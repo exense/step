@@ -28,6 +28,9 @@ import jakarta.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.artefacts.reports.aggregated.AggregatedReport;
+import step.core.artefacts.reports.aggregated.AggregatedReportViewRequest;
+import step.core.artefacts.reports.aggregated.FlatAggregatedReport;
 import step.reports.CustomReportType;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
@@ -262,9 +265,9 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Path("/{id}/report/aggregated")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right = "execution-read")
-	public AggregatedReportViewBuilder.AggregatedReport getFullAggregatedReportView(@PathParam("id") String executionId) {
+	public AggregatedReport getFullAggregatedReportView(@PathParam("id") String executionId) {
 		try {
-			return getAggregatedReportView(executionId, new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, null, null, null));
+			return getAggregatedReportView(executionId, new AggregatedReportViewRequest());
 		} catch (Exception e) {
 			logger.error("Unable to build the full aggregation report view for executionId {}", executionId, e);
 			throw new ControllerServiceException("Aggregation Report failed: " + e.getMessage());
@@ -277,11 +280,28 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right = "execution-read")
-	public AggregatedReportViewBuilder.AggregatedReport getAggregatedReportView(@PathParam("id") String executionId, AggregatedReportViewBuilder.AggregatedReportViewRequest request) {
+	public AggregatedReport getAggregatedReportView(@PathParam("id") String executionId, AggregatedReportViewRequest request) {
 		try {
 			ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
 			AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(executionEngineContext, executionId);
 			return aggregatedReportViewBuilder.buildAggregatedReport(request);
+		} catch (Exception e) {
+			logger.error("Unable to build the aggregation report view for executionId {}", executionId, e);
+			throw new ControllerServiceException("Aggregation Report failed: " + e.getMessage());
+		}
+	}
+
+	@Operation(description = "Returns a flat aggregated report view for the provided execution and aggregation parameters.")
+	@POST
+	@Path("/{id}/report/aggregated/flat")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right = "execution-read")
+	public FlatAggregatedReport getFlatAggregatedReportView(@PathParam("id") String executionId, AggregatedReportViewRequest request) {
+		try {
+			ExecutionEngineContext executionEngineContext = getScheduler().getExecutor().getExecutionEngine().getExecutionEngineContext();
+			AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(executionEngineContext, executionId);
+			return aggregatedReportViewBuilder.buildFlatAggregatedReport(request);
 		} catch (Exception e) {
 			logger.error("Unable to build the aggregation report view for executionId {}", executionId, e);
 			throw new ControllerServiceException("Aggregation Report failed: " + e.getMessage());

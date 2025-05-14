@@ -21,6 +21,7 @@ package step.plugins.threadmanager;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.plugins.threadmanager.ThreadManager;
 import step.engine.plugins.ExecutionEnginePlugin;
 
 @Plugin
