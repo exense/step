@@ -153,7 +153,10 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             completeExecTasksParameters.add(execTaskParameters);
         }
 
-        // IMPORTANT: validate parameters BEFORE reusing old ids, because within 'validateCronExpressions' we create and remove temporary calendar in db
+        // IMPORTANT: we need to validate parameters BEFORE reusing old ids, because within 'validateCronExpressions'
+        // we use the scheduler to create (and then remove) the temporary calendar linked with 'completeExecTasksParameters'.
+        // And we don't want to modify potentially existing calendars bound with old ids
+
         // validate the cron expression to avoid failures on 'onCreate' hook, when the AP is already partially persisted
         validateCronExpressions(completeExecTasksParameters, packageContext);
 
