@@ -234,12 +234,12 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
-    public AutomationPackageUpdateResult updateAutomationPackageMetadata(@PathParam("id") String id,
-                                                                         @QueryParam("async") Boolean async,
-                                                                         @QueryParam("version") String apVersion,
-                                                                         @QueryParam("activationExpr") String activationExpression,
-                                                                         @FormDataParam("file") InputStream uploadedInputStream,
-                                                                         @FormDataParam("file") FormDataContentDisposition fileDetail) {
+    public AutomationPackageUpdateResult updateAutomationPackage(@PathParam("id") String id,
+                                                                 @QueryParam("async") Boolean async,
+                                                                 @QueryParam("version") String apVersion,
+                                                                 @QueryParam("activationExpr") String activationExpression,
+                                                                 @FormDataParam("file") InputStream uploadedInputStream,
+                                                                 @FormDataParam("file") FormDataContentDisposition fileDetail) {
         checkAutomationPackageAcceptable(id);
         try {
             return automationPackageManager.createOrUpdateAutomationPackage(
@@ -313,6 +313,38 @@ public class AutomationPackageServices extends AbstractStepServices {
             MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
             return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
                     mvnIdentifier, true, true, null, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
+            );
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        } catch (ParserConfigurationException | IOException | SAXException e) {
+            throw new RuntimeException("Cannot parse the maven artifact xml", e);
+        }
+    }
+
+    /**
+     * @param mavenArtifactXml Example:
+     *                         <dependency>
+     *                         <groupId>junit</groupId>
+     *                         <artifactId>junit</artifactId>
+     *                         <version>4.13.2</version>
+     *                         <scope>test</scope>
+     *                         </dependency>
+     */
+    @PUT
+    @Path("/{id}/mvn")
+    @Consumes(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-write")
+    public AutomationPackageUpdateResult updateAutomationPackageFromMaven(@PathParam("id") String id,
+                                                                          @QueryParam("async") Boolean async,
+                                                                          @QueryParam("version") String apVersion,
+                                                                          @QueryParam("activationExpr") String activationExpression,
+                                                                          @RequestBody() String mavenArtifactXml) {
+        try {
+            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
+            return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
+                    mvnIdentifier, true, false, new ObjectId(id), apVersion,
+                    activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
             );
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
