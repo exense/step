@@ -28,8 +28,11 @@ public class ArtifactRepositoryConstants {
     public static final String ARTIFACT_PARAM_VERSION = "version";
     public static final String ARTIFACT_PARAM_GROUP_ID = "groupId";
     public static final String ARTIFACT_PARAM_CLASSIFIER = "classifier";
+    public static final String ARTIFACT_PARAM_TYPE = "type";
 
     public static final String ARTIFACT_PARAM_MAVEN_SETTINGS = "mavenSettings";
+    public static final String ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT = "default";
+    public static final String MAVEN_SETTINGS_PREFIX = "maven_settings_";
 
     public static final String PARAM_WRAP_PLANS_INTO_TEST_SET = "wrapPlans";
     public static final String PARAM_THREAD_NUMBER = "threads";

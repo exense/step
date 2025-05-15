@@ -22,30 +22,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.execution.AutomationPackageExecutor;
-import step.automation.packages.execution.IsolatedAutomationPackageRepository;
 import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.core.collections.Collection;
+import step.core.controller.ControllerSettingAccessor;
+import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
-import step.core.execution.model.ExecutionAccessor;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.scheduler.SchedulerPlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.manager.FunctionManager;
 import step.functions.plugin.FunctionControllerPlugin;
+import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManagerControllerPlugin;
+
+import java.io.File;
 
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS;
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.CONFIGURATION_MAVEN_FOLDER;
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.DEFAULT_MAVEN_FOLDER;
 
-@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class})
+@Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class, ControllerSettingPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
@@ -90,7 +95,15 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         if (context.get(AutomationPackageManager.class) == null) {
             log.info("Using the OS implementation of automation package manager");
 
+            AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider = new MavenConfigProviderImpl(
+                    context.require(ControllerSettingAccessor.class),
+                    context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER))
+            );
+
             // moved to 'afterInitializeData' to have the schedule accessor in context
+            // here we pass the step.automation.packages.AutomationPackageMavenConfig.ConfigProvider to resolve maven settings dynamically
+            // when we upload (deploy) the automation package from artifactory (the maven configuration can be changed either
+            // via Step Parameters or via Controller settings)
             AutomationPackageManager packageManager = AutomationPackageManager.createMainAutomationPackageManager(
                     context.require(AutomationPackageAccessor.class),
                     context.require(FunctionManager.class),
@@ -99,10 +112,10 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                     context.getResourceManager(),
                     context.require(AutomationPackageHookRegistry.class),
                     context.require(AutomationPackageReader.class),
-                    automationPackageLocks
+                    automationPackageLocks,
+                    mavenConfigProvider
             );
             context.put(AutomationPackageManager.class, packageManager);
-
         }
     }
 
@@ -131,5 +144,39 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
         return new AutomationPackageExecutionPlugin(automationPackageLocks);
+    }
+
+    private static class MavenConfigProviderImpl implements AutomationPackageMavenConfig.ConfigProvider {
+
+        private final ControllerSettingAccessor controllerSettingAccessor;
+        private final File localFileRepository;
+
+        public MavenConfigProviderImpl(ControllerSettingAccessor controllerSettingAccessor, File localFileRepository) {
+            this.controllerSettingAccessor = controllerSettingAccessor;
+            this.localFileRepository = localFileRepository;
+        }
+
+        @Override
+        public AutomationPackageMavenConfig getConfig(ObjectPredicate objectPredicate) {
+            // default maven configuration in controller settings
+            String mavenSettings;
+            String settingsXml;
+
+            // TODO: we indented to apply the user-defined multitenant parameter, but old Step Parameters are only designed for executions, so it will be replaced with special user settings (SED-3921)
+            // the maven settings are used to deploy the automation package, so there no execution engine and bindings here
+//            Map<String, Parameter> allParameters = parameterManager.getAllParameters(new HashMap<>(), objectPredicate);
+
+            // here we take the name of maven settings property alike we do this for repository parameters in MavenArtifactRepository
+            // but here we take this name from Step Parameters, but not from the execution context
+//            Parameter mavenSettingsStepParameter = allParameters.get(ARTIFACT_PARAM_MAVEN_SETTINGS);
+//            if (mavenSettingsStepParameter != null && mavenSettingsStepParameter.getValue().getValue() != null && !mavenSettingsStepParameter.getValue().getValue().isEmpty()) {
+//                settingsXml = mavenSettingsStepParameter.getValue().getValue();
+//            } else {
+                // default maven configuration in controller settings
+                mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
+                settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettings).getValue();
+//            }
+            return new AutomationPackageMavenConfig(settingsXml, localFileRepository);
+        }
     }
 }

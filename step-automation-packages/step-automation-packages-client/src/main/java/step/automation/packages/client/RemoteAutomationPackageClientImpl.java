@@ -26,6 +26,7 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import step.automation.packages.AutomationPackageUpdateResult;
+import step.client.ControllerClientException;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
@@ -67,14 +68,36 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, Boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException {
         return uploadPackage(automationPackageFile, multiPartEntity -> {
             Map<String, String> queryParams = new HashMap<>();
-            queryParams.put("async", String.valueOf(async));
+
+            // if 'async' is not defined on client it will be resolved on the server ('false' by default)
+            if (async != null) {
+                queryParams.put("async", String.valueOf(async));
+            }
             addQueryParams(apVersion, activationExpr, queryParams);
             Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
             return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
         });
+    }
+
+    @Override
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException {
+        Map<String, String> queryParams = new HashMap<>();
+
+        // if 'async' is not defined on client it will be resolved on the server ('false' by default)
+        if (async != null) {
+            queryParams.put("async", String.valueOf(async));
+        }
+        if (activationExpr != null && !activationExpr.isEmpty()) {
+            queryParams.put("activationExpr", activationExpr);
+        }
+        if (apVersion != null && !apVersion.isEmpty()) {
+            queryParams.put("version", apVersion);
+        }
+        Invocation.Builder builder = requestBuilder("/rest/automation-packages/mvn", queryParams);
+        return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(Entity.entity(mavenArtifactXml, MediaType.TEXT_PLAIN) , AutomationPackageUpdateResult.class));
     }
 
     @Override
@@ -97,7 +120,7 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     private <T> T executeAutomationPackageClientRequest(Supplier<T> provider) throws AutomationPackageClientException {
         try {
             return executeRequest(provider);
-        } catch (ControllerServiceException e) {
+        } catch (ControllerServiceException | ControllerClientException e) {
             throw new AutomationPackageClientException(e.getMessage());
         }
     }
@@ -107,7 +130,7 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
         Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
         try {
             return executeRequest.apply(entity);
-        } catch (ControllerServiceException e) {
+        } catch (ControllerServiceException | ControllerClientException e) {
             throw new AutomationPackageClientException(e.getMessage());
         }
     }
