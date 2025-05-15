@@ -1,12 +1,17 @@
 package step.automation.packages;
 
 import ch.exense.commons.app.Configuration;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
@@ -64,16 +69,20 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
-import static step.automation.packages.AutomationPackagePlugin.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
+import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
 public class AutomationPackageManagerOSTest {
+
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageManagerOSTest.class);
 
     // how many keywords and plans are defined in original sample
     public static final int KEYWORDS_COUNT = 6;
 
     // 2 annotated plans and 3 plans from yaml descriptor
     public static final int PLANS_COUNT = 5;
+    public static final int SCHEDULES_COUNT = 1;
+    public static final int PARAMETERS_COUNT = 3;
 
     private AutomationPackageManager manager;
     private AutomationPackageAccessorImpl automationPackageAccessor;
@@ -364,6 +373,39 @@ public class AutomationPackageManagerOSTest {
         uploadSample1WithAsserts(false, true, true);
     }
 
+    @Test
+    public void testGetAllEntities() throws IOException {
+        // 1. Upload new package
+        SampleUploadingResult r = uploadSample1WithAsserts(true, false, false);
+
+        // 2. Get all stored entities
+        Map<String, List<? extends AbstractOrganizableObject>> allEntities = manager.getAllEntities(r.storedPackage.getId());
+
+        // 3. Compare with expected
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        JsonNode actualJsonNode = objectMapper.valueToTree(allEntities);
+        log.info("{}", actualJsonNode);
+
+        Assert.assertEquals(4, allEntities.size());
+        List<Function> keywords = (List<Function>) allEntities.get("keywords");
+        Assert.assertEquals(KEYWORDS_COUNT, keywords.size());
+        findFunctionByClassAndName(keywords, JMeterFunction.class, J_METER_KEYWORD_1);
+
+        List<Plan> plans = (List<Plan>) allEntities.get("plans");
+        Assert.assertEquals(PLANS_COUNT, plans.size());
+        findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR);
+
+        List<ExecutiontTaskParameters> schedules = (List<ExecutiontTaskParameters>) allEntities.get("schedules");
+        Assert.assertEquals(SCHEDULES_COUNT, schedules.size());
+        findByName(schedules, SCHEDULE_1);
+
+        List<Parameter> parameters = (List<Parameter>) allEntities.get("parameters");
+        Assert.assertEquals(PARAMETERS_COUNT, parameters.size());
+        Assert.assertTrue(parameters.stream().anyMatch(p -> p.getDescription().equals("some description")));
+    }
+
     private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
         FileResolver fileResolver = new FileResolver(resourceManager);
         String resourceReferenceString = fileResourceReference.get();
@@ -422,7 +464,7 @@ public class AutomationPackageManagerOSTest {
             Assert.assertEquals("Composite keyword from AP", compositeKeyword.getPlan().getAttribute(AbstractOrganizableObject.NAME));
 
             List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(1, storedTasks.size());
+            Assert.assertEquals(SCHEDULES_COUNT, storedTasks.size());
             r.storedTask = storedTasks.get(0);
             Assert.assertEquals(SCHEDULE_1, r.storedTask.getAttribute(AbstractOrganizableObject.NAME));
             Assert.assertEquals("0 15 10 ? * *", r.storedTask.getCronExpression());
@@ -433,7 +475,7 @@ public class AutomationPackageManagerOSTest {
             Assert.assertEquals(planFromDescriptor.getId().toHexString(), r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
 
             List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(3, allParameters.size());
+            Assert.assertEquals(PARAMETERS_COUNT, allParameters.size());
             Parameter parameter = allParameters.get(0);
             assertEquals("myKey", parameter.getKey());
             assertEquals("myValue", parameter.getValue().get());
@@ -445,7 +487,7 @@ public class AutomationPackageManagerOSTest {
             assertEquals(ParameterScope.APPLICATION, parameter.getScope());
             assertEquals("entity", parameter.getScopeEntity());
 
-            parameter = allParameters.get(1);
+            parameter = allParameters.get(SCHEDULES_COUNT);
             assertEquals("mySimpleKey", parameter.getKey());
             assertFalse(parameter.getValue().isDynamic());
             assertEquals("mySimpleValue", parameter.getValue().get());
@@ -471,7 +513,7 @@ public class AutomationPackageManagerOSTest {
                 new AutomationPackageExecutionPlugin(automationPackageLocks),
                 new AbstractExecutionEnginePlugin() {
                     @Override
-                    public void beforeExecutionEnd(ExecutionContext context) {
+                    public void abortExecution(ExecutionContext context) {
                         try {
                             //delay end of execution to test locks
                             Thread.sleep(2000);

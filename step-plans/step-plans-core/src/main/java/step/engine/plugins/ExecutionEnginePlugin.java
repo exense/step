@@ -28,4 +28,6 @@ public interface ExecutionEnginePlugin extends ExecutionCallbacks {
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext);
 	
 	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext);
+
+	public void finalizeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext);
 }

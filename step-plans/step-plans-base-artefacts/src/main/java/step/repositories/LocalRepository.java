@@ -93,7 +93,7 @@ public class LocalRepository extends AbstractRepository {
 		return testSetStatusOverview;
 	}
 
-	private static String getPlanId(Map<String, String> repositoryParameters) {
+	public static String getPlanId(Map<String, String> repositoryParameters) {
 		return repositoryParameters.get(RepositoryObjectReference.PLAN_ID);
 	}
 

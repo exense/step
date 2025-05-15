@@ -24,6 +24,7 @@ import step.core.plans.filters.PlanByIncludedCategoriesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
 import step.core.plans.filters.PlanMultiFilter;
 import step.core.repositories.ImportResult;
+import step.core.timeseries.bucket.Bucket;
 
 import java.io.File;
 import java.io.IOException;
@@ -186,7 +187,7 @@ public class AbstractExecuteAutomationPackageToolTest {
         Mockito.when((remoteExecutionManagerMock.getFuture(Mockito.anyString()))).thenReturn(futureMock);
         EchoReportNode echoReportNode = new EchoReportNode();
         echoReportNode.setEcho("Hello");
-        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED",1L), List.of(), ParentSource.MAIN, echoReportNode));
+        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED",1L), List.of(), ParentSource.MAIN, echoReportNode, Map.of("PASSED",new Bucket(), "ALL" , new Bucket()), null));
         return remoteExecutionManagerMock;
     }
 

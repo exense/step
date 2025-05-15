@@ -83,7 +83,8 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
 
     @Override
     public void onDelete(AutomationPackage automationPackage, AutomationPackageContext context) {
-        List<Parameter> parameters = getParameterManager(context.getExtensions()).getParameterAccessor().findManyByCriteria(getAutomationPackageIdCriteria(automationPackage.getId())).collect(Collectors.toList());
+        ObjectId apId = automationPackage.getId();
+        List<Parameter> parameters = getParametersForAutomationPackage(context, apId);
         for (Parameter parameter : parameters) {
             try {
                 getParameterManager(context.getExtensions()).getParameterAccessor().remove(parameter.getId());
@@ -114,6 +115,11 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
         }
     }
 
+    @Override
+    public Map<String, List<? extends AbstractOrganizableObject>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext) {
+        return Map.of(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP, getParametersForAutomationPackage(automationPackageContext, automationPackageId));
+    }
+
     private boolean isLayeredAccessor(Accessor<?> accessor) {
         return accessor instanceof LayeredAccessor;
     }
@@ -129,5 +135,10 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
     protected ParameterManager getParameterManager(Map<String, Object> extensions){
         return (ParameterManager) extensions.get(PARAMETER_MANAGER_EXTENSION);
     }
+
+    protected List<Parameter> getParametersForAutomationPackage(AutomationPackageContext context, ObjectId apId) {
+        return getParameterManager(context.getExtensions()).getParameterAccessor().findManyByCriteria(getAutomationPackageIdCriteria(apId)).collect(Collectors.toList());
+    }
+
 
 }
