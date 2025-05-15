@@ -16,13 +16,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.threadmanager;
+package step.core.plugins.threadmanager;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
@@ -118,7 +114,7 @@ public class ThreadManager {
 		OperationManager operationManager = OperationManager.getInstance();
 		List<Long> threadIds = reportNodeIdToThreadId.get(reportNodeId);
 		if(threadIds!=null) {
-			return threadIds.stream().map(threadId->operationManager.getOperation(threadId)).filter(o->o!=null).collect(Collectors.toList());
+			return threadIds.stream().map(operationManager::getOperation).filter(Objects::nonNull).collect(Collectors.toList());
 		} else {
 			return new ArrayList<>();
 		}
@@ -135,7 +131,7 @@ public class ThreadManager {
 		reportNodeIdToThreadId.entrySet().forEach(e->e.getValue().remove(threadId));
 	}
 
-	public void beforeExecutionEnd(ExecutionContext context) {
+	public void abortExecution(ExecutionContext context) {
 		Set<Thread> associatedThreads = getRegister(context);
 
 		synchronized(associatedThreads) {

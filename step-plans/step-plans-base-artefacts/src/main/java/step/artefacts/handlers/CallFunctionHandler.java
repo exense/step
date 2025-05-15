@@ -220,7 +220,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				}
 
 				OperationManager.getInstance().enter(OPERATION_KEYWORD_CALL, new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
-						node.getId().toString());
+						node.getId().toString(), node.getArtefactHash());
 
 				try {
 					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class, context);

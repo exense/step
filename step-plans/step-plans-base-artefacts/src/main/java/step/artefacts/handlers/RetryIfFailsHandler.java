@@ -91,7 +91,7 @@ public class RetryIfFailsHandler extends ArtefactHandler<RetryIfFails, RetryIfFa
 			if (inSession) {
 				details.put("Release token", Boolean.toString(releaseToken));
 			}
-			OperationManager.getInstance().enter("RetryIfFails", details , node.getId().toString());
+			OperationManager.getInstance().enter("RetryIfFails", details , node.getId().toString(), node.getArtefactHash());
 			if (releaseToken && inSession) {
 				releaseTokens();
 				node.setReleasedToken(true);

@@ -32,26 +32,35 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.xml.sax.SAXException;
 import step.automation.packages.execution.AutomationPackageExecutor;
+import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractStepServices;
+import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
 import step.framework.server.security.Secured;
+import step.framework.server.tables.service.TableService;
+import step.framework.server.tables.service.bulk.TableBulkOperationReport;
+import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.Map;
 
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
-public class AutomationPackageServices extends AbstractStepServices {
+public class AutomationPackageServices extends AbstractStepAsyncServices {
 
     protected AutomationPackageManager automationPackageManager;
     protected AutomationPackageExecutor automationPackageExecutor;
+    protected TableService tableService;
     protected XmlMapper xmlMapper;
 
     @PostConstruct
@@ -59,6 +68,7 @@ public class AutomationPackageServices extends AbstractStepServices {
         super.init();
         automationPackageManager = getContext().get(AutomationPackageManager.class);
         automationPackageExecutor = getContext().get(AutomationPackageExecutor.class);
+        tableService = getContext().require(TableService.class);
         xmlMapper = new XmlMapper();
         xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
@@ -81,6 +91,10 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-delete")
     public void deleteAutomationPackage(@PathParam("id") String id) {
+        deleteSingleAutomationPackage(id);
+    }
+
+    private void deleteSingleAutomationPackage(String id) {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
             assertEntityIsAcceptableInContext(automationPackage);
@@ -358,6 +372,27 @@ public class AutomationPackageServices extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public String getAutomationPackageDescriptorSchema() {
         return automationPackageManager.getDescriptorJsonSchema();
+    }
+
+    @GET
+    @Path("{id}/entities")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, List<? extends AbstractOrganizableObject>> listEntities(@PathParam("id") String id){
+        try {
+            return automationPackageManager.getAllEntities(new ObjectId(id));
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    @POST
+    @Path("/bulk/delete")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-delete")
+    public AsyncTaskStatus<TableBulkOperationReport> bulkDelete(TableBulkOperationRequest request) {
+        Consumer<String> consumer = this::deleteSingleAutomationPackage;
+        return scheduleAsyncTaskWithinSessionContext(h ->
+                tableService.performBulkOperation(AutomationPackageEntity.entityName, request, consumer, getSession()));
     }
 
 }

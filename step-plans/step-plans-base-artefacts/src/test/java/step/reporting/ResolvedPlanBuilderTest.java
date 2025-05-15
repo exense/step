@@ -13,11 +13,17 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
+import step.core.artefacts.reports.aggregated.AggregatedReportViewRequest;
+import step.core.artefacts.reports.aggregated.FlatAggregatedReport;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.model.ExecutionStatus;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
+import step.core.timeseries.bucket.Bucket;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.handlers.javahandler.Keyword;
@@ -28,8 +34,10 @@ import step.threadpool.ThreadPoolPlugin;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder.MERGED_GROUPS_LABEL;
 import static step.planbuilder.BaseArtefacts.*;
 
 public class ResolvedPlanBuilderTest {
@@ -78,9 +86,15 @@ public class ResolvedPlanBuilderTest {
                         "  Echo: 4x: PASSED\n",
                 node.toString());
 
+        Map<String, Bucket> echoBucketsByStatus = node.children.get(0).children.get(0).bucketsByStatus;
+        assertEquals(2, echoBucketsByStatus.size()); // status ALL and status PASSED
+        assertEquals(4, echoBucketsByStatus.get(MERGED_GROUPS_LABEL).getCount());
+        assertEquals(4, echoBucketsByStatus.get("PASSED").getCount());
+
+
         // Test partial aggregated tree
         ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.EchoReportNode").findFirst().orElseThrow(() -> new RuntimeException("No echo report node found"));
-        AggregatedReportViewBuilder.AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false);
+        AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -98,6 +112,12 @@ public class ResolvedPlanBuilderTest {
         //Change status of first echo report node and update it in the inMemory collection, note that parent nodes are not changed here
         reportNode.setStatus(ReportNodeStatus.RUNNING);
         engine.getExecutionEngineContext().getReportNodeAccessor().save(reportNode);
+        //This only works if execution is in running state
+        ExecutionAccessor executionAccessor = engine.getExecutionEngineContext().getExecutionAccessor();
+        Execution execution = executionAccessor.get(result.getExecutionId());
+        execution.setStatus(ExecutionStatus.RUNNING);
+        executionAccessor.save(execution);
+
         aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         node = aggregatedReportViewBuilder.buildAggregatedReportView();
 
@@ -112,7 +132,7 @@ public class ResolvedPlanBuilderTest {
                 node.toString());
 
         // Test partial aggregated tree with RUNNING node
-        aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false);
+        aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -124,6 +144,20 @@ public class ResolvedPlanBuilderTest {
                         " Session: 1x: PASSED\n" +
                         "  Echo: 1x: RUNNING > Echo\n",
                 node.toString());
+
+        //Test with artefact class filtering
+        aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, null, true, List.of("Echo"));
+        node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
+        assertEquals("ThreadGroup: 1x: PASSED\n" +
+                        " Echo: 5x: 1 RUNNING, 4 PASSED\n",
+                node.toString());
+
+        //Test flat report with filtering on Echo
+
+        FlatAggregatedReport flatAggregatedReport = aggregatedReportViewBuilder.buildFlatAggregatedReport(aggregatedReportViewRequest);
+        assertEquals("[Echo: 5x: 1 RUNNING, 4 PASSED\n" +
+                        "]",
+                flatAggregatedReport.aggregatedReportViews.toString());
     }
 
     @Test
@@ -154,7 +188,7 @@ public class ResolvedPlanBuilderTest {
 
         // Test partial aggregated tree
         ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.EchoReportNode").findFirst().orElseThrow(() -> new RuntimeException("No echo report node found"));
-        AggregatedReportViewBuilder.AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false);
+        AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -169,7 +203,7 @@ public class ResolvedPlanBuilderTest {
                 node.toString());
 
         // Test partial aggregated tree, filtering also the aggregated report --> in this case the report should be the same
-        aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), null);
+        aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), null, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -219,7 +253,7 @@ public class ResolvedPlanBuilderTest {
 
         // Test partial aggregated tree for single Set
         ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.SetReportNode").findFirst().orElseThrow(() -> new RuntimeException("No echo report node found"));
-        AggregatedReportViewBuilder.AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true);
+        AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -415,7 +449,7 @@ public class ResolvedPlanBuilderTest {
 
         // Test partial aggregated tree for single Set
         ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.SetReportNode").findFirst().orElseThrow(() -> new RuntimeException("No echo report node found"));
-        AggregatedReportViewBuilder.AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false);
+        AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -494,6 +528,25 @@ public class ResolvedPlanBuilderTest {
                         "  Echo: 1x: PASSED > myVar value is test\n" +
                         "  [AFTER]\n" +
                         "   Echo: 1x: PASSED > in after\n",
+                node.toString());
+
+        node = aggregatedReportViewBuilder.buildAggregatedReportView(new AggregatedReportViewRequest(null, null, null, null,
+                List.of("Sequence", "Echo")));
+        logger.info(node.toString());
+        assertEquals("Sequence: 1x: PASSED\n" +
+                        " Sequence: 1x: PASSED\n" +
+                        "  Echo: 1x: PASSED > myVar value is test\n" +
+                        "  [AFTER]\n" +
+                        "   Echo: 1x: PASSED > in after\n",
+                node.toString());
+
+        node = aggregatedReportViewBuilder.buildAggregatedReportView(new AggregatedReportViewRequest(null, null, null, null,
+                List.of("Echo")));
+        logger.info(node.toString());
+        assertEquals("Sequence: 1x: PASSED\n" +
+                        " Echo: 1x: PASSED > myVar value is test\n" +
+                        " [AFTER]\n" +
+                        "  Echo: 1x: PASSED > in after\n",
                 node.toString());
     }
 
@@ -607,7 +660,7 @@ public class ResolvedPlanBuilderTest {
 
         // Test partial aggregated tree, starting from the Set node in "Before"
         ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.SetReportNode").findFirst().orElseThrow(() -> new RuntimeException("No set report node found"));
-        AggregatedReportViewBuilder.AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false);
+        AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -632,7 +685,7 @@ public class ResolvedPlanBuilderTest {
                 node.toString());
 
         // Test partial aggregated tree, starting from the Set node in "Before" and filtering the report
-        aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true);
+        aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -648,7 +701,7 @@ public class ResolvedPlanBuilderTest {
 
         // Test partial aggregated tree, starting from the Sleep node in the thread
         reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.SleepReportNode").findFirst().orElseThrow(() -> new RuntimeException("No set report node found"));
-        aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false);
+        aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -673,7 +726,7 @@ public class ResolvedPlanBuilderTest {
                 node.toString());
 
         // Test partial aggregated tree, starting from the Set node in "Before" and filtering the report
-        aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true);
+        aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -727,7 +780,7 @@ public class ResolvedPlanBuilderTest {
 
         // Test partial aggregated tree, starting from the Set node
         ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.SetReportNode").findFirst().orElseThrow(() -> new RuntimeException("No set report node found"));
-        AggregatedReportViewBuilder.AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false);
+        AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), false, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -745,7 +798,7 @@ public class ResolvedPlanBuilderTest {
                 node.toString());
 
         // Test partial aggregated tree, starting from the Set node and filtering the report
-        aggregatedReportViewRequest = new AggregatedReportViewBuilder.AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true);
+        aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true, null);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");

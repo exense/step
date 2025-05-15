@@ -29,15 +29,18 @@ public class Operation {
 	private Object details;
 	
 	private String reportNodeId;
+
+	private String artefactHash;
 	
 	private long tid;
 	
-	public Operation(String name, Date start, Object details, String reportNodeId, long tid) {
+	public Operation(String name, Date start, Object details, String reportNodeId, String artefactHash, long tid) {
 		super();
 		this.name = name;
 		this.start = start;
 		this.details = details;
 		this.reportNodeId = reportNodeId;
+		this.artefactHash = artefactHash;
 		this.tid = tid;
 	}
 
@@ -73,11 +76,31 @@ public class Operation {
 		this.reportNodeId = reportNodeId;
 	}
 
+	public String getArtefactHash() {
+		return artefactHash;
+	}
+
+	public void setArtefactHash(String artefactHash) {
+		this.artefactHash = artefactHash;
+	}
+
 	public long getTid() {
 		return tid;
 	}
 
 	public void setTid(long tid) {
 		this.tid = tid;
+	}
+
+	@Override
+	public String toString() {
+		return "Operation{" +
+				"name='" + name + '\'' +
+				", start=" + start +
+				", details=" + details +
+				", reportNodeId='" + reportNodeId + '\'' +
+				", artefactHash='" + artefactHash + '\'' +
+				", tid=" + tid +
+				'}';
 	}
 }

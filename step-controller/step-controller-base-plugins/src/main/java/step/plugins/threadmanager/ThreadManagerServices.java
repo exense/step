@@ -38,6 +38,7 @@ import step.common.managedoperations.OperationDetails;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.deployment.AbstractStepServices;
+import step.core.plugins.threadmanager.ThreadManager;
 import step.framework.server.security.Secured;
 import step.core.execution.ExecutionContext;
 import step.core.plans.Plan;

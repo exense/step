@@ -50,7 +50,7 @@ public abstract class AbstractExecutionEnginePlugin extends AbstractPlugin imple
 	public void provisionRequiredResources(ExecutionContext context) {}
 
 	@Override
-	public void beforeExecutionEnd(ExecutionContext context) {}
+	public void abortExecution(ExecutionContext context) {}
 
 	@Override
 	public void afterExecutionEnd(ExecutionContext context) {}

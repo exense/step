@@ -19,6 +19,7 @@
 package step.core.execution;
 
 import step.core.GlobalContext;
+import step.core.agents.provisioning.driver.AgentProvisioningStatus;
 import step.core.artefacts.reports.ReportNode;
 import step.core.collections.Collection;
 import step.core.execution.table.*;
@@ -45,7 +46,10 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 
 		RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
 		ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
-		tableRegistry.register("executions", new Table<>(collection, "execution-read", true).withResultItemEnricher(execution->{
+		tableRegistry.register("executions", new Table<>(collection, "execution-read", true).withResultItemTransformer((execution, session) -> {
+			execution.getCustomFields().remove(AgentProvisioningStatus.class.getName());
+			return execution;
+		}).withResultItemEnricher(execution->{
 			execution.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
 			Object executionSummary = executionSummaryFormatter.format(execution);
 			execution.setExecutionSummary(executionSummary);
