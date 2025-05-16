@@ -237,7 +237,12 @@ public class AggregatedReportViewBuilder {
                 singleInstanceReportNode = getSingleReportNodeInstance(reportNodeAccessor, executionId, artefactHash, request);
             }
         }
-        return new AggregatedReportView(resolvedPlanNode.artefact, artefactHash, countByStatus, children, resolvedPlanNode.parentSource, singleInstanceReportNode, bucketsByStatus, operationsByArtefactHash.getOrDefault(artefactHash, new ArrayList<>()));
+        boolean hasDescendantInvocations = hasDescendantInvocations(children);
+        return new AggregatedReportView(resolvedPlanNode.artefact, artefactHash, countByStatus, children, hasDescendantInvocations, resolvedPlanNode.parentSource, singleInstanceReportNode, bucketsByStatus, operationsByArtefactHash.getOrDefault(artefactHash, new ArrayList<>()));
+    }
+
+    private boolean hasDescendantInvocations(List<AggregatedReportView> children) {
+        return children.stream().anyMatch(c -> (c.hasDescendantInvocations || c.countByStatus.values().stream().anyMatch(l -> l > 0)));
     }
 
     private static boolean shouldIncludeAggregatedReport(AggregatedReportViewRequest request, AbstractArtefact artefact) {
