@@ -261,7 +261,7 @@ public class ForHandlerTest {
                         // pretend that some work is actually taking place, otherwise we might be finishing TOO fast
                         // so that not all outer threads are even needed (which could break the test assertions)
                         try {
-                            Thread.sleep(20);
+                            Thread.sleep(35);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }

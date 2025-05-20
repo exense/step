@@ -420,9 +420,12 @@ public class TokenForecastingTest {
 				Set.copyOf(tokenForecastingContext.getAgentPoolRequirementSpec()));
 	}
 
+	// We need to sleep a little bit during KW invocations: if the invocations are TOO fast,
+	// the thread pool might be able to reuse threads (instead of using new ones) too soon,
+	// so our expectations about how many threads should be used will not hold.
 	private void sleep() {
 		try {
-			Thread.sleep(35);
+			Thread.sleep(60);
 		} catch (InterruptedException ignored) {}
 	}
 
@@ -533,7 +536,8 @@ public class TokenForecastingTest {
 
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 2);
 		assertAgentCountPool1(forecast, 2);
-		stats.assertInvocationsAndThreads(39, 2);
+		// usually expecting 2 threads, but sometimes seeing a few more (see above for reason)
+		stats.assertInvocationsAndThreadsRange(39, 2, 4);
 
 		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
 		assertAgentCountPool1(forecast, 1);
