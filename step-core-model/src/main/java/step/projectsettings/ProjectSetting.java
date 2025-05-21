@@ -21,9 +21,9 @@ package step.projectsettings;
 import step.commons.activation.Expression;
 import step.core.EncryptedTrackedObject;
 import step.core.dynamicbeans.DynamicValue;
-import step.multitenancy.TenantOverlapping;
+import step.multitenancy.TenantUniqueEntity;
 
-public class ProjectSetting extends EncryptedTrackedObject implements TenantOverlapping<String> {
+public class ProjectSetting extends EncryptedTrackedObject implements TenantUniqueEntity<String> {
 
     public static final String ENTITY_NAME = "projectsettings";
 

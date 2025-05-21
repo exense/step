@@ -20,45 +20,74 @@ package step.plugins.projectsettings;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import step.controller.services.async.AsyncTaskStatus;
-import step.controller.services.entities.AbstractEntityServices;
+import org.bson.types.ObjectId;
+import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
+import step.encryption.AbstractEncryptedValuesManager;
+import step.encryption.EncryptedValueManagerException;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
-import step.framework.server.tables.service.bulk.TableBulkOperationReport;
-import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 import step.projectsettings.ProjectSetting;
 import step.projectsettings.ProjectSettingManager;
 
 import java.util.List;
 
+// TODO: check if secured context works ok for AbstractStepServices
 @Path("/project-settings")
 @Tag(name = "ProjectSettings")
 @Tag(name = "Entity=ProjectSetting")
 @SecuredContext(key = "entity", value = "project-setting")
-public class ProjectSettingServices extends AbstractEntityServices<ProjectSetting> {
+public class ProjectSettingServices extends AbstractStepServices {
 
     private ProjectSettingManager manager;
+    private ProjectSettingAccessor accessor;
 
     public ProjectSettingServices() {
-        super(ProjectSetting.ENTITY_NAME);
     }
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         manager = getContext().require(ProjectSettingManager.class);
+        accessor = getContext().require(ProjectSettingAccessor.class);
     }
 
-    @Override
-    protected ProjectSetting beforeSave(ProjectSetting entity) {
-        getObjectOverlapper().onBeforeSave(entity);
-        return super.beforeSave(entity);
+    @POST
+    @Secured(right = "{entity}-read")
+    public ProjectSetting save(ProjectSetting newSetting) {
+        if (newSetting.getKey() == null || newSetting.getKey().isBlank()) {
+            throw new ControllerServiceException("The parameter's key is mandatory.");
+        }
+
+        ProjectSetting oldSetting;
+        if (newSetting.getId() != null) {
+            oldSetting = accessor.get(newSetting.getId());
+        } else {
+            oldSetting = null;
+        }
+
+        return save(newSetting, oldSetting);
     }
+
+    @DELETE
+    @Path("/{id}")
+    @Secured(right = "{entity}-delete")
+    public void delete(@PathParam("id") String id) {
+        assertEntityIsAcceptableInContext(accessor.get(id));
+        accessor.remove(new ObjectId(id));
+    }
+
+    private ProjectSetting save(ProjectSetting newSetting, ProjectSetting sourceSetting) {
+        try {
+            ProjectSetting result = manager.save(newSetting, sourceSetting, getSession().getUser().getUsername(), getObjectValidator());
+            return AbstractEncryptedValuesManager.maskProtectedValue(result);
+        } catch (EncryptedValueManagerException e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
 
     @GET
     @Path("/unique/all")
@@ -66,24 +95,10 @@ public class ProjectSettingServices extends AbstractEntityServices<ProjectSettin
     @Secured(right = "{entity}-read")
     public List<ProjectSetting> getUniqueSettings() {
         try {
-            return manager.getAllSettingsWithUniqueKeys(getObjectOverlapper());
+            return manager.getAllSettingsWithUniqueKeys();
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
     }
 
-    @Override
-    public AsyncTaskStatus<TableBulkOperationReport> cloneEntities(TableBulkOperationRequest request) {
-        throw new UnsupportedOperationException("Clone is not supported for project settings");
-    }
-
-    @Override
-    public ProjectSetting clone(String id) {
-        throw new UnsupportedOperationException("Clone is not supported for project settings");
-    }
-
-    @Override
-    protected ProjectSetting cloneEntity(ProjectSetting entity) {
-        throw new UnsupportedOperationException("Clone is not supported for project settings");
-    }
 }

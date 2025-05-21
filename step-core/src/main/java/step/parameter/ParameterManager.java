@@ -23,6 +23,7 @@ import step.commons.activation.Activator;
 import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.encryption.EncryptionManager;
+import step.core.objectenricher.ObjectValidator;
 import step.encryption.AbstractEncryptedValuesManager;
 import step.encryption.EncryptedValueManagerException;
 
@@ -58,8 +59,8 @@ public class ParameterManager extends AbstractEncryptedValuesManager<Parameter> 
 	}
 
 	@Override
-	protected void validateBeforeSave(Parameter newObj) {
-		super.validateBeforeSave(newObj);
+	protected void validateBeforeSave(Parameter newObj, ObjectValidator objectValidator) {
+		super.validateBeforeSave(newObj, objectValidator);
 
 		ParameterScope scope = newObj.getScope();
 		if(scope != null && scope.equals(ParameterScope.GLOBAL) && newObj.getScopeEntity() != null) {

@@ -29,6 +29,7 @@ import step.core.artefacts.Artefact;
 import step.core.execution.model.*;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectValidator;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectManager;
@@ -87,7 +88,7 @@ public class AutomationPackageExecutor {
     }
 
     public List<String> runInIsolation(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters,
-                                       ObjectEnricher objectEnricher, ObjectPredicate objectPredicate) {
+                                       ObjectEnricher objectEnricher, ObjectPredicate objectPredicate, ObjectValidator validator) {
 
         ObjectId contextId = new ObjectId();
         List<String> executions = new ArrayList<>();

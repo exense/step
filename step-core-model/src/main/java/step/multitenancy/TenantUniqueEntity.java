@@ -21,7 +21,15 @@
 package step.multitenancy;
 
 // TODO: add javadoc
-public interface TenantOverlapping<KEY> {
+public interface TenantUniqueEntity<KEY> {
+
+    /**
+     * Defines the priority in accordance to the tenant
+     */
+    String ATTRIBUTE_PRIORITY = "priority";
+
     KEY getKey();
+
+    // TODO: maybe not required
     String getEntityName();
 }

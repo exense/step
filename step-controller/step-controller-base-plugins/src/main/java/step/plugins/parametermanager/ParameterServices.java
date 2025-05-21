@@ -100,7 +100,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	private Parameter save(Parameter newParameter, Parameter sourceParameter) {
 		assertRights(newParameter);
 		try {
-			return AbstractEncryptedValuesManager.maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername()));
+			return AbstractEncryptedValuesManager.maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername(), getObjectValidator()));
 		} catch (EncryptedValueManagerException e) {
 			throw new ControllerServiceException(e.getMessage());
 		}

@@ -28,6 +28,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectValidator;
 import step.core.plugins.exceptions.PluginCriticalException;
 
 import javax.script.Bindings;
@@ -60,8 +61,8 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
         return obj;
     }
 
-    public T save(T newObj, T sourceObj, String modificationUser) {
-        validateBeforeSave(newObj);
+    public T save(T newObj, T sourceObj, String modificationUser, ObjectValidator objectValidator) {
+        validateBeforeSave(newObj, objectValidator);
 
         if(sourceObj != null && isProtected(sourceObj)) {
             // protected value should not be changed
@@ -90,7 +91,11 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
         return getAccessor().save(newObj);
     }
 
-    protected void validateBeforeSave(T newObj) {
+    protected void validateBeforeSave(T newObj, ObjectValidator objectValidator) {
+        if (objectValidator != null) {
+            objectValidator.validateOnSave(newObj);
+        }
+
         if (isProtected(newObj) && newObj.getValue() != null && newObj.getValue().isDynamic()) {
             throw new EncryptedValueManagerException("Protected entity (" + getEntityNameForLogging() + ") do not support values with dynamic expression.");
         }

@@ -24,6 +24,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectValidator;
 import step.core.plans.Plan;
 import step.resources.Resource;
 import step.resources.ResourceManager;
@@ -55,15 +56,18 @@ public class AutomationPackagePlansAttributesApplier {
     public void applySpecialAttributesToPlans(List<Plan> plans,
                                               AutomationPackageArchive automationPackageArchive,
                                               AutomationPackageContent packageContent,
-                                              ObjectEnricher objectEnricher, Map<String, Object> extensions, AutomationPackageOperationMode operationMode) {
-        AutomationPackageContext apContext = prepareContext(operationMode, automationPackageArchive, packageContent, objectEnricher, extensions);
+                                              ObjectEnricher objectEnricher, ObjectValidator validator,
+                                              Map<String, Object> extensions,
+                                              AutomationPackageOperationMode operationMode) {
+        AutomationPackageContext apContext = prepareContext(operationMode, automationPackageArchive, packageContent, objectEnricher, validator, extensions);
         for (Plan plan : plans) {
             applySpecialValuesForArtifact(plan.getRoot(), apContext);
         }
     }
 
-    protected AutomationPackageContext prepareContext(AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, Map<String, Object> extensions) {
-        return new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, enricher, extensions);
+    protected AutomationPackageContext prepareContext(AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
+                                                      ObjectEnricher enricher, ObjectValidator validator, Map<String, Object> extensions) {
+        return new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, enricher, validator, extensions);
     }
 
     private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageContext apContext) {

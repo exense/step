@@ -73,7 +73,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
             // enrich with automation package id
             context.getEnricher().accept(entity);
             try {
-                getParameterManager(context.getExtensions()).save(entity, null, null);
+                getParameterManager(context.getExtensions()).save(entity, null, null, context.getValidator());
             } catch (EncryptedValueManagerException e) {
                 log.error("The automation package parameter {} cannot be saved for automation package {}.", entity.getKey(), context.getAutomationPackageArchive().getOriginalFileName(), e);
                 throw new EncryptedValueManagerException("The automation package parameter " + entity.getKey() + " cannot be saved: " + e.getMessage());
