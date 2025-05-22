@@ -8,8 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
-import step.core.controller.ControllerSettingHook;
-import step.core.controller.ControllerSettingHookRollbackException;
+import step.core.settings.SettingHook;
+import step.core.settings.SettingHookRollbackException;
 
 import java.util.Map;
 import java.util.Properties;
@@ -26,7 +26,7 @@ public class HousekeepingJobsManager {
 	private final ControllerSettingAccessor controllerSettingAccessor;
 	private final HousekeepingJobFactory housekeepingJobFactory;
 
-	private final Map<String, ControllerSettingHook> hooks = new ConcurrentHashMap<>();
+	private final Map<String, SettingHook> hooks = new ConcurrentHashMap<>();
 
 	public HousekeepingJobsManager(Configuration configuration, ControllerSettingAccessor controllerSettingAccessor) throws SchedulerException {
 
@@ -47,7 +47,7 @@ public class HousekeepingJobsManager {
 		this.housekeepingJobFactory.registerJob(managedJob.getJobClass(), managedJob.getJobSupplier());
 
 		// when housekeeping cron expression is changed, we want to reschedule a job
-		ControllerSettingHook hook = new ControllerSettingHook() {
+		SettingHook<ControllerSetting> hook = new SettingHook<>() {
 			@Override
 			public void onSettingSave(ControllerSetting setting) {
 				try {
@@ -57,7 +57,7 @@ public class HousekeepingJobsManager {
 					log.error("Cannot reschedule a housekeeping job. The controller setting won't be changed", ex);
 
 					// this will cause the rollback in ControllerSettingAccessor - setting won't be changed
-					throw new ControllerSettingHookRollbackException("Unable to schedule the housekeeping job", ex);
+					throw new SettingHookRollbackException("Unable to schedule the housekeeping job", ex);
 				}
 			}
 
@@ -70,7 +70,7 @@ public class HousekeepingJobsManager {
 					log.error("Cannot unschedule a housekeeping job. The controller setting won't be changed");
 
 					// this will cause the rollback in ControllerSettingAccessor - setting won't be changed
-					throw new ControllerSettingHookRollbackException("Unable to unschedule the housekeeping job", ex);
+					throw new SettingHookRollbackException("Unable to unschedule the housekeeping job", ex);
 				}
 			}
 
@@ -141,7 +141,7 @@ public class HousekeepingJobsManager {
 	}
 
 	public void shutdown() throws SchedulerException {
-		for (Map.Entry<String, ControllerSettingHook> hookEntry : hooks.entrySet()) {
+		for (Map.Entry<String, SettingHook> hookEntry : hooks.entrySet()) {
 			controllerSettingAccessor.removeHook(hookEntry.getKey(), hookEntry.getValue());
 		}
 		scheduler.shutdown();

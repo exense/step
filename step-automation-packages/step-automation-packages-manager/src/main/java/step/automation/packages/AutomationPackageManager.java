@@ -29,10 +29,7 @@ import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
 import step.core.entities.Entity;
-import step.core.objectenricher.EnricheableObject;
-import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectEnricherComposer;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.*;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -283,7 +280,8 @@ public class AutomationPackageManager {
         deletePlans(automationPackage);
         // schedules will be deleted in deleteAdditionalData via hooks
         deleteResources(automationPackage);
-        deleteAdditionalData(automationPackage, new AutomationPackageContext(operationMode, resourceManager, null,  null,null, extensions));
+        // TODO: archive, packageContent, enricher and validator are only used in AutomationPackageContext for save/update - maybe it is better to create separate class AutomationPackageContextForSave rather then use nulls here
+        deleteAdditionalData(automationPackage, new AutomationPackageContext(operationMode, resourceManager, null,  null,null, null, extensions));
     }
 
     /**
@@ -296,8 +294,9 @@ public class AutomationPackageManager {
      * @return the id of created package
      * @throws AutomationPackageManagerException
      */
-    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, String apVersion, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
-        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, apVersion, activationExpr, enricher, objectPredicate, false).getId();
+    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, String apVersion, String activationExpr,
+                                            ObjectEnricher enricher, ObjectPredicate objectPredicate, ObjectValidator validator) throws AutomationPackageManagerException {
+        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, apVersion, activationExpr, enricher, objectPredicate, validator, false).getId();
     }
 
     /**
@@ -313,10 +312,11 @@ public class AutomationPackageManager {
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                          InputStream inputStream, String fileName, String apVersion, String activationExpr,
-                                                                         ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
+                                                                         ObjectEnricher enricher, ObjectPredicate objectPredicate, ObjectValidator validator,
+                                                                         boolean async) throws AutomationPackageManagerException {
         try {
             try (AutomationPackageArchiveProvider provider = new AutomationPackageFromInputStreamProvider(inputStream, fileName)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, validator, async);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -372,7 +372,8 @@ public class AutomationPackageManager {
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                          AutomationPackageArchiveProvider automationPackageProvider, String apVersion, String activationExpr,
-                                                                         boolean isLocalPackage, ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) {
+                                                                         boolean isLocalPackage, ObjectEnricher enricher,
+                                                                         ObjectPredicate objectPredicate, ObjectValidator validator, boolean async) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
@@ -423,7 +424,7 @@ public class AutomationPackageManager {
             enrichers.add(new AutomationPackageLinkEnricher(newPackage.getId().toString()));
 
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
-            fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr);
+            fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, validator, automationPackageArchive, activationExpr);
 
             // persist and activate automation package
             log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
@@ -432,7 +433,7 @@ public class AutomationPackageManager {
                 if (oldPackage == null || !async || immediateWriteLock) {
                     //If not async or if it's a new package, we synchronously wait on a write lock and update
                     log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
-                    ObjectId result = updateAutomationPackage(oldPackage, newPackage, packageContent, staging, enricherForIncludedEntities, immediateWriteLock, automationPackageArchive);
+                    ObjectId result = updateAutomationPackage(oldPackage, newPackage, packageContent, staging, enricherForIncludedEntities, validator, immediateWriteLock, automationPackageArchive);
                     return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result);
                 } else {
                     // async update
@@ -442,7 +443,7 @@ public class AutomationPackageManager {
                     AutomationPackage finalNewPackage = newPackage;
                     delayedUpdateExecutor.submit(() -> {
                         try {
-                            updateAutomationPackage(oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities, false, automationPackageArchive);
+                            updateAutomationPackage(oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities, validator, false, automationPackageArchive);
                         } catch (Exception e) {
                             log.error("Exception on delayed AP update", e);
                         }
@@ -473,7 +474,7 @@ public class AutomationPackageManager {
             AutomationPackageHook<?> hook = automationPackageHookRegistry.getHook(hookName);
             result.putAll(hook.getEntitiesForAutomationPackage(
                             automationPackageId,
-                            new AutomationPackageContext(operationMode, resourceManager, null, null, null, extensions)
+                            new AutomationPackageContext(operationMode, resourceManager, null, null, null, null, extensions)
                     )
             );
         }
@@ -481,7 +482,8 @@ public class AutomationPackageManager {
     }
 
     private ObjectId updateAutomationPackage(AutomationPackage oldPackage, AutomationPackage newPackage,
-                                             AutomationPackageContent packageContent, AutomationPackageStaging staging, ObjectEnricher enricherForIncludedEntities,
+                                             AutomationPackageContent packageContent, AutomationPackageStaging staging,
+                                             ObjectEnricher enricherForIncludedEntities, ObjectValidator validator,
                                              boolean alreadyLocked, AutomationPackageArchive automationPackageArchive) {
         try {
             //If not already locked (i.e. was not able to acquire an immediate write lock)
@@ -495,7 +497,7 @@ public class AutomationPackageManager {
                 deleteAutomationPackageEntities(oldPackage);
             }
             // persist all staged entities
-            persistStagedEntities(staging, enricherForIncludedEntities, automationPackageArchive, packageContent);
+            persistStagedEntities(staging, enricherForIncludedEntities, validator, automationPackageArchive, packageContent);
             ObjectId result = automationPackageAccessor.save(newPackage).getId();
             logAfterSave(staging, oldPackage, newPackage);
             return result;
@@ -543,10 +545,11 @@ public class AutomationPackageManager {
         return new AutomationPackageStaging();
     }
 
-    protected void fillStaging(AutomationPackageStaging staging, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities,
+    protected void fillStaging(AutomationPackageStaging staging, AutomationPackageContent packageContent, AutomationPackage oldPackage,
+                               ObjectEnricher enricherForIncludedEntities, ObjectValidator validatorForIncludedEntities,
                                AutomationPackageArchive automationPackageArchive, String evaluationExpression) {
-        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager(), evaluationExpression));
-        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression));
+        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, validatorForIncludedEntities, staging.getResourceManager(), evaluationExpression));
+        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, validatorForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression));
 
         List<HookEntry> hookEntries = packageContent.getAdditionalData().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
         List<String> orderedEntryNames = automationPackageHookRegistry.getOrderedHookFieldNames();
@@ -556,7 +559,7 @@ public class AutomationPackageManager {
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked =  automationPackageHookRegistry.onPrepareStaging(
                     hookEntry.fieldName,
-                    new AutomationPackageContext(operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, enricherForIncludedEntities, extensions),
+                    new AutomationPackageContext(operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, enricherForIncludedEntities, validatorForIncludedEntities, extensions),
                     packageContent,
                     hookEntry.values,
                     oldPackage, staging);
@@ -569,6 +572,7 @@ public class AutomationPackageManager {
 
     protected void persistStagedEntities(AutomationPackageStaging staging,
                                          ObjectEnricher objectEnricher,
+                                         ObjectValidator objectValidator,
                                          AutomationPackageArchive automationPackageArchive,
                                          AutomationPackageContent packageContent) {
         List<Resource> stagingResources = staging.getResourceManager().findManyByCriteria(null);
@@ -599,7 +603,7 @@ public class AutomationPackageManager {
         for (HookEntry hookEntry : hookEntries) {
             boolean hooked = automationPackageHookRegistry.onCreate(
                     hookEntry.fieldName, hookEntry.values,
-                    new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, objectEnricher, extensions)
+                    new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, objectEnricher, objectValidator, extensions)
             );
             if (!hooked) {
                 log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
@@ -617,11 +621,11 @@ public class AutomationPackageManager {
     }
 
     protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackageArchive automationPackageArchive,
-                                             AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager,
+                                             AutomationPackage oldPackage, ObjectEnricher enricher, ObjectValidator validator, ResourceManager stagingResourceManager,
                                              String evaluationExpression) {
         List<Plan> plans = packageContent.getPlans();
         AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(stagingResourceManager);
-        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, packageContent, enricher, extensions, operationMode);
+        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, packageContent, enricher, validator, extensions, operationMode);
 
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
         if (evaluationExpression != null && !evaluationExpression.isEmpty()){
@@ -632,9 +636,10 @@ public class AutomationPackageManager {
         return plans;
     }
 
-    protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
+    protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
+                                                     ObjectEnricher enricher, ObjectValidator validator,
                                                      AutomationPackage oldPackage, ResourceManager stagingResourceManager, String evaluationExpression) {
-        AutomationPackageContext apContext = new AutomationPackageContext(operationMode, stagingResourceManager, automationPackageArchive, packageContent, enricher, extensions);
+        AutomationPackageContext apContext = new AutomationPackageContext(operationMode, stagingResourceManager, automationPackageArchive, packageContent, enricher, validator, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids

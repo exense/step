@@ -90,6 +90,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         PackageExecutionContext ctx = null;
         try {
             File artifact = getArtifact(repositoryParameters);
+
+            // we don't pass the ObjectValidator here, because it is only required to validate the entity before persist into DB
             ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false);
             TestSetStatusOverview overview = new TestSetStatusOverview();
             List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
@@ -285,7 +287,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         // create single automation package in isolated manager
         try (FileInputStream fis = new FileInputStream(apFile.getFile())) {
             // the apVersion is null (we always use the actual version), because we only create the isolated in-memory AP here
-            inMemoryPackageManager.createAutomationPackage(fis, apFile.getFile().getName(), null, null, enricher, predicate);
+            inMemoryPackageManager.createAutomationPackage(fis, apFile.getFile().getName(), null, null, enricher, predicate, null);
         } catch (IOException e) {
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
         }
