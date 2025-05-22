@@ -102,7 +102,7 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("ThreadGroup: 0x\n" +
+        assertEquals("ThreadGroup: *x\n" +
                         " Session: 1x: PASSED\n" +
                         "  Echo: 1x: PASSED > Echo\n",
                 node.toString());
@@ -140,7 +140,7 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("ThreadGroup: 0x\n" +
+        assertEquals("ThreadGroup: *x\n" +
                         " Session: 1x: PASSED\n" +
                         "  Echo: 1x: RUNNING > Echo\n",
                 node.toString());
@@ -196,7 +196,7 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("ThreadGroup: 0x\n" +
+        assertEquals("ThreadGroup: *x\n" +
                         " Session: 1x: FAILED\n" +
                         "  Echo: 1x: PASSED > Echo gcounter 1\n" +
                         "  Check: 1x: FAILED > if (gcounter % 3 == 0) { return true} else if (gcounter % 3 == 1) { return false} else if (gcounter % 3 == 2) {return var}\n",
@@ -211,7 +211,7 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("ThreadGroup: 0x\n" +
+        assertEquals("ThreadGroup: *x\n" +
                         " Session: 1x: FAILED\n" +
                         "  Echo: 1x: PASSED > Echo gcounter 1\n" +
                         "  Check: 1x: FAILED > if (gcounter % 3 == 0) { return true} else if (gcounter % 3 == 1) { return false} else if (gcounter % 3 == 2) {return var}\n",
@@ -261,8 +261,8 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("For: 0x\n" +
-                        " For: 0x\n" +
+        assertEquals("For: *x\n" +
+                        " For: *x\n" +
                         "  Set: 1x: PASSED > key = value\n" +
                         "  Echo: 1x: PASSED > Echo 2\n" +
                         "  Echo: 1x: PASSED > Echo 3\n",
@@ -457,23 +457,23 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("Sequence: 0x\n" +
-                        " call sub plan: 0x\n" +
-                        "  Sequence: 0x\n" +
+        assertEquals("Sequence: *x\n" +
+                        " call sub plan: *x\n" +
+                        "  Sequence: *x\n" +
                         "   Set: 1x: PASSED > nextCount = 2\n" +
-                        "   If: 0x\n" +
-                        "    call sub plan: 0x\n" +
-                        "     Sequence: 0x\n" +
-                        "      Set: 0x\n" +
-                        "      If: 0x\n" +
-                        "       call sub plan: 0x\n" +
-                        "        Sequence: 0x\n" +
-                        "         Set: 0x\n" +
-                        "         If: 0x\n" +
-                        "          call sub plan: 0x\n" +
-                        "           Sequence: 0x\n" +
-                        "            Set: 0x\n" +
-                        "            If: 0x\n",
+                        "   If: -\n" +
+                        "    call sub plan: -\n" +
+                        "     Sequence: -\n" +
+                        "      Set: -\n" +
+                        "      If: -\n" +
+                        "       call sub plan: -\n" +
+                        "        Sequence: -\n" +
+                        "         Set: -\n" +
+                        "         If: -\n" +
+                        "          call sub plan: -\n" +
+                        "           Sequence: -\n" +
+                        "            Set: -\n" +
+                        "            If: -\n",
                 node.toString());
 
     }
@@ -668,20 +668,20 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("ThreadGroup: 0x\n" +
+        assertEquals("ThreadGroup: *x\n" +
                         " [BEFORE]\n" +
                         "  Set: 1x: PASSED > myVar = test\n" +
                         " [BEFORE_THREAD]\n" +
-                        "  Echo: 0x\n" +
-                        " Echo: 0x\n" +
-                        " Sleep: 0x\n" +
-                        " TestKeyword: 0x\n" +
+                        "  Echo: -\n" +
+                        " Echo: -\n" +
+                        " Sleep: -\n" +
+                        " TestKeyword: -\n" +
                         "  [AFTER]\n" +
-                        "   PerformanceAssert: 0x\n" +
+                        "   PerformanceAssert: -\n" +
                         " [AFTER_THREAD]\n" +
-                        "  Echo: 0x\n" +
+                        "  Echo: -\n" +
                         " [AFTER]\n" +
-                        "  Echo: 0x\n",
+                        "  Echo: -\n",
                 node.toString());
 
         // Test partial aggregated tree, starting from the Set node in "Before" and filtering the report
@@ -693,7 +693,7 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("ThreadGroup: 0x\n" +
+        assertEquals("ThreadGroup: *x\n" +
                         " [BEFORE]\n" +
                         "  Set: 1x: PASSED > myVar = test\n",
                 node.toString());
@@ -709,20 +709,20 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("ThreadGroup: 0x\n" +
+        assertEquals("ThreadGroup: *x\n" +
                         " [BEFORE]\n" +
-                        "  Set: 0x\n" +
+                        "  Set: -\n" +
                         " [BEFORE_THREAD]\n" +
-                        "  Echo: 0x\n" +
+                        "  Echo: -\n" +
                         " Echo: 1x: PASSED > myVar value is test\n" +
                         " Sleep: 1x: PASSED\n" +
                         " TestKeyword: 1x: PASSED > Input={}, Output={\"Info\":\"The class 'step.reporting.ResolvedPlanBuilderTest' doesn't extend 'step.handlers.javahandler.AbstractKeyword'. Extend this class to get input parameters from STEP and return output.\"}\n" +
                         "  [AFTER]\n" +
                         "   PerformanceAssert: 1x: PASSED\n" +
                         " [AFTER_THREAD]\n" +
-                        "  Echo: 0x\n" +
+                        "  Echo: -\n" +
                         " [AFTER]\n" +
-                        "  Echo: 0x\n",
+                        "  Echo: -\n",
                 node.toString());
 
         // Test partial aggregated tree, starting from the Set node in "Before" and filtering the report
@@ -734,7 +734,7 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("ThreadGroup: 0x\n" +
+        assertEquals("ThreadGroup: *x\n" +
                         " Echo: 1x: PASSED > myVar value is test\n" +
                         " Sleep: 1x: PASSED\n" +
                         " TestKeyword: 1x: PASSED > Input={}, Output={\"Info\":\"The class 'step.reporting.ResolvedPlanBuilderTest' doesn't extend 'step.handlers.javahandler.AbstractKeyword'. Extend this class to get input parameters from STEP and return output.\"}\n" +
@@ -788,11 +788,11 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("TestScenario: 0x\n" +
-                        " ThreadGroup: 0x\n" +
-                        "  Echo: 0x\n" +
-                        "  Sleep: 0x\n" +
-                        " ThreadGroup: 0x\n" +
+        assertEquals("TestScenario: *x\n" +
+                        " ThreadGroup: -\n" +
+                        "  Echo: -\n" +
+                        "  Sleep: -\n" +
+                        " ThreadGroup: *x\n" +
                         "  Echo: 1x: PASSED > in 2nd thread group\n" +
                         "  Set: 1x: PASSED > key = value\n",
                 node.toString());
@@ -806,8 +806,8 @@ public class ResolvedPlanBuilderTest {
         logger.info("----------------------");
         logger.info(node.toString());
 
-        assertEquals("TestScenario: 0x\n" +
-                        " ThreadGroup: 0x\n" +
+        assertEquals("TestScenario: *x\n" +
+                        " ThreadGroup: *x\n" +
                         "  Echo: 1x: PASSED > in 2nd thread group\n" +
                         "  Set: 1x: PASSED > key = value\n",
                 node.toString());
