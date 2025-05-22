@@ -47,7 +47,8 @@
 		<!-- internal dependencies -->
 		<dependencies.version>2025.3.14</dependencies.version>
 		<step-grid.version>2025.5.12-6821d8e4cbc831232c03e85a</step-grid.version>
-		<step-framework.version>0.0.0-SNAPSHOT</step-framework.version>
+		<!-- TODO: fix version -->
+		<step-framework.version>2025.5.2-6814b7eef0c7a36de808d7d9</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
