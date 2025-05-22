@@ -30,9 +30,11 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
+import step.parameter.ParameterManager;
+import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.repositories.ArtifactRepositoryConstants;
 
-@Plugin(dependencies = {ControllerSettingPlugin.class, AutomationPackagePlugin.class})
+@Plugin(dependencies = {ControllerSettingPlugin.class, AutomationPackagePlugin.class, ParameterManagerPlugin.class, ControllerSettingPlugin.class})
 public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(ArtifactRepositoryPlugin.class);
@@ -50,7 +52,8 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
                 context.require(AutomationPackageManager.class),
                 context.require(FunctionTypeRegistry.class),
                 context.require(FunctionAccessor.class),
-                configuration, controllerSettingAccessor);
+                configuration, controllerSettingAccessor,
+                context.require(ParameterManager.class));
         ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(
                 context.getResourceManager(),
                 context.require(AutomationPackageManager.class),

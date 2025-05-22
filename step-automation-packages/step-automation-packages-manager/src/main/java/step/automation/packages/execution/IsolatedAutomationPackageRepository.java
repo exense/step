@@ -24,13 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.ArtefactInfo;
-import step.core.repositories.TestRunStatus;
-import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
@@ -52,7 +49,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class IsolatedAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
 
@@ -93,13 +89,13 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     }
 
     @Override
-    public File getArtifact(Map<String, String> repositoryParameters) {
+    public File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
         if (contextId == null) {
             throw new RuntimeException("Test set status overview cannot be prepared. ContextId is undefined");
         }
 
-        AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters);
+        AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters, objectPredicate);
         File file = apFile == null ? null : apFile.getFile();
         if (file == null) {
             throw new RuntimeException("Automation package file hasn't been found");
@@ -108,14 +104,14 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     }
 
     @Override
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId, ObjectPredicate objectPredicate) {
         // for files from input stream we save persists the resource to support re-execution
         Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName);
         File file = getApFileByResource(apResource);
         return new AutomationPackageFile(file, apResource);
     }
 
-    public AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters) {
+    public AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
         String apName = repositoryParameters.get(AP_NAME);
 
         Resource resource = contextId == null ? null : getResource(contextId, apName);
