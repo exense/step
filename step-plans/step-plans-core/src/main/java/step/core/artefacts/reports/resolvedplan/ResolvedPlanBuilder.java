@@ -36,17 +36,18 @@ public class ResolvedPlanBuilder {
         resolvedPlanCache = new ConcurrentHashMap<>();
     }
 
-    public ResolvedPlanNode buildResolvedPlan(Plan plan) {
-        return buildTreeRecursively(null, plan.getRoot(), null, plan, ParentSource.MAIN, 1);
+    public ResolvedPlanNode buildResolvedPlan(Plan plan, String executionId) {
+        return buildTreeRecursively(executionId, null, plan.getRoot(), null, plan, ParentSource.MAIN, 1);
     }
 
-    private ResolvedPlanNode buildTreeRecursively(String parentId, AbstractArtefact artefactNode, String currentArtefactPath, Plan plan, ParentSource parentSource, int position) {
+    private ResolvedPlanNode buildTreeRecursively(String executionId, String parentId, AbstractArtefact artefactNode, String currentArtefactPath, Plan plan, ParentSource parentSource, int position) {
         String artefactHash = ArtefactPathHelper.generateArtefactHash(currentArtefactPath, artefactNode);
 
         // Create a clone of the artefact instance and remove the children
         AbstractArtefact artefactClone = dynamicBeanResolver.cloneDynamicValues(artefactNode);
+        //resolvedPlanNode are also stored as a tree, each with a copy of its underlying artefact, storing artefact children's would be redundant
         artefactClone.setChildren(null);
-        ResolvedPlanNode resolvedPlanNode = new ResolvedPlanNode(artefactClone, artefactHash, parentId, parentSource, position);
+        ResolvedPlanNode resolvedPlanNode = new ResolvedPlanNode(executionId, artefactClone, artefactHash, parentId, parentSource, position);
         resolvedPlanNodeAccessor.save(resolvedPlanNode);
         resolvedPlanCache.put(resolvedPlanNode.artefactHash, resolvedPlanNode.getId().toHexString());
 
@@ -62,7 +63,7 @@ public class ResolvedPlanBuilder {
         resolvedChildrenBySource.forEach(resolvedChildren -> {
             //filter node that were already processed to avoid stack overflow for plans calling themselves
             resolvedChildren.children.stream().filter(c -> (currentArtefactPath == null || !currentArtefactPath.contains(resolvedChildren.artefactPath)))
-                    .forEach(child -> buildTreeRecursively(resolvedPlanNode.getId().toString(), child, resolvedChildren.artefactPath, plan, resolvedChildren.parentSource, localPosition.getAndIncrement()));
+                    .forEach(child -> buildTreeRecursively(executionId, resolvedPlanNode.getId().toString(), child, resolvedChildren.artefactPath, plan, resolvedChildren.parentSource, localPosition.getAndIncrement()));
         });
         return resolvedPlanNode;
     }
@@ -79,12 +80,14 @@ public class ResolvedPlanBuilder {
      * @param reportNodeCache  the report node cache of the execution used to retrieve the closest parent plan's node
      * @param parentSource
      */
-    public <ARTEFACT extends AbstractArtefact> void checkAndAddMissingResolvedPlanNode(String artefactHash, ARTEFACT artefact, ReportNode parentReportNode, ReportNodeCache reportNodeCache, ParentSource parentSource) {
+    public <ARTEFACT extends AbstractArtefact> void checkAndAddMissingResolvedPlanNode(String executionId, String artefactHash, ARTEFACT artefact, ReportNode parentReportNode, ReportNodeCache reportNodeCache, ParentSource parentSource) {
         if (!artefact.isWorkArtefact()) {
             resolvedPlanCache.computeIfAbsent(artefactHash, n -> {
                 AbstractArtefact artefactClone = dynamicBeanResolver.cloneDynamicValues(artefact);
+                //resolvedPlanNode are also stored as a tree, each with a copy of its underlying artefact, storing artefact children's would be redundant
+                artefactClone.setChildren(null);
                 String parentPlanNodeId = findClosestParentNodeId(parentReportNode, reportNodeCache);
-                ResolvedPlanNode resolvedPlanNode = new ResolvedPlanNode(artefactClone, artefactHash, parentPlanNodeId, parentSource, 0);
+                ResolvedPlanNode resolvedPlanNode = new ResolvedPlanNode(executionId, artefactClone, artefactHash, parentPlanNodeId, parentSource, 0);
                 resolvedPlanNodeAccessor.save(resolvedPlanNode);
                 return resolvedPlanNode.getId().toHexString();
             });
