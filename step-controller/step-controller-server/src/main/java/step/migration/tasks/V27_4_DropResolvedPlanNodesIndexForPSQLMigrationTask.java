@@ -28,8 +28,9 @@ public class V27_4_DropResolvedPlanNodesIndexForPSQLMigrationTask extends Migrat
             logger.info("Removing postgresql index for collection '" + RESOLVED_PLAN_COLLECTION_PROPERTY + "' and index '" + indexName + "'");
             collection.dropIndex(indexName);
             logger.info("Index removed.");
-            //since this accessor and related indexes are created directly in the controller class and not in a plugin,
-            // the accessor and indexes are created before the migration, so we must recreate them after dropping the old one
+            // Warning: due to the current implementation for few accessors directly created in the Controller.initContext
+            // outside the plugin lifecycle, we for now need a direct reference to the accessor to properly recreate its context
+            // after the migration. In this case we need to recreate the accessor which will recreate the related DB indexes
             new ResolvedPlanNodeAccessor(collectionFactory);
         }
     }

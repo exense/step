@@ -175,7 +175,7 @@ public class AggregatedReportViewBuilder {
                 .filter(n -> filteredArtefactHashSet == null || filteredArtefactHashSet.contains(n.artefactHash))
                 .map(n -> recursivelyBuildAggregatedReportTree(n, request, countByHashAndStatus, reportNodeAccessor, filteredArtefactHashSet))
                 .collect(Collectors.toList());
-        Map<String, Long> countByStatus = Optional.ofNullable(countByHashAndStatus.get(artefactHash)).orElse(new HashMap<>());
+        Map<String, Long> countByStatus = countByHashAndStatus.getOrDefault(artefactHash, new HashMap<>());
         ReportNode singleInstanceReportNode = null;
         if (resolveSingleReport(request) && countByStatus.values().stream().reduce(0L, Long::sum) == 1) {
             singleInstanceReportNode = getSingleReportNodeInstance(reportNodeAccessor, executionId, artefactHash, request.range);

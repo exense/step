@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import step.core.execution.model.Execution;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -12,7 +13,7 @@ public class ResolvedPlanNodeCachedAccessor  {
 
     private static final Logger logger = LoggerFactory.getLogger(ResolvedPlanNodeCachedAccessor.class);
     private final ResolvedPlanNodeAccessor underlyingAccessor;
-    private final Map<String, List<ResolvedPlanNode>> cacheByParentId = new HashMap<>();
+    private final Map<String, List<ResolvedPlanNode>> cacheByParentId = new ConcurrentHashMap<>();
 
     public ResolvedPlanNodeCachedAccessor(ResolvedPlanNodeAccessor underlyingAccessor, Execution execution) {
         this.underlyingAccessor = underlyingAccessor;
@@ -30,11 +31,11 @@ public class ResolvedPlanNodeCachedAccessor  {
         Optional.ofNullable(execution.getResolvedPlanRootNodeId()).map(this::getFromUnderlyingAccessor).ifPresent(r -> {
             if (r.executionId == null) {
                 long start = System.currentTimeMillis();
-                AtomicLong atomicLong = new AtomicLong(0);
+                AtomicLong counter = new AtomicLong(0);
                 String executionId = execution.getId().toHexString();
                 logger.warn("The root resolved plan nodes do not contains the execution id {}. Assuming the execution was created before Step 27.4, starting migration of its resolved plan nodes.", executionId);
-                recursivelyAddExecutionIdToResolvedPlanNodes(executionId, r, atomicLong);
-                logger.warn("Migration for execution id {} completed in {}ms for {} resolved plan nodes.", executionId, System.currentTimeMillis() - start, atomicLong.get());
+                recursivelyAddExecutionIdToResolvedPlanNodes(executionId, r, counter);
+                logger.warn("Migration for execution id {} completed in {}ms for {} resolved plan nodes.", executionId, System.currentTimeMillis() - start, counter.get());
             }
         });
     }
