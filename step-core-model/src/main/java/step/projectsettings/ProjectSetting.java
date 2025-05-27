@@ -21,9 +21,9 @@ package step.projectsettings;
 import step.commons.activation.Expression;
 import step.core.EncryptedTrackedObject;
 import step.core.dynamicbeans.DynamicValue;
-import step.multitenancy.TenantUniqueEntity;
+import step.unique.EntityWithUniqueAttributes;
 
-public class ProjectSetting extends EncryptedTrackedObject implements TenantUniqueEntity<String> {
+public class ProjectSetting extends EncryptedTrackedObject implements EntityWithUniqueAttributes<String> {
 
     public static final String ENTITY_NAME = "projectsettings";
 

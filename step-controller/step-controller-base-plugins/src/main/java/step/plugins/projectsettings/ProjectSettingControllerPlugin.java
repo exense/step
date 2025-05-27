@@ -20,6 +20,7 @@ package step.plugins.projectsettings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.AbstractContext;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
@@ -27,6 +28,7 @@ import step.core.collections.filters.Equals;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.encryption.EncryptionManager;
 import step.core.entities.Entity;
+import step.core.objectenricher.*;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
@@ -80,6 +82,28 @@ public class ProjectSettingControllerPlugin extends AbstractControllerPlugin {
                 ProjectSetting.class));
         context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(ProjectSetting.class, projectSettingManager.getEntityNameForLogging()));
         context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, ProjectSetting.class, projectSettingManager.getEntityNameForLogging()));
+
+        context.require(ObjectHookRegistry.class).add(new ObjectHook() {
+            @Override
+            public ObjectFilter getObjectFilter(AbstractContext abstractContext) {
+                return null;
+            }
+
+            @Override
+            public ObjectEnricher getObjectEnricher(AbstractContext abstractContext) {
+                return null;
+            }
+
+            @Override
+            public void rebuildContext(AbstractContext abstractContext, EnricheableObject enricheableObject) throws Exception {
+
+            }
+
+            @Override
+            public boolean isObjectAcceptableInContext(AbstractContext abstractContext, EnricheableObject enricheableObject) {
+                return false;
+            }
+        });
 
         context.getServiceRegistrationCallback().registerService(ProjectSettingServices.class);
     }

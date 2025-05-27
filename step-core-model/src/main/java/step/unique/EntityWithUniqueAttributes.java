@@ -18,13 +18,13 @@
  *  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *  *****************************************************************************
  */
-package step.multitenancy;
+package step.unique;
 
 // TODO: add javadoc
-public interface TenantUniqueEntity<KEY> {
+public interface EntityWithUniqueAttributes<KEY> {
 
     /**
-     * Defines the priority in accordance to the tenant
+     * Defines the priority (for instance, in accordance to the tenant)
      */
     String ATTRIBUTE_PRIORITY = "priority";
 

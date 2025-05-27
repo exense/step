@@ -27,7 +27,7 @@ import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.encryption.EncryptionManager;
 import step.encryption.AbstractEncryptedValuesManager;
-import step.multitenancy.TenantUniqueEntity;
+import step.unique.EntityWithUniqueAttributes;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -60,30 +60,30 @@ public class ProjectSettingManager extends AbstractEncryptedValuesManager<Projec
         return getEntitiesWithHighestPriority().stream().map(e -> (ProjectSetting) e).collect(Collectors.toList());
     }
 
-    private List<? extends TenantUniqueEntity> getEntitiesWithHighestPriority() {
+    private List<? extends EntityWithUniqueAttributes> getEntitiesWithHighestPriority() {
         // TODO: think if the ObjectFilter should also be applied here
 
         // TODO: maybe extract this logic to some common class (plugin)
-        List<? extends TenantUniqueEntity> allSettings = StreamSupport.stream(
+        List<? extends EntityWithUniqueAttributes> allSettings = StreamSupport.stream(
                 Spliterators.spliteratorUnknownSize(accessor.getAll(), Spliterator.ORDERED),
-                false).map(e -> (TenantUniqueEntity) e).collect(Collectors.toList());
+                false).map(e -> (EntityWithUniqueAttributes) e).collect(Collectors.toList());
 
         // to support multitenancy here we want to filter out settings (defined for global project) overridden in local project
-        List<? extends TenantUniqueEntity> highestPriorityProjectSettings = new ArrayList<>();
-        ListMultimap<Object, TenantUniqueEntity> groupedByKey = ArrayListMultimap.create();
-        for (TenantUniqueEntity setting : allSettings) {
+        List<? extends EntityWithUniqueAttributes> highestPriorityProjectSettings = new ArrayList<>();
+        ListMultimap<Object, EntityWithUniqueAttributes> groupedByKey = ArrayListMultimap.create();
+        for (EntityWithUniqueAttributes setting : allSettings) {
             groupedByKey.put(setting.getKey(), setting);
         }
 
         for (Object key : groupedByKey.keys()) {
-            List<TenantUniqueEntity> settingsWithTheSameKey = groupedByKey.get(key);
-            TenantUniqueEntity settingWithHighestPriority = null;
-            for (TenantUniqueEntity projectSetting : settingsWithTheSameKey) {
-                String otherPriority = ((AbstractOrganizableObject) projectSetting).getAttribute(TenantUniqueEntity.ATTRIBUTE_PRIORITY);
+            List<EntityWithUniqueAttributes> settingsWithTheSameKey = groupedByKey.get(key);
+            EntityWithUniqueAttributes settingWithHighestPriority = null;
+            for (EntityWithUniqueAttributes projectSetting : settingsWithTheSameKey) {
+                String otherPriority = ((AbstractOrganizableObject) projectSetting).getAttribute(EntityWithUniqueAttributes.ATTRIBUTE_PRIORITY);
                 if (settingWithHighestPriority == null) {
                     settingWithHighestPriority = projectSetting;
                 } else {
-                    String currentPriority = ((AbstractOrganizableObject) settingWithHighestPriority).getAttribute(TenantUniqueEntity.ATTRIBUTE_PRIORITY);
+                    String currentPriority = ((AbstractOrganizableObject) settingWithHighestPriority).getAttribute(EntityWithUniqueAttributes.ATTRIBUTE_PRIORITY);
                     if (Objects.equals(currentPriority, otherPriority)) {
                         throw new RuntimeException("Validation failed. 2 setting with same keys " + key + " with various priorities have been detected");
                     } else if (currentPriority == null && otherPriority != null) {
