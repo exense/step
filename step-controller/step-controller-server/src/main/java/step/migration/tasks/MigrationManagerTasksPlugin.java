@@ -51,6 +51,7 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
 		migrationManager.register(MigrateBeforeAfterAndPropertiesArtefactInPlans.class);
 		migrationManager.register(MigrateAgentProvisioningConfiguration.class);
 		migrationManager.register(MigrateParametersToDynamicValues.class);
+		migrationManager.register(V27_4_DropResolvedPlanNodesIndexForPSQLMigrationTask.class);
 	}
 
 	@Override
