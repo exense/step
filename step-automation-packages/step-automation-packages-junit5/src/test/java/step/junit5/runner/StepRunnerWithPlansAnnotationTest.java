@@ -22,6 +22,10 @@ import step.automation.packages.junit.ExcludePlans;
 import step.junit.runners.annotations.ExecutionParameters;
 import step.junit.runners.annotations.Plans;
 
+/**
+ * This test covers some plans from annotation package. Plans with JMeter keywords are excluded to support local
+ * launch without installed JMeter. All plans including JMeter are covered by {@link StepAutomationPackageRunAllTest}
+ */
 @ExcludePlans({"JMeter Plan", "testAutomation.plan"})
 @Plans({"plans/plan2.plan", "plans/plan3.plan", "plans/assertsTest.plan"})
 @ExecutionParameters({"PARAM_EXEC","Value","PARAM_EXEC2","Value","PARAM_EXEC3","Value"})

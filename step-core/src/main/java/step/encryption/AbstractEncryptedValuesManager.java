@@ -20,24 +20,16 @@ package step.encryption;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.commons.activation.Activator;
 import step.core.EncryptedTrackedObject;
 import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
-import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectValidator;
-import step.core.plugins.exceptions.PluginCriticalException;
 
-import javax.script.Bindings;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
 import java.util.*;
-import java.util.stream.Collectors;
 
-public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedObject> {
+public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedObject, V> {
 
     protected static Logger logger = LoggerFactory.getLogger(AbstractEncryptedValuesManager.class);
 
@@ -54,23 +46,15 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
         this.dynamicBeanResolver = dynamicBeanResolver;
     }
 
-    public static <T extends EncryptedTrackedObject> T maskProtectedValue(T obj) {
-        if(obj != null && isProtected(obj) & !RESET_VALUE.equals(obj.getValue().getValue())) {
-            obj.setValue(new DynamicValue<>(PROTECTED_VALUE));
-        }
-        return obj;
-    }
-
     public T save(T newObj, T sourceObj, String modificationUser, ObjectValidator objectValidator) {
         validateBeforeSave(newObj, objectValidator);
 
-        if(sourceObj != null && isProtected(sourceObj)) {
+        if (sourceObj != null && isProtected(sourceObj)) {
             // protected value should not be changed
             newObj.setProtectedValue(true);
             // if the protected mask is set as value, reuse source value (i.e. value hasn't been changed)
-            DynamicValue<String> newValue = newObj.getValue();
-            if(newValue != null && !newValue.isDynamic() && newValue.get().equals(PROTECTED_VALUE)) {
-                newObj.setValue(sourceObj.getValue());
+            if (getValue(newObj) != null && !isDynamicValue(newObj) && getStringValue(newObj).equals(PROTECTED_VALUE)) {
+                setValue(newObj, getValue(sourceObj));
             }
         }
 
@@ -95,10 +79,6 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
         if (objectValidator != null) {
             objectValidator.validateOnSave(newObj);
         }
-
-        if (isProtected(newObj) && newObj.getValue() != null && newObj.getValue().isDynamic()) {
-            throw new EncryptedValueManagerException("Protected entity (" + getEntityNameForLogging() + ") do not support values with dynamic expression.");
-        }
     }
 
     protected abstract Accessor<T> getAccessor();
@@ -110,10 +90,10 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
     public T encryptValueIfEncryptionManagerAvailable(T obj) throws EncryptionManagerException {
         if(encryptionManager != null) {
             if(isProtected(obj)) {
-                DynamicValue<String> value = obj.getValue();
-                if(value != null && value.get() != null) {
-                    obj.setValue(null);
-                    String encryptedValue = encryptionManager.encrypt(value.get());
+                String value = getStringValue(obj);
+                if(value != null) {
+                    setValue(obj, null);
+                    String encryptedValue = encryptionManager.encrypt(value);
                     obj.setEncryptedValue(encryptedValue);
                 }
             }
@@ -121,82 +101,13 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
         return obj;
     }
 
-    public Map<String, String> getAllValues(Map<String, Object> contextBindings, ObjectPredicate objectPredicate) {
-        return getAllObjects(contextBindings, objectPredicate).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getValue().get()));
-    }
+    protected abstract boolean isDynamicValue(T obj);
 
-    public Map<String, T> getAllObjects(Map<String, Object> contextBindings, ObjectPredicate objectPredicate) {
-        Map<String, T> result = new HashMap<>();
-        Bindings bindings = contextBindings!=null?new SimpleBindings(contextBindings):null;
+    protected abstract String getStringValue(T obj);
 
-        Map<String, List<T>> objectsMap = new HashMap<>();
-        getAccessor().getAll().forEachRemaining(p->{
-            if(objectPredicate==null || objectPredicate.test(p)) {
-                List<T> objects = objectsMap.get(p.getKey());
-                if(objects==null) {
-                    objects = new ArrayList<>();
-                    objectsMap.put(p.getKey(), objects);
-                }
-                objects.add(p);
-                try {
-                    Activator.compileActivationExpression(p, defaultScriptEngine);
-                } catch (ScriptException e) {
-                    logger.error("Error while compiling activation expression of  " + getEntityNameForLogging() + " " + p, e);
-                }
-            }
-        });
+    protected abstract void setValue(T obj, V value);
 
-
-        for(String key:objectsMap.keySet()) {
-            List<T> objects = objectsMap.get(key);
-            T bestMatch = Activator.findBestMatch(bindings, objects, defaultScriptEngine);
-            if(bestMatch!=null) {
-                result.put(key, bestMatch);
-            }
-        }
-        resolveAllValues(result, contextBindings);
-        return result;
-    }
-
-    private void resolveAllValues(Map<String, T> allObjects, Map<String, Object> contextBindings) {
-        List<String> unresolvedKeys = new ArrayList<>(allObjects.keySet());
-        List<String> resolvedKeys = new ArrayList<>();
-        HashMap<String, Object> bindings = new HashMap<>(contextBindings);
-        int unresolvedCountBeforeIteration;
-        do {
-            unresolvedCountBeforeIteration = unresolvedKeys.size();
-            unresolvedKeys.forEach(k -> {
-                T obj = allObjects.get(k);
-                Boolean protectedValue = obj.getProtectedValue();
-                boolean isProtected = isProtected(obj);
-                DynamicValue<String> value = obj.getValue();
-                if (!isProtected && value != null) {
-                    try {
-                        if (value.isDynamic()) {
-                            dynamicBeanResolver.evaluate(obj, bindings);
-                        }
-                        String resolvedValue = obj.getValue().get(); //throw an error if evaluation failed
-                        bindings.put(k, resolvedValue);
-                        resolvedKeys.add(k);
-                    } catch (Exception e) {
-                        if (logger.isDebugEnabled()) {
-                            logger.debug("Could not (yet) resolve " + getEntityNameForLogging() + " dynamic value " + obj);
-                        }
-                    }
-                } else {
-                    //value is not set or is protected, resolution is skipped
-                    resolvedKeys.add(k);
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Following won't be resolved (null or protected value) " + obj);
-                    }
-                }
-            });
-            unresolvedKeys.removeAll(resolvedKeys);
-        } while (!unresolvedKeys.isEmpty() && unresolvedKeys.size() < unresolvedCountBeforeIteration);
-        if (!unresolvedKeys.isEmpty()) {
-            throw new PluginCriticalException("Error while resolving " + getEntityNameForLogging() + "s, following " + getEntityNameForLogging() + " s could not be resolved: " + unresolvedKeys);
-        }
-    }
+    protected abstract V getValue(T obj);
 
     public void encryptAll() {
         getAccessor().getAll().forEachRemaining(p->{
@@ -216,12 +127,14 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
         getAccessor().getAll().forEachRemaining(p->{
             if(isProtected(p)) {
                 logger.info("Resetting " + getEntityNameForLogging() + " " + p);
-                p.setValue(new DynamicValue<>(RESET_VALUE));
+                setValue(p, getResetValue());
                 p.setEncryptedValue(null);
                 getAccessor().save(p);
             }
         });
     }
+
+    public abstract V getResetValue();
 
     public EncryptionManager getEncryptionManager() {
         return encryptionManager;

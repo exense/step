@@ -100,7 +100,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	private Parameter save(Parameter newParameter, Parameter sourceParameter) {
 		assertRights(newParameter);
 		try {
-			return AbstractEncryptedValuesManager.maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername(), getObjectValidator()));
+			return ParameterManager.maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername(), getObjectValidator()));
 		} catch (EncryptedValueManagerException e) {
 			throw new ControllerServiceException(e.getMessage());
 		}
@@ -141,11 +141,11 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Override
 	public Parameter get(String id) {
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
-		return AbstractEncryptedValuesManager.maskProtectedValue(parameter);
+		return ParameterManager.maskProtectedValue(parameter);
 	}
 
 	protected List<Parameter> maskProtectedValues(Stream<Parameter> stream) {
-		return stream.map(AbstractEncryptedValuesManager::maskProtectedValue).collect(Collectors.toList());
+		return stream.map(ParameterManager::maskProtectedValue).collect(Collectors.toList());
 	}
 
 	@POST
@@ -154,7 +154,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="{entity}-read")
 	public Parameter getParameterByAttributes(Map<String,String> attributes) {
-		return AbstractEncryptedValuesManager.maskProtectedValue(parameterAccessor.findByAttributes(attributes));
+		return ParameterManager.maskProtectedValue(parameterAccessor.findByAttributes(attributes));
 	}
 
 	@Override

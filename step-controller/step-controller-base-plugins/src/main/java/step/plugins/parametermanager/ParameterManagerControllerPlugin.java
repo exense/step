@@ -27,6 +27,7 @@ import step.core.collections.Collection;
 import step.core.collections.Filters;
 import step.core.collections.filters.Equals;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.entities.Entity;
 import step.core.plugins.AbstractControllerPlugin;
@@ -68,7 +69,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 		context.put("ParameterAccessor", parameterAccessor);
 
 		context.get(TableRegistry.class).register(ENTITY_PARAMETERS, new Table<>(collection, "param-read", true)
-				.withResultItemTransformer((p,s) -> AbstractEncryptedValuesManager.maskProtectedValue(p))
+				.withResultItemTransformer((p,s) -> ParameterManager.maskProtectedValue(p))
 				.withDerivedTableFiltersFactory(lf -> {
 					Set<String> allFilterAttributes = lf.stream().map(Filters::collectFilterAttributes).flatMap(Set::stream).collect(Collectors.toSet());
 					return allFilterAttributes.contains(PARAMETER_VALUE_FIELD + ".value") ? new Equals(PARAMETER_PROTECTED_VALUE_FIELD, false) : Filters.empty();
@@ -82,8 +83,28 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 				Parameter.ENTITY_NAME, 
 				parameterAccessor,
 				Parameter.class));
-		context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(Parameter.class, parameterManager.getEntityNameForLogging()));
-		context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, Parameter.class, parameterManager.getEntityNameForLogging()));
+		context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer<Parameter>(Parameter.class, parameterManager.getEntityNameForLogging()) {
+			@Override
+			protected Object getValue(Parameter obj) {
+				return obj.getValue();
+			}
+
+			@Override
+			protected void setResetValue(Parameter obj) {
+				obj.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
+			}
+		});
+		context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer<Parameter>(encryptionManager, Parameter.class, parameterManager.getEntityNameForLogging()) {
+			@Override
+			protected Object getValue(Parameter obj) {
+				return obj.getValue();
+			}
+
+			@Override
+			protected void setResetValue(Parameter obj) {
+				obj.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
+			}
+		});
 		
 		context.getServiceRegistrationCallback().registerService(ParameterServices.class);
 	}
@@ -107,6 +128,5 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 	public ExecutionEnginePlugin getExecutionEnginePlugin() {
 		return new ParameterManagerPlugin(parameterManager);
 	}
-
 
 }

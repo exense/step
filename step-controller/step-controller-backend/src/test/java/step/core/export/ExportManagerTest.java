@@ -56,6 +56,7 @@ import step.core.plans.PlanAccessor;
 import step.core.plans.PlanEntity;
 import step.core.plans.builder.PlanBuilder;
 import step.datapool.excel.ExcelDataPool;
+import step.encryption.AbstractEncryptedValuesManager;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -157,8 +158,28 @@ public class ExportManagerTest {
 				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver, entityManager))
 				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
-		entityManager.registerExportHook(new EncryptedEntityExportBiConsumer(Parameter.class, "parameter"));
-		entityManager.registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, Parameter.class, "parameter"));
+		entityManager.registerExportHook(new EncryptedEntityExportBiConsumer<Parameter>(Parameter.class, "parameter") {
+			@Override
+			protected Object getValue(Parameter obj) {
+				return obj.getValue();
+			}
+
+			@Override
+			protected void setResetValue(Parameter obj) {
+				obj.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
+			}
+		});
+		entityManager.registerImportHook(new EncryptedEntityImportBiConsumer<Parameter>(encryptionManager, Parameter.class, "parameter") {
+			@Override
+			protected Object getValue(Parameter obj) {
+				return obj.getValue();
+			}
+
+			@Override
+			protected void setResetValue(Parameter obj) {
+				obj.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
+			}
+		});
 		entityManager.registerImportHook(new ResourceImporter(resourceManager));
 		
 		migrationManager = new MigrationManager();

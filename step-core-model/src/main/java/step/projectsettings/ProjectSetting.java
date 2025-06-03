@@ -18,39 +18,26 @@
  ******************************************************************************/
 package step.projectsettings;
 
-import step.commons.activation.Expression;
 import step.core.EncryptedTrackedObject;
-import step.core.dynamicbeans.DynamicValue;
 import step.unique.EntityWithUniqueAttributes;
 
 public class ProjectSetting extends EncryptedTrackedObject implements EntityWithUniqueAttributes<String> {
 
     public static final String ENTITY_NAME = "projectsettings";
 
+    protected String value;
     protected String description;
 
-    protected Expression activationExpression;
 
-    protected Integer priority;
-
-
-    /**
-     * When running with an encryption manager, the value of protected
-     * {@link ProjectSetting}s is encrypted and the encrypted value is stored into this
-     * field
-     */
-    protected String encryptedValue;
 
     public ProjectSetting() {
         super();
     }
 
-    public ProjectSetting(Expression activationExpression, String key, String value, String description) {
+    public ProjectSetting(String key, String value, String description) {
         super();
         this.key = key;
-        this.value = new DynamicValue<>(value);
         this.description = description;
-        this.activationExpression = activationExpression;
     }
 
     @Override
@@ -61,24 +48,6 @@ public class ProjectSetting extends EncryptedTrackedObject implements EntityWith
     @Override
     public String getEntityName() {
         return ENTITY_NAME;
-    }
-
-    @Override
-    public Expression getActivationExpression() {
-        return activationExpression;
-    }
-
-    @Override
-    public Integer getPriority() {
-        return priority;
-    }
-
-    public void setActivationExpression(Expression activationExpression) {
-        this.activationExpression = activationExpression;
-    }
-
-    public void setPriority(Integer priority) {
-        this.priority = priority;
     }
 
     public String getDescription() {
@@ -94,10 +63,17 @@ public class ProjectSetting extends EncryptedTrackedObject implements EntityWith
         return null;
     }
 
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
     @Override
     public String toString() {
         return "ProjectSetting [key=" + key + "]";
     }
-
 
 }

@@ -18,38 +18,27 @@
  ******************************************************************************/
 package step.core;
 
-import step.commons.activation.ActivableObject;
 import step.core.accessors.AbstractTrackedObject;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.objectenricher.EnricheableObject;
 import step.parameter.Parameter;
-import step.parameter.ParameterScope;
 
-public abstract class EncryptedTrackedObject extends AbstractTrackedObject implements ActivableObject, EnricheableObject, ValueWithKey {
+public abstract class EncryptedTrackedObject extends AbstractTrackedObject implements EnricheableObject, ValueWithKey {
 
     public static final String PARAMETER_PROTECTED_VALUE_FIELD = "protectedValue";
     public static final String PARAMETER_VALUE_FIELD = "value";
 
     protected Boolean protectedValue = false;
+
     /**
      * When running with an encryption manager, the value of protected
      * {@link Parameter}s is encrypted and the encrypted value is stored into this
      * field
      */
     protected String encryptedValue;
-    protected DynamicValue<String> value;
     protected String key;
 
     public EncryptedTrackedObject() {
         super();
-    }
-
-    public DynamicValue<String> getValue() {
-        return value;
-    }
-
-    public void setValue(DynamicValue<String> value) {
-        this.value = value;
     }
 
     public Boolean getProtectedValue() {

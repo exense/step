@@ -25,7 +25,6 @@ import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
-import step.encryption.AbstractEncryptedValuesManager;
 import step.encryption.EncryptedValueManagerException;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
@@ -38,7 +37,7 @@ import java.util.List;
 @Path("/project-settings")
 @Tag(name = "ProjectSettings")
 @Tag(name = "Entity=ProjectSetting")
-@SecuredContext(key = "entity", value = "project-setting")
+@SecuredContext(key = "entity", value = "project-settings")
 public class ProjectSettingServices extends AbstractStepServices {
 
     private ProjectSettingManager manager;
@@ -55,7 +54,7 @@ public class ProjectSettingServices extends AbstractStepServices {
     }
 
     @POST
-    @Secured(right = "{entity}-read")
+    @Secured(right = "{entity}-write")
     public ProjectSetting save(ProjectSetting newSetting) {
         if (newSetting.getKey() == null || newSetting.getKey().isBlank()) {
             throw new ControllerServiceException("The parameter's key is mandatory.");
@@ -82,7 +81,7 @@ public class ProjectSettingServices extends AbstractStepServices {
     private ProjectSetting save(ProjectSetting newSetting, ProjectSetting sourceSetting) {
         try {
             ProjectSetting result = manager.save(newSetting, sourceSetting, getSession().getUser().getUsername(), getObjectValidator());
-            return AbstractEncryptedValuesManager.maskProtectedValue(result);
+            return ProjectSettingManager.maskProtectedValue(result);
         } catch (EncryptedValueManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -101,4 +100,15 @@ public class ProjectSettingServices extends AbstractStepServices {
         }
     }
 
+    @GET
+    @Path("/unique/single")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-read")
+    public ProjectSetting getUniqueSettingByKey(@QueryParam("key") String key) {
+        try {
+            return manager.getUniqueSettingByKey(key);
+        } catch (Exception e) {
+            throw new ControllerServiceException(e.getMessage());
+        }
+    }
 }

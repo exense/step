@@ -20,7 +20,10 @@
  */
 package step.unique;
 
-// TODO: add javadoc
+/**
+ * The interface for entities with unique combination of attributes in the application
+ * @param <KEY>
+ */
 public interface EntityWithUniqueAttributes<KEY> {
 
     /**
@@ -30,6 +33,5 @@ public interface EntityWithUniqueAttributes<KEY> {
 
     KEY getKey();
 
-    // TODO: maybe not required
     String getEntityName();
 }

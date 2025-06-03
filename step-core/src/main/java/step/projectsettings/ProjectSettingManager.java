@@ -24,7 +24,6 @@ import com.google.common.collect.ListMultimap;
 import step.commons.activation.Activator;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
-import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.encryption.EncryptionManager;
 import step.encryption.AbstractEncryptedValuesManager;
 import step.unique.EntityWithUniqueAttributes;
@@ -33,22 +32,55 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class ProjectSettingManager extends AbstractEncryptedValuesManager<ProjectSetting> {
+public class ProjectSettingManager extends AbstractEncryptedValuesManager<ProjectSetting, String> {
 
     private final Accessor<ProjectSetting> accessor;
 
-    public ProjectSettingManager(Accessor<ProjectSetting> accessor, EncryptionManager encryptionManager, Configuration configuration, DynamicBeanResolver dynamicBeanResolver) {
-        this(accessor, encryptionManager, configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE), dynamicBeanResolver);
+    public ProjectSettingManager(Accessor<ProjectSetting> accessor, EncryptionManager encryptionManager, Configuration configuration) {
+        this(accessor, encryptionManager, configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE));
     }
 
-    public ProjectSettingManager(Accessor<ProjectSetting> accessor, EncryptionManager encryptionManager, String defaultScriptEngine, DynamicBeanResolver dynamicBeanResolver) {
-        super(encryptionManager, defaultScriptEngine, dynamicBeanResolver);
+    public ProjectSettingManager(Accessor<ProjectSetting> accessor, EncryptionManager encryptionManager, String defaultScriptEngine) {
+        // project settings can't be dynamic, so the dynamic bean resolver is null
+        super(encryptionManager, defaultScriptEngine, null);
         this.accessor = accessor;
+    }
+
+    public static ProjectSetting maskProtectedValue(ProjectSetting obj) {
+        if(obj != null && isProtected(obj) & !RESET_VALUE.equals(obj.getValue())) {
+            obj.setValue(PROTECTED_VALUE);
+        }
+        return obj;
     }
 
     @Override
     protected Accessor<ProjectSetting> getAccessor() {
         return accessor;
+    }
+
+    @Override
+    protected boolean isDynamicValue(ProjectSetting obj) {
+        return false;
+    }
+
+    @Override
+    protected String getStringValue(ProjectSetting obj) {
+        return obj.getValue();
+    }
+
+    @Override
+    protected void setValue(ProjectSetting obj, String value) {
+        obj.setValue(value);
+    }
+
+    @Override
+    protected String getValue(ProjectSetting obj) {
+        return obj.getValue();
+    }
+
+    @Override
+    public String getResetValue() {
+        return RESET_VALUE;
     }
 
     @Override
@@ -95,5 +127,9 @@ public class ProjectSettingManager extends AbstractEncryptedValuesManager<Projec
             }
         }
         return highestPriorityProjectSettings;
+    }
+
+    public ProjectSetting getUniqueSettingByKey(String key) {
+        return getAllSettingsWithUniqueKeys().stream().filter(s -> Objects.equals(key, s.getKey())).findFirst().orElse(null);
     }
 }

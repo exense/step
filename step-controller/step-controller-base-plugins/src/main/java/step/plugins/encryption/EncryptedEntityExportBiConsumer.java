@@ -25,7 +25,7 @@ import step.encryption.AbstractEncryptedValuesManager;
 
 import java.util.function.BiConsumer;
 
-public class EncryptedEntityExportBiConsumer implements BiConsumer<Object, ExportContext> {
+public abstract class EncryptedEntityExportBiConsumer<T extends EncryptedTrackedObject> implements BiConsumer<Object, ExportContext> {
 
     private final Class<? extends EncryptedTrackedObject> clazz;
     private final String entityNameForLog;
@@ -38,11 +38,11 @@ public class EncryptedEntityExportBiConsumer implements BiConsumer<Object, Expor
     @Override
     public void accept(Object object_, ExportContext exportContext) {
         if (object_ != null && clazz.isAssignableFrom(object_.getClass())) {
-            EncryptedTrackedObject param = (EncryptedTrackedObject) object_;
+            T param = (T) object_;
             //if protected and not encrypted, mask value by changing it to reset value
             if (param.getProtectedValue() != null && param.getProtectedValue()) {
-                if (param.getValue() != null) {
-                    param.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
+                if (getValue(param) != null) {
+                    setResetValue(param);
                     exportContext.addMessage(getExportProtectParamWarn());
                 } else {
                     exportContext.addMessage(getExportEncryptParamWarn());
@@ -50,6 +50,10 @@ public class EncryptedEntityExportBiConsumer implements BiConsumer<Object, Expor
             }
         }
     }
+
+    protected abstract Object getValue(T obj);
+
+    protected abstract void setResetValue(T obj);
 
     private String getExportProtectParamWarn(){
         return String.format("The %s list contains protected %s. The values of these %ss won't be exported and will have to be reset at import.", entityNameForLog, entityNameForLog, entityNameForLog);

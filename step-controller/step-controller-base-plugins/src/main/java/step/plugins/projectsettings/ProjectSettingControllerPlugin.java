@@ -66,13 +66,13 @@ public class ProjectSettingControllerPlugin extends AbstractControllerPlugin {
         context.put("ProjectSettingAccessor", projectSettingAccessor);
 
         context.get(TableRegistry.class).register(ProjectSetting.ENTITY_NAME, new Table<>(collection, "param-read", true)
-                .withResultItemTransformer((p,s) -> AbstractEncryptedValuesManager.maskProtectedValue(p))
+                .withResultItemTransformer((p,s) -> ProjectSettingManager.maskProtectedValue(p))
                 .withDerivedTableFiltersFactory(lf -> {
                     Set<String> allFilterAttributes = lf.stream().map(Filters::collectFilterAttributes).flatMap(Set::stream).collect(Collectors.toSet());
                     return allFilterAttributes.contains(PARAMETER_VALUE_FIELD + ".value") ? new Equals(PARAMETER_PROTECTED_VALUE_FIELD, false) : Filters.empty();
                 }));
 
-        ProjectSettingManager projectSettingManager = new ProjectSettingManager(projectSettingAccessor, encryptionManager, context.getConfiguration(), context.getDynamicBeanResolver());
+        ProjectSettingManager projectSettingManager = new ProjectSettingManager(projectSettingAccessor, encryptionManager, context.getConfiguration());
         context.put(ProjectSettingManager.class, projectSettingManager);
         this.projectSettingManager = projectSettingManager;
 
@@ -80,8 +80,28 @@ public class ProjectSettingControllerPlugin extends AbstractControllerPlugin {
                 ProjectSetting.ENTITY_NAME,
                 projectSettingAccessor,
                 ProjectSetting.class));
-        context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer(ProjectSetting.class, projectSettingManager.getEntityNameForLogging()));
-        context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer(encryptionManager, ProjectSetting.class, projectSettingManager.getEntityNameForLogging()));
+        context.getEntityManager().registerExportHook(new EncryptedEntityExportBiConsumer<ProjectSetting>(ProjectSetting.class, projectSettingManager.getEntityNameForLogging()) {
+            @Override
+            protected Object getValue(ProjectSetting obj) {
+                return obj.getValue();
+            }
+
+            @Override
+            protected void setResetValue(ProjectSetting obj) {
+                obj.setValue(AbstractEncryptedValuesManager.RESET_VALUE);
+            }
+        });
+        context.getEntityManager().registerImportHook(new EncryptedEntityImportBiConsumer<ProjectSetting>(encryptionManager, ProjectSetting.class, projectSettingManager.getEntityNameForLogging()) {
+            @Override
+            protected Object getValue(ProjectSetting obj) {
+                return obj.getValue();
+            }
+
+            @Override
+            protected void setResetValue(ProjectSetting obj) {
+                obj.setValue(AbstractEncryptedValuesManager.RESET_VALUE);
+            }
+        });
 
         context.require(ObjectHookRegistry.class).add(new ObjectHook() {
             @Override

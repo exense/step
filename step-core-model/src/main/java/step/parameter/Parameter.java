@@ -18,11 +18,12 @@
  ******************************************************************************/
 package step.parameter;
 
+import step.commons.activation.ActivableObject;
 import step.commons.activation.Expression;
 import step.core.EncryptedTrackedObject;
 import step.core.dynamicbeans.DynamicValue;
 
-public class Parameter extends EncryptedTrackedObject {
+public class Parameter extends EncryptedTrackedObject implements ActivableObject {
 	
 	public static final String ENTITY_NAME = "parameters";
 
@@ -31,6 +32,7 @@ public class Parameter extends EncryptedTrackedObject {
 	protected Expression activationExpression;
 	
 	protected Integer priority;
+	protected DynamicValue<String> value;
 
 	protected ParameterScope scope;
 	protected String scopeEntity;
@@ -95,6 +97,14 @@ public class Parameter extends EncryptedTrackedObject {
 
 	public void setScopeEntity(String scopeEntity) {
 		this.scopeEntity = scopeEntity;
+	}
+
+	public DynamicValue<String> getValue() {
+		return value;
+	}
+
+	public void setValue(DynamicValue<String> value) {
+		this.value = value;
 	}
 
 	@Override

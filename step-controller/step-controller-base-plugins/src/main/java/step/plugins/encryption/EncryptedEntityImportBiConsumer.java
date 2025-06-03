@@ -27,7 +27,7 @@ import step.encryption.AbstractEncryptedValuesManager;
 
 import java.util.function.BiConsumer;
 
-public class EncryptedEntityImportBiConsumer implements BiConsumer<Object, ImportContext> {
+public abstract class EncryptedEntityImportBiConsumer<T extends EncryptedTrackedObject> implements BiConsumer<Object, ImportContext> {
 
     private final EncryptionManager encryptionManager;
     private final Class<? extends EncryptedTrackedObject> clazz;
@@ -42,31 +42,35 @@ public class EncryptedEntityImportBiConsumer implements BiConsumer<Object, Impor
     @Override
     public void accept(Object object_, ImportContext importContext) {
         if (object_ != null && clazz.isAssignableFrom(object_.getClass())) {
-            EncryptedTrackedObject param = (EncryptedTrackedObject) object_;
+            T param = (T) object_;
             //if importing protected and encrypted value
             if (param.getProtectedValue() != null && param.getProtectedValue()) {
-                if (param.getValue() == null) {
+                if (getValue(param) == null) {
                     //if we have a valid encryption manager and can still decrypt keep encrypted value, else reset
                     if (encryptionManager != null && param.getEncryptedValue() != null) {
                         try {
                             encryptionManager.decrypt(param.getEncryptedValue());
                         } catch (EncryptionManagerException e) {
-                            param.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
+                            setResetValue(param);
                             param.setEncryptedValue(null);
                             importContext.addMessage(getImportDecryptFailWarn());
                         }
                     } else {
-                        param.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
+                        setResetValue(param);
                         param.setEncryptedValue(null);
                         importContext.addMessage(getImportDecryptNoEmWarn());
                     }
                 } else {
-                    param.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
+                    setResetValue(param);
                     importContext.addMessage(getImportResetWarn());
                 }
             }
         }
     }
+
+    protected abstract Object getValue(T obj);
+
+    protected abstract void setResetValue(T obj);
 
     private String getImportDecryptFailWarn() {
         return String.format("The export file contains encrypted %s which could not be decrypted. The values of these %ss will be reset.", entityNameForLog, entityNameForLog);
