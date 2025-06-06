@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.attachments.AttachmentMeta;
+import step.attachments.SkippedAttachmentMeta;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.variables.UndefinedVariableException;
@@ -112,22 +113,25 @@ public class ReportNodeAttachmentManager {
 		e.printStackTrace(new PrintWriter(w));
 		return w.toString().getBytes();
 	}
-	
-	public AttachmentMeta createAttachment(Throwable e) throws AttachmentQuotaException {
-		return createAttachment(exceptionToAttachment(e), "exception.log");
-	}
-	
+
 	public void attach(Throwable e, ReportNode node) {
 		attach(exceptionToAttachment(e), "exception.log", node);
 	}
+
+	public void attach(byte[] content, String filename, ReportNode reportNode ) {
+			reportNode.addAttachment(createAttachment(content, filename));
+	}
 	
-	public AttachmentMeta createAttachment(byte[] content, String filename) throws AttachmentQuotaException {
+	public AttachmentMeta createAttachment(byte[] content, String filename) {
 		if(checkAndUpateAttachmentQuota()) {
 			return createAttachmentWithoutQuotaCheck(content, filename);
 		} else {
-			logger.debug(context.getExecutionId().toString() + ". Skipping attachment \"" + filename + "\"");
-			throw new AttachmentQuotaException("The attachment " + filename + " has been skipped because the test " +
-					"generated more than the maximum number of attachments permitted.");
+			String message = String.format("The attachment %s has been skipped because the execution generated more than" +
+					" the maximum number of attachments permitted. This quota can be changed by setting the variable %s with an higher value.", filename, QUOTA_VARNAME);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Execution {} - {}", context.getExecutionId(), message);
+			}
+			return new SkippedAttachmentMeta(filename, message);
 		}
 	}
 
@@ -159,17 +163,5 @@ public class ReportNodeAttachmentManager {
 			throw new RuntimeException("Error while createing resource container", e1);
 		}
 	}
-	
-	public void attach(byte[] content, String filename, ReportNode reportNode ) {
-		try {
-			AttachmentMeta attachment = createAttachment(content, filename);
-			reportNode.addAttachment(attachment);
-		} catch (AttachmentQuotaException e) {
-			logger.debug(context.getExecutionId().toString() + ". Skipping attachment \"" + filename + "\"");
-			reportNode.addError("The attachment " + filename + " has been skipped because the test "
-					+ "generated more than the maximum number of attachments permitted.");
-		}
-	}
-	
 
 }
