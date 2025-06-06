@@ -184,12 +184,14 @@ public class AggregatedReportViewBuilder {
     }
 
     private void ingestReportNodeRecursively(ReportNode reportNode, ReportNodeTimeSeries reportNodeTimeSeries, Map<String, ReportNode> singleReportNodes, Map<String, Long> runningCountByArtefactHash, Map<String, List<Operation>> operationsByArtefactHash,  boolean fetchCurrentOperations) {
-        reportNodeTimeSeries.ingestReportNode(reportNode);
         if (reportNode.getStatus().equals(ReportNodeStatus.RUNNING)) {
             runningCountByArtefactHash.merge(reportNode.getArtefactHash(), 1L, Long::sum);
             if (fetchCurrentOperations && threadManager != null) {
                 operationsByArtefactHash.computeIfAbsent(reportNode.getArtefactHash(), k -> new ArrayList<>()).addAll(threadManager.getCurrentOperationsByReportNodeId(reportNode.getId().toHexString()));
             }
+        } else {
+            // only ended reports are ingested
+            reportNodeTimeSeries.ingestReportNode(reportNode);
         }
         singleReportNodes.put(reportNode.getArtefactHash(), reportNode);
         this.mainReportNodeAccessor.getChildren(reportNode.getId()).forEachRemaining(child -> ingestReportNodeRecursively(child, reportNodeTimeSeries, singleReportNodes, runningCountByArtefactHash, operationsByArtefactHash, fetchCurrentOperations));
