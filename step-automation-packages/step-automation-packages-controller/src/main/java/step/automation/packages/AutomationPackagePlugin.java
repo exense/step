@@ -28,6 +28,7 @@ import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
+import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
@@ -49,6 +50,7 @@ import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.CONFIGURATION_MAVEN_FOLDER;
 import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.DEFAULT_MAVEN_FOLDER;
+import static step.repositories.ArtifactRepositoryConstants.MAVEN_EMPTY_SETTINGS;
 
 @Plugin(dependencies = {ObjectHookControllerPlugin.class, ResourceManagerControllerPlugin.class, FunctionControllerPlugin.class, AutomationPackageSchedulerPlugin.class, ControllerSettingPlugin.class})
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
@@ -174,8 +176,18 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 //            } else {
                 // default maven configuration in controller settings
                 mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
-                settingsXml = controllerSettingAccessor.getSettingByKey(mavenSettings).getValue();
+                ControllerSetting controllerSetting = controllerSettingAccessor.getSettingByKey(mavenSettings);
 //            }
+
+            if (controllerSetting == null || controllerSetting.getValue() == null) {
+                log.warn("No settings found for \"" + mavenSettings + "\", using empty settings instead.");
+                controllerSettingAccessor.updateOrCreateSetting(mavenSettings, MAVEN_EMPTY_SETTINGS);
+                controllerSetting = controllerSettingAccessor.getSettingByKey(mavenSettings);
+                settingsXml = controllerSetting == null ? null : controllerSetting.getValue();
+            } else {
+                settingsXml = controllerSetting.getValue();
+            }
+
             return new AutomationPackageMavenConfig(settingsXml, localFileRepository);
         }
     }
