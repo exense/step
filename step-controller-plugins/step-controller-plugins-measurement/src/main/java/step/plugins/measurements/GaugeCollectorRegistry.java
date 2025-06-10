@@ -26,11 +26,11 @@ public class GaugeCollectorRegistry {
 	Map<String, GaugeCollector> collectors = new ConcurrentHashMap<>();
 	List<MeasurementHandler> handlers = new CopyOnWriteArrayList<>();
 
-	public synchronized void registerCollector(String name, GaugeCollector collector){
+	public void registerCollector(String name, GaugeCollector collector){
 		collectors.put(name, collector);
 	}
 
-	public synchronized void  registerHandler(MeasurementHandler handler){
+	public void  registerHandler(MeasurementHandler handler){
 		handlers.add(handler);
 	}
 
