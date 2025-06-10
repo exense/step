@@ -30,14 +30,7 @@ public interface AutomationPackageHook<T> {
                                       List<?> yamlData,
                                       AutomationPackageContent targetContent) {
         // by default, just copy the yaml objects to automation package content
-        if (yamlData != null) {
-            List<Object> existingData = (List<Object>) targetContent.getAdditionalData().get(fieldName);
-            if (existingData != null) {
-                existingData.addAll(yamlData);
-            } else {
-                targetContent.getAdditionalData().put(fieldName, new ArrayList<>(yamlData));
-            }
-        }
+        targetContent.addToAdditionalData(fieldName, yamlData);
     }
 
     /**
@@ -50,15 +43,7 @@ public interface AutomationPackageHook<T> {
                                   AutomationPackage oldPackage,
                                   AutomationPackageStaging targetStaging) {
         // by default, we simply put the objects to staging
-        if (objects != null) {
-            List<Object> existingData = (List<Object>) targetStaging.getAdditionalObjects().get(fieldName);
-            if (existingData != null) {
-                existingData.addAll(objects);
-            } else {
-                targetStaging.getAdditionalObjects().put(fieldName, new ArrayList<>(objects));
-            }
-        }
-
+        targetStaging.addAdditionalObjects(fieldName, objects);
     }
 
     /**

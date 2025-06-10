@@ -74,4 +74,11 @@ public class AutomationPackageContent {
     public void setAdditionalData(Map<String, List<?>> additionalData) {
         this.additionalData = additionalData;
     }
+
+    public void addToAdditionalData(String fieldName, List<?> objects) {
+        if (objects != null) {
+            List<Object> existingList = (List<Object>) additionalData.computeIfAbsent(fieldName, s -> new ArrayList<>());
+            existingList.addAll(objects);
+        }
+    }
 }

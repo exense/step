@@ -52,4 +52,11 @@ public class AutomationPackageStaging {
     public Map<String, List<?>> getAdditionalObjects() {
         return additionalObjects;
     }
+
+    public void addAdditionalObjects(String fieldName, List<?> objects){
+        if(objects != null) {
+            List<Object> existingList = (List<Object>) additionalObjects.computeIfAbsent(fieldName, s -> new ArrayList<>());
+            existingList.addAll(objects);
+        }
+    }
 }
