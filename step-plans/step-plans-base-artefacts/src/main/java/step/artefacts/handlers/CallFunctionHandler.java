@@ -29,6 +29,7 @@ import step.artefacts.handlers.functions.FunctionGroupSession;
 import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.attachments.SkippedAttachmentMeta;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.common.managedoperations.OperationManager;
 import step.core.accessors.AbstractOrganizableObject;
@@ -250,13 +251,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				
 				if(output.getAttachments()!=null) {
 					for(Attachment a:output.getAttachments()) {
-						AttachmentMeta attachmentMeta;
-						try {
-							attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
-							node.addAttachment(attachmentMeta);					
-						} catch (AttachmentQuotaException e) {
-							// attachment has been skipped. Nothing else to do here
-						}
+						AttachmentMeta attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+						node.addAttachment(attachmentMeta);
 					}
 				}
 				if(output.getMeasures()!=null) {
