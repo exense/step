@@ -5,4 +5,5 @@ fragments:
   - "plans/*.yml"
   - "schedules.yml"
   - "parameters.yml"
+  - "parameters2.yml"
   - "unknown.yml"

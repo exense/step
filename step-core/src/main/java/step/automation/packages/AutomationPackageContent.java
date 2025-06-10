@@ -21,10 +21,7 @@ package step.automation.packages;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.core.plans.Plan;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AutomationPackageContent {
 
@@ -67,11 +64,18 @@ public class AutomationPackageContent {
         this.plans = plans;
     }
 
-    public Map<String, List<?>> getAdditionalData() {
-        return additionalData;
+    public Set<String> getAdditionalFields() {
+        return additionalData.keySet();
     }
 
-    public void setAdditionalData(Map<String, List<?>> additionalData) {
-        this.additionalData = additionalData;
+    public List<?> getAdditionalData(String fieldName) {
+        return additionalData.get(fieldName);
+    }
+
+    public void addToAdditionalData(String fieldName, List<?> objects) {
+        if (objects != null) {
+            List<Object> existingList = (List<Object>) additionalData.computeIfAbsent(fieldName, s -> new ArrayList<>());
+            existingList.addAll(objects);
+        }
     }
 }
