@@ -147,7 +147,7 @@ public class AutomationPackageReaderTest {
         assertEquals("{\"myInput\":{\"dynamic\":false,\"value\":\"myValue\"}}", callKeyword.getArgument().get());
 
         // 1 parameter
-        List<AutomationPackageParameter> parameters = (List<AutomationPackageParameter>) automationPackageContent.getAdditionalData().get(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP);
+        List<AutomationPackageParameter> parameters = (List<AutomationPackageParameter>) automationPackageContent.getAdditionalData(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP);
         assertNotNull(parameters);
 
         // 3 parameters from one fragment and 1 parameter from another one

@@ -25,10 +25,7 @@ import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AutomationPackageStaging {
     private List<Plan> plans = new ArrayList<>();
@@ -49,12 +46,16 @@ public class AutomationPackageStaging {
         return resourceManager;
     }
 
-    public Map<String, List<?>> getAdditionalObjects() {
-        return additionalObjects;
+    public Set<String> getAdditionalFields(){
+        return additionalObjects.keySet();
     }
 
-    public void addAdditionalObjects(String fieldName, List<?> objects){
-        if(objects != null) {
+    public List<?> getAdditionalObjects(String fieldName) {
+        return additionalObjects.get(fieldName);
+    }
+
+    public void addAdditionalObjects(String fieldName, List<?> objects) {
+        if (objects != null) {
             List<Object> existingList = (List<Object>) additionalObjects.computeIfAbsent(fieldName, s -> new ArrayList<>());
             existingList.addAll(objects);
         }
