@@ -273,26 +273,61 @@ public class AutomationPackageReader {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
 
-        // parse plain - text plans
-        for (YamlPlainTextPlan plainTextPlan : fragment.getPlansPlainText()) {
-            try {
-                try (InputStream is = archive.getResourceAsStream(plainTextPlan.getFile())) {
-                    Plan parsedPlan = planTextPlanParser.parse(is, plainTextPlan.getRootType() == null ? RootArtefactType.TestCase : plainTextPlan.getRootType());
-                    String planNameInYaml = plainTextPlan.getName();
-                    String finalPlanName = (planNameInYaml == null || planNameInYaml.isEmpty()) ? plainTextPlan.getFile() : planNameInYaml;
-                    YamlPlanReader.setPlanName(parsedPlan, finalPlanName);
-                    parsedPlan.setCategories(plainTextPlan.getCategories());
-                    targetPackage.getPlans().add(parsedPlan);
-                }
-            } catch (IOException | StepsParser.ParsingException e) {
-                throw new AutomationPackageReadingException("Unable to read plain text plan: " + plainTextPlan.getFile(), e);
-            }
-        }
+        readPlainTextPlans(targetPackage, fragment, archive);
 
         for (Map.Entry<String, List<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
             boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage);
             if (!hooked) {
                 log.warn("Hook not found for additional field " + additionalField.getKey() + ". The additional field has been skipped");
+            }
+        }
+    }
+
+    private void readPlainTextPlans(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
+        // parse plain - text plans
+        for (YamlPlainTextPlan plainTextPlan : fragment.getPlansPlainText()) {
+            try {
+                List<URL> urls;
+                boolean wildcard = false;
+                if (ResourcePathMatchingResolver.containsWildcard(plainTextPlan.getFile())) {
+                    wildcard = true;
+                    ResourcePathMatchingResolver resourceResolver = new ResourcePathMatchingResolver(archive.getClassLoader());
+                    urls = resourceResolver.getResourcesByPattern(plainTextPlan.getFile());
+                } else {
+                    urls = List.of(archive.getResource(plainTextPlan.getFile()));
+                }
+                for (URL url : urls) {
+                    try (InputStream is = url.openStream()) {
+                        Plan parsedPlan = planTextPlanParser.parse(is, plainTextPlan.getRootType() == null ? RootArtefactType.TestCase : plainTextPlan.getRootType());
+                        String planNameInYaml = plainTextPlan.getName();
+                        String finalPlanName;
+                        if (!wildcard) {
+                            finalPlanName = (planNameInYaml == null || planNameInYaml.isEmpty()) ? plainTextPlan.getFile() : planNameInYaml;
+                        } else {
+                            // TODO: how to resolve plan name?
+                            if (planNameInYaml != null && !planNameInYaml.isEmpty()) {
+                                throw new AutomationPackageReadingException("planName is not supported in combination with wildcards");
+                            }
+                            String urlFile = url.getFile();
+                            if (urlFile != null && !urlFile.isEmpty()) {
+                                int fileNameBeginIndex = urlFile.lastIndexOf(ResourcePathMatchingResolver.getPathSeparator());
+                                if (fileNameBeginIndex > 0) {
+                                    finalPlanName = urlFile.substring(fileNameBeginIndex + 1);
+                                } else {
+                                    finalPlanName = url.getPath();
+                                }
+                            } else {
+                                finalPlanName = url.getPath();
+                            }
+                        }
+                        YamlPlanReader.setPlanName(parsedPlan, finalPlanName);
+                        parsedPlan.setCategories(plainTextPlan.getCategories());
+                        targetPackage.getPlans().add(parsedPlan);
+                    }
+                }
+
+            } catch (IOException | StepsParser.ParsingException e) {
+                throw new AutomationPackageReadingException("Unable to read plain text plan: " + plainTextPlan.getFile(), e);
             }
         }
     }
