@@ -79,8 +79,8 @@ public class AutomationPackageManagerOSTest {
     // how many keywords and plans are defined in original sample
     public static final int KEYWORDS_COUNT = 6;
 
-    // 2 annotated plans and 3 plans from yaml descriptor
-    public static final int PLANS_COUNT = 5;
+    // 2 annotated plans and 5 plans from yaml descriptor
+    public static final int PLANS_COUNT = 7;
     public static final int SCHEDULES_COUNT = 1;
     public static final int PARAMETERS_COUNT = 3;
 
@@ -279,13 +279,13 @@ public class AutomationPackageManagerOSTest {
 
         // check that the new activation expression is propagated to all plans and keywords
         List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-        Assert.assertEquals(5, storedPlans.size());
+        Assert.assertEquals(PLANS_COUNT, storedPlans.size());
         for (Plan storedPlan : storedPlans) {
             Assert.assertEquals("true == true", storedPlan.getActivationExpression().getScript());
         }
 
         List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-        Assert.assertEquals(6, storedFunctions.size());
+        Assert.assertEquals(KEYWORDS_COUNT, storedFunctions.size());
         for (Function storedFunction : storedFunctions) {
             Assert.assertEquals("true == true", storedFunction.getActivationExpression().getScript());
         }
@@ -300,13 +300,13 @@ public class AutomationPackageManagerOSTest {
 
         // check that the new activation expression is propagated to all plans and keywords
         storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-        Assert.assertEquals(5, storedPlans.size());
+        Assert.assertEquals(PLANS_COUNT, storedPlans.size());
         for (Plan storedPlan : storedPlans) {
             Assert.assertNull(storedPlan.getActivationExpression());
         }
 
         storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-        Assert.assertEquals(6, storedFunctions.size());
+        Assert.assertEquals(KEYWORDS_COUNT, storedFunctions.size());
         for (Function storedFunction : storedFunctions) {
             Assert.assertNull( storedFunction.getActivationExpression());
         }

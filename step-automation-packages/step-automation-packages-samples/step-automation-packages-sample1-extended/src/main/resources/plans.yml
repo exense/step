@@ -30,3 +30,7 @@ plansPlainText:
     categories:
       - PlainTextPlan
     file: plan2.plan
+  - rootType: Sequence
+    file: plansPlainText/*.plan
+    categories:
+      - PlainTextPlan

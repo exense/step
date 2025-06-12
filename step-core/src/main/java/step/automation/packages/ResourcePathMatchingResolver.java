@@ -50,12 +50,12 @@ public class ResourcePathMatchingResolver {
         return res;
     }
 
-    private static boolean containsWildcard(String resourcePathPattern) {
+    public static boolean containsWildcard(String resourcePathPattern) {
         return resourcePathPattern.contains("*");
     }
 
     protected List<URL> findPathMatchingResources(String locationPattern) {
-        String[] pathArray = locationPattern.split("/");
+        String[] pathArray = locationPattern.split(getPathSeparator());
         List<URL> result = new ArrayList<>();
         String rootPath = pathArray[0];
         if(containsWildcard(rootPath)) {
@@ -65,6 +65,10 @@ public class ResourcePathMatchingResolver {
             findPathMatchingResourcesRecursive(pathArray, 0, resource, result);
         }
         return result;
+    }
+
+    public static String getPathSeparator() {
+        return "/";
     }
 
     private void findPathMatchingResourcesRecursive(String[] pathArray, int currentLevel, URL currentPath, List<URL> result) {
@@ -77,10 +81,10 @@ public class ResourcePathMatchingResolver {
                     Pattern pattern = Pattern.compile(nextPath.replaceAll("\\*", ".*"));
                     for (URL url : urls) {
                         String file = url.getFile();
-                        if(file.endsWith("/")) {
+                        if(file.endsWith(getPathSeparator())) {
                             file = file.substring(0, file.length() - 1);
                         }
-                        int lastIndexOf = file.lastIndexOf("/");
+                        int lastIndexOf = file.lastIndexOf(getPathSeparator());
                         String lastPath = file.substring(lastIndexOf + 1);
                         if (pattern.matcher(lastPath).matches()) {
                             findPathMatchingResourcesRecursive(pathArray, nextLevel, url, result);
