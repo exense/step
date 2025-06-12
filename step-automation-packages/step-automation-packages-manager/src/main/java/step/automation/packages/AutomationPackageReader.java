@@ -252,18 +252,14 @@ public class AutomationPackageReader {
 
         if (!fragment.getFragments().isEmpty()) {
             for (String importedFragmentReference : fragment.getFragments()) {
-                try {
-                    List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
-                    for (URL resource : resources) {
-                        try (InputStream fragmentYamlStream = resource.openStream()) {
-                            fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getOriginalFileName());
-                            fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive);
-                        } catch (IOException e) {
-                            throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
-                        }
+                List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
+                for (URL resource : resources) {
+                    try (InputStream fragmentYamlStream = resource.openStream()) {
+                        fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getOriginalFileName());
+                        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive);
+                    } catch (IOException e) {
+                        throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
                     }
-                } catch (IOException ex) {
-                    throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, ex);
                 }
             }
         }
@@ -296,6 +292,11 @@ public class AutomationPackageReader {
                 } else {
                     urls = List.of(archive.getResource(plainTextPlan.getFile()));
                 }
+
+                if (urls.isEmpty()) {
+                    throw new AutomationPackageReadingException("No plain text plans have been found for the following path: " + plainTextPlan.getFile());
+                }
+
                 for (URL url : urls) {
                     try (InputStream is = url.openStream()) {
                         Plan parsedPlan = planTextPlanParser.parse(is, plainTextPlan.getRootType() == null ? RootArtefactType.TestCase : plainTextPlan.getRootType());
@@ -304,7 +305,6 @@ public class AutomationPackageReader {
                         if (!wildcard) {
                             finalPlanName = (planNameInYaml == null || planNameInYaml.isEmpty()) ? plainTextPlan.getFile() : planNameInYaml;
                         } else {
-                            // TODO: how to resolve plan name?
                             if (planNameInYaml != null && !planNameInYaml.isEmpty()) {
                                 throw new AutomationPackageReadingException("planName is not supported in combination with wildcards");
                             }
@@ -323,10 +323,12 @@ public class AutomationPackageReader {
                         YamlPlanReader.setPlanName(parsedPlan, finalPlanName);
                         parsedPlan.setCategories(plainTextPlan.getCategories());
                         targetPackage.getPlans().add(parsedPlan);
+                    } catch (IOException ex) {
+                        throw new AutomationPackageReadingException("Unable to read plain text plan from url: " + url.getFile());
                     }
                 }
 
-            } catch (IOException | StepsParser.ParsingException e) {
+            } catch (StepsParser.ParsingException e) {
                 throw new AutomationPackageReadingException("Unable to read plain text plan: " + plainTextPlan.getFile(), e);
             }
         }
