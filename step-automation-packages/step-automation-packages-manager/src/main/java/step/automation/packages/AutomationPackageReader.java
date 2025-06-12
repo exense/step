@@ -324,7 +324,7 @@ public class AutomationPackageReader {
                         parsedPlan.setCategories(plainTextPlan.getCategories());
                         targetPackage.getPlans().add(parsedPlan);
                     } catch (IOException ex) {
-                        throw new AutomationPackageReadingException("Unable to read plain text plan from url: " + url.getFile());
+                        throw new AutomationPackageReadingException("Unable to read plain text plan from url: " + url.getFile(), ex);
                     }
                 }
 
