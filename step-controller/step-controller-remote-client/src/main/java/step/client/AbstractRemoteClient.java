@@ -155,8 +155,12 @@ public class AbstractRemoteClient implements Closeable {
 			} catch (Exception e2) {
 				// Fallback to string
 				String errorMessage = response.readEntity(String.class);
+				if (errorMessage == null || errorMessage.isEmpty()) {
+					// for 401 the response is empty and in this case error message has to be taken from the exception
+					errorMessage = e.getMessage();
+				}
 				throw new ControllerClientException("Error while calling controller "+
-						credentials.getServerUrl()+". The server returned following error: "+errorMessage, e);
+						credentials.getServerUrl()+". The server returned following error: "+ errorMessage, e);
 			}
 		}
 	}
