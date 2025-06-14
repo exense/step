@@ -22,16 +22,17 @@ package step.unique;
 
 /**
  * The interface for entities with unique combination of attributes in the application
- * @param <KEY>
  */
-public interface EntityWithUniqueAttributes<KEY> {
+public interface EntityWithUniqueAttributes {
 
     /**
      * Defines the priority (for instance, in accordance to the tenant)
      */
     String ATTRIBUTE_PRIORITY = "priority";
 
-    KEY getKey();
+    String getKey();
+
+    String getKeyFieldName();
 
     String getEntityName();
 }

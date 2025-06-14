@@ -37,12 +37,17 @@ public class UniqueEntityManager {
                 EntityWithUniqueAttributes e = (EntityWithUniqueAttributes) enricheableObject;
                 Collection<? extends EntityWithUniqueAttributes> collection = collectionFactory.getCollection(e.getEntityName(), e.getClass());
 
-                if (!enricheableObject.getAttributes().isEmpty()) {
+                if (enricheableObject.getAttributes() != null && !enricheableObject.getAttributes().isEmpty()) {
                     ArrayList<Filter> attrFilter = new ArrayList<>();
                     for (Map.Entry<String, String> entry : enricheableObject.getAttributes().entrySet()) {
                         attrFilter.add(Filters.equals("attributes." + entry.getKey(), entry.getValue()));
                     }
                     Filter filterByAttribute = Filters.and(attrFilter);
+                    if(e.getKeyFieldName() != null){
+                       attrFilter.add(Filters.equals(e.getKeyFieldName(), e.getKey()));
+                    }
+
+                    // filter out the entity with the same ID and apply the filter by key again (if getKeyFieldName returns null and the key is resolved dynamically)
                     Optional<? extends EntityWithUniqueAttributes> collision = collection.find(filterByAttribute, null, null, null, 0)
                             .filter(tmp -> !Objects.equals(((AbstractIdentifiableObject) e).getId(), ((AbstractIdentifiableObject) tmp).getId()) && Objects.equals(e.getKey(), tmp.getKey()))
                             .findFirst();

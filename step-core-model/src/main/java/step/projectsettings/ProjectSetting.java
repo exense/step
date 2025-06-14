@@ -21,14 +21,12 @@ package step.projectsettings;
 import step.core.EncryptedTrackedObject;
 import step.unique.EntityWithUniqueAttributes;
 
-public class ProjectSetting extends EncryptedTrackedObject implements EntityWithUniqueAttributes<String> {
+public class ProjectSetting extends EncryptedTrackedObject implements EntityWithUniqueAttributes {
 
     public static final String ENTITY_NAME = "projectsettings";
 
     protected String value;
     protected String description;
-
-
 
     public ProjectSetting() {
         super();
@@ -36,6 +34,7 @@ public class ProjectSetting extends EncryptedTrackedObject implements EntityWith
 
     public ProjectSetting(String key, String value, String description) {
         super();
+        this.value = value;
         this.key = key;
         this.description = description;
     }
@@ -43,6 +42,11 @@ public class ProjectSetting extends EncryptedTrackedObject implements EntityWith
     @Override
     public String getKey() {
         return key;
+    }
+
+    @Override
+    public String getKeyFieldName() {
+        return KEY_FIELD_NAME;
     }
 
     @Override

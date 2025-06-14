@@ -92,7 +92,7 @@ public class ProjectSettingManager extends AbstractEncryptedValuesManager<Projec
         return getEntitiesWithHighestPriority().stream().map(e -> (ProjectSetting) e).collect(Collectors.toList());
     }
 
-    private List<? extends EntityWithUniqueAttributes> getEntitiesWithHighestPriority() {
+    private List<? extends EntityWithUniqueAttributes>  getEntitiesWithHighestPriority() {
         // TODO: think if the ObjectFilter should also be applied here
 
         // TODO: maybe extract this logic to some common class (plugin)
