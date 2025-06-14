@@ -78,7 +78,9 @@ public class ProjectSetting extends EncryptedTrackedObject implements EntityWith
 
     @Override
     public String toString() {
-        return "ProjectSetting [key=" + key + "]";
+        return "ProjectSetting{" +
+                "value='" + value + '\'' +
+                ", key='" + key + '\'' +
+                '}';
     }
-
 }

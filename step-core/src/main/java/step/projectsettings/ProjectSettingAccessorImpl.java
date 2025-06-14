@@ -22,7 +22,6 @@ package step.projectsettings;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
 import step.core.settings.AbstractSettingAccessorWithHook;
@@ -47,8 +46,8 @@ public class ProjectSettingAccessorImpl extends AbstractSettingAccessorWithHook<
 
     @Override
     public ProjectSetting getSettingWithHighestPriority(String key) {
-        Stream<ProjectSetting> allEntities = getCollectionDriver().find(Filters.equals(ProjectSetting.KEY_FIELD_NAME, key), null, null, null, 0);
-        List<ProjectSetting> filtered = filterSettingsByPriority(allEntities);
+        Stream<ProjectSetting> filteredByKey = getCollectionDriver().find(Filters.equals(ProjectSetting.KEY_FIELD_NAME, key), null, null, null, 0);
+        List<ProjectSetting> filtered = filterSettingsByPriority(filteredByKey);
         if (filtered.size() == 0) {
             return null;
         } else if (filtered.size() > 1) {
@@ -67,20 +66,21 @@ public class ProjectSettingAccessorImpl extends AbstractSettingAccessorWithHook<
             groupedByKey.put(e.getKey(), e);
         });
 
-        for (Object key : groupedByKey.keys()) {
+        for (Object key : groupedByKey.keySet()) {
             List<ProjectSetting> settingsWithTheSameKey = groupedByKey.get(key);
             ProjectSetting settingWithHighestPriority = null;
+
             for (ProjectSetting projectSetting : settingsWithTheSameKey) {
-                String otherPriority = ((AbstractOrganizableObject) projectSetting).getAttribute(EntityWithUniqueAttributes.ATTRIBUTE_PRIORITY);
                 if (settingWithHighestPriority == null) {
                     settingWithHighestPriority = projectSetting;
                 } else {
-                    String currentPriority = ((AbstractOrganizableObject) settingWithHighestPriority).getAttribute(EntityWithUniqueAttributes.ATTRIBUTE_PRIORITY);
-                    if (Objects.equals(currentPriority, otherPriority)) {
+                    String currentPriority = projectSetting.getAttribute(EntityWithUniqueAttributes.ATTRIBUTE_PRIORITY);
+                    String highestPriority = settingWithHighestPriority.getAttribute(EntityWithUniqueAttributes.ATTRIBUTE_PRIORITY);
+                    if (Objects.equals(highestPriority, currentPriority)) {
                         throw new RuntimeException("Validation failed. 2 setting with same keys " + key + " with various priorities have been detected");
-                    } else if (currentPriority == null && otherPriority != null) {
+                    } else if (highestPriority == null && currentPriority != null) {
                         settingWithHighestPriority = projectSetting;
-                    } else if (otherPriority != null && Integer.parseInt(currentPriority) < Integer.parseInt(otherPriority)) {
+                    } else if (currentPriority != null && Integer.parseInt(highestPriority) < Integer.parseInt(currentPriority)) {
                         settingWithHighestPriority = projectSetting;
                     }
                 }
