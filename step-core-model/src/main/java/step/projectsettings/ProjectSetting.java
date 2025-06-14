@@ -24,6 +24,7 @@ import step.unique.EntityWithUniqueAttributes;
 public class ProjectSetting extends EncryptedTrackedObject implements EntityWithUniqueAttributes {
 
     public static final String ENTITY_NAME = "projectsettings";
+    public static final String KEY_FIELD_NAME = "key";
 
     protected String value;
     protected String description;

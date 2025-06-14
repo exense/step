@@ -23,8 +23,7 @@ package step.unique;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
-import step.core.collections.Filter;
-import step.core.collections.Filters;
+import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectValidator;
 
 import java.util.*;
@@ -34,29 +33,15 @@ public class UniqueEntityManager {
     public ObjectValidator createObjectValidator(CollectionFactory collectionFactory) {
         return enricheableObject -> {
             if (enricheableObject instanceof EntityWithUniqueAttributes) {
-                EntityWithUniqueAttributes e = (EntityWithUniqueAttributes) enricheableObject;
-                Collection<? extends EntityWithUniqueAttributes> collection = collectionFactory.getCollection(e.getEntityName(), e.getClass());
-
-                if (enricheableObject.getAttributes() != null && !enricheableObject.getAttributes().isEmpty()) {
-                    ArrayList<Filter> attrFilter = new ArrayList<>();
-                    for (Map.Entry<String, String> entry : enricheableObject.getAttributes().entrySet()) {
-                        attrFilter.add(Filters.equals("attributes." + entry.getKey(), entry.getValue()));
-                    }
-                    Filter filterByAttribute = Filters.and(attrFilter);
-                    if(e.getKeyFieldName() != null){
-                       attrFilter.add(Filters.equals(e.getKeyFieldName(), e.getKey()));
-                    }
-
-                    // filter out the entity with the same ID and apply the filter by key again (if getKeyFieldName returns null and the key is resolved dynamically)
-                    Optional<? extends EntityWithUniqueAttributes> collision = collection.find(filterByAttribute, null, null, null, 0)
-                            .filter(tmp -> !Objects.equals(((AbstractIdentifiableObject) e).getId(), ((AbstractIdentifiableObject) tmp).getId()) && Objects.equals(e.getKey(), tmp.getKey()))
-                            .findFirst();
-                    if (collision.isPresent()) {
-                        throw new RuntimeException(String.format("%s (%s) cannot be saved. Another entity (%s) with the same attributes has been detected",
-                                e.getEntityName(), ((AbstractIdentifiableObject) e).getId(), ((AbstractIdentifiableObject) collision.get()).getId()
-                        ));
-                    }
+                Collection<? extends EnricheableObject> collection = collectionFactory.getCollection(((EntityWithUniqueAttributes) enricheableObject).getEntityName(), enricheableObject.getClass());
+                EntityWithUniqueAttributesAccessor<? extends AbstractIdentifiableObject> accessor = new EntityWithUniqueAttributesAccessor<>(collection);
+                Optional<? extends EntityWithUniqueAttributes> duplicate = (Optional<? extends EntityWithUniqueAttributes>) accessor.findDuplicate((EntityWithUniqueAttributes) enricheableObject);
+                if (duplicate.isPresent()) {
+                    throw new RuntimeException(String.format("%s (%s) cannot be saved. Another entity (%s) with the same attributes has been detected",
+                            ((EntityWithUniqueAttributes) enricheableObject).getEntityName(), ((AbstractIdentifiableObject) enricheableObject).getId(), ((AbstractIdentifiableObject) duplicate.get()).getId()
+                    ));
                 }
+
             }
         };
     }

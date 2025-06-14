@@ -19,28 +19,22 @@
 package step.projectsettings;
 
 import ch.exense.commons.app.Configuration;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
 import step.commons.activation.Activator;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.encryption.EncryptionManager;
 import step.encryption.AbstractEncryptedValuesManager;
-import step.unique.EntityWithUniqueAttributes;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class ProjectSettingManager extends AbstractEncryptedValuesManager<ProjectSetting, String> {
 
-    private final Accessor<ProjectSetting> accessor;
+    private final ProjectSettingAccessor accessor;
 
-    public ProjectSettingManager(Accessor<ProjectSetting> accessor, EncryptionManager encryptionManager, Configuration configuration) {
+    public ProjectSettingManager(ProjectSettingAccessor accessor, EncryptionManager encryptionManager, Configuration configuration) {
         this(accessor, encryptionManager, configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE));
     }
 
-    public ProjectSettingManager(Accessor<ProjectSetting> accessor, EncryptionManager encryptionManager, String defaultScriptEngine) {
+    public ProjectSettingManager(ProjectSettingAccessor accessor, EncryptionManager encryptionManager, String defaultScriptEngine) {
         // project settings can't be dynamic, so the dynamic bean resolver is null
         super(encryptionManager, defaultScriptEngine, null);
         this.accessor = accessor;
@@ -89,47 +83,10 @@ public class ProjectSettingManager extends AbstractEncryptedValuesManager<Projec
     }
 
     public List<ProjectSetting> getAllSettingsWithUniqueKeys() {
-        return getEntitiesWithHighestPriority().stream().map(e -> (ProjectSetting) e).collect(Collectors.toList());
-    }
-
-    private List<? extends EntityWithUniqueAttributes>  getEntitiesWithHighestPriority() {
-        // TODO: think if the ObjectFilter should also be applied here
-
-        // TODO: maybe extract this logic to some common class (plugin)
-        List<? extends EntityWithUniqueAttributes> allSettings = StreamSupport.stream(
-                Spliterators.spliteratorUnknownSize(accessor.getAll(), Spliterator.ORDERED),
-                false).map(e -> (EntityWithUniqueAttributes) e).collect(Collectors.toList());
-
-        // to support multitenancy here we want to filter out settings (defined for global project) overridden in local project
-        List<? extends EntityWithUniqueAttributes> highestPriorityProjectSettings = new ArrayList<>();
-        ListMultimap<Object, EntityWithUniqueAttributes> groupedByKey = ArrayListMultimap.create();
-        for (EntityWithUniqueAttributes setting : allSettings) {
-            groupedByKey.put(setting.getKey(), setting);
-        }
-
-        for (Object key : groupedByKey.keys()) {
-            List<EntityWithUniqueAttributes> settingsWithTheSameKey = groupedByKey.get(key);
-            EntityWithUniqueAttributes settingWithHighestPriority = null;
-            for (EntityWithUniqueAttributes projectSetting : settingsWithTheSameKey) {
-                String otherPriority = ((AbstractOrganizableObject) projectSetting).getAttribute(EntityWithUniqueAttributes.ATTRIBUTE_PRIORITY);
-                if (settingWithHighestPriority == null) {
-                    settingWithHighestPriority = projectSetting;
-                } else {
-                    String currentPriority = ((AbstractOrganizableObject) settingWithHighestPriority).getAttribute(EntityWithUniqueAttributes.ATTRIBUTE_PRIORITY);
-                    if (Objects.equals(currentPriority, otherPriority)) {
-                        throw new RuntimeException("Validation failed. 2 setting with same keys " + key + " with various priorities have been detected");
-                    } else if (currentPriority == null && otherPriority != null) {
-                        settingWithHighestPriority = projectSetting;
-                    } else if (otherPriority != null && Integer.parseInt(currentPriority) < Integer.parseInt(otherPriority)) {
-                        settingWithHighestPriority = projectSetting;
-                    }
-                }
-            }
-        }
-        return highestPriorityProjectSettings;
+        return accessor.getSettingsWithHighestPriority();
     }
 
     public ProjectSetting getUniqueSettingByKey(String key) {
-        return getAllSettingsWithUniqueKeys().stream().filter(s -> Objects.equals(key, s.getKey())).findFirst().orElse(null);
+        return accessor.getSettingWithHighestPriority(key);
     }
 }

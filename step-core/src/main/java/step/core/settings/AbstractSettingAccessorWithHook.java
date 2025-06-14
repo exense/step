@@ -26,6 +26,8 @@ import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
+import step.core.objectenricher.EnricheableObject;
+import step.unique.EntityWithUniqueAttributesAccessor;
 
 import java.util.ArrayList;
 import java.util.List;

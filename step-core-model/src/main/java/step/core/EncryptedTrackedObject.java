@@ -27,8 +27,6 @@ public abstract class EncryptedTrackedObject extends AbstractTrackedObject imple
     public static final String PARAMETER_PROTECTED_VALUE_FIELD = "protectedValue";
     public static final String PARAMETER_VALUE_FIELD = "value";
 
-    protected static final String KEY_FIELD_NAME = "key";
-
     protected Boolean protectedValue = false;
 
     /**
