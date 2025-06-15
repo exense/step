@@ -22,6 +22,7 @@ import ch.exense.commons.app.Configuration;
 import step.commons.activation.Activator;
 import step.core.accessors.Accessor;
 import step.core.encryption.EncryptionManager;
+import step.core.objectenricher.ObjectFilter;
 import step.encryption.AbstractEncryptedValuesManager;
 
 import java.util.*;
@@ -82,11 +83,11 @@ public class ProjectSettingManager extends AbstractEncryptedValuesManager<Projec
         return "project setting";
     }
 
-    public List<ProjectSetting> getAllSettingsWithUniqueKeys() {
-        return accessor.getSettingsWithHighestPriority();
+    public List<ProjectSetting> getAllSettingsWithUniqueKeys(ObjectFilter additionalFilter) {
+        return accessor.getSettingsWithHighestPriority(additionalFilter);
     }
 
-    public ProjectSetting getUniqueSettingByKey(String key) {
-        return accessor.getSettingWithHighestPriority(key);
+    public ProjectSetting getUniqueSettingByKey(String key, ObjectFilter additionalFilter) {
+        return accessor.getSettingWithHighestPriority(key, additionalFilter);
     }
 }

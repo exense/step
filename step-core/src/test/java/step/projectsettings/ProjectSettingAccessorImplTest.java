@@ -40,7 +40,7 @@ public class ProjectSettingAccessorImplTest extends TestCase {
         ProjectSettingAccessorImpl accessor = new ProjectSettingAccessorImpl(new InMemoryCollection<>());
         prepareTestData(accessor);
 
-        List<ProjectSetting> settingsWithHighestPriority = accessor.getSettingsWithHighestPriority();
+        List<ProjectSetting> settingsWithHighestPriority = accessor.getSettingsWithHighestPriority(null);
         log.info("Found settings: {}", settingsWithHighestPriority);
 
         Assert.assertEquals(3, settingsWithHighestPriority.size());
@@ -56,7 +56,7 @@ public class ProjectSettingAccessorImplTest extends TestCase {
     public void testGetSettingWithHighestPriority(){
         ProjectSettingAccessorImpl accessor = new ProjectSettingAccessorImpl(new InMemoryCollection<>());
         prepareTestData(accessor);
-        ProjectSetting s = accessor.getSettingWithHighestPriority("key1");
+        ProjectSetting s = accessor.getSettingWithHighestPriority("key1", null);
         Assert.assertEquals("value with priority", s.getValue());
     }
 

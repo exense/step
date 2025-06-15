@@ -95,7 +95,7 @@ public class ProjectSettingServices extends AbstractStepServices {
     @Secured(right = "{entity}-read")
     public List<ProjectSetting> getUniqueSettings() {
         try {
-            return manager.getAllSettingsWithUniqueKeys();
+            return manager.getAllSettingsWithUniqueKeys(getObjectFilter());
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -107,7 +107,7 @@ public class ProjectSettingServices extends AbstractStepServices {
     @Secured(right = "{entity}-read")
     public ProjectSetting getUniqueSettingByKey(@QueryParam("key") String key) {
         try {
-            return manager.getUniqueSettingByKey(key);
+            return manager.getUniqueSettingByKey(key, getObjectFilter());
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }

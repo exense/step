@@ -21,12 +21,15 @@
 package step.projectsettings;
 
 import step.core.accessors.Accessor;
+import step.core.objectenricher.ObjectFilter;
 
 import java.util.List;
 
 public interface ProjectSettingAccessor extends Accessor<ProjectSetting> {
 
-    List<ProjectSetting> getSettingsWithHighestPriority();
+    List<ProjectSetting> getSettingsWithHighestPriority(ObjectFilter filter);
 
-    ProjectSetting getSettingWithHighestPriority(String key);
+    ProjectSetting getSettingWithHighestPriority(String key, ObjectFilter filter);
+
+    List<ProjectSetting> getSettingByKey(String key, ObjectFilter objectFilter);
 }

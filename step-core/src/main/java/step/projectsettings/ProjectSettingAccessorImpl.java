@@ -23,13 +23,17 @@ package step.projectsettings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import step.core.collections.Collection;
+import step.core.collections.Filter;
 import step.core.collections.Filters;
+import step.core.objectenricher.ObjectFilter;
+import step.core.ql.OQLFilterBuilder;
 import step.core.settings.AbstractSettingAccessorWithHook;
 import step.unique.EntityWithUniqueAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ProjectSettingAccessorImpl extends AbstractSettingAccessorWithHook<ProjectSetting> implements ProjectSettingAccessor {
@@ -39,14 +43,18 @@ public class ProjectSettingAccessorImpl extends AbstractSettingAccessorWithHook<
     }
 
     @Override
-    public List<ProjectSetting> getSettingsWithHighestPriority() {
-        Stream<ProjectSetting> allEntities = getCollectionDriver().find(Filters.empty(), null, null, null, 0);
+    public List<ProjectSetting> getSettingsWithHighestPriority(ObjectFilter filter) {
+        Stream<ProjectSetting> allEntities = getCollectionDriver().find(getFilterNotNull(filter), null, null, null, 0);
         return filterSettingsByPriority(allEntities);
     }
 
+    private static Filter getFilterNotNull(ObjectFilter filter) {
+        return filter == null ? Filters.empty() : (filter.getOQLFilter() == null ? Filters.empty() : OQLFilterBuilder.getFilter(filter.getOQLFilter()));
+    }
+
     @Override
-    public ProjectSetting getSettingWithHighestPriority(String key) {
-        Stream<ProjectSetting> filteredByKey = getCollectionDriver().find(Filters.equals(ProjectSetting.KEY_FIELD_NAME, key), null, null, null, 0);
+    public ProjectSetting getSettingWithHighestPriority(String key, ObjectFilter filter) {
+        Stream<ProjectSetting> filteredByKey = getSettingsStreamByKey(key, filter);
         List<ProjectSetting> filtered = filterSettingsByPriority(filteredByKey);
         if (filtered.size() == 0) {
             return null;
@@ -55,6 +63,18 @@ public class ProjectSettingAccessorImpl extends AbstractSettingAccessorWithHook<
         } else {
             return filtered.get(0);
         }
+    }
+
+    private Stream<ProjectSetting> getSettingsStreamByKey(String key, ObjectFilter filter) {
+        Filter additionalFilterNotNull = getFilterNotNull(filter);
+        Filter filterByKey = Filters.equals(ProjectSetting.KEY_FIELD_NAME, key);
+        Stream<ProjectSetting> filteredByKey = getCollectionDriver().find(Filters.and(List.of(additionalFilterNotNull, filterByKey)), null, null, null, 0);
+        return filteredByKey;
+    }
+
+    @Override
+    public List<ProjectSetting> getSettingByKey(String key, ObjectFilter objectFilter){
+        return getSettingsStreamByKey(key, objectFilter).collect(Collectors.toList());
     }
 
     private static List<ProjectSetting> filterSettingsByPriority(Stream<ProjectSetting> allEntities) {
