@@ -19,9 +19,8 @@
 package step.repositories.artifact;
 
 import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageReader;
 import step.core.execution.ExecutionContext;
-import step.core.plans.PlanAccessor;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.RepositoryObjectReference;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
@@ -46,7 +45,7 @@ public class ResourceArtifactRepository extends AbstractArtifactRepository {
 	}
 
     @Override
-	public File getArtifact(Map<String, String> repositoryParameters) {
+	public File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
 		String resourceId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
 		return getResourceFile(resourceId);
 	}

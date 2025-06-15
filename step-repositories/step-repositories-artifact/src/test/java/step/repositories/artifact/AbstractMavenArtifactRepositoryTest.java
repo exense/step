@@ -42,15 +42,16 @@ import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.JMeterFunctionType;
 import step.plugins.node.NodeFunction;
 import step.plugins.node.NodeFunctionType;
+import step.repositories.ArtifactRepositoryConstants;
 import step.resources.LocalResourceManagerImpl;
 
 import java.util.Map;
 
 public abstract class AbstractMavenArtifactRepositoryTest {
 
-    protected static final Map<String, String> REPOSITORY_PARAMETERS = Map.of(MavenArtifactRepository.PARAM_GROUP_ID, "ch.exense.step",
-            MavenArtifactRepository.PARAM_ARTIFACT_ID, "step-automation-packages-junit", MavenArtifactRepository.PARAM_VERSION, "0.0.0",
-            MavenArtifactRepository.PARAM_CLASSIFIER, "tests");
+    protected static final Map<String, String> REPOSITORY_PARAMETERS = Map.of(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, "ch.exense.step",
+            ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, "step-automation-packages-junit", ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, "0.0.0",
+            ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, "tests");
     protected static final String MAVEN_SETTINGS_NEXUS = "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "  xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
             "    <profiles>\n" +
@@ -82,7 +83,7 @@ public abstract class AbstractMavenArtifactRepositoryTest {
         FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry();
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), new LocalResourceManagerImpl(), apReader, hookRegistry);
-        artifactRepository = new MavenArtifactRepository(apManager, functionTypeRegistry, functionAccessor, configuration, controllerSettingAccessor);
+        artifactRepository = new MavenArtifactRepository(apManager, functionTypeRegistry, functionAccessor, configuration, controllerSettingAccessor, null);
 
         // mock the context, which is normally prepared via FunctionPlugin
         executionContext = ExecutionEngine.builder().build().newExecutionContext();

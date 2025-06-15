@@ -352,7 +352,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 		//the resolved plan nodes when required
 		// Resolved plans might be disabled
 		if (resolvedPlanBuilder != null) {
-			resolvedPlanBuilder.checkAndAddMissingResolvedPlanNode(artefactHash, artefact, parentReportNode, reportNodeCache, reportNode.getParentSource());
+			resolvedPlanBuilder.checkAndAddMissingResolvedPlanNode(context.getExecutionId(), artefactHash, artefact, parentReportNode, reportNodeCache, reportNode.getParentSource());
 		}
 
 		context.setCurrentReportNode(reportNode);

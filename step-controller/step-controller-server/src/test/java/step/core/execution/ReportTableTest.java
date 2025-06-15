@@ -73,7 +73,7 @@ public class ReportTableTest {
         AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, reportNode.getId().toHexString(), true, null);
         AggregatedReport aggregatedReport = aggregatedReportViewBuilder.buildAggregatedReport(aggregatedReportViewRequest);
 
-        assertEquals("For: 0x\n" +
+        assertEquals("For: *x\n" +
                         " Echo: 1x: PASSED > test\n" +
                         " For: 1x: PASSED\n" +
                         "  Set: 5x: PASSED\n" +

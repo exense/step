@@ -89,7 +89,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
         PackageExecutionContext ctx = null;
         try {
-            File artifact = getArtifact(repositoryParameters);
+            File artifact = getArtifact(repositoryParameters, objectPredicate);
 
             // we don't pass the ObjectValidator here, because it is only required to validate the entity before persist into DB
             ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false);
@@ -243,13 +243,13 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return plan.getAttributes().get(AbstractOrganizableObject.NAME);
     }
 
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId, ObjectPredicate objectPredicate) {
         // for files provided by artifact repository we don't store the file as resource, but just load the file from this repository
         RepositoryObjectReference repositoryObject = parameters.getOriginalRepositoryObject();
         if (repositoryObject == null) {
             throw new AutomationPackageManagerException("Unable to resolve AP file. Repository object is undefined");
         }
-        File artifact = getArtifact(parameters.getOriginalRepositoryObject().getRepositoryParameters());
+        File artifact = getArtifact(parameters.getOriginalRepositoryObject().getRepositoryParameters(), objectPredicate);
         return new AutomationPackageFile(artifact, null);
     }
 
@@ -263,14 +263,14 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 contextId = new ObjectId().toString();
             }
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
-            AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters);
+            AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters, predicate);
             return createIsolatedPackageExecutionContext(enricher, predicate, contextId, apFile, false);
         }
         return current;
     }
 
-    protected AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters) {
-        File artifact = getArtifact(repositoryParameters);
+    protected AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+        File artifact = getArtifact(repositoryParameters, objectPredicate);
         if (artifact == null) {
             throw new AutomationPackageManagerException("Unable to resolve the requested Automation Package file in artifact repository " + this.getClass().getSimpleName() + " with parameters " + repositoryParameters);
         }

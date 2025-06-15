@@ -16,9 +16,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core;
+package step.core.maven;
 
-public interface Constants {
-    String STEP_API_VERSION_STRING = "3.28.0";
-    Version STEP_API_VERSION = new Version(STEP_API_VERSION_STRING);
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+
+public class MavenArtifactIdentifierFromXmlParser {
+
+    private final XmlMapper xmlMapper;
+
+    public MavenArtifactIdentifierFromXmlParser() {
+        this.xmlMapper = new XmlMapper();
+        xmlMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
+    public MavenArtifactIdentifierFromXmlParser(XmlMapper xmlMapper) {
+        this.xmlMapper = xmlMapper;
+    }
+
+    public MavenArtifactIdentifier parse(String xmlSnippet) throws JsonProcessingException {
+        return xmlMapper.readValue(xmlSnippet, MavenArtifactIdentifier.class);
+    }
 }

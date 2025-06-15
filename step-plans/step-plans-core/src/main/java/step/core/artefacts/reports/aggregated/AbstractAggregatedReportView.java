@@ -60,7 +60,12 @@ public abstract class AbstractAggregatedReportView {
     public StringBuffer getStatusCountDetails(AbstractAggregatedReportView node) {
         StringBuffer stringBuffer = new StringBuffer();
         long totalCount = node.countTotal();
-        stringBuffer.append(totalCount).append("x");
+        if (totalCount == 0 && node instanceof AggregatedReportView) {
+            AggregatedReportView aggregatedReportView = (AggregatedReportView) node;
+            stringBuffer.append((aggregatedReportView.hasDescendantInvocations) ? "*x": "-");
+        } else {
+            stringBuffer.append(totalCount).append("x");;
+        }
         if (totalCount > 0) {
             stringBuffer.append(": ");
             if (node.countByStatus.size() == 1) {

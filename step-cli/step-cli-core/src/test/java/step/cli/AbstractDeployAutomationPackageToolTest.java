@@ -11,6 +11,7 @@ import step.automation.packages.AutomationPackageUpdateStatus;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.controller.multitenancy.Tenant;
+import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +63,12 @@ public class AbstractDeployAutomationPackageToolTest {
         }
 
         @Override
-        protected File getFileToUpload() throws StepCliExecutionException {
+        protected MavenArtifactIdentifier getMavenArtifactIdentifierToUpload() {
+            return null;
+        }
+
+        @Override
+        protected File getLocalFileToUpload() throws StepCliExecutionException {
             return TEST_FILE;
         }
 

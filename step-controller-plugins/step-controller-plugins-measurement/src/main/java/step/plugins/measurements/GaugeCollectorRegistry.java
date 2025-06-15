@@ -4,10 +4,9 @@ import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -24,14 +23,14 @@ public class GaugeCollectorRegistry {
 	private final ScheduledExecutorService scheduler =
 			Executors.newScheduledThreadPool(1, new BasicThreadFactory.Builder().namingPattern("gauge-collector-%d").build());
 
-	Map<String, GaugeCollector> collectors = new HashMap<>();
-	List<MeasurementHandler> handlers = new ArrayList<MeasurementHandler>();
+	Map<String, GaugeCollector> collectors = new ConcurrentHashMap<>();
+	List<MeasurementHandler> handlers = new CopyOnWriteArrayList<>();
 
-	public synchronized void registerCollector(String name, GaugeCollector collector){
+	public void registerCollector(String name, GaugeCollector collector){
 		collectors.put(name, collector);
 	}
 
-	public synchronized void  registerHandler(MeasurementHandler handler){
+	public void  registerHandler(MeasurementHandler handler){
 		handlers.add(handler);
 	}
 

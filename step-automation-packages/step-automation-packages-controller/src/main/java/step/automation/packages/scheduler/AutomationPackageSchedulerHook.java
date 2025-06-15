@@ -35,10 +35,7 @@ import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.*;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AutomationPackageSchedulerHook implements AutomationPackageHook<ExecutiontTaskParameters> {
@@ -91,14 +88,16 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
                                  AutomationPackageContent apContent, List<?> objects,
                                  AutomationPackage oldPackage, AutomationPackageStaging targetStaging) {
         if (isSchedulerInContext(apContext)) {
+            List<ExecutiontTaskParameters> preparedForStaging = prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects,
+                    apContent,
+                    apContext,
+                    oldPackage,
+                    targetStaging.getPlans()
+            );
+
             targetStaging.getAdditionalObjects().put(
                     AutomationPackageSchedule.FIELD_NAME_IN_AP,
-                    prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects,
-                            apContent,
-                            apContext,
-                            oldPackage,
-                            targetStaging.getPlans()
-                    )
+                    preparedForStaging
             );
         }
     }
@@ -119,10 +118,13 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
 
             execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
+
             execTaskParameters.setCronExpression(schedule.getCron());
+
             List<String> cronExclusionsAsStrings = schedule.getCronExclusions();
             if (cronExclusionsAsStrings != null && !cronExclusionsAsStrings.isEmpty()) {
-                List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream().map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
+                List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream()
+                        .map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
                 execTaskParameters.setCronExclusions(cronExclusions);
             }
             String assertionPlanName = schedule.getAssertionPlanName();
@@ -155,9 +157,32 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             execTaskParameters.setExecutionsParameters(executionParameters);
             completeExecTasksParameters.add(execTaskParameters);
         }
+
+        // IMPORTANT: we need to validate parameters BEFORE reusing old ids, because within 'validateCronExpressions'
+        // we use the scheduler to create (and then remove) the temporary calendar linked with 'completeExecTasksParameters'.
+        // And we don't want to modify potentially existing calendars bound with old ids
+
+        // validate the cron expression to avoid failures on 'onCreate' hook, when the AP is already partially persisted
+        validateCronExpressions(completeExecTasksParameters, packageContext);
+
         Entity.reuseOldIds(completeExecTasksParameters, oldPackage != null ? getPackageSchedules(oldPackage.getId(), packageContext) : new ArrayList<>());
         completeExecTasksParameters.forEach(packageContext.getEnricher());
         return completeExecTasksParameters;
+    }
+
+    private void validateCronExpressions(List<ExecutiontTaskParameters> params, AutomationPackageContext automationPackageContext) {
+        ExecutionScheduler scheduler = getExecutionScheduler(automationPackageContext);
+        for (ExecutiontTaskParameters param : params) {
+            Executor executor = scheduler.getExecutor();
+            if (executor != null) {
+                // common validation to check the syntax of cron expression and cron exclusions
+                executor.validate(param);
+
+                // check the validity of cron exclusions - it requires to create a new trigger with calendar of exclusions
+                executor.createAndValidateTrigger(param, true);
+            }
+
+        }
     }
 
     protected Plan lookupPlanByName(List<Plan> plansStaging, String planName, AutomationPackageContext context) {

@@ -3,11 +3,7 @@ package step.core.artefacts.reports.aggregated;
 import ch.exense.commons.app.Configuration;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.collections.CollectionFactory;
-import step.core.collections.Filters;
-import step.core.collections.IndexField;
-import step.core.collections.Order;
-import step.core.collections.filters.And;
+import step.core.collections.*;
 import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
 import step.core.timeseries.aggregation.TimeSeriesOptimizationType;
@@ -90,19 +86,28 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         public long to;
     }
 
-    public Map<String, Bucket> queryByExecutionIdAndArtefactHash(String executionId, String artefactHash, Range range) {
-        And filter = Filters.and(List.of(Filters.equals("attributes." + EXECUTION_ID, executionId), Filters.equals("attributes." + ARTEFACT_HASH, artefactHash)));
+
+    public Map<String, Map<String, Bucket>> queryByExecutionIdAndGroupByArtefactHashAndStatuses(String executionId, Range range) {
+        Filter filter = Filters.equals("attributes." + EXECUTION_ID, executionId);
         TimeSeriesAggregationQueryBuilder queryBuilder = new TimeSeriesAggregationQueryBuilder()
                 .withOptimizationType(TimeSeriesOptimizationType.MOST_ACCURATE)
                 .withFilter(filter)
-                .withGroupDimensions(Set.of(STATUS))
+                .withGroupDimensions(Set.of(ARTEFACT_HASH, STATUS))
                 .split(1);
 
         if (range != null) {
             queryBuilder.range(range.from, range.to);
         }
         return timeSeries.getAggregationPipeline().collect(queryBuilder.build())
-                .getSeries().entrySet().stream().collect(Collectors.toMap(k -> (String) k.getKey().get(STATUS), v -> v.getValue().values().stream().findFirst().orElseThrow()));
+                .getSeries().entrySet().stream()
+                .filter(e -> e.getKey().containsKey(ARTEFACT_HASH) && e.getKey().containsKey(STATUS))
+                .collect(Collectors.groupingBy(
+                        e -> (String) e.getKey().get(ARTEFACT_HASH), // outer key
+                        Collectors.toMap(
+                                e -> (String)  e.getKey().get(STATUS),    // inner key
+                                e -> e.getValue().values().stream().findFirst().orElse(new Bucket())
+                        )
+                ));
     }
 
     @Override
