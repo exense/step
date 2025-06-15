@@ -71,6 +71,10 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 		return objectHookRegistry.getObjectEnricher(getSession());
 	}
 
+	protected ObjectValidator getObjectValidator(){
+		return objectHookRegistry.getObjectValidator(getSession());
+	}
+
 	protected ObjectFilter getObjectFilter() {
 		return objectHookRegistry.getObjectFilter(getSession());
 	}
