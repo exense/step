@@ -37,6 +37,8 @@ public class AutomationPackageTestUtils {
     public static final String PLAN_NAME_FROM_DESCRIPTOR = "Test Plan";
     public static final String PLAN_NAME_FROM_DESCRIPTOR_2 = "Test Plan 2";
     public static final String PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT = "Plain text plan";
+    public static final String PLAN_NAME_PLAIN_TEXT_2 = "firstPlainText.plan";
+    public static final String PLAN_NAME_PLAIN_TEXT_3 = "secondPlainText.plan";
     public static final String PLAN_NAME_WITH_COMPOSITE = "Test Plan with Composite";
     public static final String INLINE_PLAN = "Inline Plan";
     public static final String PLAN_FROM_PLANS_ANNOTATION = "plan.plan";
