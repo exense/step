@@ -244,7 +244,7 @@ public class FunctionMessageHandlerTest {
 	}
 
 	private AgentTokenServices getLocalAgentTokenServices() {
-		AgentTokenServices tokenServices = new AgentTokenServices(new FunctionMessageHandlerTest.TestFileManagerClient());
+		AgentTokenServices tokenServices = new AgentTokenServices(new FunctionMessageHandlerTest.TestFileManagerClient(), null);
 		tokenServices.setApplicationContextBuilder(new ApplicationContextBuilder(new ExecutionContextCacheConfiguration()));
 		Map<String, String> agentProperties = new HashMap<>();
 		agentProperties.put("myAgentProp1", "myAgentPropValue1");
