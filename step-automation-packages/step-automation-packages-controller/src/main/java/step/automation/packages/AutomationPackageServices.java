@@ -116,7 +116,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             ObjectId id = automationPackageManager.createAutomationPackage(
                     automationPackageInputStream, fileDetail.getFileName(),
                     apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate()
+                    getObjectEnricher(), getObjectPredicate(), getObjectValidator()
             );
             return id == null ? null : id.toString();
         } catch (AutomationPackageManagerException e) {
@@ -192,7 +192,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     fileDetail == null ? null : fileDetail.getFileName(),
                     executionParameters,
                     getObjectEnricher(),
-                    getObjectPredicate()
+                    getObjectPredicate(),
+                    getObjectValidator()
             );
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
@@ -259,7 +260,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             return automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
                     uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), async != null && async
+                    getObjectEnricher(), getObjectPredicate(), getObjectValidator(), async != null && async
             );
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
@@ -290,7 +291,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
                     true, true, null, uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), async != null && async
+                    getObjectEnricher(), getObjectPredicate(), getObjectValidator(), async != null && async
             );
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
