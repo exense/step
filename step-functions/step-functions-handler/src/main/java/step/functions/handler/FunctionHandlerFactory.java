@@ -24,18 +24,30 @@ import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.filemanager.FileManagerClient;
+import step.grid.io.stream.StreamableAttachmentsHandler;
+import step.grid.io.stream.StreamableAttachmentsHandlerFactory;
 
 public class FunctionHandlerFactory {
 	
 	private final ApplicationContextBuilder applicationContextBuilder;
 	
 	private final FileManagerClient fileManagerClient;
+	private final StreamableAttachmentsHandlerFactory streamableAttachmentsHandlerFactory;
 	
+	public FunctionHandlerFactory(ApplicationContextBuilder applicationContextBuilder, FileManagerClient fileManagerClient, StreamableAttachmentsHandlerFactory streamableAttachmentsHandlerFactory) {
+		super();
+		this.applicationContextBuilder = applicationContextBuilder;
+		this.fileManagerClient = fileManagerClient;
+		this.streamableAttachmentsHandlerFactory = streamableAttachmentsHandlerFactory;
+	}
+
 	public FunctionHandlerFactory(ApplicationContextBuilder applicationContextBuilder, FileManagerClient fileManagerClient) {
 		super();
 		this.applicationContextBuilder = applicationContextBuilder;
 		this.fileManagerClient = fileManagerClient;
+		this.streamableAttachmentsHandlerFactory = null;
 	}
+
 
 	/**
 	 * Creates a new instance of {@link AbstractFunctionHandler}
@@ -65,7 +77,10 @@ public class FunctionHandlerFactory {
 	 * @return the initialized {@link AbstractFunctionHandler}
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public AbstractFunctionHandler initialize(AbstractFunctionHandler functionHandler, TokenSession tokenSession, TokenReservationSession tokenReservationSession, Map<String, String> properties) {
+	public AbstractFunctionHandler initialize(AbstractFunctionHandler functionHandler,
+											  TokenSession tokenSession,
+											  TokenReservationSession tokenReservationSession,
+											  Map<String, String> properties) {
 		functionHandler.setFunctionHandlerFactory(this);
 		functionHandler.setApplicationContextBuilder(applicationContextBuilder);
 		functionHandler.setFileManagerClient(fileManagerClient);
@@ -73,7 +88,10 @@ public class FunctionHandlerFactory {
 		
 		functionHandler.setTokenSession(tokenSession);
 		functionHandler.setTokenReservationSession(tokenReservationSession);
-		
+		if (streamableAttachmentsHandlerFactory != null) {
+			functionHandler.setStreamableAttachmentsHandler(streamableAttachmentsHandlerFactory.create(tokenReservationSession));
+		}
+
 		functionHandler.initialize();
 		return functionHandler;
 	}

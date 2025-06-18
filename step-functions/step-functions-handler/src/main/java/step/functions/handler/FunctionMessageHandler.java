@@ -68,7 +68,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		
 		applicationContextBuilder.forkCurrentContext(AbstractFunctionHandler.FORKED_BRANCH);
 		
-		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient());
+		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient(), agentTokenServices.getStreamableAttachmentsHandlerFactory());
 	}
 
 	@Override
