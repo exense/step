@@ -35,10 +35,7 @@ import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.*;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AutomationPackageSchedulerHook implements AutomationPackageHook<ExecutiontTaskParameters> {
@@ -57,7 +54,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
         if (isSchedulerInContext(context)) {
             ExecutionScheduler executionScheduler = getExecutionScheduler(context);
             for (ExecutiontTaskParameters entity : entities) {
-                //make sure the execution parameter of the schedule are enriched too (required to execute in same project
+                // make sure the execution parameter of the schedule are enriched too (required to execute in same project
                 // as the schedule and populate event bindings
                 context.getEnricher().accept(entity.getExecutionsParameters());
                 executionScheduler.addOrUpdateExecutionTask(entity, false);
@@ -91,7 +88,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
                                  AutomationPackageContent apContent, List<?> objects,
                                  AutomationPackage oldPackage, AutomationPackageStaging targetStaging) {
         if (isSchedulerInContext(apContext)) {
-            targetStaging.getAdditionalObjects().put(
+            targetStaging.addAdditionalObjects(
                     AutomationPackageSchedule.FIELD_NAME_IN_AP,
                     prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects,
                             apContent,

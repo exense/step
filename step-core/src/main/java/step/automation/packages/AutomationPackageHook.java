@@ -26,7 +26,7 @@ public interface AutomationPackageHook<T> {
                                       List<?> yamlData,
                                       AutomationPackageContent targetContent) {
         // by default, just copy the yaml objects to automation package content
-        targetContent.getAdditionalData().put(fieldName, yamlData);
+        targetContent.addToAdditionalData(fieldName, yamlData);
     }
 
     /**
@@ -39,7 +39,7 @@ public interface AutomationPackageHook<T> {
                                   AutomationPackage oldPackage,
                                   AutomationPackageStaging targetStaging) {
         // by default, we simply put the objects to staging
-        targetStaging.getAdditionalObjects().put(fieldName, objects);
+        targetStaging.addAdditionalObjects(fieldName, objects);
     }
 
     /**

@@ -62,7 +62,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
 
     @Override
     public void onPrepareStaging(String fieldName, AutomationPackageContext apContext, AutomationPackageContent apContent, List<?> objects, AutomationPackage oldPackage, AutomationPackageStaging targetStaging) {
-        targetStaging.getAdditionalObjects().put(
+        targetStaging.addAdditionalObjects(
                 AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
                 objects.stream().map(p -> ((AutomationPackageParameter)p).toParameter()).collect(Collectors.toList())
         );
