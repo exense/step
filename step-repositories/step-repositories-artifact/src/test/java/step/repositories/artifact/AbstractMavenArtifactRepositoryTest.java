@@ -44,6 +44,7 @@ import step.plugins.node.NodeFunction;
 import step.plugins.node.NodeFunctionType;
 import step.resources.LocalResourceManagerImpl;
 
+import java.io.IOException;
 import java.util.Map;
 
 public abstract class AbstractMavenArtifactRepositoryTest {
@@ -93,6 +94,13 @@ public abstract class AbstractMavenArtifactRepositoryTest {
     protected void cleanup() {
         if (apManager != null) {
             apManager.cleanup();
+        }
+        if (executionContext != null) {
+            try {
+                executionContext.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
