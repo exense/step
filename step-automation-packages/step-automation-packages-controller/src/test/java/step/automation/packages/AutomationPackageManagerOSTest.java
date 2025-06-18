@@ -82,7 +82,9 @@ public class AutomationPackageManagerOSTest {
     // 2 annotated plans and 5 plans from yaml descriptor
     public static final int PLANS_COUNT = 7;
     public static final int SCHEDULES_COUNT = 1;
-    public static final int PARAMETERS_COUNT = 3;
+
+    // 3 parameters from one fragment and 1 from another
+    public static final int PARAMETERS_COUNT = 4;
 
     private AutomationPackageManager manager;
     private AutomationPackageAccessorImpl automationPackageAccessor;
@@ -224,11 +226,11 @@ public class AutomationPackageManagerOSTest {
             Assert.assertNotNull(newTask);
             assertFalse(newTask.isActive());
 
-            // 1 parameter is saved
+            // 2 parameter are saved
             List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result.getId())).collect(Collectors.toList());
-            Assert.assertEquals(1, allParameters.size());
-            Parameter parameter = allParameters.get(0);
-            assertEquals("myKey", parameter.getKey());
+            Assert.assertEquals(2, allParameters.size());
+
+            Parameter parameter = allParameters.stream().filter(p -> "myKey".equals(p.getKey())).findFirst().orElseThrow();
             assertEquals("myValue", parameter.getValue().get());
             assertEquals("some description", parameter.getDescription());
             assertEquals("abc", parameter.getActivationExpression().getScript());
@@ -237,6 +239,9 @@ public class AutomationPackageManagerOSTest {
             assertEquals(true, parameter.getProtectedValue());
             assertEquals(ParameterScope.GLOBAL, parameter.getScope());
             assertEquals(null, parameter.getScopeEntity());
+
+            parameter = allParameters.stream().filter(p -> "myKey2".equals(p.getKey())).findFirst().orElseThrow();
+            assertEquals("some description 2", parameter.getDescription());
         }
 
         // 3. Upload the original sample again - added plans/functions/tasks from step 2 should be removed
@@ -405,6 +410,9 @@ public class AutomationPackageManagerOSTest {
         List<Parameter> parameters = (List<Parameter>) allEntities.get("parameters");
         Assert.assertEquals(PARAMETERS_COUNT, parameters.size());
         Assert.assertTrue(parameters.stream().anyMatch(p -> p.getDescription().equals("some description")));
+
+        // parameter from parameters2.yml
+        Assert.assertTrue(parameters.stream().anyMatch(p -> p.getKey().equals("myKey2")));
     }
 
     private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
@@ -499,6 +507,10 @@ public class AutomationPackageManagerOSTest {
             assertTrue(parameter.getValue().isDynamic());
             assertEquals("mySimpleKey", parameter.getValue().getExpression());
             assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global by default
+
+            // parameter from parameters2.yml
+            parameter = allParameters.get(3);
+            assertEquals("myKey2", parameter.getKey());
         }
         return r;
     }
