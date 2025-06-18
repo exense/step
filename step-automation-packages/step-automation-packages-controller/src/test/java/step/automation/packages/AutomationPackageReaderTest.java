@@ -6,6 +6,8 @@ import jakarta.json.spi.JsonProvider;
 import org.apache.commons.collections.CollectionUtils;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.CallFunction;
 import step.artefacts.Sequence;
 import step.artefacts.TestCase;
@@ -45,6 +47,8 @@ public class AutomationPackageReaderTest {
     private static final String KEYWORD_SCHEMA_FROM_SAMPLE = "{\"type\":\"object\", \"properties\": { "
             + "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
             + "}, \"required\" : []}";
+
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageReaderTest.class);
 
     private final AutomationPackageReader reader;
 
@@ -111,28 +115,40 @@ public class AutomationPackageReaderTest {
 
         AutomationPackageTestUtils.findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, INLINE_PLAN);
 
-        // 2 annotated plans and 3 plans in yaml descriptor
+        // 2 annotated plans and 5 plans in yaml descriptor
         List<Plan> plans = automationPackageContent.getPlans();
-        assertEquals("Detected plans: " + plans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()), 5, plans.size());
+        assertEquals("Detected plans: " + plans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()),
+                7, plans.size());
+
         Plan testPlan = findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR);
         assertEquals(TestCase.class, testPlan.getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, PLAN_FROM_PLANS_ANNOTATION).getRoot().getClass());
         assertEquals(TestCase.class, AutomationPackageTestUtils.findPlanByName(plans, INLINE_PLAN).getRoot().getClass());
 
-        // Check plain text plan
+        // Check plain text plans
         Plan plainTextPlan = findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT);
+        assertEquals(Sequence.class, plainTextPlan.getRoot().getClass());
+
+        // plain text plans resolved by wildcards
+        plainTextPlan =  findPlanByName(plans, PLAN_NAME_PLAIN_TEXT_2);
+        assertEquals(Sequence.class, plainTextPlan.getRoot().getClass());
+
+        plainTextPlan =  findPlanByName(plans, PLAN_NAME_PLAIN_TEXT_3);
         assertEquals(Sequence.class, plainTextPlan.getRoot().getClass());
 
         //Assert all categories
         Map<String, List<String>> expectedCategoriesByPlan = Map.of(
-                "Test Plan", List.of("Yaml Plan"),
-                "Test Plan with Composite", List.of("Yaml Plan", "Composite"),
-                "plan.plan", List.of("PlainTextPlan", "AnnotatedPlan"),
-                "Plain text plan", List.of("PlainTextPlan"),
-                "Inline Plan", List.of("InlinePlan", "AnnotatedPlan")
+                PLAN_NAME_FROM_DESCRIPTOR, List.of("Yaml Plan"),
+                PLAN_NAME_WITH_COMPOSITE, List.of("Yaml Plan", "Composite"),
+                PLAN_FROM_PLANS_ANNOTATION, List.of("PlainTextPlan", "AnnotatedPlan"),
+                PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT, List.of("PlainTextPlan"),
+                PLAN_NAME_PLAIN_TEXT_2, List.of("PlainTextPlan"),
+                PLAN_NAME_PLAIN_TEXT_3, List.of("PlainTextPlan"),
+                INLINE_PLAN, List.of("InlinePlan", "AnnotatedPlan")
         );
         for (Plan plan : plans) {
             String planName = plan.getAttribute(AbstractOrganizableObject.NAME);
+            log.info("Checking the category for plan: " + planName);
             assertTrue(CollectionUtils.isEqualCollection(expectedCategoriesByPlan.get(planName), plan.getCategories()));
         }
 
@@ -147,9 +163,11 @@ public class AutomationPackageReaderTest {
         assertEquals("{\"myInput\":{\"dynamic\":false,\"value\":\"myValue\"}}", callKeyword.getArgument().get());
 
         // 1 parameter
-        List<AutomationPackageParameter> parameters = (List<AutomationPackageParameter>) automationPackageContent.getAdditionalData().get(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP);
+        List<AutomationPackageParameter> parameters = (List<AutomationPackageParameter>) automationPackageContent.getAdditionalData(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP);
         assertNotNull(parameters);
-        assertEquals(3, parameters.size());
+
+        // 3 parameters from one fragment and 1 parameter from another one
+        assertEquals(4, parameters.size());
         AutomationPackageParameter parameter = parameters.get(0);
         assertEquals("myKey", parameter.getKey());
         assertEquals("myValue", parameter.getValue().get());
@@ -159,18 +177,23 @@ public class AutomationPackageReaderTest {
         assertEquals(true, parameter.getProtectedValue());
         assertEquals(ParameterScope.APPLICATION, parameter.getScope());
         assertEquals("entity", parameter.getScopeEntity());
+
         parameter = parameters.get(1);
         assertEquals("mySimpleKey", parameter.getKey());
         assertFalse(parameter.getValue().isDynamic());
         assertEquals("mySimpleValue", parameter.getValue().get());
         assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global is default value
         assertEquals(false, parameter.getProtectedValue());
+
         parameter = parameters.get(2);
         assertEquals("myDynamicParam", parameter.getKey());
         assertTrue(parameter.getValue().isDynamic());
         assertEquals("mySimpleKey", parameter.getValue().getExpression());
         assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global is default value
         assertEquals(false, parameter.getProtectedValue());
+
+        parameter = parameters.get(3);
+        assertEquals("myKey2", parameter.getKey());
     }
 
     @Test

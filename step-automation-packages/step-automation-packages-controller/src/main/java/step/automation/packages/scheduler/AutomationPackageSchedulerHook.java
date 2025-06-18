@@ -95,10 +95,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
                     targetStaging.getPlans()
             );
 
-            targetStaging.getAdditionalObjects().put(
-                    AutomationPackageSchedule.FIELD_NAME_IN_AP,
-                    preparedForStaging
-            );
+            targetStaging.addAdditionalObjects(AutomationPackageSchedule.FIELD_NAME_IN_AP, preparedForStaging);
         }
     }
 
