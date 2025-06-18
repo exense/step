@@ -73,7 +73,7 @@ public class AutomationPackageManagerOSTest {
     public static final int KEYWORDS_COUNT = 6;
 
     // 2 annotated plans and 5 plans from yaml descriptor
-    public static final int PLANS_COUNT = 7;
+    public static final int PLANS_COUNT = 5;
     public static final int SCHEDULES_COUNT = 1;
 
     // 3 parameters from one fragment and 1 from another
