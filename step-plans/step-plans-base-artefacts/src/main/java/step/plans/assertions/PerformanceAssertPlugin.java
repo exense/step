@@ -32,11 +32,27 @@ public class PerformanceAssertPlugin extends AbstractExecutionEnginePlugin {
 		if (resolvedArtefact instanceof ThreadGroup) {
 			afterThread = ((ThreadGroup) resolvedArtefact).getAfterThread();
 		}
-		if ((after != null && after.getSteps().stream().anyMatch(s -> s instanceof PerformanceAssert)) ||
-				(afterThread != null && afterThread.getSteps().stream().anyMatch(s -> s instanceof PerformanceAssert))) {
+		if ((after != null && hasAnyPerformanceAssert(after.getSteps())) ||
+				(afterThread != null && hasAnyPerformanceAssert(afterThread.getSteps()))) {
 			PerformanceAssertSession performanceAssertSession = new PerformanceAssertSession();
 			context.getVariablesManager().putVariable(node, PerformanceAssertPlugin.$PERFORMANCE_ASSERT_SESSION, performanceAssertSession);
 		}
+	}
+
+
+	private boolean hasAnyPerformanceAssert(List<AbstractArtefact> steps) {
+		for (AbstractArtefact artefact: steps) {
+			boolean resultForArtefact = false;
+			if  (artefact instanceof PerformanceAssert){
+				resultForArtefact = true;
+			} else {
+				resultForArtefact = hasAnyPerformanceAssert(artefact.getChildren());
+			}
+			if (resultForArtefact) {
+				return resultForArtefact;
+			}
+		}
+		return false;
 	}
 
 	@Override
