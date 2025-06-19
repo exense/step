@@ -9,13 +9,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import step.artefacts.Aggregator;
-import step.artefacts.BaseArtefactPlugin;
-import step.artefacts.Comparator;
-import step.artefacts.Filter;
-import step.artefacts.FilterType;
-import step.artefacts.PerformanceAssert;
-import step.artefacts.Set;
+import step.artefacts.*;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
@@ -107,6 +101,27 @@ public class PerformanceAssertHandlerTest extends AbstractKeyword {
 						.withAfter(assert1, assert2, assert3, assert4, assert5)
 					.endBlock()
 				.endBlock().build();
+
+		PlanRunnerResult result = engine.execute(plan);
+		assertEquals(ReportNodeStatus.PASSED, result.getResult());
+	}
+
+	@Test
+	public void testAssertInNestedNodes() throws IOException {
+		PerformanceAssert assert1 = new PerformanceAssert(Aggregator.COUNT, Comparator.EQUALS, 3l, filterMyMeasure2Regex);
+		Sequence afterSequence = BaseArtefacts.sequence();
+		Sequence afterSequenceLvl2 = BaseArtefacts.sequence();
+		afterSequence.addChild(afterSequenceLvl2);
+		afterSequenceLvl2.addChild(assert1);
+
+
+		Plan plan = PlanBuilder.create()
+				.startBlock(BaseArtefacts.sequence())
+					.startBlock(BaseArtefacts.sequence())
+						.add(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
+					.endBlock().withAfter(afterSequence)
+				.endBlock()
+				.build();
 
 		PlanRunnerResult result = engine.execute(plan);
 		assertEquals(ReportNodeStatus.PASSED, result.getResult());
