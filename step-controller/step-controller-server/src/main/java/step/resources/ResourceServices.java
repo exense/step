@@ -19,6 +19,7 @@
 package step.resources;
 
 import ch.exense.commons.io.FileHelper;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
@@ -28,22 +29,30 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
+import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
+import step.core.entities.EntityManager;
 import step.core.objectenricher.ObjectEnricher;
 import step.framework.server.security.Secured;
+import step.framework.server.tables.service.TableService;
+import step.framework.server.tables.service.bulk.TableBulkOperationReport;
+import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Path("/resources")
 @Tag(name = "Resources")
-public class ResourceServices extends AbstractStepServices {
+public class ResourceServices extends AbstractStepAsyncServices {
 
 	protected ResourceManager resourceManager;
+	private TableService tableService;
 
 	@jakarta.ws.rs.core.Context
 	ServletContext context;
@@ -53,6 +62,7 @@ public class ResourceServices extends AbstractStepServices {
 		super.init();
 		GlobalContext globalContext = getContext();
 		resourceManager = globalContext.getResourceManager();
+		tableService = globalContext.require(TableService.class);
 	}
 	
 	@POST
@@ -142,6 +152,22 @@ public class ResourceServices extends AbstractStepServices {
 	@Secured(right = "resource-delete")
 	public void deleteResource(@PathParam("id") String resourceId) {
 		resourceManager.deleteResource(resourceId);
+	}
+
+	@POST
+	@Path("/bulk/delete")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right = "resource-delete")
+	public AsyncTaskStatus<TableBulkOperationReport> bulkDelete(TableBulkOperationRequest request) {
+		Consumer<String> consumer = t -> {
+			try {
+				deleteResource(t);
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
+		return scheduleAsyncTaskWithinSessionContext(h ->
+				tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
 	}
 	
 	@GET
