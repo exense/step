@@ -157,7 +157,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
 	@POST
 	@Path("/bulk/delete")
 	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right = "resource-delete")
+	@Secured(right = "resource-bulk-delete")
 	public AsyncTaskStatus<TableBulkOperationReport> bulkDelete(TableBulkOperationRequest request) {
 		Consumer<String> consumer = t -> {
 			try {
