@@ -36,14 +36,12 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
     public static final String RESET_VALUE = "####change me####";
     public static final String PROTECTED_VALUE = "******";
 
-    protected final DynamicBeanResolver dynamicBeanResolver;
     protected final EncryptionManager encryptionManager;
     protected final String defaultScriptEngine;
 
-    public AbstractEncryptedValuesManager(EncryptionManager encryptionManager, String defaultScriptEngine, DynamicBeanResolver dynamicBeanResolver) {
+    public AbstractEncryptedValuesManager(EncryptionManager encryptionManager, String defaultScriptEngine) {
         this.encryptionManager = encryptionManager;
         this.defaultScriptEngine = defaultScriptEngine;
-        this.dynamicBeanResolver = dynamicBeanResolver;
     }
 
     public T save(T newObj, T sourceObj, String modificationUser, ObjectValidator objectValidator) {

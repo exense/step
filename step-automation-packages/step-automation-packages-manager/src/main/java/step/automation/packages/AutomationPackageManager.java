@@ -292,11 +292,11 @@ public class AutomationPackageManager {
         deleteAdditionalData(automationPackage, new AutomationPackageContext(operationMode, resourceManager, null,  null,null, null, extensions));
     }
 
-    public ObjectId createAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier, String apVersion, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+    public ObjectId createAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier, String apVersion, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate, ObjectValidator objectValidator) {
         validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
         try {
             try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
-                return createOrUpdateAutomationPackage(false, true, null, provider, apVersion, activationExpr, false, enricher, objectPredicate, false).getId();
+                return createOrUpdateAutomationPackage(false, true, null, provider, apVersion, activationExpr, false, enricher, objectPredicate, objectValidator, false).getId();
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -372,11 +372,12 @@ public class AutomationPackageManager {
     public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier,
                                                                                   boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                                   String apVersion, String activationExpr,
-                                                                                  ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
+                                                                                  ObjectEnricher enricher, ObjectPredicate objectPredicate, ObjectValidator objectValidator,
+                                                                                  boolean async) throws AutomationPackageManagerException {
         try {
             validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
             try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, objectValidator, async);
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);

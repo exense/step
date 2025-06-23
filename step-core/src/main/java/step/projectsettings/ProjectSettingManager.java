@@ -37,7 +37,7 @@ public class ProjectSettingManager extends AbstractEncryptedValuesManager<Projec
 
     public ProjectSettingManager(ProjectSettingAccessor accessor, EncryptionManager encryptionManager, String defaultScriptEngine) {
         // project settings can't be dynamic, so the dynamic bean resolver is null
-        super(encryptionManager, defaultScriptEngine, null);
+        super(encryptionManager, defaultScriptEngine);
         this.accessor = accessor;
     }
 

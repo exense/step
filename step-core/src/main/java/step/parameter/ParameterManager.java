@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 public class ParameterManager extends AbstractEncryptedValuesManager<Parameter, DynamicValue<String>> {
 
+	protected final DynamicBeanResolver dynamicBeanResolver;
 	private final Accessor<Parameter> parameterAccessor;
 
 	public ParameterManager(Accessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, Configuration configuration, DynamicBeanResolver dynamicBeanResolver) {
@@ -48,8 +49,9 @@ public class ParameterManager extends AbstractEncryptedValuesManager<Parameter, 
 	}
 
 	public ParameterManager(Accessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, String defaultScriptEngine, DynamicBeanResolver dynamicBeanResolver) {
-		super(encryptionManager, defaultScriptEngine, dynamicBeanResolver);
+		super(encryptionManager, defaultScriptEngine);
 		this.parameterAccessor = parameterAccessor;
+		this.dynamicBeanResolver = dynamicBeanResolver;
 	}
 
 	public static ParameterManager copy(ParameterManager from, Accessor<Parameter> parameterAccessor){

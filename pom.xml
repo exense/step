@@ -47,9 +47,9 @@
 		<!-- internal dependencies -->
 		<dependencies.version>2025.3.14</dependencies.version>
 		<step-grid.version>2025.6.2-683db53f335ed956c4147901</step-grid.version>
-        <step-framework.version>2025.6.15-684ed0f35008c944809c80e1</step-framework.version>
+		<step-framework.version>2025.6.15-684ed0f35008c944809c80e1</step-framework.version>
 
-        <!-- external, non-transitive, dependencies -->
+		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
 		<dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
 		<dep.apache-poi.version>5.2.3</dep.apache-poi.version>
