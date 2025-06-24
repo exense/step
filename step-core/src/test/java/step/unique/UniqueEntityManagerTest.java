@@ -30,6 +30,8 @@ import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.objectenricher.ObjectValidator;
 import step.projectsettings.ProjectSetting;
 
+import java.util.HashMap;
+
 public class UniqueEntityManagerTest {
     private static final Logger log = LoggerFactory.getLogger(UniqueEntityManagerTest.class);
 
@@ -49,7 +51,7 @@ public class UniqueEntityManagerTest {
         ps1.addAttribute("project", "project2");
         projectSettingCollection.save(ps2);
 
-        ObjectValidator validator = manager.createObjectValidator(inMemoryCollectionFactory);
+        ObjectValidator validator = manager.createObjectValidator(inMemoryCollectionFactory, new HashMap<>());
 
         // new entity - ok
         ProjectSetting newPs = new ProjectSetting("setting3", "value3", "description3");

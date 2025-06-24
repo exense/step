@@ -35,13 +35,15 @@ public class EntityWithUniqueAttributesAccessor<T extends AbstractIdentifiableOb
         super((Collection<T>) collectionDriver);
     }
 
-    public Optional<T> findDuplicate(EntityWithUniqueAttributes e){
+    public Optional<T> findDuplicate(EntityWithUniqueAttributes e, Set<String> ignoredAttributes){
         EnricheableObject enricheableObject = (EnricheableObject) e;
 
         ArrayList<Filter> attrFilter = new ArrayList<>();
         if (enricheableObject.getAttributes() != null && !enricheableObject.getAttributes().isEmpty()) {
             for (Map.Entry<String, String> entry : enricheableObject.getAttributes().entrySet()) {
-                attrFilter.add(Filters.equals("attributes." + entry.getKey(), entry.getValue()));
+                if(ignoredAttributes == null || !ignoredAttributes.contains(entry.getKey())) {
+                    attrFilter.add(Filters.equals("attributes." + entry.getKey(), entry.getValue()));
+                }
             }
         }
 

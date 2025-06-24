@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.EncryptedTrackedObject;
 import step.core.accessors.Accessor;
-import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.objectenricher.ObjectValidator;

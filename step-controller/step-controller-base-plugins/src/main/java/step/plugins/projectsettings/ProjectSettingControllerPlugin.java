@@ -65,7 +65,7 @@ public class ProjectSettingControllerPlugin extends AbstractControllerPlugin {
         Collection<ProjectSetting> collection = context.getCollectionFactory().getCollection(ProjectSetting.ENTITY_NAME, ProjectSetting.class);
 
         ProjectSettingAccessor projectSettingAccessor = new ProjectSettingAccessorImpl(collection);
-        context.put("ProjectSettingAccessor", projectSettingAccessor);
+        context.put(ProjectSettingAccessor.class, projectSettingAccessor);
 
         ProjectSettingManager projectSettingManager = new ProjectSettingManager(projectSettingAccessor, encryptionManager, context.getConfiguration());
         context.put(ProjectSettingManager.class, projectSettingManager);

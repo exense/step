@@ -34,7 +34,6 @@ import step.projectsettings.ProjectSettingManager;
 
 import java.util.List;
 
-// TODO: check if secured context works ok for AbstractStepServices
 @Path("/project-settings")
 @Tag(name = "ProjectSettings")
 @Tag(name = "Entity=ProjectSetting")
@@ -57,6 +56,7 @@ public class ProjectSettingServices extends AbstractStepServices {
     @POST
     @Secured(right = "{entity}-write")
     public ProjectSetting save(ProjectSetting newSetting) {
+        assertEntityIsAcceptableInContext(newSetting);
         if (newSetting.getKey() == null || newSetting.getKey().isBlank()) {
             throw new ControllerServiceException("The parameter's key is mandatory.");
         }

@@ -29,13 +29,19 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.unique.UniqueEntityManager;
 
+import java.util.Map;
+
 @Plugin(dependencies= {ObjectHookControllerPlugin.class})
 public class UniqueEntityControllerPlugin extends AbstractControllerPlugin {
 
     public static Logger logger = LoggerFactory.getLogger(UniqueEntityControllerPlugin.class);
 
+    private CollectionFactory collectionFactory;
+
     @Override
     public void serverStart(GlobalContext context) {
+
+        this.collectionFactory = context.getCollectionFactory();
 
         UniqueEntityManager uniqueEntityManager = new UniqueEntityManager();
         context.put(UniqueEntityManager.class, uniqueEntityManager);
@@ -58,12 +64,12 @@ public class UniqueEntityControllerPlugin extends AbstractControllerPlugin {
 
             @Override
             public boolean isObjectAcceptableInContext(AbstractContext abstractContext, EnricheableObject enricheableObject) {
-                return false;
+                return true;
             }
 
             @Override
-            public ObjectValidator getObjectValidator(AbstractContext context) {
-                return uniqueEntityManager.createObjectValidator(context.require(CollectionFactory.class));
+            public ObjectValidator getObjectValidator(AbstractContext context, Map<String, Object> config) {
+                return uniqueEntityManager.createObjectValidator(collectionFactory, config);
             }
         });
     }

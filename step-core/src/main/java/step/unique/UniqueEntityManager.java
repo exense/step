@@ -30,12 +30,16 @@ import java.util.*;
 
 public class UniqueEntityManager {
 
-    public ObjectValidator createObjectValidator(CollectionFactory collectionFactory) {
+    public static final String NON_UNIQUE_ATTRIBUTES_CONFIG = "nonUniqueAttributes";
+
+    public ObjectValidator createObjectValidator(CollectionFactory collectionFactory, Map<String, Object> config) {
         return enricheableObject -> {
             if (enricheableObject instanceof EntityWithUniqueAttributes) {
                 Collection<? extends EnricheableObject> collection = collectionFactory.getCollection(((EntityWithUniqueAttributes) enricheableObject).getEntityName(), enricheableObject.getClass());
                 EntityWithUniqueAttributesAccessor<? extends AbstractIdentifiableObject> accessor = new EntityWithUniqueAttributesAccessor<>(collection);
-                Optional<? extends EntityWithUniqueAttributes> duplicate = (Optional<? extends EntityWithUniqueAttributes>) accessor.findDuplicate((EntityWithUniqueAttributes) enricheableObject);
+                Object configValue = config.get(NON_UNIQUE_ATTRIBUTES_CONFIG);
+                Set<String> nonUniqueAttributes = configValue == null ? null : new HashSet<>((java.util.Collection<String>) configValue);
+                Optional<? extends EntityWithUniqueAttributes> duplicate = (Optional<? extends EntityWithUniqueAttributes>) accessor.findDuplicate((EntityWithUniqueAttributes) enricheableObject, nonUniqueAttributes);
                 if (duplicate.isPresent()) {
                     throw new RuntimeException(String.format("%s (%s) cannot be saved. Another entity (%s) with the same attributes has been detected",
                             ((EntityWithUniqueAttributes) enricheableObject).getEntityName(), ((AbstractIdentifiableObject) enricheableObject).getId(), ((AbstractIdentifiableObject) duplicate.get()).getId()
