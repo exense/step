@@ -18,8 +18,18 @@
  ******************************************************************************/
 package step.attachments;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.bson.types.ObjectId;
 
+@JsonTypeInfo(
+		use= JsonTypeInfo.Id.CLASS,
+		property = "type",
+		defaultImpl = AttachmentMeta.class  // Fallback type if "type" is missing
+)
+@JsonSubTypes({
+		@JsonSubTypes.Type(value = SkippedAttachmentMeta.class)
+})
 public class AttachmentMeta {
 	
 	ObjectId _id;

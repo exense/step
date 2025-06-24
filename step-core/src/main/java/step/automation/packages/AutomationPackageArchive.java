@@ -101,7 +101,7 @@ public class AutomationPackageArchive implements Closeable {
         return url.openStream();
     }
 
-    public URL getResource(String resourcePath) throws IOException {
+    public URL getResource(String resourcePath) {
         URL resource = classLoader.getResource(resourcePath);
         if (log.isDebugEnabled()) {
             log.debug("Obtain resource from automation package: {}", resource);
@@ -109,7 +109,7 @@ public class AutomationPackageArchive implements Closeable {
         return resource;
     }
 
-    public List<URL> getResourcesByPattern(String resourcePathPattern) throws IOException {
+    public List<URL> getResourcesByPattern(String resourcePathPattern) {
         return pathMatchingResourceResolver.getResourcesByPattern(resourcePathPattern);
     }
 
