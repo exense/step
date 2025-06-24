@@ -74,7 +74,11 @@ public abstract class AbstractEncryptedValuesManager<T extends EncryptedTrackedO
 
     protected void validateBeforeSave(T newObj, ObjectValidator objectValidator) {
         if (objectValidator != null) {
-            objectValidator.validateOnSave(newObj);
+            try {
+                objectValidator.validateOnSave(newObj);
+            } catch (Exception e) {
+                throw new EncryptedValueManagerException("Value cannot be saved: " + e.getMessage(), e);
+            }
         }
     }
 

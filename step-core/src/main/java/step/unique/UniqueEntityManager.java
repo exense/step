@@ -38,8 +38,8 @@ public class UniqueEntityManager {
                 Collection<? extends EnricheableObject> collection = collectionFactory.getCollection(((EntityWithUniqueAttributes) enricheableObject).getEntityName(), enricheableObject.getClass());
                 EntityWithUniqueAttributesAccessor<? extends AbstractIdentifiableObject> accessor = new EntityWithUniqueAttributesAccessor<>(collection);
                 Object configValue = config.get(NON_UNIQUE_ATTRIBUTES_CONFIG);
-                Set<String> nonUniqueAttributes = configValue == null ? null : new HashSet<>((java.util.Collection<String>) configValue);
-                Optional<? extends EntityWithUniqueAttributes> duplicate = (Optional<? extends EntityWithUniqueAttributes>) accessor.findDuplicate((EntityWithUniqueAttributes) enricheableObject, nonUniqueAttributes);
+                List<EntityWithUniqueAttributesAccessor.AdditionalUniquenessRestriction> additionalRestrictions = configValue == null ? null : new ArrayList<>((List<EntityWithUniqueAttributesAccessor.AdditionalUniquenessRestriction>) configValue);
+                Optional<? extends EntityWithUniqueAttributes> duplicate = (Optional<? extends EntityWithUniqueAttributes>) accessor.findDuplicate((EntityWithUniqueAttributes) enricheableObject, additionalRestrictions);
                 if (duplicate.isPresent()) {
                     throw new RuntimeException(String.format("%s (%s) cannot be saved. Another entity (%s) with the same attributes has been detected",
                             ((EntityWithUniqueAttributes) enricheableObject).getEntityName(), ((AbstractIdentifiableObject) enricheableObject).getId(), ((AbstractIdentifiableObject) duplicate.get()).getId()

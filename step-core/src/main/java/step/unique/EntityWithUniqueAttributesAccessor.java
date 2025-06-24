@@ -35,22 +35,49 @@ public class EntityWithUniqueAttributesAccessor<T extends AbstractIdentifiableOb
         super((Collection<T>) collectionDriver);
     }
 
-    public Optional<T> findDuplicate(EntityWithUniqueAttributes e, Set<String> ignoredAttributes){
+    public Optional<T> findDuplicate(EntityWithUniqueAttributes e, List<AdditionalUniquenessRestriction> additionalRestrictions) {
         EnricheableObject enricheableObject = (EnricheableObject) e;
 
         ArrayList<Filter> attrFilter = new ArrayList<>();
         if (enricheableObject.getAttributes() != null && !enricheableObject.getAttributes().isEmpty()) {
             for (Map.Entry<String, String> entry : enricheableObject.getAttributes().entrySet()) {
-                if(ignoredAttributes == null || !ignoredAttributes.contains(entry.getKey())) {
-                    attrFilter.add(Filters.equals("attributes." + entry.getKey(), entry.getValue()));
+                attrFilter.add(Filters.equals("attributes." + entry.getKey(), entry.getValue()));
+            }
+        }
+        Optional<T> duplicate = findDuplicate(e, attrFilter);
+        if (duplicate.isPresent()) {
+            return duplicate;
+        }
+
+        // perform additional checks with additional conditions
+        if (additionalRestrictions != null) {
+            for (AdditionalUniquenessRestriction additionalRestriction : additionalRestrictions) {
+                attrFilter = new ArrayList<>();
+
+                if (enricheableObject.getAttributes() != null && !enricheableObject.getAttributes().isEmpty()) {
+                    for (Map.Entry<String, String> entry : enricheableObject.getAttributes().entrySet()) {
+                        if (additionalRestriction.getIgnoredAttributes() == null || !additionalRestriction.getIgnoredAttributes().contains(entry.getKey())) {
+                            attrFilter.add(Filters.equals("attributes." + entry.getKey(), entry.getValue()));
+                        }
+                    }
+
+                    if (additionalRestriction.getAttributeGroupField() != null) {
+                        attrFilter.add(Filters.equals("attributes." + additionalRestriction.getAttributeGroupField(), additionalRestriction.getAttributeGroupValue()));
+                    }
+
+                    duplicate = findDuplicate(e, attrFilter);
+                    if (duplicate.isPresent()) {
+                        return duplicate;
+                    }
                 }
             }
         }
 
-        Filter filterByAttribute = Filters.and(attrFilter);
-        if(e.getKeyFieldName() != null){
-            attrFilter.add(Filters.equals(e.getKeyFieldName(), e.getKey()));
-        }
+        return Optional.empty();
+    }
+
+    private Optional<T> findDuplicate(EntityWithUniqueAttributes e, ArrayList<Filter> attrFilter) {
+        Filter filterByAttribute = addFilterByKey(e, attrFilter);
 
         // filter out the entity with the same ID and apply the filter by key again (if getKeyFieldName returns null and the key is resolved dynamically)
         return getCollectionDriver().find(filterByAttribute, null, null, null, 0)
@@ -58,5 +85,35 @@ public class EntityWithUniqueAttributesAccessor<T extends AbstractIdentifiableOb
                 .findFirst();
     }
 
+    private static Filter addFilterByKey(EntityWithUniqueAttributes e, ArrayList<Filter> attrFilter) {
+        Filter filterByAttribute = Filters.and(attrFilter);
+        if(e.getKeyFieldName() != null){
+            attrFilter.add(Filters.equals(e.getKeyFieldName(), e.getKey()));
+        }
+        return filterByAttribute;
+    }
 
+    public static class AdditionalUniquenessRestriction {
+        private Set<String> ignoredAttributes;
+        private String attributeGroupField;
+        private String attributeGroupValue;
+
+        public AdditionalUniquenessRestriction(Set<String> ignoredAttributes, String attributeGroupField, String attributeGroupValue) {
+            this.ignoredAttributes = ignoredAttributes;
+            this.attributeGroupField = attributeGroupField;
+            this.attributeGroupValue = attributeGroupValue;
+        }
+
+        public Set<String> getIgnoredAttributes() {
+            return ignoredAttributes;
+        }
+
+        public String getAttributeGroupField() {
+            return attributeGroupField;
+        }
+
+        public String getAttributeGroupValue() {
+            return attributeGroupValue;
+        }
+    }
 }
