@@ -953,10 +953,10 @@ public class ExportManagerTest {
 	
 	private ImportManager createNewContextAndGetImportManager() throws IOException {
 		before();
-		return new ImportManager(entityManager, migrationManager, Controller.VERSION);
+		return new ImportManager(entityManager, migrationManager, resourceManager, Controller.VERSION);
 	}
 	
 	private ImportManager newImportManager() throws IOException {
-		return new ImportManager(entityManager, migrationManager, Controller.VERSION);
+		return new ImportManager(entityManager, migrationManager, resourceManager, Controller.VERSION);
 	}
 }

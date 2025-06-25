@@ -24,4 +24,5 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EntityReference {
 	String type();
+	String subtype() default "";
 }

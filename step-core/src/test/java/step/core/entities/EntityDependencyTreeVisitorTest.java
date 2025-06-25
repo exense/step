@@ -46,7 +46,7 @@ public class EntityDependencyTreeVisitorTest {
 				.register(new Entity<EntityType2, Accessor<EntityType2>>(ENTITY_TYPE2, accessor2, EntityType2.class) {
 
 					@Override
-					public String resolveAtomicReference(Object atomicReference,
+					public String resolveAtomicReference(Object atomicReference, String entitySubtype,
 							EntityTreeVisitorContext visitorContext) {
 						return atomicReference != null && atomicReference.equals(CUSTOM_REFERENCE)
 								? entity2.getId().toString()
@@ -57,6 +57,7 @@ public class EntityDependencyTreeVisitorTest {
 		EntityDependencyTreeVisitor visitor = new EntityDependencyTreeVisitor(entityManager, null);
 		
 		List<String> entityIds = new ArrayList<>();
+		List<String> filePaths = new ArrayList<>();
 		visitor.visitEntityDependencyTree(ENTITY_TYPE1, entity1.getId().toString(), new EntityTreeVisitor() {
 			
 			@Override
@@ -72,6 +73,12 @@ public class EntityDependencyTreeVisitorTest {
 			@Override
 			public String onResolvedEntityId(String entityName, String resolvedEntityId) {
 				return null;
+			}
+
+			@Override
+			public String onResolvedReferencedFile(String path, String referencedSubType) {
+				filePaths.add(path);
+				return path;
 			}
 		}, true);
 		
@@ -103,7 +110,7 @@ public class EntityDependencyTreeVisitorTest {
 		entityManager.register(new Entity<EntityType2, Accessor<EntityType2>>(ENTITY_TYPE2, accessor2, EntityType2.class) {
 
 			@Override
-			public String resolveAtomicReference(Object atomicReference, EntityTreeVisitorContext visitorContext) {
+			public String resolveAtomicReference(Object atomicReference, String entitySubtype, EntityTreeVisitorContext visitorContext) {
 				return entity2.getId().toString();
 			}
 
@@ -124,7 +131,8 @@ public class EntityDependencyTreeVisitorTest {
 		ObjectId newId = new ObjectId();
 		String newIdString = newId.toHexString();
 		List<String> entityIds = new ArrayList<>();
-		
+		List<String> filePaths = new ArrayList<>();
+
 		visitor.visitSingleObject(entity1, new EntityTreeVisitor() {
 			
 			@Override
@@ -140,6 +148,12 @@ public class EntityDependencyTreeVisitorTest {
 			@Override
 			public String onResolvedEntityId(String entityName, String resolvedEntityId) {
 				return newIdString;
+			}
+
+			@Override
+			public String onResolvedReferencedFile(String path, String referencedSubType) {
+				filePaths.add(path);
+				return path;
 			}
 		}, new HashSet<String>());
 		

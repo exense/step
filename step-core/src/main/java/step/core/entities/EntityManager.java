@@ -128,6 +128,12 @@ public class EntityManager  {
 			public String onResolvedEntityId(String entityName, String resolvedEntityId) {
 				return null;
 			}
+
+			@Override
+			public String onResolvedReferencedFile(String path, String referencedSubType) {
+				references.addFileReferences(referencedSubType, path);
+				return null;
+			}
 		}, recursive);
 	}
 
@@ -151,6 +157,13 @@ public class EntityManager  {
 						logger.debug("Replacing reference to entity: name = " + entityName + " oldReference = " + resolvedEntityId + " newReference = " + newEntityId);
 					}
 					return newEntityId;
+				}
+
+				@Override
+				public String onResolvedReferencedFile(String path, String referencedSubType) {
+					//When is that called
+					logger.info("onResolvedFile called in updateReference");
+					return path;
 				}
 			}, messageCollector);
 		}

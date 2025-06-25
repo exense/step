@@ -95,6 +95,8 @@ public class EntityDependencyTreeVisitor {
 
 		String onResolvedEntityId(String entityName, String entityId);
 
+		String onResolvedReferencedFile(String path, String referencedSubType);
+
 	}
 
 	private void visitEntity(String entityName, String entityId, EntityTreeVisitorContext context) {
@@ -140,6 +142,7 @@ public class EntityDependencyTreeVisitor {
 				if (method != null && method.isAnnotationPresent(EntityReference.class)) {
 					EntityReference entityReferenceAnnotation = method.getAnnotation(EntityReference.class);
 					String entityType = entityReferenceAnnotation.type();
+					String entitySubtype = entityReferenceAnnotation.subtype();
 					Object value = null;
 					try {
 						value = method.invoke(entity);
@@ -162,7 +165,7 @@ public class EntityDependencyTreeVisitor {
 							ArrayList<Object> newList = new ArrayList<>();
 							c.forEach(atomicReference -> {
 								// Resolve the entity id of the atomic reference
-								String resolvedEntityId = resolveEntityIdAndVisitResolvedEntity(entityType,
+								String resolvedEntityId = resolveEntityIdAndVisitResolvedEntity(entityType, entitySubtype,
 										atomicReference, context);
 								// Update the atomic reference if needed
 								Object newEntityId = updateAtomicReferenceIfNeeded(entityType, resolvedEntityId,
@@ -196,7 +199,7 @@ public class EntityDependencyTreeVisitor {
 							}
 						} else {
 							// Resolve the entity id of the atomic reference
-							String resolvedEntityId = resolveEntityIdAndVisitResolvedEntity(entityType, value, context);
+							String resolvedEntityId = resolveEntityIdAndVisitResolvedEntity(entityType, entitySubtype, value, context);
 							// Update the atomic reference if needed
 							Object newEntityId = updateAtomicReferenceIfNeeded(entityType, resolvedEntityId, value,
 									context);
@@ -237,11 +240,11 @@ public class EntityDependencyTreeVisitor {
 		}
 	}
 
-	private String resolveEntityIdAndVisitResolvedEntity(String entityName, Object atomicReference,
-			EntityTreeVisitorContext visitorContext) {
+	private String resolveEntityIdAndVisitResolvedEntity(String entityName, String referencedSubType, Object atomicReference
+			, EntityTreeVisitorContext visitorContext) {
 		// First try to resolve the entity id using the custom method of the entity
 		String resolvedEntityId = entityManager.getEntityByName(entityName).resolveAtomicReference(atomicReference,
-				visitorContext);
+				referencedSubType, visitorContext);
 
 		// Call the generic method if the custom method returned null,
 		if (resolvedEntityId == null) {

@@ -18,19 +18,14 @@
  ******************************************************************************/
 package step.core.entities;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class EntityReferencesMap {
 	
 	private Map<String, List<String>> references;
 	Set<String> refNotFoundWarnings = new HashSet<String>();
+	Map<String, List<String>> fileReferences = new HashMap<>();
 
 	public EntityReferencesMap() {
 		super();
@@ -55,7 +50,15 @@ public class EntityReferencesMap {
 	public Set<String> getRefNotFoundWarnings(){
 		return refNotFoundWarnings;
 	}
-	
+
+	public void addFileReferences(String type, String path) {
+		fileReferences.computeIfAbsent(type, (k) -> new ArrayList<>()).add(path);
+	}
+
+	public Map<String, List<String>> getFileReferences() {
+		return fileReferences;
+	}
+
 	public List<String> getTypes() {
 		return references.keySet().stream().sorted(new EntityTypeComparator()).collect(Collectors.toList());
 	}

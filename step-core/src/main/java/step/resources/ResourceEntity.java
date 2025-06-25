@@ -10,6 +10,8 @@ import step.core.entities.Entity;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
 import step.core.entities.EntityManager;
 
+import java.io.File;
+
 public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 
 	private final Logger logger = LoggerFactory.getLogger(ResourceEntity.class);
@@ -32,15 +34,15 @@ public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 	}
 
 	@Override
-	public String resolveAtomicReference(Object atomicReferene, EntityTreeVisitorContext visitorContext) {
+	public String resolveAtomicReference(Object atomicReferene, String referencedSubType, EntityTreeVisitorContext visitorContext) {
 		if(atomicReferene != null) {
 			if(atomicReferene instanceof String) {
-				return resolveResourceId(atomicReferene);
+				return resolveResourceIdOrAddFileReference(atomicReferene, referencedSubType, visitorContext);
 			} else if (atomicReferene instanceof DynamicValue<?>) {
 				DynamicValue<?> dynamicValue = (DynamicValue<?>) atomicReferene;
 				try {
 					Object value = dynamicValue.get();
-					return resolveResourceId(value);
+					return resolveResourceIdOrAddFileReference(value, referencedSubType, visitorContext);
 				} catch (Exception e) {
 					String warningMessage = "Unable to resolve resource referenced by dynamic expression '" + dynamicValue.getExpression() + "'.";
 					if (logger.isDebugEnabled()) {
@@ -56,6 +58,20 @@ public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 		} else {
 			return null;
 		}
+	}
+
+	private String resolveResourceIdOrAddFileReference(Object value, String referencedSubType, EntityTreeVisitorContext visitorContext) {
+		String resolvedId = resolveResourceId(value);
+		if (resolvedId == null && value instanceof String) {
+			String path = (String) value;
+			if (!path.isBlank()) {
+				File file = new File(path);
+				if (file.isFile() && file.exists()) {
+					resolvedId = visitorContext.getVisitor().onResolvedReferencedFile(path, referencedSubType);
+				}
+			}
+		}
+		return resolvedId;
 	}
 
 	@Override

@@ -54,7 +54,7 @@ public class ImportServices extends AbstractStepServices {
 		super.init();
 		GlobalContext context = getContext();
 		importManager = new ImportManager(context.getEntityManager(), context.require(MigrationManager.class),
-				context.require(Version.class));
+				context.getResourceManager(), context.require(Version.class));
 		fileResolver = context.getFileResolver();
 	}
 

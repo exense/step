@@ -38,6 +38,7 @@ import step.core.collections.Filters;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.migration.MigrationManager;
+import step.resources.ResourceManager;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -57,7 +58,7 @@ public class ImportManager {
 	private final MigrationManager migrationManager;
 	private final Version currentVersion;
 
-	public ImportManager(EntityManager entityManager, MigrationManager migrationManager, Version currentVersion) throws IOException {
+	public ImportManager(EntityManager entityManager, MigrationManager migrationManager, ResourceManager resourceManager, Version currentVersion) throws IOException {
 		super();
 		this.entityManager = entityManager;
 		this.migrationManager = migrationManager;

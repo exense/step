@@ -41,4 +41,10 @@ public class FindReferencesTreeVisitor implements EntityDependencyTreeVisitor.En
         }
         return null;
     }
+
+    @Override
+    public String onResolvedReferencedFile(String path, String referencedSubType) {
+        //Not implemented
+        return path;
+    }
 }

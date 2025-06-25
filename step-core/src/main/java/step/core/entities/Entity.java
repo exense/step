@@ -73,9 +73,10 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 	 * 
 	 * @param atomicReference the atomic reference to be resolved
 	 * @param visitorContext  the context object
+	 * @param referencedSubType  the referenced subtype
 	 * @return the resolved entity id or null
 	 */
-	public String resolveAtomicReference(Object atomicReference, EntityTreeVisitorContext visitorContext) {
+	public String resolveAtomicReference(Object atomicReference, String referencedSubType, EntityTreeVisitorContext visitorContext) {
 		return null;
 	}
 

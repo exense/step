@@ -49,6 +49,9 @@
 		<step-grid.version>2025.6.20-68552bad6249f636f082d5c8</step-grid.version>
 		<step-framework.version>2025.6.18-6852c0b26249f636f0e010ed</step-framework.version>
 
+		<!-- tmp overwritte exense-common version, remove from dependency mgmt and dependency -->
+		<exense-common.version>0.0.0-SNAPSHOT</exense-common.version>
+
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
 		<dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
@@ -397,11 +400,22 @@
 				<artifactId>commons-compress</artifactId>
 				<version>1.27.1</version>
 			</dependency>
+
+			<dependency>
+				<groupId>ch.exense.commons</groupId>
+				<artifactId>exense-basic-commons</artifactId>
+				<version>${exense-common.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
 	<!-- actually used dependencies, exported to all modules (but not externally referring projects) -->
 	<dependencies>
+		<dependency>
+			<groupId>ch.exense.commons</groupId>
+			<artifactId>exense-basic-commons</artifactId>
+		</dependency>
+
 		<!-- common dependencies, thus automatically available in all modules (but not external projects) -->
 		<dependency>
 			<groupId>org.slf4j</groupId>

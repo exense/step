@@ -50,7 +50,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 	
 	DynamicValue<String> errorHandlerFile = new DynamicValue<>("");
 	
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type=EntityManager.resources, subtype = ResourceManager.RESOURCE_TYPE_FUNCTIONS)
 	public DynamicValue<String> getScriptFile() {
 		return scriptFile;
 	}
@@ -73,7 +73,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 		this.scriptLanguage = scriptLanguage;
 	}
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type=EntityManager.resources, subtype = ResourceManager.RESOURCE_TYPE_FUNCTIONS)
 	public DynamicValue<String> getLibrariesFile() {
 		return librariesFile;
 	}
@@ -86,7 +86,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 		this.librariesFile = librariesFile;
 	}
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type=EntityManager.resources, subtype = ResourceManager.RESOURCE_TYPE_FUNCTIONS)
 	public DynamicValue<String> getErrorHandlerFile() {
 		return errorHandlerFile;
 	}
