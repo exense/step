@@ -107,7 +107,7 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_PERCENTAGE)), execution.getStartTime(), executionPassed ? 0 : 100);
 			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_COUNT)), execution.getStartTime(), executionPassed ? 0 : 1);
 			// Execution.endTime is not set at this stage. Use the current time instead. It's not really nice but we have no other option for now
-			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_DURATION, EXECUTION_RESULT.getName(), execution.getResult(), EXECUTION_BOOLEAN_RESULT.getName(), executionPassed ? "PASSED":"FAILED" )), execution.getStartTime(), System.currentTimeMillis() - execution.getStartTime());
+			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_DURATION, EXECUTION_RESULT.getName(), execution.getResult().toString(), EXECUTION_BOOLEAN_RESULT.getName(), executionPassed ? "PASSED":"FAILED" )), execution.getStartTime(), System.currentTimeMillis() - execution.getStartTime());
 
 			ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
 

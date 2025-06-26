@@ -45,9 +45,9 @@
 		<maven.compiler.target>11</maven.compiler.target>
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
-		<dependencies.version>2025.3.14</dependencies.version>
-        <step-grid.version>2025.6.20-68552bad6249f636f082d5c8</step-grid.version>
-        <step-framework.version>2025.6.24-685aec5f64523b01b039cecd</step-framework.version>
+		<dependencies.version>2025.6.25</dependencies.version>
+		<step-grid.version>2025.6.26-685ce15064523b01b01292be</step-grid.version>
+		<step-framework.version>2025.6.24-685aec5f64523b01b039cecd</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
