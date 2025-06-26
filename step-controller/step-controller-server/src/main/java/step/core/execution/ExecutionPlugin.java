@@ -31,6 +31,7 @@ import step.framework.server.tables.TableRegistry;
 import step.plugins.screentemplating.ScreenTemplatePlugin;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 @Plugin(dependencies= {ExecutionTypeControllerPlugin.class, ScreenTemplatePlugin.class})
 public class ExecutionPlugin extends AbstractControllerPlugin {
@@ -47,7 +48,10 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 		RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
 		ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
 		tableRegistry.register("executions", new Table<>(collection, "execution-read", true).withResultItemTransformer((execution, session) -> {
-			execution.getCustomFields().remove(AgentProvisioningStatus.class.getName());
+			Map<String, Object> customFields = execution.getCustomFields();
+			if (customFields != null) {
+				customFields.remove(AgentProvisioningStatus.class.getName());
+			}
 			return execution;
 		}).withResultItemEnricher(execution->{
 			execution.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
