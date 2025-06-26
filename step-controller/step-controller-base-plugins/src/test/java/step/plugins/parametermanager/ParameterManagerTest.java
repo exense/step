@@ -94,12 +94,12 @@ public class ParameterManagerTest {
 		Map<String, Object> bindings = new HashMap<String, Object>();
 		bindings.put("user", "poire");
 
-		Map<String, String> params = m.getAllParameterValues(bindings, null);
+		Map<String, String> params = m.getAllValues(bindings, null);
 		Assert.assertEquals(params.get("key1"),"poirier");
 		Assert.assertEquals(params.get("key2"),"defaultValue2");
 		Assert.assertEquals(params.get("key3"),"value3");
 
-		params = m.getAllParameterValues(bindings, t -> false);
+		params = m.getAllValues(bindings, t -> false);
 		Assert.assertEquals(0, params.size());
 	}
 
@@ -125,12 +125,12 @@ public class ParameterManagerTest {
 		bindings.put("user", "user"+nIt);
 		
 		long t1 = System.currentTimeMillis();
-		Map<String, String> params = m.getAllParameterValues(bindings, null);
+		Map<String, String> params = m.getAllValues(bindings, null);
 		logger.info("ms:"+(System.currentTimeMillis()-t1));
 		Assert.assertEquals(params.get("key1"),"value"+nIt);
 		
 		t1 = System.currentTimeMillis();
-		params = m.getAllParameterValues(bindings, null);
+		params = m.getAllValues(bindings, null);
 		logger.info("ms:"+(System.currentTimeMillis()-t1));
 		Assert.assertEquals(params.get("key1"),"value"+nIt);
 		
@@ -161,7 +161,7 @@ public class ParameterManagerTest {
 						Random r = new Random();
 						int userId = r.nextInt(nIt)+1;
 						bindings.put("user", "user"+userId);
-						Map<String, String> params = m.getAllParameterValues(bindings, null);
+						Map<String, String> params = m.getAllValues(bindings, null);
 						Assert.assertEquals(params.get("key1"),"value"+userId);
 					}
 				}

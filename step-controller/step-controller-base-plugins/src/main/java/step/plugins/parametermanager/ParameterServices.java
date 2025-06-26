@@ -28,24 +28,18 @@ import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
 import step.core.accessors.Accessor;
 import step.core.deployment.ControllerServiceException;
-import step.core.dynamicbeans.DynamicValue;
-import step.core.encryption.EncryptionManagerException;
+import step.encryption.AbstractEncryptedValuesManager;
+import step.encryption.EncryptedValueManagerException;
 import step.framework.server.access.AuthorizationManager;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
-import step.parameter.Parameter;
-import step.parameter.ParameterManager;
-import step.parameter.ParameterManagerException;
-import step.parameter.ParameterScope;
+import step.parameter.*;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import static step.parameter.ParameterManager.PROTECTED_VALUE;
 
 @Path("/parameters")
 @Tag(name = "Parameters")
@@ -106,8 +100,8 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	private Parameter save(Parameter newParameter, Parameter sourceParameter) {
 		assertRights(newParameter);
 		try {
-			return maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername()));
-		} catch (ParameterManagerException e) {
+			return ParameterManager.maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername(), getObjectValidator()));
+		} catch (EncryptedValueManagerException e) {
 			throw new ControllerServiceException(e.getMessage());
 		}
 	}
@@ -124,9 +118,6 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		return authorizationManager.checkRightInContext(getSession(), "param-global-write");
 	}
 
-	protected static boolean isProtected(Parameter oldParameter) {
-		return oldParameter.getProtectedValue()!=null && oldParameter.getProtectedValue();
-	}
 
 	@Override
 	public Parameter clone(String id) {
@@ -150,19 +141,11 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Override
 	public Parameter get(String id) {
 		Parameter parameter = parameterAccessor.get(new ObjectId(id));
-		return maskProtectedValue(parameter);
-	}
-
-	public static Parameter maskProtectedValue(Parameter parameter) {
-		if(parameter != null && isProtected(parameter) &&
-				!ParameterManager.RESET_VALUE.equals(parameter.getValue())) {
-			parameter.setValue(new DynamicValue<>(PROTECTED_VALUE));
-		}
-		return parameter;
+		return ParameterManager.maskProtectedValue(parameter);
 	}
 
 	protected List<Parameter> maskProtectedValues(Stream<Parameter> stream) {
-		return stream.map(ParameterServices::maskProtectedValue).collect(Collectors.toList());
+		return stream.map(ParameterManager::maskProtectedValue).collect(Collectors.toList());
 	}
 
 	@POST
@@ -171,7 +154,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="{entity}-read")
 	public Parameter getParameterByAttributes(Map<String,String> attributes) {
-		return maskProtectedValue(parameterAccessor.findByAttributes(attributes));
+		return ParameterManager.maskProtectedValue(parameterAccessor.findByAttributes(attributes));
 	}
 
 	@Override

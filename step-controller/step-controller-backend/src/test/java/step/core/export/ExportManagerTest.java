@@ -56,6 +56,7 @@ import step.core.plans.PlanAccessor;
 import step.core.plans.PlanEntity;
 import step.core.plans.builder.PlanBuilder;
 import step.datapool.excel.ExcelDataPool;
+import step.encryption.AbstractEncryptedValuesManager;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -71,7 +72,8 @@ import step.parameter.ParameterManager;
 import step.planbuilder.FunctionArtefacts;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.functions.types.CompositeFunctionType;
-import step.plugins.parametermanager.ParameterManagerControllerPlugin;
+import step.plugins.encryption.EncryptedEntityImportBiConsumer;
+import step.plugins.encryption.EncryptedEntityExportBiConsumer;
 import step.resources.*;
 
 import java.io.File;
@@ -86,6 +88,13 @@ import static step.planbuilder.BaseArtefacts.callPlan;
 import static step.planbuilder.BaseArtefacts.sequence;
 
 public class ExportManagerTest {
+
+	private static String EXPORT_ENCRYPT_WARN = "The parameter list contains encrypted parameters. The values of these parameters will be reset if you import them on an other installation of step.";
+	private static String EXPORT_PROTECT_WARN = "The parameter list contains protected parameter. The values of these parameters won't be exported and will have to be reset at import.";
+
+	private static String IMPORT_DECRYPT_FAIL_WARN = "The export file contains encrypted parameter which could not be decrypted. The values of these parameters will be reset.";
+	private static String IMPORT_DECRYPT_NO_EM_WARN = "The export file contains encrypted parameters. The values of these parameters will be reset.";
+	private static String IMPORT_RESET_WARN = "The export file contains protected parameters. Their values must be reset.";
 
 	private PlanAccessor planAccessor;
 	private EntityManager entityManager;
@@ -149,8 +158,28 @@ public class ExportManagerTest {
 				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver, entityManager))
 				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
-		entityManager.registerExportHook(new ParameterManagerControllerPlugin.ParameterExportBiConsumer());
-		entityManager.registerImportHook(new ParameterManagerControllerPlugin.ParameterImportBiConsumer(encryptionManager));
+		entityManager.registerExportHook(new EncryptedEntityExportBiConsumer<Parameter>(Parameter.class, "parameter") {
+			@Override
+			protected Object getValue(Parameter obj) {
+				return obj.getValue();
+			}
+
+			@Override
+			protected void setResetValue(Parameter obj) {
+				obj.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
+			}
+		});
+		entityManager.registerImportHook(new EncryptedEntityImportBiConsumer<Parameter>(encryptionManager, Parameter.class, "parameter") {
+			@Override
+			protected Object getValue(Parameter obj) {
+				return obj.getValue();
+			}
+
+			@Override
+			protected void setResetValue(Parameter obj) {
+				obj.setValue(new DynamicValue<>(AbstractEncryptedValuesManager.RESET_VALUE));
+			}
+		});
 		entityManager.registerImportHook(new ResourceImporter(resourceManager));
 		
 		migrationManager = new MigrationManager();
@@ -293,8 +322,8 @@ public class ExportManagerTest {
 			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
 			assertEquals(2,exportResult.getMessages().size());
-			assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN,exportResult.getMessages().toArray()[1]);
-			assertEquals(ParameterManagerControllerPlugin.EXPORT_ENCRYPT_PARAM_WARN,exportResult.getMessages().toArray()[0]);
+			assertEquals(EXPORT_PROTECT_WARN,exportResult.getMessages().toArray()[1]);
+			assertEquals(EXPORT_ENCRYPT_WARN,exportResult.getMessages().toArray()[0]);
 
 			EncryptionManager encryptionManager = new EncryptionManager() {
 				@Override
@@ -322,7 +351,7 @@ public class ExportManagerTest {
 			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true);
 			ImportResult importResult = importManager.importAll(importConfiguration);
 			assertEquals(1,importResult.getMessages().size());
-			assertEquals(ParameterManagerControllerPlugin.IMPORT_RESET_WARN,importResult.getMessages().toArray()[0]);
+			assertEquals(IMPORT_RESET_WARN,importResult.getMessages().toArray()[0]);
 
 			Plan actualPlan = planAccessor.get(plan.getId());
 			Plan actualPlan2 = planAccessor.get(plan2.getId());
@@ -365,7 +394,7 @@ public class ExportManagerTest {
 			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
 			assertEquals(1,exportResult.getMessages().size());
-			assertEquals(ParameterManagerControllerPlugin.EXPORT_ENCRYPT_PARAM_WARN,exportResult.getMessages().toArray()[0]);
+			assertEquals(EXPORT_ENCRYPT_WARN,exportResult.getMessages().toArray()[0]);
 
 			//Override previous encryption manager to simulate new instance
 			EncryptionManager encryptionManagerNewInstance = new EncryptionManager() {
@@ -391,7 +420,7 @@ public class ExportManagerTest {
 			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true);
 			ImportResult importResult = importManager.importAll(importConfiguration);
 			assertEquals(1,importResult.getMessages().size());
-			assertEquals(ParameterManagerControllerPlugin.IMPORT_DECRYPT_FAIL_WARN,importResult.getMessages().toArray()[0]);
+			assertEquals(IMPORT_DECRYPT_FAIL_WARN,importResult.getMessages().toArray()[0]);
 
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtectedEncrypted.getId());
 			assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
@@ -422,7 +451,7 @@ public class ExportManagerTest {
 			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
 			assertEquals(1,exportResult.getMessages().size());
-			assertEquals(ParameterManagerControllerPlugin.EXPORT_ENCRYPT_PARAM_WARN,exportResult.getMessages().toArray()[0]);
+			assertEquals(EXPORT_ENCRYPT_WARN,exportResult.getMessages().toArray()[0]);
 
 			// Create a new context without encryption manager
 			newContext(null);
@@ -430,7 +459,7 @@ public class ExportManagerTest {
 			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true);
 			ImportResult importResult = importManager.importAll(importConfiguration);
 			assertEquals(1,importResult.getMessages().size());
-			assertEquals(ParameterManagerControllerPlugin.IMPORT_DECRYPT_NO_EM_WARN,importResult.getMessages().toArray()[0]);
+			assertEquals(IMPORT_DECRYPT_NO_EM_WARN,importResult.getMessages().toArray()[0]);
 
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtectedEncrypted.getId());
 			assertEquals(savedParamProtectedEncrypted.getId(), actualParamProtectedEncrypted.getId());
@@ -459,13 +488,13 @@ public class ExportManagerTest {
 			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
 			assertEquals(1,exportResult.getMessages().size());
-			assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN,exportResult.getMessages().toArray()[0]);
+			assertEquals(EXPORT_PROTECT_WARN,exportResult.getMessages().toArray()[0]);
 
 			ImportManager importManager = createNewContextAndGetImportManager();
 			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true);
 			ImportResult importResult = importManager.importAll(importConfiguration);
 			assertEquals(1,importResult.getMessages().size());
-			assertEquals(ParameterManagerControllerPlugin.IMPORT_RESET_WARN,importResult.getMessages().toArray()[0]);
+			assertEquals(IMPORT_RESET_WARN,importResult.getMessages().toArray()[0]);
 
 			Parameter actualParamProtectedEncrypted = parameterAccessor.get(savedParamProtected.getId());
 			assertEquals(savedParamProtected.getId(), actualParamProtectedEncrypted.getId());
