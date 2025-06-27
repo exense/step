@@ -86,6 +86,7 @@ public class Controller {
 	private ServiceRegistrationCallback serviceRegistrationCallback;
 	
 	private CollectionFactory collectionFactory;
+	private ReportNodeTimeSeries reportNodeTimeSeries;
 
 	public Controller(GlobalContext context) {
 		super();
@@ -141,7 +142,8 @@ public class Controller {
 
 		context.setReportNodeAccessor(
 				new ReportNodeAccessorImpl(collectionFactory.getCollection("reports", ReportNode.class)));
-		context.put(ReportNodeTimeSeries.class, new ReportNodeTimeSeries(collectionFactory, context.getConfiguration()));
+		reportNodeTimeSeries = new ReportNodeTimeSeries(collectionFactory, context.getConfiguration());
+		context.put(ReportNodeTimeSeries.class, reportNodeTimeSeries);
 		context.put(ResolvedPlanNodeAccessor.class, new ResolvedPlanNodeAccessor(collectionFactory));
 		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(
 				collectionFactory.getCollection("tasks", ExecutiontTaskParameters.class)));
@@ -214,6 +216,9 @@ public class Controller {
 
 	public void destroy() {
 		serviceRegistrationCallback.stop();
+		if (reportNodeTimeSeries != null) {
+			reportNodeTimeSeries.close();
+		}
 	}
 
 	public void postShutdownHook() throws IOException {
