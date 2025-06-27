@@ -26,9 +26,11 @@ import step.controller.grid.GridPlugin;
 import step.controller.grid.services.FunctionServices;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
+import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.EntityManager;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
@@ -57,7 +59,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Plugin(dependencies= {ScreenTemplatePlugin.class, TableSettingsPlugin.class, GridPlugin.class, ResourceManagerControllerPlugin.class})
+@Plugin(dependencies= {ScreenTemplatePlugin.class, TableSettingsPlugin.class, GridPlugin.class, ResourceManagerControllerPlugin.class, ObjectHookControllerPlugin.class})
 public class FunctionControllerPlugin extends AbstractControllerPlugin {
 
 	@Override
@@ -66,6 +68,8 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		
 		GridClient gridClient = context.require(GridClient.class);
 		FileResolver fileResolver = context.getFileResolver();
+
+		ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
 		
 		FunctionEditorRegistry editorRegistry = new FunctionEditorRegistry();
 		
@@ -73,7 +77,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		functionTypeConfiguration.setFileResolverCacheConcurrencyLevel(configuration.getPropertyAsInteger("functions.fileresolver.cache.concurrencylevel", 4));
 		functionTypeConfiguration.setFileResolverCacheMaximumsize(configuration.getPropertyAsInteger("functions.fileresolver.cache.maximumsize", 1000));
 		functionTypeConfiguration.setFileResolverCacheExpireAfter(configuration.getPropertyAsInteger("functions.fileresolver.cache.expireafter.ms", 500));
-		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, gridClient);
+		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, gridClient, objectHookRegistry);
 
 		Collection<Function> collection = context.getCollectionFactory().getCollection("functions", Function.class);
 		FunctionAccessor functionAccessor = new FunctionAccessorImpl(collection);

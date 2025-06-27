@@ -34,7 +34,7 @@ public class EmbeddedFunctionPackageImporterTest {
 		FileResolver fileResolver = new FileResolver(resourceManager);
 
 		FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
-		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, new MockedGridClientImpl());
+		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, new MockedGridClientImpl(), new ObjectHookRegistry());
 		functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(configuration));
 		FunctionManagerImpl functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
 		
