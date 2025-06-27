@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import step.attachments.FileResolver;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.Function;
 import step.grid.GridFileService;
 
@@ -32,16 +33,19 @@ public class FunctionTypeRegistryImpl implements FunctionTypeRegistry {
 	protected final GridFileService gridFileServices;
 	
 	protected final FunctionTypeConfiguration functionTypeConfiguration;
+
+	protected final ObjectHookRegistry objectHookRegistry;
 	
-	public FunctionTypeRegistryImpl(FileResolver fileResolver, GridFileService gridFileServices) {
-		this(fileResolver, gridFileServices, new FunctionTypeConfiguration());
+	public FunctionTypeRegistryImpl(FileResolver fileResolver, GridFileService gridFileServices, ObjectHookRegistry objectHookRegistry) {
+		this(fileResolver, gridFileServices, objectHookRegistry, new FunctionTypeConfiguration());
 	}
 
 	public FunctionTypeRegistryImpl(FileResolver fileResolver, GridFileService gridFileServices,
-			FunctionTypeConfiguration functionTypeConfiguration) {
+									ObjectHookRegistry objectHookRegistry, FunctionTypeConfiguration functionTypeConfiguration) {
 		super();
 		this.fileResolver = fileResolver;
 		this.gridFileServices = gridFileServices;
+		this.objectHookRegistry = objectHookRegistry;
 		this.functionTypeConfiguration = functionTypeConfiguration;
 	}
 
@@ -53,6 +57,7 @@ public class FunctionTypeRegistryImpl implements FunctionTypeRegistry {
 		functionType.setFunctionTypeConfiguration(functionTypeConfiguration);
 		functionType.setFileResolver(fileResolver);
 		functionType.setGridFileServices(gridFileServices);
+		functionType.setObjectHookRegistry(objectHookRegistry);
 		functionType.init();
 		functionTypes.put(functionType.newFunction().getClass().getName(), (AbstractFunctionType<Function>) functionType);
 	}

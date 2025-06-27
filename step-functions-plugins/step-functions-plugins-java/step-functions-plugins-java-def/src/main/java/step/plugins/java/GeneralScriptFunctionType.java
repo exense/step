@@ -44,7 +44,7 @@ public class GeneralScriptFunctionType extends AbstractScriptFunctionType<Genera
 			} else if(language.equals("groovy")) {
 				template = "custom_script.groovy";
 			}			
-			setupScriptFile(function, template);
+			setupScriptFileAsResource(function, template);
 		}
 	}
 

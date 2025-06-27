@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.execution.FunctionExecutionService;
@@ -78,7 +79,7 @@ public class FunctionRunner {
 			client = new MockedGridClientImpl();
 			
 			FileResolver fileResolver = new FileResolver(new LocalResourceManagerImpl());
-			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, client);
+			FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, client, new ObjectHookRegistry());
 			functionTypeRegistry.registerFunctionType(functionType);
 			
 			try {
