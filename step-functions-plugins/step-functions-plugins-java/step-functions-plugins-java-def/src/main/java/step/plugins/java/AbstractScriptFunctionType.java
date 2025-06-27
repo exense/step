@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.attachments.FileResolver;
 import step.core.AbstractContext;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
@@ -127,57 +128,45 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		return conf.getScriptLanguage().get();
 	}
 
-	protected File setupScriptFile(GeneralScriptFunction function, String templateFilename) throws SetupFunctionException {
+	protected InputStream getTemplateFileInputStream(String templateFilename) throws SetupFunctionException {
 		File templateScript = new File(configuration.getProperty("controller.dir") + "/data/templates/" + templateFilename);
 		try {
 			boolean templateExists = templateScript.exists();
 			if (!templateExists) {
 				log.warn("Default template file not found: " + templateScript.getAbsolutePath());
 			}
-			return setupScriptFile(function, templateExists ? new FileInputStream(templateScript) : null);
+			return templateExists ? new FileInputStream(templateScript) : null;
 		} catch (FileNotFoundException e) {
 			throw new SetupFunctionException("Unable to apply template. The file '" + templateScript.getAbsolutePath() + "' doesn't exist");
 		}
 	}
 
-	protected File setupScriptFile(GeneralScriptFunction function, InputStream templateStream) throws SetupFunctionException {
-		return setupScriptFile(function, templateStream, true);
+	protected File setupScriptFile(GeneralScriptFunction function, String templateFilename) throws SetupFunctionException {
+		return setupScriptFile(function, getTemplateFileInputStream(templateFilename));
 	}
 
-	protected File setupScriptFile(GeneralScriptFunction function, InputStream templateStream, boolean useResourceManager) throws SetupFunctionException {
-		return setupScriptFile(function, templateStream, useResourceManager, configuration.getProperty("keywords.script.scriptdir"));
+	protected File setupScriptFile(GeneralScriptFunction function, InputStream templateStream) throws SetupFunctionException {
+		return setupScriptFile(function, templateStream, configuration.getProperty("keywords.script.scriptdir"));
 	}
 	
 	protected File setupScriptFile(GeneralScriptFunction function, InputStream templateStream,
-								   boolean useResourceManager, String scriptDir) throws SetupFunctionException {
+								   String scriptDir) throws SetupFunctionException {
+		File scriptFile;
+
 		String scriptFilename = function.getScriptFile().get();
 
-		//If the script file is not defined, we create a default file and apply the template
-		if(scriptFilename == null || scriptFilename.isBlank()) {
-			ResourceManager resourceManager = fileResolver.getResourceManager();
-			//If a resource manager is present and should be used by default, we create the script as a resource
-			if (resourceManager != null && useResourceManager) {
-				String newScriptFilename = getScriptFilename(function);
-				InputStream resourceIS = Objects.requireNonNullElse(templateStream, InputStream.nullInputStream());
-				// apply context attributes of the function package to the function
-				AbstractContext context = new AbstractContext() {};
-				try {
-					objectHookRegistry.rebuildContext(context, function);
-					ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(context);
-					Resource resource = resourceManager.createResource(RESOURCE_TYPE_FUNCTIONS, resourceIS, newScriptFilename, false, objectEnricher);
-					function.getScriptFile().setValue(fileResolver.createPathForResourceId(resource.getId().toHexString()));
-				} catch (Exception e) {
-					throw new SetupFunctionException("Unable to create the default script resource", e);
-				}
-			} else {
-				//If resource manager is not available or an absolute path is requested, we create a new file and use it directly as script file
-				function.getScriptFile().setValue(getDefaultScriptFile(function, scriptDir).getAbsolutePath());
-			}
+		if (scriptFilename.startsWith(FileResolver.RESOURCE_PREFIX)) {
+			return null;
 		}
 
-		//In all cases, if the files doesn't exist yet, we create it with the provided template
-		File scriptFile = fileResolver.resolve(function.getScriptFile().get());
-		if(scriptFile != null && !scriptFile.exists()) {
+		if(scriptFilename==null || scriptFilename.trim().length()==0) {
+			scriptFile = getDefaultScriptFile(function, scriptDir);
+			function.getScriptFile().setValue(scriptFile.getAbsolutePath());
+		} else {
+			scriptFile = new File(scriptFilename);
+		}
+
+		if(!scriptFile.exists()) {
 			File folder = scriptFile.getParentFile();
 			if (!folder.exists()) {
 				try {
@@ -200,6 +189,27 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		return scriptFile;
 	}
 
+	protected File setupScriptFileAsResource(GeneralScriptFunction function, String templateFilename) throws SetupFunctionException {
+		return setupScriptFileAsResource(function, getTemplateFileInputStream(templateFilename));
+	}
+
+	protected File setupScriptFileAsResource(GeneralScriptFunction function, InputStream templateStream) throws SetupFunctionException {
+		ResourceManager resourceManager = fileResolver.getResourceManager();
+		String newScriptFilename = getScriptFilename(function);
+		InputStream resourceIS = Objects.requireNonNullElse(templateStream, InputStream.nullInputStream());
+		// apply context attributes of the function package to the function
+		AbstractContext context = new AbstractContext() {};
+		try {
+			objectHookRegistry.rebuildContext(context, function);
+			ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(context);
+			Resource resource = resourceManager.createResource(RESOURCE_TYPE_FUNCTIONS, resourceIS, newScriptFilename, false, objectEnricher);
+			function.getScriptFile().setValue(fileResolver.createPathForResourceId(resource.getId().toHexString()));
+		} catch (Exception e) {
+			throw new SetupFunctionException("Unable to create the default script as resource", e);
+		}
+		return fileResolver.resolve(function.getScriptFile().get());
+	}
+
 	@Override
 	public T copyFunction(T function) throws FunctionTypeException {
 		T copy = super.copyFunction(function);
@@ -218,10 +228,12 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 				boolean isResource = fileResolver.isResource(scriptFileValue);
 				if (isResource) {
 					scriptFileValue = fileResolver.resolve(scriptFileValue).getAbsolutePath();
+					newFile = setupScriptFileAsResource(copy, new FileInputStream(scriptFileValue));
+				} else {
+					newFile = (parent != null) ?
+							setupScriptFile(copy, new FileInputStream(scriptFileValue), parent) :
+							setupScriptFile(copy, new FileInputStream(scriptFileValue));
 				}
-				newFile = (parent != null) ?
-						setupScriptFile(copy, new FileInputStream(scriptFileValue), isResource, parent) :
-						setupScriptFile(copy, new FileInputStream(scriptFileValue), isResource);
 			} catch (SetupFunctionException | FileNotFoundException e) {
 				//Keep source config in case of error
 			} finally {
