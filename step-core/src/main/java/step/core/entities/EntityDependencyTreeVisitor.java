@@ -36,12 +36,12 @@ public class EntityDependencyTreeVisitor {
 
 	public void visitEntityDependencyTree(String entityName, String entityId, EntityTreeVisitor visitor,
 			boolean recursive) {
-		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, recursive, visitor, null);
+		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, recursive, visitor);
 		visitEntity(entityName, entityId, context);
 	}
 
 	public void visitSingleObject(Object object, EntityTreeVisitor visitor, Set<String> messageCollector) {
-		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, false, visitor, messageCollector);
+		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, false, visitor);
 		resolveEntityDependencies(object, context);
 	}
 
@@ -51,14 +51,12 @@ public class EntityDependencyTreeVisitor {
 		private final ObjectPredicate objectPredicate;
 		private final EntityTreeVisitor visitor;
 		private final Map<String, Object> stack = new HashMap<>();
-		private final Set<String> messageCollector;
 
-		public EntityTreeVisitorContext(ObjectPredicate objectPredicate, boolean recursive, EntityTreeVisitor visitor, Set<String> messageCollector) {
+		public EntityTreeVisitorContext(ObjectPredicate objectPredicate, boolean recursive, EntityTreeVisitor visitor) {
 			super();
 			this.objectPredicate = objectPredicate;
 			this.recursive = recursive;
 			this.visitor = visitor;
-			this.messageCollector = messageCollector;
 		}
 
 		public ObjectPredicate getObjectPredicate() {
@@ -75,7 +73,7 @@ public class EntityDependencyTreeVisitor {
 			return visitor.onResolvedEntityId(entityName, entityId);
 		}
 
-		protected EntityTreeVisitor getVisitor() {
+		public EntityTreeVisitor getVisitor() {
 			return visitor;
 		}
 
@@ -87,9 +85,6 @@ public class EntityDependencyTreeVisitor {
 			return stack;
 		}
 
-		public Set<String> getMessageCollector() {
-			return messageCollector;
-		}
 	}
 
 	public interface EntityTreeVisitor {
