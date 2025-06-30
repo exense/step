@@ -77,6 +77,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     }
 
     @Override
+    @Secured(right = "{entity}-write")
     public ExecutiontTaskParameters save(ExecutiontTaskParameters schedule) {
         // Enrich the execution parameters with the attributes of the task parameters.
         // The attributes of the execution parameters are then added to the Execution
@@ -135,7 +136,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Operation(description = "Enable/disable the given scheduler task.")
     @PUT
     @Path("/{id}")
-    @Secured(right = "{entity}-write")
+    @Secured(right = "{entity}-toggle")
     public void enableExecutionTask(@PathParam("id") String executionTaskID, @QueryParam("enabled") Boolean enabled) {
         try {
             if (enabled != null && enabled) {
@@ -149,6 +150,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     }
 
     @Override
+    @Secured(right = "{entity}-delete")
     public void delete(String id) {
         assertEntityIsAcceptableInContext(getEntity(id));
         scheduler.removeExecutionTask(id);
