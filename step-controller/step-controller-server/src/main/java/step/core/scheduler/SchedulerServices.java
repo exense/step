@@ -136,7 +136,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Operation(description = "Enable/disable the given scheduler task.")
     @PUT
     @Path("/{id}")
-    @Secured(right = "{entity}-(de)activate")
+    @Secured(right = "{entity}-activate")
     public void enableExecutionTask(@PathParam("id") String executionTaskID, @QueryParam("enabled") Boolean enabled) {
         try {
             if (enabled != null && enabled) {
