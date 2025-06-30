@@ -218,18 +218,19 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		if(function.getScriptLanguage().get().equals("groovy") || function.getScriptLanguage().get().equals("javascript")) {
 			try {
 				copy.setScriptFile(new DynamicValue<>(""));//reset script to setup a new one
-				String parent = null;
 				String scriptFileValue = scriptFile.get();
-				try {
-					parent = new File(scriptFileValue).getParent();
-				} catch (Exception e) {
-					//keep configuration script dir in case of error
-				}
+
 				boolean isResource = fileResolver.isResource(scriptFileValue);
 				if (isResource) {
 					scriptFileValue = fileResolver.resolve(scriptFileValue).getAbsolutePath();
 					newFile = setupScriptFileAsResource(copy, new FileInputStream(scriptFileValue));
 				} else {
+					String parent = null;
+					try {
+						parent = new File(scriptFileValue).getParent();
+					} catch (Exception e) {
+						//keep configuration script dir in case of error
+					}
 					newFile = (parent != null) ?
 							setupScriptFile(copy, new FileInputStream(scriptFileValue), parent) :
 							setupScriptFile(copy, new FileInputStream(scriptFileValue));
