@@ -46,6 +46,7 @@
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
 		<dependencies.version>2025.6.25</dependencies.version>
+		<exense-commons.version>2025.7.2-68650d84343e7d5ee6f0b519</exense-commons.version>
 		<step-grid.version>2025.7.2-68653427343e7d5ee60a1774</step-grid.version>
 		<step-framework.version>2025.6.26-685ce23164523b01b0137162</step-framework.version>
 
@@ -111,6 +112,15 @@
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
+			<!-- TODO: this has been added to force the use of the correct version without having to create a release of step-framework. Remove before merge! -->
+			<dependency>
+				<groupId>ch.exense.commons</groupId>
+				<artifactId>exense-commons</artifactId>
+				<version>${exense-commons.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
 			<dependency>
 				<groupId>ch.exense.step</groupId>
 				<artifactId>step-framework</artifactId>
