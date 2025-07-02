@@ -35,7 +35,6 @@ import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.deployment.AbstractStepServices;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
@@ -111,11 +110,14 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public String createAutomationPackage(@QueryParam("version") String apVersion,
                                           @QueryParam("activationExpr") String activationExpression,
                                           @FormDataParam("file") InputStream automationPackageInputStream,
-                                          @FormDataParam("file") FormDataContentDisposition fileDetail) {
+                                          @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                          @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
+                                          @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail) {
         try {
             ObjectId id = automationPackageManager.createAutomationPackage(
                     automationPackageInputStream, fileDetail.getFileName(),
                     apVersion, activationExpression,
+                    keywordLibraryInputStream, keywordLibraryFileDetail == null ? null : keywordLibraryFileDetail.getFileName(),
                     getObjectEnricher(), getObjectPredicate()
             );
             return id == null ? null : id.toString();
@@ -144,6 +146,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                    @QueryParam("activationExpr") String activationExpression,
                                                    @RequestBody() String mavenArtifactXml) {
         try {
+            // TODO: keyword library xml?
             MavenArtifactIdentifier mavenArtifactIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
             return automationPackageManager.createAutomationPackageFromMaven(
                     mavenArtifactIdentifier, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate()
@@ -167,6 +170,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                  @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart) {
+        // TODO: execute without keyword library?
         IsolatedAutomationPackageExecutionParameters executionParameters;
         if (executionParamsBodyPart != null) {
             // The workaround to parse execution parameters as application/json even if the Content-Type for this part is not explicitly set in request
@@ -253,12 +257,15 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @QueryParam("version") String apVersion,
                                                                  @QueryParam("activationExpr") String activationExpression,
                                                                  @FormDataParam("file") InputStream uploadedInputStream,
-                                                                 @FormDataParam("file") FormDataContentDisposition fileDetail) {
+                                                                 @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                                 @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
+                                                                 @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail) {
         checkAutomationPackageAcceptable(id);
         try {
             return automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
-                    uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
+                    uploadedInputStream, fileDetail.getFileName(), keywordLibraryInputStream, keywordLibraryFileDetail == null ? null : keywordLibraryFileDetail.getFileName(),
+                    apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async
             );
         } catch (AutomationPackageManagerException e) {
@@ -286,10 +293,13 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @QueryParam("version") String apVersion,
                                                     @QueryParam("activationExpr") String activationExpression,
                                                     @FormDataParam("file") InputStream uploadedInputStream,
-                                                    @FormDataParam("file") FormDataContentDisposition fileDetail) {
+                                                    @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                    @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
+                                                    @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail) {
         try {
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
-                    true, true, null, uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
+                    true, true, null, uploadedInputStream, fileDetail.getFileName(), keywordLibraryInputStream, keywordLibraryFileDetail == null ? null : keywordLibraryFileDetail.getFileName(),
+                    apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async
             );
             Response.ResponseBuilder responseBuilder;
@@ -324,6 +334,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                                   @QueryParam("activationExpr") String activationExpression,
                                                                                   @RequestBody() String mavenArtifactXml) {
         try {
+            // TODO: keyword library file xml?
             MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
             return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
                     mvnIdentifier, true, true, null, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
@@ -355,6 +366,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                           @QueryParam("activationExpr") String activationExpression,
                                                                           @RequestBody() String mavenArtifactXml) {
         try {
+            // TODO: keyword library file xml?
             MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
             return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
                     mvnIdentifier, true, false, new ObjectId(id), apVersion,

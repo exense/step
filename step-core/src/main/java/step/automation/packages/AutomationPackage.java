@@ -20,6 +20,8 @@ package step.automation.packages;
 
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.entities.EntityManager;
+import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
 
 public class AutomationPackage extends AbstractOrganizableObject implements EnricheableObject {
@@ -27,6 +29,8 @@ public class AutomationPackage extends AbstractOrganizableObject implements Enri
     private AutomationPackageStatus status;
     private String version;
     private Expression activationExpression;
+
+    private String packageLibrariesLocation;
 
     public AutomationPackageStatus getStatus() {
         return status;
@@ -50,5 +54,17 @@ public class AutomationPackage extends AbstractOrganizableObject implements Enri
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    /**
+     * @return the resource path to the package libraries. Package libraries are either a folder of jar or DLLs
+     */
+    @EntityReference(type= EntityManager.resources)
+    public String getPackageLibrariesLocation() {
+        return packageLibrariesLocation;
+    }
+
+    public void setPackageLibrariesLocation(String packageLibrariesLocation) {
+        this.packageLibrariesLocation = packageLibrariesLocation;
     }
 }
