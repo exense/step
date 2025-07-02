@@ -88,6 +88,16 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-framework-server-plugins</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>ch.exense.streaming</groupId>
+			<artifactId>step-streaming-impl-server</artifactId>
+			<version>${step-streaming.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.streaming</groupId>
+			<artifactId>step-streaming-impl-websocket-server</artifactId>
+			<version>${step-streaming.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.json</groupId>
