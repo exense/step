@@ -592,10 +592,10 @@ public class AutomationPackageManager {
         message.append(String.format(" Plans: %s.", staging.getPlans().size()));
         message.append(String.format(" Functions: %s.", staging.getFunctions().size()));
 
-        for (Map.Entry<String, List<?>> additionalObjects : staging.getAdditionalObjects().entrySet()) {
-            message.append(String.format(" %s: %s.", additionalObjects.getKey(), additionalObjects.getValue().size()));
+        for (String additionalField : staging.getAdditionalFields()) {
+            List<?> additionalObjects = staging.getAdditionalObjects(additionalField);
+            message.append(String.format(" %s: %s.", additionalField, additionalObjects == null ? 0 : additionalObjects.size()));
         }
-
         log.info(message.toString());
     }
 
@@ -608,7 +608,11 @@ public class AutomationPackageManager {
         staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager(), evaluationExpression));
         staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression));
 
-        List<HookEntry> hookEntries = packageContent.getAdditionalData().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
+        List<HookEntry> hookEntries = new ArrayList<>();
+        for (String additionalField : packageContent.getAdditionalFields()) {
+            hookEntries.add(new HookEntry(additionalField, packageContent.getAdditionalData(additionalField)));
+        }
+
         List<String> orderedEntryNames = automationPackageHookRegistry.getOrderedHookFieldNames();
         // sort the hook entries according to their "natural" order defined by the registry
         hookEntries.sort(Comparator.comparingInt(he -> orderedEntryNames.indexOf(he.fieldName)));
@@ -661,7 +665,10 @@ public class AutomationPackageManager {
         }
 
         // save task parameters and additional objects via hooks
-        List<HookEntry> hookEntries = staging.getAdditionalObjects().entrySet().stream().map(e -> new HookEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
+        List<HookEntry> hookEntries = new ArrayList<>();
+        for (String additionalField : staging.getAdditionalFields()) {
+            hookEntries.add(new HookEntry(additionalField, staging.getAdditionalObjects(additionalField)));
+        }
         for (HookEntry hookEntry : hookEntries) {
             try {
                 boolean hooked = automationPackageHookRegistry.onCreate(

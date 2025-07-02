@@ -58,21 +58,22 @@ public class ResourceArtifactRepositoryTest {
         File file = new File("src/test/resources/step/repositories/artifact/plans-with-keywords.jar");
         try (InputStream is = new FileInputStream(file)) {
             // mock the context, which is normally prepared via FunctionPlugin
-            ExecutionContext executionContext = ExecutionEngine.builder().build().newExecutionContext();
-            executionContext.put(FunctionAccessor.class, new InMemoryFunctionAccessorImpl());
-            executionContext.put(FunctionTypeRegistry.class, functionTypeRegistry);
+            try (ExecutionContext executionContext = ExecutionEngine.builder().build().newExecutionContext()) {
+                executionContext.put(FunctionAccessor.class, new InMemoryFunctionAccessorImpl());
+                executionContext.put(FunctionTypeRegistry.class, functionTypeRegistry);
 
-            // upload the jar
-            Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, "plans-with-keywords.jar", false, null);
-            log.info("Resource uploaded: {}", resource.getId().toString());
+                // upload the jar
+                Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, "plans-with-keywords.jar", false, null);
+                log.info("Resource uploaded: {}", resource.getId().toString());
 
-            Map<String, String> repoParams = new HashMap<>();
-            repoParams.put(ResourceArtifactRepository.PARAM_RESOURCE_ID, resource.getId().toString());
+                Map<String, String> repoParams = new HashMap<>();
+                repoParams.put(ResourceArtifactRepository.PARAM_RESOURCE_ID, resource.getId().toString());
 
-            log.info("Importing...");
-            ImportResult importResult = this.repo.importArtefact(executionContext, repoParams);
-            Assert.assertTrue(importResult.isSuccessful());
-            Assert.assertNotNull(importResult.getPlanId());
+                log.info("Importing...");
+                ImportResult importResult = this.repo.importArtefact(executionContext, repoParams);
+                Assert.assertTrue(importResult.isSuccessful());
+                Assert.assertNotNull(importResult.getPlanId());
+            }
 
         } catch (IOException | InvalidResourceFormatException e) {
             throw new RuntimeException("Input stream exception", e);

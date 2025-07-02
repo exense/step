@@ -42,15 +42,17 @@ import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.JMeterFunctionType;
 import step.plugins.node.NodeFunction;
 import step.plugins.node.NodeFunctionType;
+import step.repositories.ArtifactRepositoryConstants;
 import step.resources.LocalResourceManagerImpl;
 
+import java.io.IOException;
 import java.util.Map;
 
 public abstract class AbstractMavenArtifactRepositoryTest {
 
-    protected static final Map<String, String> REPOSITORY_PARAMETERS = Map.of(MavenArtifactRepository.PARAM_GROUP_ID, "ch.exense.step",
-            MavenArtifactRepository.PARAM_ARTIFACT_ID, "step-automation-packages-junit", MavenArtifactRepository.PARAM_VERSION, "0.0.0",
-            MavenArtifactRepository.PARAM_CLASSIFIER, "tests");
+    protected static final Map<String, String> REPOSITORY_PARAMETERS = Map.of(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, "ch.exense.step",
+            ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, "step-automation-packages-junit", ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, "0.0.0",
+            ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, "tests");
     protected static final String MAVEN_SETTINGS_NEXUS = "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
             "  xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
             "    <profiles>\n" +
@@ -93,6 +95,13 @@ public abstract class AbstractMavenArtifactRepositoryTest {
     protected void cleanup() {
         if (apManager != null) {
             apManager.cleanup();
+        }
+        if (executionContext != null) {
+            try {
+                executionContext.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

@@ -36,6 +36,7 @@ import step.attachments.FileResolver;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.Function;
 import step.functions.io.Input;
 import step.grid.GridFileService;
@@ -62,6 +63,8 @@ public abstract class AbstractFunctionType<T extends Function> {
 
 	protected FileVersion handlerPackageVersion = null;
 
+	protected ObjectHookRegistry objectHookRegistry;
+
 	protected void setFunctionTypeConfiguration(FunctionTypeConfiguration functionTypeConfiguration) {
 		this.functionTypeConfiguration = functionTypeConfiguration;
 	}
@@ -82,6 +85,10 @@ public abstract class AbstractFunctionType<T extends Function> {
 	
 	protected void setGridFileServices(GridFileService gridFileServices) {
 		this.gridFileServices = gridFileServices;
+	}
+
+	protected void setObjectHookRegistry(ObjectHookRegistry objectHookRegistry) {
+		this.objectHookRegistry = objectHookRegistry;
 	}
 
 	protected void init() {}
