@@ -33,7 +33,6 @@ import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
-import step.grid.io.stream.StreamableAttachmentsHandler;
 
 public abstract class AbstractFunctionHandler<IN, OUT> {
 
@@ -43,7 +42,6 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	
 	private TokenSession tokenSession;
 	private TokenReservationSession tokenReservationSession;
-	private StreamableAttachmentsHandler streamableAttachmentsHandler;
 	
 	private Map<String, String> properties;
 	
@@ -90,14 +88,6 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 
 	protected void setTokenReservationSession(TokenReservationSession tokenReservationSession) {
 		this.tokenReservationSession = tokenReservationSession;
-	}
-
-	protected void setStreamableAttachmentsHandler(StreamableAttachmentsHandler streamableAttachmentsHandler) {
-		this.streamableAttachmentsHandler = streamableAttachmentsHandler;
-	}
-
-	protected StreamableAttachmentsHandler getStreamableAttachmentsHandler() {
-		return streamableAttachmentsHandler;
 	}
 
 	protected void registerObjectToBeClosedWithSession(AutoCloseable autoCloseable) {

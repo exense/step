@@ -1,6 +1,5 @@
 {
    "gridHost":"http://localhost:8081",
-   "streamUploadEndpoint":"ws://localhost:8080/ws/resource/upload",
    "registrationPeriod":1000,
    "gridReadTimeout":20000,
    "workingDir":"src/test/work",

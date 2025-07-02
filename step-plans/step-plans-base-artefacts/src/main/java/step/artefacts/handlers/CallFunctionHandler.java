@@ -29,14 +29,15 @@ import step.artefacts.handlers.functions.FunctionGroupSession;
 import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.common.managedoperations.OperationManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
+import step.core.artefacts.handlers.ArtefactPathHelper;
 import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -62,12 +63,8 @@ import step.functions.handler.AbstractFunctionHandler;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.type.FunctionTypeRegistry;
-import step.grid.Grid;
-import step.grid.GridImpl;
 import step.grid.Token;
 import step.grid.TokenWrapper;
-import step.grid.agent.events.AgentEventMessage;
-import step.grid.agent.events.StreamableAttachmentCreatedEventMessage;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
@@ -76,7 +73,6 @@ import step.plugins.functions.types.CompositeFunction;
 
 import java.io.StringReader;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
@@ -96,22 +92,14 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	protected FunctionLocator functionLocator;
 
 	protected boolean useLegacyOutput;
-	// required for reacting to agent events (real-time resource uploads), to update the report accordingly.
-	private GridImpl grid;
-	ReportNodeAccessor reportNodeAccessor;
 	
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
-		Grid grid = context.get(Grid.class);
-		if (grid instanceof GridImpl) {
-			this.grid = (GridImpl) grid;
-		}
 		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 		functionAccessor = context.require(FunctionAccessor.class);
 		functionExecutionService = context.require(FunctionExecutionService.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
-		reportNodeAccessor = context.getReportNodeAccessor();
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
 		this.tokenSelectionCriteriaMapBuilder = new TokenSelectionCriteriaMapBuilder(functionTypeRegistry, dynamicJsonObjectResolver);
 		this.functionLocator = new FunctionLocator(functionAccessor, new SelectorHelper(dynamicJsonObjectResolver));
@@ -216,7 +204,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			boolean forceLocalToken =  context.getOperationMode() == OperationMode.LOCAL;
 			TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
-			Consumer<AgentEventMessage> eventsCallback = null;
 			try {
 				String agentUrl = token.getAgent().getAgentUrl();
 				node.setAgentUrl(agentUrl);
@@ -226,8 +213,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				if(gridToken.isLocal()) {
 					TokenReservationSession session = (TokenReservationSession) gridToken.getAttachedObject(TokenWrapper.TOKEN_RESERVATION_SESSION);
 					session.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, new ExecutionContextWrapper(context));
-					// TODO: not sure anymore if this is required, will need to finalize streaming attachments stuff anyway, it won't work locally
-					session.put(TokenReservationSession.TOKENID_KEY, gridToken.getId());
 					session.put(AbstractFunctionHandler.ARTEFACT_PATH, currentArtefactPath());
 				} else {
 					// only report non-local (i.e. actual agent) URLs
@@ -236,24 +221,10 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 				OperationManager.getInstance().enter(OPERATION_KEYWORD_CALL, new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
 						node.getId().toString(), node.getArtefactHash());
-				if (!gridToken.isLocal() && grid != null) {
-					eventsCallback = agentEvent -> {
-						// This is a hack/PoC to show how to integrate the events into the report in realtime.
-						if (agentEvent instanceof StreamableAttachmentCreatedEventMessage) {
-							StreamableAttachmentCreatedEventMessage event = (StreamableAttachmentCreatedEventMessage) agentEvent;
-							node.setName("streamable: " + event.attachmentDescriptor.filename +" @ " +event.attachmentDescriptor.reference.identifier);
-						}
-                        reportNodeAccessor.save(node);
-                    };
-					grid.registerAgentEventCallback(token.getToken().getId(), eventsCallback);
-				}
 
 				try {
 					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class, context);
 				} finally {
-					if (eventsCallback != null) {
-						grid.unregisterAgentEventCallback(token.getToken().getId(), eventsCallback);
-					}
 					OperationManager.getInstance().exit();
 				}
 				executionCallbacks.afterFunctionExecution(context, node, function, output);

@@ -2,7 +2,6 @@ package step.plugins.timeseries;
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.Filter;
-import jakarta.websocket.server.ServerEndpointConfig;
 import org.junit.Assert;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -90,10 +89,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 			@Override
 			public void registerWebAppRoot(String webAppRoot) {}
 
-			@Override
-			public void registerWebsocketEndpoint(ServerEndpointConfig serverEndpointConfig) {
 
-			}
 		});
 		globalContext.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
 		MeasurementControllerPlugin mc = new MeasurementControllerPlugin();
