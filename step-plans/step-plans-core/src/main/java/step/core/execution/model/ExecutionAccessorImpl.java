@@ -44,6 +44,8 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 		createOrUpdateIndex("result");
 		collectionDriver.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(new IndexField("executionTaskID",Order.ASC, null),
 				new IndexField("endTime",Order.DESC, null))));
+		collectionDriver.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(new IndexField("planId",Order.ASC, null),
+				new IndexField("endTime",Order.DESC, null))));
 	}
 
 	@Override
@@ -68,10 +70,15 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 		return collectionDriver.find(filter, null, null, null, 0).collect(Collectors.toList());
 	}
 
-	public List<Execution> findByCritera(Map<String, String> criteria, long start, long end, SearchOrder order, int skip, int limit) {
+	public List<Execution> findByCritera(Map<String, String> criteria, Long start, Long end, SearchOrder order, int skip, int limit) {
 		List<Filter> filters = new ArrayList<>();
-		filters.add(Filters.gte("startTime", start));
-		filters.add(Filters.lte("endTime", end));
+		if (start != null) {
+			filters.add(Filters.gte("startTime", start));
+		}
+		if (end != null) {
+			filters.add(Filters.lte("endTime", end));
+		}
+
 		criteria.forEach((k, v) -> {
 			filters.add(Filters.equals(k, v));
 		});
