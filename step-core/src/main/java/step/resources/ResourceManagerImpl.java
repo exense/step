@@ -196,6 +196,10 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	private List<Resource> getSimilarResources(Resource actualResource, ResourceRevision actualResourceRevision) {
 		List<Resource> result = new ArrayList<>();
+		// Similar resources is only supported for file, not for directory
+		if (actualResource.isDirectory()) {
+			return result;
+		}
 		resourceRevisionAccessor.getResourceRevisionsByChecksum(actualResourceRevision.getChecksum()).forEachRemaining(revision->{
 			if(!revision.getId().equals(actualResourceRevision.getId())) {
 				Resource resource = resourceAccessor.get(new ObjectId(revision.getResourceId()));
