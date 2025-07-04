@@ -41,6 +41,15 @@
 			<artifactId>step-api-function</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>ch.exense.streaming</groupId>
+			<artifactId>step-streaming-api-client-upload</artifactId>
+		</dependency>
+		<!-- TODO: get rid of this one here, use some other way to provide it at runtime -->
+		<dependency>
+			<groupId>ch.exense.streaming</groupId>
+			<artifactId>step-streaming-impl-websocket-client-upload</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
 		</dependency>

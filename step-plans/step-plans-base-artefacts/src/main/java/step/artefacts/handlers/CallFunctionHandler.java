@@ -29,13 +29,10 @@ import step.artefacts.handlers.functions.FunctionGroupSession;
 import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
-import step.attachments.SkippedAttachmentMeta;
-import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.common.managedoperations.OperationManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
-import step.core.artefacts.handlers.ArtefactPathHelper;
 import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
@@ -49,7 +46,6 @@ import step.core.execution.ExecutionContextWrapper;
 import step.core.execution.OperationMode;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
-import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
 import step.core.plans.Plan;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.reports.Error;
@@ -61,6 +57,9 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.handler.AbstractFunctionHandler;
+import step.functions.handler.liveupload.LiveUploadContext;
+import step.functions.handler.liveupload.LiveUpload;
+import step.functions.handler.liveupload.LiveUploadContextListeners;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.type.FunctionTypeRegistry;
@@ -73,7 +72,9 @@ import step.grid.tokenpool.Interest;
 import step.plugins.functions.types.CompositeFunction;
 
 import java.io.StringReader;
+import java.net.URI;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
@@ -196,6 +197,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		validateInput(input, function);
 
 		Output<JsonObject> output;
+		Map<URI, LiveUpload> liveUploads = new ConcurrentHashMap<>();
+
 		if(!context.isSimulation()) {
 			FunctionGroupContext functionGroupContext = getFunctionGroupContext();
 			boolean closeFunctionGroupSessionAfterExecution = (functionGroupContext == null);
@@ -211,6 +214,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				node.setTokenId(token.getID());
 
 				Token gridToken = token.getToken();
+				LiveUploadContext uploadContext = LiveUploadContext.createNew();
+				LiveUploadContextListeners.registerListener(uploadContext.contextId, upload -> {
+					liveUploads.put(upload.reference.getUri(), upload);
+					System.err.println("LIVEUPLOADS NOW: " + liveUploads);
+				});
+				System.err.println("upload context: " + uploadContext.contextId);
+				input.getProperties().put(LiveUploadContext.PROPERTY_KEY, uploadContext.toString());
 				if(gridToken.isLocal()) {
 					TokenReservationSession session = (TokenReservationSession) gridToken.getAttachedObject(TokenWrapper.TOKEN_RESERVATION_SESSION);
 					session.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, new ExecutionContextWrapper(context));

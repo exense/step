@@ -1,4 +1,4 @@
-package step.streaming;
+package step.plugins.streaming;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.EnricheableObject;

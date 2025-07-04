@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.reports.Measure;
 import step.core.reports.MeasurementsBuilder;
+import step.functions.handler.liveupload.LiveUploadContext;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.agent.AgentTokenServices;
@@ -34,7 +35,9 @@ import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
+import step.streaming.websocket.client.upload.WebsocketUploadProvider;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,20 +46,20 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	public static final String FUNCTION_HANDLER_PACKAGE_KEY = "$functionhandlerjar";
 	public static final String FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY = "$functionhandlerjarCleanable";
-	
+
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
 	public static final String FUNCTION_TYPE_KEY = "$functionType";
 
 	// Cached object mapper for message payload serialization
-	private ObjectMapper mapper;
-	
+	private final ObjectMapper mapper;
+
 	private ApplicationContextBuilder applicationContextBuilder;
-	
+
 	public FunctionHandlerFactory functionHandlerFactory;
-	
+
 	public FunctionMessageHandler() {
 		super();
-		
+
 		mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
 	}
 
@@ -65,9 +68,9 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		super.init(agentTokenServices);
 		applicationContextBuilder = new ApplicationContextBuilder(this.getClass().getClassLoader(),
 				agentTokenServices.getApplicationContextBuilder().getApplicationContextConfiguration());
-		
+
 		applicationContextBuilder.forkCurrentContext(AbstractFunctionHandler.FORKED_BRANCH);
-		
+
 		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient());
 	}
 
@@ -104,6 +107,17 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			// Handle the input
 			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
 			measurementsBuilder.startMeasure(input.getFunction());
+
+            // TODO: move the dependency on implementation somewhere else, better error handling...
+            // There's no easy way to do this in the AbstractFunctionHandler itself, because
+            // the only place where the Input properties are guaranteed to be available is in the (abstract)
+            // handle() method.
+            String uploadContext = input.getProperties().get(LiveUploadContext.PROPERTY_KEY);
+            if (uploadContext != null) {
+                URI uri = URI.create(uploadContext);
+                functionHandler.setStreamingUploadProvider(new WebsocketUploadProvider(uri));
+            }
+
 			@SuppressWarnings("unchecked")
 			Output<?> output = functionHandler.handle(input);
 			measurementsBuilder.stopMeasure(customMeasureData());
@@ -116,7 +130,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			addAdditionalMeasuresToOutput(output, measurementsBuilder.getMeasures());
 
 			// Serialize the output
-			ObjectNode outputPayload = (ObjectNode) mapper.valueToTree(output);
+			ObjectNode outputPayload = mapper.valueToTree(output);
 
 			// Create and return the output message
 			OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();

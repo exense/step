@@ -18,11 +18,6 @@
  ******************************************************************************/
 package step.functions.handler;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.agent.tokenpool.TokenReservationSession;
@@ -33,10 +28,17 @@ import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
+import step.streaming.client.upload.StreamingUploadProvider;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 public abstract class AbstractFunctionHandler<IN, OUT> {
 
 	private FileManagerClient fileManagerClient;
+	private StreamingUploadProvider streamingUploadProvider;
 	private ApplicationContextBuilder applicationContextBuilder;
 	private FunctionHandlerFactory functionHandlerFactory;
 	
@@ -64,6 +66,14 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 
 	protected void setFileManagerClient(FileManagerClient fileManagerClient) {
 		this.fileManagerClient = fileManagerClient;
+	}
+
+	void setStreamingUploadProvider(StreamingUploadProvider streamingUploadProvider) {
+		this.streamingUploadProvider = streamingUploadProvider;
+	}
+
+	protected StreamingUploadProvider getStreamingUploadProvider() {
+		return streamingUploadProvider;
 	}
 
 	protected void setProperties(Map<String, String> properties) {

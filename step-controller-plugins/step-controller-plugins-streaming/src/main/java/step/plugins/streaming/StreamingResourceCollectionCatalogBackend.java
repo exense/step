@@ -1,4 +1,4 @@
-package step.streaming;
+package step.plugins.streaming;
 
 import org.bson.types.ObjectId;
 import step.core.GlobalContext;

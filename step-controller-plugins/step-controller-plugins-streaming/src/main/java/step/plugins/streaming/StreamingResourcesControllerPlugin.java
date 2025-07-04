@@ -1,0 +1,98 @@
+package step.plugins.streaming;
+
+import jakarta.websocket.server.ServerEndpointConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.core.GlobalContext;
+import step.core.plugins.AbstractControllerPlugin;
+import step.core.plugins.Plugin;
+import step.functions.handler.liveupload.LiveUploadContext;
+import step.streaming.server.*;
+import step.streaming.websocket.server.DefaultWebsocketServerEndpointSessionsHandler;
+import step.streaming.websocket.server.WebsocketDownloadEndpoint;
+import step.streaming.websocket.server.WebsocketServerEndpointSessionsHandler;
+import step.streaming.websocket.server.WebsocketUploadEndpoint;
+
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+@Plugin
+public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin {
+    public static final String UPLOAD_PATH = WebsocketUploadEndpoint.DEFAULT_ENDPOINT_URL;
+    public static final String DOWNLOAD_PATH = WebsocketDownloadEndpoint.DEFAULT_ENDPOINT_URL;
+    public static final String DOWNLOAD_PARAMETER_NAME = WebsocketDownloadEndpoint.DEFAULT_PARAMETER_NAME;
+
+    private static final Logger logger = LoggerFactory.getLogger(StreamingResourcesControllerPlugin.class);
+    private final WebsocketServerEndpointSessionsHandler sessionsHandler = DefaultWebsocketServerEndpointSessionsHandler.getInstance();
+
+    @Override
+    public void serverStart(GlobalContext context) throws Exception {
+        super.serverStart(context);
+
+        int controllerPort = context.getConfiguration().getPropertyAsInteger("port", 8080);
+        String controllerUrl = context.getConfiguration().getProperty("controller.url");
+        if (controllerUrl == null) {
+            controllerUrl = "http://localhost:" + controllerPort;
+            logger.warn("controller.url is not set in step.properties, unable to determine correct URL for streaming services. Will use " + controllerUrl + " instead, but this will not be accessible remotely.");
+        }
+        // remove trailing slash if present
+        if (controllerUrl.endsWith("/")) {
+            controllerUrl = controllerUrl.substring(0, controllerUrl.length() - 1);
+        }
+        URI websocketBaseUri = URI.create(controllerUrl.replaceFirst("^http", "ws"));
+
+        if (websocketBaseUri.getPort() != controllerPort) {
+            websocketBaseUri = changeURIPort(websocketBaseUri, controllerPort);
+            logger.warn("controller.url port did not match listening port, Websocket base url has been changed to " + websocketBaseUri);
+        }
+
+        // FIXME - make configurable
+        File storageBaseDir = new File(System.getProperty("os.name").toLowerCase().contains("win") ? "C:/Temp/streaming-storage" : "/tmp/streaming-storage");
+
+        StreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageBaseDir);
+        StreamingResourcesCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
+        StreamingResourceReferenceMapper mapper = new DefaultStreamingResourceReferenceMapper(websocketBaseUri, DOWNLOAD_PATH, DOWNLOAD_PARAMETER_NAME);
+        StreamingResourceManager manager = new DefaultStreamingResourceManager(catalog, storage, mapper);
+
+        LiveUploadContext.setBaseUri(websocketBaseUri + UPLOAD_PATH);
+        context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeUploadConfig(manager));
+        context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeDownloadConfig(manager));
+        logger.info("Streaming Websockets plugin started, upload/download URLs: {}, {}", websocketBaseUri + UPLOAD_PATH, websocketBaseUri + DOWNLOAD_PATH);
+    }
+
+    private ServerEndpointConfig makeUploadConfig(StreamingResourceManager manager) {
+        return ServerEndpointConfig.Builder.create(ContextAwareWebsocketUploadEndpoint.class, UPLOAD_PATH)
+                .configurator(new ServerEndpointConfig.Configurator() {
+                    @Override
+                    public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
+                        return endpointClass.cast(new ContextAwareWebsocketUploadEndpoint(manager, sessionsHandler));
+                    }
+                })
+                .build();
+    }
+
+    private ServerEndpointConfig makeDownloadConfig(StreamingResourceManager manager) {
+        return ServerEndpointConfig.Builder.create(WebsocketDownloadEndpoint.class, DOWNLOAD_PATH)
+                .configurator(new ServerEndpointConfig.Configurator() {
+                    @Override
+                    public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
+                        return endpointClass.cast(new WebsocketDownloadEndpoint(manager, sessionsHandler, DOWNLOAD_PARAMETER_NAME));
+                    }
+                })
+                .build();
+    }
+
+    private URI changeURIPort(URI u, int newPort) throws URISyntaxException {
+        return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), newPort, u.getPath(), u.getQuery(), u.getFragment());
+    }
+
+    @Override
+    public void serverStop(GlobalContext context) {
+        // TODO: This is not the correct place really, but for now these are the only Websocket server endpoints.
+        // Will have to think about a better place to put this, potentially simply in a separate plugin
+        // This will automatically take care of closing all active websocket sessions on shutdown.
+        sessionsHandler.shutdown();
+        super.serverStop(context);
+    }
+}
