@@ -27,6 +27,7 @@
     </parent>
 
     <artifactId>step-functions-plugins-defs-all-os</artifactId>
+    <name>${project.groupId}:${project.artifactId}</name>
 
     <properties>
     </properties>

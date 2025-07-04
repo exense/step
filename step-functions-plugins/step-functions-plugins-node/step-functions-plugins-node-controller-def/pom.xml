@@ -27,6 +27,7 @@
     </parent>
 
     <artifactId>step-functions-plugins-node-controller-def</artifactId>
+    <name>${project.groupId}:${project.artifactId}</name>
 
     <properties>
     </properties>
