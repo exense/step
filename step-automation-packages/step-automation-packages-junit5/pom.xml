@@ -16,6 +16,7 @@
     </parent>
 
     <artifactId>step-automation-packages-junit5</artifactId>
+    <name>${project.groupId}:${project.artifactId}</name>
 
     <properties>
         <junit.jupiter.version>5.11.4</junit.jupiter.version>
