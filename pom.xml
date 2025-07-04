@@ -52,7 +52,7 @@
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
 		<dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
-		<dep.apache-poi.version>5.2.3</dep.apache-poi.version>
+		<dep.apache-poi.version>5.4.0</dep.apache-poi.version>
 		<dep.aether.version>1.1.0</dep.aether.version>
 
 		<!-- maven build dependencies -->
