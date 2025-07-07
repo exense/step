@@ -286,7 +286,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         try (FileInputStream fis = new FileInputStream(apFile.getFile())) {
             // TODO: keyword libraries
             // the apVersion is null (we always use the actual version), because we only create the isolated in-memory AP here
-            inMemoryPackageManager.createAutomationPackage(fis, apFile.getFile().getName(), null, null, null, null, enricher, predicate);
+            inMemoryPackageManager.createAutomationPackage(fis, apFile.getFile().getName(), null, null, null, enricher, predicate);
         } catch (IOException e) {
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
         }

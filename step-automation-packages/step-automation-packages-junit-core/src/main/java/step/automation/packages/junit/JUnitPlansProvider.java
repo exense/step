@@ -47,7 +47,7 @@ public class JUnitPlansProvider {
             AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(testClass.getClassLoader());
             ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                     false, true, null, automationPackageProvider, null, null,
-                    true, null, null, false, null, null
+                    true, null, null, false, null
             ).getId();
 
             List<PlanFilter> planFilterList = new ArrayList<>();

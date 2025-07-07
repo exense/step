@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
+import step.automation.packages.kwlibrary.*;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.commons.activation.Expression;
 import step.core.AbstractStepContext;
@@ -51,6 +52,7 @@ import step.functions.type.SetupFunctionException;
 import step.resources.*;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -292,15 +294,17 @@ public class AutomationPackageManager {
         deletePlans(automationPackage);
         // schedules will be deleted in deleteAdditionalData via hooks
         deleteResources(automationPackage);
-        deleteAdditionalData(automationPackage, new AutomationPackageContext(operationMode, resourceManager, null,  null,null, extensions));
+        deleteAdditionalData(automationPackage, new AutomationPackageContext(operationMode, resourceManager, null,  null,null, null, extensions));
     }
 
-    public ObjectId createAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier, String apVersion, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+    public ObjectId createAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier,
+                                                     String apVersion, String activationExpr,
+                                                     KeywordLibraryReference keywordLibraryReference,
+                                                     ObjectEnricher enricher, ObjectPredicate objectPredicate) {
         validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
         try {
             try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
-                // TODO: take library input stream from maven
-                return createOrUpdateAutomationPackage(false, true, null, provider, apVersion, activationExpr, false, enricher, objectPredicate, false, null, null).getId();
+                return createOrUpdateAutomationPackage(false, true, null, provider, apVersion, activationExpr, false, enricher, objectPredicate, false, keywordLibraryReference).getId();
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -329,16 +333,14 @@ public class AutomationPackageManager {
      *
      * @param packageStream             the package content
      * @param fileName                  the original name of file with automation package
-     * @param keywordLibraryInputStream
-     * @param keywordLibraryFileName
      * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate           the filter for automation package
      * @return the id of created package
      * @throws AutomationPackageManagerException
      */
-    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, String apVersion, String activationExpr, InputStream keywordLibraryInputStream, String keywordLibraryFileName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
+    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, String apVersion, String activationExpr, KeywordLibraryReference keywordLibraryReference, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
         return createOrUpdateAutomationPackage(false, true, null,
-                packageStream, fileName, keywordLibraryInputStream, keywordLibraryFileName,
+                packageStream, fileName, keywordLibraryReference,
                 apVersion, activationExpr, enricher, objectPredicate, false).getId();
     }
 
@@ -349,20 +351,19 @@ public class AutomationPackageManager {
      * @param allowCreate               whether create new package is allowed
      * @param explicitOldId             the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
      * @param fileName                  the original name of file with automation package
-     * @param keywordLibraryInputStream
-     * @param keywordLibraryFileName
      * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate           the filter for automation package
      * @return the id of created/updated package
      */
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate,
+                                                                         ObjectId explicitOldId,
                                                                          InputStream inputStream, String fileName,
-                                                                         InputStream keywordLibraryInputStream, String keywordLibraryFileName,
+                                                                         KeywordLibraryReference keywordLibraryReference,
                                                                          String apVersion, String activationExpr,
                                                                          ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
         try {
             try (AutomationPackageArchiveProvider provider = new AutomationPackageFromInputStreamProvider(inputStream, fileName)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibraryInputStream, keywordLibraryFileName);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibraryReference);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -382,12 +383,13 @@ public class AutomationPackageManager {
     public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier,
                                                                                   boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                                   String apVersion, String activationExpr,
+                                                                                  KeywordLibraryReference keywordLibraryReference,
                                                                                   ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
         try {
             validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
             try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
                 // TODO: define keyword library from maven
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, null, null);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibraryReference);
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -439,13 +441,13 @@ public class AutomationPackageManager {
      * @param automationPackageProvider the automation package content provider
      * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate           the filter for automation package
-     * @param keywordLibraryInputStream
+     * @param keywordLibraryReference
      * @return the id of created/updated package
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                          AutomationPackageArchiveProvider automationPackageProvider, String apVersion, String activationExpr,
                                                                          boolean isLocalPackage, ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async,
-                                                                         InputStream keywordLibraryInputStream, String keywordLibraryFileName) {
+                                                                         KeywordLibraryReference keywordLibraryReference) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
@@ -488,10 +490,22 @@ public class AutomationPackageManager {
             newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, apVersion, activationExpr, oldPackage, enricher);
 
             // upload keyword package if provided
-            // TODO: check duplicates properly + maybe add the reference on keyword library to the AutomationPackageContent
-            if (keywordLibraryInputStream != null) {
-                Resource keywordLibraryResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, keywordLibraryInputStream, keywordLibraryFileName, true, enricher);
-                newPackage.setPackageLibrariesLocation(FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString());
+            // TODO: now we check the MD5 hash to prevent uploading duplicated libraries - further we will need more flexible approach
+            AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibraryReference, objectPredicate);
+            File keywordLibrary = keywordLibraryProvider.getKeywordLibrary();
+            Resource keywordLibraryResource = null;
+            String keywordLibraryResourceString = null;
+            if (keywordLibrary != null) {
+                try (FileInputStream fis = new FileInputStream(keywordLibrary)) {
+                    try {
+                        keywordLibraryResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, fis, keywordLibrary.getName(), true, enricher);
+                    } catch (SimilarResourceExistingException ex){
+                        log.info("Existing keyword library {} has been detected and will be reused in AP {}", keywordLibrary.getName(), packageContent.getName());
+                        keywordLibraryResource = ex.getResource();
+                    }
+                    keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
+                    newPackage.setPackageLibrariesLocation(keywordLibraryResourceString);
+                }
             }
 
             // prepare staging collections
@@ -503,7 +517,7 @@ public class AutomationPackageManager {
             enrichers.add(new AutomationPackageLinkEnricher(newPackage.getId().toString()));
 
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
-            fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr);
+            fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, keywordLibraryResourceString);
 
             // persist and activate automation package
             log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
@@ -512,7 +526,7 @@ public class AutomationPackageManager {
                 if (oldPackage == null || !async || immediateWriteLock) {
                     //If not async or if it's a new package, we synchronously wait on a write lock and update
                     log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
-                    ObjectId result = updateAutomationPackage(oldPackage, newPackage, packageContent, staging, enricherForIncludedEntities, immediateWriteLock, automationPackageArchive);
+                    ObjectId result = updateAutomationPackage(oldPackage, newPackage, packageContent, staging, enricherForIncludedEntities, immediateWriteLock, automationPackageArchive, keywordLibraryResourceString);
                     return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result);
                 } else {
                     // async update
@@ -520,9 +534,12 @@ public class AutomationPackageManager {
                     newPackage.setStatus(AutomationPackageStatus.DELAYED_UPDATE);
                     automationPackageAccessor.save(newPackage);
                     AutomationPackage finalNewPackage = newPackage;
+
+                    // copy to the final variable to use it in lambda expression
+                    String finalKeywordLibraryResourceString = keywordLibraryResourceString;
                     delayedUpdateExecutor.submit(() -> {
                         try {
-                            updateAutomationPackage(oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities, false, automationPackageArchive);
+                            updateAutomationPackage(oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities, false, automationPackageArchive, finalKeywordLibraryResourceString);
                         } catch (Exception e) {
                             log.error("Exception on delayed AP update", e);
                         }
@@ -539,6 +556,17 @@ public class AutomationPackageManager {
         }
     }
 
+    private AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(KeywordLibraryReference keywordLibraryReference, ObjectPredicate predicate) {
+        if (keywordLibraryReference != null) {
+            if (keywordLibraryReference.useMavenIdentifier()) {
+                return new KeywordLibraryFromMavenProvider(mavenConfigProvider.getConfig(predicate), keywordLibraryReference.getMavenArtifactIdentifier());
+            } else if (keywordLibraryReference.getInputStream() != null) {
+                return new KeywordLibraryFromInputStreamProvider(keywordLibraryReference.getInputStream(), keywordLibraryReference.getFileName());
+            }
+        }
+        return new NoKeywordLibraryProvider();
+    }
+
     /**
      * @return all DB entities linked with the automation package
      */
@@ -553,7 +581,7 @@ public class AutomationPackageManager {
             AutomationPackageHook<?> hook = automationPackageHookRegistry.getHook(hookName);
             result.putAll(hook.getEntitiesForAutomationPackage(
                             automationPackageId,
-                            new AutomationPackageContext(operationMode, resourceManager, null, null, null, extensions)
+                            new AutomationPackageContext(operationMode, resourceManager, null, null, null, null, extensions)
                     )
             );
         }
@@ -562,7 +590,7 @@ public class AutomationPackageManager {
 
     private ObjectId updateAutomationPackage(AutomationPackage oldPackage, AutomationPackage newPackage,
                                              AutomationPackageContent packageContent, AutomationPackageStaging staging, ObjectEnricher enricherForIncludedEntities,
-                                             boolean alreadyLocked, AutomationPackageArchive automationPackageArchive) {
+                                             boolean alreadyLocked, AutomationPackageArchive automationPackageArchive, String keywordLibraryResource) {
         try {
             //If not already locked (i.e. was not able to acquire an immediate write lock)
             if (!alreadyLocked) {
@@ -575,7 +603,7 @@ public class AutomationPackageManager {
                 deleteAutomationPackageEntities(oldPackage);
             }
             // persist all staged entities
-            persistStagedEntities(staging, enricherForIncludedEntities, automationPackageArchive, packageContent);
+            persistStagedEntities(staging, enricherForIncludedEntities, automationPackageArchive, packageContent, keywordLibraryResource);
             ObjectId result = automationPackageAccessor.save(newPackage).getId();
             logAfterSave(staging, oldPackage, newPackage);
             return result;
@@ -624,9 +652,9 @@ public class AutomationPackageManager {
     }
 
     protected void fillStaging(AutomationPackageStaging staging, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities,
-                               AutomationPackageArchive automationPackageArchive, String evaluationExpression) {
-        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager(), evaluationExpression));
-        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression));
+                               AutomationPackageArchive automationPackageArchive, String evaluationExpression, String keywordLibraryResourceString) {
+        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager(), evaluationExpression, keywordLibraryResourceString));
+        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression, keywordLibraryResourceString));
 
         List<HookEntry> hookEntries = new ArrayList<>();
         for (String additionalField : packageContent.getAdditionalFields()) {
@@ -641,7 +669,7 @@ public class AutomationPackageManager {
             try {
                 boolean hooked = automationPackageHookRegistry.onPrepareStaging(
                         hookEntry.fieldName,
-                        new AutomationPackageContext(operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, enricherForIncludedEntities, extensions),
+                        new AutomationPackageContext(operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, keywordLibraryResourceString, enricherForIncludedEntities, extensions),
                         packageContent,
                         hookEntry.values,
                         oldPackage, staging);
@@ -660,7 +688,8 @@ public class AutomationPackageManager {
     protected void persistStagedEntities(AutomationPackageStaging staging,
                                          ObjectEnricher objectEnricher,
                                          AutomationPackageArchive automationPackageArchive,
-                                         AutomationPackageContent packageContent) {
+                                         AutomationPackageContent packageContent,
+                                         String keywordLibraryResource) {
         List<Resource> stagingResources = staging.getResourceManager().findManyByCriteria(null);
         try {
             for (Resource resource: stagingResources) {
@@ -693,7 +722,7 @@ public class AutomationPackageManager {
             try {
                 boolean hooked = automationPackageHookRegistry.onCreate(
                         hookEntry.fieldName, hookEntry.values,
-                        new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, objectEnricher, extensions)
+                        new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, keywordLibraryResource, objectEnricher, extensions)
                 );
                 if (!hooked) {
                     log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
@@ -723,10 +752,10 @@ public class AutomationPackageManager {
 
     protected List<Plan> preparePlansStaging(AutomationPackageContent packageContent, AutomationPackageArchive automationPackageArchive,
                                              AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager,
-                                             String evaluationExpression) {
+                                             String evaluationExpression, String keywordLibraryResourceString) {
         List<Plan> plans = packageContent.getPlans();
         AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(stagingResourceManager);
-        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, packageContent, enricher, extensions, operationMode);
+        specialAttributesApplier.applySpecialAttributesToPlans(plans, automationPackageArchive, packageContent, keywordLibraryResourceString, enricher, extensions, operationMode);
 
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
         if (evaluationExpression != null && !evaluationExpression.isEmpty()){
@@ -738,8 +767,8 @@ public class AutomationPackageManager {
     }
 
     protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
-                                                     AutomationPackage oldPackage, ResourceManager stagingResourceManager, String evaluationExpression) {
-        AutomationPackageContext apContext = new AutomationPackageContext(operationMode, stagingResourceManager, automationPackageArchive, packageContent, enricher, extensions);
+                                                     AutomationPackage oldPackage, ResourceManager stagingResourceManager, String evaluationExpression, String keywordLibraryResourceString) {
+        AutomationPackageContext apContext = new AutomationPackageContext(operationMode, stagingResourceManager, automationPackageArchive, packageContent, keywordLibraryResourceString, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids

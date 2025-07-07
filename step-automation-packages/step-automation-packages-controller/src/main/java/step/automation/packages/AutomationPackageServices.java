@@ -32,6 +32,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import org.xml.sax.SAXException;
 import step.automation.packages.execution.AutomationPackageExecutor;
+import step.automation.packages.kwlibrary.KeywordLibraryReference;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
@@ -117,7 +118,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             ObjectId id = automationPackageManager.createAutomationPackage(
                     automationPackageInputStream, fileDetail.getFileName(),
                     apVersion, activationExpression,
-                    keywordLibraryInputStream, keywordLibraryFileDetail == null ? null : keywordLibraryFileDetail.getFileName(),
+                    keywordLibraryInputStream == null ? null : KeywordLibraryReference.withInputStream(keywordLibraryInputStream, keywordLibraryFileDetail.getFileName()),
                     getObjectEnricher(), getObjectPredicate()
             );
             return id == null ? null : id.toString();
@@ -126,8 +127,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
+    // TODO: fix usages!!!
     /**
-     * @param mavenArtifactXml
+     * @param requestBody
      * Example:
      * <dependency>
      *     <groupId>junit</groupId>
@@ -139,23 +141,33 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      */
     @POST
     @Path("/mvn")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
     public String createAutomationPackageFromMaven(@QueryParam("version") String apVersion,
                                                    @QueryParam("activationExpr") String activationExpression,
-                                                   @RequestBody() String mavenArtifactXml) {
+                                                   @RequestBody AutomationPackageFromMavenRequest requestBody) {
         try {
-            // TODO: keyword library xml?
-            MavenArtifactIdentifier mavenArtifactIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
+            MavenArtifactIdentifier mavenArtifactIdentifier = getMavenArtifactIdentifierFromXml(requestBody.getApMavenSnippetXml());
+            KeywordLibraryReference keywordLibraryReference = getKeywordLibraryReference(requestBody);
             return automationPackageManager.createAutomationPackageFromMaven(
-                    mavenArtifactIdentifier, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate()
+                    mavenArtifactIdentifier, apVersion, activationExpression,
+                    keywordLibraryReference,
+                    getObjectEnricher(), getObjectPredicate()
             ).toString();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         } catch (ParserConfigurationException | IOException | SAXException e) {
             throw new RuntimeException("Cannot parse the maven artifact xml", e);
         }
+    }
+
+    private KeywordLibraryReference getKeywordLibraryReference(AutomationPackageFromMavenRequest requestBody) throws ParserConfigurationException, IOException, SAXException {
+        KeywordLibraryReference keywordLibraryReference = null;
+        if(requestBody.getKeywordLibraryMavenSnippetXml() != null && !requestBody.getKeywordLibraryMavenSnippetXml().isEmpty()){
+            keywordLibraryReference = KeywordLibraryReference.withMavenIdentifier(getMavenArtifactIdentifierFromXml(requestBody.getKeywordLibraryMavenSnippetXml()));
+        }
+        return keywordLibraryReference;
     }
 
     protected MavenArtifactIdentifier getMavenArtifactIdentifierFromXml(String mavenArtifactXml) throws ParserConfigurationException, IOException, SAXException {
@@ -264,7 +276,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             return automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
-                    uploadedInputStream, fileDetail.getFileName(), keywordLibraryInputStream, keywordLibraryFileDetail == null ? null : keywordLibraryFileDetail.getFileName(),
+                    uploadedInputStream, fileDetail.getFileName(), keywordLibraryInputStream == null ? null : KeywordLibraryReference.withInputStream(keywordLibraryInputStream, keywordLibraryFileDetail.getFileName()),
                     apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async
             );
@@ -298,7 +310,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail) {
         try {
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
-                    true, true, null, uploadedInputStream, fileDetail.getFileName(), keywordLibraryInputStream, keywordLibraryFileDetail == null ? null : keywordLibraryFileDetail.getFileName(),
+                    true, true, null, uploadedInputStream, fileDetail.getFileName(),
+                    keywordLibraryInputStream == null ? null : KeywordLibraryReference.withInputStream(keywordLibraryInputStream, keywordLibraryFileDetail.getFileName()),
                     apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async
             );
@@ -315,7 +328,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     /**
-     * @param mavenArtifactXml
      * Example:
      * <dependency>
      *     <groupId>junit</groupId>
@@ -326,18 +338,18 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      */
     @PUT
     @Path("/mvn")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(@QueryParam("async") Boolean async,
                                                                                   @QueryParam("version") String apVersion,
                                                                                   @QueryParam("activationExpr") String activationExpression,
-                                                                                  @RequestBody() String mavenArtifactXml) {
+                                                                                  @RequestBody AutomationPackageFromMavenRequest requestBody) {
         try {
-            // TODO: keyword library file xml?
-            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
+            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(requestBody.getApMavenSnippetXml());
+            KeywordLibraryReference keywordLibraryReference = getKeywordLibraryReference(requestBody);
             return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
-                    mvnIdentifier, true, true, null, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
+                    mvnIdentifier, true, true, null, apVersion, activationExpression, keywordLibraryReference, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
             );
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
@@ -347,30 +359,30 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     /**
-     * @param mavenArtifactXml Example:
-     *                         <dependency>
-     *                         <groupId>junit</groupId>
-     *                         <artifactId>junit</artifactId>
-     *                         <version>4.13.2</version>
-     *                         <scope>test</scope>
-     *                         </dependency>
+     * Example:
+     * <dependency>
+     * <groupId>junit</groupId>
+     * <artifactId>junit</artifactId>
+     * <version>4.13.2</version>
+     * <scope>test</scope>
+     * </dependency>
      */
     @PUT
     @Path("/{id}/mvn")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     public AutomationPackageUpdateResult updateAutomationPackageFromMaven(@PathParam("id") String id,
                                                                           @QueryParam("async") Boolean async,
                                                                           @QueryParam("version") String apVersion,
                                                                           @QueryParam("activationExpr") String activationExpression,
-                                                                          @RequestBody() String mavenArtifactXml) {
+                                                                          @RequestBody AutomationPackageFromMavenRequest requestBody) {
         try {
-            // TODO: keyword library file xml?
-            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
+            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(requestBody.getApMavenSnippetXml());
+            KeywordLibraryReference keywordLibraryReference = getKeywordLibraryReference(requestBody);
             return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
                     mvnIdentifier, true, false, new ObjectId(id), apVersion,
-                    activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
+                    activationExpression, keywordLibraryReference, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
             );
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());

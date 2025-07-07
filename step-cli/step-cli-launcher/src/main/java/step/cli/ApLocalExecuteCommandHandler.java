@@ -63,7 +63,7 @@ public class ApLocalExecuteCommandHandler {
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         false, true, null, automationPackageProvider, null, null,
-                        true, null, null, false, null, null
+                        true, null, null, false, null
                 ).getId();
 
                 PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);

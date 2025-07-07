@@ -119,8 +119,10 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 					throw new RuntimeException("General script function cannot be created", e);
 				}
 			}
-			// TODO: set keyword library reference here
 			setScriptFile(new DynamicValue<>(uploadedPackageFileResource));
+			if(context.getKeywordLibraryResource() != null && !context.getKeywordLibraryResource().isEmpty()){
+				setLibrariesFile(new DynamicValue<>(context.getKeywordLibraryResource()));
+			}
 		}
 		return this;
 	}
