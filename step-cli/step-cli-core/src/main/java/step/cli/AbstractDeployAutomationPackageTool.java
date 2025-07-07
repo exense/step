@@ -35,14 +35,19 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
     private Boolean async;
     private String apVersion;
     private String activationExpression;
+    private final MavenArtifactIdentifier keywordLibraryMavenArtifact;
+    private final File keywordLibraryFile;
 
-    public AbstractDeployAutomationPackageTool(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpression) {
+    public AbstractDeployAutomationPackageTool(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpression,
+                                               MavenArtifactIdentifier keywordLibraryMavenArtifact, File keywordLibraryFile) {
         super(url);
         this.stepProjectName = stepProjectName;
         this.authToken = authToken;
         this.async = async;
         this.apVersion = apVersion;
         this.activationExpression = activationExpression;
+        this.keywordLibraryMavenArtifact = keywordLibraryMavenArtifact;
+        this.keywordLibraryFile = keywordLibraryFile;
     }
 
     @Override
@@ -58,19 +63,27 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
             MavenArtifactIdentifier mavenArtifactIdentifierToUpload = getMavenArtifactIdentifierToUpload();
             if (mavenArtifactIdentifierToUpload != null) {
                 logInfo("Uploading the automation package from Maven artifactory...", null);
+                if (getKeywordLibraryFile() != null) {
+                    throw new StepCliExecutionException("You cannot upload the keyword library file for automation packages located in maven. You only can use a maven snippet to reference the keyword library");
+                }
                 try {
                     updateResult = automationPackageClient.createOrUpdateAutomationPackageMvn(
                             createMavenArtifactXml(mavenArtifactIdentifierToUpload),
-                            getAsync(), getApVersion(), getActivationExpression()
+                            getAsync(), getApVersion(), getActivationExpression(),
+                            getKeywordLibraryMavenArtifact() == null ? null : createMavenArtifactXml(getKeywordLibraryMavenArtifact())
+
                     );
                 } catch (AutomationPackageClientException e) {
                     throw logAndThrow("Error while uploading automation package to Step from Maven artifactory: " + e.getMessage());
                 }
             } else {
+                if (getKeywordLibraryMavenArtifact() != null) {
+                    throw new StepCliExecutionException("You cannot the maven snipped for keyword library file. You only can use a path to the local file.");
+                }
                 File packagedTarget = getLocalFileToUpload();
                 logInfo("Uploading the automation package...", null);
                 try {
-                    updateResult = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget, getAsync() != null && getAsync(), getApVersion(), getActivationExpression());
+                    updateResult = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget, getAsync() != null && getAsync(), getApVersion(), getActivationExpression(), getKeywordLibraryFile());
                 } catch (AutomationPackageClientException e) {
                     throw logAndThrow("Error while uploading automation package to Step: " + e.getMessage());
                 }
@@ -167,4 +180,11 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
         this.activationExpression = activationExpression;
     }
 
+    public MavenArtifactIdentifier getKeywordLibraryMavenArtifact() {
+        return keywordLibraryMavenArtifact;
+    }
+
+    public File getKeywordLibraryFile() {
+        return keywordLibraryFile;
+    }
 }

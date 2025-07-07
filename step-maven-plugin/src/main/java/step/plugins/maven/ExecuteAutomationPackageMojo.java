@@ -54,6 +54,17 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.artifact-type", required = false)
     private String artifactType;
 
+    @Parameter(property = "step-execute-auto-packages.lib-artifact-group-id")
+    private String libArtifactGroupId;
+    @Parameter(property = "step-execute-auto-packages.lib-artifact-id")
+    private String libArtifactId;
+    @Parameter(property = "step-execute-auto-packages.lib-artifact-version")
+    private String libArtifactVersion;
+    @Parameter(property = "step-execute-auto-packages.lib-artifact-classifier", required = false)
+    private String libArtifactClassifier;
+    @Parameter(property = "step-execute-auto-packages.lib-artifact-type", required = false)
+    private String libArtifactType;
+
     @Parameter(property = "step-execute-auto-packages.execution-parameters", required = false)
     private Map<String, String> executionParameters;
     @Parameter(property = "step-execute-auto-packages.exec-result-timeout-s", defaultValue = "3600")
@@ -174,7 +185,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     protected AbstractExecuteAutomationPackageTool createTool(final String url, AbstractExecuteAutomationPackageTool.Params params) {
-        return new AbstractExecuteAutomationPackageTool(url, params) {
+        // TODO: here we need to support the maven snippet for the library file
+        return new AbstractExecuteAutomationPackageTool(url, params, null) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
                 // if groupId and artifactId are not defined, we execute the maven artifact from current project
@@ -197,6 +209,15 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             }
         };
     }
+
+    protected MavenArtifactIdentifier getKeywordLibRemoteMavenIdentifier() throws MojoExecutionException {
+        if(getLibArtifactId() != null && !getLibArtifactId().isEmpty() && getLibArtifactGroupId() != null && !getLibArtifactGroupId().isEmpty()){
+            return new MavenArtifactIdentifier(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(), getLibArtifactClassifier(), getLibArtifactType());
+        } else {
+            return null;
+        }
+    }
+
 
     protected boolean isLocalMavenArtifact() {
         return getArtifactId() == null || getArtifactId().isEmpty() || getArtifactGroupId() == null || getArtifactGroupId().isEmpty();
@@ -360,5 +381,45 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setArtifactType(String artifactType) {
         this.artifactType = artifactType;
+    }
+
+    public String getLibArtifactGroupId() {
+        return libArtifactGroupId;
+    }
+
+    public void setLibArtifactGroupId(String libArtifactGroupId) {
+        this.libArtifactGroupId = libArtifactGroupId;
+    }
+
+    public String getLibArtifactId() {
+        return libArtifactId;
+    }
+
+    public void setLibArtifactId(String libArtifactId) {
+        this.libArtifactId = libArtifactId;
+    }
+
+    public String getLibArtifactVersion() {
+        return libArtifactVersion;
+    }
+
+    public void setLibArtifactVersion(String libArtifactVersion) {
+        this.libArtifactVersion = libArtifactVersion;
+    }
+
+    public String getLibArtifactClassifier() {
+        return libArtifactClassifier;
+    }
+
+    public void setLibArtifactClassifier(String libArtifactClassifier) {
+        this.libArtifactClassifier = libArtifactClassifier;
+    }
+
+    public String getLibArtifactType() {
+        return libArtifactType;
+    }
+
+    public void setLibArtifactType(String libArtifactType) {
+        this.libArtifactType = libArtifactType;
     }
 }

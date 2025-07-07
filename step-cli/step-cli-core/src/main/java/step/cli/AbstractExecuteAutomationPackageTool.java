@@ -51,10 +51,12 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractExecuteAutomationPackageTool.class);
     private final Params params;
+    private final File keywordLibraryFile;
 
-    public AbstractExecuteAutomationPackageTool(String url, Params params) {
+    public AbstractExecuteAutomationPackageTool(String url, Params params, File keywordLibraryFile) {
         super(url);
         this.params = params;
+        this.keywordLibraryFile = keywordLibraryFile;
     }
 
     public static String getExecutionTreeAsString(PlanRunnerResult res) {
@@ -116,7 +118,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
             List<String> executionIds;
             try {
-                executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
+                executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters, keywordLibraryFile);
             } catch (AutomationPackageClientException e) {
                 throw logAndThrow("Error while executing automation package: " + e.getMessage());
             }

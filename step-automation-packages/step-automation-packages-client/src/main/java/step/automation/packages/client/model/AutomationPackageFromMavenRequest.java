@@ -18,7 +18,7 @@
  *  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *  *****************************************************************************
  */
-package step.automation.packages;
+package step.automation.packages.client.model;
 
 public class AutomationPackageFromMavenRequest {
 

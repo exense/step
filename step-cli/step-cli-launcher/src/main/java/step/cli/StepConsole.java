@@ -172,6 +172,10 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The automation-package.yaml file or the folder containing it")
             protected String apFile;
 
+            // TODO: description
+            @Option(names = {"--keywordLib"})
+            protected String keywordLib;
+
             /**
              * If the param points to the folder, prepares the zipped AP file with .stz extension.
              * Otherwise, if the param is a simple file, just returns this file
@@ -295,16 +299,17 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 checkStepControllerVersion();
-                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr, getMavenArtifact(apFile));
+                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr, getMavenArtifact(apFile), getMavenArtifact(keywordLib), prepareApFile(keywordLib));
             }
 
             // for tests
-            protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr, final MavenArtifactIdentifier mavenArtifact) {
-                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr) {
+            protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr,
+                                       MavenArtifactIdentifier apMavenIdentifier, MavenArtifactIdentifier keywordLibMavenArtifact, File keywordLibFile) {
+                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr, keywordLibMavenArtifact, keywordLibFile) {
 
                     @Override
                     protected MavenArtifactIdentifier getMavenArtifactIdentifierToUpload() {
-                        return getMavenArtifact(apFile);
+                        return apMavenIdentifier;
                     }
 
                     @Override
@@ -492,7 +497,7 @@ public class StepConsole implements Callable<Integer> {
             // for tests
             protected void executeRemotely(final String stepUrl,
                                            AbstractExecuteAutomationPackageTool.Params params) {
-                new AbstractExecuteAutomationPackageTool(stepUrl, params) {
+                new AbstractExecuteAutomationPackageTool(stepUrl, params, prepareApFile(keywordLib)) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
                         return prepareApFile(apFile);

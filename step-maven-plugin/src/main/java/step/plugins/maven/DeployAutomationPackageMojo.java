@@ -53,10 +53,21 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     private String artifactId;
     @Parameter(property = "step-deploy-auto-packages.artifact-version")
     private String artifactVersion;
-    @Parameter(property = "step-execute-auto-packages.artifact-classifier", required = false)
+    @Parameter(property = "step-deploy-auto-packages.artifact-classifier", required = false)
     private String artifactClassifier;
-    @Parameter(property = "step-execute-auto-packages.artifact-type", required = false)
+    @Parameter(property = "step-deploy-auto-packages.artifact-type", required = false)
     private String artifactType;
+
+    @Parameter(property = "step-deploy-auto-packages.lib-artifact-group-id")
+    private String libArtifactGroupId;
+    @Parameter(property = "step-deploy-auto-packages.lib-artifact-id")
+    private String libArtifactId;
+    @Parameter(property = "step-deploy-auto-packages.lib-artifact-version")
+    private String libArtifactVersion;
+    @Parameter(property = "step-deploy-auto-packages.lib-artifact-classifier", required = false)
+    private String libArtifactClassifier;
+    @Parameter(property = "step-deploy-auto-packages.lib-artifact-type", required = false)
+    private String libArtifactType;
 
     @Override
     protected ControllerCredentials getControllerCredentials() {
@@ -79,7 +90,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     protected AbstractDeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
                                                              final String apVersion, final String activationExpr) throws MojoExecutionException {
-        return new MavenDeployAutomationPackageTool(url, projectName, authToken, async, apVersion, activationExpr);
+        return new MavenDeployAutomationPackageTool(url, projectName, authToken, async, apVersion, activationExpr, getKeywordLibRemoteMavenIdentifier());
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -168,6 +179,46 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         return artifactType;
     }
 
+    public String getLibArtifactGroupId() {
+        return libArtifactGroupId;
+    }
+
+    public void setLibArtifactGroupId(String libArtifactGroupId) {
+        this.libArtifactGroupId = libArtifactGroupId;
+    }
+
+    public String getLibArtifactId() {
+        return libArtifactId;
+    }
+
+    public void setLibArtifactId(String libArtifactId) {
+        this.libArtifactId = libArtifactId;
+    }
+
+    public String getLibArtifactVersion() {
+        return libArtifactVersion;
+    }
+
+    public void setLibArtifactVersion(String libArtifactVersion) {
+        this.libArtifactVersion = libArtifactVersion;
+    }
+
+    public String getLibArtifactClassifier() {
+        return libArtifactClassifier;
+    }
+
+    public void setLibArtifactClassifier(String libArtifactClassifier) {
+        this.libArtifactClassifier = libArtifactClassifier;
+    }
+
+    public String getLibArtifactType() {
+        return libArtifactType;
+    }
+
+    public void setLibArtifactType(String libArtifactType) {
+        this.libArtifactType = libArtifactType;
+    }
+
     protected boolean isLocalMavenArtifact() {
         return getArtifactId() == null || getArtifactId().isEmpty() || getArtifactGroupId() == null || getArtifactGroupId().isEmpty();
     }
@@ -183,10 +234,18 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         return remoteMavenArtifact;
     }
 
+    protected MavenArtifactIdentifier getKeywordLibRemoteMavenIdentifier() throws MojoExecutionException {
+        if(getLibArtifactId() != null && !getLibArtifactId().isEmpty() && getLibArtifactGroupId() != null && !getLibArtifactGroupId().isEmpty()){
+            return new MavenArtifactIdentifier(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(), getLibArtifactClassifier(), getLibArtifactType());
+        } else {
+            return null;
+        }
+    }
+
     protected class MavenDeployAutomationPackageTool extends AbstractDeployAutomationPackageTool {
 
-        public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr) {
-            super(url, projectName, authToken, async, apVersion, activationExpr);
+        public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr, MavenArtifactIdentifier keywordLibraryMavenArtifact) {
+            super(url, projectName, authToken, async, apVersion, activationExpr, keywordLibraryMavenArtifact, null);
         }
 
         @Override

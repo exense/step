@@ -126,15 +126,21 @@ public class StepConsoleTest {
 
         // deploy from artifactory
         deployExecHistory.clear();
-        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--apVersion=1.0.0");
+        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--apVersion=1.0.0", "--keywordLib=mvn:ch.exense.step:some-step-keyword-lib:1.0.0:tests");
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals("ch.exense.step", usedParams.mavenArtifact.getGroupId());
-        Assert.assertEquals("step-automation-packages-junit", usedParams.mavenArtifact.getArtifactId());
-        Assert.assertEquals("0.0.0", usedParams.mavenArtifact.getVersion());
-        Assert.assertEquals("tests", usedParams.mavenArtifact.getClassifier());
+
+        Assert.assertEquals("ch.exense.step", usedParams.apMavenIdentifier.getGroupId());
+        Assert.assertEquals("step-automation-packages-junit", usedParams.apMavenIdentifier.getArtifactId());
+        Assert.assertEquals("0.0.0", usedParams.apMavenIdentifier.getVersion());
+        Assert.assertEquals("tests", usedParams.apMavenIdentifier.getClassifier());
+
+        Assert.assertEquals("ch.exense.step", usedParams.keywordLibMavenIdentifier.getGroupId());
+        Assert.assertEquals("some-step-keyword-lib", usedParams.keywordLibMavenIdentifier.getArtifactId());
+        Assert.assertEquals("1.0.0", usedParams.keywordLibMavenIdentifier.getVersion());
+        Assert.assertEquals("tests", usedParams.keywordLibMavenIdentifier.getClassifier());
     }
 
     @Test
@@ -424,11 +430,14 @@ public class StepConsoleTest {
             private String apVersion;
             private String activationExpr;
             private String apFile;
-            private MavenArtifactIdentifier mavenArtifact;
+            public MavenArtifactIdentifier apMavenIdentifier;
+            private MavenArtifactIdentifier keywordLibMavenIdentifier;
+            private File keywordLibFile;
         }
 
         @Override
-        protected void executeTool(String stepUrl1, String projectName, String authToken1, boolean async, String apVersion, String activationExpr, final MavenArtifactIdentifier mavenArtifact) {
+        protected void executeTool(String stepUrl1, String projectName, String authToken1, boolean async, String apVersion, String activationExpr,
+                                   MavenArtifactIdentifier apMavenIdentifier, MavenArtifactIdentifier keywordLibMavenIdentifier, File keywordLibFile) {
             if (testRegistry != null) {
                 ExecutionParams p = new ExecutionParams();
                 p.stepUrl = stepUrl1;
@@ -438,7 +447,9 @@ public class StepConsoleTest {
                 p.apFile = this.apFile;
                 p.apVersion = apVersion;
                 p.activationExpr = activationExpr;
-                p.mavenArtifact = mavenArtifact;
+                p.apMavenIdentifier = apMavenIdentifier;
+                p.keywordLibMavenIdentifier = keywordLibMavenIdentifier;
+                p.keywordLibFile = keywordLibFile;
                 testRegistry.add(p);
             }
         }
