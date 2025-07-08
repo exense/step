@@ -24,7 +24,7 @@ import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import step.cli.AbstractDeployAutomationPackageTool;
+import step.cli.DeployAutomationPackageTool;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -72,7 +72,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
 
     private static class DeployAutomationPackageMojoTestable extends DeployAutomationPackageMojo {
 
-        private final AbstractDeployAutomationPackageTool mockedTool = Mockito.mock(AbstractDeployAutomationPackageTool.class);
+        private final DeployAutomationPackageTool mockedTool = Mockito.mock(DeployAutomationPackageTool.class);
 
         private String toolUrl;
         private String toolProjectName;
@@ -83,7 +83,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         }
 
         @Override
-        protected AbstractDeployAutomationPackageTool createTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr) {
+        protected DeployAutomationPackageTool createTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr) {
             this.toolAsync = async;
             this.toolUrl = url;
             this.toolProjectName = projectName;

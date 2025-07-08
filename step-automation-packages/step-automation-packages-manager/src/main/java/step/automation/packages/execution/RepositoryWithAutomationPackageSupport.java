@@ -26,6 +26,7 @@ import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
+import step.automation.packages.kwlibrary.KeywordLibraryReference;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
@@ -89,8 +90,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
         PackageExecutionContext ctx = null;
         try {
+            // TODO: pass library file
             File artifact = getArtifact(repositoryParameters, objectPredicate);
-            ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false);
+            ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false, null);
             TestSetStatusOverview overview = new TestSetStatusOverview();
             List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
                     .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
@@ -260,9 +262,10 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             if (contextId == null) {
                 contextId = new ObjectId().toString();
             }
+            // TODO: pass keyword lib
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
             AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters, predicate);
-            return createIsolatedPackageExecutionContext(enricher, predicate, contextId, apFile, false);
+            return createIsolatedPackageExecutionContext(enricher, predicate, contextId, apFile, false, null);
         }
         return current;
     }
@@ -275,7 +278,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return new AutomationPackageFile(artifact, null);
     }
 
-    public PackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate, String contextId, AutomationPackageFile apFile, boolean shared) {
+    public PackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate, String contextId, AutomationPackageFile apFile, boolean shared,
+                                                                         KeywordLibraryReference keywordLibraryReference) {
         // prepare the isolated in-memory automation package manager with the only one automation package
         AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
                 new ObjectId(contextId), functionTypeRegistry,
@@ -284,9 +288,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
 
         // create single automation package in isolated manager
         try (FileInputStream fis = new FileInputStream(apFile.getFile())) {
-            // TODO: keyword libraries
             // the apVersion is null (we always use the actual version), because we only create the isolated in-memory AP here
-            inMemoryPackageManager.createAutomationPackage(fis, apFile.getFile().getName(), null, null, null, enricher, predicate);
+            inMemoryPackageManager.createAutomationPackage(fis, apFile.getFile().getName(), null, null, keywordLibraryReference, enricher, predicate);
         } catch (IOException e) {
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
         }

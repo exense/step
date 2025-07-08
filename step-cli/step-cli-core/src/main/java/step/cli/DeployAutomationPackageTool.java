@@ -26,33 +26,18 @@ import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 
-public abstract class AbstractDeployAutomationPackageTool extends AbstractCliTool {
+public class DeployAutomationPackageTool extends AbstractCliTool {
 
-    private String stepProjectName;
+    private final Params params;
 
-    private String authToken;
-
-    private Boolean async;
-    private String apVersion;
-    private String activationExpression;
-    private final MavenArtifactIdentifier keywordLibraryMavenArtifact;
-    private final File keywordLibraryFile;
-
-    public AbstractDeployAutomationPackageTool(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpression,
-                                               MavenArtifactIdentifier keywordLibraryMavenArtifact, File keywordLibraryFile) {
+    public DeployAutomationPackageTool(String url, Params params) {
         super(url);
-        this.stepProjectName = stepProjectName;
-        this.authToken = authToken;
-        this.async = async;
-        this.apVersion = apVersion;
-        this.activationExpression = activationExpression;
-        this.keywordLibraryMavenArtifact = keywordLibraryMavenArtifact;
-        this.keywordLibraryFile = keywordLibraryFile;
+        this.params = params;
     }
 
     @Override
     protected ControllerCredentials getControllerCredentials() {
-        String authToken = getAuthToken();
+        String authToken = params.getAuthToken();
         return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
     }
 
@@ -60,30 +45,35 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient()) {
 
             AutomationPackageUpdateResult updateResult;
-            MavenArtifactIdentifier mavenArtifactIdentifierToUpload = getMavenArtifactIdentifierToUpload();
+            MavenArtifactIdentifier mavenArtifactIdentifierToUpload = params.getAutomationPackageMavenArtifact();
             if (mavenArtifactIdentifierToUpload != null) {
                 logInfo("Uploading the automation package from Maven artifactory...", null);
-                if (getKeywordLibraryFile() != null) {
+                if (params.getKeywordLibraryFile() != null) {
                     throw new StepCliExecutionException("You cannot upload the keyword library file for automation packages located in maven. You only can use a maven snippet to reference the keyword library");
                 }
                 try {
+                    // send maven coordinates to the Step server
                     updateResult = automationPackageClient.createOrUpdateAutomationPackageMvn(
                             createMavenArtifactXml(mavenArtifactIdentifierToUpload),
-                            getAsync(), getApVersion(), getActivationExpression(),
-                            getKeywordLibraryMavenArtifact() == null ? null : createMavenArtifactXml(getKeywordLibraryMavenArtifact())
+                            params.getAsync(), params.getApVersion(), params.getActivationExpression(),
+                            params.getKeywordLibraryMavenArtifact() == null ? null : createMavenArtifactXml(params.getKeywordLibraryMavenArtifact())
 
                     );
                 } catch (AutomationPackageClientException e) {
                     throw logAndThrow("Error while uploading automation package to Step from Maven artifactory: " + e.getMessage());
                 }
             } else {
-                if (getKeywordLibraryMavenArtifact() != null) {
+                if (params.getKeywordLibraryMavenArtifact() != null) {
                     throw new StepCliExecutionException("You cannot the maven snipped for keyword library file. You only can use a path to the local file.");
                 }
-                File packagedTarget = getLocalFileToUpload();
+                File packagedTarget = params.getAutomationPackageFile();
                 logInfo("Uploading the automation package...", null);
                 try {
-                    updateResult = automationPackageClient.createOrUpdateAutomationPackage(packagedTarget, getAsync() != null && getAsync(), getApVersion(), getActivationExpression(), getKeywordLibraryFile());
+                    // send binary files to the Step server
+                    updateResult = automationPackageClient.createOrUpdateAutomationPackage(
+                            packagedTarget, params.getAsync() != null && params.getAsync(),
+                            params.getApVersion(), params.getActivationExpression(), params.getKeywordLibraryFile()
+                    );
                 } catch (AutomationPackageClientException e) {
                     throw logAndThrow("Error while uploading automation package to Step: " + e.getMessage());
                 }
@@ -127,64 +117,109 @@ public abstract class AbstractDeployAutomationPackageTool extends AbstractCliToo
         return builder.toString();
     }
 
-    /**
-     * @return the maven snippet of automation package to be uploaded or null to use the local file instead.
-     */
-    protected abstract MavenArtifactIdentifier getMavenArtifactIdentifierToUpload();
-
-    protected abstract File getLocalFileToUpload() throws StepCliExecutionException;
-
     protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
         RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
-        addProjectHeaderToRemoteClient(getStepProjectName(), client);
+        addProjectHeaderToRemoteClient(params.getStepProjectName(), client);
         return client;
     }
 
-    public String getStepProjectName() {
-        return stepProjectName;
-    }
+    public static class Params {
+        private String stepProjectName;
 
-    public void setStepProjectName(String stepProjectName) {
-        this.stepProjectName = stepProjectName;
-    }
+        private String authToken;
 
-    public String getAuthToken() {
-        return authToken;
-    }
+        private Boolean async;
+        private String apVersion;
+        private String activationExpression;
+        private File automationPackageFile;
+        private MavenArtifactIdentifier automationPackageMavenArtifact;
 
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
+        private MavenArtifactIdentifier keywordLibraryMavenArtifact;
+        private File keywordLibraryFile;
 
-    public Boolean getAsync() {
-        return async;
-    }
+        /**
+         * @return the maven snippet of automation package to be uploaded or null to use the local file instead.
+         */
+        public MavenArtifactIdentifier getAutomationPackageMavenArtifact() {
+            return automationPackageMavenArtifact;
+        }
 
-    public void setAsync(Boolean async) {
-        this.async = async;
-    }
+        public Params setAutomationPackageMavenArtifact(MavenArtifactIdentifier automationPackageMavenArtifact) {
+            this.automationPackageMavenArtifact = automationPackageMavenArtifact;
+            return this;
+        }
 
-    public String getApVersion() {
-        return apVersion;
-    }
+        public MavenArtifactIdentifier getKeywordLibraryMavenArtifact() {
+            return keywordLibraryMavenArtifact;
+        }
 
-    public String getActivationExpression() {
-        return activationExpression;
-    }
+        public Params setKeywordLibraryMavenArtifact(MavenArtifactIdentifier keywordLibraryMavenArtifact) {
+            this.keywordLibraryMavenArtifact = keywordLibraryMavenArtifact;
+            return this;
+        }
 
-    public void setApVersion(String apVersion) {
-        this.apVersion = apVersion;
-    }
+        public File getKeywordLibraryFile() {
+            return keywordLibraryFile;
+        }
 
-    public void setActivationExpression(String activationExpression) {
-        this.activationExpression = activationExpression;
-    }
+        public Params setKeywordLibraryFile(File keywordLibraryFile) {
+            this.keywordLibraryFile = keywordLibraryFile;
+            return this;
+        }
 
-    public MavenArtifactIdentifier getKeywordLibraryMavenArtifact() {
-        return keywordLibraryMavenArtifact;
-    }
+        public String getStepProjectName() {
+            return stepProjectName;
+        }
 
-    public File getKeywordLibraryFile() {
-        return keywordLibraryFile;
+        public Params setStepProjectName(String stepProjectName) {
+            this.stepProjectName = stepProjectName;
+            return this;
+        }
+
+        public String getAuthToken() {
+            return authToken;
+        }
+
+        public Params setAuthToken(String authToken) {
+            this.authToken = authToken;
+            return this;
+        }
+
+        public Boolean getAsync() {
+            return async;
+        }
+
+        public Params setAsync(Boolean async) {
+            this.async = async;
+            return this;
+        }
+
+        public String getApVersion() {
+            return apVersion;
+        }
+
+        public Params setApVersion(String apVersion) {
+            this.apVersion = apVersion;
+            return this;
+        }
+
+        public String getActivationExpression() {
+            return activationExpression;
+        }
+
+        public Params setActivationExpression(String activationExpression) {
+            this.activationExpression = activationExpression;
+            return this;
+        }
+
+        public File getAutomationPackageFile() {
+            return automationPackageFile;
+        }
+
+        public Params setAutomationPackageFile(File automationPackageFile) {
+            this.automationPackageFile = automationPackageFile;
+            return this;
+        }
+
     }
 }

@@ -82,7 +82,7 @@ public class StepConsoleTest {
         Assert.assertEquals("abc", usedParams.authToken);
         Assert.assertEquals("testProject", usedParams.projectName);
         Assert.assertTrue(usedParams.async);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
         Assert.assertEquals(usedParams.apVersion, "ver1");
         Assert.assertEquals(usedParams.activationExpr, "true==true");
 
@@ -94,7 +94,7 @@ public class StepConsoleTest {
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertFalse(usedParams.async);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
 
         // incorrect parameters (project name / token)
         deployExecHistory.clear();
@@ -111,7 +111,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8081", usedParams.stepUrl);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
 
         // several properties files (containing url and project/token)
         deployExecHistory.clear();
@@ -120,7 +120,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8081", usedParams.stepUrl);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
         Assert.assertEquals("abc", usedParams.authToken);
         Assert.assertEquals("testProject", usedParams.projectName);
 
@@ -137,10 +137,10 @@ public class StepConsoleTest {
         Assert.assertEquals("0.0.0", usedParams.apMavenIdentifier.getVersion());
         Assert.assertEquals("tests", usedParams.apMavenIdentifier.getClassifier());
 
-        Assert.assertEquals("ch.exense.step", usedParams.keywordLibMavenIdentifier.getGroupId());
-        Assert.assertEquals("some-step-keyword-lib", usedParams.keywordLibMavenIdentifier.getArtifactId());
-        Assert.assertEquals("1.0.0", usedParams.keywordLibMavenIdentifier.getVersion());
-        Assert.assertEquals("tests", usedParams.keywordLibMavenIdentifier.getClassifier());
+        Assert.assertEquals("ch.exense.step", usedParams.keywordLibMavenArtifact.getGroupId());
+        Assert.assertEquals("some-step-keyword-lib", usedParams.keywordLibMavenArtifact.getArtifactId());
+        Assert.assertEquals("1.0.0", usedParams.keywordLibMavenArtifact.getVersion());
+        Assert.assertEquals("tests", usedParams.keywordLibMavenArtifact.getClassifier());
     }
 
     @Test
@@ -429,26 +429,27 @@ public class StepConsoleTest {
             private boolean async;
             private String apVersion;
             private String activationExpr;
-            private String apFile;
+            private File apFile;
             public MavenArtifactIdentifier apMavenIdentifier;
-            private MavenArtifactIdentifier keywordLibMavenIdentifier;
+            private MavenArtifactIdentifier keywordLibMavenArtifact;
             private File keywordLibFile;
         }
 
         @Override
-        protected void executeTool(String stepUrl1, String projectName, String authToken1, boolean async, String apVersion, String activationExpr,
-                                   MavenArtifactIdentifier apMavenIdentifier, MavenArtifactIdentifier keywordLibMavenIdentifier, File keywordLibFile) {
+        protected void executeTool(final String stepUrl, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr,
+                                   MavenArtifactIdentifier apMavenIdentifier, File apFile,
+                                   MavenArtifactIdentifier keywordLibMavenArtifact, File keywordLibFile) {
             if (testRegistry != null) {
                 ExecutionParams p = new ExecutionParams();
-                p.stepUrl = stepUrl1;
+                p.stepUrl = stepUrl;
                 p.projectName = projectName;
-                p.authToken = authToken1;
+                p.authToken = authToken;
                 p.async = async;
-                p.apFile = this.apFile;
+                p.apFile = apFile;
                 p.apVersion = apVersion;
                 p.activationExpr = activationExpr;
                 p.apMavenIdentifier = apMavenIdentifier;
-                p.keywordLibMavenIdentifier = keywordLibMavenIdentifier;
+                p.keywordLibMavenArtifact = keywordLibMavenArtifact;
                 p.keywordLibFile = keywordLibFile;
                 testRegistry.add(p);
             }

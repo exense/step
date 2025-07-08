@@ -140,6 +140,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
             List<AbstractExecuteAutomationPackageTool.Report> parsedReports = parseReports();
 
             AbstractExecuteAutomationPackageTool.Params params = new AbstractExecuteAutomationPackageTool.Params()
+                    .setMavenArtifactIdentifier(remoteMavenArtifact)
                     .setStepProjectName(getStepProjectName())
                     .setUserId(getUserId())
                     .setAuthToken(getAuthToken())
@@ -154,7 +155,6 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     .setExcludeCategories(getExcludeCategories())
                     .setWrapIntoTestSet(getWrapIntoTestSet())
                     .setNumberOfThreads(getNumberOfThreads())
-                    .setMavenArtifactIdentifier(remoteMavenArtifact)
                     .setReportOutputDir(reportOutputDir);
 
             createTool(getUrl(), params).execute();
@@ -186,7 +186,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     protected AbstractExecuteAutomationPackageTool createTool(final String url, AbstractExecuteAutomationPackageTool.Params params) {
         // TODO: here we need to support the maven snippet for the library file
-        return new AbstractExecuteAutomationPackageTool(url, params, null) {
+        return new AbstractExecuteAutomationPackageTool(url, params) {
             @Override
             protected File getAutomationPackageFile() throws StepCliExecutionException {
                 // if groupId and artifactId are not defined, we execute the maven artifact from current project

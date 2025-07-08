@@ -299,25 +299,29 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 checkStepControllerVersion();
-                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr, getMavenArtifact(apFile), getMavenArtifact(keywordLib), prepareApFile(keywordLib));
+                MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);
+                MavenArtifactIdentifier keywordLibMavenArtifact = getMavenArtifact(keywordLib);
+                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr,
+                        apMavenArtifact, apMavenArtifact == null ? null : prepareApFile(apFile),
+                        keywordLibMavenArtifact, keywordLibMavenArtifact == null ? null : prepareApFile(keywordLib));
             }
 
             // for tests
-            protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr,
-                                       MavenArtifactIdentifier apMavenIdentifier, MavenArtifactIdentifier keywordLibMavenArtifact, File keywordLibFile) {
-                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr, keywordLibMavenArtifact, keywordLibFile) {
+            protected void executeTool(final String stepUrl, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr,
+                                       MavenArtifactIdentifier apMavenIdentifier, File apFile,
+                                       MavenArtifactIdentifier keywordLibMavenArtifact, File keywordLibFile) {
 
-                    @Override
-                    protected MavenArtifactIdentifier getMavenArtifactIdentifierToUpload() {
-                        return apMavenIdentifier;
-                    }
-
-                    @Override
-                    protected File getLocalFileToUpload() throws StepCliExecutionException {
-                        return prepareApFile(apFile);
-                    }
-
-                }.execute();
+                DeployAutomationPackageTool.Params params = new DeployAutomationPackageTool.Params()
+                        .setAutomationPackageMavenArtifact(apMavenIdentifier)
+                        .setAutomationPackageFile(apFile)
+                        .setStepProjectName(projectName)
+                        .setAuthToken(authToken)
+                        .setAsync(async)
+                        .setApVersion(apVersion)
+                        .setActivationExpression(activationExpr)
+                        .setKeywordLibraryMavenArtifact(keywordLibMavenArtifact)
+                        .setKeywordLibraryFile(keywordLibFile);
+                new DeployAutomationPackageTool(stepUrl, params).execute();
             }
         }
 
@@ -442,6 +446,8 @@ public class StepConsole implements Callable<Integer> {
                 List<AbstractExecuteAutomationPackageTool.Report> reports = parseReportsParams();
                 executeRemotely(stepUrl,
                         new AbstractExecuteAutomationPackageTool.Params()
+                                .setMavenArtifactIdentifier(getMavenArtifact(apFile))
+                                .setKeywordLibraryFile(prepareApFile(keywordLib))
                                 .setStepProjectName(getStepProjectName())
                                 .setUserId(stepUser)
                                 .setAuthToken(getAuthToken())
@@ -457,7 +463,6 @@ public class StepConsole implements Callable<Integer> {
                                 .setNumberOfThreads(numberOfThreads)
                                 .setReports(reports)
                                 .setReportOutputDir(reportDir)
-                                .setMavenArtifactIdentifier(getMavenArtifact(apFile))
                 );
             }
 
@@ -497,7 +502,7 @@ public class StepConsole implements Callable<Integer> {
             // for tests
             protected void executeRemotely(final String stepUrl,
                                            AbstractExecuteAutomationPackageTool.Params params) {
-                new AbstractExecuteAutomationPackageTool(stepUrl, params, prepareApFile(keywordLib)) {
+                new AbstractExecuteAutomationPackageTool(stepUrl, params) {
                     @Override
                     protected File getAutomationPackageFile() throws StepCliExecutionException {
                         return prepareApFile(apFile);

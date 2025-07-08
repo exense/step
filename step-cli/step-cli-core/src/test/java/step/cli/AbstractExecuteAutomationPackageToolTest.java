@@ -218,8 +218,7 @@ public class AbstractExecuteAutomationPackageToolTest {
                         .setExcludeCategories(TEST_EXCLUDE_CATEGORIES)
                         .setWrapIntoTestSet(false)
                         .setNumberOfThreads(0),
-                executionManagerMock, remoteAutomationPackageClientMock,
-                null
+                executionManagerMock, remoteAutomationPackageClientMock
         );
     }
 
@@ -237,9 +236,8 @@ public class AbstractExecuteAutomationPackageToolTest {
 
         public ExecuteAutomationPackageToolTestable(String url, Params params,
                                                     RemoteExecutionManager remoteExecutionManagerMock,
-                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock,
-                                                    File keywordLibraryFile) {
-            super(url, params, keywordLibraryFile);
+                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
+            super(url, params);
             this.remoteExecutionManagerMock = remoteExecutionManagerMock;
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }

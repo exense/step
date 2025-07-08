@@ -22,7 +22,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import step.cli.AbstractDeployAutomationPackageTool;
+import step.cli.DeployAutomationPackageTool;
 import step.cli.StepCliExecutionException;
 import step.client.credentials.ControllerCredentials;
 import step.core.maven.MavenArtifactIdentifier;
@@ -88,9 +88,21 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected AbstractDeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
-                                                             final String apVersion, final String activationExpr) throws MojoExecutionException {
-        return new MavenDeployAutomationPackageTool(url, projectName, authToken, async, apVersion, activationExpr, getKeywordLibRemoteMavenIdentifier());
+    protected DeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
+                                                     final String apVersion, final String activationExpr) throws MojoExecutionException {
+        MavenArtifactIdentifier remoteApMavenIdentifier = getRemoteMavenIdentifier();
+        File localApFile = remoteApMavenIdentifier != null ? null : DeployAutomationPackageMojo.this.getFileToUpload();
+        return new MavenDeployAutomationPackageTool(
+                url, new DeployAutomationPackageTool.Params()
+                .setAutomationPackageMavenArtifact(remoteApMavenIdentifier)
+                .setAutomationPackageFile(localApFile)
+                .setKeywordLibraryMavenArtifact(getKeywordLibRemoteMavenIdentifier())
+                .setStepProjectName(projectName)
+                .setAuthToken(authToken)
+                .setAsync(async)
+                .setApVersion(apVersion)
+                .setActivationExpression(activationExpr)
+        );
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -242,28 +254,10 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected class MavenDeployAutomationPackageTool extends AbstractDeployAutomationPackageTool {
+    protected class MavenDeployAutomationPackageTool extends DeployAutomationPackageTool {
 
-        public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr, MavenArtifactIdentifier keywordLibraryMavenArtifact) {
-            super(url, projectName, authToken, async, apVersion, activationExpr, keywordLibraryMavenArtifact, null);
-        }
-
-        @Override
-        protected MavenArtifactIdentifier getMavenArtifactIdentifierToUpload() {
-            try {
-                return getRemoteMavenIdentifier();
-            } catch (MojoExecutionException e) {
-                throw new StepCliExecutionException(e);
-            }
-        }
-
-        @Override
-        protected File getLocalFileToUpload() throws StepCliExecutionException {
-            try {
-                return DeployAutomationPackageMojo.this.getFileToUpload();
-            } catch (MojoExecutionException ex) {
-                throw new StepCliExecutionException(ex);
-            }
+        public MavenDeployAutomationPackageTool(String url, Params params) {
+            super(url, params);
         }
 
         @Override

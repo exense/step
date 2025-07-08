@@ -51,12 +51,10 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractExecuteAutomationPackageTool.class);
     private final Params params;
-    private final File keywordLibraryFile;
 
-    public AbstractExecuteAutomationPackageTool(String url, Params params, File keywordLibraryFile) {
+    public AbstractExecuteAutomationPackageTool(String url, Params params) {
         super(url);
         this.params = params;
-        this.keywordLibraryFile = keywordLibraryFile;
     }
 
     public static String getExecutionTreeAsString(PlanRunnerResult res) {
@@ -118,7 +116,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
             List<String> executionIds;
             try {
-                executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters, keywordLibraryFile);
+                executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters, params.getKeywordLibraryFile());
             } catch (AutomationPackageClientException e) {
                 throw logAndThrow("Error while executing automation package: " + e.getMessage());
             }
@@ -329,6 +327,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
         private List<Report> reports;
         private File reportOutputDir;
+        private File keywordLibraryFile;
 
         public String getStepProjectName() {
             return stepProjectName;
@@ -471,6 +470,15 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
         public Params setReports(List<Report> reports) {
             this.reports = reports;
+            return this;
+        }
+
+        public File getKeywordLibraryFile() {
+            return keywordLibraryFile;
+        }
+
+        public Params setKeywordLibraryFile(File keywordLibraryFile) {
+            this.keywordLibraryFile = keywordLibraryFile;
             return this;
         }
     }

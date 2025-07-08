@@ -16,7 +16,7 @@ import step.core.maven.MavenArtifactIdentifier;
 import java.io.File;
 import java.io.IOException;
 
-public class AbstractDeployAutomationPackageToolTest {
+public class DeployAutomationPackageToolTest {
 
     private static final ObjectId UPDATED_PACK_ID = new ObjectId();
     protected static final Tenant TENANT_1 = createTenant1();
@@ -24,9 +24,16 @@ public class AbstractDeployAutomationPackageToolTest {
 
     @Test
     public void testUpload() throws Exception {
+        File testFile;
+        try {
+            testFile = FileHelper.createTempFile();
+        } catch (IOException e) {
+            throw new RuntimeException("Temp file cannot be created", e);
+        }
+
         RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
         DeployAutomationPackageToolTestable tool = new DeployAutomationPackageToolTestable(
-                "http://localhost:8080", TENANT_1.getName(),
+                "http://localhost:8080", testFile, TENANT_1.getName(),
                 null, false, "ver1", "true==true", null, null, automationPackageClient
         );
         tool.execute();
@@ -36,7 +43,7 @@ public class AbstractDeployAutomationPackageToolTest {
         Mockito.verify(automationPackageClient, Mockito.times(1)).createOrUpdateAutomationPackage(packageFileCaptor.capture(), Mockito.anyBoolean(), Mockito.eq("ver1"), Mockito.eq("true==true"), Mockito.isNull());
         Mockito.verify(automationPackageClient, Mockito.times(1)).close();
         Mockito.verifyNoMoreInteractions(automationPackageClient);
-        Assert.assertEquals(tool.TEST_FILE, packageFileCaptor.getValue());
+        Assert.assertEquals(testFile, packageFileCaptor.getValue());
     }
 
     private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {
@@ -45,32 +52,23 @@ public class AbstractDeployAutomationPackageToolTest {
         return remoteClient;
     }
 
-    private static class DeployAutomationPackageToolTestable extends AbstractDeployAutomationPackageTool {
-
-        protected final File TEST_FILE ;
+    private static class DeployAutomationPackageToolTestable extends DeployAutomationPackageTool {
 
         private RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
-        public DeployAutomationPackageToolTestable(String url, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpr,
+        public DeployAutomationPackageToolTestable(String url, File apFile, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpr,
                                                    MavenArtifactIdentifier keywordLibraryMavenIdentifier, File keywordLibraryFile,
                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
-            super(url, stepProjectName, authToken, async, apVersion, activationExpr, keywordLibraryMavenIdentifier, keywordLibraryFile);
-            try {
-                TEST_FILE = FileHelper.createTempFile();
-            } catch (IOException e) {
-                throw new RuntimeException("Temp file cannot be created", e);
-            }
+            super(url, new Params()
+                    .setAutomationPackageFile(apFile)
+                    .setStepProjectName(stepProjectName)
+                    .setAuthToken(authToken)
+                    .setAsync(async)
+                    .setApVersion(apVersion)
+                    .setActivationExpression(activationExpr)
+                    .setKeywordLibraryMavenArtifact(keywordLibraryMavenIdentifier)
+                    .setKeywordLibraryFile(keywordLibraryFile));
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
-        }
-
-        @Override
-        protected MavenArtifactIdentifier getMavenArtifactIdentifierToUpload() {
-            return null;
-        }
-
-        @Override
-        protected File getLocalFileToUpload() throws StepCliExecutionException {
-            return TEST_FILE;
         }
 
         @Override

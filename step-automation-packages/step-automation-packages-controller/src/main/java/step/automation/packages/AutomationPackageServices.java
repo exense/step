@@ -181,8 +181,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-execute")
     public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                 @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
+                                                 @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail,
                                                  @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart) {
-        // TODO: execute without keyword library?
         IsolatedAutomationPackageExecutionParameters executionParameters;
         if (executionParamsBodyPart != null) {
             // The workaround to parse execution parameters as application/json even if the Content-Type for this part is not explicitly set in request
@@ -207,6 +208,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     automationPackageInputStream,
                     fileDetail == null ? null : fileDetail.getFileName(),
                     executionParameters,
+                    KeywordLibraryReference.withInputStream(keywordLibraryInputStream, keywordLibraryFileDetail == null ? null : keywordLibraryFileDetail.getFileName()),
                     getObjectEnricher(),
                     getObjectPredicate()
             );
