@@ -37,24 +37,22 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
 
-//        int controllerPort = context.getConfiguration().getPropertyAsInteger("port", 8080);
-//        String controllerUrl = context.getConfiguration().getProperty("controller.url");
-//        if (controllerUrl == null) {
-//            controllerUrl = "http://localhost:" + controllerPort;
-//            logger.warn("controller.url is not set in step.properties, unable to determine correct URL for streaming services. Will use " + controllerUrl + " instead, but this will not be accessible remotely.");
-//        }
-//        // remove trailing slash if present
-//        if (controllerUrl.endsWith("/")) {
-//            controllerUrl = controllerUrl.substring(0, controllerUrl.length() - 1);
-//        }
-//        URI websocketBaseUri = URI.create(controllerUrl.replaceFirst("^http", "ws"));
-
-//        if (websocketBaseUri.getPort() != controllerPort) {
-//            websocketBaseUri = changeURIPort(websocketBaseUri, controllerPort);
-//            logger.warn("controller.url port did not match listening port, Websocket base url has been changed to " + websocketBaseUri);
-//        }
-// FIXME: this needs some more thought, for now localhost:8080 should work for local executions on both dev and cloud instances (local KW executions only)
-        URI websocketBaseUri = URI.create("ws://localhost:8080");
+        // FIXME: this is quick and dirty for now, so it runs both on dev machines (OS/EE) and (hopefully) the grid.
+        // There needs to be some better logic.
+        int controllerPort = context.getConfiguration().getPropertyAsInteger("port", 8080);
+        String controllerUrl = context.getConfiguration().getProperty("controller.url");
+        if (controllerUrl == null) {
+            controllerUrl = "http://localhost:" + controllerPort;
+            logger.warn("controller.url is not set in step.properties, unable to determine correct URL for streaming services. Will use {} instead, but this will not be accessible remotely.", controllerUrl);
+        } else if (controllerUrl.equals("http://localhost:4201")) {
+            // adjust (only for websockets, not globally)
+            controllerUrl = "http://localhost:" + controllerPort;
+        }
+        // remove trailing slash if present
+        if (controllerUrl.endsWith("/")) {
+            controllerUrl = controllerUrl.substring(0, controllerUrl.length() - 1);
+        }
+        URI websocketBaseUri = URI.create(controllerUrl.replaceFirst("^http", "ws"));
 
         websocketBaseUrl = websocketBaseUri.toString();
 
