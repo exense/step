@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -23,19 +23,23 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
 import jakarta.json.JsonValue.ValueType;
 import jakarta.json.stream.JsonParsingException;
+import org.bson.types.ObjectId;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.handlers.functions.FunctionGroupSession;
 import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.attachments.StreamingAttachmentMeta;
 import step.common.managedoperations.OperationManager;
+import step.constants.StreamingConstants;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -57,9 +61,6 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.handler.AbstractFunctionHandler;
-import step.functions.handler.liveupload.LiveUploadContext;
-import step.functions.handler.liveupload.LiveUpload;
-import step.functions.handler.liveupload.LiveUploadContextListeners;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.type.FunctionTypeRegistry;
@@ -70,6 +71,7 @@ import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.tokenpool.Interest;
 import step.plugins.functions.types.CompositeFunction;
+import step.streaming.common.*;
 
 import java.io.StringReader;
 import java.net.URI;
@@ -86,6 +88,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	protected FunctionExecutionService functionExecutionService;
 	protected FunctionAccessor functionAccessor;
+	protected ReportNodeAccessor reportNodeAccessor;
 
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
@@ -94,12 +97,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	protected FunctionLocator functionLocator;
 
 	protected boolean useLegacyOutput;
-	
+
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
 		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 		functionAccessor = context.require(FunctionAccessor.class);
+		reportNodeAccessor = context.getReportNodeAccessor();
 		functionExecutionService = context.require(FunctionExecutionService.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
@@ -175,12 +179,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) throws Exception {
 		String argumentStr = testArtefact.getArgument().get();
 		node.setInput(argumentStr);
-		
+
 		Function function = getFunction(testArtefact);
-		
+
 		ExecutionCallbacks executionCallbacks = context.getExecutionCallbacks();
 		executionCallbacks.beforeFunctionExecution(context, node, function);
-		
+
 		node.setFunctionId(function.getId().toString());
 		node.setFunctionAttributes(function.getAttributes());
 
@@ -190,14 +194,14 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		if(name.equals(CallFunction.ARTEFACT_NAME) && functionName != null) {
 			node.setName(functionName);
 		}
-		
+
 		FunctionInput<JsonObject> input = buildInput(argumentStr);
 		node.setInput(input.getPayload().toString());
-		
+
 		validateInput(input, function);
 
 		Output<JsonObject> output;
-		Map<URI, LiveUpload> liveUploads = new ConcurrentHashMap<>();
+		Map<String, StreamingAttachmentMeta> streamingAttachments = new ConcurrentHashMap<>();
 
 		if(!context.isSimulation()) {
 			FunctionGroupContext functionGroupContext = getFunctionGroupContext();
@@ -208,19 +212,47 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			boolean forceLocalToken =  context.getOperationMode() == OperationMode.LOCAL;
 			TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
+			StreamingResourceUploadContext uploadContext = null;
+
 			try {
 				String agentUrl = token.getAgent().getAgentUrl();
 				node.setAgentUrl(agentUrl);
 				node.setTokenId(token.getID());
 
 				Token gridToken = token.getToken();
-				LiveUploadContext uploadContext = LiveUploadContext.createNew();
-				LiveUploadContextListeners.registerListener(uploadContext.contextId, upload -> {
-					liveUploads.put(upload.reference.getUri(), upload);
-					System.err.println("LIVEUPLOADS NOW: " + liveUploads);
-				});
-				System.err.println("upload context: " + uploadContext.contextId);
-				input.getProperties().put(LiveUploadContext.PROPERTY_KEY, uploadContext.toString());
+				// FIXME: This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
+                StreamingResourceUploadContexts uploadContexts = context.get(StreamingResourceUploadContexts.class);
+				if (uploadContexts != null) {
+					uploadContext = new StreamingResourceUploadContext();
+					uploadContexts.registerContext(uploadContext);
+					uploadContexts.registerListener(uploadContext.contextId, new StreamingResourceUploadContextListener() {
+
+						@Override
+						public void onResourceCreated(String resourceId, StreamingResourceMetadata metadata) {
+							streamingAttachments.put(resourceId, new StreamingAttachmentMeta(new ObjectId(resourceId), metadata.getFilename(), metadata.getMimeType()));
+						}
+
+						@Override
+						public void onResourceStatusChanged(String resourceId, StreamingResourceStatus status) {
+							StreamingAttachmentMeta attachment = streamingAttachments.get(resourceId);
+							if (attachment != null) {
+								boolean addNew = attachment.getStatus() == null;
+								attachment.setCurrentSize(status.getCurrentSize());
+								attachment.setStatus(StreamingAttachmentMeta.Status.valueOf(status.getTransferStatus().name()));
+								if (addNew) {
+									node.getAttachments().add(attachment);
+								}
+								reportNodeAccessor.save(node);
+							} else {
+								logger.warn("Unexpected: Unable to find attachment for resource '{}'", resourceId);
+							}
+						}
+					});
+					input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL));
+					input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH));
+					input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, uploadContext.contextId);
+				}
+
 				if(gridToken.isLocal()) {
 					TokenReservationSession session = (TokenReservationSession) gridToken.getAttachedObject(TokenWrapper.TOKEN_RESERVATION_SESSION);
 					session.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, new ExecutionContextWrapper(context));
@@ -239,7 +271,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					OperationManager.getInstance().exit();
 				}
 				executionCallbacks.afterFunctionExecution(context, node, function, output);
-				
+
 				Error error = output.getError();
 				if(error!=null) {
 					node.setError(error);
@@ -247,7 +279,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				} else {
 					node.setStatus(ReportNodeStatus.PASSED);
 				}
-	
+
 				if(output.getPayload() != null) {
 					Object outputPayload = (useLegacyOutput) ? output.getPayload() : new UserFriendlyJsonObject(output.getPayload());
 					context.getVariablesManager().putVariable(node, "output", outputPayload);
@@ -258,7 +290,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 						context.getVariablesManager().putVariable(parentNode, "previous", outputPayload);
 					}
 				}
-				
+
 				if(output.getAttachments()!=null) {
 					for(Attachment a:output.getAttachments()) {
 						AttachmentMeta attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
@@ -268,14 +300,16 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				if(output.getMeasures()!=null) {
 					node.setMeasures(output.getMeasures());
 				}
-				
+
 				String drainOutputValue = testArtefact.getResultMap().get();
 				drainOutput(drainOutputValue, output);
 			} finally {
 				if(closeFunctionGroupSessionAfterExecution) {
 					functionGroupSession.releaseTokens(true);
 				}
-	
+				if (uploadContext != null) {
+					context.require(StreamingResourceUploadContexts.class).unregisterContext(uploadContext.contextId);
+				}
 				callChildrenArtefacts(node, testArtefact);
 			}
 		} else {
@@ -337,7 +371,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	@SuppressWarnings("unchecked")
 	private void drainOutput(String drainOutputValue, Output<JsonObject> output) {
-		if(drainOutputValue!=null&&drainOutputValue.trim().length()>0) {
+		if (drainOutputValue != null && drainOutputValue.trim().length() > 0) {
 			JsonObject resultJson = output.getPayload();
 			if(resultJson!=null) {
 				Object var = context.getVariablesManager().getVariable(drainOutputValue);
@@ -360,11 +394,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 						}
 					}
 					if(!resultMap.isEmpty()) {
-						dataSetHandle.addRow(resultMap);						
+						dataSetHandle.addRow(resultMap);
 					}
 				} else {
 					throw new RuntimeException("The variable '"+drainOutputValue+"' is neither a Map nor a DataSet handle");
-				}					
+				}
 			}
 		}
 	}
@@ -383,26 +417,26 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	protected void callChildrenArtefacts(CallFunctionReportNode node, CallFunction testArtefact) {
-		if(testArtefact.getChildren()!=null&&testArtefact.getChildren().size()>0) {
+		if (testArtefact.getChildren() != null && testArtefact.getChildren().size() > 0) {
 			VariablesManager variableManager = context.getVariablesManager();
 			variableManager.putVariable(node, "callReport", node);
-			
+
 //			node.getOutputObject().forEach((k,v)->{
 //				variableManager.putVariable(node, k, v.toString());
 //			});
-			
+
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-			scheduler.execute_(node, testArtefact, true);				
+			scheduler.execute_(node, testArtefact, true);
 		}
 	}
-	
+
 	private FunctionInput<JsonObject> buildInput(String argumentStr) {
 		JsonObject argument = parseAndResolveJson(argumentStr);
-		
+
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
 		properties.put(AbstractFunctionHandler.PARENTREPORTID_KEY, context.getCurrentReportNode().getId().toString());
-		
+
 		FunctionInput<JsonObject> input = new FunctionInput<>();
 		input.setPayload(argument);
 		input.setProperties(properties);
@@ -412,7 +446,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	private JsonObject parseAndResolveJson(String functionStr) {
 		JsonObject query;
 		try {
-			if(functionStr!=null&&functionStr.trim().length()>0) {
+			if (functionStr != null && functionStr.trim().length() > 0) {
 				query = JsonProviderCache.createReader(new StringReader(functionStr)).readObject();
 			} else {
 				query = JsonProviderCache.createObjectBuilder().build();

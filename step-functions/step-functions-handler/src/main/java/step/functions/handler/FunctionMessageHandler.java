@@ -21,9 +21,9 @@ package step.functions.handler;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import step.constants.StreamingConstants;
 import step.core.reports.Measure;
 import step.core.reports.MeasurementsBuilder;
-import step.functions.handler.liveupload.LiveUploadContext;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.agent.AgentTokenServices;
@@ -35,6 +35,7 @@ import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
+import step.streaming.common.StreamingResourceUploadContext;
 import step.streaming.websocket.client.upload.WebsocketUploadProvider;
 
 import java.net.URI;
@@ -112,11 +113,20 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
             // There's no easy way to do this in the AbstractFunctionHandler itself, because
             // the only place where the Input properties are guaranteed to be available is in the (abstract)
             // handle() method.
-            String uploadContext = input.getProperties().get(LiveUploadContext.PROPERTY_KEY);
-            if (uploadContext != null) {
-                URI uri = URI.create(uploadContext);
-                functionHandler.setStreamingUploadProvider(new WebsocketUploadProvider(uri));
-            }
+            String uploadContextId = input.getProperties().get(StreamingResourceUploadContext.PARAMETER_NAME);
+			if (uploadContextId != null) {
+				// This information can also be retrieved from somewhere else (e.g. this.agentTokenServices....), for now it's in the inputs
+				String host = input.getProperties().get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
+				while (host.endsWith("/")) {
+					host = host.substring(0, host.length() - 1);
+				}
+				String path = input.getProperties().get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH);
+				while (path.startsWith("/")) {
+					path = path.substring(1);
+				}
+				URI uri = URI.create(String.format("%s/%s?%s=%s", host, path, StreamingResourceUploadContext.PARAMETER_NAME, uploadContextId));
+				functionHandler.setStreamingUploadProvider(new WebsocketUploadProvider(uri));
+			}
 
 			@SuppressWarnings("unchecked")
 			Output<?> output = functionHandler.handle(input);

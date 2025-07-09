@@ -3,10 +3,15 @@ package step.plugins.streaming;
 import jakarta.websocket.server.ServerEndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.constants.StreamingConstants;
 import step.core.GlobalContext;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.functions.handler.liveupload.LiveUploadContext;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.ExecutionEnginePlugin;
+import step.streaming.common.StreamingResourceUploadContexts;
 import step.streaming.server.*;
 import step.streaming.websocket.server.DefaultWebsocketServerEndpointSessionsHandler;
 import step.streaming.websocket.server.WebsocketDownloadEndpoint;
@@ -25,48 +30,57 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
 
     private static final Logger logger = LoggerFactory.getLogger(StreamingResourcesControllerPlugin.class);
     private final WebsocketServerEndpointSessionsHandler sessionsHandler = DefaultWebsocketServerEndpointSessionsHandler.getInstance();
+    private final StreamingResourceUploadContexts uploadContexts = new StreamingResourceUploadContexts();
+    private String websocketBaseUrl;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
 
-        int controllerPort = context.getConfiguration().getPropertyAsInteger("port", 8080);
-        String controllerUrl = context.getConfiguration().getProperty("controller.url");
-        if (controllerUrl == null) {
-            controllerUrl = "http://localhost:" + controllerPort;
-            logger.warn("controller.url is not set in step.properties, unable to determine correct URL for streaming services. Will use " + controllerUrl + " instead, but this will not be accessible remotely.");
-        }
-        // remove trailing slash if present
-        if (controllerUrl.endsWith("/")) {
-            controllerUrl = controllerUrl.substring(0, controllerUrl.length() - 1);
-        }
-        URI websocketBaseUri = URI.create(controllerUrl.replaceFirst("^http", "ws"));
+//        int controllerPort = context.getConfiguration().getPropertyAsInteger("port", 8080);
+//        String controllerUrl = context.getConfiguration().getProperty("controller.url");
+//        if (controllerUrl == null) {
+//            controllerUrl = "http://localhost:" + controllerPort;
+//            logger.warn("controller.url is not set in step.properties, unable to determine correct URL for streaming services. Will use " + controllerUrl + " instead, but this will not be accessible remotely.");
+//        }
+//        // remove trailing slash if present
+//        if (controllerUrl.endsWith("/")) {
+//            controllerUrl = controllerUrl.substring(0, controllerUrl.length() - 1);
+//        }
+//        URI websocketBaseUri = URI.create(controllerUrl.replaceFirst("^http", "ws"));
 
-        if (websocketBaseUri.getPort() != controllerPort) {
-            websocketBaseUri = changeURIPort(websocketBaseUri, controllerPort);
-            logger.warn("controller.url port did not match listening port, Websocket base url has been changed to " + websocketBaseUri);
-        }
+//        if (websocketBaseUri.getPort() != controllerPort) {
+//            websocketBaseUri = changeURIPort(websocketBaseUri, controllerPort);
+//            logger.warn("controller.url port did not match listening port, Websocket base url has been changed to " + websocketBaseUri);
+//        }
+// FIXME: this needs some more thought, for now localhost:8080 should work for local executions on both dev and cloud instances (local KW executions only)
+        URI websocketBaseUri = URI.create("ws://localhost:8080");
+
+        websocketBaseUrl = websocketBaseUri.toString();
 
         // FIXME - make configurable
         File storageBaseDir = new File(System.getProperty("os.name").toLowerCase().contains("win") ? "C:/Temp/streaming-storage" : "/tmp/streaming-storage");
 
-        StreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageBaseDir);
-        StreamingResourcesCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
+        FilesystemStreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageBaseDir);
+        StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
         StreamingResourceReferenceMapper mapper = new DefaultStreamingResourceReferenceMapper(websocketBaseUri, DOWNLOAD_PATH, DOWNLOAD_PARAMETER_NAME);
-        StreamingResourceManager manager = new DefaultStreamingResourceManager(catalog, storage, mapper);
+        StreamingResourceManager manager = new DefaultStreamingResourceManager(catalog, storage, mapper, uploadContexts);
 
-        LiveUploadContext.setBaseUri(websocketBaseUri + UPLOAD_PATH);
+        context.put(StreamingResourceCollectionCatalogBackend.class, catalog);
+        context.put(FilesystemStreamingResourcesStorageBackend.class, storage);
+        context.getServiceRegistrationCallback().registerService(StreamingResourceServices.class);
+
         context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeUploadConfig(manager));
         context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeDownloadConfig(manager));
         logger.info("Streaming Websockets plugin started, upload/download URLs: {}, {}", websocketBaseUri + UPLOAD_PATH, websocketBaseUri + DOWNLOAD_PATH);
     }
 
     private ServerEndpointConfig makeUploadConfig(StreamingResourceManager manager) {
-        return ServerEndpointConfig.Builder.create(ContextAwareWebsocketUploadEndpoint.class, UPLOAD_PATH)
+        return ServerEndpointConfig.Builder.create(WebsocketUploadEndpoint.class, UPLOAD_PATH)
                 .configurator(new ServerEndpointConfig.Configurator() {
                     @Override
                     public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
-                        return endpointClass.cast(new ContextAwareWebsocketUploadEndpoint(manager, sessionsHandler));
+                        return endpointClass.cast(new WebsocketUploadEndpoint(manager, sessionsHandler));
                     }
                 })
                 .build();
@@ -85,6 +99,18 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
 
     private URI changeURIPort(URI u, int newPort) throws URISyntaxException {
         return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), newPort, u.getPath(), u.getQuery(), u.getFragment());
+    }
+
+    @Override
+    public ExecutionEnginePlugin getExecutionEnginePlugin() {
+        return new AbstractExecutionEnginePlugin() {
+            @Override
+            public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+                executionContext.put(StreamingResourceUploadContexts.class, uploadContexts);
+                executionContext.put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, websocketBaseUrl);
+                executionContext.put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, UPLOAD_PATH);
+            }
+        };
     }
 
     @Override

@@ -11,8 +11,6 @@ import step.streaming.common.StreamingResourceStatus;
 import step.streaming.common.StreamingResourceTransferStatus;
 import step.streaming.data.MD5CalculatingOutputStream;
 import step.streaming.websocket.client.upload.WebsocketUploadProvider;
-import step.streaming.websocket.protocol.download.DownloadProtocolMessage;
-import step.streaming.websocket.protocol.upload.UploadProtocolMessage;
 
 import java.io.File;
 import java.io.OutputStream;
@@ -27,8 +25,8 @@ public class StreamingTests {
     @Test
     public void testUpload() throws Exception {
         URI uploadUri = URI.create("ws://localhost:8080" + StreamingResourcesControllerPlugin.UPLOAD_PATH);
-        StreamingResourceMetadata metadata = new StreamingResourceMetadata("test.txt", "text/plain");
-        File file = new File(Objects.requireNonNull(getClass().getClassLoader().getResource("test.txt")).getFile());
+        StreamingResourceMetadata metadata = new StreamingResourceMetadata("streaming-test.txt", "text/plain");
+        File file = new File(Objects.requireNonNull(getClass().getClassLoader().getResource("streaming-test.txt")).getFile());
 
 
         StreamingUpload upload = new WebsocketUploadProvider(uploadUri).startLiveFileUpload(file, metadata);
@@ -40,10 +38,12 @@ public class StreamingTests {
 
     @Test
     public void testDownload() throws Exception {
+        boolean print = true;
         // Use URI as given by testUpload
-        String url = "ws://localhost:8080/ws/streaming/download/68652f2bd9657b12cd4f9920";
-        WebsocketDownload download = new WebsocketDownload(new StreamingResourceReference(URI.create(url)));
-        MD5CalculatingOutputStream out = new MD5CalculatingOutputStream(OutputStream.nullOutputStream());
+        String url = "ws://localhost:8080/ws/streaming/download/686e5899a3a0251772992954";
+        WebsocketDownload download = new WebsocketDownload(new StreamingResourceReference(URI.create(url), null));
+        OutputStream leafOut = print? System.err : OutputStream.nullOutputStream();
+        MD5CalculatingOutputStream out = new MD5CalculatingOutputStream(leafOut);
         download.getInputStream().transferTo(out);
         out.close();
         download.close();

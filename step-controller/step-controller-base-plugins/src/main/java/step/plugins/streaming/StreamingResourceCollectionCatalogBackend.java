@@ -5,6 +5,7 @@ import step.core.GlobalContext;
 import step.streaming.common.StreamingResourceMetadata;
 import step.streaming.common.StreamingResourceStatus;
 import step.streaming.common.StreamingResourceTransferStatus;
+import step.streaming.common.StreamingResourceUploadContext;
 import step.streaming.server.StreamingResourcesCatalogBackend;
 
 public class StreamingResourceCollectionCatalogBackend implements StreamingResourcesCatalogBackend {
@@ -13,7 +14,7 @@ public class StreamingResourceCollectionCatalogBackend implements StreamingResou
         accessor = new StreamingResourceAccessor(context.getCollectionFactory().getCollection(StreamingResource.COLLECTION_NAME, StreamingResource.class));
     }
     @Override
-    public String createResource(StreamingResourceMetadata metadata) {
+    public String createResource(StreamingResourceMetadata metadata, StreamingResourceUploadContext context) {
         StreamingResource entity = new StreamingResource();
         entity.filename = metadata.getFilename();
         entity.mimeType = metadata.getMimeType();
@@ -30,7 +31,7 @@ public class StreamingResourceCollectionCatalogBackend implements StreamingResou
         }
     }
 
-    private StreamingResource getEntity(String resourceId) {
+    StreamingResource getEntity(String resourceId) {
         StreamingResource entity = accessor.get(new ObjectId(resourceId));
         if (entity == null) {
             throw new IllegalArgumentException("Resource not found: " + resourceId);
