@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Streaming/Chunking Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+
+        fieldset {
+            margin-bottom: 20px;
+            padding: 15px;
+        }
+
+        input[type="text"], input[type="number"] {
+            padding: 5px;
+            margin-right: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            overflow-y: auto;
+            resize: none;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .textarea-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .textarea-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .textarea-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .textarea-header label {
+            font-weight: bold;
+        }
+
+        .status-display {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+        }
+
+        .small-button {
+            font-size: 12px;
+            padding: 4px 8px;
+        }
+
+        #auto-container {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 20px;
+        }
+
+        #autoToggle {
+            margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Streaming/Chunking Demo</h1>
+
+<fieldset>
+    <legend>Control</legend>
+
+    <div class="status-display">
+        Status: <span id="status">N/A</span>
+    </div>
+
+    <label for="url">URL (wrong one is OK, we will extract the ID and correct the path):</label><br>
+    <input type="text" id="url" name="url" style="width: 100%;" />
+    <br><br>
+
+    <label>Mode:</label>
+    <input type="radio" id="ws" name="mode" value="websocket" checked />
+    <label for="ws">WebSocket</label>
+
+    <input type="radio" id="rest" name="mode" value="rest" />
+    <label for="rest">REST</label>
+
+    <span id="auto-container">
+      <label for="autoToggle">send requests automatically</label>
+      <input type="checkbox" id="autoToggle" checked />
+    </span>
+
+    <br><br>
+    <label for="start">Start:</label>
+    <input type="number" id="start" name="start" disabled />
+
+    <label for="end">End:</label>
+    <input type="number" id="end" name="end" disabled />
+
+    <br><br>
+    <button id="connect" disabled>Connect</button>
+    <button id="submit" disabled>REQUEST</button>
+    <button id="disconnect" disabled>Disconnect</button>
+    <button id="clearPayload">CLEAR</button>
+</fieldset>
+<div class="textarea-container">
+    <div class="textarea-wrapper">
+        <div class="textarea-header">
+            <label for="log">Log</label>
+        </div>
+        <textarea id="log" readonly></textarea>
+    </div>
+    <div class="textarea-wrapper">
+        <div class="textarea-header">
+            <label for="payload">Payload</label>
+        </div>
+        <textarea id="payload" readonly></textarea>
+    </div>
+</div>
+
+<script>
+    const urlInput = document.getElementById("url");
+    const connectBtn = document.getElementById("connect");
+    const submitBtn = document.getElementById("submit");
+    const disconnectBtn = document.getElementById("disconnect");
+    const logArea = document.getElementById("log");
+    const payloadArea = document.getElementById("payload");
+    const startInput = document.getElementById("start");
+    const endInput = document.getElementById("end");
+    const statusDisplay = document.getElementById("status");
+    const wsRadio = document.getElementById("ws");
+    const restRadio = document.getElementById("rest");
+    const clearPayloadBtn = document.getElementById("clearPayload");
+    const autoToggle = document.getElementById("autoToggle");
+
+    let wsUrl = null;
+    let restUrlTemplate = '';
+    let wsSession = null;
+    let autoBytesReceived = 0;
+    let currentSize = 0;
+    let currentStatus = null;
+
+    function log(message) {
+        logArea.value += message + "\n";
+        logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    function updateStatus(status) {
+        currentStatus = status;
+        statusDisplay.textContent = `${currentStatus} | currentSize: ${currentSize}`;
+    }
+
+    function updateButtonStates() {
+        const mode = document.querySelector('input[name="mode"]:checked').value;
+        const wsConnected = wsSession && wsSession.readyState === WebSocket.OPEN;
+
+        connectBtn.disabled = wsUrl == null || wsConnected;
+        disconnectBtn.disabled = !wsConnected;
+
+        const isRestMode = mode === 'rest';
+        const allowManual = !autoToggle.checked && (isRestMode || wsConnected);
+        submitBtn.disabled = !allowManual;
+    }
+
+
+    function maybeDisableAutoMode() {
+        if (currentStatus === 'COMPLETED' && autoToggle.checked && autoBytesReceived >= currentSize) {
+            log("✅ COMPLETED — auto mode disabled.");
+            autoToggle.checked = false;
+            submitBtn.disabled = false;
+            startInput.value = 0;
+        }
+    }
+
+    function handleBytesReceived(bytes) {
+        if (!autoToggle.checked) {
+            startInput.value = Math.min(Number(startInput.value) + bytes, currentSize);
+            endInput.value = Math.min(Number(endInput.value) + bytes, currentSize);
+        } else {
+            autoBytesReceived += bytes;
+            startInput.value = autoBytesReceived;
+            maybeDisableAutoMode();
+        }
+    }
+
+
+
+    function parseInputUrl(inputUrl) {
+        try {
+            const url = new URL(inputUrl);
+            const scheme = url.protocol.replace(":", "");
+            const host = url.host;
+            const wsScheme = scheme === "https" ? "wss" : "ws";
+            const restScheme = scheme === "https" ? "https" : "http";
+            const pathname = url.pathname;
+            const idMatch = pathname.match(/\/([a-f0-9]{24})(?=\/|$)/);
+
+            if (!idMatch) {
+                log("❌ Could not extract resource ID from URL.");
+                connectBtn.disabled = true;
+                submitBtn.disabled = true;
+                disconnectBtn.disabled = true;
+                return;
+            }
+
+            const id = idMatch[1];
+            wsUrl = `${wsScheme}://${host}/ws/streaming/download/${id}`;
+            restUrlTemplate = `${restScheme}://${host}/rest/streaming-resources/${id}/download?start={start}&end={end}&inline=true`;
+
+            log(`✅ Parsed URLs:\nWS: ${wsUrl}\nREST: ${restUrlTemplate}`);
+            startInput.disabled = false;
+            endInput.disabled = false;
+
+            updateButtonStates();
+        } catch (e) {
+            log("❌ Invalid URL.");
+            wsUrl = null;
+            updateButtonStates();
+        }
+    }
+
+    async function requestChunk(start, end) {
+        const selectedMode = document.querySelector('input[name="mode"]:checked').value;
+
+        if (selectedMode === "websocket") {
+            if (!wsSession || wsSession.readyState !== WebSocket.OPEN) {
+                log("❌ WebSocket is not connected.");
+                return;
+            }
+
+            const message = {
+                "@": "RequestChunk",
+                startOffset: start,
+                endOffset: end
+            };
+            const json = JSON.stringify(message);
+            log((autoToggle.checked ? "⚡ AUTO" : "📤") + " WS REQUEST:\n" + json);
+            wsSession.send(json);
+
+        } else {
+            const restUrl = restUrlTemplate
+                .replace("{start}", encodeURIComponent(start))
+                .replace("{end}", encodeURIComponent(end));
+            log((autoToggle.checked ? "⚡ AUTO" : "🌐") + ` REST REQUEST:\n${restUrl}`);
+
+            try {
+                const response = await fetch(restUrl);
+                const buffer = await response.arrayBuffer();
+                const decoder = new TextDecoder("utf-8");
+                const text = decoder.decode(buffer);
+
+                log(`📦 REST RESPONSE RECEIVED: ${buffer.byteLength} bytes`);
+                payloadArea.value += text;
+                payloadArea.scrollTop = payloadArea.scrollHeight;
+
+                handleBytesReceived(buffer.byteLength);
+            } catch (err) {
+                log(`❌ REST CALL FAILED: ${err.message}`);
+            }
+        }
+    }
+
+    urlInput.addEventListener("input", (e) => {
+        logArea.value = "";
+        parseInputUrl(e.target.value.trim());
+        updateButtonStates();
+    });
+
+    autoToggle.addEventListener("change", () => {
+        updateButtonStates();
+    });
+
+    connectBtn.addEventListener("click", () => {
+        if (wsSession && wsSession.readyState === WebSocket.OPEN) {
+            log("ℹ️ WebSocket already connected.");
+            return;
+        }
+
+        wsSession = new WebSocket(wsUrl);
+        updateButtonStates();
+
+        wsSession.onopen = () => {
+            log("✅ WebSocket connection established.");
+            autoBytesReceived = 0;
+            payloadArea.value = "";
+            updateButtonStates();
+        };
+
+        wsSession.onmessage = async (event) => {
+            if (typeof event.data === "string") {
+                log("📩 WS RECEIVED:\n" + event.data);
+                try {
+                    const msg = JSON.parse(event.data);
+
+                    if (msg['@'] === "StatusChanged" && msg.resourceStatus) {
+                        const status = msg.resourceStatus.transferStatus;
+                        currentSize = msg.resourceStatus.currentSize;
+
+                        updateStatus(status);
+
+                        if (status !== "FAILED") {
+                            startInput.value = 0;
+                            endInput.value = currentSize;
+                        }
+
+                        if (autoToggle.checked && autoBytesReceived < currentSize) {
+                            requestChunk(autoBytesReceived, currentSize);
+                        }
+
+                        maybeDisableAutoMode();
+                    }
+                } catch (err) {
+                    log("⚠️ Failed to parse JSON message.");
+                }
+            } else if (event.data instanceof Blob) {
+                const buffer = await event.data.arrayBuffer();
+                const decoder = new TextDecoder("utf-8");
+                const text = decoder.decode(buffer);
+
+                log(`📦 WS BINARY RECEIVED: ${buffer.byteLength} bytes`);
+                payloadArea.value += text;
+                payloadArea.scrollTop = payloadArea.scrollHeight;
+
+                handleBytesReceived(buffer.byteLength);
+            }
+        };
+
+        wsSession.onerror = (error) => {
+            log("❌ WebSocket error.");
+            console.error(error);
+        };
+
+        wsSession.onclose = (event) => {
+            log(`⚠️ WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason || "No reason provided."}`);
+            updateStatus("DISCONNECTED");
+            updateButtonStates();
+        };
+    });
+
+    disconnectBtn.addEventListener("click", () => {
+        if (wsSession) {
+            wsSession.close();
+            wsSession = null;
+            log("🔌 WebSocket manually disconnected.");
+        }
+        updateButtonStates();
+    });
+
+    submitBtn.addEventListener("click", () => {
+        const start = parseInt(startInput.value, 10);
+        const end = parseInt(endInput.value, 10);
+        requestChunk(start, end);
+    });
+
+    clearPayloadBtn.addEventListener("click", () => {
+        payloadArea.value = "";
+        log("🧹 Payload cleared.");
+    });
+</script>
+
+</body>
+</html>

@@ -21,6 +21,9 @@ import step.streaming.websocket.server.WebsocketUploadEndpoint;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Plugin
 public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin {
@@ -56,8 +59,12 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
 
         websocketBaseUrl = websocketBaseUri.toString();
 
-        // FIXME - make configurable
+        // FIXME - temporary code - make configurable
         File storageBaseDir = new File(System.getProperty("os.name").toLowerCase().contains("win") ? "C:/Temp/streaming-storage" : "/tmp/streaming-storage");
+        Path controllerData = Paths.get("/home/controller/data");
+        if (Files.exists(controllerData)) {
+            storageBaseDir = new File(controllerData.toString(), "streaming-storage");
+        }
 
         FilesystemStreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageBaseDir);
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
