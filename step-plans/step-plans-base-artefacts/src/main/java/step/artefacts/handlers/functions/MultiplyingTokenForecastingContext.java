@@ -45,6 +45,11 @@ public class MultiplyingTokenForecastingContext extends TokenForecastingContext 
     }
 
     @Override
+    protected void requireToken(Key key, int count) {
+        parentContext.requireToken(key, count * numberOfThreads);
+    }
+
+    @Override
     public void releaseRequiredToken(Key key, int count) {
         parentContext.releaseRequiredToken(key, count * numberOfThreads);
     }

@@ -957,6 +957,67 @@ public class TokenForecastingTest {
 
 	}
 
+	@Test
+	public void testTestScenarioInTestSet() {
+
+		CallFunction testKeyword = FunctionArtefacts.keyword("test");
+		testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+		Stats stats = new Stats();
+
+		MyFunction function = new MyFunction(input -> {
+			sleep();
+			stats.update();
+			return new Output<>();
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "test");
+
+		Set<AgentPoolSpec> availableAgentPools = Set.of(
+				new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+
+		Plan plan = PlanBuilder.create()
+				.startBlock(BaseArtefacts.testSet())
+					.startBlock(new TestScenario())
+						.add(testKeyword)
+					.endBlock()
+				.endBlock()
+				.build();
+
+		plan.setFunctions(List.of(function));
+
+
+		TokenForecastingContext forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		stats.assertInvocationsAndThreads(1, 1); // default for TestScenario is number of children
+		assertAgentCountPool1(forecast, 1);
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+		stats.assertInvocationsAndThreads(1, 1); // default for TestScenario is number of children
+		assertAgentCountPool1(forecast, 1);
+
+		plan = PlanBuilder.create()
+				.startBlock(BaseArtefacts.testSet())
+				.startBlock(new TestScenario())
+				.add(testKeyword)
+				.add(testKeyword)
+				.endBlock()
+				.startBlock(new TestScenario())
+				.add(testKeyword)
+				.add(testKeyword)
+				.endBlock()
+				.endBlock()
+				.build();
+
+		plan.setFunctions(List.of(function));
+
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+		stats.assertInvocationsAndThreads(4, 2); // default for TestScenario is number of children
+		assertAgentCountPool1(forecast, 2);
+
+		forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, 1);
+		stats.assertInvocationsAndThreads(4, 1); // default for TestScenario is number of children
+		assertAgentCountPool1(forecast, 1);
+	}
+
 	private static TokenForecastingContext executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
 		return executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
 	}
