@@ -15,6 +15,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
 
+import static step.plans.parser.yaml.YamlPlanReaderTest.replaceDynamicValuesInExpectedInput;
+
 public class YamlEditorPlanTypeTest {
 
     private static final Logger log = LoggerFactory.getLogger(YamlEditorPlanTypeTest.class);
@@ -28,7 +30,7 @@ public class YamlEditorPlanTypeTest {
         File yamlFile = new File("src/test/resources/step/plans/parser/yaml/editor/test-valid-source.yml");
         try (FileInputStream is = new FileInputStream(yamlFile)) {
             ObjectMapper yamlMapper = YamlPlanReader.createDefaultYamlMapper();
-            Assert.assertEquals(yamlMapper.readTree(newPlan.getSource()), yamlMapper.readTree(is));
+            Assert.assertEquals(yamlMapper.readTree(replaceDynamicValuesInExpectedInput(is)), yamlMapper.readTree(newPlan.getSource()));
         }
     }
 

@@ -36,6 +36,7 @@ import step.plans.parser.yaml.model.YamlPlanVersions;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public class YamlPlanReaderTest {
 
@@ -52,7 +53,7 @@ public class YamlPlanReaderTest {
 
 	public YamlPlanReaderTest() {
 		this.yamlReader = new YamlPlanReader(
-				step.plans.parser.yaml.model.YamlPlanVersions.ACTUAL_VERSION,
+				YamlPlanVersions.ACTUAL_VERSION,
 				true,
 				null
 		);
@@ -292,7 +293,8 @@ public class YamlPlanReaderTest {
 				}
 			}
 
-			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(yamlPlanFile);
+			String yamlPlanExpectedContent = replaceDynamicValuesInExpectedInput(yamlPlanFile);
+			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(yamlPlanExpectedContent);
 			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedYaml, actual);
 		} catch (IOException e) {
@@ -371,8 +373,17 @@ public class YamlPlanReaderTest {
 
 	}
 
-	private String replaceDynamicValuesInExpectedInput(String input) {
-		return input.replaceAll("(\n {0,2}version: )\"[^\"]*\"", "$1\"" + YamlPlanVersions.ACTUAL_VERSION + "\"");
+	public static String replaceDynamicValuesInExpectedInput(File yamlPlanFile) throws IOException {
+		return replaceDynamicValuesInExpectedInput(Files.readString(yamlPlanFile.toPath(), StandardCharsets.UTF_8));
+	}
+
+
+	public static String replaceDynamicValuesInExpectedInput(InputStream is) throws IOException {
+		return replaceDynamicValuesInExpectedInput(new String(is.readAllBytes(), StandardCharsets.UTF_8));
+	}
+
+	public static String replaceDynamicValuesInExpectedInput(String input) {
+		return input.replaceAll("((^|\n) {0,2}version: )\"[^\"]*\"", "$1\"" + YamlPlanVersions.ACTUAL_VERSION + "\"");
 	}
 
 	private void convertPlanToYaml(String technicalPlanFilePath, String expectedYamlPlan) {
@@ -396,7 +407,7 @@ public class YamlPlanReaderTest {
 				}
 			}
 
-			String expectedString = replaceDynamicValuesInExpectedInput(new String(expectedIS.readAllBytes(), StandardCharsets.UTF_8));
+			String expectedString = replaceDynamicValuesInExpectedInput(expectedIS);
 			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(expectedString);
 			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedYaml, actual);
