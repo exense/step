@@ -36,6 +36,7 @@ import step.plans.parser.yaml.model.YamlPlanVersions;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 public class YamlPlanReaderTest {
 
@@ -52,7 +53,7 @@ public class YamlPlanReaderTest {
 
 	public YamlPlanReaderTest() {
 		this.yamlReader = new YamlPlanReader(
-				step.plans.parser.yaml.model.YamlPlanVersions.ACTUAL_VERSION,
+				YamlPlanVersions.ACTUAL_VERSION,
 				true,
 				null
 		);
@@ -292,7 +293,8 @@ public class YamlPlanReaderTest {
 				}
 			}
 
-			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(yamlPlanFile);
+			String yamlPlanExpectedContent = replaceDynamicValuesInExpectedInput(Files.readString(yamlPlanFile.toPath(), StandardCharsets.UTF_8));
+			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(yamlPlanExpectedContent);
 			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedYaml, actual);
 		} catch (IOException e) {
