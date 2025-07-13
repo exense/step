@@ -22,7 +22,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import step.cli.AbstractExecuteAutomationPackageTool;
+import step.cli.ExecuteAutomationPackageTool;
 import step.core.maven.MavenArtifactIdentifier;
 import step.cli.StepCliExecutionException;
 
@@ -96,14 +96,14 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     private String reportDir;
 
     public static class ReportParam {
-        private AbstractExecuteAutomationPackageTool.ReportType type;
+        private ExecuteAutomationPackageTool.ReportType type;
         private String output;
 
-        public AbstractExecuteAutomationPackageTool.ReportType getType() {
+        public ExecuteAutomationPackageTool.ReportType getType() {
             return type;
         }
 
-        public void setType(AbstractExecuteAutomationPackageTool.ReportType type) {
+        public void setType(ExecuteAutomationPackageTool.ReportType type) {
             this.type = type;
         }
 
@@ -137,10 +137,29 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                 reportOutputDir = new File(resolvedReportDir);
             }
 
-            List<AbstractExecuteAutomationPackageTool.Report> parsedReports = parseReports();
+            List<ExecuteAutomationPackageTool.Report> parsedReports = parseReports();
 
-            AbstractExecuteAutomationPackageTool.Params params = new AbstractExecuteAutomationPackageTool.Params()
-                    .setMavenArtifactIdentifier(remoteMavenArtifact)
+            // if groupId and artifactId are not defined, we execute the maven artifact from current project
+            File localApFile = null;
+            if (remoteMavenArtifact == null) {
+                Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier());
+
+                if (applicableArtifact != null) {
+                    localApFile = applicableArtifact.getFile();
+                    if (localApFile == null || !localApFile.exists()) {
+                        throw logAndThrow("The resolved artifact '" + artifactToString(applicableArtifact) + "' contains no file.");
+                    }
+                } else {
+                    throw logAndThrow("Unable to resolve automation package file " + artifactToString(project.getGroupId(), project.getArtifactId(), getArtifactClassifier(), project.getVersion()));
+                }
+            }
+
+            // TODO: here we need to support the local files for keyword lib
+
+            ExecuteAutomationPackageTool.Params params = new ExecuteAutomationPackageTool.Params()
+                    .setAutomationPackageFile(localApFile)
+                    .setAutomationPackageMavenArtifact(remoteMavenArtifact)
+                    .setKeywordLibraryMavenArtifact(getKeywordLibRemoteMavenIdentifier())
                     .setStepProjectName(getStepProjectName())
                     .setUserId(getUserId())
                     .setAuthToken(getAuthToken())
@@ -165,17 +184,17 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    private List<AbstractExecuteAutomationPackageTool.Report> parseReports() {
+    private List<ExecuteAutomationPackageTool.Report> parseReports() {
         if (getReports() != null) {
-            List<AbstractExecuteAutomationPackageTool.Report> result = new ArrayList<>();
+            List<ExecuteAutomationPackageTool.Report> result = new ArrayList<>();
             for (ReportParam report : getReports()) {
                 if (report.getOutput() == null || report.getOutput().isEmpty()) {
-                    result.add(new AbstractExecuteAutomationPackageTool.Report(report.getType()));
+                    result.add(new ExecuteAutomationPackageTool.Report(report.getType()));
                 } else {
-                    List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes = Arrays.stream(report.getOutput().split(","))
-                            .map(AbstractExecuteAutomationPackageTool.ReportOutputMode::valueOf)
+                    List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes = Arrays.stream(report.getOutput().split(","))
+                            .map(ExecuteAutomationPackageTool.ReportOutputMode::valueOf)
                             .collect(Collectors.toList());
-                    result.add(new AbstractExecuteAutomationPackageTool.Report(report.getType(), outputModes));
+                    result.add(new ExecuteAutomationPackageTool.Report(report.getType(), outputModes));
                 }
             }
             return result;
@@ -184,30 +203,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected AbstractExecuteAutomationPackageTool createTool(final String url, AbstractExecuteAutomationPackageTool.Params params) {
-        // TODO: here we need to support the maven snippet for the library file
-        return new AbstractExecuteAutomationPackageTool(url, params) {
-            @Override
-            protected File getAutomationPackageFile() throws StepCliExecutionException {
-                // if groupId and artifactId are not defined, we execute the maven artifact from current project
-                if (useLocalArtifact()) {
-                    Artifact applicableArtifact = getProjectArtifact(getArtifactClassifier());
-
-                    if (applicableArtifact != null) {
-                        File artifactFile = applicableArtifact.getFile();
-                        if(artifactFile == null || !artifactFile.exists()) {
-                            throw logAndThrow("The resolved artifact '" + artifactToString(applicableArtifact) + "' contains no file.");
-                        } else {
-                            return artifactFile;
-                        }
-                    } else {
-                        throw logAndThrow("Unable to resolve automation package file " + artifactToString(project.getGroupId(), project.getArtifactId(), getArtifactClassifier(), project.getVersion()));
-                    }
-                } else {
-                    return null;
-                }
-            }
-        };
+    protected ExecuteAutomationPackageTool createTool(final String url, ExecuteAutomationPackageTool.Params params) {
+        return new ExecuteAutomationPackageTool(url, params);
     }
 
     protected MavenArtifactIdentifier getKeywordLibRemoteMavenIdentifier() throws MojoExecutionException {

@@ -5,6 +5,7 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.AutomationPackageUpdateStatus;
@@ -40,7 +41,12 @@ public class DeployAutomationPackageToolTest {
 
         // attributes used to search for existing function packages
         ArgumentCaptor<File> packageFileCaptor = ArgumentCaptor.forClass(File.class);
-        Mockito.verify(automationPackageClient, Mockito.times(1)).createOrUpdateAutomationPackage(packageFileCaptor.capture(), Mockito.anyBoolean(), Mockito.eq("ver1"), Mockito.eq("true==true"), Mockito.isNull());
+        Mockito.verify(automationPackageClient, Mockito.times(1))
+                .createOrUpdateAutomationPackage(
+                        packageFileCaptor.capture(), Mockito.isNull(), Mockito.anyBoolean(),
+                        Mockito.eq("ver1"), Mockito.eq("true==true"),
+                        Mockito.isNull(), Mockito.isNull()
+                );
         Mockito.verify(automationPackageClient, Mockito.times(1)).close();
         Mockito.verifyNoMoreInteractions(automationPackageClient);
         Assert.assertEquals(testFile, packageFileCaptor.getValue());
@@ -48,7 +54,12 @@ public class DeployAutomationPackageToolTest {
 
     private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {
         RemoteAutomationPackageClientImpl remoteClient = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteClient.createOrUpdateAutomationPackage(Mockito.any(), Mockito.anyBoolean(), Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID), null);
+        Mockito.when(remoteClient.createOrUpdateAutomationPackage(
+                Mockito.any(), Mockito.isNull(),
+                Mockito.anyBoolean(),
+                Mockito.any(), Mockito.any(),
+                Mockito.isNull(), Mockito.isNull())
+        ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID), null);
         return remoteClient;
     }
 

@@ -299,12 +299,12 @@ public class AutomationPackageManager {
 
     public ObjectId createAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier,
                                                      String apVersion, String activationExpr,
-                                                     KeywordLibraryReference keywordLibraryReference,
+                                                     AutomationPackageFileSource keywordLibrarySource,
                                                      ObjectEnricher enricher, ObjectPredicate objectPredicate) {
         validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
         try {
             try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
-                return createOrUpdateAutomationPackage(false, true, null, provider, apVersion, activationExpr, false, enricher, objectPredicate, false, keywordLibraryReference).getId();
+                return createOrUpdateAutomationPackage(false, true, null, provider, apVersion, activationExpr, false, enricher, objectPredicate, false, keywordLibrarySource).getId();
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -331,16 +331,17 @@ public class AutomationPackageManager {
     /**
      * Creates the new automation package. The exception will be thrown, if the package with the same name already exists.
      *
-     * @param packageStream             the package content
-     * @param fileName                  the original name of file with automation package
+     * @param apSource                  the content of automation package
      * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate           the filter for automation package
      * @return the id of created package
      * @throws AutomationPackageManagerException
      */
-    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, String apVersion, String activationExpr, KeywordLibraryReference keywordLibraryReference, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
+    public ObjectId createAutomationPackage(AutomationPackageFileSource apSource, String apVersion, String activationExpr,
+                                            AutomationPackageFileSource keywordLibrarySource, ObjectEnricher enricher,
+                                            ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
         return createOrUpdateAutomationPackage(false, true, null,
-                packageStream, fileName, keywordLibraryReference,
+                apSource, keywordLibrarySource,
                 apVersion, activationExpr, enricher, objectPredicate, false).getId();
     }
 
@@ -350,20 +351,19 @@ public class AutomationPackageManager {
      * @param allowUpdate               whether update existing package is allowed
      * @param allowCreate               whether create new package is allowed
      * @param explicitOldId             the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
-     * @param fileName                  the original name of file with automation package
      * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate           the filter for automation package
      * @return the id of created/updated package
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate,
                                                                          ObjectId explicitOldId,
-                                                                         InputStream inputStream, String fileName,
-                                                                         KeywordLibraryReference keywordLibraryReference,
+                                                                         AutomationPackageFileSource apSource,
+                                                                         AutomationPackageFileSource keywordLibrarySource,
                                                                          String apVersion, String activationExpr,
                                                                          ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
         try {
-            try (AutomationPackageArchiveProvider provider = new AutomationPackageFromInputStreamProvider(inputStream, fileName)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibraryReference);
+            try (AutomationPackageArchiveProvider provider = getAutomationPackageArchiveProvider(apSource, objectPredicate)) {
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibrarySource);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -383,13 +383,13 @@ public class AutomationPackageManager {
     public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier,
                                                                                   boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                                   String apVersion, String activationExpr,
-                                                                                  KeywordLibraryReference keywordLibraryReference,
+                                                                                  AutomationPackageFileSource keywordLibrarySource,
                                                                                   ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
         try {
             validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
             try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
                 // TODO: define keyword library from maven
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibraryReference);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibrarySource);
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -441,13 +441,13 @@ public class AutomationPackageManager {
      * @param automationPackageProvider the automation package content provider
      * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate           the filter for automation package
-     * @param keywordLibraryReference
+     * @param keywordLibrarySource
      * @return the id of created/updated package
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                          AutomationPackageArchiveProvider automationPackageProvider, String apVersion, String activationExpr,
                                                                          boolean isLocalPackage, ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async,
-                                                                         KeywordLibraryReference keywordLibraryReference) {
+                                                                         AutomationPackageFileSource keywordLibrarySource) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
@@ -491,7 +491,7 @@ public class AutomationPackageManager {
 
             // upload keyword package if provided
             // TODO: now we check the MD5 hash to prevent uploading duplicated libraries - further we will need more flexible approach
-            AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibraryReference, objectPredicate);
+            AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate);
             File keywordLibrary = keywordLibraryProvider.getKeywordLibrary();
             Resource keywordLibraryResource = null;
             String keywordLibraryResourceString = null;
@@ -556,15 +556,26 @@ public class AutomationPackageManager {
         }
     }
 
-    private AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(KeywordLibraryReference keywordLibraryReference, ObjectPredicate predicate) {
-        if (keywordLibraryReference != null) {
-            if (keywordLibraryReference.useMavenIdentifier()) {
-                return new KeywordLibraryFromMavenProvider(mavenConfigProvider.getConfig(predicate), keywordLibraryReference.getMavenArtifactIdentifier());
-            } else if (keywordLibraryReference.getInputStream() != null) {
-                return new KeywordLibraryFromInputStreamProvider(keywordLibraryReference.getInputStream(), keywordLibraryReference.getFileName());
+    private AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate) {
+        if (keywordLibrarySource != null) {
+            if (keywordLibrarySource.useMavenIdentifier()) {
+                return new KeywordLibraryFromMavenProvider(mavenConfigProvider.getConfig(predicate), keywordLibrarySource.getMavenArtifactIdentifier());
+            } else if (keywordLibrarySource.getInputStream() != null) {
+                return new KeywordLibraryFromInputStreamProvider(keywordLibrarySource.getInputStream(), keywordLibrarySource.getFileName());
             }
         }
         return new NoKeywordLibraryProvider();
+    }
+
+    private AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource, ObjectPredicate predicate) throws AutomationPackageReadingException {
+        if (apFileSource != null) {
+            if (apFileSource.useMavenIdentifier()) {
+                return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier());
+            } else if (apFileSource.getInputStream() != null) {
+                return new AutomationPackageFromInputStreamProvider(apFileSource.getInputStream(), apFileSource.getFileName());
+            }
+        }
+        throw new AutomationPackageManagerException("The automation package is not provided");
     }
 
     /**

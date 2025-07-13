@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static step.cli.AbstractExecuteAutomationPackageTool.getPlanFilters;
+import static step.cli.ExecuteAutomationPackageTool.getPlanFilters;
 
 public class ApLocalExecuteCommandHandler {
 
@@ -87,7 +87,7 @@ public class ApLocalExecuteCommandHandler {
                         protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
                             log.error("Execution has been failed for plan {}. {}", parserResult.getName(), errorText);
 
-                            String executionTree = AbstractExecuteAutomationPackageTool.getExecutionTreeAsString(result);
+                            String executionTree = ExecuteAutomationPackageTool.getExecutionTreeAsString(result);
                             String detailMessage = errorText + "\n" + executionTree;
                             if(assertionError){
                                 detailMessage += "Assertion error. ";

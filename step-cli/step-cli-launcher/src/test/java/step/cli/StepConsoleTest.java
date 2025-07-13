@@ -170,8 +170,8 @@ public class StepConsoleTest {
         Assert.assertEquals("timeout doesn't match", (Integer) 1000, usedParams.params.getExecutionResultTimeoutS());
         Assert.assertFalse(usedParams.params.getWaitForExecution());
         Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.params.getExecutionParameters());
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertNull(usedParams.params.getMavenArtifactIdentifier());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+        Assert.assertNull(usedParams.params.getAutomationPackageMavenArtifact());
 
         // minimum parameters
         remoteExecuteHistory.clear();
@@ -181,8 +181,8 @@ public class StepConsoleTest {
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertTrue(usedParams.params.getWaitForExecution());
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertNull(usedParams.params.getMavenArtifactIdentifier());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+        Assert.assertNull(usedParams.params.getAutomationPackageMavenArtifact());
 
         // use maven artifact instead of local file
         remoteExecuteHistory.clear();
@@ -191,7 +191,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests", null), usedParams.params.getMavenArtifactIdentifier());
+        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests", null), usedParams.params.getAutomationPackageMavenArtifact());
 
         // test various report types and output types
         remoteExecuteHistory.clear();
@@ -200,8 +200,8 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals(1, usedParams.params.getReports().size());
-        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.file), usedParams.params.getReports().get(0).getOutputModes());
+        Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
+        Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.file), usedParams.params.getReports().get(0).getOutputModes());
 
         remoteExecuteHistory.clear();
         res = runMain(histories, "ap", "execute", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080", "--reportType=junit;output=stdout", "--reportType=aggregated;output=file,stdout");
@@ -209,10 +209,10 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals(2, usedParams.params.getReports().size());
-        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(0).getOutputModes());
-        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.aggregated, usedParams.params.getReports().get(1).getReportType());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.file, AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(1).getOutputModes());
+        Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
+        Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(0).getOutputModes());
+        Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.aggregated, usedParams.params.getReports().get(1).getReportType());
+        Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.file, ExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(1).getOutputModes());
     }
 
     @Test
@@ -476,8 +476,7 @@ public class StepConsoleTest {
 
         public static class RemoteExecutionParams {
             private String stepUrl;
-            private AbstractExecuteAutomationPackageTool.Params params;
-            private String apFile;
+            private ExecuteAutomationPackageTool.Params params;
         }
 
         public static class LocalExecutionParams {
@@ -502,12 +501,11 @@ public class StepConsoleTest {
         }
 
         @Override
-        protected void executeRemotely(String stepUrl, AbstractExecuteAutomationPackageTool.Params params) {
+        protected void executeRemotely(String stepUrl, ExecuteAutomationPackageTool.Params params) {
             if (remoteParams != null) {
                 RemoteExecutionParams p = new RemoteExecutionParams();
                 p.stepUrl = stepUrl;
                 p.params = params;
-                p.apFile = this.apFile;
 
                 remoteParams.add(p);
             }

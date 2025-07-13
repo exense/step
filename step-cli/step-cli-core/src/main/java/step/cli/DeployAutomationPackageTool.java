@@ -42,79 +42,39 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
     }
 
     public void execute() throws StepCliExecutionException {
+        params.validate();
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient()) {
 
             AutomationPackageUpdateResult updateResult;
-            MavenArtifactIdentifier mavenArtifactIdentifierToUpload = params.getAutomationPackageMavenArtifact();
-            if (mavenArtifactIdentifierToUpload != null) {
-                logInfo("Uploading the automation package from Maven artifactory...", null);
-                if (params.getKeywordLibraryFile() != null) {
-                    throw new StepCliExecutionException("You cannot upload the keyword library file for automation packages located in maven. You only can use a maven snippet to reference the keyword library");
-                }
-                try {
-                    // send maven coordinates to the Step server
-                    updateResult = automationPackageClient.createOrUpdateAutomationPackageMvn(
-                            createMavenArtifactXml(mavenArtifactIdentifierToUpload),
-                            params.getAsync(), params.getApVersion(), params.getActivationExpression(),
-                            params.getKeywordLibraryMavenArtifact() == null ? null : createMavenArtifactXml(params.getKeywordLibraryMavenArtifact())
-
-                    );
-                } catch (AutomationPackageClientException e) {
-                    throw logAndThrow("Error while uploading automation package to Step from Maven artifactory: " + e.getMessage());
-                }
-            } else {
-                if (params.getKeywordLibraryMavenArtifact() != null) {
-                    throw new StepCliExecutionException("You cannot the maven snipped for keyword library file. You only can use a path to the local file.");
-                }
-                File packagedTarget = params.getAutomationPackageFile();
-                logInfo("Uploading the automation package...", null);
-                try {
-                    // send binary files to the Step server
-                    updateResult = automationPackageClient.createOrUpdateAutomationPackage(
-                            packagedTarget, params.getAsync() != null && params.getAsync(),
-                            params.getApVersion(), params.getActivationExpression(), params.getKeywordLibraryFile()
-                    );
-                } catch (AutomationPackageClientException e) {
-                    throw logAndThrow("Error while uploading automation package to Step: " + e.getMessage());
-                }
+            String mavenAutomationPackageXml = null;
+            if (params.getAutomationPackageMavenArtifact() != null) {
+                mavenAutomationPackageXml = createMavenArtifactXml(params.getAutomationPackageMavenArtifact());
+            }
+            String mavenKeywordLibraryXml = null;
+            if (params.getKeywordLibraryMavenArtifact() != null) {
+                mavenKeywordLibraryXml = createMavenArtifactXml(params.getKeywordLibraryMavenArtifact());
             }
 
-            if (updateResult != null && updateResult.getId() != null) {
-                logInfo("Automation package successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId(), null);
-            } else {
-                throw logAndThrow("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
+            try {
+                updateResult = automationPackageClient.createOrUpdateAutomationPackage(
+                        params.getAutomationPackageFile(), mavenAutomationPackageXml,
+                        params.getAsync(), params.getApVersion(), params.getActivationExpression(),
+                        params.getKeywordLibraryFile(), mavenKeywordLibraryXml
+                );
+
+                if (updateResult != null && updateResult.getId() != null) {
+                    logInfo("Automation package successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId(), null);
+                } else {
+                    throw logAndThrow("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
+                }
+            } catch (AutomationPackageClientException e){
+                throw logAndThrow("Error while uploading automation package to Step: " + e.getMessage());
             }
         } catch (StepCliExecutionException e) {
             throw e;
         } catch (Exception e) {
             throw logAndThrow("Unexpected error while uploading automation package to Step", e);
         }
-    }
-
-    protected String createMavenArtifactXml(MavenArtifactIdentifier identifier) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("<dependency>");
-
-        builder.append("<groupId>");
-        if(identifier.getGroupId() != null){
-            builder.append(identifier.getGroupId());
-        }
-        builder.append("</groupId>");
-
-        builder.append("<artifactId>");
-        if(identifier.getArtifactId() != null){
-            builder.append(identifier.getArtifactId());
-        }
-        builder.append("</artifactId>");
-
-        builder.append("<version>");
-        if(identifier.getVersion() != null){
-            builder.append(identifier.getVersion());
-        }
-        builder.append("</version>");
-
-        builder.append("</dependency>");
-        return builder.toString();
     }
 
     protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
@@ -219,6 +179,15 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
         public Params setAutomationPackageFile(File automationPackageFile) {
             this.automationPackageFile = automationPackageFile;
             return this;
+        }
+
+        public void validate() throws StepCliExecutionException {
+            if (getAutomationPackageFile() != null && getAutomationPackageMavenArtifact() != null) {
+                throw new StepCliExecutionException("Invalid parameters detected. The automation package should be referenced either as local file or as maven snipped");
+            }
+            if (getKeywordLibraryFile() != null && getKeywordLibraryMavenArtifact() != null) {
+                throw new StepCliExecutionException("Invalid parameters detected. The keyword library should be referenced either as local file or as maven snipped");
+            }
         }
 
     }

@@ -18,33 +18,36 @@
  *  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *  *****************************************************************************
  */
-package step.automation.packages.kwlibrary;
+package step.automation.packages;
 
-import step.automation.packages.AutomationPackageManagerException;
 import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.InputStream;
 
-public class KeywordLibraryReference {
+public class AutomationPackageFileSource {
 
     private MavenArtifactIdentifier mavenArtifactIdentifier;
     private String fileName;
     private InputStream inputStream;
 
-    private KeywordLibraryReference(){
+    private AutomationPackageFileSource(){
     }
 
-    public static KeywordLibraryReference withMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier){
-        KeywordLibraryReference res = new KeywordLibraryReference();
+    public static AutomationPackageFileSource withMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier){
+        AutomationPackageFileSource res = new AutomationPackageFileSource();
         res.mavenArtifactIdentifier = mavenArtifactIdentifier;
         return res;
     }
 
-    public static KeywordLibraryReference withInputStream(InputStream inputStream, String fileName){
-        KeywordLibraryReference res = new KeywordLibraryReference();
+    public static AutomationPackageFileSource withInputStream(InputStream inputStream, String fileName){
+        AutomationPackageFileSource res = new AutomationPackageFileSource();
         res.inputStream = inputStream;
         res.fileName = fileName;
         return res;
+    }
+
+    public static AutomationPackageFileSource empty(){
+        return new AutomationPackageFileSource();
     }
 
     public MavenArtifactIdentifier getMavenArtifactIdentifier() {
@@ -57,6 +60,17 @@ public class KeywordLibraryReference {
 
     public InputStream getInputStream() {
         return inputStream;
+    }
+
+    public AutomationPackageFileSource addInputStream(InputStream inputStream, String fileName){
+        this.inputStream = inputStream;
+        this.fileName = fileName;
+        return this;
+    }
+
+    public AutomationPackageFileSource addMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier){
+        this.mavenArtifactIdentifier = mavenArtifactIdentifier;
+        return this;
     }
 
     public boolean useMavenIdentifier() {

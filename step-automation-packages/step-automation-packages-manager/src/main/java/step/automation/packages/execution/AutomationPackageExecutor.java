@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.kwlibrary.KeywordLibraryReference;
+import step.automation.packages.AutomationPackageFileSource;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.model.*;
@@ -88,7 +88,7 @@ public class AutomationPackageExecutor {
     }
 
     public List<String> runInIsolation(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters,
-                                       KeywordLibraryReference keywordLibraryReference,
+                                       AutomationPackageFileSource keywordLibrarySource,
                                        ObjectEnricher objectEnricher, ObjectPredicate objectPredicate) {
 
         ObjectId contextId = new ObjectId();
@@ -106,7 +106,7 @@ public class AutomationPackageExecutor {
 
         // and then we read the ap from just stored file
         // create single execution context for the whole AP to execute all plans on the same ap manager (for performance reason)
-        IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createIsolatedPackageExecutionContext(objectEnricher, objectPredicate, contextId.toString(), apFile, true, keywordLibraryReference);
+        IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createIsolatedPackageExecutionContext(objectEnricher, objectPredicate, contextId.toString(), apFile, true, keywordLibrarySource);
         try {
             AutomationPackage automationPackage = executionContext.getAutomationPackage();
             String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);

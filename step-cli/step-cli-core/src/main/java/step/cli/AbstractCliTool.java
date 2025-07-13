@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
+import step.core.maven.MavenArtifactIdentifier;
 
 public abstract class AbstractCliTool implements CliToolLogging {
 
@@ -77,5 +78,31 @@ public abstract class AbstractCliTool implements CliToolLogging {
         if (stepProjectName != null && !stepProjectName.isEmpty()) {
             remoteClient.getHeaders().addProjectName(stepProjectName);
         }
+    }
+
+    protected String createMavenArtifactXml(MavenArtifactIdentifier identifier) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<dependency>");
+
+        builder.append("<groupId>");
+        if(identifier.getGroupId() != null){
+            builder.append(identifier.getGroupId());
+        }
+        builder.append("</groupId>");
+
+        builder.append("<artifactId>");
+        if(identifier.getArtifactId() != null){
+            builder.append(identifier.getArtifactId());
+        }
+        builder.append("</artifactId>");
+
+        builder.append("<version>");
+        if(identifier.getVersion() != null){
+            builder.append(identifier.getVersion());
+        }
+        builder.append("</version>");
+
+        builder.append("</dependency>");
+        return builder.toString();
     }
 }
