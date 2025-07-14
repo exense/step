@@ -58,6 +58,8 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-deploy-auto-packages.artifact-type", required = false)
     private String artifactType;
 
+    @Parameter(property = "step-deploy-auto-packages.lib-artifact-path")
+    private String libArtifactPath;
     @Parameter(property = "step-deploy-auto-packages.lib-artifact-group-id")
     private String libArtifactGroupId;
     @Parameter(property = "step-deploy-auto-packages.lib-artifact-id")
@@ -80,7 +82,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getApVersion(), getActivationExpression()).execute();
+            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getApVersion(), getActivationExpression(), getLibArtifactPath()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -89,13 +91,14 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     protected DeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
-                                                     final String apVersion, final String activationExpr) throws MojoExecutionException {
+                                                     final String apVersion, final String activationExpr, String libArtifactPath) throws MojoExecutionException {
         MavenArtifactIdentifier remoteApMavenIdentifier = getRemoteMavenIdentifier();
         File localApFile = remoteApMavenIdentifier != null ? null : DeployAutomationPackageMojo.this.getFileToUpload();
         return new MavenDeployAutomationPackageTool(
                 url, new DeployAutomationPackageTool.Params()
                 .setAutomationPackageMavenArtifact(remoteApMavenIdentifier)
                 .setAutomationPackageFile(localApFile)
+                .setKeywordLibraryFile(libArtifactPath == null ? null : new File(libArtifactPath))
                 .setKeywordLibraryMavenArtifact(getKeywordLibRemoteMavenIdentifier())
                 .setStepProjectName(projectName)
                 .setAuthToken(authToken)
@@ -229,6 +232,14 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setLibArtifactType(String libArtifactType) {
         this.libArtifactType = libArtifactType;
+    }
+
+    public String getLibArtifactPath() {
+        return libArtifactPath;
+    }
+
+    public void setLibArtifactPath(String libArtifactPath) {
+        this.libArtifactPath = libArtifactPath;
     }
 
     protected boolean isLocalMavenArtifact() {

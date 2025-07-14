@@ -39,6 +39,8 @@
         <module>step-automation-packages-malformed</module>
         <module>step-automation-packages-sample-junit</module>
         <module>step-automation-packages-sample-echo</module>
+        <module>step-automation-packages-kw-lib</module>
+        <module>step-automation-packages-kw-lib-call</module>
     </modules>
 
 </project>

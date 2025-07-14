@@ -490,21 +490,22 @@ public class AutomationPackageManager {
             newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, apVersion, activationExpr, oldPackage, enricher);
 
             // upload keyword package if provided
-            // TODO: now we check the MD5 hash to prevent uploading duplicated libraries - further we will need more flexible approach
-            AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate);
-            File keywordLibrary = keywordLibraryProvider.getKeywordLibrary();
-            Resource keywordLibraryResource = null;
+            // TODO: now we check the MD5 hash to prevent uploading duplicated libraries - further we will need more flexible approach (+strange case - the duplicated resource is persisted)
             String keywordLibraryResourceString = null;
-            if (keywordLibrary != null) {
-                try (FileInputStream fis = new FileInputStream(keywordLibrary)) {
-                    try {
-                        keywordLibraryResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, fis, keywordLibrary.getName(), true, enricher);
-                    } catch (SimilarResourceExistingException ex){
-                        log.info("Existing keyword library {} has been detected and will be reused in AP {}", keywordLibrary.getName(), packageContent.getName());
-                        keywordLibraryResource = ex.getResource();
+            try (AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate)) {
+                File keywordLibrary = keywordLibraryProvider.getKeywordLibrary();
+                Resource keywordLibraryResource = null;
+                if (keywordLibrary != null) {
+                    try (FileInputStream fis = new FileInputStream(keywordLibrary)) {
+                        try {
+                            keywordLibraryResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, fis, keywordLibrary.getName(), true, enricher);
+                        } catch (SimilarResourceExistingException ex) {
+                            log.info("Existing keyword library {} has been detected and will be reused in AP {}", keywordLibrary.getName(), packageContent.getName());
+                            keywordLibraryResource = ex.getResource();
+                        }
+                        keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
+                        newPackage.setPackageLibrariesLocation(keywordLibraryResourceString);
                     }
-                    keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
-                    newPackage.setPackageLibrariesLocation(keywordLibraryResourceString);
                 }
             }
 
