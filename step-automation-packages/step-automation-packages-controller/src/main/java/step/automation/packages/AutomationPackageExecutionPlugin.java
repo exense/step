@@ -15,6 +15,7 @@ import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 
 import static step.automation.packages.AutomationPackageLocks.*;
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.AP_ID;
 import static step.repositories.LocalRepository.getPlanId;
 
 /**
@@ -94,28 +95,48 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
         public final String planName;
         public final ExecutionContext context;
 
+        /**
+         * Determine based on the execution context whether this execution relates to an automation package, and if it is, extracts the related AP ID and executed plan name.
+         * The AP ID is then used by the caller to synchronize execution with AP updates.
+         * Because we try to lock the executions as early as possible and that the paths are quite different between schedules,
+         * single plans and AP executions, as well as between the different plan repositories,
+         * we have different way to pass and retrieve the AP ID:
+         * <ul><li>a custom field directly in the execution parameter</li>
+         *  <li>an apID field in the repository parameter</li>
+         *  <li>a custom field in the plan object referenced in the execution parameters</li>
+         *  <li>lastly for local plan repository we fetch the plan from DB and check its custom fields too</li>
+         *  </ul>
+         * @param context the execution context for which we want to extract the AP ID
+         */
         public AutomationPackageExecutionContext(ExecutionContext context) {
             this.context = context;
             String apID = null;
             String resolvedPlanName = "unresolved";
             ExecutionParameters executionParameters = context.getExecutionParameters();
             if (executionParameters != null) {
-                //Either it is already set in execution parameters (which is the case for schedules)
+                //Either it is already set in the execution parameters (which is the case for schedules deployed from AP)
                 apID = (String) executionParameters.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
                 resolvedPlanName = (executionParameters.getPlan() != null) ?
                         executionParameters.getPlan().getAttribute(AbstractOrganizableObject.NAME) :
                         executionParameters.getDescription();
                 if (apID == null) {
-                    //Or it can be set in plan which is already in the parameters
-                    if (executionParameters.getPlan() != null) {
-                        apID = (String) executionParameters.getPlan().getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
-                    //Last possibility is for local repo where the plan was deployed in DB
-                    } else if (executionParameters.getRepositoryObject().getRepositoryID().equals(RepositoryObjectReference.LOCAL_REPOSITORY_ID)) {
-                        String planId = getPlanId(executionParameters.getRepositoryObject().getRepositoryParameters());
-                        Plan plan = context.getPlanAccessor().get(planId);
-                        if (plan != null) {
-                            apID = (String) plan.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID) ;
-                            resolvedPlanName =  plan.getAttribute(AbstractOrganizableObject.NAME);
+                    // Or it can be defined in the repository parameters (case for RepositoryWithAutomationPackageSupport)
+                    RepositoryObjectReference repositoryObject = executionParameters.getRepositoryObject();
+                    String repoParametersAppID = repositoryObject.getRepositoryParameters().get(AP_ID);
+                    if (repoParametersAppID != null) {
+                        apID = repoParametersAppID;
+                    } else {
+                        //Or it can be set in plan which is already in the parameters (but the plan is usually only set after import)
+                        if (executionParameters.getPlan() != null) {
+                            apID = (String) executionParameters.getPlan().getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
+                        } else if (repositoryObject.getRepositoryID().equals(RepositoryObjectReference.LOCAL_REPOSITORY_ID)) {
+                            //last chance if it's a local repo, we get the plan from the DB
+                            String planId = getPlanId(repositoryObject.getRepositoryParameters());
+                            Plan plan = context.getPlanAccessor().get(planId);
+                            if (plan != null) {
+                                apID = (String) plan.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
+                                resolvedPlanName = plan.getAttribute(AbstractOrganizableObject.NAME);
+                            }
                         }
                     }
                 }

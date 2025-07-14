@@ -62,6 +62,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public static final Logger log = LoggerFactory.getLogger(RepositoryWithAutomationPackageSupport.class);
 
     public static final String AP_NAME = "apName";
+    public static final String AP_ID = "apID";
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
     public static final String AP_NAME_CUSTOM_FIELD = "apName";
 
