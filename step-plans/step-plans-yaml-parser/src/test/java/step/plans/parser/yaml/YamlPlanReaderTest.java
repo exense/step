@@ -293,7 +293,7 @@ public class YamlPlanReaderTest {
 				}
 			}
 
-			String yamlPlanExpectedContent = replaceDynamicValuesInExpectedInput(yamlPlanFile);
+			String yamlPlanExpectedContent = replaceYamlVersionWithCurrentOne(yamlPlanFile);
 			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(yamlPlanExpectedContent);
 			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedYaml, actual);
@@ -345,8 +345,8 @@ public class YamlPlanReaderTest {
 					fileOs.write(os.toByteArray());
 				}
 			}
-			String actualString = replaceDynamicValuesInActualTechOutput(os.toString(StandardCharsets.UTF_8));
-			String expectedString = replaceDynamicValuesInExpectedInput(new String(expectedIS.readAllBytes(), StandardCharsets.UTF_8));
+			String actualString = replaceIdsWithPredefinedOne(os.toString(StandardCharsets.UTF_8));
+			String expectedString = replaceYamlVersionWithCurrentOne(new String(expectedIS.readAllBytes(), StandardCharsets.UTF_8));
 			JsonNode expectedTechnicalYaml = technicalPlanMapper.readTree(expectedString);
 			JsonNode actual = technicalPlanMapper.readTree(actualString);
 			Assert.assertEquals(expectedTechnicalYaml, actual);
@@ -368,21 +368,44 @@ public class YamlPlanReaderTest {
 		);
 	}
 
-	private String replaceDynamicValuesInActualTechOutput(String input) {
+	/**
+	 * Generated YAMLs during the tests will have generated Objects Ids, to be able to compare the results with the expected output
+	 * we replace all generated object IDs with a static one
+	 * @param input the YAML content before replacement
+	 * @return the YAML content after replacement
+	 */
+	private String replaceIdsWithPredefinedOne(String input) {
 		return input.replaceAll("id: \"[^\"]*\"", "id: \"" + STATIC_ID + "\"");
 
 	}
 
-	public static String replaceDynamicValuesInExpectedInput(File yamlPlanFile) throws IOException {
-		return replaceDynamicValuesInExpectedInput(Files.readString(yamlPlanFile.toPath(), StandardCharsets.UTF_8));
+	/**
+	 * Generated YAMLs during the tests are generated with the current YAML version. To avoid modifying the expected results
+	 * for each new version, we modify the current version in the expected file on the fly with this function
+	 * @param yamlPlanFile the file containing YAML content before replacement
+	 * @return the YAML content after replacement
+	 */
+	public static String replaceYamlVersionWithCurrentOne(File yamlPlanFile) throws IOException {
+		return replaceYamlVersionWithCurrentOne(Files.readString(yamlPlanFile.toPath(), StandardCharsets.UTF_8));
 	}
 
-
-	public static String replaceDynamicValuesInExpectedInput(InputStream is) throws IOException {
-		return replaceDynamicValuesInExpectedInput(new String(is.readAllBytes(), StandardCharsets.UTF_8));
+	/**
+	 * Generated YAMLs during the tests are generated with the current YAML version. To avoid modifying the expected results
+	 * for each new version, we modify the current version in the expected file on the fly with this function
+	 * @param is the InputStream of the  YAML content before replacement
+	 * @return the YAML content after replacement
+	 */
+	public static String replaceYamlVersionWithCurrentOne(InputStream is) throws IOException {
+		return replaceYamlVersionWithCurrentOne(new String(is.readAllBytes(), StandardCharsets.UTF_8));
 	}
 
-	public static String replaceDynamicValuesInExpectedInput(String input) {
+	/**
+	 * Generated YAMLs during the tests are generated with the current YAML version. To avoid modifying the expected results
+	 * for each new version, we modify the current version in the expected file on the fly with this function
+	 * @param input the YAML content before replacement
+	 * @return the YAML content after replacement
+	 */
+	public static String replaceYamlVersionWithCurrentOne(String input) {
 		return input.replaceAll("((^|\n) {0,2}version: )\"[^\"]*\"", "$1\"" + YamlPlanVersions.ACTUAL_VERSION + "\"");
 	}
 
@@ -407,7 +430,7 @@ public class YamlPlanReaderTest {
 				}
 			}
 
-			String expectedString = replaceDynamicValuesInExpectedInput(expectedIS);
+			String expectedString = replaceYamlVersionWithCurrentOne(expectedIS);
 			JsonNode expectedYaml = yamlReader.getYamlMapper().readTree(expectedString);
 			JsonNode actual = yamlReader.getYamlMapper().readTree(os.toByteArray());
 			Assert.assertEquals(expectedYaml, actual);
@@ -426,7 +449,7 @@ public class YamlPlanReaderTest {
 
 			// serialize plan
 			writePlanInTechnicalFormat(os, plan);
-			String actualTechString = replaceDynamicValuesInActualTechOutput(os.toString(StandardCharsets.UTF_8));
+			String actualTechString = replaceIdsWithPredefinedOne(os.toString(StandardCharsets.UTF_8));
 //			log.info("Converted technical plan -->");
 //			log.info(os.toString(StandardCharsets.UTF_8));
 
