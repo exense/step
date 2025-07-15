@@ -25,6 +25,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.handlers.AtomicReportNodeStatusComposer;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
@@ -61,6 +62,11 @@ public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNod
 		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node);
 		
 		List<AbstractArtefact> artefacts = getChildren(testArtefact);
+		if (artefacts.isEmpty()) {
+			// empty scenario, report as passed
+			node.setStatus(ReportNodeStatus.PASSED);
+			return;
+		}
 		Iterator<AbstractArtefact> iterator = artefacts.iterator();
 		
 		ThreadPool threadPool = context.get(ThreadPool.class);
