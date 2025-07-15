@@ -54,4 +54,17 @@ public class TestScenarioHandlerTest {
 		return passedCheck;
 	}
 
+	@Test // SED-4051
+	public void testEmpty() throws IOException {
+		Plan plan = PlanBuilder.create().startBlock(new TestScenario()).endBlock().build();
+
+		StringWriter writer = new StringWriter();
+		try (ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).build()) {
+			engine.execute(plan).printTree(writer);
+		}
+
+		Assert.assertTrue(writer.toString().startsWith("TestScenario:"+ReportNodeStatus.PASSED));
+	}
+
+
 }
