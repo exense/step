@@ -118,6 +118,6 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
     }
 
     protected boolean isWrapPlansIntoTestSet(Map<String, String> repositoryParameters) {
-        return Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "true"));
+        return Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "false"));
     }
 }
