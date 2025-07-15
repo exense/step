@@ -19,6 +19,16 @@
 package step.core;
 
 public interface Constants {
-    String STEP_API_VERSION_STRING = "3.28.0";
+    String STEP_API_VERSION_STRING = "3.29.0";
     Version STEP_API_VERSION = new Version(STEP_API_VERSION_STRING);
+
+    String STEP_YAML_SCHEMA_VERSION_STRING = "1.1.1";
+    /**
+     * This version is used for both the Yaml plan schema version and the automation package schema version (YamlPlanVersions.class, YamlAutomationPackageVersions.class)
+     * It is used by extension for EE too (YamlReaderExtenderEE.class, YamlAutomationPackageVersionsEE.class).
+     * <br/>
+     * Whenever one of these schema is changed we must bump the version (but only once per Step release) and update the related <a href="https://step.dev/knowledgebase/devops/automation-package-yaml/#schema-version">documentation</a>
+     * When bumping the version here, we must also update the version in the generated JSON schema files accordingly (Junit will detect the mismatch otherwise ). You will find the 4 files paths in the above-mentioned classes
+     */
+    Version STEP_YAML_SCHEMA_VERSION = new Version(STEP_YAML_SCHEMA_VERSION_STRING);
 }

@@ -48,7 +48,7 @@
 		<dependencies.version>2025.6.25</dependencies.version>
 		<exense-commons.version>2025.7.4-686790ccf551c55946ab2cc0</exense-commons.version>
 		<step-grid.version>2025.7.15-68762f0351f1b869510cd94c</step-grid.version>
-		<step-framework.version>2025.6.26-685ce23164523b01b0137162</step-framework.version>
+		<step-framework.version>2025.7.7-686b7a0df551c559469fe8ff</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
@@ -774,6 +774,26 @@
 								</configuration>
 							</execution>
 						</executions>
+					</plugin>
+
+					<!-- Disable old maven-deploy plugin -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-deploy-plugin</artifactId>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</plugin>
+
+					<!-- Publish directly to central instead -->
+					<plugin>
+						<groupId>org.sonatype.central</groupId>
+						<artifactId>central-publishing-maven-plugin</artifactId>
+						<version>0.8.0</version>
+						<extensions>true</extensions>
+						<configuration>
+							<publishingServerId>sonatype</publishingServerId>
+						</configuration>
 					</plugin>
 				</plugins>
 			</build>
