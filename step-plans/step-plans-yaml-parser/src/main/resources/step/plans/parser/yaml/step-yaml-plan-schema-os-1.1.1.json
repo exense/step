@@ -2351,7 +2351,7 @@
           "type" : "string"
         },
         "version" : {
-          "const" : "1.1.0"
+          "const" : "1.1.1"
         },
         "categories" : {
           "type" : "array",
@@ -2375,7 +2375,7 @@
           "type" : "string"
         },
         "version" : {
-          "const" : "1.1.0"
+          "const" : "1.1.1"
         },
         "root" : {
           "$ref" : "#/$defs/RootArtefactDef"

@@ -85,7 +85,7 @@ public class PlanLocator {
 		try {
 			p = selectPlan(artefact, objectPredicate, bindings);
 		} catch (Exception ex) {
-			log.error("Unable to resolve call plan", ex);
+			log.warn("Unable to resolve call plan", ex);
 			throw new PlanLocatorException(createPlanNotResolvedMessage(artefact), ex);
 		}
 		if (p == null) {

@@ -17,6 +17,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>step-automation-packages-junit-core</artifactId>
+    <name>${project.groupId}:${project.artifactId}</name>
 
     <properties>
     </properties>
