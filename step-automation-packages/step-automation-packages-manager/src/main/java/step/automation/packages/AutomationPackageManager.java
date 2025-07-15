@@ -54,7 +54,6 @@ import step.resources.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -176,7 +175,7 @@ public class AutomationPackageManager {
                                                                                   AutomationPackageReader reader,
                                                                                   AutomationPackageHookRegistry hookRegistry) {
 
-        ResourceManager resourceManager1 = new LocalResourceManagerImpl(new File("resources_" + isolatedContextId.toString()));
+        ResourceManager resourceManager = new LocalResourceManagerImpl(new File("resources_" + isolatedContextId.toString()));
         InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
         LayeredFunctionAccessor layeredFunctionAccessor = new LayeredFunctionAccessor(List.of(inMemoryFunctionRepository, mainFunctionAccessor));
 
@@ -187,7 +186,7 @@ public class AutomationPackageManager {
                 new FunctionManagerImpl(layeredFunctionAccessor, functionTypeRegistry),
                 layeredFunctionAccessor,
                 new InMemoryPlanAccessor(),
-                resourceManager1,
+                resourceManager,
                 extensions,
                 hookRegistry, reader,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
@@ -490,24 +489,7 @@ public class AutomationPackageManager {
             newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, apVersion, activationExpr, oldPackage, enricher);
 
             // upload keyword package if provided
-            // TODO: now we check the MD5 hash to prevent uploading duplicated libraries - further we will need more flexible approach (+strange case - the duplicated resource is persisted)
-            String keywordLibraryResourceString = null;
-            try (AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate)) {
-                File keywordLibrary = keywordLibraryProvider.getKeywordLibrary();
-                Resource keywordLibraryResource = null;
-                if (keywordLibrary != null) {
-                    try (FileInputStream fis = new FileInputStream(keywordLibrary)) {
-                        try {
-                            keywordLibraryResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, fis, keywordLibrary.getName(), true, enricher);
-                        } catch (SimilarResourceExistingException ex) {
-                            log.info("Existing keyword library {} has been detected and will be reused in AP {}", keywordLibrary.getName(), packageContent.getName());
-                            keywordLibraryResource = ex.getResource();
-                        }
-                        keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
-                        newPackage.setPackageLibrariesLocation(keywordLibraryResourceString);
-                    }
-                }
-            }
+            String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibrarySource, newPackage, ResourceManager.RESOURCE_TYPE_FUNCTIONS, packageContent.getName(), enricher, objectPredicate);
 
             // prepare staging collections
             AutomationPackageStaging staging = createStaging();
@@ -555,6 +537,28 @@ public class AutomationPackageManager {
         } catch (Exception ex) {
             throw new AutomationPackageManagerException("Unexpected exception", ex);
         }
+    }
+
+    public String uploadKeywordLibrary(AutomationPackageFileSource keywordLibrarySource, AutomationPackage newPackage, String resourceType, String apName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws IOException, AutomationPackageReadingException, InvalidResourceFormatException {
+        // TODO: now we check the MD5 hash to prevent uploading duplicated libraries - further we will need more flexible approach (+strange case - the duplicated resource is persisted)
+        String keywordLibraryResourceString = null;
+        try (AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate)) {
+            File keywordLibrary = keywordLibraryProvider.getKeywordLibrary();
+            Resource keywordLibraryResource = null;
+            if (keywordLibrary != null) {
+                try (FileInputStream fis = new FileInputStream(keywordLibrary)) {
+                    try {
+                        keywordLibraryResource = resourceManager.createResource(resourceType, fis, keywordLibrary.getName(), true, enricher);
+                    } catch (SimilarResourceExistingException ex) {
+                        log.info("Existing keyword library {} has been detected and will be reused in AP {}", keywordLibrary.getName(), apName);
+                        keywordLibraryResource = ex.getResource();
+                    }
+                    keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
+                    newPackage.setPackageLibrariesLocation(keywordLibraryResourceString);
+                }
+            }
+        }
+        return keywordLibraryResourceString;
     }
 
     private AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate) {

@@ -54,6 +54,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.artifact-type", required = false)
     private String artifactType;
 
+    @Parameter(property = "step-execute-auto-packages.lib-artifact-path")
+    private String libArtifactPath;
     @Parameter(property = "step-execute-auto-packages.lib-artifact-group-id")
     private String libArtifactGroupId;
     @Parameter(property = "step-execute-auto-packages.lib-artifact-id")
@@ -154,11 +156,10 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                 }
             }
 
-            // TODO: here we need to support the local files for keyword lib
-
             ExecuteAutomationPackageTool.Params params = new ExecuteAutomationPackageTool.Params()
                     .setAutomationPackageFile(localApFile)
                     .setAutomationPackageMavenArtifact(remoteMavenArtifact)
+                    .setKeywordLibraryFile(getLibArtifactPath() == null ? null : new File(getLibArtifactPath()))
                     .setKeywordLibraryMavenArtifact(getKeywordLibRemoteMavenIdentifier())
                     .setStepProjectName(getStepProjectName())
                     .setUserId(getUserId())
@@ -418,5 +419,13 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setLibArtifactType(String libArtifactType) {
         this.libArtifactType = libArtifactType;
+    }
+
+    public String getLibArtifactPath() {
+        return libArtifactPath;
+    }
+
+    public void setLibArtifactPath(String libArtifactPath) {
+        this.libArtifactPath = libArtifactPath;
     }
 }
