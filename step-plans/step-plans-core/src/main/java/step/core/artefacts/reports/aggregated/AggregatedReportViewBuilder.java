@@ -189,7 +189,7 @@ public class AggregatedReportViewBuilder {
             if (fetchCurrentOperations && threadManager != null) {
                 operationsByArtefactHash.computeIfAbsent(reportNode.getArtefactHash(), k -> new ArrayList<>()).addAll(threadManager.getCurrentOperationsByReportNodeId(reportNode.getId().toHexString()));
             }
-        } else {
+        } else if (!reportNode.getStatus().equals(ReportNodeStatus.NORUN)) {
             // only ended reports are ingested
             reportNodeTimeSeries.ingestReportNode(reportNode);
         }
