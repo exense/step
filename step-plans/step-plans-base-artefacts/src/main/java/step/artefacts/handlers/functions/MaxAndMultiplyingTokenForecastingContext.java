@@ -56,6 +56,12 @@ public class MaxAndMultiplyingTokenForecastingContext extends TokenForecastingCo
     }
 
     @Override
+    protected void requireToken(Key key, int count) {
+        currentIteration.requireToken(key, count);
+        keys.add(key);
+    }
+
+    @Override
     public void releaseRequiredToken(Key key, int count) {
         currentIteration.releaseRequiredToken(key, count);
     }
