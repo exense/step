@@ -22,7 +22,7 @@ public class FunctionEntity extends Entity<Function, Accessor<Function>> {
             //This is only required to recursively visit the function referenced by callFunction artefacts
             if (t instanceof CallFunction && context.isRecursive()) {
                 try {
-                    Function function = functionLocator.getFunction((CallFunction) t, context.getObjectPredicate(),
+                    Function function = functionLocator.getFunction((CallFunction) t, context.getObjectFilter(),
                             null);
                     context.visitEntity(EntityManager.functions, function.getId().toString());
                 } catch (NoSuchElementException e) {

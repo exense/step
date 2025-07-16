@@ -26,6 +26,7 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plugins.ExecutionCallbacks;
@@ -56,6 +57,7 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 
 	private ObjectEnricher objectEnricher;
 	private ObjectPredicate objectPredicate;
+	private ObjectFilter objectFilter;
 
 	private final Set<ExecutionVetoer> executionVetoers = new HashSet<>();
 	
@@ -217,6 +219,14 @@ public class ExecutionContext extends AbstractExecutionEngineContext  {
 
 	protected void setObjectPredicate(ObjectPredicate objectPredicate) {
 		this.objectPredicate = objectPredicate;
+	}
+
+	public ObjectFilter getObjectFilter() {
+		return objectFilter;
+	}
+
+	public void setObjectFilter(ObjectFilter objectFilter) {
+		this.objectFilter = objectFilter;
 	}
 
 	public Resolver getResolver() {

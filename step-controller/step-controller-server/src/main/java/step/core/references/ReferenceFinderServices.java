@@ -3,6 +3,7 @@ package step.core.references;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractStepServices;
+import step.core.objectenricher.ObjectFilter;
 import step.framework.server.security.Secured;
 import step.core.entities.EntityDependencyTreeVisitor;
 import step.core.entities.EntityManager;
@@ -115,7 +116,10 @@ public class ReferenceFinderServices extends AbstractStepServices {
             return true;
         };
 
-        EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(entityManager, visitedObjectPredicate);
+        //For the reference finder we don't apply a context filter to look up all entities
+        ObjectFilter objectFilter = () -> "";
+
+        EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(entityManager, objectFilter, visitedObjectPredicate);
         FindReferencesTreeVisitor entityTreeVisitor = new FindReferencesTreeVisitor(entityManager, referencedObjects);
         entityDependencyTreeVisitor.visitEntityDependencyTree(entityType, object.getId().toString(), entityTreeVisitor, false);
 

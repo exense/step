@@ -105,7 +105,7 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	}
 
 	protected Plan selectPlan(CallPlan testArtefact) {
-		return planLocator.selectPlan(testArtefact, context.getObjectPredicate(),
+		return planLocator.selectPlan(testArtefact, context.getObjectFilter(),
 				ExecutionContextBindings.get(context));
 	}
 

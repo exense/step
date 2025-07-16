@@ -27,16 +27,17 @@ import step.automation.packages.model.AutomationPackageKeyword;
 import step.commons.activation.Expression;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 import step.core.collections.IndexField;
+import step.core.collections.filters.And;
 import step.core.entities.Entity;
 import step.core.maven.MavenArtifactIdentifier;
-import step.core.objectenricher.EnricheableObject;
-import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectEnricherComposer;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.*;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.ql.OQLFilterBuilder;
 import step.core.repositories.ImportResult;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -234,44 +235,31 @@ public class AutomationPackageManager {
         return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getPackageReader(), automationPackageHookRegistry);
     }
 
-    public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
-        AutomationPackage automationPackage = automationPackageAccessor.get(id);
-        if (automationPackage == null) {
-            throw new AutomationPackageManagerException("Automation package hasn't been found by id: " + id);
-        }
-
-        if (objectPredicate != null && !objectPredicate.test(automationPackage)) {
-            // package exists, but is not accessible (linked with another product)
-            throw new AutomationPackageManagerException("Automation package " + id + " is not accessible");
-        }
-
-        return automationPackage;
+    public AutomationPackage getAutomationPackageById(ObjectId id, ObjectFilter objectFilter) {
+        Filter contextFilters = OQLFilterBuilder.getFilter(objectFilter.getOQLFilter());
+        And queryFilters = Filters.and(List.of(Filters.id(id), contextFilters));
+        return automationPackageAccessor.getCollectionDriver()
+                .find(queryFilters, null, null, 1, 0)
+                .findFirst()
+                .orElseThrow(() -> new AutomationPackageManagerException("Automation package hasn't been found by id '" + id + "' in current context."));
     }
 
-    public AutomationPackage getAutomatonPackageById(ObjectId id, ObjectPredicate objectPredicate) {
-        return this.getAutomationPackageById(id, objectPredicate);
+    public AutomationPackage getAutomationPackageByName(String name, ObjectFilter objectFilter) {
+        Filter contextFilters = OQLFilterBuilder.getFilter(objectFilter.getOQLFilter());
+        And queryFilters = Filters.and(List.of(Filters.equals(AbstractOrganizableObject.NAME, name), contextFilters));
+        return automationPackageAccessor.getCollectionDriver()
+                .find(queryFilters, null, null, null, 0)
+                .findFirst().orElse(null);
     }
 
-    public AutomationPackage getAutomationPackageByName(String name, ObjectPredicate objectPredicate) {
-        Stream<AutomationPackage> stream = StreamSupport.stream(automationPackageAccessor.findManyByAttributes(Map.of(AbstractOrganizableObject.NAME, name)), false);
-        if (objectPredicate != null) {
-            stream = stream.filter(objectPredicate);
-        }
-        return stream.findFirst().orElse(null);
+    public Stream<AutomationPackage> getAllAutomationPackages(ObjectFilter objectFilter) {
+        Filter contextFilters = OQLFilterBuilder.getFilter(objectFilter.getOQLFilter());
+        return automationPackageAccessor.getCollectionDriver()
+                .find(contextFilters, null, null, null, 0);
     }
 
-    public Stream<AutomationPackage> getAllAutomationPackages(ObjectPredicate objectPredicate) {
-        Stream<AutomationPackage> stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(automationPackageAccessor.getAll(), Spliterator.ORDERED),
-                false
-        );
-        if (objectPredicate != null) {
-            stream = stream.filter(objectPredicate);
-        }
-        return stream;
-    }
-
-    public void removeAutomationPackage(ObjectId id, ObjectPredicate objectPredicate) {
-        AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
+    public void removeAutomationPackage(ObjectId id, ObjectFilter objectFilter) {
+        AutomationPackage automationPackage = getAutomationPackageById(id, objectFilter);
         String automationPackageId = automationPackage.getId().toHexString();
         if (automationPackageLocks.tryWriteLock(automationPackageId)) {
             try {
@@ -294,11 +282,11 @@ public class AutomationPackageManager {
         deleteAdditionalData(automationPackage, new AutomationPackageContext(operationMode, resourceManager, null,  null,null, extensions));
     }
 
-    public ObjectId createAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier, String apVersion, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
+    public ObjectId createAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier, String apVersion, String activationExpr, ObjectEnricher enricher, ObjectFilter objectFilter) {
         validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
         try {
-            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
-                return createOrUpdateAutomationPackage(false, true, null, provider, apVersion, activationExpr, false, enricher, objectPredicate, false).getId();
+            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectFilter), mavenArtifactIdentifier)) {
+                return createOrUpdateAutomationPackage(false, true, null, provider, apVersion, activationExpr, false, enricher, objectFilter, false).getId();
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -328,12 +316,12 @@ public class AutomationPackageManager {
      * @param packageStream   the package content
      * @param fileName        the original name of file with automation package
      * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
-     * @param objectPredicate the filter for automation package
+     * @param objectFilter the filter for automation package
      * @return the id of created package
      * @throws AutomationPackageManagerException
      */
-    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, String apVersion, String activationExpr, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
-        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, apVersion, activationExpr, enricher, objectPredicate, false).getId();
+    public ObjectId createAutomationPackage(InputStream packageStream, String fileName, String apVersion, String activationExpr, ObjectEnricher enricher, ObjectFilter objectFilter) throws AutomationPackageManagerException {
+        return createOrUpdateAutomationPackage(false, true, null, packageStream, fileName, apVersion, activationExpr, enricher, objectFilter, false).getId();
     }
 
     /**
@@ -344,15 +332,15 @@ public class AutomationPackageManager {
      * @param explicitOldId   the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
      * @param fileName        the original name of file with automation package
      * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
-     * @param objectPredicate the filter for automation package
+     * @param objectFilter the filter for automation package
      * @return the id of created/updated package
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                          InputStream inputStream, String fileName, String apVersion, String activationExpr,
-                                                                         ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
+                                                                         ObjectEnricher enricher, ObjectFilter objectFilter, boolean async) throws AutomationPackageManagerException {
         try {
             try (AutomationPackageArchiveProvider provider = new AutomationPackageFromInputStreamProvider(inputStream, fileName)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectFilter, async);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -366,25 +354,25 @@ public class AutomationPackageManager {
      * @param allowCreate     whether create new package is allowed
      * @param explicitOldId   the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
      * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
-     * @param objectPredicate the filter for automation package
+     * @param objectFilter the filter for automation package
      * @return the id of created/updated package
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(MavenArtifactIdentifier mavenArtifactIdentifier,
                                                                                   boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                                   String apVersion, String activationExpr,
-                                                                                  ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) throws AutomationPackageManagerException {
+                                                                                  ObjectEnricher enricher, ObjectFilter objectFilter, boolean async) throws AutomationPackageManagerException {
         try {
             validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
-            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async);
+            try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectFilter), mavenArtifactIdentifier)) {
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectFilter, async);
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
         }
     }
 
-    public void updateAutomationPackageMetadata(ObjectId id, String apVersion, String activationExpr, ObjectPredicate objectPredicate) {
-        AutomationPackage ap = getAutomationPackageById(id, objectPredicate);
+    public void updateAutomationPackageMetadata(ObjectId id, String apVersion, String activationExpr, ObjectFilter objectFilter) {
+        AutomationPackage ap = getAutomationPackageById(id, objectFilter);
         String newApName;
 
         String oldApVersion = ap.getVersion();
@@ -427,12 +415,12 @@ public class AutomationPackageManager {
      * @param explicitOldId             the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
      * @param automationPackageProvider the automation package content provider
      * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
-     * @param objectPredicate           the filter for automation package
+     * @param objectFilter           the filter for automation package
      * @return the id of created/updated package
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                          AutomationPackageArchiveProvider automationPackageProvider, String apVersion, String activationExpr,
-                                                                         boolean isLocalPackage, ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async) {
+                                                                         boolean isLocalPackage, ObjectEnricher enricher, ObjectFilter objectFilter, boolean async) {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
@@ -448,13 +436,13 @@ public class AutomationPackageManager {
 
             AutomationPackage oldPackage;
             if (explicitOldId != null) {
-                oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
+                oldPackage = getAutomationPackageById(explicitOldId, objectFilter);
 
                 String newName = packageContent.getName();
                 String oldName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
                 if (!Objects.equals(newName, oldName)) {
                     // the package with the same name shouldn't exist
-                    AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
+                    AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectFilter);
 
                     if (existingPackageWithSameName != null) {
                         throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
@@ -462,7 +450,7 @@ public class AutomationPackageManager {
                     }
                 }
             } else {
-                oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
+                oldPackage = getAutomationPackageByName(packageContent.getName(), objectFilter);
             }
             if (!allowUpdate && oldPackage != null) {
                 throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");

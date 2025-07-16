@@ -23,8 +23,11 @@ import step.automation.packages.AutomationPackageEntity;
 import step.commons.activation.Activator;
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 import step.core.execution.ExecutionContextBindings;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
+import step.core.ql.OQLFilterBuilder;
 import step.functions.EvaluationExpression;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -51,14 +54,14 @@ public class FunctionLocator {
 	/**
 	 * Resolve a {@link CallFunction} artefact to the underlying {@link Function}
 	 * 
-	 * @param callFunctionArtefact the CallFunction artefact
-	 * @param objectPredicate the predicate to be used to filter the results out
+	 * @param callFunctionArtefact the CallFunction artefact for which we look up the function
+	 * @param objectFilter the additional context filters to look up the plan
 	 * @param bindings the bindings to be used for the evaluation of dynamic expressions (can be null)
 	 * @return the {@link Function} referenced by this artefact
 	 */
-	public Function getFunction(CallFunction callFunctionArtefact, ObjectPredicate objectPredicate, Map<String, Object> bindings) {
+	public Function getFunction(CallFunction callFunctionArtefact, ObjectFilter objectFilter, Map<String, Object> bindings) {
 		Objects.requireNonNull(callFunctionArtefact, "The artefact must not be null");
-		Objects.requireNonNull(objectPredicate, "The object predicate must not be null");
+		Objects.requireNonNull(objectFilter, "The object filter must not be null");
 		Function function;
 		String selectionAttributesJson = callFunctionArtefact.getFunction().get();
 		Map<String, String> attributes;
@@ -69,10 +72,11 @@ public class FunctionLocator {
 		}
 
 		if(attributes.size()>0) {
-
-			Stream<Function> stream = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false);
-			stream = stream.filter(objectPredicate);
-			List<Function> functionsMatchingByAttributes = stream.collect(Collectors.toList());
+			Filter contextFilters = OQLFilterBuilder.getFilter(objectFilter.getOQLFilter());
+			List<Filter> attributesFilters = attributes.entrySet().stream().map(e -> Filters.equals("attributes." + e.getKey(), e.getValue())).collect(Collectors.toList());
+			List<Function> functionsMatchingByAttributes = functionAccessor.getCollectionDriver()
+					.find(Filters.and(List.of(contextFilters, Filters.and(attributesFilters))), null, null, null, 0)
+					.collect(Collectors.toList());
 
 			// reorder matching functions: the function from current AP has a priority
 			List<Function> orderedFunctions = prioritizeAndFilterApEntities(functionsMatchingByAttributes, bindings);

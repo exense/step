@@ -64,7 +64,6 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 
 	protected PlanAccessor planAccessor;
 	protected PlanTypeRegistry planTypeRegistry;
-	protected ObjectPredicateFactory objectPredicateFactory;
 	private ArtefactHandlerRegistry artefactHandlerRegistry;
 
 	private final YamlPlanReader yamlPlanReader = new YamlPlanReader();
@@ -79,7 +78,6 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		GlobalContext context = getContext();
 		planAccessor = context.getPlanAccessor();
 		planTypeRegistry = context.get(PlanTypeRegistry.class);
-		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
 		artefactHandlerRegistry = context.getArtefactHandlerRegistry();
 	}
 
@@ -218,9 +216,8 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
-		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		try {
-			result = planLocator.selectPlan(artefact, objectPredicate, null);
+			result = planLocator.selectPlan(artefact, getObjectFilter(), null);
 		} catch (RuntimeException e) {}
 		return result;
 	}
@@ -236,9 +233,8 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
-		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		try {
-			result = planLocator.selectPlan(callPlan, objectPredicate, null);
+			result = planLocator.selectPlan(callPlan, getObjectFilter(), null);
 		} catch (RuntimeException e) {}
 		return result;
 	}

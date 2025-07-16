@@ -50,7 +50,7 @@ import step.core.imports.ImportManager;
 import step.core.imports.ImportResult;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -170,7 +170,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", false, null);
 			ExportResult exportResult = exportManager.exportById(exportConfig, plan.getId().toString());
 			assertTrue(exportResult.getMessages().isEmpty());
 			assertTrue(FileHelper.isArchive(testExportFile));
@@ -208,7 +208,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), EntityManager.functions, true, null);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), EntityManager.functions, true, null);
 			ExportResult exportResult = exportManager.exportById(exportConfig, function.getId().toString());
 			assertTrue(exportResult.getMessages().isEmpty());
 			assertTrue(FileHelper.isArchive(testExportFile));
@@ -251,7 +251,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", false, null);
 			ExportResult exportResult = exportManager.exportAll(exportConfig);
 			assertTrue(exportResult.getMessages().isEmpty());
 
@@ -296,7 +296,7 @@ public class ExportManagerTest {
 			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", false, additionalEntities);
 			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
 			assertEquals(2,exportResult.getMessages().size());
@@ -368,7 +368,7 @@ public class ExportManagerTest {
 			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", false, additionalEntities);
 			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
 			assertEquals(1,exportResult.getMessages().size());
@@ -425,7 +425,7 @@ public class ExportManagerTest {
 			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", false, additionalEntities);
 			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
 			assertEquals(1,exportResult.getMessages().size());
@@ -462,7 +462,7 @@ public class ExportManagerTest {
 			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", false, additionalEntities);
 			ExportResult exportResult = exportManager.exportAll(exportConfig);
 
 			assertEquals(1,exportResult.getMessages().size());
@@ -549,7 +549,7 @@ public class ExportManagerTest {
 			Map<String, String> metadata = buildMetadata();
 			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", false, additionalEntities);
 			ExportResult exportResult = exportManager.exportById(exportConfig, plan.getId().toString());
 			assertTrue(exportResult.getMessages().isEmpty());
 			assertTrue(FileHelper.isArchive(testExportFile));
@@ -579,7 +579,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", false, null);
 			ExportResult exportResult = exportManager.exportById(exportConfig, plan.getId().toString());
 			assertTrue(exportResult.getMessages().isEmpty());
 
@@ -648,7 +648,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", true, null);
 			ExportResult exportResult = exportManager.exportById(exportConfig, plan2.getId().toString());
 			if (missingEntities) {
 				assertEquals(3, exportResult.getMessages().size());
@@ -725,7 +725,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", true, null);
 			ExportResult exportResult = exportManager.exportById(exportConfig, plan.getId().toString());
 			assertTrue(exportResult.getMessages().isEmpty());
 
@@ -793,7 +793,7 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, emptyObjectFilter(), "plans", true, null);
 			ExportResult exportResult = exportManager.exportById(exportConfig, plan.getId().toString());
 			assertTrue(exportResult.getMessages().isEmpty());
 			//delete created resource
@@ -860,8 +860,8 @@ public class ExportManagerTest {
 		return newResource.replace(FileResolver.RESOURCE_PREFIX, "");
 	}
 
-	protected ObjectPredicate dummyObjectPredicate() {
-		return t -> true;
+	protected ObjectFilter emptyObjectFilter() {
+		return () -> "";
 	}
 	
 	@Test

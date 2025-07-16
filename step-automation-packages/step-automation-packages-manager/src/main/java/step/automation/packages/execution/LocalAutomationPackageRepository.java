@@ -24,7 +24,7 @@ import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
@@ -58,7 +58,7 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
     }
 
     @Override
-    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectFilter objectFilter) throws Exception {
         return new TestSetStatusOverview();
     }
 
@@ -68,7 +68,7 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
     }
 
     @Override
-    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate) {
+    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectFilter objectFilter) {
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
 
         // Execution context can be created in-advance and shared between several plans
@@ -82,7 +82,7 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
             if (apName == null) {
                 throw new AutomationPackageManagerException("Unable to resolve automation package name for local execution");
             }
-            AutomationPackage automationPackage = manager.getAutomationPackageByName(apName, predicate);
+            AutomationPackage automationPackage = manager.getAutomationPackageByName(apName, objectFilter);
             if (automationPackage == null) {
                 throw new AutomationPackageManagerException("Unable to resolve automation package by name: " + apName);
             }

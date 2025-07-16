@@ -60,7 +60,7 @@ public abstract class AbstractArtifactRepository extends RepositoryWithAutomatio
 
 	protected abstract String resolveArtifactName(Map<String, String> repositoryParameters);
 
-	public abstract File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate);
+	public abstract File getArtifact(Map<String, String> repositoryParameters);
 
 	@Override
 	public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) {

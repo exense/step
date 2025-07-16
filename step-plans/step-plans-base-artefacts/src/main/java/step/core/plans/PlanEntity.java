@@ -14,7 +14,7 @@ public class PlanEntity extends Entity<Plan, Accessor<Plan>> {
             //This is only required to recursively visit the plans referenced by callPlan artefacts
             if (entity instanceof CallPlan && context.isRecursive()) {
                 try {
-                    Plan plan = planLocator.selectPlanNotNull((CallPlan) entity, context.getObjectPredicate(), null);
+                    Plan plan = planLocator.selectPlanNotNull((CallPlan) entity, context.getObjectFilter(), null);
                     context.visitEntity(EntityManager.plans, plan.getId().toString());
                 } catch (PlanLocator.PlanLocatorException ex) {
                     context.getVisitor().onWarning(ex.getMessage());

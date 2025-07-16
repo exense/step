@@ -23,8 +23,7 @@ import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.ReportExport;
 import step.core.execution.model.ReportExportStatus;
-import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 
 import java.util.Map;
 import java.util.Objects;
@@ -97,10 +96,10 @@ public class RepositoryObjectManager {
 		}
 	}
 	
-	public TestSetStatusOverview getReport(RepositoryObjectReference report, ObjectPredicate objectPredicate) throws Exception {
+	public TestSetStatusOverview getReport(RepositoryObjectReference report, ObjectFilter objectFilter) throws Exception {
 		String respositoryId = report.getRepositoryID();
 		Repository repository = getRepository(respositoryId);
-		return repository.getTestSetStatusOverview(report.getRepositoryParameters(), objectPredicate);
+		return repository.getTestSetStatusOverview(report.getRepositoryParameters(), objectFilter);
 	}
 
 	public boolean compareRepositoryObjectReference(RepositoryObjectReference ref1, RepositoryObjectReference ref2) {

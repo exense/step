@@ -17,50 +17,59 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectPredicate;
 
 public class EntityDependencyTreeVisitor {
 
 	private static final Logger logger = LoggerFactory.getLogger(EntityDependencyTreeVisitor.class);
 	private final EntityManager entityManager;
+	private final ObjectFilter objectFilter;
 	private final ObjectPredicate objectPredicate;
 	// Declared as static for performance reasons. In the current implementation, this class gets instantiated quite often
 	// TODO declare it as non-static to avoid potential leaks
 	private static final Map<Class<?>, BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
 
-	public EntityDependencyTreeVisitor(EntityManager entityManager, ObjectPredicate objectPredicate) {
+	public EntityDependencyTreeVisitor(EntityManager entityManager, ObjectFilter objectFilter, ObjectPredicate objectPredicate) {
 		super();
 		this.entityManager = entityManager;
+		this.objectFilter = objectFilter;
 		this.objectPredicate = objectPredicate;
 	}
 
 	public void visitEntityDependencyTree(String entityName, String entityId, EntityTreeVisitor visitor,
 			boolean recursive) {
-		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, recursive, visitor);
+		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectFilter, objectPredicate, recursive, visitor);
 		visitEntity(entityName, entityId, context);
 	}
 
 	public void visitSingleObject(Object object, EntityTreeVisitor visitor, Set<String> messageCollector) {
-		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, false, visitor);
+		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectFilter, objectPredicate, false, visitor);
 		resolveEntityDependencies(object, context);
 	}
 
 	public class EntityTreeVisitorContext {
 
 		private final boolean recursive;
-		private final ObjectPredicate objectPredicate;
+		private final ObjectFilter objectFilter;
+		private final ObjectPredicate visitorPredicate;
 		private final EntityTreeVisitor visitor;
 		private final Map<String, Object> stack = new HashMap<>();
 
-		public EntityTreeVisitorContext(ObjectPredicate objectPredicate, boolean recursive, EntityTreeVisitor visitor) {
+		public EntityTreeVisitorContext(ObjectFilter objectFilter, ObjectPredicate visitorPredicate, boolean recursive, EntityTreeVisitor visitor) {
 			super();
-			this.objectPredicate = objectPredicate;
+			this.objectFilter = objectFilter;
+			this.visitorPredicate = visitorPredicate;
 			this.recursive = recursive;
 			this.visitor = visitor;
 		}
 
-		public ObjectPredicate getObjectPredicate() {
-			return objectPredicate;
+		public ObjectFilter getObjectFilter() {
+			return objectFilter;
+		}
+
+		public ObjectPredicate getVisitorPredicate() {
+			return visitorPredicate;
 		}
 
 		public void visitEntity(String entityName, String entityId) {

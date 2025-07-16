@@ -31,7 +31,8 @@ import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitor;
 import step.core.export.ExportContext;
 import step.core.imports.ImportContext;
 import step.core.objectenricher.EnricheableObject;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
+import step.core.ql.OQLFilterBuilder;
 
 public class EntityManager  {
 
@@ -85,11 +86,11 @@ public class EntityManager  {
 	/**
 	 * Retrieve all existing references from the DB for given entity type
 	 * @param entityType type of entities to retrieve
-	 * @param objectPredicate to apply to filter entities (i.e. project)
+	 * @param objectFilter to filter entities based on context (i.e. project)
 	 * @param recursively flag to export references recursively (i.e by exporting a plan recursively the plan will be scanned to find sub references)
 	 * @param refs the map of entity references to be populated during the process
 	 */
-	public void getEntitiesReferences(String entityType, ObjectPredicate objectPredicate, boolean recursively, EntityReferencesMap refs) {
+	public void getEntitiesReferences(String entityType, ObjectFilter objectFilter, boolean recursively, EntityReferencesMap refs) {
 		Entity<?, ?> entity = getEntityByName(entityType);
 		if (entity == null ) {
 			throw new RuntimeException("Entity of type " + entityType + " is not supported");
@@ -97,10 +98,12 @@ public class EntityManager  {
 		//Some entity types may define a filter to exclude/include specific entities when exporting all
 		// (i.e. excludes hidden plans when exporting all plans)
 		Filter exportAllFilters = Objects.requireNonNullElse(getExportAllFilters(entityType), Filters.empty());
-		entity.getAccessor().getCollectionDriver().find(exportAllFilters,null,null,null,0).forEach(a -> {
-			if ((entity.isByPassObjectPredicate() || (!(a instanceof EnricheableObject) || objectPredicate.test((EnricheableObject) a)))) {
-				getEntitiesReferences(entityType,a.getId().toHexString(), objectPredicate, refs, recursively);
-			}
+		Filter finalFilter = exportAllFilters;
+		if (!entity.isByPassObjectPredicate() && EnricheableObject.class.isAssignableFrom(entity.getEntityClass())) {
+			finalFilter  = Filters.and(List.of(exportAllFilters, OQLFilterBuilder.getFilter(objectFilter.getOQLFilter())));
+		}
+		entity.getAccessor().getCollectionDriver().find(finalFilter,null,null,null,0).forEach(a -> {
+				getEntitiesReferences(entityType,a.getId().toHexString(), objectFilter, refs, recursively);
 		});
 	}
 
@@ -110,8 +113,8 @@ public class EntityManager  {
 	 * @param entityId the id of the entity
 	 * @param references the map of references to be populated
 	 */
-	public void getEntitiesReferences(String entityName, String entityId, ObjectPredicate objectPredicate, EntityReferencesMap references, boolean recursive) {
-		EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
+	public void getEntitiesReferences(String entityName, String entityId, ObjectFilter objectFilter, EntityReferencesMap references, boolean recursive) {
+		EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectFilter, o -> true);
 		entityDependencyTreeVisitor.visitEntityDependencyTree(entityName, entityId, new EntityTreeVisitor() {
 			
 			@Override
@@ -131,9 +134,9 @@ public class EntityManager  {
 		}, recursive);
 	}
 
-	public void updateReferences(Object entity, Map<String, String> references, ObjectPredicate objectPredicate, Set<String> messageCollector) {
+	public void updateReferences(Object entity, Map<String, String> references, ObjectFilter objectFilter, Set<String> messageCollector) {
 		if(entity!=null) {
-			EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
+			EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectFilter, o -> true);
 			entityDependencyTreeVisitor.visitSingleObject(entity, new EntityTreeVisitor() {
 				
 				@Override

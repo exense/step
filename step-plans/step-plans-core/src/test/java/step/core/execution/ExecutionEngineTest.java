@@ -28,7 +28,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -293,7 +293,7 @@ public class ExecutionEngineTest {
 				}
 				
 				@Override
-				public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+				public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectFilter objectFilter) throws Exception {
 					return null;
 				}
 				

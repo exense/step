@@ -37,6 +37,7 @@ import step.core.collections.Document;
 import step.core.collections.Filters;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
+import step.core.objectenricher.ObjectFilter;
 import step.migration.MigrationManager;
 
 import java.io.BufferedReader;
@@ -226,7 +227,7 @@ public class ImportManager {
 				if(logger.isDebugEnabled()) {
 					logger.debug("Updating references for entity: entityName = " + entityName + ", id " + entity.getId());
 				}
-				entityManager.updateReferences(entity, importContext.getReferences(), o -> true, importContext.getMessages());
+				entityManager.updateReferences(entity, importContext.getReferences(), emptyObjectFilter(), importContext.getMessages());
 
 			}
 			// save the entity before running the import hooks. this is needed because
@@ -239,6 +240,10 @@ public class ImportManager {
 			// save again after having applied the import hooks
 			accessor.save(entity);
 		});
+	}
+
+	private ObjectFilter emptyObjectFilter() {
+		return () -> "";
 	}
 
 	private void importOlderPlans(ImportConfiguration importConfig, ImportContext importContext) throws IOException {

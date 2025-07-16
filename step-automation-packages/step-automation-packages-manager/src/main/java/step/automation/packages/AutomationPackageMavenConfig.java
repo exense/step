@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 
 import java.io.File;
 
@@ -49,6 +49,6 @@ public class AutomationPackageMavenConfig {
     }
 
     public interface ConfigProvider {
-        AutomationPackageMavenConfig getConfig(ObjectPredicate objectPredicate);
+        AutomationPackageMavenConfig getConfig(ObjectFilter objectFilter);
     }
 }

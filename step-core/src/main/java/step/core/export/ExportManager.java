@@ -39,7 +39,7 @@ import ch.exense.commons.io.FileHelper;
 import step.core.entities.Entity;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReferencesMap;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 import step.resources.ResourceManager;
 
 public class ExportManager {
@@ -60,13 +60,13 @@ public class ExportManager {
 			throws FileNotFoundException, IOException {
 		return export(exportConfig, c -> {
 			entityManager.getEntitiesReferences(exportConfig.getEntityType(), id,
-					exportConfig.getObjectPredicate(), c.getReferences(), exportConfig.isRecursively());
+					exportConfig.getOObjectFilter(), c.getReferences(), exportConfig.isRecursively());
 		});
 	}
 
 	public ExportResult exportAll(ExportConfiguration exportConfig) throws FileNotFoundException, IOException {
 		return export(exportConfig, c -> {
-			entityManager.getEntitiesReferences(exportConfig.getEntityType(), exportConfig.getObjectPredicate(),
+			entityManager.getEntitiesReferences(exportConfig.getEntityType(), exportConfig.getOObjectFilter(),
 					exportConfig.isRecursively(), c.getReferences());
 		});
 	}
@@ -75,13 +75,13 @@ public class ExportManager {
 			throws FileNotFoundException, IOException {
 		ExportContext exportContext = new ExportContext(exportConfig);
 		EntityReferencesMap references = exportContext.getReferences();
-		ObjectPredicate objectPredicate = exportConfig.getObjectPredicate();
+		ObjectFilter objectFilter = exportConfig.getOObjectFilter();
 
 		runnable.accept(exportContext);
 
 		List<String> additionalEntities = exportConfig.getAdditionalEntities();
 		if (additionalEntities != null && additionalEntities.size() > 0) {
-			additionalEntities.forEach(e -> entityManager.getEntitiesReferences(e, objectPredicate, false, references));
+			additionalEntities.forEach(e -> entityManager.getEntitiesReferences(e, objectFilter, false, references));
 		}
 
 		export(exportContext);

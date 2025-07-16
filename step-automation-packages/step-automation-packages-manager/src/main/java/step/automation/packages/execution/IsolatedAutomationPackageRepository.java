@@ -89,13 +89,13 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     }
 
     @Override
-    public File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+    public File getArtifact(Map<String, String> repositoryParameters) {
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
         if (contextId == null) {
             throw new RuntimeException("Test set status overview cannot be prepared. ContextId is undefined");
         }
 
-        AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters, objectPredicate);
+        AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters);
         File file = apFile == null ? null : apFile.getFile();
         if (file == null) {
             throw new RuntimeException("Automation package file hasn't been found");
@@ -104,14 +104,14 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     }
 
     @Override
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId, ObjectPredicate objectPredicate) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId) {
         // for files from input stream we save persists the resource to support re-execution
         Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName);
         File file = getApFileByResource(apResource);
         return new AutomationPackageFile(file, apResource);
     }
 
-    public AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+    public AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters) {
         String apName = repositoryParameters.get(AP_NAME);
 
         Resource resource = contextId == null ? null : getResource(contextId, apName);

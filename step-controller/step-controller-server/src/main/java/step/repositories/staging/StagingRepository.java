@@ -19,7 +19,7 @@
 package step.repositories.staging;
 
 import step.core.execution.ExecutionContext;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 import step.core.plans.Plan;
 import step.core.repositories.AbstractRepository;
 import step.core.repositories.ArtefactInfo;
@@ -74,7 +74,7 @@ public class StagingRepository extends AbstractRepository {
 	}
 
 	@Override
-	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectFilter objectFilter) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

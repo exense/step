@@ -6,7 +6,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -34,19 +34,19 @@ public class FunctionLocatorTest {
 
 		// by id
 		CallFunction testArtefact = FunctionArtefacts.keyword("function1");
-		Function function = functionLocator.getFunction(testArtefact, predicate(), null);
+		Function function = functionLocator.getFunction(testArtefact, objectFilter(), null);
 		assertEquals(expectedFunction1, function);
 		
 		// by attributes
 		CallFunction callFunction2 = new CallFunction();
 		callFunction2.setFunction(new DynamicValue<>("{\"name\":\"function1\"}"));
-		Function function2 = functionLocator.getFunction(callFunction2, predicate(), null);
+		Function function2 = functionLocator.getFunction(callFunction2, objectFilter(), null);
 		assertEquals(expectedFunction1, function2);
 		
 		// by attributes with predicate
 		Exception actual = null;
 		try {
-			functionLocator.getFunction(callFunction2, predicateFalse(), null);	
+			functionLocator.getFunction(callFunction2, objectFilterFalse(), null);
 		} catch (Exception e) {
 			actual = e;
 		}
@@ -58,10 +58,10 @@ public class FunctionLocatorTest {
 		Function function4;
 		HashMap<String, Object> bindings = new HashMap<>();
 		bindings.put("binding1", "v1");
-		function4 = functionLocator.getFunction(callFunction4, predicate(), bindings);
+		function4 = functionLocator.getFunction(callFunction4, objectFilter(), bindings);
 		assertEquals(expectedFunction2_v1, function4);
 		bindings.put("binding1", "v2");
-		function4 = functionLocator.getFunction(callFunction4, predicate(), bindings);
+		function4 = functionLocator.getFunction(callFunction4, objectFilter(), bindings);
 		assertEquals(expectedFunction2_v2, function4);
 		
 		// using the special binding KEYWORD_ACTIVE_VERSIONS
@@ -70,14 +70,14 @@ public class FunctionLocatorTest {
 		Function function5;
 		HashMap<String, Object> bindings2 = new HashMap<>();
 		bindings2.put(FunctionLocator.KEYWORD_ACTIVE_VERSIONS, "v1");
-		function5 = functionLocator.getFunction(callFunction5, predicate(), bindings2);
+		function5 = functionLocator.getFunction(callFunction5, objectFilter(), bindings2);
 		assertEquals(expectedFunction2_v1, function5);
 		bindings2.put(FunctionLocator.KEYWORD_ACTIVE_VERSIONS, "v2");
-		function5 = functionLocator.getFunction(callFunction5, predicate(), bindings2);
+		function5 = functionLocator.getFunction(callFunction5, objectFilter(), bindings2);
 		assertEquals(expectedFunction2_v2, function5);
 		// if no function is found for a specific version the first function without version is returned 
 		bindings2.put(FunctionLocator.KEYWORD_ACTIVE_VERSIONS, "v3");
-		function5 = functionLocator.getFunction(callFunction5, predicate(), bindings2);
+		function5 = functionLocator.getFunction(callFunction5, objectFilter(), bindings2);
 		assertEquals(expectedFunction2_noversion, function5);
 	}
 
@@ -91,11 +91,11 @@ public class FunctionLocatorTest {
 		return function;
 	}
 
-	private ObjectPredicate predicate() {
-		return t -> true;
+	private ObjectFilter objectFilter() {
+		return () -> "";
 	}
 	
-	private ObjectPredicate predicateFalse() {
-		return t -> false;
+	private ObjectFilter objectFilterFalse() {
+		return () -> "wrongKey = wrongValue";
 	}
 }

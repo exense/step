@@ -51,7 +51,7 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
         this.parameterManager = parameterManager;
     }
 
-    private String getMavenSettingsXml(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+    private String getMavenSettingsXml(Map<String, String> repositoryParameters) {
         // Priority 1: the explicit parameter in repository params
         String mavenSettingsPostfix = repositoryParameters.get(ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS);
         if (mavenSettingsPostfix == null) {
@@ -79,8 +79,8 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     }
 
     @Override
-    public File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
-        String settingsXml = getMavenSettingsXml(repositoryParameters, objectPredicate);
+    public File getArtifact(Map<String, String> repositoryParameters) {
+        String settingsXml = getMavenSettingsXml(repositoryParameters);
         try {
             MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml, localRepository);
             String artifactId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID);

@@ -338,12 +338,19 @@ public class ExecutionEngine implements AutoCloseable {
 		ObjectPredicateFactory objectPredicateFactory = new ObjectPredicateFactory(objectHookRegistry);
 		return objectPredicateFactory.getObjectPredicate(context);
 	}
+
+	private ObjectFilter getObjectFilter(ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {
+		ObjectHookContext context = rebuildObjectHookContext(executionParameters, executiontTaskParameters);
+		return objectHookRegistry.getObjectFilter(context);
+	}
 	
 	private void addObjectHooksToExecutionContext(ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters, ExecutionContext executionContext) {
 		ObjectEnricher objectEnricher = getObjectEnricher(executionParameters, executiontTaskParameters);
 		ObjectPredicate objectPredicate = getObjectPredicate(executionParameters, executiontTaskParameters);
+		ObjectFilter objectFilter = getObjectFilter(executionParameters, executiontTaskParameters);
 		executionContext.setObjectPredicate(objectPredicate);
 		executionContext.setObjectEnricher(objectEnricher);
+		executionContext.setObjectFilter(objectFilter);
 	}
 
 	private ObjectHookContext rebuildObjectHookContext(ExecutionParameters executionParameters, ExecutiontTaskParameters executiontTaskParameters) {

@@ -23,17 +23,17 @@ import java.util.Map;
 import java.util.Set;
 
 import step.core.execution.ExecutionContext;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 
 public interface Repository {
 
 	ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception;
 
-	default File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+	default File getArtifact(Map<String, String> repositoryParameters) {
 		throw new UnsupportedOperationException("This repository doesn't support getArtifact method");
 	}
 
-	TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception;
+	TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectFilter objectFilter) throws Exception;
 
 	ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception;
 

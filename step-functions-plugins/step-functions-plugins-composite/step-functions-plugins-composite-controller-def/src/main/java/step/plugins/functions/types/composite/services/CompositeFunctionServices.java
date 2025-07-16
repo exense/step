@@ -53,7 +53,6 @@ public class CompositeFunctionServices extends AbstractStepServices {
     private FunctionAccessor functionAccessor;
     private  PlanTypeRegistry planTypeRegistry;
     private PlanAccessor planAccessor;
-    private ObjectPredicateFactory objectPredicateFactory;
 
     @PostConstruct
     public void init() throws Exception {
@@ -62,7 +61,6 @@ public class CompositeFunctionServices extends AbstractStepServices {
         functionAccessor = getContext().get(FunctionAccessor.class);
         planAccessor = getContext().getPlanAccessor();
         planTypeRegistry = context.get(PlanTypeRegistry.class);
-        objectPredicateFactory = context.get(ObjectPredicateFactory.class);
     }
 
     @Operation(operationId = "cloneCompositePlan", description = "Clones the plan of the composite to a new plan")
@@ -107,9 +105,8 @@ public class CompositeFunctionServices extends AbstractStepServices {
         DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
         SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
         PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
-        ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
         try {
-            result = planLocator.selectPlan(artefact, objectPredicate, null);
+            result = planLocator.selectPlan(artefact, getObjectFilter(), null);
         } catch (RuntimeException e) {}
         return result;
     }

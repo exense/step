@@ -34,7 +34,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.PlanFilter;
@@ -86,11 +86,11 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     }
 
     @Override
-    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectFilter objectFilter) throws Exception {
         PackageExecutionContext ctx = null;
         try {
-            File artifact = getArtifact(repositoryParameters, objectPredicate);
-            ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false);
+            File artifact = getArtifact(repositoryParameters);
+            ctx = createIsolatedPackageExecutionContext(null, objectFilter, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false);
             TestSetStatusOverview overview = new TestSetStatusOverview();
             List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
                     .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
@@ -110,7 +110,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         ImportResult result = new ImportResult();
         try {
             try {
-                ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
+                ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectFilter());
                 //If context is shared across multiple executions, it was created externally and will be closed by the creator,
                 // otherwise it should be closed once the executions ends from the execution context
                 if (!ctx.isShared()) {
@@ -241,17 +241,17 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return plan.getAttributes().get(AbstractOrganizableObject.NAME);
     }
 
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId, ObjectPredicate objectPredicate) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId) {
         // for files provided by artifact repository we don't store the file as resource, but just load the file from this repository
         RepositoryObjectReference repositoryObject = parameters.getOriginalRepositoryObject();
         if (repositoryObject == null) {
             throw new AutomationPackageManagerException("Unable to resolve AP file. Repository object is undefined");
         }
-        File artifact = getArtifact(parameters.getOriginalRepositoryObject().getRepositoryParameters(), objectPredicate);
+        File artifact = getArtifact(parameters.getOriginalRepositoryObject().getRepositoryParameters());
         return new AutomationPackageFile(artifact, null);
     }
 
-    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate) {
+    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectFilter objectFilter) {
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
 
         // Execution context can be created in-advance and shared between several plans
@@ -261,21 +261,21 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 contextId = new ObjectId().toString();
             }
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
-            AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters, predicate);
-            return createIsolatedPackageExecutionContext(enricher, predicate, contextId, apFile, false);
+            AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters);
+            return createIsolatedPackageExecutionContext(enricher, objectFilter, contextId, apFile, false);
         }
         return current;
     }
 
-    protected AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
-        File artifact = getArtifact(repositoryParameters, objectPredicate);
+    protected AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters) {
+        File artifact = getArtifact(repositoryParameters);
         if (artifact == null) {
             throw new AutomationPackageManagerException("Unable to resolve the requested Automation Package file in artifact repository " + this.getClass().getSimpleName() + " with parameters " + repositoryParameters);
         }
         return new AutomationPackageFile(artifact, null);
     }
 
-    public PackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate, String contextId, AutomationPackageFile apFile, boolean shared) {
+    public PackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectFilter objectFilter, String contextId, AutomationPackageFile apFile, boolean shared) {
         // prepare the isolated in-memory automation package manager with the only one automation package
         AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
                 new ObjectId(contextId), functionTypeRegistry,
@@ -285,7 +285,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         // create single automation package in isolated manager
         try (FileInputStream fis = new FileInputStream(apFile.getFile())) {
             // the apVersion is null (we always use the actual version), because we only create the isolated in-memory AP here
-            inMemoryPackageManager.createAutomationPackage(fis, apFile.getFile().getName(), null, null, enricher, predicate);
+            inMemoryPackageManager.createAutomationPackage(fis, apFile.getFile().getName(), null, null, enricher, objectFilter);
         } catch (IOException e) {
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
         }

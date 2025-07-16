@@ -28,6 +28,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.model.*;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectFilter;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
@@ -79,15 +80,15 @@ public class AutomationPackageExecutor {
     public List<String> runDeployedAutomationPackage(ObjectId automationPackageId,
                                                      AutomationPackageExecutionParameters parameters,
                                                      ObjectEnricher objectEnricher,
-                                                     ObjectPredicate objectPredicate){
+                                                     ObjectFilter objectFilter){
         // throws an exception if ap doesn't exist
-        AutomationPackage automationPackage = mainAutomationPackageManager.getAutomatonPackageById(automationPackageId, objectPredicate);
+        AutomationPackage automationPackage = mainAutomationPackageManager.getAutomationPackageById(automationPackageId, objectFilter);
 
         return runExecutions(automationPackage, LOCAL_AUTOMATION_PACKAGE, null, null, mainAutomationPackageManager, parameters, objectEnricher);
     }
 
     public List<String> runInIsolation(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters,
-                                       ObjectEnricher objectEnricher, ObjectPredicate objectPredicate) {
+                                       ObjectEnricher objectEnricher, ObjectFilter objectFilter) {
 
         ObjectId contextId = new ObjectId();
         List<String> executions = new ArrayList<>();
@@ -100,11 +101,11 @@ public class AutomationPackageExecutor {
         // 2) to read the automation package and fill ap manager with plans, keywords etc.
 
         // so at first we store the input stream as resource
-        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId, objectPredicate);
+        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId);
 
         // and then we read the ap from just stored file
         // create single execution context for the whole AP to execute all plans on the same ap manager (for performance reason)
-        IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createIsolatedPackageExecutionContext(objectEnricher, objectPredicate, contextId.toString(), apFile, true);
+        IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createIsolatedPackageExecutionContext(objectEnricher, objectFilter, contextId.toString(), apFile, true);
         try {
             AutomationPackage automationPackage = executionContext.getAutomationPackage();
             String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);

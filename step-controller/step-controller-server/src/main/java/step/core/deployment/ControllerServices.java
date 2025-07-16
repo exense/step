@@ -67,9 +67,6 @@ public class ControllerServices extends AbstractStepServices {
 	private Map<String, Long> userActivityMap;
 
 	private long initializationTime;
-	private ObjectHookRegistry objectHooks;
-
-	private ObjectPredicateFactory objectPredicateFactory;
 
 	@PostConstruct
 	public void init() throws Exception {
@@ -81,8 +78,6 @@ public class ControllerServices extends AbstractStepServices {
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
-		objectHooks = context.get(ObjectHookRegistry.class);
-		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
 
 		executionAccessor = context.getExecutionAccessor();
 		userActivityMap = (Map<String, Long>) context.get(USER_ACTIVITY_MAP_KEY);
@@ -122,14 +117,13 @@ public class ControllerServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
 	public Plan getReportNodeRootPlan(@PathParam("id") String reportNodeId) {
-		ObjectPredicate objectPredicate = objectHooks.getObjectPredicate(getSession());
 		PlanAccessor planAccessor = getContext().getPlanAccessor();
 		ReportNode reportNode = getContext().getReportAccessor().get(reportNodeId);
 		Plan plan = planAccessor.get(getContext().getExecutionAccessor().get(reportNode.getExecutionID()).getPlanId());
 		if (reportNode.getParentID() != null) {
 			CallPlan callPlan = getParentCallPlan(reportNode.getParentID().toString());
 			if (callPlan != null) {
-				Plan locatedPlan = planLocator.selectPlan(callPlan, objectPredicate, null);
+				Plan locatedPlan = planLocator.selectPlan(callPlan, getObjectFilter(), null);
 				plan = (locatedPlan != null) ? locatedPlan : plan;
 			}
 		}
@@ -201,8 +195,7 @@ public class ControllerServices extends AbstractStepServices {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Secured(right="execution-read")
 	public TestSetStatusOverview getReport(RepositoryObjectReference report) throws Exception {
-		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
-		return getContext().getRepositoryObjectManager().getReport(report, objectPredicate);
+		return getContext().getRepositoryObjectManager().getReport(report, getObjectFilter());
 	}
 
 	@GET

@@ -29,7 +29,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
@@ -64,7 +64,7 @@ public class LocalRepository extends AbstractRepository {
 	}
 
 	@Override
-	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectFilter objectFilter) throws Exception {
 		TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
 
 		String planId = getPlanId(repositoryParameters);
@@ -80,7 +80,7 @@ public class LocalRepository extends AbstractRepository {
 				if(child instanceof TestCase) {
 					addTestRunStatus(testSetStatusOverview.getRuns(), child);
 				} else if(child instanceof CallPlan) {
-					Plan referencedPlan = planLocator.selectPlan((CallPlan)child, objectPredicate, null);
+					Plan referencedPlan = planLocator.selectPlan((CallPlan)child, objectFilter, null);
 					if (referencedPlan != null) {
 						AbstractArtefact root = referencedPlan.getRoot();
 						if (root instanceof TestCase) {

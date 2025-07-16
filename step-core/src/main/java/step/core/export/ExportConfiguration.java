@@ -22,23 +22,23 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectFilter;
 
 public class ExportConfiguration {
 
 	private final OutputStream outputStream;
 	private final Map<String, String> metadata;
-	private final ObjectPredicate objectPredicate;
+	private final ObjectFilter objectFilter;
 	private final String entityType;
 	private final boolean recursively;
 	private final List<String> additionalEntities;
 
-	public ExportConfiguration(OutputStream outputStream, Map<String, String> metadata, ObjectPredicate objectPredicate,
+	public ExportConfiguration(OutputStream outputStream, Map<String, String> metadata, ObjectFilter objectFilter,
 			String entityType, boolean recursively, List<String> additionalEntities) {
 		super();
 		this.outputStream = outputStream;
 		this.metadata = metadata;
-		this.objectPredicate = objectPredicate;
+		this.objectFilter = objectFilter;
 		this.entityType = entityType;
 		this.recursively = recursively;
 		this.additionalEntities = additionalEntities;
@@ -52,8 +52,8 @@ public class ExportConfiguration {
 		return metadata;
 	}
 
-	public ObjectPredicate getObjectPredicate() {
-		return objectPredicate;
+	public ObjectFilter getOObjectFilter() {
+		return objectFilter;
 	}
 
 	public String getEntityType() {

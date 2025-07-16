@@ -321,7 +321,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	private Function getFunction(CallFunction testArtefact) {
-		return functionLocator.getFunction(testArtefact, context.getObjectPredicate(),
+		return functionLocator.getFunction(testArtefact, context.getObjectFilter(),
 				ExecutionContextBindings.get(context));
 	}
 

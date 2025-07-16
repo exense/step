@@ -121,8 +121,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	public Function lookupCallFunction(CallFunction callFunction) {
 		Function function = null;
 		try {
-			ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
-			function = functionLocator.getFunction(callFunction, objectPredicate, null);
+			function = functionLocator.getFunction(callFunction, getObjectFilter(), null);
 		} catch (RuntimeException e) {}
 		return function;
 	}

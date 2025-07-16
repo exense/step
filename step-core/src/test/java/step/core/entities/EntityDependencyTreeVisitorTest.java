@@ -15,6 +15,7 @@ import step.core.accessors.InMemoryAccessor;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitor;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
+import step.core.objectenricher.ObjectFilter;
 
 public class EntityDependencyTreeVisitorTest {
 
@@ -54,7 +55,7 @@ public class EntityDependencyTreeVisitorTest {
 					}
 
 				});
-		EntityDependencyTreeVisitor visitor = new EntityDependencyTreeVisitor(entityManager, null);
+		EntityDependencyTreeVisitor visitor = new EntityDependencyTreeVisitor(entityManager, getObjectFilter(), o -> true);
 		
 		List<String> entityIds = new ArrayList<>();
 		visitor.visitEntityDependencyTree(ENTITY_TYPE1, entity1.getId().toString(), new EntityTreeVisitor() {
@@ -77,6 +78,10 @@ public class EntityDependencyTreeVisitorTest {
 		
 		assertEquals(9, entityIds.size());
 		
+	}
+
+	private ObjectFilter getObjectFilter() {
+		return () -> "";
 	}
 	
 	@Test
@@ -119,7 +124,7 @@ public class EntityDependencyTreeVisitorTest {
 			
 		});
 		
-		EntityDependencyTreeVisitor visitor = new EntityDependencyTreeVisitor(entityManager, null);
+		EntityDependencyTreeVisitor visitor = new EntityDependencyTreeVisitor(entityManager, getObjectFilter(), o -> true);
 		
 		ObjectId newId = new ObjectId();
 		String newIdString = newId.toHexString();

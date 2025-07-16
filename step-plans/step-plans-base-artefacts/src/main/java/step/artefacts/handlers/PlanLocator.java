@@ -26,9 +26,12 @@ import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.CallPlan;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
+import step.core.objectenricher.ObjectFilter;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.core.ql.OQLFilterBuilder;
 
 public class PlanLocator {
 
@@ -46,28 +49,35 @@ public class PlanLocator {
 	/**
 	 * Resolve a {@link CallPlan} artefact to the underlying {@link Plan}. Returns null if plan is not resolved by ID
 	 * 
-	 * @param artefact the {@link CallPlan} artefact
-	 * @param objectPredicate the predicate to be used to filter the results out
+	 * @param artefact the {@link CallPlan} artefact used to find the plan
+	 * @param objectFilter the additional context filters to look up the plan
 	 * @param bindings the bindings to be used for the evaluation of dynamic expressions (can be null)
 	 * @return the {@link Plan} referenced by the provided artefact
 	 */
-	public Plan selectPlan(CallPlan artefact, ObjectPredicate objectPredicate, Map<String, Object> bindings) {
+	public Plan selectPlan(CallPlan artefact, ObjectFilter objectFilter, Map<String, Object> bindings) {
 		Objects.requireNonNull(artefact, "The artefact must not be null");
-		Objects.requireNonNull(objectPredicate, "The object predicate must not be null");
+		Objects.requireNonNull(objectFilter, "The object filter must not be null");
 
 		Plan a;
 		if(artefact.getPlanId()!=null) {
 			a = Optional.ofNullable(accessor.get(artefact.getPlanId())).orElseThrow(() -> new  NoSuchElementException("Unable to find plan with id: " + artefact.getPlanId()));
 		} else {
 			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(artefact.getSelectionAttributes().get(), bindings);
-			Stream<Plan> stream = StreamSupport.stream(accessor.findManyByAttributes(selectionAttributes), false);
-			stream = stream.filter(objectPredicate);
-			List<Plan> matchingPlans = stream.collect(Collectors.toList());
+			if (selectionAttributes.isEmpty()) {
+				throw new NoSuchElementException("No selection attribute defined");
+			} else {
+				Filter contextFilters = OQLFilterBuilder.getFilter(objectFilter.getOQLFilter());
+				List<Filter> attributesFilters = selectionAttributes.entrySet().stream().map(e -> Filters.equals("attributes." + e.getKey(), e.getValue())).collect(Collectors.toList());
+				List<Plan> matchingPlans = accessor.getCollectionDriver()
+						.find(Filters.and(List.of(contextFilters, Filters.and(attributesFilters))), null, null, null, 0)
+						.collect(Collectors.toList());
 
-			// The same logic as for functions - plans from current automation package have priority in 'CallPlan'
-			// We use prioritization by current automation package and filtering by activation expressions
-			List<Plan> orderedPlans = FunctionLocator.prioritizeAndFilterApEntities(matchingPlans, bindings);
-			a = orderedPlans.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find plan with attributes: "+selectionAttributes.toString()));
+
+				// The same logic as for functions - plans from current automation package have priority in 'CallPlan'
+				// We use prioritization by current automation package and filtering by activation expressions
+				List<Plan> orderedPlans = FunctionLocator.prioritizeAndFilterApEntities(matchingPlans, bindings);
+				a = orderedPlans.stream().findFirst().orElseThrow(() -> new NoSuchElementException("Unable to find plan with attributes: " + selectionAttributes.toString()));
+			}
 		}
 		return a;
 	}
@@ -76,14 +86,14 @@ public class PlanLocator {
 	 * Resolve a {@link CallPlan} artefact to the underlying {@link Plan}. Throws an exception if plan is not resolved for any reason
 	 *
 	 * @param artefact        the {@link CallPlan} artefact
-	 * @param objectPredicate the predicate to be used to filter the results out
+	 * @param objectFilter the additional context filters to look up the plan
 	 * @param bindings        the bindings to be used for the evaluation of dynamic expressions (can be null)
 	 * @return the {@link Plan} referenced by the provided artefact
 	 */
-	public Plan selectPlanNotNull(CallPlan artefact, ObjectPredicate objectPredicate, Map<String, Object> bindings) throws PlanLocatorException {
+	public Plan selectPlanNotNull(CallPlan artefact, ObjectFilter objectFilter, Map<String, Object> bindings) throws PlanLocatorException {
 		Plan p;
 		try {
-			p = selectPlan(artefact, objectPredicate, bindings);
+			p = selectPlan(artefact, objectFilter, bindings);
 		} catch (Exception ex) {
 			log.warn("Unable to resolve call plan", ex);
 			throw new PlanLocatorException(createPlanNotResolvedMessage(artefact), ex);
