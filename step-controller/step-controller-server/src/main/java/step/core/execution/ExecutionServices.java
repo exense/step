@@ -210,8 +210,10 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 	@Path("/search/by/critera")
 	@Secured(right="execution-read")
 	public List<Execution> findByCritera(FindByCriteraParam param) {
+		Long start = param.getStart() != null ? param.getStart().getTime() : null;
+		Long end = param.getEnd() != null ? param.getEnd().getTime() : null;
 		return ((ExecutionAccessorImpl) getContext().getExecutionAccessor()).findByCritera(param.getCriteria(), 
-				param.getStart().getTime(), param.getEnd().getTime(), new SearchOrder("endTime", -1),
+				start, end, new SearchOrder("endTime", -1),
 				param.getSkip(), param.getLimit());
 	}
 
