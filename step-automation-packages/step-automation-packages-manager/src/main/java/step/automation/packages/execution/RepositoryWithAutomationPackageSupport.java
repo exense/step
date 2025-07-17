@@ -185,8 +185,13 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
 
     private Plan wrapAllPlansFromApToTestSet(PackageExecutionContext ctx, Map<String, String> repositoryParameters) {
         PlanBuilder planBuilder = PlanBuilder.create();
-        int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, "0"));
-        TestSet testSet = new TestSet(numberOfThreads);
+        TestSet testSet;
+        String testSetNumberOfThread = repositoryParameters.get(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER);
+        if (testSetNumberOfThread == null || testSetNumberOfThread.isBlank()) {
+            testSet = new TestSet();
+        } else {
+            testSet = new TestSet(Integer.parseInt(testSetNumberOfThread));
+        }
         AutomationPackage ap = ctx.getAutomationPackage();
         testSet.addAttribute(AbstractArtefact.NAME, ap.getAttribute(AbstractOrganizableObject.NAME));
 
