@@ -14,6 +14,8 @@ import step.core.repositories.RepositoryObjectReference;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 
+import java.util.Map;
+
 import static step.automation.packages.AutomationPackageLocks.*;
 import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.AP_ID;
 import static step.repositories.LocalRepository.getPlanId;
@@ -122,16 +124,19 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
                 if (apID == null) {
                     // Or it can be defined in the repository parameters (case for RepositoryWithAutomationPackageSupport)
                     RepositoryObjectReference repositoryObject = executionParameters.getRepositoryObject();
-                    String repoParametersAppID = repositoryObject.getRepositoryParameters().get(AP_ID);
+                    Map<String, String> repositoryParameters = (repositoryObject != null) ? repositoryObject.getRepositoryParameters(): null;
+                    String repoParametersAppID = (repositoryParameters != null) ? repositoryParameters.get(AP_ID): null;
                     if (repoParametersAppID != null) {
                         apID = repoParametersAppID;
                     } else {
                         //Or it can be set in plan which is already in the parameters (but the plan is usually only set after import)
                         if (executionParameters.getPlan() != null) {
                             apID = (String) executionParameters.getPlan().getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
-                        } else if (repositoryObject.getRepositoryID().equals(RepositoryObjectReference.LOCAL_REPOSITORY_ID)) {
+                        } else if (repositoryObject != null &&
+                                repositoryObject.getRepositoryID().equals(RepositoryObjectReference.LOCAL_REPOSITORY_ID) &&
+                                repositoryParameters != null) {
                             //last chance if it's a local repo, we get the plan from the DB
-                            String planId = getPlanId(repositoryObject.getRepositoryParameters());
+                            String planId = getPlanId(repositoryParameters);
                             Plan plan = context.getPlanAccessor().get(planId);
                             if (plan != null) {
                                 apID = (String) plan.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
