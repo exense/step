@@ -19,6 +19,8 @@
 package step.automation.packages.execution;
 
 import org.bson.types.ObjectId;
+import step.artefacts.TestCase;
+import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
@@ -52,7 +54,8 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
         String apName = repositoryParameters.get(AP_NAME);
 
         ArtefactInfo info = new ArtefactInfo();
-        info.setType("automationPackage");
+        boolean isWrapInTestSet = Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "false"));
+        info.setType((isWrapInTestSet) ? TestSet.class.getSimpleName(): TestCase.class.getSimpleName());
         info.setName(apName);
         return info;
     }
