@@ -120,6 +120,9 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 				}
 			}
 			setScriptFile(new DynamicValue<>(uploadedPackageFileResource));
+			if(context.getKeywordLibraryResource() != null && !context.getKeywordLibraryResource().isEmpty()){
+				setLibrariesFile(new DynamicValue<>(context.getKeywordLibraryResource()));
+			}
 		}
 		return this;
 	}

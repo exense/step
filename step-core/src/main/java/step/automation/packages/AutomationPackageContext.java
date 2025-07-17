@@ -32,31 +32,34 @@ public class AutomationPackageContext {
     private ResourceManager resourceManager;
     private AutomationPackageArchive automationPackageArchive;
     private AutomationPackageContent packageContent;
+    private String keywordLibraryResource;
 
     private ObjectEnricher enricher;
 
+    /**
+     * This field should be initialized when the automation package is uploaded to Step as resource.
+     * Usually it is performed in GeneralScriptFunction, where we need a reference to script (which is the AP itself).
+     * So when we save the GeneralScriptFunction we need to upload the AP as resource at first
+     */
     private String uploadedPackageFileResource;
     private final Map<String, Object> extensions;
 
     public final AutomationPackageOperationMode operationMode;
 
     public AutomationPackageContext(AutomationPackageOperationMode operationMode, ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive,
-                                    AutomationPackageContent packageContent,
+                                    AutomationPackageContent packageContent, String keywordLibraryResource,
                                     ObjectEnricher enricher, Map<String, Object> extensions) {
         this.operationMode = Objects.requireNonNull(operationMode);
         this.resourceManager = resourceManager;
         this.automationPackageArchive = automationPackageArchive;
         this.packageContent = packageContent;
+        this.keywordLibraryResource = keywordLibraryResource;
         this.enricher = enricher;
         this.extensions = extensions;
     }
 
     public ResourceManager getResourceManager() {
         return resourceManager;
-    }
-
-    public void setResourceManager(ResourceManager resourceManager) {
-        this.resourceManager = resourceManager;
     }
 
     public AutomationPackageArchive getAutomationPackageArchive() {
@@ -75,10 +78,6 @@ public class AutomationPackageContext {
         return enricher;
     }
 
-    public void setAutomationPackageArchive(AutomationPackageArchive automationPackageArchive) {
-        this.automationPackageArchive = automationPackageArchive;
-    }
-
     public void setEnricher(ObjectEnricher enricher) {
         this.enricher = enricher;
     }
@@ -89,5 +88,9 @@ public class AutomationPackageContext {
 
     public AutomationPackageContent getPackageContent() {
         return packageContent;
+    }
+
+    public String getKeywordLibraryResource() {
+        return keywordLibraryResource;
     }
 }
