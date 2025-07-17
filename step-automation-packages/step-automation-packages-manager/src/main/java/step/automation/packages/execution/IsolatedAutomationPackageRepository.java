@@ -22,6 +22,8 @@ import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.TestCase;
+import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
 import step.core.execution.ExecutionContext;
@@ -83,7 +85,8 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
         }
 
         ArtefactInfo info = new ArtefactInfo();
-        info.setType("automationPackage");
+        boolean isWrapInTestSet = Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "false"));
+        info.setType((isWrapInTestSet) ? TestSet.class.getSimpleName(): TestCase.class.getSimpleName());
         info.setName(resource.getCustomField(AP_NAME_CUSTOM_FIELD, String.class));
         return info;
     }
