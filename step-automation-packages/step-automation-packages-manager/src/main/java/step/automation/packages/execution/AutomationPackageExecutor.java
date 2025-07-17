@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -179,8 +180,10 @@ public class AutomationPackageExecutor {
         if (includePlans != null) {
             repositoryParameters.put(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS, includePlans);
         }
-        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, parameters.getWrapIntoTestSet() == null ? null : parameters.getWrapIntoTestSet().toString());
-        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, parameters.getNumberOfThreads() == null ? null : parameters.getNumberOfThreads().toString());
+        Boolean wrapIntoTestSet = Objects.requireNonNullElse(parameters.getWrapIntoTestSet(), false);
+        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, wrapIntoTestSet.toString());
+        Integer numberOfThreads = parameters.getNumberOfThreads();
+        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, numberOfThreads == null ? null : numberOfThreads.toString());
 
         // store the reference from original repository object
         if (originalRepositoryObject != null && originalRepositoryObject.getRepositoryParameters() != null) {

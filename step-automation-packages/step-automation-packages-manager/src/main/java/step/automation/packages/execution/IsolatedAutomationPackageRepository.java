@@ -136,7 +136,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
     @Override
     protected boolean isWrapPlansIntoTestSet(Map<String, String> repositoryParameters) {
-        return Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "true"));
+        return Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "false"));
     }
 
     protected void updateLastExecution(Resource resource) {
