@@ -55,8 +55,14 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
 
         ArtefactInfo info = new ArtefactInfo();
         boolean isWrapInTestSet = Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "false"));
-        info.setType((isWrapInTestSet) ? TestSet.class.getSimpleName(): TestCase.class.getSimpleName());
-        info.setName(apName);
+        //Introduced for 28.1, previous execution do not have this field in repo parameters
+        String rootType = repositoryParameters.get(ArtifactRepositoryConstants.PARAM_ROOT_TYPE);
+        if (rootType != null) {
+            info.setType(rootType);
+        } else {
+            info.setType((isWrapInTestSet) ? TestSet.class.getSimpleName() : TestCase.class.getSimpleName());
+        }
+        info.setName((isWrapInTestSet) ? apName : repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS, apName));
         return info;
     }
 
