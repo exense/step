@@ -453,93 +453,89 @@ public class AutomationPackageManager {
         AutomationPackage newPackage = null;
 
         try {
-            try {
-                automationPackageArchive = automationPackageProvider.getAutomationPackageArchive();
-                packageContent = readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
-            } catch (AutomationPackageReadingException e) {
-                throw new AutomationPackageManagerException("Unable to read automation package. Cause: " + e.getMessage(), e);
-            }
+            automationPackageArchive = automationPackageProvider.getAutomationPackageArchive();
+            packageContent = readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
+        } catch (AutomationPackageReadingException e) {
+            throw new AutomationPackageManagerException("Unable to read automation package. Cause: " + e.getMessage(), e);
+        }
 
-            AutomationPackage oldPackage;
-            if (explicitOldId != null) {
-                oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
+        AutomationPackage oldPackage;
+        if (explicitOldId != null) {
+            oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
 
-                String newName = packageContent.getName();
-                String oldName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
-                if (!Objects.equals(newName, oldName)) {
-                    // the package with the same name shouldn't exist
-                    AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
+            String newName = packageContent.getName();
+            String oldName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
+            if (!Objects.equals(newName, oldName)) {
+                // the package with the same name shouldn't exist
+                AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
 
-                    if (existingPackageWithSameName != null) {
-                        throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
-                                + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
-                    }
+                if (existingPackageWithSameName != null) {
+                    throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
+                            + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
                 }
+            }
+        } else {
+            oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
+        }
+        if (!allowUpdate && oldPackage != null) {
+            throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
+        }
+        if (!allowCreate && oldPackage == null) {
+            throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
+        }
+
+        // keep old package id
+        newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, apVersion, activationExpr, oldPackage, enricher);
+
+        // upload keyword package if provided
+        String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibrarySource, newPackage, ResourceManager.RESOURCE_TYPE_FUNCTIONS, packageContent.getName(), enricher, objectPredicate);
+
+        // prepare staging collections
+        AutomationPackageStaging staging = createStaging();
+        List<ObjectEnricher> enrichers = new ArrayList<>();
+        if (enricher != null) {
+            enrichers.add(enricher);
+        }
+        enrichers.add(new AutomationPackageLinkEnricher(newPackage.getId().toString()));
+
+        ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
+        fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, keywordLibraryResourceString);
+
+        // persist and activate automation package
+        log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
+        boolean immediateWriteLock = tryObtainImmediateWriteLock(newPackage);
+        try {
+            if (oldPackage == null || !async || immediateWriteLock) {
+                //If not async or if it's a new package, we synchronously wait on a write lock and update
+                log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
+                ObjectId result = updateAutomationPackage(oldPackage, newPackage, packageContent, staging, enricherForIncludedEntities, immediateWriteLock, automationPackageArchive, keywordLibraryResourceString);
+                return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result);
             } else {
-                oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
+                // async update
+                log.info("Updating the automation package " + newPackage.getId().toString() + " asynchronously due to running execution(s).");
+                newPackage.setStatus(AutomationPackageStatus.DELAYED_UPDATE);
+                automationPackageAccessor.save(newPackage);
+                AutomationPackage finalNewPackage = newPackage;
+
+                // copy to the final variable to use it in lambda expression
+                String finalKeywordLibraryResourceString = keywordLibraryResourceString;
+                delayedUpdateExecutor.submit(() -> {
+                    try {
+                        updateAutomationPackage(oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities, false, automationPackageArchive, finalKeywordLibraryResourceString);
+                    } catch (Exception e) {
+                        log.error("Exception on delayed AP update", e);
+                    }
+                });
+                return new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.UPDATE_DELAYED, newPackage.getId());
             }
-            if (!allowUpdate && oldPackage != null) {
-                throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
+        } finally {
+            if (immediateWriteLock) {
+                releaseWriteLock(newPackage);
             }
-            if (!allowCreate && oldPackage == null) {
-                throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
-            }
-
-            // keep old package id
-            newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, apVersion, activationExpr, oldPackage, enricher);
-
-            // upload keyword package if provided
-            String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibrarySource, newPackage, ResourceManager.RESOURCE_TYPE_FUNCTIONS, packageContent.getName(), enricher, objectPredicate);
-
-            // prepare staging collections
-            AutomationPackageStaging staging = createStaging();
-            List<ObjectEnricher> enrichers = new ArrayList<>();
-            if (enricher != null) {
-                enrichers.add(enricher);
-            }
-            enrichers.add(new AutomationPackageLinkEnricher(newPackage.getId().toString()));
-
-            ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
-            fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, keywordLibraryResourceString);
-
-            // persist and activate automation package
-            log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
-            boolean immediateWriteLock = tryObtainImmediateWriteLock(newPackage);
-            try {
-                if (oldPackage == null || !async || immediateWriteLock) {
-                    //If not async or if it's a new package, we synchronously wait on a write lock and update
-                    log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
-                    ObjectId result = updateAutomationPackage(oldPackage, newPackage, packageContent, staging, enricherForIncludedEntities, immediateWriteLock, automationPackageArchive, keywordLibraryResourceString);
-                    return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result);
-                } else {
-                    // async update
-                    log.info("Updating the automation package " + newPackage.getId().toString() + " asynchronously due to running execution(s).");
-                    newPackage.setStatus(AutomationPackageStatus.DELAYED_UPDATE);
-                    automationPackageAccessor.save(newPackage);
-                    AutomationPackage finalNewPackage = newPackage;
-
-                    // copy to the final variable to use it in lambda expression
-                    String finalKeywordLibraryResourceString = keywordLibraryResourceString;
-                    delayedUpdateExecutor.submit(() -> {
-                        try {
-                            updateAutomationPackage(oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities, false, automationPackageArchive, finalKeywordLibraryResourceString);
-                        } catch (Exception e) {
-                            log.error("Exception on delayed AP update", e);
-                        }
-                    });
-                    return new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.UPDATE_DELAYED, newPackage.getId());
-                }
-            } finally {
-                if (immediateWriteLock) {
-                    releaseWriteLock(newPackage);
-                }
-            }
-        } catch (Exception ex) {
-            throw new AutomationPackageManagerException("Unexpected exception", ex);
         }
     }
 
-    public String uploadKeywordLibrary(AutomationPackageFileSource keywordLibrarySource, AutomationPackage newPackage, String resourceType, String apName, ObjectEnricher enricher, ObjectPredicate objectPredicate) throws IOException, AutomationPackageReadingException, InvalidResourceFormatException {
+    public String uploadKeywordLibrary(AutomationPackageFileSource keywordLibrarySource, AutomationPackage newPackage, String resourceType, String apName, ObjectEnricher enricher, ObjectPredicate objectPredicate) {
         // TODO: now we check the MD5 hash to prevent uploading duplicated libraries - further we will need more flexible approach (+strange case - the duplicated resource is persisted)
         String keywordLibraryResourceString = null;
         try (AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate)) {
@@ -549,14 +545,32 @@ public class AutomationPackageManager {
                 try (FileInputStream fis = new FileInputStream(keywordLibrary)) {
                     try {
                         keywordLibraryResource = resourceManager.createResource(resourceType, fis, keywordLibrary.getName(), true, enricher);
+                        log.info("The new keyword library ({}) has been uploaded as ({})", keywordLibrarySource, keywordLibraryResource);
                     } catch (SimilarResourceExistingException ex) {
-                        log.info("Existing keyword library {} has been detected and will be reused in AP {}", keywordLibrary.getName(), apName);
-                        keywordLibraryResource = ex.getResource();
+                        if (ex.getSimilarResources() != null && !ex.getSimilarResources().isEmpty()) {
+                            keywordLibraryResource = ex.getSimilarResources().get(0);
+                            log.info("Existing keyword library {} with resource id {} has been detected and will be reused in AP {}", keywordLibrary.getName(), keywordLibraryResource.getId().toHexString(), apName);
+
+                            // TODO: strange behaviour - in case of SimilarResourceExistingException we anyway upload the resource, so here we rollback it
+                            Resource justUploadedResource = ex.getResource();
+                            if (justUploadedResource != null) {
+                                resourceManager.deleteResource(justUploadedResource.getId().toHexString());
+                            }
+                        } else {
+                            // strange case - the exception is thrown, but similar resources are missing
+                            keywordLibraryResource = ex.getResource();
+                            log.warn("A similar keyword library is recognized, but not provided. The new keyword library ({}) has been uploaded as ({})", keywordLibrarySource, keywordLibraryResource);
+                        }
                     }
                     keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
                     newPackage.setPackageLibrariesLocation(keywordLibraryResourceString);
                 }
             }
+        } catch (IOException | InvalidResourceFormatException | AutomationPackageReadingException e) {
+            // all these exceptions are technical, so we log the whole stack trace here, but throw the AutomationPackageManagerException
+            // to provide the short error message without technical details to the client
+            log.error("Unable to upload the keyword library", e);
+            throw new AutomationPackageManagerException("Unable to upload the keyword library: " + keywordLibrarySource, e);
         }
         return keywordLibraryResourceString;
     }

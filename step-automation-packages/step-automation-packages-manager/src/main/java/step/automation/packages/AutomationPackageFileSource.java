@@ -82,4 +82,13 @@ public class AutomationPackageFileSource {
         }
         return false;
     }
+
+    @Override
+    public String toString() {
+        return "AutomationPackageFileSource{" +
+                "mavenArtifactIdentifier=" + mavenArtifactIdentifier +
+                ", fileName='" + fileName + '\'' +
+                ", inputStream=" + (inputStream == null ? "no" : "yes") +
+                '}';
+    }
 }
