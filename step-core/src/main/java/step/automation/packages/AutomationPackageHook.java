@@ -42,7 +42,10 @@ public interface AutomationPackageHook<T> {
                                   List<?> objects,
                                   AutomationPackage oldPackage,
                                   AutomationPackageStaging targetStaging, ObjectPredicate objectPredicate) {
-        // by default, we simply put the objects to staging
+        // by default, we simply put the objects to staging after applying the enriches
+        objects.stream().filter(o -> o instanceof EnricheableObject).forEach(o -> {
+            apContext.getEnricher().accept((EnricheableObject) o);
+        });
         targetStaging.addAdditionalObjects(fieldName, objects);
     }
 
