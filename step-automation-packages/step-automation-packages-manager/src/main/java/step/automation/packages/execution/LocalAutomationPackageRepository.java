@@ -24,6 +24,7 @@ import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
@@ -31,6 +32,7 @@ import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.ImportResult;
+import step.core.repositories.TestRunStatus;
 import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
@@ -39,6 +41,7 @@ import step.repositories.ArtifactRepositoryConstants;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The repository for artifacts already stored (deployed) in Step DB as automation packages
@@ -54,7 +57,7 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
         String apName = repositoryParameters.get(AP_NAME);
 
         ArtefactInfo info = new ArtefactInfo();
-        boolean isWrapInTestSet = Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "false"));
+        boolean isWrapInTestSet = isWrapPlansIntoTestSet(repositoryParameters);
         //Introduced for 28.1, previous execution do not have this field in repo parameters
         String rootType = repositoryParameters.get(ArtifactRepositoryConstants.PARAM_ROOT_TYPE);
         if (rootType != null) {
@@ -68,7 +71,28 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
 
     @Override
     public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
-        return new TestSetStatusOverview();
+        TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
+        if (isWrapPlansIntoTestSet(repositoryParameters)) {
+            PackageExecutionContext ctx = null;
+            try {
+                ctx = getOrRestorePackageExecutionContext(repositoryParameters, null, objectPredicate);
+                //If wrap we return all plans of the AP
+                List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
+                        .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
+                testSetStatusOverview.setRuns(runs);
+                return testSetStatusOverview;
+            } finally {
+                //If context is shared across multiple executions, it was created externally and will be closed by the creator,
+                // otherwise it should be closed once the executions ends from the execution context
+                if (ctx != null && !ctx.isShared()) {
+                    ctx.close();
+                }
+            }
+        } else {
+            //We do not handle this case
+            return testSetStatusOverview;
+        }
+
     }
 
     @Override
