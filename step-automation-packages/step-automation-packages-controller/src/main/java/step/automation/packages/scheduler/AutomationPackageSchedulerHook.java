@@ -29,6 +29,7 @@ import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.entities.Entity;
 import step.core.execution.model.ExecutionParameters;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectReference;
@@ -86,13 +87,14 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
     @Override
     public void onPrepareStaging(String fieldName, AutomationPackageContext apContext,
                                  AutomationPackageContent apContent, List<?> objects,
-                                 AutomationPackage oldPackage, AutomationPackageStaging targetStaging) {
+                                 AutomationPackage oldPackage, AutomationPackageStaging targetStaging, ObjectPredicate objectPredicate) {
         if (isSchedulerInContext(apContext)) {
             List<ExecutiontTaskParameters> preparedForStaging = prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects,
                     apContent,
                     apContext,
                     oldPackage,
-                    targetStaging.getPlans()
+                    targetStaging.getPlans(),
+                    objectPredicate
             );
 
             targetStaging.addAdditionalObjects(AutomationPackageSchedule.FIELD_NAME_IN_AP, preparedForStaging);
@@ -108,7 +110,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
                                                                                 AutomationPackageContent packageContent,
                                                                                 AutomationPackageContext packageContext,
                                                                                 AutomationPackage oldPackage,
-                                                                                List<Plan> plansStaging) {
+                                                                                List<Plan> plansStaging, ObjectPredicate objectPredicate) {
         List<ExecutiontTaskParameters> completeExecTasksParameters = new ArrayList<>();
         for (AutomationPackageSchedule schedule : objects) {
             ExecutiontTaskParameters execTaskParameters = new ExecutiontTaskParameters();
@@ -126,7 +128,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             }
             String assertionPlanName = schedule.getAssertionPlanName();
             if (assertionPlanName != null && !assertionPlanName.isEmpty()) {
-                Plan assertionPlan = lookupPlanByName(plansStaging, assertionPlanName, packageContext);
+                Plan assertionPlan = lookupPlanByName(plansStaging, assertionPlanName, packageContext, objectPredicate);
                 if (assertionPlan == null) {
                     throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
                             ". No assertion plan with '" + assertionPlanName + "' name found for schedule " + schedule.getName());
@@ -140,7 +142,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
                         ". Plan name is not defined for schedule " + schedule.getName());
             }
 
-            Plan plan = lookupPlanByName(plansStaging, planNameFromSchedule, packageContext);
+            Plan plan = lookupPlanByName(plansStaging, planNameFromSchedule, packageContext, objectPredicate);
             if (plan == null) {
                 throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
                         ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
@@ -182,7 +184,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
         }
     }
 
-    protected Plan lookupPlanByName(List<Plan> plansStaging, String planName, AutomationPackageContext context) {
+    protected Plan lookupPlanByName(List<Plan> plansStaging, String planName, AutomationPackageContext context, ObjectPredicate objectPredicate) {
         Plan plan = plansStaging.stream().filter(p -> Objects.equals(p.getAttribute(AbstractOrganizableObject.NAME), planName)).findFirst().orElse(null);
         if (plan == null) {
             //Get current package ID and use it to filter out deployd entities from previous version
@@ -191,7 +193,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             // schedule can reference the existing persisted plan (not defined inside the automation package)
             Filter persistedPlanFilter = Filters.and(List.of(Filters.equals("attributes." + AbstractOrganizableObject.NAME, planName),
                     Filters.not(Filters.equals("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, enrichablePlan.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID).toString()))));
-            plan = getPlanAccessor(context).getCollectionDriver().find(persistedPlanFilter,  null, null, 1, 0).findFirst().orElse(null);
+            plan = getPlanAccessor(context).getCollectionDriver().find(persistedPlanFilter,  null, null, null, 0).filter(objectPredicate).findFirst().orElse(null);
         }
         return plan;
     }

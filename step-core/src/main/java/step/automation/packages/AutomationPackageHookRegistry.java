@@ -1,10 +1,10 @@
 package step.automation.packages;
 
 import step.core.AbstractStepContext;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.ImportResult;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class AutomationPackageHookRegistry {
 
@@ -43,10 +43,10 @@ public class AutomationPackageHookRegistry {
                                         AutomationPackageContent apContent,
                                         List<T> objects,
                                         AutomationPackage oldPackage,
-                                        AutomationPackageStaging targetStaging) {
+                                        AutomationPackageStaging targetStaging, ObjectPredicate objectPredicate) {
         AutomationPackageHook<T> hook = (AutomationPackageHook<T>) getHook(fieldName);
         if (hook != null) {
-            hook.onPrepareStaging(fieldName, apContext, apContent, objects, oldPackage, targetStaging);
+            hook.onPrepareStaging(fieldName, apContext, apContent, objects, oldPackage, targetStaging, objectPredicate);
             return true;
         } else {
             return false;

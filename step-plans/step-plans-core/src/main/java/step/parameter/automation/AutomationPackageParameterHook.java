@@ -27,6 +27,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.InMemoryAccessor;
 import step.core.accessors.LayeredAccessor;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.ImportResult;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -60,7 +61,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
     }
 
     @Override
-    public void onPrepareStaging(String fieldName, AutomationPackageContext apContext, AutomationPackageContent apContent, List<?> objects, AutomationPackage oldPackage, AutomationPackageStaging targetStaging) {
+    public void onPrepareStaging(String fieldName, AutomationPackageContext apContext, AutomationPackageContent apContent, List<?> objects, AutomationPackage oldPackage, AutomationPackageStaging targetStaging, ObjectPredicate objectPredicate) {
         targetStaging.addAdditionalObjects(
                 AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
                 objects.stream().map(p -> ((AutomationPackageParameter)p).toParameter()).collect(Collectors.toList())

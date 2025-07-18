@@ -4,9 +4,9 @@ import org.bson.types.ObjectId;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.EnricheableObject;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.ImportResult;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +41,11 @@ public interface AutomationPackageHook<T> {
                                   AutomationPackageContent apContent,
                                   List<?> objects,
                                   AutomationPackage oldPackage,
-                                  AutomationPackageStaging targetStaging) {
-        // by default, we simply put the objects to staging
+                                  AutomationPackageStaging targetStaging, ObjectPredicate objectPredicate) {
+        // by default, we simply put the objects to staging after applying the enriches
+        objects.stream().filter(o -> o instanceof EnricheableObject).forEach(o -> {
+            apContext.getEnricher().accept((EnricheableObject) o);
+        });
         targetStaging.addAdditionalObjects(fieldName, objects);
     }
 
