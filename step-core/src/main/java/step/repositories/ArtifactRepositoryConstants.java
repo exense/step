@@ -40,6 +40,7 @@ public class ArtifactRepositoryConstants {
     public static final String PARAM_EXCLUDE_PLANS = "excludePlans";
     public static final String PARAM_INCLUDE_CATEGORIES = "includeCategories";
     public static final String PARAM_EXCLUDE_CATEGORIES = "excludeCategories";
+    public static final String PARAM_ROOT_TYPE = "rootType";
 
     // Parameters in Resource Artifact Repository
     public static final String RESOURCE_PARAM_RESOURCE_ID = "resourceId";

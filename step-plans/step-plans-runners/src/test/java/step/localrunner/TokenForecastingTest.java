@@ -425,7 +425,7 @@ public class TokenForecastingTest {
 	// so our expectations about how many threads should be used will not hold.
 	private void sleep() {
 		try {
-			Thread.sleep(60);
+			Thread.sleep(100);
 		} catch (InterruptedException ignored) {}
 	}
 
