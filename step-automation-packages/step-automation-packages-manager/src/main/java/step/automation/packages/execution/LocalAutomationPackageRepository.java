@@ -65,6 +65,7 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
         } else {
             info.setType((isWrapInTestSet) ? TestSet.class.getSimpleName() : TestCase.class.getSimpleName());
         }
+        //isolated execution wrapped in TestSet use the AP name as plan name, Non-wrapped AP execution create one execution per plan using the includePlans with the name of the plan to be executed
         info.setName((isWrapInTestSet) ? apName : repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS, apName));
         return info;
     }
@@ -82,8 +83,8 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
                 testSetStatusOverview.setRuns(runs);
                 return testSetStatusOverview;
             } finally {
-                //If context is shared across multiple executions, it was created externally and will be closed by the creator,
-                // otherwise it should be closed once the executions ends from the execution context
+                // getOrRestorePackageExecutionContext return an PackageExecutionContext than can be shared and reused, it should be only closed here if it's not shared
+                // even if with current implementation Local context are never shared only non-wrapped isolated executions are
                 if (ctx != null && !ctx.isShared()) {
                     ctx.close();
                 }

@@ -93,6 +93,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
         } else {
             info.setType((isWrapInTestSet) ? TestSet.class.getSimpleName() : TestCase.class.getSimpleName());
         }
+        //isolated execution wrapped in TestSet use the AP name as plan name, Non-wrapped AP execution create one execution per plan using the includePlans with the name of the plan to be executed
         info.setName((isWrapInTestSet) ? resource.getCustomField(AP_NAME_CUSTOM_FIELD, String.class) : repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS, apName));
         return info;
     }
