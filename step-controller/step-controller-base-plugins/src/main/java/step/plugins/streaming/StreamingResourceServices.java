@@ -75,15 +75,16 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
         } catch (Exception e) {
             throw new ResourceMissingException(resourceId);
         }
+        // FIXME: we probably actually want to allow this
         if (entity.status.getTransferStatus() == StreamingResourceTransferStatus.FAILED) {
             throw new IllegalArgumentException("The resource with ID " + resourceId + " has status " + entity.status.getTransferStatus());
         }
         long currentSize = Optional.ofNullable(entity.status.getCurrentSize()).orElse(0L);
         if (start != null && (start < 0 || start > currentSize)) {
-            throw new IllegalArgumentException("start must be between 0 and " + (currentSize - 1));
+            throw new IllegalArgumentException("start must be between 0 and " + currentSize);
         }
         if (end != null && (end < 0 || end > currentSize)) {
-            throw new IllegalArgumentException("end must be between 0 and " + (currentSize - 1));
+            throw new IllegalArgumentException("end must be between 0 and " + currentSize);
         }
         if (end != null && start != null && end < start) {
             throw new IllegalArgumentException("end must not be smaller than start");
@@ -101,8 +102,74 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
             }
         };
 
-        return Response.ok(streamingOutput, entity.mimeType)
-                .header("Content-Disposition", (inline ? "inline": "attachment") + "; filename=" + entity.filename)
+        String mimeType = entity.mimeType;
+        if (mimeType.startsWith("text/")) {
+            mimeType += "; charset=UTF-8";
+        }
+        String utf8Filename = entity.filename;
+        String asciiFilename = makeAsciiFilename(utf8Filename);
+        String filenameHeaderFragment = "; filename=\"" + asciiFilename + "\"";
+        if (!asciiFilename.equals(utf8Filename)) {
+            filenameHeaderFragment += "; filename*=UTF-8''" + encodeUtf8Filename(utf8Filename);
+        }
+
+        return Response.ok(streamingOutput, mimeType)
+                .header("Content-Disposition", (inline ? "inline" : "attachment") + filenameHeaderFragment)
                 .build();
     }
+
+    public static String makeAsciiFilename(String utf8Filename) {
+        if (utf8Filename == null || utf8Filename.isEmpty()) {
+            return "file"; // fallback default name
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < utf8Filename.length(); i++) {
+            char c = utf8Filename.charAt(i);
+
+            if (c <= 0x1F || c == 0x7F) {
+                // Control characters
+                sb.append('_');
+            } else if (c > 0x7F) {
+                // Non-ASCII
+                sb.append('_');
+            } else if ("\\/:*?\"<>|".indexOf(c) >= 0) {
+                // Forbidden on most file systems
+                sb.append('_');
+            } else {
+                sb.append(c);
+            }
+        }
+
+        String result = sb.toString();
+
+        // Remove trailing dots or spaces (Windows issue)
+        result = result.replaceAll("[.\\s]+$", "");
+
+        return result.isEmpty() ? "file" : result;
+    }
+
+    public static String encodeUtf8Filename(String filename) {
+        StringBuilder sb = new StringBuilder();
+
+        for (byte b : filename.getBytes(StandardCharsets.UTF_8)) {
+            int c = b & 0xFF;
+
+            // RFC 5987: "normal" unreserved characters
+            if ((c >= 'a' && c <= 'z') ||
+                    (c >= 'A' && c <= 'Z') ||
+                    (c >= '0' && c <= '9') ||
+                    c == '-' || c == '.' ||
+                    c == '_' || c == '~') {
+                sb.append((char) c);
+            } else {
+                // anything else: percent-encode
+                sb.append('%');
+                sb.append(String.format("%02X", c));
+            }
+        }
+
+        return sb.toString();
+    }
+
 }

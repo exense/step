@@ -308,7 +308,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					functionGroupSession.releaseTokens(true);
 				}
 				if (uploadContext != null) {
-					context.require(StreamingResourceUploadContexts.class).unregisterContext(uploadContext.contextId);
+					context.require(StreamingResourceUploadContexts.class).unregisterContext(uploadContext);
 				}
 				callChildrenArtefacts(node, testArtefact);
 			}

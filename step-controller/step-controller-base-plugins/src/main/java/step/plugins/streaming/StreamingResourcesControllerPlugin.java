@@ -32,7 +32,7 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     public static final String DOWNLOAD_PARAMETER_NAME = WebsocketDownloadEndpoint.DEFAULT_PARAMETER_NAME;
 
     private static final Logger logger = LoggerFactory.getLogger(StreamingResourcesControllerPlugin.class);
-    private final WebsocketServerEndpointSessionsHandler sessionsHandler = DefaultWebsocketServerEndpointSessionsHandler.getInstance();
+    private final WebsocketServerEndpointSessionsHandler sessionsHandler = new DefaultWebsocketServerEndpointSessionsHandler();
     private final StreamingResourceUploadContexts uploadContexts = new StreamingResourceUploadContexts();
     private String websocketBaseUrl;
 
@@ -68,8 +68,8 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
 
         FilesystemStreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageBaseDir);
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
-        StreamingResourceReferenceMapper mapper = new DefaultStreamingResourceReferenceMapper(websocketBaseUri, DOWNLOAD_PATH, DOWNLOAD_PARAMETER_NAME);
-        StreamingResourceManager manager = new DefaultStreamingResourceManager(catalog, storage, mapper, uploadContexts);
+        URITemplateBasedReferenceProducer referenceProducer = new URITemplateBasedReferenceProducer(websocketBaseUri, DOWNLOAD_PATH, DOWNLOAD_PARAMETER_NAME);
+        StreamingResourceManager manager = new DefaultStreamingResourceManager(catalog, storage, referenceProducer, uploadContexts);
 
         context.put(StreamingResourceCollectionCatalogBackend.class, catalog);
         context.put(FilesystemStreamingResourcesStorageBackend.class, storage);

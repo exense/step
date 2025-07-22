@@ -15,10 +15,12 @@ import step.streaming.websocket.client.upload.WebsocketUploadProvider;
 import java.io.File;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /* For now, these tests must be manually performed with an already running server (assumed at localhost:8080)
  */
+@SuppressWarnings("resource")
 @Ignore
 public class StreamingTests {
 
@@ -29,7 +31,7 @@ public class StreamingTests {
         File file = new File(Objects.requireNonNull(getClass().getClassLoader().getResource("streaming-test.txt")).getFile());
 
 
-        StreamingUpload upload = new WebsocketUploadProvider(uploadUri).startLiveFileUpload(file, metadata);
+        StreamingUpload upload = new WebsocketUploadProvider(uploadUri).startLiveTextFileUpload(file, metadata, StandardCharsets.UTF_8);
         StreamingResourceStatus status = upload.signalEndOfInput().get();
         Assert.assertEquals(StreamingResourceTransferStatus.COMPLETED, status.getTransferStatus());
         Assert.assertEquals(24, status.getCurrentSize().intValue());
@@ -41,7 +43,7 @@ public class StreamingTests {
         boolean print = true;
         // Use URI as given by testUpload
         String url = "ws://localhost:8080/ws/streaming/download/686e5899a3a0251772992954";
-        WebsocketDownload download = new WebsocketDownload(new StreamingResourceReference(URI.create(url), null));
+        WebsocketDownload download = new WebsocketDownload(new StreamingResourceReference(URI.create(url)));
         OutputStream leafOut = print? System.err : OutputStream.nullOutputStream();
         MD5CalculatingOutputStream out = new MD5CalculatingOutputStream(leafOut);
         download.getInputStream().transferTo(out);
