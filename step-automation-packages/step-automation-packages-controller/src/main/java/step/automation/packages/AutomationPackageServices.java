@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.Map;
 
+// TODO: improve the swagger doc for endpoint and params
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
 public class AutomationPackageServices extends AbstractStepAsyncServices {
@@ -233,11 +234,12 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
 
         try {
+            AutomationPackageFileSource keywordLibrarySource = getFileSource(keywordLibraryInputStream, keywordLibraryFileDetail, keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ");
             return automationPackageExecutor.runInIsolation(
                     automationPackageInputStream,
                     fileDetail == null ? null : fileDetail.getFileName(),
                     executionParameters,
-                    AutomationPackageFileSource.withInputStream(keywordLibraryInputStream, keywordLibraryFileDetail == null ? null : keywordLibraryFileDetail.getFileName()),
+                    keywordLibrarySource,
                     getObjectEnricher(),
                     getObjectPredicate()
             );
