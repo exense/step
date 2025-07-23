@@ -15,6 +15,7 @@ public class StreamingAttachmentMeta extends AttachmentMeta {
 
     private String mimeType;
     private Long currentSize;
+    private Long currentNumberOfLines;
     private Status status;
 
     public StreamingAttachmentMeta() {
@@ -43,6 +44,14 @@ public class StreamingAttachmentMeta extends AttachmentMeta {
         this.currentSize = currentSize;
     }
 
+    public Long getCurrentNumberOfLines() {
+        return currentNumberOfLines;
+    }
+
+    public void setCurrentNumberOfLines(Long currentNumberOfLines) {
+        this.currentNumberOfLines = currentNumberOfLines;
+    }
+
     public Status getStatus() {
         return status;
     }
@@ -58,6 +67,7 @@ public class StreamingAttachmentMeta extends AttachmentMeta {
                 ", name='" + name + '\'' +
                 ", mimeType='" + mimeType + '\'' +
                 ", currentSize=" + currentSize +
+                ", currentNumberOfLines=" + currentNumberOfLines +
                 ", status=" + status +
                 '}';
     }

@@ -245,17 +245,22 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 						@Override
 						public void onResourceCreated(String resourceId, StreamingResourceMetadata metadata) {
+							// This will create an attachment with its immutable properties, but it will not yet "publish" it to the reportNode or set its status etc.
 							streamingAttachments.put(resourceId, new StreamingAttachmentMeta(new ObjectId(resourceId), metadata.getFilename(), metadata.getMimeType()));
 						}
 
 						@Override
 						public void onResourceStatusChanged(String resourceId, StreamingResourceStatus status) {
+							// Here's where we update the attachment status etc.
 							StreamingAttachmentMeta attachment = streamingAttachments.get(resourceId);
 							if (attachment != null) {
-								boolean addNew = attachment.getStatus() == null;
+								// initially, there is no status set (see above)
+								boolean isFirstUpdate = attachment.getStatus() == null;
 								attachment.setCurrentSize(status.getCurrentSize());
+								attachment.setCurrentNumberOfLines(status.getNumberOfLines());
 								attachment.setStatus(StreamingAttachmentMeta.Status.valueOf(status.getTransferStatus().name()));
-								if (addNew) {
+								if (isFirstUpdate) {
+									// this ensures that attachments are added to the node exactly once, and with meaningful initial data
 									node.getAttachments().add(attachment);
 								}
 								reportNodeAccessor.save(node);
