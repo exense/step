@@ -1,10 +1,15 @@
 package step.plugins.streaming;
 
+import jakarta.servlet.http.HttpSession;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.HandshakeResponse;
+import jakarta.websocket.server.HandshakeRequest;
 import jakarta.websocket.server.ServerEndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.constants.StreamingConstants;
 import step.core.GlobalContext;
+import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.AbstractControllerPlugin;
@@ -20,12 +25,14 @@ import step.streaming.websocket.server.WebsocketUploadEndpoint;
 
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Supplier;
 
-@Plugin
+import static step.plugins.streaming.StepStreamingResourceManager.ATTRIBUTE_STEP_SESSION;
+
+@Plugin(dependencies = ObjectHookControllerPlugin.class)
 public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin {
     public static final String UPLOAD_PATH = WebsocketUploadEndpoint.DEFAULT_ENDPOINT_URL;
     public static final String DOWNLOAD_PATH = WebsocketDownloadEndpoint.DEFAULT_ENDPOINT_URL;
@@ -69,10 +76,9 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         FilesystemStreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageBaseDir);
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
         URITemplateBasedReferenceProducer referenceProducer = new URITemplateBasedReferenceProducer(websocketBaseUri, DOWNLOAD_PATH, DOWNLOAD_PARAMETER_NAME);
-        StreamingResourceManager manager = new DefaultStreamingResourceManager(catalog, storage, referenceProducer, uploadContexts);
+        StepStreamingResourceManager manager = new StepStreamingResourceManager(context, catalog, storage, referenceProducer, uploadContexts);
 
-        context.put(StreamingResourceCollectionCatalogBackend.class, catalog);
-        context.put(FilesystemStreamingResourcesStorageBackend.class, storage);
+        context.put(StepStreamingResourceManager.class, manager);
         context.getServiceRegistrationCallback().registerService(StreamingResourceServices.class);
 
         context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeUploadConfig(manager));
@@ -80,30 +86,37 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         logger.info("Streaming Websockets plugin started, upload/download URLs: {}, {}", websocketBaseUri + UPLOAD_PATH, websocketBaseUri + DOWNLOAD_PATH);
     }
 
+    private static class EndpointConfigurator extends ServerEndpointConfig.Configurator {
+
+        private final Supplier<Endpoint> constructor;
+        public EndpointConfigurator(Supplier<Endpoint> constructor) {
+            this.constructor = constructor;
+        }
+
+        @Override
+        public void modifyHandshake(ServerEndpointConfig config, HandshakeRequest request, HandshakeResponse response) {
+            HttpSession httpSession = (HttpSession) request.getHttpSession();
+            if (httpSession != null) {
+                config.getUserProperties().put(ATTRIBUTE_STEP_SESSION, httpSession.getAttribute("session"));
+            }
+        }
+
+        @Override
+        public <T> T getEndpointInstance(Class<T> endpointClass) {
+            return endpointClass.cast(constructor.get());
+        }
+    }
+
     private ServerEndpointConfig makeUploadConfig(StreamingResourceManager manager) {
-        return ServerEndpointConfig.Builder.create(WebsocketUploadEndpoint.class, UPLOAD_PATH)
-                .configurator(new ServerEndpointConfig.Configurator() {
-                    @Override
-                    public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
-                        return endpointClass.cast(new WebsocketUploadEndpoint(manager, sessionsHandler));
-                    }
-                })
+        return ServerEndpointConfig.Builder.create(StepWebsocketUploadEndpoint.class, UPLOAD_PATH)
+                .configurator(new EndpointConfigurator(() -> new StepWebsocketUploadEndpoint(manager, sessionsHandler)))
                 .build();
     }
 
-    private ServerEndpointConfig makeDownloadConfig(StreamingResourceManager manager) {
-        return ServerEndpointConfig.Builder.create(WebsocketDownloadEndpoint.class, DOWNLOAD_PATH)
-                .configurator(new ServerEndpointConfig.Configurator() {
-                    @Override
-                    public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
-                        return endpointClass.cast(new WebsocketDownloadEndpoint(manager, sessionsHandler, DOWNLOAD_PARAMETER_NAME));
-                    }
-                })
+    private ServerEndpointConfig makeDownloadConfig(StepStreamingResourceManager manager) {
+        return ServerEndpointConfig.Builder.create(StepWebsocketDownloadEndpoint.class, DOWNLOAD_PATH)
+                .configurator(new EndpointConfigurator(() -> new StepWebsocketDownloadEndpoint(manager, sessionsHandler, DOWNLOAD_PARAMETER_NAME)))
                 .build();
-    }
-
-    private URI changeURIPort(URI u, int newPort) throws URISyntaxException {
-        return new URI(u.getScheme(), u.getUserInfo(), u.getHost(), newPort, u.getPath(), u.getQuery(), u.getFragment());
     }
 
     @Override

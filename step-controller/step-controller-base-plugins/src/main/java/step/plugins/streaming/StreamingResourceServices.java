@@ -24,15 +24,13 @@ import java.util.Optional;
 @Tag(name = "Streaming Resources")
 public class StreamingResourceServices extends AbstractStepAsyncServices {
 
-    StreamingResourceCollectionCatalogBackend catalog;
-    FilesystemStreamingResourcesStorageBackend storage;
+    StepStreamingResourceManager manager;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         GlobalContext globalContext = getContext();
-        catalog = globalContext.get(StreamingResourceCollectionCatalogBackend.class);
-        storage = globalContext.get(FilesystemStreamingResourcesStorageBackend.class);
+        manager = globalContext.get(StepStreamingResourceManager.class);
     }
 
     @GET
@@ -71,14 +69,13 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
     public Response download(@PathParam("id") String resourceId, @QueryParam("start") Long start, @QueryParam("end") Long end, @QueryParam("inline") boolean inline) throws IOException {
         StreamingResource entity;
         try {
-            entity = catalog.getEntity(resourceId);
+            entity = manager.getCatalog().getEntity(resourceId);
         } catch (Exception e) {
             throw new ResourceMissingException(resourceId);
         }
-        // FIXME: we probably actually want to allow this
-        if (entity.status.getTransferStatus() == StreamingResourceTransferStatus.FAILED) {
-            throw new IllegalArgumentException("The resource with ID " + resourceId + " has status " + entity.status.getTransferStatus());
-        }
+
+        manager.checkDownloadPermission(entity, getSession());
+
         long currentSize = Optional.ofNullable(entity.status.getCurrentSize()).orElse(0L);
         if (start != null && (start < 0 || start > currentSize)) {
             throw new IllegalArgumentException("start must be between 0 and " + currentSize);
@@ -95,7 +92,7 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
 
 
         StreamingOutput streamingOutput = outputStream -> {
-            try (outputStream; InputStream inputStream = storage.openReadStream(resourceId, downloadStart, downloadEnd)) {
+            try (outputStream; InputStream inputStream = manager.getStorage().openReadStream(resourceId, downloadStart, downloadEnd)) {
                 inputStream.transferTo(outputStream);
             } catch (IOException e) {
                 throw new WebApplicationException(e);

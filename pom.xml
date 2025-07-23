@@ -49,7 +49,7 @@
 
 		<step-grid.version>2.4.0</step-grid.version>
 		<step-framework.version>2025.7.4-6867e4f4f551c55946e46d50</step-framework.version>
-		<step-streaming.version>2025.7.22-687f889c6832f859e97082d1</step-streaming.version>
+		<step-streaming.version>2025.7.23-6880f306d3337016e1f9f9ee</step-streaming.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>

@@ -50,6 +50,7 @@ import step.core.execution.ExecutionContextWrapper;
 import step.core.execution.OperationMode;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.reports.Error;
@@ -220,11 +221,26 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				node.setTokenId(token.getID());
 
 				Token gridToken = token.getToken();
+				/* Support for streaming uploads produced during this call. We create and register a new context,
+				provide the necessary information for the upload provider, and set up a listener for the context,
+				so we can populate the attachment metadata in realtime and attach it to the report node.
+				*/
+
 				// FIXME: This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
                 StreamingResourceUploadContexts uploadContexts = context.get(StreamingResourceUploadContexts.class);
 				if (uploadContexts != null) {
 					uploadContext = new StreamingResourceUploadContext();
 					uploadContexts.registerContext(uploadContext);
+					ObjectEnricher enricher = context.getObjectEnricher();
+					if (enricher != null) {
+						uploadContext.getAttributes().put(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER, enricher);
+					}
+
+					input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL));
+					input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH));
+					input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, uploadContext.contextId);
+
+
 					uploadContexts.registerListener(uploadContext.contextId, new StreamingResourceUploadContextListener() {
 
 						@Override
@@ -248,9 +264,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 							}
 						}
 					});
-					input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL));
-					input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH));
-					input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, uploadContext.contextId);
 				}
 
 				if(gridToken.isLocal()) {
