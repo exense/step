@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -39,14 +40,9 @@ public class Activator {
 	public static final String DEFAULT_SCRIPT_ENGINE = "groovy";
 
 	public static final Logger logger = LoggerFactory.getLogger(Activator.class);
-	
-	public static <T extends ActivableObject> List<T> compileActivationExpressions(List<T> objects, String defaultScriptEngine) throws ScriptException {
-		for(ActivableObject object:objects) {
-			compileActivationExpression(object, defaultScriptEngine);
-		}
-		return objects; 
-	}
-	
+	private static final ScriptEngineManager manager = new ScriptEngineManager();
+	private static final ConcurrentHashMap<String, ScriptEngine> scriptEngines = new ConcurrentHashMap<>();
+
 	public static void compileActivationExpression(ActivableObject object, String defaultScriptEngine) throws ScriptException {
 		Expression expression = object.getActivationExpression();
 		compileExpression(expression, defaultScriptEngine);
@@ -54,20 +50,20 @@ public class Activator {
 
 	protected static void compileExpression(Expression expression, String defaultScriptEngine) throws ScriptException {
 		if(expression!=null && expression.compiledScript==null) {
-			String scriptEngine = expression.scriptEngine!=null?expression.scriptEngine:defaultScriptEngine;
-
 			if(expression.script!=null && expression.script.trim().length()>0) {
-				ScriptEngineManager manager = new ScriptEngineManager();
-		        ScriptEngine engine = manager.getEngineByName(scriptEngine);
-
-		        CompiledScript script = ((Compilable)engine).compile(expression.script);
-		        expression.compiledScript = script;
+				ScriptEngine engine = getScriptEngineForExpression(expression, defaultScriptEngine);
+				expression.compiledScript = ((Compilable)engine).compile(expression.script);
 			} else {
 				expression.compiledScript = null;
 			}
 		}
 	}
-	
+
+	private static ScriptEngine getScriptEngineForExpression(Expression expression, String defaultScriptEngine) {
+		String scriptEngine = expression.scriptEngine != null ? expression.scriptEngine : defaultScriptEngine;
+		return scriptEngines.computeIfAbsent(scriptEngine, manager::getEngineByName);
+	}
+
 	public static Boolean evaluateActivationExpression(Bindings bindings, Expression activationExpression, String defaultScriptEngine) {
 		Boolean expressionResult; 
 		if(activationExpression!=null) {
@@ -76,10 +72,16 @@ public class Activator {
 			} catch (ScriptException e1) {
 				logger.error("Error while evaluating expression "+activationExpression, e1);
 			}
+			// If the map wrapped by the bindings object is immutable (Map.of), it causes issues in the script engine
+			// We therefore recreate a fresh bindings object
+			Bindings newBindings = new SimpleBindings();
+			if (bindings != null) {
+				newBindings.putAll(bindings);
+			}
 			CompiledScript script = activationExpression.compiledScript;
 			if(script!=null) {
 				try {
-					Object evaluationResult = script.eval(bindings);
+					Object evaluationResult = script.eval(newBindings);
 					if(evaluationResult instanceof Boolean) {
 						expressionResult = (Boolean) evaluationResult;
 					} else {
