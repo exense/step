@@ -34,6 +34,7 @@ public class AutomationPackageContext {
     private AutomationPackageContent packageContent;
     private String keywordLibraryResource;
 
+    private String actorUser;
     private ObjectEnricher enricher;
 
     /**
@@ -47,13 +48,14 @@ public class AutomationPackageContext {
     public final AutomationPackageOperationMode operationMode;
 
     public AutomationPackageContext(AutomationPackageOperationMode operationMode, ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive,
-                                    AutomationPackageContent packageContent, String keywordLibraryResource,
+                                    AutomationPackageContent packageContent, String keywordLibraryResource, String actorUser,
                                     ObjectEnricher enricher, Map<String, Object> extensions) {
         this.operationMode = Objects.requireNonNull(operationMode);
         this.resourceManager = resourceManager;
         this.automationPackageArchive = automationPackageArchive;
         this.packageContent = packageContent;
         this.keywordLibraryResource = keywordLibraryResource;
+        this.actorUser = actorUser;
         this.enricher = enricher;
         this.extensions = extensions;
     }
@@ -92,5 +94,13 @@ public class AutomationPackageContext {
 
     public String getKeywordLibraryResource() {
         return keywordLibraryResource;
+    }
+
+    public String getActorUser() {
+        return actorUser;
+    }
+
+    public void setActorUser(String actorUser) {
+        this.actorUser = actorUser;
     }
 }

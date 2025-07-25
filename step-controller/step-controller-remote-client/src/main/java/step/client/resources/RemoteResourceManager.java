@@ -89,7 +89,7 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, true, null);
 	}
 	
-	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, boolean checkForDuplicates, String trackingAttribute) {
+	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, boolean checkForDuplicates, String trackingValue) {
 		MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
         multiPart.bodyPart(bodyPart);
@@ -98,9 +98,10 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
         params.put("type", type);
 		params.put("directory", Boolean.toString(isDirectory));
         params.put("duplicateCheck", Boolean.toString(checkForDuplicates));
-		if (trackingAttribute != null) {
-			params.put("trackingAttribute", trackingAttribute);
+		if (trackingValue != null) {
+			params.put("trackingAttribute", trackingValue);
 		}
+		// in RemoteResourceManager we ignore actor user, because in remote services he will be automatically resolved from authentication context
         Builder b = requestBuilder("/rest/resources/content", params);
         return executeRequest(()->b.post(Entity.entity(multiPart, multiPart.getMediaType()), ResourceUploadResponse.class));
 	}
@@ -125,23 +126,24 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 
 	@Override
 	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName,
-			boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException {
-		return createResource(resourceType, false, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+								   boolean checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException {
+		return createResource(resourceType, false, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, actorUser);
 	}
 
 	@Override
 	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName,
-								   boolean checkForDuplicates, ObjectEnricher objectEnricher) {
-		return createResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, null);
+								   boolean checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) {
+		return createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, null, null);
 	}
 
 	@Override
-	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String trackingAttribute) {
+	public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher,
+										  String trackingValue, String actorUser) {
 		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 
 		// !!! in fact, 'checkForDuplicates' parameter is ignored, because the list of found duplicated resources (with the same hash sums)
 		// is located in ResourceUploadResponse.similarResources, but we ignore this list here and just take the uploaded resource
-		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, checkForDuplicates, trackingAttribute);
+		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, checkForDuplicates, trackingValue);
 		return upload.getResource();
 	}
 
@@ -151,7 +153,7 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	@Override
-	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName)
+	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String actorUser)
 			throws IOException {
 		
 		return null;
@@ -241,7 +243,7 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	@Override
-	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName)
+	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String actorUser)
 			throws IOException {
 		throw new RuntimeException("Not implemented");
 	}

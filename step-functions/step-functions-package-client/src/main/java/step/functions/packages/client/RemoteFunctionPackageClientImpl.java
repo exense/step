@@ -46,7 +46,8 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 				File file = packageLibraryFile.getFile();
 				try {
 					// TODO: here we want to protect against uploading duplicated resources (checkForDuplicates=true), but the remoteResourceManager now doesn't support this (should be fixed)
-					remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(), true, null);
+					// actor user is null here, because it doesn't make sense in the remote client - user will be anyway resolved on server side
+					remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(), true, null, null);
 				} catch (SimilarResourceExistingException e) {
 					// in case of existing resource with the same hash sum we want to use it
 					if (e.getSimilarResources() != null && !e.getSimilarResources().isEmpty()) {
@@ -129,7 +130,8 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 
 	protected Resource upload(File file) throws IOException {
 		try {
-			return remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(), false, null);
+			// actor user is null here, because it doesn't make sense in the remote client - user will be anyway resolved on server side
+			return remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(), false, null, null);
 		} catch (IOException e) {
 			throw e;
 		} catch (SimilarResourceExistingException e) {

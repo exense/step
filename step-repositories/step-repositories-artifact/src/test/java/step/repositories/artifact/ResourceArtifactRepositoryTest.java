@@ -63,7 +63,7 @@ public class ResourceArtifactRepositoryTest {
                 executionContext.put(FunctionTypeRegistry.class, functionTypeRegistry);
 
                 // upload the jar
-                Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, "plans-with-keywords.jar", false, null);
+                Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, "plans-with-keywords.jar", false, null, "testUser");
                 log.info("Resource uploaded: {}", resource.getId().toString());
 
                 Map<String, String> repoParams = new HashMap<>();

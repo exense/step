@@ -21,9 +21,10 @@ package step.resources;
 import org.bson.types.ObjectId;
 
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractTrackedObject;
 import step.core.objectenricher.EnricheableObject;
 
-public class Resource extends AbstractOrganizableObject implements EnricheableObject {
+public class Resource extends AbstractTrackedObject implements EnricheableObject {
 
 	public static final String TRACKING_FIELD = "tracking";
 
