@@ -18,17 +18,18 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.CallPlan;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.entities.activation.Activator;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class PlanLocator {
 
@@ -36,11 +37,13 @@ public class PlanLocator {
 	
 	private final PlanAccessor accessor;
 	private final SelectorHelper selectorHelper;
+	private final ApEntitiesPrioritizer apEntitiesPrioritizer;
 
-	public PlanLocator(PlanAccessor accessor, SelectorHelper selectorHelper) {
+	public PlanLocator(PlanAccessor accessor, SelectorHelper selectorHelper, Activator activator) {
 		super();
 		this.accessor = accessor;
 		this.selectorHelper = selectorHelper;
+		this.apEntitiesPrioritizer = new ApEntitiesPrioritizer(activator);
 	}
 	
 	/**
@@ -66,7 +69,7 @@ public class PlanLocator {
 
 			// The same logic as for functions - plans from current automation package have priority in 'CallPlan'
 			// We use prioritization by current automation package and filtering by activation expressions
-			List<Plan> orderedPlans = FunctionLocator.prioritizeAndFilterApEntities(matchingPlans, bindings);
+			List<Plan> orderedPlans = apEntitiesPrioritizer.prioritizeAndFilterApEntities(matchingPlans, bindings);
 			a = orderedPlans.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find plan with attributes: "+selectionAttributes.toString()));
 		}
 		return a;

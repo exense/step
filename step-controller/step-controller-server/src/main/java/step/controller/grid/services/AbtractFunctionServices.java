@@ -40,6 +40,8 @@ import step.core.entities.EntityManager;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
+import step.entities.activation.Activator;
+import step.expressions.ExpressionHandler;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
 import step.functions.Function;
@@ -84,9 +86,10 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 		functionAccessor = getContext().get(FunctionAccessor.class);
 		functionManager = getContext().get(FunctionManager.class);
 		functionExecutionService = getContext().get(FunctionExecutionService.class);
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+		ExpressionHandler expressionHandler = getContext().getExpressionHandler();
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
 		selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
+		functionLocator = new FunctionLocator(functionAccessor, selectorHelper, new Activator(expressionHandler));
 		objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);
 	}
 

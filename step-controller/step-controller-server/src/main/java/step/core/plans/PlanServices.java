@@ -42,6 +42,8 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.EntityManager;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
+import step.entities.activation.Activator;
+import step.expressions.ExpressionHandler;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 import step.plans.parser.yaml.YamlPlanReader;
@@ -215,9 +217,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		Plan result = null;
 		PlanNavigator planNavigator = new PlanNavigator(plan);
 		CallPlan artefact = (CallPlan) planNavigator.findArtefactById(artefactId);
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
-		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
+		PlanLocator planLocator = getPlanLocator();
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		try {
 			result = planLocator.selectPlan(artefact, objectPredicate, null);
@@ -233,14 +233,20 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Secured(right="{entity}-read")
 	public Plan lookupCallPlan(CallPlan callPlan) {
 		Plan result = null;
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
-		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
+		PlanLocator planLocator = getPlanLocator();
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		try {
 			result = planLocator.selectPlan(callPlan, objectPredicate, null);
 		} catch (RuntimeException e) {}
 		return result;
+	}
+
+	private PlanLocator getPlanLocator() {
+		GlobalContext context = getContext();
+		ExpressionHandler expressionHandler = context.getExpressionHandler();
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
+		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+        return new PlanLocator(context.getPlanAccessor(), selectorHelper, new  Activator(expressionHandler));
 	}
 
 	@Operation(description = "Clones the provided artefact.")

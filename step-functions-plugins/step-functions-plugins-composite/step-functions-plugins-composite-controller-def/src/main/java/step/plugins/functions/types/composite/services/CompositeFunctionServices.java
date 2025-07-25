@@ -40,6 +40,8 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.*;
+import step.entities.activation.Activator;
+import step.expressions.ExpressionHandler;
 import step.framework.server.security.Secured;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -104,9 +106,10 @@ public class CompositeFunctionServices extends AbstractStepServices {
         Plan result = null;
         PlanNavigator planNavigator = new PlanNavigator(plan);
         CallPlan artefact = (CallPlan) planNavigator.findArtefactById(artefactId);
-        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+        ExpressionHandler expressionHandler = getContext().getExpressionHandler();
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
         SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-        PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
+        PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper, new Activator(expressionHandler));
         ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
         try {
             result = planLocator.selectPlan(artefact, objectPredicate, null);

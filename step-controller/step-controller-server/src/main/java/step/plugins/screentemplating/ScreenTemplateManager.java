@@ -18,6 +18,10 @@
  ******************************************************************************/
 package step.plugins.screentemplating;
 
+import org.bson.types.ObjectId;
+import step.core.objectenricher.ObjectPredicate;
+import step.entities.activation.Activator;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,28 +29,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import ch.exense.commons.app.Configuration;
-import org.bson.types.ObjectId;
-
-import step.commons.activation.Activator;
-import step.core.objectenricher.ObjectPredicate;
-
-import javax.script.SimpleBindings;
-
-import static step.commons.activation.Activator.evaluateActivationExpression;
 
 public class ScreenTemplateManager {
 
 	protected final List<ScreenTemplateChangeListener> listeners = new ArrayList<>();
 	
 	protected ScreenInputAccessor screenInputAccessor;
-	protected String defaultScriptEngine;
+	private final Activator activator;
 
-	public ScreenTemplateManager(ScreenInputAccessor screenInputAccessor, Configuration configuration) {
+	public ScreenTemplateManager(ScreenInputAccessor screenInputAccessor, Activator activator) {
 		super();
 		this.screenInputAccessor = screenInputAccessor;
-		this.defaultScriptEngine = configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE);
-	}
+        this.activator = activator;
+    }
 
 	public List<Input> getInputsForScreen(String screenId, Map<String,Object> contextBindings, ObjectPredicate objectPredicate) {
 		Stream<ScreenInput> stream = screenInputAccessor.getScreenInputsByScreenId(screenId).stream();
@@ -56,12 +51,12 @@ public class ScreenTemplateManager {
 		List<Input> screenInputs = stream.map(i->i.getInput()).collect(Collectors.toList());
 		
 		List<Input> result = new ArrayList<>();
-		List<Input> inputs =  Activator.findAllMatches(contextBindings, screenInputs, defaultScriptEngine);
+		List<Input> inputs =  activator.findAllMatches(contextBindings, screenInputs);
 		for(Input input:inputs) {
 			List<Option> options = input.getOptions();
 			List<Option> activeOptions = null;
 			if(options!=null) {
-				activeOptions = Activator.findAllMatches(contextBindings, options, defaultScriptEngine);
+				activeOptions = activator.findAllMatches(contextBindings, options);
 			}
 			Input clone = new Input(input.getType(), input.getId(), input.getLabel(), input.getDescription(), activeOptions);
 			clone.setCustomUIComponents(input.getCustomUIComponents());
@@ -110,7 +105,7 @@ public class ScreenTemplateManager {
 		contextBindings.putAll(defaultValuesAsBindings);
 
 		List<ScreenInput> result = new ArrayList<>();
-		List<ScreenInput> activatedScreeninputs =  findAllMatches(contextBindings, screenInputs, defaultScriptEngine);
+		List<ScreenInput> activatedScreeninputs =  findAllMatches(contextBindings, screenInputs);
 		for(ScreenInput screenInput:activatedScreeninputs) {
 			//We keep the same logic as legacy methods to create a clone, to avoid any unexpected update in DB
 			//The client still needs to be able to map by ID with the source screen inputs in DB
@@ -125,7 +120,7 @@ public class ScreenTemplateManager {
 			List<Option> options = input.getOptions();
 			List<Option> activeOptions = null;
 			if(options!=null) {
-				activeOptions = Activator.findAllMatches(contextBindings, options, defaultScriptEngine);
+				activeOptions = activator.findAllMatches(contextBindings, options);
 			}
 			Input clone = new Input(input.getType(), input.getId(), input.getLabel(), input.getDescription(), activeOptions);
 			clone.setCustomUIComponents(input.getCustomUIComponents());
@@ -138,10 +133,10 @@ public class ScreenTemplateManager {
 		return result;
 	}
 
-	private List<ScreenInput> findAllMatches(Map<String, Object> bindings, List<ScreenInput> screenInputs, String defaultScriptEngine) {
+	private List<ScreenInput> findAllMatches(Map<String, Object> bindings, List<ScreenInput> screenInputs) {
 		List<ScreenInput> result = new ArrayList<>();
 		for(ScreenInput screenInput:screenInputs) {
-			Boolean expressionResult = evaluateActivationExpression(bindings!=null?new SimpleBindings(bindings):null, screenInput.getInput().getActivationExpression(), defaultScriptEngine);
+			boolean expressionResult = activator.evaluateActivationExpression(bindings, screenInput.getInput().getActivationExpression());
 
 			if(expressionResult) {
 				result.add(screenInput);

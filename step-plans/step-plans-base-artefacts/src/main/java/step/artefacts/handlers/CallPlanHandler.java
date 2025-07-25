@@ -32,6 +32,8 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.json.JsonProviderCache;
 import step.core.plans.Plan;
+import step.entities.activation.Activator;
+import step.expressions.ExpressionHandler;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -47,8 +49,9 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
-		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		planLocator = new PlanLocator(context.getPlanAccessor(), new SelectorHelper(dynamicJsonObjectResolver));
+		ExpressionHandler expressionHandler = context.getExpressionHandler();
+		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
+		planLocator = new PlanLocator(context.getPlanAccessor(), new SelectorHelper(dynamicJsonObjectResolver), new Activator(expressionHandler));
 	}
 	
 	@Override

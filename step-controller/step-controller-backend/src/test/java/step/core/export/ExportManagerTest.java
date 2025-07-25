@@ -57,6 +57,7 @@ import step.core.plans.PlanAccessor;
 import step.core.plans.PlanEntity;
 import step.core.plans.builder.PlanBuilder;
 import step.datapool.excel.ExcelDataPool;
+import step.entities.activation.Activator;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
@@ -141,11 +142,13 @@ public class ExportManagerTest {
 		entityManager = new EntityManager();
 		
 		FileResolver fileResolver = new FileResolver(resourceManager);
-		SelectorHelper selectorHelper = new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler())));
-		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
+		ExpressionHandler expressionHandler = new ExpressionHandler();
+		SelectorHelper selectorHelper = new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler)));
+		Activator activator = new Activator(expressionHandler);
+		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper, activator);
 		entityManager
 				.register(new Entity<>(Parameter.ENTITY_NAME, parameterAccessor, Parameter.class))
-				.register(new PlanEntity(planAccessor, new PlanLocator(planAccessor, selectorHelper), entityManager))
+				.register(new PlanEntity(planAccessor, new PlanLocator(planAccessor, selectorHelper, activator), entityManager))
 				.register(new FunctionEntity(functionAccessor, functionLocator, entityManager))
 				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver, entityManager))
 				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));

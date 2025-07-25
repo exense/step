@@ -26,15 +26,13 @@ import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
+import step.entities.activation.Activator;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 
 @Plugin(dependencies= {BasePlugin.class})
 public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
-
-    public static final String STEP_PARAMTER_SCRIPT_ENGINE = "StepParamterScriptEngine";
-    public static final String defaultScriptEngine = "groovy";
 
     public ParameterManagerLocalPlugin() {
         super();
@@ -52,25 +50,11 @@ public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
         Accessor<Parameter> parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
         EncryptionManager encryptionManager = executionEngineContext.get(EncryptionManager.class);
 
-        String scriptEngine = getScriptEngine();
-        ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, scriptEngine, executionEngineContext.getDynamicBeanResolver());
+        ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager,
+                executionEngineContext.getDynamicBeanResolver(), new Activator(executionEngineContext.getExpressionHandler()));
         executionEngineContext.put(ParameterManager.class, parameterManager);
 
         configure(parameterManager);
-    }
-
-    private String getScriptEngine() {
-        String scriptEngine = defaultScriptEngine;
-        String propertyVar = System.getProperty(STEP_PARAMTER_SCRIPT_ENGINE);
-        if (propertyVar != null && !propertyVar.isBlank()) {
-            scriptEngine = propertyVar;
-        } else {
-            String envVar = System.getenv(STEP_PARAMTER_SCRIPT_ENGINE);
-            if (envVar != null && ! envVar.isBlank()) {
-                scriptEngine = envVar;
-            }
-        }
-        return scriptEngine;
     }
 
 }

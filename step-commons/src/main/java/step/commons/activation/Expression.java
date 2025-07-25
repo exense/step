@@ -18,15 +18,12 @@
  ******************************************************************************/
 package step.commons.activation;
 
-import javax.script.CompiledScript;
-
 public class Expression {
 
-	String script;
-	
-	String scriptEngine;
-	
-	CompiledScript compiledScript;
+	public String script;
+
+	// This field isn't used anymore but has been kept in order to avoid serialization exceptions
+	public String scriptEngine;
 
 	public Expression() {
 		super();

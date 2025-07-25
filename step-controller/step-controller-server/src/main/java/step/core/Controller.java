@@ -57,6 +57,7 @@ import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.ScheduleEntity;
+import step.entities.activation.Activator;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
 import step.framework.server.ServiceRegistrationCallback;
@@ -178,12 +179,13 @@ public class Controller {
 				configuration.getPropertyAsInteger("tec.expressions.warningthreshold",200),
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000),
 				configuration.getPropertyAsInteger("tec.expressions.pool.maxidle",-1)));
-		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
+		ExpressionHandler expressionHandler = context.getExpressionHandler();
+		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(expressionHandler)));
 		
 		context.setEntityManager(new EntityManager());
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		PlanLocator planLocator = new PlanLocator(context.getPlanAccessor(), selectorHelper);
+		PlanLocator planLocator = new PlanLocator(context.getPlanAccessor(), selectorHelper, new Activator(expressionHandler));
 		
 		EntityManager entityManager = context.getEntityManager();
 		entityManager

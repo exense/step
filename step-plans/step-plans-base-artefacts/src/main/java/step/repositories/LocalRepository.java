@@ -33,6 +33,7 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.*;
+import step.entities.activation.Activator;
 import step.expressions.ExpressionHandler;
 
 import java.util.List;
@@ -49,7 +50,7 @@ public class LocalRepository extends AbstractRepository {
 		this.planAccessor = planAccessor;
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		planLocator = new PlanLocator(planAccessor, selectorHelper);
+		planLocator = new PlanLocator(planAccessor, selectorHelper, new Activator(expressionHandler));
 	}
 
 	@Override

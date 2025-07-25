@@ -36,6 +36,7 @@ import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.*;
 import step.datapool.excel.ExcelDataPool;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.entities.activation.Activator;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessorImpl;
@@ -104,7 +105,8 @@ public class AutomationPackageManagerOSTest {
         this.automationPackageAccessor = new AutomationPackageAccessorImpl(new InMemoryCollection<>());
         this.functionAccessor = new FunctionAccessorImpl(new InMemoryCollection<>());
         this.parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
-        ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, "groovy", new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
+        ExpressionHandler expressionHandler = new ExpressionHandler();
+        ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, new DynamicBeanResolver(new DynamicValueResolver(expressionHandler)), new Activator(expressionHandler));
 
         Configuration configuration = createTestConfiguration();
         this.resourceManager = new LocalResourceManagerImpl();
