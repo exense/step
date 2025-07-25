@@ -40,7 +40,7 @@ public class ScreenTemplateManager {
 	public ScreenTemplateManager(ScreenInputAccessor screenInputAccessor, Activator activator) {
 		super();
 		this.screenInputAccessor = screenInputAccessor;
-        this.activator = activator;
+		this.activator = activator;
     }
 
 	public List<Input> getInputsForScreen(String screenId, Map<String,Object> contextBindings, ObjectPredicate objectPredicate) {

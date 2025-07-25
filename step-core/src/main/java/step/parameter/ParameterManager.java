@@ -103,8 +103,8 @@ public class ParameterManager {
 		Map<String, List<Parameter>> parameterMap = new HashMap<>();
 		parameterAccessor.getAll().forEachRemaining(p->{
 			if(objectPredicate==null || objectPredicate.test(p)) {
-                List<Parameter> parameters = parameterMap.computeIfAbsent(p.key, k -> new ArrayList<>());
-                parameters.add(p);
+				List<Parameter> parameters = parameterMap.computeIfAbsent(p.key, k -> new ArrayList<>());
+				parameters.add(p);
 			}
 		});
 		

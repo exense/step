@@ -246,7 +246,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		ExpressionHandler expressionHandler = context.getExpressionHandler();
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-        return new PlanLocator(context.getPlanAccessor(), selectorHelper, new  Activator(expressionHandler));
+		return new PlanLocator(context.getPlanAccessor(), selectorHelper, new  Activator(expressionHandler));
 	}
 
 	@Operation(description = "Clones the provided artefact.")

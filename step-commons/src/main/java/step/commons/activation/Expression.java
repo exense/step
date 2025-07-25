@@ -20,10 +20,10 @@ package step.commons.activation;
 
 public class Expression {
 
-	public String script;
+	private String script;
 
 	// This field isn't used anymore but has been kept in order to avoid serialization exceptions
-	public String scriptEngine;
+	private String scriptEngine;
 
 	public Expression() {
 		super();

@@ -46,19 +46,19 @@ public class Activator {
         if (activationExpression != null) {
             try {
                 Bindings newBindings = bindings != null ? new SimpleBindings(bindings) : new SimpleBindings();
-                Object evaluationResult = expressionHandler.evaluateGroovyExpression(activationExpression.script, newBindings);
+                Object evaluationResult = expressionHandler.evaluateGroovyExpression(activationExpression.getScript(), newBindings);
                 if (evaluationResult instanceof Boolean) {
                     result = (Boolean) evaluationResult;
                 } else {
                     // For historical reasons we're returning false when the result of an expression is not a boolean
                     // Changing this could cause unexpected exceptions where ever activation expression are executed
-                    logger.warn("The evaluation of the activation expression {} did not return a boolean. Returning false by default", activationExpression.script);
+                    logger.warn("The evaluation of the activation expression {} did not return a boolean. Returning false by default", activationExpression.getScript());
                     result = false;
                 }
             } catch (Exception e) {
                 // For historical reasons we're returning false when the execution of an expression throws an error
                 // Changing this could cause unexpected exceptions where ever activation expression are executed
-                logger.warn("The evaluation of the activation expression {} failed. Returning false by default", activationExpression.script, e);
+                logger.warn("The evaluation of the activation expression {} failed. Returning false by default", activationExpression.getScript(), e);
                 result = false;
             }
         } else {
@@ -70,7 +70,7 @@ public class Activator {
 
     public <T extends ActivableObject> T findBestMatch(Map<String, Object> bindings, List<T> objects) {
         List<T> matchingObjects = new ArrayList<>(objects);
-        matchingObjects.sort(new Comparator<T>() {
+        matchingObjects.sort(new Comparator<>() {
             @Override
             public int compare(T o1, T o2) {
                 return -Integer.compare(getPriority(o1), getPriority(o2));

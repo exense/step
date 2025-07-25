@@ -26,7 +26,6 @@ import step.core.execution.ExecutionContextBindings;
 import step.entities.activation.Activator;
 import step.functions.EvaluationExpression;
 
-import javax.script.SimpleBindings;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +59,7 @@ public class ApEntitiesPrioritizer {
                     break;
                 }
             }
-            if (evaluationExprressionIsDefined(entity)) {
+            if (hasActivationExpression(entity)) {
                 if (isActivated(bindings, entity)) {
                     entitiesActivatedExplicitly.add(entity);
                 }
@@ -76,16 +75,14 @@ public class ApEntitiesPrioritizer {
         return orderedEntities;
     }
 
-    private <T extends AbstractOrganizableObject> boolean evaluationExprressionIsDefined(T entity) {
+    private <T extends AbstractOrganizableObject> boolean hasActivationExpression(T entity) {
         return (entity instanceof EvaluationExpression && ((EvaluationExpression) entity).getActivationExpression() != null);
     }
 
     private <T extends AbstractOrganizableObject> boolean isActivated(Map<String, Object> bindings, T entity) {
-        if (evaluationExprressionIsDefined(entity)) {
-            Expression activationExpression = ((EvaluationExpression) entity).getActivationExpression();
-            return activator.evaluateActivationExpression(bindings, activationExpression);
-        } else {
-            return true;
-        }
+        // hasActivationExpression should have been called before this method.
+        // We therefore assume that the entity implements EvaluationExpression and has a non-null expression
+        Expression activationExpression = ((EvaluationExpression) entity).getActivationExpression();
+        return activator.evaluateActivationExpression(bindings, activationExpression);
     }
 }
