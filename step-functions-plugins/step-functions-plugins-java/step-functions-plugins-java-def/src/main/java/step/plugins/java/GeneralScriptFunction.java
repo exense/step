@@ -109,7 +109,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 				}
 				try (InputStream is = new FileInputStream(originalFile)) {
 					Resource resource = context.getResourceManager().createResource(
-							ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), false, context.getEnricher(), context.getActorUser()
+							ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), null, context.getEnricher(), context.getActorUser()
                     );
 					uploadedPackageFileResource = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
 

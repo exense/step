@@ -36,7 +36,6 @@ import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.repositories.ArtifactRepositoryConstants;
-import step.resources.ResourceManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -116,7 +115,7 @@ public class AutomationPackageExecutor {
             // TODO: here we upload the keyword library with 'isolatedAp' type to be cleaned up automatically via CleanupApResourcesJob
             // TODO: and we use the mainAutomationPackageManager with main resourceManager to support the re-execution with this keyword library
             try {
-                mainAutomationPackageManager.uploadKeywordLibrary(keywordLibrarySource, automationPackage, ResourceManager.RESOURCE_TYPE_ISOLATED_AP, apName, objectEnricher, objectPredicate, actorUser);
+                mainAutomationPackageManager.uploadKeywordLibrary(keywordLibrarySource, automationPackage, apName, objectEnricher, objectPredicate, actorUser, true);
             } catch (Exception e) {
                 throw new AutomationPackageManagerException("Unable to upload the keyword library for isolated execution", e);
             }

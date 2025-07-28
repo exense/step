@@ -48,9 +48,9 @@ public interface ResourceManager {
 	 * @throws IOException                      an IOException occurs during the call
 	 * @throws SimilarResourceExistingException a similar resource exist
 	 */
-	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
 
-	Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+	Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
 
 	ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String actorUser) throws IOException;
 
@@ -84,7 +84,7 @@ public interface ResourceManager {
 								   boolean isDirectory,
 								   InputStream resourceStream,
 								   String resourceFileName,
-								   boolean checkForDuplicates,
+								   DuplicatesDetection checkForDuplicates,
 								   ObjectEnricher objectEnricher,
 								   String trackingAttributeValue,
 								   String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
@@ -133,6 +133,40 @@ public interface ResourceManager {
 	List<Resource> findManyByCriteria(Map<String, String> criteria);
 
 	default void cleanup() {
+	}
+
+	// TODO: implement
+    class DuplicatesDetection {
+		private DuplicatesDetectionMode mode = DuplicatesDetectionMode.md5;
+		private boolean dontSaveDuplicate = false;
+		private String tenantToLookup = null;
+
+		public DuplicatesDetection(DuplicatesDetectionMode mode, boolean dontSaveDuplicate, String tenantToLookup) {
+			this.mode = mode;
+			this.dontSaveDuplicate = dontSaveDuplicate;
+            this.tenantToLookup = tenantToLookup;
+        }
+
+		public static DuplicatesDetection createDefault(){
+			return new DuplicatesDetection(DuplicatesDetectionMode.md5, false, null);
+		}
+
+		public DuplicatesDetectionMode getMode() {
+			return mode;
+		}
+
+		public boolean isDontSaveDuplicate() {
+			return dontSaveDuplicate;
+		}
+
+		public String getTenantToLookup() {
+			return tenantToLookup;
+		}
+	}
+
+	enum DuplicatesDetectionMode {
+		md5,
+		tracking_value
 	}
 
 }

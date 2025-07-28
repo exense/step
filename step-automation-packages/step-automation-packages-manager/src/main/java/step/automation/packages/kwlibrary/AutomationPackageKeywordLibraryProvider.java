@@ -21,10 +21,19 @@
 package step.automation.packages.kwlibrary;
 
 import step.automation.packages.AutomationPackageReadingException;
+import step.resources.ResourceManager;
 
 import java.io.Closeable;
 import java.io.File;
 
 public interface AutomationPackageKeywordLibraryProvider extends Closeable {
     File getKeywordLibrary() throws AutomationPackageReadingException;
+
+    default String getTrackingValue() {
+        return null;
+    }
+
+    default String getResourceType() {
+        return ResourceManager.RESOURCE_TYPE_FUNCTIONS;
+    }
 }

@@ -51,7 +51,7 @@ public class ResourceRevisionContainer {
 		return resourceRevision;
 	}
 
-	public void save(boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+	public void save(ResourceManager.DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
 		try {
 			outputStream.close();
 		} catch (IOException e) {
@@ -62,7 +62,7 @@ public class ResourceRevisionContainer {
 	
 	public void save(ObjectEnricher objectEnricher) throws IOException, InvalidResourceFormatException {
 		try {
-			save(false, objectEnricher);
+			save(null, objectEnricher);
 		} catch (SimilarResourceExistingException e) {
 			throw new RuntimeException("This should never happen");
 		}

@@ -54,7 +54,8 @@ public class ResourceServices extends AbstractStepServices {
 		GlobalContext globalContext = getContext();
 		resourceManager = globalContext.getResourceManager();
 	}
-	
+
+	// TODO: add new configs for duplication check
 	@POST
 	@Path("/content")
 	@Secured(right = "resource-write")
@@ -78,7 +79,7 @@ public class ResourceServices extends AbstractStepServices {
 		
 		try {
 			// TODO: take user from auth context?
-			Resource resource = resourceManager.createTrackedResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate, objectEnricher, trackingAttribute, null);
+			Resource resource = resourceManager.createTrackedResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate ? ResourceManager.DuplicatesDetection.createDefault() : null, objectEnricher, trackingAttribute, null);
 			return new ResourceUploadResponse(resource, null);
 		} catch (SimilarResourceExistingException e) {
 			return new ResourceUploadResponse(e.getResource(), e.getSimilarResources());

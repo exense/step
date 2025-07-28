@@ -46,25 +46,6 @@
     </dependencies>
 
     <build>
-        <pluginManagement>
-            <plugins>
-                <!-- Make the Step maven plugin available -->
-                <plugin>
-                    <groupId>ch.exense.step</groupId>
-                    <artifactId>step-maven-plugin</artifactId>
-                    <version>0.0.0-SNAPSHOT</version>
-                    <!-- adding dependencies to reports nodes for enterprise artefacts, only required to read errors that may occur during isolated executions -->
-                    <!--					<dependencies>-->
-                    <!--						<dependency>-->
-                    <!--							<groupId>ch.exense.step-enterprise</groupId>-->
-                    <!--							<artifactId>step-maven-plugin-ee-extensions</artifactId>-->
-                    <!--							<version>0.0.0-SNAPSHOT</version>-->
-                    <!--						</dependency>-->
-                    <!--					</dependencies>-->
-                </plugin>
-            </plugins>
-        </pluginManagement>
-
         <plugins>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -80,26 +61,6 @@
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>ch.exense.step</groupId>
-                <artifactId>step-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>deploy-automation-package-in-step</id>
-                        <phase>package</phase>
-                        <configuration>
-                            <url>http://localhost:8080</url>
-                            <libArtifactPath>C:\Users\ig-eg\IdeaProjects\step\step-automation-packages\step-automation-packages-samples\step-automation-packages-kw-lib\target\step-automation-packages-kw-lib-0.0.0-SNAPSHOT-jar-with-dependencies.jar</libArtifactPath>
-<!--                            <libArtifactGroupId>ch.exense.step</libArtifactGroupId>-->
-<!--                            <libArtifactId>step-automation-packages-kw-lib</libArtifactId>-->
-<!--                            <libArtifactVersion>1.0.0</libArtifactVersion>-->
-                        </configuration>
-                        <goals>
-                            <goal>deploy-automation-package</goal>
                         </goals>
                     </execution>
                 </executions>

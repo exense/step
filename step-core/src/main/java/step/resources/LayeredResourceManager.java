@@ -74,12 +74,12 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
-    public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+    public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
         return getManagerForPersistence().createResource(resourceType, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, actorUser);
     }
 
     @Override
-    public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+    public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
         return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, actorUser);
     }
 
@@ -141,7 +141,7 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
-    public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher,
+    public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher,
                                           String trackingAttribute, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
         return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, trackingAttribute);
     }

@@ -106,4 +106,27 @@ public class MavenArtifactIdentifier {
     public int hashCode() {
         return Objects.hash(groupId, artifactId, version, classifier, type);
     }
+
+    /**
+     * @param shortString the maven identifier in string format ('mvn:artifactId:groupId:version:classifier:type'). Classifier and type are optional
+     */
+    public static MavenArtifactIdentifier fromShortString(String shortString){
+        if(shortString != null && shortString.startsWith("mvn:")) {
+            String[] split = shortString.split(":");
+            return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null, split.length >= 6 ? split[5] : null);
+        } else {
+            throw new IllegalArgumentException("Invalid maven identifier: " + shortString);
+        }
+    }
+    
+    public String toShortString() {
+        String res = String.format("mvn:%s:%s:%s", this.getArtifactId(), getGroupId(), getVersion());
+        if (this.getClassifier() != null) {
+            res += this.getClassifier();
+        }
+        if (this.getType() != null) {
+            res += this.getType();
+        }
+        return res;
+    }
 }

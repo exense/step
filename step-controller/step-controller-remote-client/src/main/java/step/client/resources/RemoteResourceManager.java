@@ -86,10 +86,10 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart) {
-		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, true, null);
+		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, DuplicatesDetection.createDefault(), null);
 	}
 	
-	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, boolean checkForDuplicates, String trackingValue) {
+	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, DuplicatesDetection checkForDuplicates, String trackingValue) {
 		MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
         multiPart.bodyPart(bodyPart);
@@ -97,7 +97,8 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
         Map<String, String> params = new HashMap<>();
         params.put("type", type);
 		params.put("directory", Boolean.toString(isDirectory));
-        params.put("duplicateCheck", Boolean.toString(checkForDuplicates));
+		// TODO: pass another attributes used to check duplicates
+        params.put("duplicateCheck", checkForDuplicates == null ? "false" : "true");
 		if (trackingValue != null) {
 			params.put("trackingAttribute", trackingValue);
 		}
@@ -126,24 +127,24 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 
 	@Override
 	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName,
-								   boolean checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException {
+								   DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException {
 		return createResource(resourceType, false, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, actorUser);
 	}
 
 	@Override
 	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName,
-								   boolean checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) {
+								   DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) {
 		return createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, null, null);
 	}
 
 	@Override
-	public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher,
+	public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher,
 										  String trackingValue, String actorUser) {
 		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 
 		// !!! in fact, 'checkForDuplicates' parameter is ignored, because the list of found duplicated resources (with the same hash sums)
 		// is located in ResourceUploadResponse.similarResources, but we ignore this list here and just take the uploaded resource
-		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, checkForDuplicates, trackingValue);
+		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, DuplicatesDetection.createDefault(), trackingValue);
 		return upload.getResource();
 	}
 

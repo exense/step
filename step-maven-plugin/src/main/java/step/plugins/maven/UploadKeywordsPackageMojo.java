@@ -221,7 +221,7 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 							false,
 							is,
 							remoteLibArtifact.getFile().getName(),
-							false, null,
+							null, null,
 							actualTrackingAttribute,
 							null);
 					getLog().info("Library resource has been created: " + created.getId().toString());

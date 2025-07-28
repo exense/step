@@ -53,7 +53,7 @@ public class ResourceManagerImplTest {
 	@Test
 	public void test() throws Exception {
 		// Create a resource
-		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false, null, "testUser");
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, null, "testUser");
 		assertNotNull(resource);
 		
 		// Assert that the resource has been persisted
@@ -135,12 +135,12 @@ public class ResourceManagerImplTest {
 	@Test
 	public void testDuplicateResource() throws Exception {
 		// Create a resource
-		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null, "testUser");
-		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource2.txt"), "TestResource2.txt", true, null, "testUser");
-		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false, null, "testUser");
+		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", ResourceManager.DuplicatesDetection.createDefault(), null, "testUser");
+		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource2.txt"), "TestResource2.txt", ResourceManager.DuplicatesDetection.createDefault(), null, "testUser");
+		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, null, "testUser");
 		SimilarResourceExistingException actualException = null;
 		try {
-			resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null, "testUser");
+			resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, null, "testUser");
 		} catch (SimilarResourceExistingException e) {
 			actualException = e;
 		}
@@ -151,7 +151,7 @@ public class ResourceManagerImplTest {
 	@Test
 	public void testDeletedResourceException() throws Exception {
 		// Create a resource
-		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null, "testUser");
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", ResourceManager.DuplicatesDetection.createDefault(), null, "testUser");
 		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/"+ResourceManager.RESOURCE_TYPE_FUNCTIONS+"/"+resource.getId().toString()+"/"+resource.getCurrentRevisionId().toString()+"/TestResource.txt");
 		resourceFileActual.delete();
 		
@@ -168,7 +168,7 @@ public class ResourceManagerImplTest {
 	@Test
 	public void testEphemeralResources() throws Exception {
 		// Create a resource
-		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null, "testUser");
+		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", ResourceManager.DuplicatesDetection.createDefault(), null, "testUser");
 		
 		String resourceId = resource.getId().toString();
 		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
@@ -187,7 +187,7 @@ public class ResourceManagerImplTest {
 	@Test
 	public void testEphemeralResources2() throws Exception {
 		// Create a resource
-		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null, "testUser");
+		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", ResourceManager.DuplicatesDetection.createDefault(), null, "testUser");
 		
 		String resourceId = resource.getId().toString();
 		ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(resourceId);
@@ -230,7 +230,7 @@ public class ResourceManagerImplTest {
 		FileHelper.zip(tempFolder, zippedFolder);
 
 		// Create a directory resource
-		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, true, new FileInputStream(zippedFolder), "TestResource.zip", true, null, "testUser");
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, true, new FileInputStream(zippedFolder), "TestResource.zip", ResourceManager.DuplicatesDetection.createDefault(), null, "testUser");
 		assertEquals("TestResource", resource.getAttribute(AbstractOrganizableObject.NAME));
 		assertEquals("TestResource", resource.getResourceName());
 

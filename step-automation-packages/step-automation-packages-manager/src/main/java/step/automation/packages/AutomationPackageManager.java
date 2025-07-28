@@ -494,7 +494,7 @@ public class AutomationPackageManager {
         newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, apVersion, activationExpr, oldPackage, enricher);
 
         // upload keyword package if provided
-        String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibrarySource, newPackage, ResourceManager.RESOURCE_TYPE_FUNCTIONS, packageContent.getName(), enricher, objectPredicate, actorUser);
+        String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibrarySource, newPackage, packageContent.getName(), enricher, objectPredicate, actorUser, false);
 
         // prepare staging collections
         AutomationPackageStaging staging = createStaging();
@@ -541,7 +541,7 @@ public class AutomationPackageManager {
         }
     }
 
-    public String uploadKeywordLibrary(AutomationPackageFileSource keywordLibrarySource, AutomationPackage newPackage, String resourceType, String apName, ObjectEnricher enricher, ObjectPredicate objectPredicate, String actorUser) {
+    public String uploadKeywordLibrary(AutomationPackageFileSource keywordLibrarySource, AutomationPackage newPackage, String apName, ObjectEnricher enricher, ObjectPredicate objectPredicate, String actorUser, boolean forIsolatedExecution) {
         // TODO: now we check the MD5 hash to prevent uploading duplicated libraries - further we will need more flexible approach (+strange case - the duplicated resource is persisted)
         String keywordLibraryResourceString = null;
         try (AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate)) {
@@ -550,18 +550,21 @@ public class AutomationPackageManager {
             if (keywordLibrary != null) {
                 try (FileInputStream fis = new FileInputStream(keywordLibrary)) {
                     try {
-                        keywordLibraryResource = resourceManager.createResource(resourceType, fis, keywordLibrary.getName(), true, enricher, actorUser);
+                        // for isolated execution we always use the isolatedAp resource type to support auto cleanup after execution
+                        String resourceType = forIsolatedExecution ? ResourceManager.RESOURCE_TYPE_ISOLATED_AP : keywordLibraryProvider.getResourceType();
+
+                        // for maven artifacts we save the maven snippet in the tracking value and use it to lookup existing resources (ie the same maven artifacts)
+                        ResourceManager.DuplicatesDetectionMode duplicatesDetectionMode = Objects.equals(ResourceManager.RESOURCE_TYPE_MAVEN_ARTIFACT, keywordLibraryResource.getResourceType())
+                                ? ResourceManager.DuplicatesDetectionMode.tracking_value
+                                : ResourceManager.DuplicatesDetectionMode.md5;
+
+                        // TODO: if required, resolve tenant here and apply restriction by tenant to lookup duplicates
+                        keywordLibraryResource = resourceManager.createTrackedResource(resourceType, false, fis, keywordLibrary.getName(), new ResourceManager.DuplicatesDetection(duplicatesDetectionMode, true, null), enricher, keywordLibraryProvider.getTrackingValue(), actorUser);
                         log.info("The new keyword library ({}) has been uploaded as ({})", keywordLibrarySource, keywordLibraryResource);
                     } catch (SimilarResourceExistingException ex) {
                         if (ex.getSimilarResources() != null && !ex.getSimilarResources().isEmpty()) {
                             keywordLibraryResource = ex.getSimilarResources().get(0);
                             log.info("Existing keyword library {} with resource id {} has been detected and will be reused in AP {}", keywordLibrary.getName(), keywordLibraryResource.getId().toHexString(), apName);
-
-                            // TODO: strange behaviour - in case of SimilarResourceExistingException we anyway upload the resource, so here we rollback it
-                            Resource justUploadedResource = ex.getResource();
-                            if (justUploadedResource != null) {
-                                resourceManager.deleteResource(justUploadedResource.getId().toHexString());
-                            }
                         } else {
                             // strange case - the exception is thrown, but similar resources are missing
                             keywordLibraryResource = ex.getResource();
