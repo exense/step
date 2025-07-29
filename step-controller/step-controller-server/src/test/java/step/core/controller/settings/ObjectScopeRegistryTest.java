@@ -46,7 +46,7 @@ public class ObjectScopeRegistryTest {
             @Override
             protected String getScopeValue(Session<?> session) {
                 AbstractUser user = session.getUser();
-                return (user != null) ? user.getSessionUsername() : null;
+                return (user != null) ? user.getUsername() : null;
             }
 
             @Override

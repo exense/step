@@ -21,9 +21,7 @@ package step.core.access;
 import java.util.List;
 import java.util.function.Function;
 
-import step.core.accessors.Accessor;
-
-public interface UserAccessor extends Accessor<User> {
+public interface UserAccessor extends GenericUserAccessor<User> {
 
 	void remove(String username);
 

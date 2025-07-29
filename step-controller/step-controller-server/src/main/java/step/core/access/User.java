@@ -22,24 +22,12 @@ import step.core.accessors.AbstractUser;
 
 public class User extends AbstractUser {
 
-	private String username;
-
 	private String password;
-	
-	private String role;
 	
 	private Preferences preferences;
 
 	public User() {
 		super();
-	}
-
-	public String getUsername() {
-		return username;
-	}
-
-	public void setUsername(String username) {
-		this.username = username;
 	}
 
 	public String getPassword() {
@@ -50,13 +38,6 @@ public class User extends AbstractUser {
 		this.password = password;
 	}
 
-	public String getRole() {
-		return role;
-	}
-
-	public void setRole(String role) {
-		this.role = role;
-	}
 
 	public Preferences getPreferences() {
 		return preferences;
@@ -66,8 +47,4 @@ public class User extends AbstractUser {
 		this.preferences = preferences;
 	}
 
-	@Override
-	public String getSessionUsername() {
-		return username;
-	}
 }

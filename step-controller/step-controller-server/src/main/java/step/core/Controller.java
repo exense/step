@@ -118,7 +118,7 @@ public class Controller {
 
 		SessionResponseBuilder sessionResponseBuilder = new SessionResponseBuilder();
 		context.put(SessionResponseBuilder.class, sessionResponseBuilder);
-		sessionResponseBuilder.registerHook(s -> Map.of("username", s.getUser().getSessionUsername()));
+		sessionResponseBuilder.registerHook(s -> Map.of("username", s.getUser().getUsername()));
 		//AuthorizationManager might get overwritten by plugins, FE still need a default role in OS
 		sessionResponseBuilder.registerHook(s -> Map.of("role", context.get(AuthorizationManager.class).getRoleInContext(s)));
 		sessionResponseBuilder.registerHook(s -> Map.of("authenticated", s.isAuthenticated()));
@@ -157,7 +157,7 @@ public class Controller {
 			@Override
 			protected String getScopeValue(Session<?> session) {
 				AbstractUser user = session.getUser();
-				return (user != null) ? user.getSessionUsername() : null;
+				return (user != null) ? user.getUsername() : null;
 			}
 
 			@Override
