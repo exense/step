@@ -126,7 +126,7 @@
 			<dependency>
 				<groupId>ch.exense.streaming</groupId>
 				<artifactId>step-streaming</artifactId>
-				<version>2025.7.29-6888fa674e318f3fad5c5a9e</version>
+				<version>2025.7.29-6889093c4e318f3fad5f1a22</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
