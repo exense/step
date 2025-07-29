@@ -24,6 +24,7 @@ import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.core.AbstractStepContext;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
@@ -114,7 +115,7 @@ public class TokenSelectionCriteriaMapBuilderTest {
 	}
 
 	private static FunctionTypeRegistry buildFunctionTypeRegistry(Map<String, Interest> criteria) {
-		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(null, null);
+		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(null, null, new ObjectHookRegistry());
 		functionTypeRegistry.registerFunctionType(new AbstractFunctionType<>() {
 
 			@Override

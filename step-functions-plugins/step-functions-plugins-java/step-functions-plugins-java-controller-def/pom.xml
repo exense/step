@@ -20,6 +20,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<artifactId>step-functions-plugins-java-controller-def</artifactId>
+	<name>${project.groupId}:${project.artifactId}</name>
 	<packaging>jar</packaging>
 
 	<parent>

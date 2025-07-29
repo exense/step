@@ -40,8 +40,9 @@ import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.manager.FunctionManagerImpl;
-import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
+import step.functions.type.FunctionTypeRegistryImpl;
+import step.grid.client.MockedGridClientImpl;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
@@ -106,11 +107,11 @@ public class AutomationPackageManagerOSTest {
         ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, "groovy", new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
 
         Configuration configuration = createTestConfiguration();
-        FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry(configuration);
+        this.resourceManager = new LocalResourceManagerImpl();
+        FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry(configuration, resourceManager);
 
         this.functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
         this.planAccessor = new PlanAccessorImpl(new InMemoryCollection<>());
-        this.resourceManager = new LocalResourceManagerImpl();
 
         this.executionTaskAccessor = new ExecutionTaskAccessorImpl(new InMemoryCollection<>());
 
@@ -134,28 +135,13 @@ public class AutomationPackageManagerOSTest {
         );
     }
 
-    private static FunctionTypeRegistry prepareTestFunctionTypeRegistry(Configuration configuration) {
-        FunctionTypeRegistry functionTypeRegistry = Mockito.mock(FunctionTypeRegistry.class);
+    private static FunctionTypeRegistry prepareTestFunctionTypeRegistry(Configuration configuration, LocalResourceManagerImpl resourceManager) {
+        FunctionTypeRegistry functionTypeRegistry =  new FunctionTypeRegistryImpl(new FileResolver(resourceManager), new MockedGridClientImpl(), new ObjectHookRegistry());
+        functionTypeRegistry.registerFunctionType(new JMeterFunctionType(configuration));
+        functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(configuration));
+        functionTypeRegistry.registerFunctionType(new CompositeFunctionType(new ObjectHookRegistry()));
+        functionTypeRegistry.registerFunctionType(new NodeFunctionType());
 
-        AbstractFunctionType<?> jMeterFunctionType = new JMeterFunctionType(configuration);
-        AbstractFunctionType<?> generalScriptFunctionType = new GeneralScriptFunctionType(configuration);
-        AbstractFunctionType<?> compositeFunctionType = new CompositeFunctionType(new ObjectHookRegistry());
-        AbstractFunctionType<?> nodeFunctionType = new NodeFunctionType();
-
-        Mockito.when(functionTypeRegistry.getFunctionTypeByFunction(Mockito.any())).thenAnswer(invocationOnMock -> {
-            Object function = invocationOnMock.getArgument(0);
-            if (function instanceof JMeterFunction) {
-                return jMeterFunctionType;
-            } else if (function instanceof GeneralScriptFunction) {
-                return generalScriptFunctionType;
-            } else if (function instanceof CompositeFunction) {
-                return compositeFunctionType;
-            } else if (function instanceof NodeFunction) {
-                return nodeFunctionType;
-            } else {
-                return null;
-            }
-        });
         return functionTypeRegistry;
     }
 

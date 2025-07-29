@@ -21,6 +21,7 @@ package step.automation.packages.execution;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.CallPlan;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
@@ -62,6 +63,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public static final Logger log = LoggerFactory.getLogger(RepositoryWithAutomationPackageSupport.class);
 
     public static final String AP_NAME = "apName";
+    public static final String AP_ID = "apID";
     public static final String REPOSITORY_PARAM_CONTEXTID = "contextid";
     public static final String AP_NAME_CUSTOM_FIELD = "apName";
 
@@ -186,30 +188,44 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
 
     private Plan wrapAllPlansFromApToTestSet(PackageExecutionContext ctx, Map<String, String> repositoryParameters) {
         PlanBuilder planBuilder = PlanBuilder.create();
-        int numberOfThreads = Integer.parseInt(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, "0"));
-        TestSet testSet = new TestSet(numberOfThreads);
+        TestSet testSet;
+        String testSetNumberOfThread = repositoryParameters.get(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER);
+        if (testSetNumberOfThread == null || testSetNumberOfThread.isBlank()) {
+            testSet = new TestSet();
+        } else {
+            testSet = new TestSet(Integer.parseInt(testSetNumberOfThread));
+        }
         AutomationPackage ap = ctx.getAutomationPackage();
         testSet.addAttribute(AbstractArtefact.NAME, ap.getAttribute(AbstractOrganizableObject.NAME));
 
         planBuilder.startBlock(testSet);
         getFilteredPackagePlans(ap, repositoryParameters, ctx.getAutomationPackageManager()).forEach(plan -> {
             String name = getPlanName(plan);
-            wrapPlanInTestCase(plan, name);
-            planBuilder.add(callPlan(plan.getId().toString(), name));
+
+            planBuilder.add(wrapCallPlanInTestCaseIfRequired(plan, name));
         });
         planBuilder.endBlock();
 
         return planBuilder.build();
     }
 
-    protected void wrapPlanInTestCase(Plan plan, String testCaseName){
+    /**
+     * When wrapping the execution in a TestSet all plan should be called as Test case to benefit of all TestSet features
+     * In the plan if already a test case just call it otherwise create a Test Case artefact doing the call plan
+     * @param plan the plan to be called
+     * @param testCaseName the name to be used when creating a test case
+     * @return the artefact (Test case or direct call plan) to be added to the TestSet for this plan
+     */
+    protected AbstractArtefact wrapCallPlanInTestCaseIfRequired(Plan plan, String testCaseName){
         AbstractArtefact root = plan.getRoot();
-        if (!(root instanceof TestCase)) {
-            // tricky solution - wrap all plans into TestCase to display all plans, launched while running automation package, in UI
-            TestCase newRoot = new TestCase();
-            newRoot.addAttribute(AbstractArtefact.NAME, testCaseName);
-            newRoot.addChild(root);
-            plan.setRoot(newRoot);
+        CallPlan callPlan = callPlan(plan.getId().toString(), testCaseName);
+        if (root instanceof TestCase) {
+            return callPlan;
+        } else {
+            TestCase testCase = new TestCase();
+            testCase.addAttribute(AbstractArtefact.NAME, testCaseName);
+            testCase.addChild(callPlan);
+            return testCase;
         }
     }
 

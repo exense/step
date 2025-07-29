@@ -22,6 +22,7 @@ import ch.exense.commons.io.Poller;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.core.accessors.AbstractOrganizableObject;
@@ -41,6 +42,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -132,6 +134,7 @@ public class AutomationPackageExecutor {
         List<Plan> applicablePlans = new ArrayList<>();
         PlanFilter planFilter = parameters.getPlanFilter();
         boolean somePlansFiltered = false;
+        String apID = automationPackage.getId().toHexString();
         for (Plan plan : apManager.getPackagePlans(automationPackage.getId())) {
             if ((planFilter == null || planFilter.isSelected(plan)) && plan.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution()) {
                 applicablePlans.add(plan);
@@ -140,11 +143,13 @@ public class AutomationPackageExecutor {
             }
         }
 
+        String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
         if (parameters.getWrapIntoTestSet() == null || !parameters.getWrapIntoTestSet()) {
             // run each plans in separate execution (apply the plan name filter to use the single file in execution)
             for (Plan plan : applicablePlans) {
                 ExecutionParameters params = prepareExecutionParams(
-                        parameters, automationPackage.getAttribute(AbstractOrganizableObject.NAME), contextId, repoId, originalRepositoryObject, plan.getAttribute(AbstractOrganizableObject.NAME), CommonExecutionParameters.defaultDescription(plan), objectEnricher
+                        parameters, apName, apID, contextId, repoId, originalRepositoryObject, plan.getAttribute(AbstractOrganizableObject.NAME),
+                        CommonExecutionParameters.defaultDescription(plan), plan.getRoot().getClass().getSimpleName(), objectEnricher
                 );
                 String newExecutionId = this.scheduler.execute(params);
                 if (newExecutionId != null) {
@@ -154,7 +159,9 @@ public class AutomationPackageExecutor {
         } else {
             // wrap all plans in test set
             ExecutionParameters params = prepareExecutionParams(
-                    parameters, automationPackage.getAttribute(AbstractOrganizableObject.NAME), contextId, repoId, originalRepositoryObject, somePlansFiltered ? applicablePlans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.joining(",")) : null, null, objectEnricher
+                    parameters, apName, apID, contextId, repoId, originalRepositoryObject,
+                    somePlansFiltered ? applicablePlans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.joining(",")) : null,
+                    null, TestSet.class.getSimpleName(), objectEnricher
             );
             String newExecutionId = this.scheduler.execute(params);
             if (newExecutionId != null) {
@@ -165,23 +172,27 @@ public class AutomationPackageExecutor {
     }
 
     private ExecutionParameters prepareExecutionParams(AutomationPackageExecutionParameters parameters, String apName,
-                                                       ObjectId contextId, String repoId,
+                                                       String apID, ObjectId contextId, String repoId,
                                                        RepositoryObjectReference originalRepositoryObject,
-                                                       String includePlans, String defaultDescription, ObjectEnricher objectEnricher) {
+                                                       String includePlans, String defaultDescription, String rootType, ObjectEnricher objectEnricher) {
         ExecutionParameters params = parameters.toExecutionParameters();
 
         HashMap<String, String> repositoryParameters = new HashMap<>();
 
         // save apName + contextId + planName to support re-execution
-        repositoryParameters.put(IsolatedAutomationPackageRepository.AP_NAME, apName);
+        repositoryParameters.put(RepositoryWithAutomationPackageSupport.AP_NAME, apName);
+        repositoryParameters.put(RepositoryWithAutomationPackageSupport.AP_ID, apID);
         if (contextId != null) {
             repositoryParameters.put(IsolatedAutomationPackageRepository.REPOSITORY_PARAM_CONTEXTID, contextId.toString());
         }
         if (includePlans != null) {
             repositoryParameters.put(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS, includePlans);
         }
-        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, parameters.getWrapIntoTestSet() == null ? null : parameters.getWrapIntoTestSet().toString());
-        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, parameters.getNumberOfThreads() == null ? null : parameters.getNumberOfThreads().toString());
+        Boolean wrapIntoTestSet = Objects.requireNonNullElse(parameters.getWrapIntoTestSet(), false);
+        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, wrapIntoTestSet.toString());
+        Integer numberOfThreads = parameters.getNumberOfThreads();
+        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_THREAD_NUMBER, numberOfThreads == null ? null : numberOfThreads.toString());
+        repositoryParameters.put(ArtifactRepositoryConstants.PARAM_ROOT_TYPE, rootType);
 
         // store the reference from original repository object
         if (originalRepositoryObject != null && originalRepositoryObject.getRepositoryParameters() != null) {

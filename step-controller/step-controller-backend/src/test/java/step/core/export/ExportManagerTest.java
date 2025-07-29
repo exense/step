@@ -19,6 +19,7 @@
 package step.core.export;
 
 import ch.exense.commons.io.FileHelper;
+import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.CallFunction;
@@ -199,12 +200,14 @@ public class ExportManagerTest {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
-			exportManager.exportById(exportConfig, plan.getId().toString());
+			ExportResult exportResult = exportManager.exportById(exportConfig, plan.getId().toString());
+			assertTrue(exportResult.getMessages().isEmpty());
 			assertTrue(FileHelper.isArchive(testExportFile));
 			
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of("plans"), true));
-			
+			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of("plans"), true));
+			assertTrue(importResult.getMessages().isEmpty());
+
 			Plan actualPlan = planAccessor.get(plan.getId());
 			assertEquals(plan.getId(), actualPlan.getId());
 			assertEquals(plan.getRoot(), actualPlan.getRoot());
@@ -235,11 +238,13 @@ public class ExportManagerTest {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), EntityManager.functions, true, null);
-			exportManager.exportById(exportConfig, function.getId().toString());
+			ExportResult exportResult = exportManager.exportById(exportConfig, function.getId().toString());
+			assertTrue(exportResult.getMessages().isEmpty());
 			assertTrue(FileHelper.isArchive(testExportFile));
 
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of(EntityManager.functions), true));
+			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of(EntityManager.functions), true));
+			assertTrue(importResult.getMessages().isEmpty());
 			functionAccessor.save(function);
 			Function actualFunction = functionAccessor.get(function.getId());
 
@@ -276,10 +281,12 @@ public class ExportManagerTest {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
-			exportManager.exportAll(exportConfig);
-			
+			ExportResult exportResult = exportManager.exportAll(exportConfig);
+			assertTrue(exportResult.getMessages().isEmpty());
+
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of("plans"), true));
+			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of("plans"), true));
+			assertTrue(importResult.getMessages().isEmpty());
 			
 			Plan actualPlan = planAccessor.get(plan.getId());
 			Plan actualPlan2 = planAccessor.get(plan2.getId());
@@ -518,7 +525,7 @@ public class ExportManagerTest {
 		File testImportFile = new File(resource.getFile());
 
 		ImportManager importManager = createNewContextAndGetImportManager();
-		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), null, true));
+		ImportResult importResult = importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), null, true));
 
 		Plan testSet01 = planAccessor.get(testSet01Id);
 		assertNotNull(testSet01);
@@ -572,12 +579,14 @@ public class ExportManagerTest {
 			List<String> additionalEntities = new ArrayList<>();
 			additionalEntities.add(Parameter.ENTITY_NAME);
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, additionalEntities);
-			exportManager.exportById(exportConfig, plan.getId().toString());
+			ExportResult exportResult = exportManager.exportById(exportConfig, plan.getId().toString());
+			assertTrue(exportResult.getMessages().isEmpty());
 			assertTrue(FileHelper.isArchive(testExportFile));
 			
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true));
-			
+			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true));
+			assertTrue(importResult.getMessages().isEmpty());
+
 			Parameter actualParam = parameterAccessor.get(savedParam.getId());
 			Plan actualPlan = planAccessor.get(plan.getId());
 			assertEquals(plan.getId(), actualPlan.getId());
@@ -600,11 +609,13 @@ public class ExportManagerTest {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", false, null);
-			exportManager.exportById(exportConfig, plan.getId().toString());
-			
+			ExportResult exportResult = exportManager.exportById(exportConfig, plan.getId().toString());
+			assertTrue(exportResult.getMessages().isEmpty());
+
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of("plans"), true));
-			
+			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of("plans"), true));
+			assertTrue(importResult.getMessages().isEmpty());
+
 			Plan actualPlan = planAccessor.get(plan.getId());
 			assertEquals(plan.getId(), actualPlan.getId());
 			assertEquals(plan.getRoot(), actualPlan.getRoot());
@@ -615,30 +626,38 @@ public class ExportManagerTest {
 
 	@Test
 	public void testExportPlanRecursively() throws Exception {
-		testExportPlansRecursively(false, true);
+		testExportPlansRecursively(false, true, false);
 	}
 
 	@Test
 	public void testExportPlanRecursivelyNewReferences() throws Exception {
-		testExportPlansRecursively(false, false);
+		testExportPlansRecursively(false, false, false);
 	}
 
 	@Test
 	public void testExportPlanRecursivelyWithPansOnly() throws Exception {
-		testExportPlansRecursively(true, true);
+		testExportPlansRecursively(true, true, false);
 	}
 
 	@Test
 	public void testExportPlanRecursivelyNewReferencesWithPansOnly() throws Exception {
-		testExportPlansRecursively(true, false);
+		testExportPlansRecursively(true, false, false);
 	}
 
-	private void testExportPlansRecursively(boolean plansOnly, boolean overwrite) throws Exception {
+	@Test
+	public void testExportPlanRecursivelyMissingReferences() throws Exception {
+		testExportPlansRecursively(true, false, true);
+	}
+
+	private void testExportPlansRecursively(boolean plansOnly, boolean overwrite, boolean missingEntities) throws Exception {
 		Sequence rootSequence = sequence();
 		Plan plan = PlanBuilder.create().startBlock(rootSequence).add(sequence()).endBlock().build();
+		if (missingEntities) { //force id for error message assertion
+			plan.setId(new ObjectId("685943b9341bcf6b215ac2d2"));
+		}
 		planAccessor.save(plan);
 		Function function = new Function();
-		String functionName = UUID.randomUUID().toString();
+		String functionName = missingEntities ? "434f33f6-cdc5-4b1e-83c2-04c5f163f1b5" : UUID.randomUUID().toString();
 		function.addAttribute(AbstractOrganizableObject.NAME, functionName);
 		functionAccessor.save(function);
 		Sequence sequence = sequence();
@@ -649,21 +668,41 @@ public class ExportManagerTest {
 		Plan plan2 = PlanBuilder.create().startBlock(rootSequence).add(sequence).endBlock().build();
 		planAccessor.save(plan2);
 
+		if (missingEntities) {
+			functionAccessor.getAll().forEachRemaining(p -> functionAccessor.remove(p.getId()));
+			planAccessor.remove(plan.getId());
+		}
+
 		File testExportFile = new File("testExport.json");
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
-			exportManager.exportById(exportConfig, plan2.getId().toString());
+			ExportResult exportResult = exportManager.exportById(exportConfig, plan2.getId().toString());
+			if (missingEntities) {
+				assertEquals(3, exportResult.getMessages().size());
+				assertTrue(exportResult.getMessages().toString().contains("Referenced entity with id '685943b9341bcf6b215ac2d2' and type 'plans' is missing"));
+				assertTrue(exportResult.getMessages().toString().contains("The keyword referenced by the call keyword artefact '434f33f6-cdc5-4b1e-83c2-04c5f163f1b5' could not be found"));
+				assertTrue(exportResult.getMessages().toString().contains("Could not resolve called plan with ID:'685943b9341bcf6b215ac2d2'; Selection attributes: '{}'"));
+			} else {
+				assertEquals(0, exportResult.getMessages().size());
+			}
+
 
 			planAccessor.getAll().forEachRemaining(p -> planAccessor.remove(p.getId()));
 			functionAccessor.getAll().forEachRemaining(p -> functionAccessor.remove(p.getId()));
 
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), plansOnly ? List.of("plans") : null, overwrite));
+			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), plansOnly ? List.of("plans") : null, overwrite));
+			assertTrue(importResult.getMessages().isEmpty());
 
-			assertEquals(2, planAccessor.stream().count());
-			assertEquals(plansOnly ? 0 : 1, functionAccessor.stream().count());
+			if (missingEntities) {
+				assertEquals(1, planAccessor.stream().count());
+				assertEquals(0, functionAccessor.stream().count());
+			} else {
+				assertEquals(2, planAccessor.stream().count());
+				assertEquals(plansOnly ? 0 : 1, functionAccessor.stream().count());
+			}
 
 			Plan actualPlan = planAccessor.get(plan.getId());
 			Plan actualPlan2 = planAccessor.get(plan2.getId());
@@ -716,12 +755,14 @@ public class ExportManagerTest {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
-			exportManager.exportById(exportConfig, plan.getId().toString());
-						
+			ExportResult exportResult = exportManager.exportById(exportConfig, plan.getId().toString());
+			assertTrue(exportResult.getMessages().isEmpty());
+
 			newContext(null);
 			
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
+			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
+			assertTrue(importResult.getMessages().isEmpty());
 			
 			AtomicInteger nbPlans = new AtomicInteger(0);
 			planAccessor.getAll().forEachRemaining(p-> nbPlans.incrementAndGet());
@@ -782,15 +823,17 @@ public class ExportManagerTest {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
 			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), "plans", true, null);
-			exportManager.exportById(exportConfig, plan.getId().toString());
+			ExportResult exportResult = exportManager.exportById(exportConfig, plan.getId().toString());
+			assertTrue(exportResult.getMessages().isEmpty());
 			//delete created resource
 			resourceManager.deleteResource(resource.getId().toHexString());
 						
 			newContext(null);
 			
 			ImportManager importManager = createNewContextAndGetImportManager();
-			importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
-			
+			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, overwrite));
+			assertTrue(importResult.getMessages().isEmpty());
+
 			Plan actualPlan = planAccessor.get(plan.getId());
 
 			AtomicInteger nbPlans = new AtomicInteger(0);
@@ -862,8 +905,9 @@ public class ExportManagerTest {
 	private void testImport3_12(File testImportFile, boolean overwriteIds) throws Exception {
 		//create a new context to test the import
 		ImportManager importManager = createNewContextAndGetImportManager();
-		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), List.of("plans"), overwriteIds));
-		
+		ImportResult importResult = importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), List.of("plans"), overwriteIds));
+		assertTrue(importResult.getMessages().isEmpty());
+
 		Plan actualPlan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, "DataSet_while"));
 		assertNotEquals("5c3860fb66d4260008813172", actualPlan.getId().toString());
 		assertEquals(actualPlan, actualPlan);
@@ -925,8 +969,9 @@ public class ExportManagerTest {
 		
 		//create a new context to test the import
 		ImportManager importManager = createNewContextAndGetImportManager();
-		importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"), overwrite));
-		
+		ImportResult importResult = importManager.importAll(new ImportConfiguration(testImportFile, dummyObjectEnricher(), Arrays.asList("plans"), overwrite));
+		assertTrue(importResult.getMessages().isEmpty());
+
 		Plan actualPlan = planAccessor.findByAttributes(Map.of(AbstractOrganizableObject.NAME, "Test"));
 		// Due to the migration from the collection artefacts to plans overwrite is not supported when importing from 3.12 and below
 		if(assertOverwrite) {

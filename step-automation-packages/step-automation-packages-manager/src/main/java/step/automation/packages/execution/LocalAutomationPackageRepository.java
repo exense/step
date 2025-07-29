@@ -19,9 +19,12 @@
 package step.automation.packages.execution;
 
 import org.bson.types.ObjectId;
+import step.artefacts.TestCase;
+import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
@@ -29,6 +32,7 @@ import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.ImportResult;
+import step.core.repositories.TestRunStatus;
 import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
@@ -37,6 +41,7 @@ import step.repositories.ArtifactRepositoryConstants;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * The repository for artifacts already stored (deployed) in Step DB as automation packages
@@ -52,14 +57,43 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
         String apName = repositoryParameters.get(AP_NAME);
 
         ArtefactInfo info = new ArtefactInfo();
-        info.setType("automationPackage");
-        info.setName(apName);
+        boolean isWrapInTestSet = isWrapPlansIntoTestSet(repositoryParameters);
+        //Introduced for 28.1, previous execution do not have this field in repo parameters
+        String rootType = repositoryParameters.get(ArtifactRepositoryConstants.PARAM_ROOT_TYPE);
+        if (rootType != null) {
+            info.setType(rootType);
+        } else {
+            info.setType((isWrapInTestSet) ? TestSet.class.getSimpleName() : TestCase.class.getSimpleName());
+        }
+        //isolated execution wrapped in TestSet use the AP name as plan name, Non-wrapped AP execution create one execution per plan using the includePlans with the name of the plan to be executed
+        info.setName((isWrapInTestSet) ? apName : repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS, apName));
         return info;
     }
 
     @Override
     public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
-        return new TestSetStatusOverview();
+        TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
+        if (isWrapPlansIntoTestSet(repositoryParameters)) {
+            PackageExecutionContext ctx = null;
+            try {
+                ctx = getOrRestorePackageExecutionContext(repositoryParameters, null, objectPredicate);
+                //If wrap we return all plans of the AP
+                List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
+                        .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
+                testSetStatusOverview.setRuns(runs);
+                return testSetStatusOverview;
+            } finally {
+                // getOrRestorePackageExecutionContext return an PackageExecutionContext than can be shared and reused, it should be only closed here if it's not shared
+                // even if with current implementation Local context are never shared only non-wrapped isolated executions are
+                if (ctx != null && !ctx.isShared()) {
+                    ctx.close();
+                }
+            }
+        } else {
+            //We do not handle this case
+            return testSetStatusOverview;
+        }
+
     }
 
     @Override
@@ -118,6 +152,6 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
     }
 
     protected boolean isWrapPlansIntoTestSet(Map<String, String> repositoryParameters) {
-        return Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "true"));
+        return Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "false"));
     }
 }
