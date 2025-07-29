@@ -105,17 +105,13 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 
-			// Handle the input
-			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
-			measurementsBuilder.startMeasure(input.getFunction());
-
             // TODO: move the dependency on implementation somewhere else, better error handling...
             // There's no easy way to do this in the AbstractFunctionHandler itself, because
             // the only place where the Input properties are guaranteed to be available is in the (abstract)
             // handle() method.
             String uploadContextId = input.getProperties().get(StreamingResourceUploadContext.PARAMETER_NAME);
 			if (uploadContextId != null) {
-				// This information can also be retrieved from somewhere else (e.g. this.agentTokenServices....), for now it's in the inputs
+				// This information could also be retrieved from somewhere else (e.g. this.agentTokenServices....), for now it's in the inputs
 				String host = input.getProperties().get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
 				while (host.endsWith("/")) {
 					host = host.substring(0, host.length() - 1);
@@ -127,6 +123,10 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 				URI uri = URI.create(String.format("%s/%s?%s=%s", host, path, StreamingResourceUploadContext.PARAMETER_NAME, uploadContextId));
 				functionHandler.setStreamingUploadProvider(new WebsocketUploadProvider(uri));
 			}
+
+			// Handle the input
+			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
+			measurementsBuilder.startMeasure(input.getFunction());
 
 			@SuppressWarnings("unchecked")
 			Output<?> output = functionHandler.handle(input);
