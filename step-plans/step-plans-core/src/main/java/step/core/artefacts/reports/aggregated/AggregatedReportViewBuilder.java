@@ -189,8 +189,9 @@ public class AggregatedReportViewBuilder {
             if (fetchCurrentOperations && threadManager != null) {
                 operationsByArtefactHash.computeIfAbsent(reportNode.getArtefactHash(), k -> new ArrayList<>()).addAll(threadManager.getCurrentOperationsByReportNodeId(reportNode.getId().toHexString()));
             }
-        } else {
-            // only ended reports are ingested
+        } else if (!reportNode.getStatus().equals(ReportNodeStatus.NORUN) && reportNode.getDuration() != null) {
+            // When re-ingesting nodes to build up the partial aggregated tree, we only consider fully executed nodes as in ArtefactHandler.executes
+            // While we could rely on report node status only, the strongest and safest requirement is that the report node duration must be set.
             reportNodeTimeSeries.ingestReportNode(reportNode);
         }
         singleReportNodes.put(reportNode.getArtefactHash(), reportNode);
