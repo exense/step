@@ -121,6 +121,16 @@
 				<scope>import</scope>
 			</dependency>
 
+			<!-- Temporary override; for imported dependencies, FIRST declared one wins, so we
+			 need to put this before step-grid with transitively provides the streaming -->
+			<dependency>
+				<groupId>ch.exense.streaming</groupId>
+				<artifactId>step-streaming</artifactId>
+				<version>2025.7.29-6888cdb44e318f3fad037e86</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
 			<dependency>
 				<groupId>ch.exense.step</groupId>
 				<artifactId>step-grid</artifactId>
