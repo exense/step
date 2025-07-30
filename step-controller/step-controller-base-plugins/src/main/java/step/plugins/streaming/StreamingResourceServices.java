@@ -18,7 +18,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Path("/streaming-resources")
 @Tag(name = "Streaming Resources")
@@ -115,7 +118,26 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
                 .build();
     }
 
-    public static String makeAsciiFilename(String utf8Filename) {
+    @GET
+    @Path("/{id}/lines")
+    @Secured(right = "resource-read")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<String> getLines(@PathParam("id") String resourceId, @QueryParam("startIndex") long startIndex, @QueryParam("count") long count) throws IOException {
+        StreamingResource entity;
+        try {
+            entity = manager.getCatalog().getEntity(resourceId);
+        } catch (Exception e) {
+            throw new ResourceMissingException(resourceId);
+        }
+
+        manager.checkDownloadPermission(entity, getSession());
+        // argument validation is performed in this method, may throw various exceptions
+        Stream<String> lines = manager.getLines(resourceId, startIndex, count);
+        return lines.collect(Collectors.toList());
+    }
+
+
+    private static String makeAsciiFilename(String utf8Filename) {
         if (utf8Filename == null || utf8Filename.isEmpty()) {
             return "file"; // fallback default name
         }

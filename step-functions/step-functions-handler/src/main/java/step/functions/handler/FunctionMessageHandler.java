@@ -105,13 +105,14 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 
-            // TODO: move the dependency on implementation somewhere else, better error handling...
-            // There's no easy way to do this in the AbstractFunctionHandler itself, because
-            // the only place where the Input properties are guaranteed to be available is in the (abstract)
-            // handle() method.
-            String uploadContextId = input.getProperties().get(StreamingResourceUploadContext.PARAMETER_NAME);
+			// TODO: move the dependency on implementation somewhere else? Check classloader separation...
+			// There's no easy way to do this in the AbstractFunctionHandler itself, because
+			// the only place where the Input properties are guaranteed to be available is in the (abstract)
+			// handle() method (which would then have to be implemented in all subclasses). So we do it here.
+			String uploadContextId = input.getProperties().get(StreamingResourceUploadContext.PARAMETER_NAME);
 			if (uploadContextId != null) {
-				// This information could also be retrieved from somewhere else (e.g. this.agentTokenServices....), for now it's in the inputs
+				// This information could also be retrieved from somewhere else (e.g. this.agentTokenServices....),
+				// for now it's in the inputs provided by the controller itself.
 				String host = input.getProperties().get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
 				while (host.endsWith("/")) {
 					host = host.substring(0, host.length() - 1);

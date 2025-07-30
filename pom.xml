@@ -47,7 +47,7 @@
 		<!-- internal dependencies -->
 		<dependencies.version>2025.6.25</dependencies.version>
 
-		<step-grid.version>2025.7.29-6888b09d4e318f3fadbe55f7</step-grid.version>
+		<step-grid.version>2025.7.30-6889e6ce4e318f3fadef2696</step-grid.version>
 		<step-framework.version>2025.7.29-688877f34e318f3fad34ded4</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
@@ -121,15 +121,15 @@
 				<scope>import</scope>
 			</dependency>
 
-			<!-- Temporary override; for imported dependencies, FIRST declared one wins, so we
-			 need to put this before step-grid which transitively provides the streaming -->
-			<dependency>
-				<groupId>ch.exense.streaming</groupId>
-				<artifactId>step-streaming</artifactId>
-				<version>2025.7.29-6889093c4e318f3fad5f1a22</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
+<!--			&lt;!&ndash; Temporary override; for imported dependencies, FIRST declared one wins, so we-->
+<!--			 need to put this before step-grid which transitively provides the streaming &ndash;&gt;-->
+<!--			<dependency>-->
+<!--				<groupId>ch.exense.streaming</groupId>-->
+<!--				<artifactId>step-streaming</artifactId>-->
+<!--				<version>2025.7.29-6889093c4e318f3fad5f1a22</version>-->
+<!--				<type>pom</type>-->
+<!--				<scope>import</scope>-->
+<!--			</dependency>-->
 
 			<dependency>
 				<groupId>ch.exense.step</groupId>
