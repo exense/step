@@ -46,9 +46,8 @@
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
 		<dependencies.version>2025.6.25</dependencies.version>
-		<exense-commons.version>2025.7.4-686790ccf551c55946ab2cc0</exense-commons.version>
-		<step-grid.version>2025.7.21-687e53836832f859e9695c5d</step-grid.version>
-		<step-framework.version>2025.7.7-686b7a0df551c559469fe8ff</step-framework.version>
+		<step-grid.version>2025.7.30-6889d1c54e318f3fade37650</step-grid.version>
+		<step-framework.version>2025.7.30-6889c7994e318f3fade03a5d</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
@@ -112,15 +111,6 @@
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
-			<!-- TODO: this has been added to force the use of the correct version without having to create a release of step-framework. Remove before merge! -->
-			<dependency>
-				<groupId>ch.exense.commons</groupId>
-				<artifactId>exense-commons</artifactId>
-				<version>${exense-commons.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-
 			<dependency>
 				<groupId>ch.exense.step</groupId>
 				<artifactId>step-framework</artifactId>
