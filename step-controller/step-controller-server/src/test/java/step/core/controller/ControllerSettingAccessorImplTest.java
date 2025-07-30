@@ -8,6 +8,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollection;
+import step.core.settings.SettingHook;
+import step.core.settings.SettingHookRollbackException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -57,7 +59,7 @@ public class ControllerSettingAccessorImplTest {
 			// both hooks should be called 'on save' and 'on delete', because the rollback operation performs delete for just saved record
 			accessor.save(notSaved);
 			Assert.fail("Exception not thrown");
-		} catch (ControllerSettingHookRollbackException ex) {
+		} catch (SettingHookRollbackException ex) {
 			// ok
 		}
 
@@ -125,8 +127,10 @@ public class ControllerSettingAccessorImplTest {
 			// second hook should throw exception on 'bad_value' - this causes operation rollback and the value should NOT be deleted
 			// both hooks should be called 'on save' and 'on delete', because the rollback operation performs compensating save for just deleted record
 			accessor.remove(saved1.getId());
-		}  catch (ControllerSettingHookRollbackException ex) {
+			Assert.fail("Exception is missing");
+		}  catch (SettingHookRollbackException ex) {
 			// ok
+			log.info("Settings exception: {}", ex.getMessage());
 		}
 
 		// value should not be removed
@@ -175,7 +179,7 @@ public class ControllerSettingAccessorImplTest {
 			// both hooks should be called 'on save' and 'on delete', because the rollback operation performs delete for just saved record
 			accessor.save(Arrays.asList(notSaved1, notSaved2));
 			Assert.fail("Exception not thrown");
-		} catch (ControllerSettingHookRollbackException ex) {
+		} catch (SettingHookRollbackException ex) {
 			// ok
 		}
 
@@ -201,7 +205,7 @@ public class ControllerSettingAccessorImplTest {
 		return Objects.equals(a.getKey(), b.getKey()) && Objects.equals(a.getValue(), b.getValue());
 	}
 
-	private static class TestHook implements ControllerSettingHook {
+	private static class TestHook implements SettingHook<ControllerSetting> {
 
 		protected List<ControllerSetting> hookedOnSave = new ArrayList<>();
 		protected List<ControllerSetting> hookedOnDelete = new ArrayList<>();

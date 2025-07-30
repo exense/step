@@ -19,6 +19,7 @@
 package step.automation.packages;
 
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectValidator;
 import step.resources.ResourceManager;
 
 import java.util.Map;
@@ -33,6 +34,7 @@ public class AutomationPackageContext {
     private AutomationPackageArchive automationPackageArchive;
     private AutomationPackageContent packageContent;
 
+    private ObjectValidator validator;
     private ObjectEnricher enricher;
 
     private String uploadedPackageFileResource;
@@ -42,12 +44,15 @@ public class AutomationPackageContext {
 
     public AutomationPackageContext(AutomationPackageOperationMode operationMode, ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive,
                                     AutomationPackageContent packageContent,
-                                    ObjectEnricher enricher, Map<String, Object> extensions) {
+                                    ObjectEnricher enricher,
+                                    ObjectValidator validator,
+                                    Map<String, Object> extensions) {
         this.operationMode = Objects.requireNonNull(operationMode);
         this.resourceManager = resourceManager;
         this.automationPackageArchive = automationPackageArchive;
         this.packageContent = packageContent;
         this.enricher = enricher;
+        this.validator = validator;
         this.extensions = extensions;
     }
 
@@ -73,6 +78,10 @@ public class AutomationPackageContext {
 
     public ObjectEnricher getEnricher() {
         return enricher;
+    }
+
+    public ObjectValidator getValidator(){
+        return validator;
     }
 
     public void setAutomationPackageArchive(AutomationPackageArchive automationPackageArchive) {
