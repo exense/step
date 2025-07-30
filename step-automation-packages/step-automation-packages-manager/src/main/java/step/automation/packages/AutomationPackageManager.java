@@ -609,8 +609,8 @@ public class AutomationPackageManager {
     protected void fillStaging(AutomationPackageStaging staging, AutomationPackageContent packageContent, AutomationPackage oldPackage,
                                ObjectEnricher enricherForIncludedEntities, ObjectValidator validatorForIncludedEntities,
                                AutomationPackageArchive automationPackageArchive, String evaluationExpression, ObjectPredicate objectPredicate) {
-        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager(), evaluationExpression));
-        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression));
+        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, validatorForIncludedEntities, staging.getResourceManager(), evaluationExpression));
+        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, validatorForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression));
 
         List<HookEntry> hookEntries = new ArrayList<>();
         for (String additionalField : packageContent.getAdditionalFields()) {
