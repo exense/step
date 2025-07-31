@@ -91,7 +91,17 @@ public class TokenForecastingContext {
         public int hashCode() {
             return Objects.hash(matchingPools, provisioningParameters);
         }
+
+        @Override
+        public String toString() {
+            return "Key{" +
+                    "matchingPools=" + matchingPools +
+                    ", provisioningParameters=" + provisioningParameters +
+                    '}';
+        }
     }
+
+
 
     protected void releaseRequiredToken(Key key, int count) {
         poolResourceReservations.computeIfAbsent(key, k -> new PoolReservationTracker()).release(count);

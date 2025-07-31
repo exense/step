@@ -19,6 +19,8 @@
 package step.core.artefacts.handlers;
 
 import java.util.List;
+import java.util.Map;
+
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
@@ -40,9 +42,19 @@ public class SequentialArtefactScheduler {
 		createReportSkeleton_(node, testArtefact, ParentSource.MAIN);
 	}
 
+	public void createReportSkeleton_(ReportNode node, AbstractArtefact testArtefact, Map<String, Object> newVariables) {
+		createReportSkeleton_(node, testArtefact, newVariables, ParentSource.MAIN);
+	}
+
 	public void createReportSkeleton_(ReportNode node, AbstractArtefact testArtefact, ParentSource parentSource) {
 		for (AbstractArtefact child : ArtefactHandler.getChildren(testArtefact, context)) {
 			artefactHandlerManager.createReportSkeleton(child, node, parentSource);
+		}
+	}
+
+	public void createReportSkeleton_(ReportNode node, AbstractArtefact testArtefact, Map<String, Object> newVariables, ParentSource parentSource) {
+		for (AbstractArtefact child : ArtefactHandler.getChildren(testArtefact, context)) {
+			artefactHandlerManager.createReportSkeleton(child, node, newVariables, parentSource);
 		}
 	}
 
