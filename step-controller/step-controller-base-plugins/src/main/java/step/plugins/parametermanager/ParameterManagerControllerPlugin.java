@@ -36,12 +36,13 @@ import step.core.imports.ImportContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.entities.activation.Activator;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.plugins.encryption.EncryptionManagerDependencyPlugin;
-import step.plugins.screentemplating.*;
+import step.plugins.screentemplating.ScreenTemplatePlugin;
 
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -76,7 +77,7 @@ public class ParameterManagerControllerPlugin extends AbstractControllerPlugin {
 					return allFilterAttributes.contains(PARAMETER_VALUE_FIELD + ".value") ? new Equals(PARAMETER_PROTECTED_VALUE_FIELD, false) : Filters.empty();
 				}));
 		
-		ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, context.getConfiguration(), context.getDynamicBeanResolver());
+		ParameterManager parameterManager = new ParameterManager(parameterAccessor, encryptionManager, context.getDynamicBeanResolver(), new Activator(context.getExpressionHandler()));
 		context.put(ParameterManager.class, parameterManager);
 		this.parameterManager = parameterManager;
 		

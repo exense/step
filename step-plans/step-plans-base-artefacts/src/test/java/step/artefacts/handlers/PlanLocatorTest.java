@@ -1,26 +1,30 @@
 package step.artefacts.handlers;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
-
 import step.artefacts.CallPlan;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
+import step.entities.activation.Activator;
 import step.expressions.ExpressionHandler;
+
+import static org.junit.Assert.assertEquals;
 
 public class PlanLocatorTest {
 
 	private final PlanAccessor planAccessor = new InMemoryPlanAccessor();
-	private final PlanLocator planLocator = new PlanLocator(planAccessor, new SelectorHelper(
-			new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler()))));
+	private final PlanLocator planLocator;
+
+	{
+		ExpressionHandler expressionHandler = new ExpressionHandler();
+		planLocator = new PlanLocator(planAccessor, new SelectorHelper(
+				new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler))), new Activator(expressionHandler));
+	}
 
 	@Test
 	public void test() {

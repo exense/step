@@ -46,6 +46,8 @@ import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
+import step.entities.activation.Activator;
+import step.expressions.ExpressionHandler;
 import step.framework.server.security.Secured;
 
 import java.io.File;
@@ -78,9 +80,10 @@ public class ControllerServices extends AbstractStepServices {
 		currentVersion = context.getCurrentVersion();
 		controller = context.require(Controller.class);
 
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+		ExpressionHandler expressionHandler = getContext().getExpressionHandler();
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
+		planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper, new Activator(expressionHandler));
 		objectHooks = context.get(ObjectHookRegistry.class);
 		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
 

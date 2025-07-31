@@ -7,6 +7,7 @@ import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.objectenricher.ObjectPredicate;
+import step.entities.activation.Activator;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -28,8 +29,10 @@ public class FunctionLocatorTest {
 		Function expectedFunction2_v1 = newFunction("function2", "v1");
 		Function expectedFunction2_v2 = newFunction("function2", "v2");
 
+		ExpressionHandler expressionHandler = new ExpressionHandler();
 		FunctionLocator functionLocator = new FunctionLocator(functionAccessor,
-                new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler())))
+                new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler))),
+				new Activator(expressionHandler)
 		);
 
 		// by id

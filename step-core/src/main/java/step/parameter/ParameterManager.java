@@ -18,18 +18,8 @@
  ******************************************************************************/
 package step.parameter;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.script.Bindings;
-import javax.script.ScriptException;
-import javax.script.SimpleBindings;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import ch.exense.commons.app.Configuration;
-import step.commons.activation.Activator;
 import step.core.accessors.Accessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValue;
@@ -37,33 +27,33 @@ import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plugins.exceptions.PluginCriticalException;
+import step.entities.activation.Activator;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ParameterManager {
 	
 	public static final String RESET_VALUE = "####change me####";
 	public static final String PROTECTED_VALUE = "******";
 
-	private static Logger logger = LoggerFactory.getLogger(ParameterManager.class);
+	private static final Logger logger = LoggerFactory.getLogger(ParameterManager.class);
 	
-	private Accessor<Parameter> parameterAccessor;
-	private EncryptionManager encryptionManager;
+	private final Accessor<Parameter> parameterAccessor;
+	private final EncryptionManager encryptionManager;
 
-	private String defaultScriptEngine;
 	private final DynamicBeanResolver dynamicBeanResolver;
+	private final Activator activator;
 
-	public ParameterManager(Accessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, Configuration configuration, DynamicBeanResolver dynamicBeanResolver) {
-		this(parameterAccessor, encryptionManager, configuration.getProperty("tec.activator.scriptEngine", Activator.DEFAULT_SCRIPT_ENGINE), dynamicBeanResolver);
-	}
-
-	public ParameterManager(Accessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, String defaultScriptEngine, DynamicBeanResolver dynamicBeanResolver) {
+	public ParameterManager(Accessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, DynamicBeanResolver dynamicBeanResolver, Activator activator) {
 		this.parameterAccessor = parameterAccessor;
 		this.encryptionManager = encryptionManager;
-		this.defaultScriptEngine = defaultScriptEngine;
 		this.dynamicBeanResolver = dynamicBeanResolver;
+		this.activator = activator;
 	}
 
 	public static ParameterManager copy(ParameterManager from, Accessor<Parameter> parameterAccessor){
-		return new ParameterManager(parameterAccessor, from.encryptionManager, from.defaultScriptEngine, from.dynamicBeanResolver);
+		return new ParameterManager(parameterAccessor, from.encryptionManager, from.dynamicBeanResolver, from.activator);
 	}
 
 	public Parameter save(Parameter newParameter, Parameter sourceParameter, String modificationUser) {
@@ -109,29 +99,18 @@ public class ParameterManager {
 	
 	public Map<String, Parameter> getAllParameters(Map<String, Object> contextBindings, ObjectPredicate objectPredicate) {
 		Map<String, Parameter> result = new HashMap<>();
-		Bindings bindings = contextBindings!=null?new SimpleBindings(contextBindings):null;
 
-		Map<String, List<Parameter>> parameterMap = new HashMap<String, List<Parameter>>();
+		Map<String, List<Parameter>> parameterMap = new HashMap<>();
 		parameterAccessor.getAll().forEachRemaining(p->{
 			if(objectPredicate==null || objectPredicate.test(p)) {
-				List<Parameter> parameters = parameterMap.get(p.key);
-				if(parameters==null) {
-					parameters = new ArrayList<>();
-					parameterMap.put(p.key, parameters);
-				}
+				List<Parameter> parameters = parameterMap.computeIfAbsent(p.key, k -> new ArrayList<>());
 				parameters.add(p);
-				try {
-					Activator.compileActivationExpression(p, defaultScriptEngine);
-				} catch (ScriptException e) {
-					logger.error("Error while compiling activation expression of parameter "+p, e);
-				}
 			}
 		});
 		
-		
 		for(String key:parameterMap.keySet()) {
 			List<Parameter> parameters = parameterMap.get(key);
-			Parameter bestMatch = Activator.findBestMatch(bindings, parameters, defaultScriptEngine);
+			Parameter bestMatch = activator.findBestMatch(contextBindings, parameters);
 			if(bestMatch!=null) {
 				result.put(key, bestMatch);
 			}
@@ -150,7 +129,7 @@ public class ParameterManager {
 			unresolvedParamKeys.forEach(k -> {
 				Parameter parameter = allParameters.get(k);
 				Boolean protectedValue = parameter.getProtectedValue();
-				boolean isProtected = parameter.getProtectedValue() != null && parameter.getProtectedValue();
+				boolean isProtected = protectedValue != null && protectedValue;
 				DynamicValue<String> parameterValue = parameter.getValue();
 				if (!isProtected && parameterValue != null) {
 					try {
@@ -221,10 +200,6 @@ public class ParameterManager {
 			}
 		}
 		return parameter;
-	}
-
-	public String getDefaultScriptEngine() {
-		return defaultScriptEngine;
 	}
 
 	public Accessor<Parameter> getParameterAccessor() {

@@ -18,16 +18,10 @@
  ******************************************************************************/
 package step.plugins.parametermanager;
 
-import static org.junit.Assert.*;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import ch.exense.commons.app.Configuration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.InMemoryAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
@@ -41,11 +35,18 @@ import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.variables.VariablesManager;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.entities.activation.Activator;
 import step.expressions.ExpressionHandler;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class ParameterManagerPluginTest {
 	
@@ -437,9 +438,7 @@ public class ParameterManagerPluginTest {
 		}
 
 		public LocalParameterManagerPlugin(InMemoryAccessor<Parameter> parameterAccessor, EncryptionManager encryptionManager, Configuration configuration) {
-			super(new ParameterManager(parameterAccessor, encryptionManager, configuration, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()))));
+			super(new ParameterManager(parameterAccessor, encryptionManager, new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())), new Activator(new ExpressionHandler())));
 		}
-		
-		
 	}
 }

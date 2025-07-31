@@ -36,6 +36,8 @@ import step.commons.activation.Expression;
 import step.core.collections.Collection;
 import step.core.collections.EntityVersion;
 import step.core.objectenricher.ObjectPredicate;
+import step.entities.activation.Activator;
+import step.expressions.ExpressionHandler;
 
 public class ScreenTemplateManagerTest {
 
@@ -167,7 +169,7 @@ public class ScreenTemplateManagerTest {
 			}
 		};
 
-		ScreenTemplateManager s = new ScreenTemplateManager(a, new Configuration());
+		ScreenTemplateManager s = new ScreenTemplateManager(a, new Activator(new ExpressionHandler()));
 		
 		List<Input> inputs = s.getInputsForScreen("testScreen1", new HashMap<String, Object>(), newPredicate());
 		Assert.assertEquals(3, inputs.size());

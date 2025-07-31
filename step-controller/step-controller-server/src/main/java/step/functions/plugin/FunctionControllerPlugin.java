@@ -33,6 +33,8 @@ import step.core.entities.EntityManager;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.entities.activation.Activator;
+import step.expressions.ExpressionHandler;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.functions.Function;
@@ -83,12 +85,13 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		FunctionAccessor functionAccessor = new FunctionAccessorImpl(collection);
 		FunctionManager functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
 		FunctionExecutionService functionExecutionService = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, context.getDynamicBeanResolver());
-		
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+
+		ExpressionHandler expressionHandler = context.getExpressionHandler();
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
 
 		context.put(FunctionAccessor.class, functionAccessor);
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		final FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
+		final FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper, new Activator(expressionHandler));
 		EntityManager entityManager = context.getEntityManager();
 		entityManager.register(new FunctionEntity(functionAccessor, functionLocator, entityManager));
 		context.put(FunctionManager.class, functionManager);

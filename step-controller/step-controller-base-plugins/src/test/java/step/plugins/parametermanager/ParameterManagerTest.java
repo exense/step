@@ -18,45 +18,36 @@
  ******************************************************************************/
 package step.plugins.parametermanager;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import javax.script.ScriptException;
-
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.test.categories.PerformanceTest;
 import org.junit.Assert;
 import org.junit.Test;
-
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.commons.activation.Expression;
 import step.core.accessors.AbstractAccessor;
+import step.core.accessors.InMemoryAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
 import step.core.collections.mongodb.MongoDBCollectionFactory;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
+import step.entities.activation.Activator;
 import step.expressions.ExpressionHandler;
 import step.parameter.Parameter;
-import step.commons.activation.Expression;
-import step.core.accessors.InMemoryAccessor;
 import step.parameter.ParameterManager;
+
+import javax.script.ScriptException;
+import java.util.*;
+import java.util.concurrent.*;
 
 public class ParameterManagerTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(ParameterManagerTest.class);
 
 	private final DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
+	private final Activator activator = new Activator(new ExpressionHandler());
 
 	@Test
 	public void testJavascript() throws ScriptException {
@@ -74,7 +65,7 @@ public class ParameterManagerTest {
 
 	public void test1Common(Configuration configuration) throws ScriptException {
 		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
-		ParameterManager m = new ParameterManager(accessor, null, configuration, resolver);
+		ParameterManager m = new ParameterManager(accessor, null, resolver, activator);
 
 		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
 		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
@@ -114,7 +105,7 @@ public class ParameterManagerTest {
 		Collection<Parameter> collection = new MongoDBCollectionFactory(properties).getCollection("perfParameters", Parameter.class);
 		AbstractAccessor<Parameter> accessor = new AbstractAccessor<>(collection);
 		accessor.getCollectionDriver().remove(Filters.empty());
-		ParameterManager m = new ParameterManager(accessor, null, new Configuration(), resolver);
+		ParameterManager m = new ParameterManager(accessor, null, resolver, activator);
 		
 		int nIt = 100;
 		for(int i=1;i<=nIt;i++) {
@@ -140,8 +131,8 @@ public class ParameterManagerTest {
 	@Test
 	public void testParallel() throws ScriptException, InterruptedException, ExecutionException {
 		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
-		ParameterManager m = new ParameterManager(accessor, null, new Configuration(), resolver);
-		
+		ParameterManager m = new ParameterManager(accessor, null, resolver, activator);
+
 		int nIt = 100;
 		for(int i=1;i<=nIt;i++) {
 			accessor.save(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i, "desc"));

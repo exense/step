@@ -19,17 +19,12 @@
 package step.artefacts.handlers;
 
 import step.artefacts.CallFunction;
-import step.automation.packages.AutomationPackageEntity;
-import step.commons.activation.Activator;
-import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.execution.ExecutionContextBindings;
 import step.core.objectenricher.ObjectPredicate;
-import step.functions.EvaluationExpression;
+import step.entities.activation.Activator;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 
-import javax.script.SimpleBindings;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,11 +36,13 @@ public class FunctionLocator {
 	
 	private final FunctionAccessor functionAccessor;
 	private final SelectorHelper selectorHelper;
+	private final ApEntitiesPrioritizer apEntitiesPrioritizer;
 
-	public FunctionLocator(FunctionAccessor functionAccessor, SelectorHelper selectorHelper) {
+	public FunctionLocator(FunctionAccessor functionAccessor, SelectorHelper selectorHelper, Activator activator) {
 		super();
 		this.functionAccessor = functionAccessor;
 		this.selectorHelper= selectorHelper;
+		this.apEntitiesPrioritizer = new ApEntitiesPrioritizer(activator);
 	}
 
 	/**
@@ -75,7 +72,7 @@ public class FunctionLocator {
 			List<Function> functionsMatchingByAttributes = stream.collect(Collectors.toList());
 
 			// reorder matching functions: the function from current AP has a priority
-			List<Function> orderedFunctions = prioritizeAndFilterApEntities(functionsMatchingByAttributes, bindings);
+			List<Function> orderedFunctions = apEntitiesPrioritizer.prioritizeAndFilterApEntities(functionsMatchingByAttributes, bindings);
 
 			// after prioritization, we check the chosen active keyword version
 			Set<String> activeKeywordVersions = getActiveKeywordVersions(bindings);
@@ -103,59 +100,10 @@ public class FunctionLocator {
 
 	}
 
-	/**
-	 * Reorders and filters entities according to the current automation package and activation expression
-	 */
-	public static <T extends AbstractOrganizableObject> List<T> prioritizeAndFilterApEntities(List<T> entities, Map<String, Object> bindings) {
-		// reorder entities: entities from current AP have a priority
-		List<T> entitiesFromSameAP = new ArrayList<>();
-		List<T> entitiesActivatedExplicitly = new ArrayList<>();
-		List<T> entitiesWithLowerPriority = new ArrayList<>();
-		String planApId = (bindings != null) ? (String) bindings.get(ExecutionContextBindings.BINDING_AP) : null;
-		for (T entity : entities) {
-			// If we're executing a plan belonging to an AP, any matching entity from the same AP as the priority
-			// activation expression is not checked since all entity from the AP have the same activation expression, it should
-			// not impact the selection
-			if (planApId != null) {
-				String entityApId = entity.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
-				if (Objects.equals(entityApId, planApId)) {
-					entitiesFromSameAP.add(entity);
-					break;
-				}
-			}
-			if (evaluationExprressionIsDefined(entity)) {
-				if (isActivated(bindings, entity)) {
-					entitiesActivatedExplicitly.add(entity);
-				}
-			} else {
-				entitiesWithLowerPriority.add(entity);
-			}
-		}
-
-		List<T> orderedEntities = new ArrayList<>();
-		orderedEntities.addAll(entitiesFromSameAP);
-		orderedEntities.addAll(entitiesActivatedExplicitly);
-		orderedEntities.addAll(entitiesWithLowerPriority);
-		return orderedEntities;
-	}
-
-	private static <T extends AbstractOrganizableObject> boolean evaluationExprressionIsDefined(T entity) {
-		return (entity instanceof EvaluationExpression && ((EvaluationExpression) entity).getActivationExpression() != null);
-	}
-
-	private static <T extends AbstractOrganizableObject> boolean isActivated(Map<String, Object> bindings, T entity) {
-		if (evaluationExprressionIsDefined(entity)) {
-			Expression activationExpression = ((EvaluationExpression) entity).getActivationExpression();
-			return Activator.evaluateActivationExpression(bindings == null ? null : new SimpleBindings(bindings), activationExpression, Activator.DEFAULT_SCRIPT_ENGINE);
-		} else {
-			return true;
-		}
-	}
-
 	private Set<String> getActiveKeywordVersions(Map<String, Object> bindings) {
 		Set<String> activeKeywordVersions = null;
 		if (bindings != null) {
-			
+
 			Object activeKeywordVersionsObject = bindings.get(KEYWORD_ACTIVE_VERSIONS);
 			activeKeywordVersions = new HashSet<>();
 			if(activeKeywordVersionsObject != null) {

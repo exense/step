@@ -23,6 +23,7 @@ import step.core.collections.Collection;
 import step.core.entities.Entity;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.entities.activation.Activator;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 
@@ -42,7 +43,7 @@ public class ScreenTemplatePlugin extends AbstractControllerPlugin {
 	public void serverStart(GlobalContext context) {
 		screenInputAccessor = new ScreenInputAccessorImpl(
 				context.getCollectionFactory().getCollection("screenInputs", ScreenInput.class));
-		screenTemplateManager = new ScreenTemplateManager(screenInputAccessor, context.getConfiguration());
+		screenTemplateManager = new ScreenTemplateManager(screenInputAccessor, new Activator(context.getExpressionHandler()));
 
 		initializeScreenInputsIfNecessary();
 		
