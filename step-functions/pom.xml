@@ -30,6 +30,7 @@
 	</parent>
 	
 	<modules>
+		<module>step-functions-handler-initializer</module>
 		<module>step-functions-handler</module>
 		<module>step-functions-client</module>
 		<module>step-functions-client-api</module>

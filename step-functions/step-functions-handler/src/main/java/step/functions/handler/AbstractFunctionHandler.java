@@ -247,6 +247,8 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		return applicationContextBuilder.runInContext(branchName, ()->{
 			@SuppressWarnings("unchecked")
 			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext(branchName).getClassLoader(), functionHandlerClassname, tokenSession, tokenReservationSession, properties);
+			// TODO: I'm not perfectly happy with this. Ideally the streamingProvider and all other "services" should be passed at creation to FunctionHandlerFactory.create
+			functionHandler.setStreamingUploadProvider(streamingUploadProvider);
 			return functionHandler.handle(input);
 		});
 	}

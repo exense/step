@@ -30,14 +30,16 @@ import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.contextbuilder.RemoteApplicationContextFactory;
+import step.grid.contextbuilder.*;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
+import step.streaming.client.upload.StreamingUploadProvider;
 import step.streaming.common.StreamingResourceUploadContext;
-import step.streaming.websocket.client.upload.WebsocketUploadProvider;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +52,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
 	public static final String FUNCTION_TYPE_KEY = "$functionType";
+	public static final String BRANCH_HANDLER_INITIALIZER = "handler-initializer";
 
 	// Cached object mapper for message payload serialization
 	private final ObjectMapper mapper;
@@ -71,8 +74,9 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 				agentTokenServices.getApplicationContextBuilder().getApplicationContextConfiguration());
 
 		applicationContextBuilder.forkCurrentContext(AbstractFunctionHandler.FORKED_BRANCH);
+		applicationContextBuilder.forkCurrentContext(BRANCH_HANDLER_INITIALIZER);
 
-		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient());
+        functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient());
 	}
 
 	@Override
@@ -105,25 +109,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 
-			// TODO: move the dependency on implementation somewhere else? Check classloader separation...
-			// There's no easy way to do this in the AbstractFunctionHandler itself, because
-			// the only place where the Input properties are guaranteed to be available is in the (abstract)
-			// handle() method (which would then have to be implemented in all subclasses). So we do it here.
-			String uploadContextId = input.getProperties().get(StreamingResourceUploadContext.PARAMETER_NAME);
-			if (uploadContextId != null) {
-				// This information could also be retrieved from somewhere else (e.g. this.agentTokenServices....),
-				// for now it's in the inputs provided by the controller itself.
-				String host = input.getProperties().get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
-				while (host.endsWith("/")) {
-					host = host.substring(0, host.length() - 1);
-				}
-				String path = input.getProperties().get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH);
-				while (path.startsWith("/")) {
-					path = path.substring(1);
-				}
-				URI uri = URI.create(String.format("%s/%s?%s=%s", host, path, StreamingResourceUploadContext.PARAMETER_NAME, uploadContextId));
-				functionHandler.setStreamingUploadProvider(new WebsocketUploadProvider(uri));
-			}
+			StreamingUploadProvider streamingUploadProvider = initializeStreamingUploadProvider(input);
+			functionHandler.setStreamingUploadProvider(streamingUploadProvider);
 
 			// Handle the input
 			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
@@ -148,6 +135,46 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			outputMessageBuilder.setPayload(outputPayload);
 			return outputMessageBuilder.build();
 
+		});
+	}
+
+	private StreamingUploadProvider initializeStreamingUploadProvider(Input<?> input) throws Exception {
+		applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new LocalResourceApplicationContextFactory(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar"), true);
+		// There's no easy way to do this in the AbstractFunctionHandler itself, because
+		// the only place where the Input properties are guaranteed to be available is in the (abstract)
+		// handle() method (which would then have to be implemented in all subclasses). So we do it here.
+		// This information could also be retrieved from somewhere else (e.g. this.agentTokenServices....),
+		// for now it's in the inputs provided by the controller itself.
+		return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> {
+			// There's no easy way to do this in the AbstractFunctionHandler itself, because
+			// the only place where the Input properties are guaranteed to be available is in the (abstract)
+			// handle() method (which would then have to be implemented in all subclasses). So we do it here.
+			String uploadContextId = input.getProperties().get(StreamingResourceUploadContext.PARAMETER_NAME);
+			if (uploadContextId != null) {
+				// This information could also be retrieved from somewhere else (e.g. this.agentTokenServices....),
+				// for now it's in the inputs provided by the controller itself.
+				String host = input.getProperties().get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
+				while (host.endsWith("/")) {
+					host = host.substring(0, host.length() - 1);
+				}
+				String path = input.getProperties().get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH);
+				while (path.startsWith("/")) {
+					path = path.substring(1);
+				}
+				URI uri = URI.create(String.format("%s/%s?%s=%s", host, path, StreamingResourceUploadContext.PARAMETER_NAME, uploadContextId));
+
+				@SuppressWarnings("unchecked") Class<StreamingUploadProvider> aClass = (Class<StreamingUploadProvider>) Thread.currentThread().getContextClassLoader().loadClass("step.streaming.websocket.client.upload.WebsocketUploadProvider");
+				StreamingUploadProvider streamingUploadProvider = aClass.getDeclaredConstructor(URI.class).newInstance(uri);
+
+				return (StreamingUploadProvider) Proxy.newProxyInstance(aClass.getClassLoader(), new Class[]{StreamingUploadProvider.class}, new InvocationHandler() {
+					@Override
+					public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+						return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> method.invoke(streamingUploadProvider, args));
+					}
+				});
+			} else {
+				return null;
+			}
 		});
 	}
 
