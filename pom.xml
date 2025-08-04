@@ -113,6 +113,15 @@
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
+			<!-- We're temporarily forcing the step-api version here. TODO: remove before merge to master -->
+			<dependency>
+				<groupId>ch.exense.step</groupId>
+				<artifactId>step-api</artifactId>
+				<version>2025.8.4-68906afebf2221169f20486b</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
 			<dependency>
 				<groupId>ch.exense.step</groupId>
 				<artifactId>step-framework</artifactId>

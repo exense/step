@@ -18,18 +18,21 @@
  ******************************************************************************/
 package step.plugins.java.handler;
 
-import javax.json.JsonObject;
-
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.handlers.javahandler.KeywordExecutor;
+import step.reporting.ReportingCallbacks;
+import step.streaming.client.upload.StreamingUploadProvider;
+
+import javax.json.JsonObject;
 
 public class KeywordHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		KeywordExecutor executor = new KeywordExecutor(false);
+		StreamingUploadProvider streamingUploadProvider = this.getStreamingUploadProvider();
+		KeywordExecutor executor = new KeywordExecutor(false, new ReportingCallbacks(streamingUploadProvider));
 		return executor.handle(input, getTokenSession(), getTokenReservationSession(), mergeAllProperties(input));
 	}
 }
