@@ -25,6 +25,7 @@ import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.MavenArtifactDownloader;
 import step.core.maven.MavenArtifactIdentifier;
 import step.resources.ResourceManager;
+import step.resources.ResourceOrigin;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,6 +44,11 @@ public class KeywordLibraryFromMavenProvider implements AutomationPackageKeyword
     @Override
     public File getKeywordLibrary() throws AutomationPackageReadingException {
         return MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier);
+    }
+
+    @Override
+    public ResourceOrigin getOrigin() {
+        return mavenArtifactIdentifier;
     }
 
     @Override

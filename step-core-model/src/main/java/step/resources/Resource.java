@@ -37,7 +37,9 @@ public class Resource extends AbstractTrackedObject implements EnricheableObject
 	protected boolean directory;
 	
 	protected boolean ephemeral;
-	
+
+	protected String origin;
+
 	public ObjectId getCurrentRevisionId() {
 		return currentRevisionId;
 	}
@@ -76,5 +78,13 @@ public class Resource extends AbstractTrackedObject implements EnricheableObject
 
 	public void setDirectory(boolean directory) {
 		this.directory = directory;
+	}
+
+	public String getOrigin() {
+		return origin;
+	}
+
+	public void setOrigin(String origin) {
+		this.origin = origin;
 	}
 }

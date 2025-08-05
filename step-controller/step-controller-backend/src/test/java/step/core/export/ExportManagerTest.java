@@ -729,7 +729,7 @@ public class ExportManagerTest {
 	
 	public void testExportPlansWithResourceFct(boolean overwrite) throws Exception {
 		// Create a resource
-		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_DATASOURCE, this.getClass().getResourceAsStream("dummyExcel.xls"), "TestResource.txt", null, null, "testUser");
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_DATASOURCE, this.getClass().getResourceAsStream("dummyExcel.xls"), "TestResource.txt", null, "testUser");
 		assertNotNull(resource);
 			
 		ForEachBlock f = new ForEachBlock();

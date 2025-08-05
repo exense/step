@@ -549,30 +549,24 @@ public class AutomationPackageManager {
             Resource keywordLibraryResource = null;
             if (keywordLibrary != null) {
                 try (FileInputStream fis = new FileInputStream(keywordLibrary)) {
-                    try {
-                        // for isolated execution we always use the isolatedAp resource type to support auto cleanup after execution
-                        String resourceType = forIsolatedExecution ? ResourceManager.RESOURCE_TYPE_ISOLATED_AP : keywordLibraryProvider.getResourceType();
+                    // for isolated execution we always use the isolatedAp resource type to support auto cleanup after execution
+                    String resourceType = forIsolatedExecution ? ResourceManager.RESOURCE_TYPE_ISOLATED_AP : keywordLibraryProvider.getResourceType();
 
-                        // for maven artifacts we save the maven snippet in the tracking value and use it to lookup existing resources (ie the same maven artifacts)
-                        ResourceManager.DuplicatesDetectionMode duplicatesDetectionMode = Objects.equals(ResourceManager.RESOURCE_TYPE_MAVEN_ARTIFACT, keywordLibraryResource.getResourceType())
-                                ? ResourceManager.DuplicatesDetectionMode.tracking_value
-                                : ResourceManager.DuplicatesDetectionMode.md5;
-
-                        // TODO: if required, resolve tenant here and apply restriction by tenant to lookup duplicates
-                        keywordLibraryResource = resourceManager.createTrackedResource(resourceType, false, fis, keywordLibrary.getName(), new ResourceManager.DuplicatesDetection(duplicatesDetectionMode, true, null), enricher, keywordLibraryProvider.getTrackingValue(), actorUser);
-                        log.info("The new keyword library ({}) has been uploaded as ({})", keywordLibrarySource, keywordLibraryResource);
-                    } catch (SimilarResourceExistingException ex) {
-                        if (ex.getSimilarResources() != null && !ex.getSimilarResources().isEmpty()) {
-                            keywordLibraryResource = ex.getSimilarResources().get(0);
-                            log.info("Existing keyword library {} with resource id {} has been detected and will be reused in AP {}", keywordLibrary.getName(), keywordLibraryResource.getId().toHexString(), apName);
-                        } else {
-                            // strange case - the exception is thrown, but similar resources are missing
-                            keywordLibraryResource = ex.getResource();
-                            log.warn("A similar keyword library is recognized, but not provided. The new keyword library ({}) has been uploaded as ({})", keywordLibrarySource, keywordLibraryResource);
-                        }
+                    // TODO: improve the logic to detect duplicates and reupload keyword libs
+                    ResourceOrigin origin = keywordLibraryProvider.getOrigin();
+                    List<Resource> oldResources = null;
+                    if (origin != null && origin.getOriginType() == ResourceOriginType.mvn) {
+                        oldResources = resourceManager.findManyByCriteria(Map.of("origin", origin.toStringRepresentation()));
+                    }
+                    log.info("The new keyword library ({}) has been uploaded as ({})", keywordLibrarySource, keywordLibraryResource);
+                    if (oldResources != null && !oldResources.isEmpty()) {
+                        log.info("Existing keyword library {} with resource id {} has been detected and will be reused in AP {}", keywordLibrary.getName(), oldResources.get(0).getId().toHexString(), apName);
+                        keywordLibraryResource = oldResources.get(0);
+                    } else {
+                        keywordLibraryResource = resourceManager.createTrackedResource(resourceType, false, fis, keywordLibrary.getName(), enricher, keywordLibraryProvider.getTrackingValue(), actorUser, origin == null ? null : origin.toStringRepresentation());
                     }
                     keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
-                    newPackage.setPackageLibrariesLocation(keywordLibraryResourceString);
+                    newPackage.setKeywordLibraryResource(keywordLibraryResourceString);
                 }
             }
         } catch (IOException | InvalidResourceFormatException | AutomationPackageReadingException e) {
@@ -734,7 +728,7 @@ public class AutomationPackageManager {
             for (Resource resource: stagingResources) {
                 resourceManager.copyResource(resource, staging.getResourceManager());
             }
-        } catch (IOException | SimilarResourceExistingException | InvalidResourceFormatException e) {
+        } catch (IOException | InvalidResourceFormatException e) {
             throw new AutomationPackageManagerException("Unable to persist a resource in automation package", e);
         } finally {
             staging.getResourceManager().cleanup();

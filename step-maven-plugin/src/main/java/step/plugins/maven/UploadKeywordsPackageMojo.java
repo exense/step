@@ -108,6 +108,7 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 
 			getLog().info("Package attributes: " + packageAttributes);
 
+			// TODO: this can be potentially replaced with some origin
 			String trackingAttribute = (getTrackingAttribute() == null || getTrackingAttribute().isEmpty())
 					? getProject().getGroupId() + "." + getProject().getArtifactId()
 					: getTrackingAttribute();
@@ -221,9 +222,9 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 							false,
 							is,
 							remoteLibArtifact.getFile().getName(),
-							null, null,
+							null,
 							actualTrackingAttribute,
-							null);
+							null, null);
 					getLog().info("Library resource has been created: " + created.getId().toString());
 					return LibFileReference.resourceId(created.getId().toString());
 				} catch (IOException e) {

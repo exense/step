@@ -21,6 +21,7 @@
 package step.automation.packages.kwlibrary;
 
 import step.automation.packages.AutomationPackageReadingException;
+import step.resources.ResourceOrigin;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +30,11 @@ public class NoKeywordLibraryProvider implements AutomationPackageKeywordLibrary
 
     @Override
     public File getKeywordLibrary() throws AutomationPackageReadingException {
+        return null;
+    }
+
+    @Override
+    public ResourceOrigin getOrigin() {
         return null;
     }
 

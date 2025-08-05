@@ -30,7 +30,11 @@ public class AutomationPackage extends AbstractOrganizableObject implements Enri
     private String version;
     private Expression activationExpression;
 
-    private String packageLibrariesLocation;
+    private String automationPackageOrigin;
+    private String automationPackageResource;
+
+    private String keywordLibraryOrigin;
+    private String keywordLibraryResource;
 
     public AutomationPackageStatus getStatus() {
         return status;
@@ -60,11 +64,36 @@ public class AutomationPackage extends AbstractOrganizableObject implements Enri
      * @return the resource path to the package libraries. Package libraries are either a folder of jar or DLLs
      */
     @EntityReference(type= EntityManager.resources)
-    public String getPackageLibrariesLocation() {
-        return packageLibrariesLocation;
+    public String getKeywordLibraryResource() {
+        return keywordLibraryResource;
     }
 
-    public void setPackageLibrariesLocation(String packageLibrariesLocation) {
-        this.packageLibrariesLocation = packageLibrariesLocation;
+    public void setKeywordLibraryResource(String keywordLibraryResource) {
+        this.keywordLibraryResource = keywordLibraryResource;
+    }
+
+    public String getAutomationPackageOrigin() {
+        return automationPackageOrigin;
+    }
+
+    public void setAutomationPackageOrigin(String automationPackageOrigin) {
+        this.automationPackageOrigin = automationPackageOrigin;
+    }
+
+    @EntityReference(type= EntityManager.resources)
+    public String getAutomationPackageResource() {
+        return automationPackageResource;
+    }
+
+    public void setAutomationPackageResource(String automationPackageResource) {
+        this.automationPackageResource = automationPackageResource;
+    }
+
+    public String getKeywordLibraryOrigin() {
+        return keywordLibraryOrigin;
+    }
+
+    public void setKeywordLibraryOrigin(String keywordLibraryOrigin) {
+        this.keywordLibraryOrigin = keywordLibraryOrigin;
     }
 }

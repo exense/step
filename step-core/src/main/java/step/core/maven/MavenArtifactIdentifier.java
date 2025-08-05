@@ -18,10 +18,14 @@
  ******************************************************************************/
 package step.core.maven;
 
+import step.resources.ResourceOrigin;
+import step.resources.ResourceOriginType;
+
 import java.util.Objects;
 
-public class MavenArtifactIdentifier {
+public class MavenArtifactIdentifier implements ResourceOrigin {
 
+    public static final String MVN_PREFIX = "mvn";
     private String groupId;
     private String artifactId;
     private String version;
@@ -111,7 +115,7 @@ public class MavenArtifactIdentifier {
      * @param shortString the maven identifier in string format ('mvn:artifactId:groupId:version:classifier:type'). Classifier and type are optional
      */
     public static MavenArtifactIdentifier fromShortString(String shortString){
-        if(shortString != null && shortString.startsWith("mvn:")) {
+        if(shortString != null && shortString.startsWith(MVN_PREFIX + ":")) {
             String[] split = shortString.split(":");
             return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null, split.length >= 6 ? split[5] : null);
         } else {
@@ -120,7 +124,7 @@ public class MavenArtifactIdentifier {
     }
     
     public String toShortString() {
-        String res = String.format("mvn:%s:%s:%s", this.getArtifactId(), getGroupId(), getVersion());
+        String res = String.format(MVN_PREFIX + ":%s:%s:%s", this.getArtifactId(), getGroupId(), getVersion());
         if (this.getClassifier() != null) {
             res += this.getClassifier();
         }
@@ -128,5 +132,15 @@ public class MavenArtifactIdentifier {
             res += this.getType();
         }
         return res;
+    }
+
+    @Override
+    public ResourceOriginType getOriginType() {
+        return ResourceOriginType.mvn;
+    }
+
+    @Override
+    public String toStringRepresentation() {
+        return toShortString();
     }
 }

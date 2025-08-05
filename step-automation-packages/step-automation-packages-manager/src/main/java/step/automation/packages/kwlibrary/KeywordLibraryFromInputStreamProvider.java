@@ -24,6 +24,8 @@ import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageManagerException;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.InputStreamToTempFileDownloader;
+import step.resources.ResourceOrigin;
+import step.resources.UploadedResourceOrigin;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +47,11 @@ public class KeywordLibraryFromInputStreamProvider implements AutomationPackageK
     @Override
     public File getKeywordLibrary() throws AutomationPackageReadingException {
         return tempFile == null ? null : tempFile.getTempFile();
+    }
+
+    @Override
+    public ResourceOrigin getOrigin() {
+        return new UploadedResourceOrigin();
     }
 
     @Override

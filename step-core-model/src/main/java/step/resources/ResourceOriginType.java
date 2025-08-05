@@ -18,25 +18,9 @@
  *  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *  *****************************************************************************
  */
-package step.automation.packages.kwlibrary;
+package step.resources;
 
-import step.automation.packages.AutomationPackageReadingException;
-import step.resources.ResourceManager;
-import step.resources.ResourceOrigin;
-
-import java.io.Closeable;
-import java.io.File;
-
-public interface AutomationPackageKeywordLibraryProvider extends Closeable {
-    File getKeywordLibrary() throws AutomationPackageReadingException;
-
-    ResourceOrigin getOrigin();
-
-    default String getTrackingValue() {
-        return null;
-    }
-
-    default String getResourceType() {
-        return ResourceManager.RESOURCE_TYPE_FUNCTIONS;
-    }
+public enum ResourceOriginType {
+    mvn,
+    uploaded
 }

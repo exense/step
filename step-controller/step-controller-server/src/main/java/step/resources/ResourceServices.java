@@ -79,11 +79,9 @@ public class ResourceServices extends AbstractStepServices {
 		
 		try {
 			// TODO: take user from auth context?
-			Resource resource = resourceManager.createTrackedResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate ? ResourceManager.DuplicatesDetection.createDefault() : null, objectEnricher, trackingAttribute, null);
+			Resource resource = resourceManager.createTrackedResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), objectEnricher, trackingAttribute, null, new UploadedResourceOrigin().toStringRepresentation());
 			return new ResourceUploadResponse(resource, null);
-		} catch (SimilarResourceExistingException e) {
-			return new ResourceUploadResponse(e.getResource(), e.getSimilarResources());
-		} catch (InvalidResourceFormatException e) {
+		}  catch (InvalidResourceFormatException e) {
 			throw uploadFileNotAnArchive();
 		}
 	}

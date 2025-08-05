@@ -16,8 +16,6 @@ import step.client.credentials.ControllerCredentials;
 import step.client.resources.RemoteResourceManager;
 import step.functions.packages.FunctionPackage;
 import step.resources.Resource;
-import step.resources.ResourceManager;
-import step.resources.SimilarResourceExistingException;
 
 public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implements FunctionPackageClient {
 
@@ -46,14 +44,11 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 				// upload new file as library (or reuse the existing resource with the same has sum)
 				File file = packageLibraryFile.getFile();
 				try {
-					// TODO: here we want to protect against uploading duplicated resources (checkForDuplicates=true), but the remoteResourceManager now doesn't support this (should be fixed)
+					// TODO: here we tried to protect against duplicated resources, but this functionality is removed now
 					// actor user is null here, because it doesn't make sense in the remote client - user will be anyway resolved on server side
-					remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(), ResourceManager.DuplicatesDetection.createDefault(), null, null);
-				} catch (SimilarResourceExistingException e) {
-					// in case of existing resource with the same hash sum we want to use it
-					if (e.getSimilarResources() != null && !e.getSimilarResources().isEmpty()) {
-						packageLibraryResource = e.getSimilarResources().get(0);
-					}
+					remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(),null, null);
+				} catch (step.resources.InvalidResourceFormatException e) {
+					throw new RuntimeException(e);
 				}
 			} else if (packageLibraryFile.getResourceId() != null && !packageLibraryFile.getResourceId().isEmpty()) {
 				// reuse existing resource as package library
@@ -132,11 +127,11 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 	protected Resource upload(File file) throws IOException {
 		try {
 			// actor user is null here, because it doesn't make sense in the remote client - user will be anyway resolved on server side
-			return remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(), null, null, null);
+			return remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(), null, null);
 		} catch (IOException e) {
 			throw e;
-		} catch (SimilarResourceExistingException e) {
-			throw new RuntimeException("Unexpected similar resource error. This should never occur.", e);
+		} catch (step.resources.InvalidResourceFormatException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

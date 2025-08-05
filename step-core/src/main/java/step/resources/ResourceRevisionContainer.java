@@ -51,21 +51,13 @@ public class ResourceRevisionContainer {
 		return resourceRevision;
 	}
 
-	public void save(ResourceManager.DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+	public void save(ObjectEnricher objectEnricher) throws IOException, InvalidResourceFormatException {
 		try {
 			outputStream.close();
 		} catch (IOException e) {
 
 		}
-		resourceManagerImpl.closeResourceContainer(resource, resourceRevision, checkForDuplicates, objectEnricher);
-	}
-	
-	public void save(ObjectEnricher objectEnricher) throws IOException, InvalidResourceFormatException {
-		try {
-			save(null, objectEnricher);
-		} catch (SimilarResourceExistingException e) {
-			throw new RuntimeException("This should never happen");
-		}
+		resourceManagerImpl.closeResourceContainer(resource, resourceRevision, objectEnricher);
 	}
 
 	public void save() throws IOException, InvalidResourceFormatException {

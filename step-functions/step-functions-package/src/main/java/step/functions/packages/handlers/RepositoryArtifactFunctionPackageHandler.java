@@ -134,7 +134,7 @@ public class RepositoryArtifactFunctionPackageHandler extends JavaFunctionPackag
 			functionPackage.setPackageLocation(artifactFile.getAbsolutePath());
 		} else {
 			// if it's not a preview, we save the temporary file as resource
-			Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(artifactFile), artifactFile.getName(), null, objectEnricher, null);
+			Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(artifactFile), artifactFile.getName(), objectEnricher, null);
 			functionPackage.setPackageLocation(FileResolver.RESOURCE_PREFIX+resource.getId().toString());
 			functionPackage.addAttribute(AbstractOrganizableObject.VERSION, artifact.getVersion());
 		}

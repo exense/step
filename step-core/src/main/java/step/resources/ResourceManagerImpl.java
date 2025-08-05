@@ -20,7 +20,6 @@ package step.resources;
 
 import ch.exense.commons.io.FileHelper;
 import com.google.common.hash.Hashing;
-import org.apache.commons.io.FileUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,20 +70,20 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
-	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-		return createResource(resourceType, false, resourceStream, resourceFileName, checkForDuplicates, objectEnricher, actorUser);
+	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
+		return createResource(resourceType, false, resourceStream, resourceFileName, objectEnricher, actorUser);
 	}
 
 	@Override
-	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher, String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
 		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null, actorUser);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
-		resourceContainer.save(checkForDuplicates, objectEnricher);
+		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();
 	}
 
 	@Override
-	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, InvalidResourceFormatException {
 		// TODO: need to copy user and creation/modification date?
 		File resourceFile = sourceResourceManager.getResourceFile(resource.getId().toHexString()).getResourceFile();
 		ResourceRevisionContainer resourceContainer = createResourceContainer(resource);
@@ -95,23 +94,21 @@ public class ResourceManagerImpl implements ResourceManager {
 				FileHelper.copy(is, resourceContainer.getOutputStream(), 2048);
 			}
 		}
-		resourceContainer.save(null, null);
+		resourceContainer.save(null);
 		return resourceContainer.getResource();
 	}
 
-
 	@Override
 	public Resource createTrackedResource(String resourceType,
-                                          boolean isDirectory,
-                                          InputStream resourceStream,
-                                          String resourceFileName,
-                                          DuplicatesDetection checkForDuplicates,
+										  boolean isDirectory,
+										  InputStream resourceStream,
+										  String resourceFileName,
                                           ObjectEnricher objectEnricher,
-                                          String trackingAttribute,
-										  String actorUser) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+										  String trackingAttribute,
+										  String actorUser, String origin) throws IOException, InvalidResourceFormatException {
 		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
-		resourceContainer.save(checkForDuplicates, objectEnricher);
+		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();
 	}
 
@@ -126,7 +123,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		return new ResourceRevisionContainer(resource, revision, this);
 	}
 
-	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, DuplicatesDetection checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, ObjectEnricher objectEnricher) throws IOException, InvalidResourceFormatException {
 		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
 		String checksum = getMD5Checksum(resourceRevisionFile);
 		resourceRevision.setChecksum(checksum);
@@ -140,12 +137,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceRevisionAccessor.save(resourceRevision);
 		resourceAccessor.save(resource);
 
-		List<Resource> sameResources = null;
-		if(checkForDuplicates != null) {
-			sameResources = getSimilarResources(resource, resourceRevision, checkForDuplicates.getMode());
-		}
-
-		if(resource.isDirectory()) {
+        if(resource.isDirectory()) {
 			boolean isArchive = FileHelper.isArchive(resourceRevisionFile);
 			if(isArchive) {
 				File revisionFileToUnzip = new File(resourceRevisionFile.getAbsolutePath() + "_beforeUnzip");
@@ -158,14 +150,6 @@ public class ResourceManagerImpl implements ResourceManager {
 			} else {
 				throw new InvalidResourceFormatException();
 			}
-		}
-
-		if (checkForDuplicates != null && sameResources.size() > 0) {
-			if (checkForDuplicates.isDontSaveDuplicate()) {
-				// TODO: here we make the rollback of just stored new resource if we want to omit duplicates (temp workaround)
-				deleteResource(resource.getId().toHexString());
-			}
-			throw new SimilarResourceExistingException(resource, sameResources);
 		}
 	}
 
@@ -200,40 +184,6 @@ public class ResourceManagerImpl implements ResourceManager {
 	@Override
 	public List<Resource> findManyByCriteria(Map<String, String> attributes) {
 		return resourceAccessor.findManyByCriteria(attributes).collect(Collectors.toList());
-	}
-
-	private List<Resource> getSimilarResources(Resource actualResource, ResourceRevision actualResourceRevision, DuplicatesDetectionMode duplicatesDetectionMode) {
-		List<Resource> result = new ArrayList<>();
-		resourceRevisionAccessor.getResourceRevisionsByChecksum(actualResourceRevision.getChecksum()).forEachRemaining(revision->{
-			if (!revision.getId().equals(actualResourceRevision.getId())) {
-				Resource resource = resourceAccessor.get(new ObjectId(revision.getResourceId()));
-				if (resource != null) {
-					if (resource.getCurrentRevisionId() != null) {
-						// ensure it is an active revision i.e a revision that is the current revision of a resource
-						if (resource.getCurrentRevisionId().equals(revision.getId())) {
-							try {
-								switch (duplicatesDetectionMode) {
-									case md5:
-										if (FileUtils.contentEquals(getResourceRevisionFile(resource, revision), getResourceRevisionFile(actualResource, actualResourceRevision))) {
-											result.add(resource);
-										}
-									default:
-										throw new UnsupportedOperationException("Duplicates detection mode is not yet implemented: " + duplicatesDetectionMode);
-								}
-
-							} catch (IOException e) {
-								logger.warn("Error while comparing resource revisions " + revision.getId() + " and " + actualResourceRevision.getId(), e);
-							}
-						}
-					} else {
-						logger.warn("Found resource without current revision: "+resource.getId());
-					}
-				} else {
-					logger.warn("Found orphan resource revision: "+revision.getId());
-				}
-			}
-		});
-		return result;
 	}
 
 	@Override
@@ -339,11 +289,8 @@ public class ResourceManagerImpl implements ResourceManager {
 			throws IOException, InvalidResourceFormatException {
 		ResourceRevision revision = createResourceRevisionContainer(contentFilename, resource);
 		saveResourceRevisionContent(resourceStream, resource, revision);
-		try {
-			closeResourceContainer(resource, revision, null, null);
-		} catch (SimilarResourceExistingException e) {
-			throw new RuntimeException("Should never occur", e);
-		}
+		closeResourceContainer(resource, revision, null);
+
 		return revision;
 	}
 
