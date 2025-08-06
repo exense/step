@@ -35,6 +35,7 @@ import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 import step.streaming.client.upload.StreamingUploadProvider;
+import step.streaming.client.upload.StreamingUploads;
 import step.streaming.common.StreamingResourceUploadContext;
 
 import java.lang.reflect.InvocationHandler;
@@ -110,7 +111,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 
 			StreamingUploadProvider streamingUploadProvider = initializeStreamingUploadProvider(input);
-			functionHandler.setStreamingUploadProvider(streamingUploadProvider);
+			functionHandler.setStreamingUploads(new StreamingUploads(streamingUploadProvider));
 
 			// Handle the input
 			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
@@ -140,11 +141,6 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	private StreamingUploadProvider initializeStreamingUploadProvider(Input<?> input) throws Exception {
 		applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new LocalResourceApplicationContextFactory(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar"), true);
-		// There's no easy way to do this in the AbstractFunctionHandler itself, because
-		// the only place where the Input properties are guaranteed to be available is in the (abstract)
-		// handle() method (which would then have to be implemented in all subclasses). So we do it here.
-		// This information could also be retrieved from somewhere else (e.g. this.agentTokenServices....),
-		// for now it's in the inputs provided by the controller itself.
 		return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> {
 			// There's no easy way to do this in the AbstractFunctionHandler itself, because
 			// the only place where the Input properties are guaranteed to be available is in the (abstract)

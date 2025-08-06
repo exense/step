@@ -51,8 +51,8 @@
 			<artifactId>step-functions-handler-initializer</artifactId>
 			<version>${project.version}</version>
 			<classifier>jar-with-dependencies</classifier>
-			<!-- We actually don't need this dependency but simply want to ensure that the module is built before this one.
-			 To force this we declare it as provided -->
+			<!-- We actually don't need this dependency but simply want to ensure that the module is built before this one,
+			so we can copy the resulting file to our resources/ directory. To force this we declare the module as provided -->
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

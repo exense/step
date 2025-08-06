@@ -117,7 +117,7 @@
 			<dependency>
 				<groupId>ch.exense.step</groupId>
 				<artifactId>step-api</artifactId>
-				<version>2025.8.4-68906afebf2221169f20486b</version>
+				<version>2025.8.6-6893323f50d0023081c80ae1</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -129,16 +129,6 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-
-<!--			&lt;!&ndash; Temporary override; for imported dependencies, FIRST declared one wins, so we-->
-<!--			 need to put this before step-grid which transitively provides the streaming &ndash;&gt;-->
-<!--			<dependency>-->
-<!--				<groupId>ch.exense.streaming</groupId>-->
-<!--				<artifactId>step-streaming</artifactId>-->
-<!--				<version>2025.7.29-6889093c4e318f3fad5f1a22</version>-->
-<!--				<type>pom</type>-->
-<!--				<scope>import</scope>-->
-<!--			</dependency>-->
 
 			<dependency>
 				<groupId>ch.exense.step</groupId>
