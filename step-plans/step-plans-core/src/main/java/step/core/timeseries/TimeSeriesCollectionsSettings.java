@@ -28,6 +28,7 @@ public class TimeSeriesCollectionsSettings {
 
     public static final String TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD = "{collectionName}.flush.period";
     public static final String TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE = "{collectionName}.flush.async.queue.size";
+    public static final String TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE_THRESHOLD = "{collectionName}.flush.series.queue.size.threshold";
     public static final String TIME_SERIES_MAIN_RESOLUTION = "{collectionName}.resolution";
     public static final String TIME_SERIES_MINUTE_COLLECTION_ENABLED = "{collectionName}.collections.minute.enabled";
     public static final String TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD = "{collectionName}.collections.minute.flush.period";
@@ -40,6 +41,7 @@ public class TimeSeriesCollectionsSettings {
 
     private long mainResolution;
     private long mainFlushInterval;
+    private int flushSeriesQueueSizeThreshold;
     private int flushAsyncQueueSize;
     private boolean perMinuteEnabled;
     private long perMinuteFlushInterval;
@@ -108,6 +110,15 @@ public class TimeSeriesCollectionsSettings {
         return perMinuteFlushInterval;
     }
 
+    public int getFlushSeriesQueueSizeThreshold() {
+        return flushSeriesQueueSizeThreshold;
+    }
+
+    public TimeSeriesCollectionsSettings setFlushSeriesQueueSizeThreshold(int flushSeriesQueueSizeThreshold) {
+        this.flushSeriesQueueSizeThreshold = flushSeriesQueueSizeThreshold;
+        return this;
+    }
+
     private TimeSeriesCollectionsSettings setFlushAsyncQueueSize(int flushAsyncQueueSize) {
         this.flushAsyncQueueSize = flushAsyncQueueSize;
         return this;
@@ -155,6 +166,7 @@ public class TimeSeriesCollectionsSettings {
         return new TimeSeriesCollectionsSettings()
                 .setMainResolution(mainResolution)
                 .setMainFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofSeconds(1).toMillis()))
+                .setFlushSeriesQueueSizeThreshold(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE_THRESHOLD, collectionName, 20000))
                 .setFlushAsyncQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE, collectionName, 5000))
                 .setPerMinuteEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_MINUTE_COLLECTION_ENABLED, collectionName, true))
                 .setPerMinuteFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofMinutes(1).toMillis()))
