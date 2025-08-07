@@ -10,8 +10,6 @@ import step.core.GlobalContext;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.framework.server.security.Secured;
 import step.resources.ResourceMissingException;
-import step.streaming.common.StreamingResourceTransferStatus;
-import step.streaming.server.FilesystemStreamingResourcesStorageBackend;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,7 +77,7 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
 
         manager.checkDownloadPermission(entity, getSession());
 
-        long currentSize = Optional.ofNullable(entity.status.getCurrentSize()).orElse(0L);
+        long currentSize = entity.status.getCurrentSize();
         if (start != null && (start < 0 || start > currentSize)) {
             throw new IllegalArgumentException("start must be between 0 and " + currentSize);
         }
@@ -123,6 +121,7 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
     @Secured(right = "resource-read")
     @Produces(MediaType.APPLICATION_JSON)
     public List<String> getLines(@PathParam("id") String resourceId, @QueryParam("startIndex") long startIndex, @QueryParam("count") long count) throws IOException {
+        // Note: startIndex and count default to 0 if not provided, therefore producing an empty output in that situation.
         StreamingResource entity;
         try {
             entity = manager.getCatalog().getEntity(resourceId);
