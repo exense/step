@@ -15,15 +15,22 @@ import step.streaming.common.StreamingResourceUploadContext;
 import step.streaming.server.StreamingResourceStatusUpdate;
 import step.streaming.server.StreamingResourcesCatalogBackend;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 public class StreamingResourceCollectionCatalogBackend implements StreamingResourcesCatalogBackend {
     private static final Logger logger = LoggerFactory.getLogger(StreamingResourceCollectionCatalogBackend.class);
-    private final StreamingResourceAccessor accessor;
+    final StreamingResourceAccessor accessor;
+
     public StreamingResourceCollectionCatalogBackend(GlobalContext context) {
-        accessor = new StreamingResourceAccessor(context.getCollectionFactory().getCollection(StreamingResource.COLLECTION_NAME, StreamingResource.class));
+        this(new StreamingResourceAccessor(context.getCollectionFactory().getCollection(StreamingResource.COLLECTION_NAME, StreamingResource.class)));
     }
+
+    public StreamingResourceCollectionCatalogBackend(StreamingResourceAccessor accessor) {
+        this.accessor = accessor;
+    }
+
     @Override
     public String createResource(StreamingResourceMetadata metadata, StreamingResourceUploadContext context) {
         StreamingResource entity = new StreamingResource();
@@ -67,7 +74,8 @@ public class StreamingResourceCollectionCatalogBackend implements StreamingResou
     }
 
     public Stream<String> findResourceIdsForExecution(String executionId) {
-        return Stream.empty();
+        return accessor.findManyByCriteria(Map.of("attributes." + StreamingResource.ATTRIBUTE_EXECUTION_ID, executionId))
+                .map(r -> r.getId().toHexString());
     }
 
     @Override
