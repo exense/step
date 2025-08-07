@@ -272,6 +272,10 @@ public class Executor {
 	public List<ExecutionContext> getCurrentExecutions() {
 		return executionEngine.getCurrentExecutions();
 	}
+
+	public long getLastExecutionEndTime() {
+		return executionEngine.getLastExecutionEndTime();
+	}
 	
 	public List<ExecutiontTaskParameters> getScheduledExecutions() {
 		List<ExecutiontTaskParameters> result = new ArrayList<>();

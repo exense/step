@@ -147,12 +147,6 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 	}
 
 	@Override
-	public Iterable<Execution> findLastEnded(int limit) {
-		return collectionDriver.find(Filters.empty(), new SearchOrder("endTime", -1), 0, limit, 0)
-				.collect(Collectors.toList());
-	}
-
-	@Override
 	public List<Execution> getLastEndedExecutionsBySchedulerTaskID(String schedulerTaskID, int limit) {
 		return getLastEndedExecutionsBySchedulerTaskID(schedulerTaskID, limit, null, null);
 	}
