@@ -42,13 +42,13 @@ public class TimeSeriesCollectionsBuilder {
 
     public List<TimeSeriesCollection> getTimeSeriesCollections(String mainCollectionName, TimeSeriesCollectionsSettings collectionsSettings, Set<String> ignoredAttributesForHighResolution) {
         List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
-        int flushSeriesQueueSizeThreshold = collectionsSettings.getFlushSeriesQueueSizeThreshold();
+        int flushSeriesQueueSize = collectionsSettings.getFlushSeriesQueueSize();
         int flushAsyncQueueSize = collectionsSettings.getFlushAsyncQueueSize();
-        addIfEnabled(enabledCollections, mainCollectionName, Duration.ofSeconds(1), collectionsSettings.getMainFlushInterval(), flushSeriesQueueSizeThreshold, flushAsyncQueueSize,null, true);
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_PER_MINUTE, Duration.ofMinutes(1), collectionsSettings.getPerMinuteFlushInterval(), flushSeriesQueueSizeThreshold, flushAsyncQueueSize,null, collectionsSettings.isPerMinuteEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_HOURLY, Duration.ofHours(1), collectionsSettings.getHourlyFlushInterval(), flushSeriesQueueSizeThreshold, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isHourlyEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_DAILY, Duration.ofDays(1), collectionsSettings.getDailyFlushInterval(), flushSeriesQueueSizeThreshold, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isDailyEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_WEEKLY, Duration.ofDays(7), collectionsSettings.getWeeklyFlushInterval(), flushSeriesQueueSizeThreshold, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isWeeklyEnabled());
+        addIfEnabled(enabledCollections, mainCollectionName, Duration.ofSeconds(1), collectionsSettings.getMainFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize,null, true);
+        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_PER_MINUTE, Duration.ofMinutes(1), collectionsSettings.getPerMinuteFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize,null, collectionsSettings.isPerMinuteEnabled());
+        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_HOURLY, Duration.ofHours(1), collectionsSettings.getHourlyFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isHourlyEnabled());
+        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_DAILY, Duration.ofDays(1), collectionsSettings.getDailyFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isDailyEnabled());
+        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_WEEKLY, Duration.ofDays(7), collectionsSettings.getWeeklyFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isWeeklyEnabled());
         return enabledCollections;
     }
 
@@ -56,7 +56,7 @@ public class TimeSeriesCollectionsBuilder {
         TimeSeriesCollectionSettings settings = new TimeSeriesCollectionSettings()
                 .setResolution(resolution.toMillis())
                 .setIngestionFlushingPeriodMs(flushInterval)
-                .setIngestionFlushSeriesQueueSizeThreshold(flushSeriesQueueSizeThreshold)
+                .setIngestionFlushSeriesQueueSize(flushSeriesQueueSizeThreshold)
                 .setIngestionFlushAsyncQueueSize(flushAsyncQueueSize)
                 .setIgnoredAttributes(ignoredAttributes);
         TimeSeriesCollection collection = new TimeSeriesCollection(collectionFactory.getCollection(collectionName, Bucket.class), settings);

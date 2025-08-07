@@ -28,7 +28,7 @@ public class TimeSeriesCollectionsSettings {
 
     public static final String TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD = "{collectionName}.flush.period";
     public static final String TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE = "{collectionName}.flush.async.queue.size";
-    public static final String TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE_THRESHOLD = "{collectionName}.flush.series.queue.size.threshold";
+    public static final String TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE = "{collectionName}.flush.series.queue.size";
     public static final String TIME_SERIES_MAIN_RESOLUTION = "{collectionName}.resolution";
     public static final String TIME_SERIES_MINUTE_COLLECTION_ENABLED = "{collectionName}.collections.minute.enabled";
     public static final String TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD = "{collectionName}.collections.minute.flush.period";
@@ -40,8 +40,14 @@ public class TimeSeriesCollectionsSettings {
     public static final String TIME_SERIES_WEEK_COLLECTION_FLUSH_PERIOD = "{collectionName}.collections.week.flush.period";
 
     private long mainResolution;
+    //Define the interval of the flushing job for the main ingestion pipeline (highest resolution)
+    //Note that flush is only actually performed by the job if the bucket time interval is complete (i.e. full resolution interval) or
+    //if the max series queue size is reached (to limit and control memory usage)
     private long mainFlushInterval;
-    private int flushSeriesQueueSizeThreshold;
+    //Define the max queue size for series, if the usage is over the limit flush is performed even for partial time interval
+    private int flushSeriesQueueSize;
+    //flushing do not write to DB directly but to a linked blocking queue in memory which is processed by an asynchronous processor, the queue size is limited to prevent excessive memory usage
+    //While the queue is full, ingesting new buckets is blocked
     private int flushAsyncQueueSize;
     private boolean perMinuteEnabled;
     private long perMinuteFlushInterval;
@@ -110,12 +116,12 @@ public class TimeSeriesCollectionsSettings {
         return perMinuteFlushInterval;
     }
 
-    public int getFlushSeriesQueueSizeThreshold() {
-        return flushSeriesQueueSizeThreshold;
+    public int getFlushSeriesQueueSize() {
+        return flushSeriesQueueSize;
     }
 
-    public TimeSeriesCollectionsSettings setFlushSeriesQueueSizeThreshold(int flushSeriesQueueSizeThreshold) {
-        this.flushSeriesQueueSizeThreshold = flushSeriesQueueSizeThreshold;
+    public TimeSeriesCollectionsSettings setFlushSeriesQueueSize(int flushSeriesQueueSize) {
+        this.flushSeriesQueueSize = flushSeriesQueueSize;
         return this;
     }
 
@@ -166,7 +172,7 @@ public class TimeSeriesCollectionsSettings {
         return new TimeSeriesCollectionsSettings()
                 .setMainResolution(mainResolution)
                 .setMainFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofSeconds(1).toMillis()))
-                .setFlushSeriesQueueSizeThreshold(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE_THRESHOLD, collectionName, 20000))
+                .setFlushSeriesQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE, collectionName, 20000))
                 .setFlushAsyncQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE, collectionName, 5000))
                 .setPerMinuteEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_MINUTE_COLLECTION_ENABLED, collectionName, true))
                 .setPerMinuteFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofMinutes(1).toMillis()))
