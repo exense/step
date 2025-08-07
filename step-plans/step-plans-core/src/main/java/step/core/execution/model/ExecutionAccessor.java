@@ -29,7 +29,11 @@ import step.core.repositories.RepositoryObjectReference;
 public interface ExecutionAccessor extends Accessor<Execution>, ExecutionProvider {
 
 	void createIndexesIfNeeded(Long ttl);
-	
+
+	/**
+	 * List active tests (i.e. status is not ENDED) from the database, when applicable prefer to get this list directly from the scheduler (in memory)
+	 * @return the list of active executions
+	 */
 	List<Execution> getActiveTests();
 
 	List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference);
@@ -41,8 +45,6 @@ public interface ExecutionAccessor extends Accessor<Execution>, ExecutionProvide
 	Iterable<Execution> findInInterval(Map<String, String> criteria, Date start, Date end, boolean endedOnly, SearchOrder order);
 
 	Iterable<Execution> findLastStarted(int limit);
-
-	Iterable<Execution> findLastEnded(int limit);
 
 	List<Execution> getLastEndedExecutionsBySchedulerTaskID(String schedulerTaskID, int limit);
 
