@@ -29,6 +29,7 @@ import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
 import step.streaming.client.upload.StreamingUploadProvider;
+import step.streaming.client.upload.StreamingUploads;
 
 import java.io.File;
 import java.util.HashMap;
@@ -38,7 +39,7 @@ import java.util.concurrent.Callable;
 public abstract class AbstractFunctionHandler<IN, OUT> {
 
 	private FileManagerClient fileManagerClient;
-	private StreamingUploadProvider streamingUploadProvider;
+	private StreamingUploads streamingUploads;
 	private ApplicationContextBuilder applicationContextBuilder;
 	private FunctionHandlerFactory functionHandlerFactory;
 	
@@ -68,12 +69,12 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		this.fileManagerClient = fileManagerClient;
 	}
 
-	void setStreamingUploadProvider(StreamingUploadProvider streamingUploadProvider) {
-		this.streamingUploadProvider = streamingUploadProvider;
+	void setStreamingUploads(StreamingUploads streamingUploads) {
+		this.streamingUploads = streamingUploads;
 	}
 
-	protected StreamingUploadProvider getStreamingUploadProvider() {
-		return streamingUploadProvider;
+	protected StreamingUploads getStreamingUploads() {
+		return streamingUploads;
 	}
 
 	protected void setProperties(Map<String, String> properties) {
@@ -247,8 +248,8 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		return applicationContextBuilder.runInContext(branchName, ()->{
 			@SuppressWarnings("unchecked")
 			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext(branchName).getClassLoader(), functionHandlerClassname, tokenSession, tokenReservationSession, properties);
-			// TODO: I'm not perfectly happy with this. Ideally the streamingProvider and all other "services" should be passed at creation to FunctionHandlerFactory.create
-			functionHandler.setStreamingUploadProvider(streamingUploadProvider);
+			// TODO: I'm not perfectly happy with this. Ideally the streamingUploads and all other "services" should be passed at creation to FunctionHandlerFactory.create
+			functionHandler.setStreamingUploads(streamingUploads);
 			return functionHandler.handle(input);
 		});
 	}
