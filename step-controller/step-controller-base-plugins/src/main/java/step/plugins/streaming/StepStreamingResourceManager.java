@@ -1,5 +1,7 @@
 package step.plugins.streaming;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.deployment.AuthorizationException;
@@ -9,12 +11,12 @@ import step.framework.server.access.AuthorizationManager;
 import step.streaming.common.StreamingResourceReference;
 import step.streaming.common.StreamingResourceUploadContexts;
 import step.streaming.server.DefaultStreamingResourceManager;
-import step.streaming.server.StreamingResourcesCatalogBackend;
 import step.streaming.server.StreamingResourcesStorageBackend;
 
 import java.util.function.Function;
 
 public class StepStreamingResourceManager extends DefaultStreamingResourceManager {
+    private static final Logger logger = LoggerFactory.getLogger(StepStreamingResourceManager.class);
     static final String ATTRIBUTE_STEP_SESSION = "stepSession";
 
 
@@ -22,10 +24,15 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
     private final ObjectHookRegistry objectHookRegistry;
 
     @SuppressWarnings("unchecked")
-    public StepStreamingResourceManager(GlobalContext globalContext, StreamingResourcesCatalogBackend catalog, StreamingResourcesStorageBackend storage, Function<String, StreamingResourceReference> referenceProducerFunction, StreamingResourceUploadContexts uploadContexts) {
+    public StepStreamingResourceManager(GlobalContext globalContext, StreamingResourceCollectionCatalogBackend catalog, StreamingResourcesStorageBackend storage, Function<String, StreamingResourceReference> referenceProducerFunction, StreamingResourceUploadContexts uploadContexts) {
         super(catalog, storage, referenceProducerFunction, uploadContexts);
-        authorizationManager = globalContext.require(AuthorizationManager.class);
-        objectHookRegistry = globalContext.require(ObjectHookRegistry.class);
+
+        authorizationManager = globalContext.get(AuthorizationManager.class);
+        objectHookRegistry = globalContext.get(ObjectHookRegistry.class);
+        if (authorizationManager == null || objectHookRegistry == null) {
+            // this shouldn't happen in production, but may be the case in some unit tests where it's harmless and not required
+            logger.warn("AuthorizationManager and/or ObjectHookRegistry missing from context, all permission checks will refuse access");
+        }
     }
 
     public StreamingResourceCollectionCatalogBackend getCatalog() {
@@ -40,7 +47,10 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
         checkDownloadPermission(getCatalog().getEntity(resourceId), stepSession);
     }
 
-    public void checkDownloadPermission(StreamingResource resource, Session<User> stepSession) {
+    public void checkDownloadPermission(StreamingResource resource, Session<User> stepSession) throws AuthorizationException {
+        if (authorizationManager == null || objectHookRegistry == null) {
+            throw new AuthorizationException("Access denied - unable to check permissions");
+        }
         try {
             if (stepSession == null || !stepSession.isAuthenticated()) {
                 throw new AuthorizationException("Access denied - not authenticated");

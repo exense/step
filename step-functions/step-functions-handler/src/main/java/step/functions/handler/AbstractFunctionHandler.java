@@ -28,7 +28,6 @@ import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
-import step.streaming.client.upload.StreamingUploadProvider;
 import step.streaming.client.upload.StreamingUploads;
 
 import java.io.File;

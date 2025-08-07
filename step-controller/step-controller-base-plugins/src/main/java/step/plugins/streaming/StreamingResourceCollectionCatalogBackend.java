@@ -15,24 +15,36 @@ import step.streaming.common.StreamingResourceUploadContext;
 import step.streaming.server.StreamingResourceStatusUpdate;
 import step.streaming.server.StreamingResourcesCatalogBackend;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class StreamingResourceCollectionCatalogBackend implements StreamingResourcesCatalogBackend {
     private static final Logger logger = LoggerFactory.getLogger(StreamingResourceCollectionCatalogBackend.class);
-    private final StreamingResourceAccessor accessor;
+    final StreamingResourceAccessor accessor;
+
     public StreamingResourceCollectionCatalogBackend(GlobalContext context) {
-        accessor = new StreamingResourceAccessor(context.getCollectionFactory().getCollection(StreamingResource.COLLECTION_NAME, StreamingResource.class));
+        this(new StreamingResourceAccessor(context.getCollectionFactory().getCollection(StreamingResource.COLLECTION_NAME, StreamingResource.class)));
     }
+
+    public StreamingResourceCollectionCatalogBackend(StreamingResourceAccessor accessor) {
+        this.accessor = accessor;
+    }
+
     @Override
     public String createResource(StreamingResourceMetadata metadata, StreamingResourceUploadContext context) {
         StreamingResource entity = new StreamingResource();
         entity.filename = metadata.getFilename();
         entity.mimeType = metadata.getMimeType();
         entity.status = new StreamingResourceStatus(StreamingResourceTransferStatus.INITIATED, 0L, metadata.getSupportsLineAccess() ? 0L : null);
+
         // FIXME: Currently an upload context is not strictly *required* (nor is the enricher) - do we want to enforce it?
-        Optional<ObjectEnricher> maybeObjectEnricher = Optional.ofNullable(context)
-                .map(c -> (ObjectEnricher) c.getAttributes().get(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER));
-        maybeObjectEnricher.ifPresent(e -> e.accept(entity));
+        Optional<StreamingResourceUploadContext> maybeContext = Optional.ofNullable(context);
+        maybeContext.map(c -> (ObjectEnricher) c.getAttributes().get(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER))
+                .ifPresent(enricher -> enricher.accept(entity));
+        maybeContext.map(c -> (String) c.getAttributes().get(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID))
+                .ifPresent(id -> entity.addAttribute(StreamingResource.ATTRIBUTE_EXECUTION_ID, id));
+
         return accessor.save(entity).getId().toHexString();
     }
 
@@ -59,5 +71,15 @@ public class StreamingResourceCollectionCatalogBackend implements StreamingResou
     @Override
     public StreamingResourceStatus getStatus(String resourceId) {
         return getEntity(resourceId).status;
+    }
+
+    public Stream<String> findResourceIdsForExecution(String executionId) {
+        return accessor.findManyByCriteria(Map.of("attributes." + StreamingResource.ATTRIBUTE_EXECUTION_ID, executionId))
+                .map(r -> r.getId().toHexString());
+    }
+
+    @Override
+    public void delete(String resourceId) {
+        accessor.remove(new ObjectId(resourceId));
     }
 }
