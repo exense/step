@@ -36,8 +36,6 @@ import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionAccessor;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
@@ -46,6 +44,7 @@ import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
+import step.core.scheduler.ExecutionScheduler;
 import step.framework.server.security.Secured;
 
 import java.io.File;
@@ -63,13 +62,13 @@ public class ControllerServices extends AbstractStepServices {
 	private Version currentVersion;
 	private PlanLocator planLocator;
 	private Controller controller;
-	private ExecutionAccessor executionAccessor;
 	private Map<String, Long> userActivityMap;
 
 	private long initializationTime;
 	private ObjectHookRegistry objectHooks;
 
 	private ObjectPredicateFactory objectPredicateFactory;
+	private ExecutionScheduler scheduler;
 
 	@PostConstruct
 	public void init() throws Exception {
@@ -84,7 +83,7 @@ public class ControllerServices extends AbstractStepServices {
 		objectHooks = context.get(ObjectHookRegistry.class);
 		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
 
-		executionAccessor = context.getExecutionAccessor();
+		scheduler = context.getScheduler();
 		userActivityMap = (Map<String, Long>) context.get(USER_ACTIVITY_MAP_KEY);
 		initializationTime = System.currentTimeMillis();
 	}
@@ -236,12 +235,8 @@ public class ControllerServices extends AbstractStepServices {
 	@Path("/status")
 	public Status getControllerStatus() {
 		Status status = new Status();
-		List<Execution> activeTests = executionAccessor.getActiveTests();
-		status.activeTests = activeTests.size();
-		status.lastExecutionEndTime = -1;
-		Iterator<Execution> iterator = executionAccessor.findLastEnded(1).iterator();
-		status.lastExecutionEndTime = (iterator.hasNext()) ?
-				Objects.requireNonNullElse(iterator.next().getEndTime(),-1L) : -1;
+		status.activeTests = (scheduler == null) ? 0: scheduler.getCurrentExecutions().size();
+		status.lastExecutionEndTime = (scheduler == null) ? -1: scheduler.getLastExecutionEndTime();
 		status.lastUserActivityTime = userActivityMap.values().stream().mapToLong(v -> v).max().orElse(initializationTime);
 
 		//If test are currently running idle time is 0
@@ -249,15 +244,14 @@ public class ControllerServices extends AbstractStepServices {
 			status.idleTimeMs = 0;
 		} else {
 			//idle time is either latest end time of executions or last logged-in user activity
-			long lastActivity = (status.lastUserActivityTime > status.lastExecutionEndTime) ?
-					status.lastUserActivityTime : status.lastExecutionEndTime;
+			long lastActivity = Math.max(status.lastUserActivityTime, status.lastExecutionEndTime);
 			status.idleTimeMs = System.currentTimeMillis() - lastActivity;
 		}
 		return status;
 	}
 
 
-	private class Status {
+	public static class Status {
 		public long idleTimeMs;
 		public long activeTests;
 		public long lastExecutionEndTime;
