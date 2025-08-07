@@ -34,11 +34,9 @@ import step.plugins.timeseries.migration.MigrateAggregateTask;
 import step.plugins.timeseries.migration.MigrateDashboardsTask;
 import step.plugins.timeseries.migration.MigrateResolutionsWithIgnoredFieldsTask;
 
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
+import static step.plugins.measurements.MeasurementPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.plugins.timeseries.MetricsConstants.*;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 
@@ -78,7 +76,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION);
 
 		TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(collectionFactory);
-		List<TimeSeriesCollection> enabledCollections = timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, timeSeriesCollectionsSettings);
+		List<TimeSeriesCollection> enabledCollections = timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, timeSeriesCollectionsSettings, Set.of(ATTRIBUTE_EXECUTION_ID));
 		// timeseries will have a list of registered collection.
 		timeSeries = new TimeSeriesBuilder()
 				.setSettings(new TimeSeriesSettings()
@@ -125,7 +123,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void initializeData(GlobalContext context) throws Exception {
 		super.initializeData(context);
-		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField("eId", Order.ASC, String.class))));
+		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField(ATTRIBUTE_EXECUTION_ID, Order.ASC, String.class))));
 		timeSeries.createCompoundIndex(new LinkedHashSet<>(List.of(
 				new IndexField("attributes.taskId", Order.ASC, String.class),
 				new IndexField("attributes.metricType", Order.ASC, String.class),
