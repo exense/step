@@ -16,6 +16,7 @@ import step.streaming.server.StreamingResourceStatusUpdate;
 import step.streaming.server.StreamingResourcesCatalogBackend;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class StreamingResourceCollectionCatalogBackend implements StreamingResourcesCatalogBackend {
     private static final Logger logger = LoggerFactory.getLogger(StreamingResourceCollectionCatalogBackend.class);
@@ -29,10 +30,14 @@ public class StreamingResourceCollectionCatalogBackend implements StreamingResou
         entity.filename = metadata.getFilename();
         entity.mimeType = metadata.getMimeType();
         entity.status = new StreamingResourceStatus(StreamingResourceTransferStatus.INITIATED, 0L, metadata.getSupportsLineAccess() ? 0L : null);
+
         // FIXME: Currently an upload context is not strictly *required* (nor is the enricher) - do we want to enforce it?
-        Optional<ObjectEnricher> maybeObjectEnricher = Optional.ofNullable(context)
-                .map(c -> (ObjectEnricher) c.getAttributes().get(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER));
-        maybeObjectEnricher.ifPresent(e -> e.accept(entity));
+        Optional<StreamingResourceUploadContext> maybeContext = Optional.ofNullable(context);
+        maybeContext.map(c -> (ObjectEnricher) c.getAttributes().get(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER))
+                .ifPresent(enricher -> enricher.accept(entity));
+        maybeContext.map(c -> (String) c.getAttributes().get(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID))
+                .ifPresent(id -> entity.addAttribute(StreamingResource.ATTRIBUTE_EXECUTION_ID, id));
+
         return accessor.save(entity).getId().toHexString();
     }
 
@@ -59,5 +64,14 @@ public class StreamingResourceCollectionCatalogBackend implements StreamingResou
     @Override
     public StreamingResourceStatus getStatus(String resourceId) {
         return getEntity(resourceId).status;
+    }
+
+    public Stream<String> findResourceIdsForExecution(String executionId) {
+        return Stream.empty();
+    }
+
+    @Override
+    public void delete(String resourceId) {
+        accessor.remove(new ObjectId(resourceId));
     }
 }

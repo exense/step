@@ -59,4 +59,9 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
             throw new AuthorizationException(e.getMessage());
         }
     }
+
+    public void deleteResource(String resourceId) {
+        catalog.delete(resourceId);
+        storage.delete(resourceId);
+    }
 }
