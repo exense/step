@@ -143,8 +143,7 @@ public class StepConsole implements Callable<Integer> {
 
         protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
             if (apFile != null && apFile.startsWith("mvn:")) {
-                String[] split = apFile.split(":");
-                return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null, split.length >= 6 ? split[5] : null);
+                return MavenArtifactIdentifier.fromShortString(apFile);
             } else {
                 return null;
             }

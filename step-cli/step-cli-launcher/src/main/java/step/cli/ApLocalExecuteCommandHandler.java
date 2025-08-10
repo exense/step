@@ -61,9 +61,11 @@ public class ApLocalExecuteCommandHandler {
             // TODO: keyword library
             try (InputStream is = new FileInputStream(apFile)) {
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
+
+                // TODO: for local execution we have no session and no user
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         false, true, null, automationPackageProvider, null, null,
-                        true, null, null, false, null
+                        true, null, null, false, null, null
                 ).getId();
 
                 PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);

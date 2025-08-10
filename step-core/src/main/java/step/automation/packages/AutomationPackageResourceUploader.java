@@ -94,7 +94,8 @@ public class AutomationPackageResourceUploader {
                             isDirectory,
                             resourceStream,
                             fileName,
-                            false, context.getEnricher()
+                            context.getEnricher(),
+                            context.getActorUser()
                     );
                 } finally {
                     resourceStream.close();

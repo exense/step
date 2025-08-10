@@ -37,7 +37,6 @@ import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.repositories.ArtifactRepositoryConstants;
-import step.resources.ResourceManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -93,7 +92,7 @@ public class AutomationPackageExecutor {
 
     public List<String> runInIsolation(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters,
                                        AutomationPackageFileSource keywordLibrarySource,
-                                       ObjectEnricher objectEnricher, ObjectPredicate objectPredicate) {
+                                       String actorUser, ObjectEnricher objectEnricher, ObjectPredicate objectPredicate) {
 
         ObjectId contextId = new ObjectId();
         List<String> executions = new ArrayList<>();
@@ -106,7 +105,7 @@ public class AutomationPackageExecutor {
         // 2) to read the automation package and fill ap manager with plans, keywords etc.
 
         // so at first we store the input stream as resource (via IsolatedAutomationPackageRepository)
-        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId, objectPredicate);
+        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId, objectPredicate, actorUser);
 
         // and then we read the ap from just stored file
         // create single execution context for the whole AP to execute all plans on the same ap manager (for performance reason)
@@ -118,7 +117,7 @@ public class AutomationPackageExecutor {
             // TODO: here we upload the keyword library with 'isolatedAp' type to be cleaned up automatically via CleanupApResourcesJob
             // TODO: and we use the mainAutomationPackageManager with main resourceManager to support the re-execution with this keyword library
             try {
-                mainAutomationPackageManager.uploadKeywordLibrary(keywordLibrarySource, automationPackage, ResourceManager.RESOURCE_TYPE_ISOLATED_AP, apName, objectEnricher, objectPredicate);
+                mainAutomationPackageManager.uploadKeywordLibrary(keywordLibrarySource, automationPackage, apName, objectEnricher, objectPredicate, actorUser, true);
             } catch (Exception e) {
                 throw new AutomationPackageManagerException("Unable to upload the keyword library for isolated execution", e);
             }

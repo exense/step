@@ -259,7 +259,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return plan.getAttributes().get(AbstractOrganizableObject.NAME);
     }
 
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId, ObjectPredicate objectPredicate) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId, ObjectPredicate objectPredicate, String actorUser) {
         // for files provided by artifact repository we don't store the file as resource, but just load the file from this repository
         RepositoryObjectReference repositoryObject = parameters.getOriginalRepositoryObject();
         if (repositoryObject == null) {
@@ -305,7 +305,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         // create single automation package in isolated manager
         try (FileInputStream fis = new FileInputStream(apFile.getFile())) {
             // the apVersion is null (we always use the actual version), because we only create the isolated in-memory AP here
-            inMemoryPackageManager.createAutomationPackage(AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()), null, null, keywordLibrarySource, enricher, predicate);
+            // TODO: actorUser?
+            inMemoryPackageManager.createAutomationPackage(AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()), null, null, keywordLibrarySource, null, enricher, predicate);
         } catch (IOException e) {
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
         }

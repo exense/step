@@ -28,7 +28,6 @@ import step.functions.Function;
 import step.resources.InvalidResourceFormatException;
 import step.resources.Resource;
 import step.resources.ResourceManager;
-import step.resources.SimilarResourceExistingException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -109,13 +108,13 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 				}
 				try (InputStream is = new FileInputStream(originalFile)) {
 					Resource resource = context.getResourceManager().createResource(
-							ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), false, context.getEnricher()
-					);
+							ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), context.getEnricher(), context.getActorUser()
+                    );
 					uploadedPackageFileResource = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
 
 					// fill context with just uploaded resource to upload it only once and reuse it in other general script functions
 					context.setUploadedPackageFileResource(uploadedPackageFileResource);
-				} catch (IOException | SimilarResourceExistingException | InvalidResourceFormatException e) {
+				} catch (IOException | InvalidResourceFormatException e) {
 					throw new RuntimeException("General script function cannot be created", e);
 				}
 			}

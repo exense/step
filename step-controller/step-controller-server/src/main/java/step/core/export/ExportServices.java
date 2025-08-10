@@ -72,7 +72,7 @@ public class ExportServices extends AbstractStepServices {
 		Map<String, String> metadata = getMetadata();
 		String finalFilename = removeUnsupportedChars(filename);
 		return asyncTaskManager.scheduleAsyncTask(handle -> {
-			ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
+			ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename, null);
 			ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata, objectHookRegistry.getObjectPredicate(session),
 					entity, recursively, additionalEntities);
 			ExportResult exportResult = exportManager.exportById(exportConfig, id);
@@ -105,7 +105,7 @@ public class ExportServices extends AbstractStepServices {
 		Map<String,String> metadata = getMetadata();
 		String finalFilename = removeUnsupportedChars(filename);
 		return asyncTaskManager.scheduleAsyncTask(handle -> {
-			ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename);
+			ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename, null);
 			ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),
 					metadata, objectHookRegistry.getObjectPredicate(session), entity, recursively, additionalEntities);
 			ExportResult exportResult = exportManager.exportAll(exportConfig);

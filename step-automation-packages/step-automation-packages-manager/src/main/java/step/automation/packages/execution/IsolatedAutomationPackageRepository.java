@@ -114,9 +114,9 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     }
 
     @Override
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId, ObjectPredicate objectPredicate) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId, ObjectPredicate objectPredicate, String actorUser) {
         // for files from input stream we save persists the resource to support re-execution
-        Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName);
+        Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName, actorUser);
         File file = getApFileByResource(apResource);
         return new AutomationPackageFile(file, apResource);
     }
@@ -266,18 +266,18 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
     }
 
-    public Resource saveApResource(String contextId, InputStream apStream, String fileName) {
+    public Resource saveApResource(String contextId, InputStream apStream, String fileName, String actorUser) {
         // store file in temporary storage to support rerun
         try {
             // find by resource type and contextId (or apName and override)
-            ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP, fileName);
+            ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP, fileName, actorUser);
 
             Resource resource = resourceContainer.getResource();
             resource.addCustomField(CONTEXT_ID_CUSTOM_FIELD, contextId);
             resource.addCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
             resourceManager.saveResource(resource);
 
-            resource = resourceManager.saveResourceContent(resource.getId().toString(), apStream, fileName);
+            resource = resourceManager.saveResourceContent(resource.getId().toString(), apStream, fileName, actorUser);
 
             return resource;
         } catch (IOException | InvalidResourceFormatException ex) {

@@ -18,25 +18,22 @@
  *  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *  *****************************************************************************
  */
-package step.automation.packages.kwlibrary;
+package step.resources;
 
-import step.automation.packages.AutomationPackageReadingException;
-import step.resources.ResourceManager;
-import step.resources.ResourceOrigin;
+import step.core.maven.MavenArtifactIdentifier;
 
-import java.io.Closeable;
-import java.io.File;
+public class ResourceOriginFactory {
+    public static ResourceOrigin fromStringRepresentation(String stringRepresentation) {
+        if (stringRepresentation == null || stringRepresentation.isEmpty()) {
+            return null;
+        }
 
-public interface AutomationPackageKeywordLibraryProvider extends Closeable {
-    File getKeywordLibrary() throws AutomationPackageReadingException;
-
-    ResourceOrigin getOrigin();
-
-    default String getTrackingValue() {
-        return null;
-    }
-
-    default String getResourceType() {
-        return ResourceManager.RESOURCE_TYPE_FUNCTIONS;
+        if (stringRepresentation.startsWith(MavenArtifactIdentifier.MVN_PREFIX + ":")) {
+            return MavenArtifactIdentifier.fromShortString(stringRepresentation);
+        } else if (stringRepresentation.startsWith(ResourceOriginType.uploaded.name().toLowerCase())) {
+            return new UploadedResourceOrigin();
+        } else {
+            throw new IllegalArgumentException("");
+        }
     }
 }

@@ -24,11 +24,13 @@ import step.automation.packages.AutomationPackageMavenConfig;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.MavenArtifactDownloader;
 import step.core.maven.MavenArtifactIdentifier;
+import step.resources.ResourceManager;
+import step.resources.ResourceOrigin;
 
 import java.io.File;
 import java.io.IOException;
 
-public class KeywordLibraryFromMavenProvider implements AutomationPackageKeywordLibraryProvider{
+public class KeywordLibraryFromMavenProvider implements AutomationPackageKeywordLibraryProvider {
 
     private final AutomationPackageMavenConfig mavenConfig;
     private final MavenArtifactIdentifier mavenArtifactIdentifier;
@@ -45,7 +47,22 @@ public class KeywordLibraryFromMavenProvider implements AutomationPackageKeyword
     }
 
     @Override
+    public ResourceOrigin getOrigin() {
+        return mavenArtifactIdentifier;
+    }
+
+    @Override
     public void close() throws IOException {
 
+    }
+
+    @Override
+    public String getTrackingValue() {
+        return mavenArtifactIdentifier == null ? null : mavenArtifactIdentifier.toShortString();
+    }
+
+    @Override
+    public String getResourceType() {
+        return ResourceManager.RESOURCE_TYPE_MAVEN_ARTIFACT;
     }
 }
