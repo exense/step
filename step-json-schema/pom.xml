@@ -22,6 +22,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>step-json-schema</artifactId>
+    <name>${project.groupId}:${project.artifactId}</name>
     <packaging>jar</packaging>
 
     <parent>

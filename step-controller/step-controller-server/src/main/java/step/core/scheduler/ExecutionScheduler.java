@@ -182,6 +182,10 @@ public class ExecutionScheduler implements ExecutionLauncher {
 		return executor.getCurrentExecutions();
 	}
 
+	public long getLastExecutionEndTime() {
+		return executor.getLastExecutionEndTime();
+	}
+
 	public void enableAllExecutionTasksSchedule() {
 		// Save setting
 		controllerSettingAccessor.updateOrCreateSetting(SETTING_SCHEDULER_ENABLED, Boolean.TRUE.toString());

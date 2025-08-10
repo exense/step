@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -57,6 +58,7 @@ public class ExecutionEngine implements AutoCloseable {
 	private final ExecutionEngineContext executionEngineContext;
 	private final ExecutionEnginePlugin plugins;
 	private final ConcurrentHashMap<String, ExecutionContext> currentExecutions = new ConcurrentHashMap<>();
+	private final AtomicLong lastExecutionEndTime = new AtomicLong(-1L);
 	
 	private ExecutionEngine(ExecutionEngineContext executionEngineContext, ExecutionEnginePlugin plugins) {
 		super();
@@ -287,6 +289,7 @@ public class ExecutionEngine implements AutoCloseable {
 			return executionEngineRunner.execute(); 
 		} finally {
 			currentExecutions.remove(executionId);
+			lastExecutionEndTime.set(System.currentTimeMillis());
 			if (context != null) {
 				plugins.finalizeExecutionContext(executionEngineContext, context);
 			}
@@ -375,5 +378,12 @@ public class ExecutionEngine implements AutoCloseable {
 	 */
 	public List<ExecutionContext> getCurrentExecutions() {
 		return new ArrayList<>(currentExecutions.values());
+	}
+
+	/**
+	 * @return the end time of the latest ended execution
+	 */
+	public long getLastExecutionEndTime() {
+		return lastExecutionEndTime.get();
 	}
 }

@@ -27,6 +27,7 @@
     </parent>
 
     <artifactId>step-plans-yaml-support</artifactId>
+    <name>${project.groupId}:${project.artifactId}</name>
 
     <properties>
     </properties>

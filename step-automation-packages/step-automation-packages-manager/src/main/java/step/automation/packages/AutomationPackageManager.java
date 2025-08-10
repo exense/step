@@ -498,8 +498,8 @@ public class AutomationPackageManager {
         }
         enrichers.add(new AutomationPackageLinkEnricher(newPackage.getId().toString()));
 
-        ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
-        fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, keywordLibraryResourceString);
+            ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
+            fillStaging(staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, keywordLibraryResourceString, objectPredicate);
 
         // persist and activate automation package
         log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
@@ -682,9 +682,9 @@ public class AutomationPackageManager {
     }
 
     protected void fillStaging(AutomationPackageStaging staging, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities,
-                               AutomationPackageArchive automationPackageArchive, String evaluationExpression, String keywordLibraryResourceString) {
-        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager(), evaluationExpression, keywordLibraryResourceString));
-        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression, keywordLibraryResourceString));
+                               AutomationPackageArchive automationPackageArchive, String evaluationExpression, String keywordLibraryResourceString, ObjectPredicate objectPredicate) {
+        staging.getPlans().addAll(preparePlansStaging(packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager(), evaluationExpression));
+        staging.getFunctions().addAll(prepareFunctionsStaging(automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression));
 
         List<HookEntry> hookEntries = new ArrayList<>();
         for (String additionalField : packageContent.getAdditionalFields()) {
@@ -702,7 +702,7 @@ public class AutomationPackageManager {
                         new AutomationPackageContext(operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, keywordLibraryResourceString, enricherForIncludedEntities, extensions),
                         packageContent,
                         hookEntry.values,
-                        oldPackage, staging);
+                        oldPackage, staging, objectPredicate);
 
                 if (!hooked) {
                     log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);

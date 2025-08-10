@@ -22,6 +22,7 @@ import step.attachments.FileResolver;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.Plugin;
 import step.functions.accessor.CachedFunctionAccessor;
 import step.functions.accessor.FunctionAccessor;
@@ -56,8 +57,9 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 			grid = parentContext.get(Grid.class);
 		}
 
+		ObjectHookRegistry objectHookRegistry = context.inheritFromParentOrComputeIfAbsent(parentContext, ObjectHookRegistry.class, k -> new ObjectHookRegistry());
 		functionAccessor = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionAccessor.class, k->new InMemoryFunctionAccessorImpl());
-		functionTypeRegistry = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionTypeRegistry.class, k->new FunctionTypeRegistryImpl(fileResolver, gridClient));
+		functionTypeRegistry = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionTypeRegistry.class, k->new FunctionTypeRegistryImpl(fileResolver, gridClient, objectHookRegistry));
 		
 		functionExecutionService = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionExecutionService.class, k->{
 			try {

@@ -22,6 +22,8 @@ import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.TestCase;
+import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
 import step.core.execution.ExecutionContext;
@@ -83,8 +85,16 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
         }
 
         ArtefactInfo info = new ArtefactInfo();
-        info.setType("automationPackage");
-        info.setName(resource.getCustomField(AP_NAME_CUSTOM_FIELD, String.class));
+        boolean isWrapInTestSet = Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "false"));
+        //Introduced for 28.1, previous execution do not have this field in repo parameters
+        String rootType = repositoryParameters.get(ArtifactRepositoryConstants.PARAM_ROOT_TYPE);
+        if (rootType != null) {
+            info.setType(rootType);
+        } else {
+            info.setType((isWrapInTestSet) ? TestSet.class.getSimpleName() : TestCase.class.getSimpleName());
+        }
+        //isolated execution wrapped in TestSet use the AP name as plan name, Non-wrapped AP execution create one execution per plan using the includePlans with the name of the plan to be executed
+        info.setName((isWrapInTestSet) ? resource.getCustomField(AP_NAME_CUSTOM_FIELD, String.class) : repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS, apName));
         return info;
     }
 
@@ -136,7 +146,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
     @Override
     protected boolean isWrapPlansIntoTestSet(Map<String, String> repositoryParameters) {
-        return Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "true"));
+        return Boolean.parseBoolean(repositoryParameters.getOrDefault(ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET, "false"));
     }
 
     protected void updateLastExecution(Resource resource) {

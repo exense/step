@@ -79,7 +79,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 						}, "Iteration " + rowCount, newVariable);
 					} else {
 						SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-						scheduler.createReportSkeleton_(node, testArtefact);
+						scheduler.createReportSkeleton_(node, testArtefact, newVariable);
 					}
 				} finally {
 					nextValue.commit();
