@@ -491,7 +491,11 @@ public class AutomationPackageManager {
         }
 
         // keep old package id
-        newPackage = createNewInstance(automationPackageArchive.getOriginalFileName(), packageContent, apVersion, activationExpr, oldPackage, enricher);
+        newPackage = createNewInstance(
+                automationPackageProvider.getOrigin() == null ? null : automationPackageProvider.getOrigin().toStringRepresentation(),
+                automationPackageArchive.getOriginalFileName(),
+                packageContent, apVersion, activationExpr, oldPackage, enricher
+        );
 
         // upload keyword package if provided
         String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibrarySource, newPackage, packageContent.getName(), enricher, objectPredicate, actorUser, false);
@@ -552,7 +556,6 @@ public class AutomationPackageManager {
                     // for isolated execution we always use the isolatedAp resource type to support auto cleanup after execution
                     String resourceType = forIsolatedExecution ? ResourceManager.RESOURCE_TYPE_ISOLATED_AP : keywordLibraryProvider.getResourceType();
 
-                    // TODO: improve the logic to detect duplicates and reupload keyword libs
                     ResourceOrigin origin = keywordLibraryProvider.getOrigin();
                     List<Resource> oldResources = null;
                     if (origin != null && origin.getOriginType() == ResourceOriginType.mvn) {
@@ -566,6 +569,7 @@ public class AutomationPackageManager {
                         keywordLibraryResource = resourceManager.createTrackedResource(resourceType, false, fis, keywordLibrary.getName(), enricher, keywordLibraryProvider.getTrackingValue(), actorUser, origin == null ? null : origin.toStringRepresentation());
                     }
                     keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
+                    newPackage.setKeywordLibraryOrigin(keywordLibraryProvider.getOrigin() == null ? null : keywordLibraryProvider.getOrigin().toStringRepresentation());
                     newPackage.setKeywordLibraryResource(keywordLibraryResourceString);
                 }
             }
@@ -816,7 +820,7 @@ public class AutomationPackageManager {
         return completeFunctions;
     }
 
-    protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, String apVersion, String activationExpr, AutomationPackage oldPackage, ObjectEnricher enricher) {
+    protected AutomationPackage createNewInstance(String origin, String fileName, AutomationPackageContent packageContent, String apVersion, String activationExpr, AutomationPackage oldPackage, ObjectEnricher enricher) {
         AutomationPackage newPackage = new AutomationPackage();
 
         // keep old id
@@ -825,6 +829,7 @@ public class AutomationPackageManager {
         }
         newPackage.addAttribute(AbstractOrganizableObject.NAME, packageContent.getName());
         newPackage.addAttribute(AbstractOrganizableObject.VERSION, packageContent.getVersion());
+        newPackage.setAutomationPackageOrigin(origin);
 
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
         if (activationExpr != null && !activationExpr.isEmpty()) {
@@ -941,6 +946,10 @@ public class AutomationPackageManager {
 
     public Map<String, Object> getExtensions() {
         return extensions;
+    }
+
+    public AutomationPackageAccessor getAutomationPackageAccessor() {
+        return automationPackageAccessor;
     }
 
     public void cleanup() {

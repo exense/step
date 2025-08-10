@@ -18,6 +18,9 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.resources.ResourceOrigin;
+import step.resources.UploadedResourceOrigin;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -32,6 +35,11 @@ public class AutomationPackageFromFolderProvider implements AutomationPackageArc
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
         return new AutomationPackageArchive(apFolder);
+    }
+
+    @Override
+    public ResourceOrigin getOrigin() {
+        return new UploadedResourceOrigin();
     }
 
     @Override

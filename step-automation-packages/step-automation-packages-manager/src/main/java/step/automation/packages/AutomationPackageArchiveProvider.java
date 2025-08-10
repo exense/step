@@ -18,8 +18,12 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.resources.ResourceOrigin;
+
 import java.io.Closeable;
 
 public interface AutomationPackageArchiveProvider extends Closeable {
     AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException;
+
+    ResourceOrigin getOrigin();
 }

@@ -19,8 +19,8 @@
 package step.automation.packages;
 
 import step.core.maven.MavenArtifactIdentifier;
+import step.resources.ResourceOrigin;
 
-import java.io.File;
 import java.io.IOException;
 
 public class AutomationPackageFromMavenProvider implements AutomationPackageArchiveProvider {
@@ -38,6 +38,11 @@ public class AutomationPackageFromMavenProvider implements AutomationPackageArch
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
         // The same client as in MavenArtifactRepository
         return new AutomationPackageArchive(MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier));
+    }
+
+    @Override
+    public ResourceOrigin getOrigin() {
+        return mavenArtifactIdentifier;
     }
 
     @Override
