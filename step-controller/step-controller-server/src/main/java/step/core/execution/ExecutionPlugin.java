@@ -52,6 +52,10 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 			if (customFields != null) {
 				customFields.remove(AgentProvisioningStatus.class.getName());
 			}
+			// replace parameters by empty map to prevent excessive result sizes
+			if (execution.getParameters() != null && !execution.getParameters().isEmpty()) {
+				execution.setParameters(Map.of());
+			}
 			return execution;
 		}).withResultItemEnricher(execution->{
 			execution.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
