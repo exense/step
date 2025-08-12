@@ -21,6 +21,7 @@ package step.automation.packages;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.google.api.client.http.HttpStatusCodes;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
@@ -150,6 +151,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     forceUpload == null ? false : forceUpload, true,
                     getObjectEnricher(), getObjectPredicate());
             return id == null ? null : id.toString();
+        } catch (SameAutomationPackageOriginException e){
+            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -325,6 +328,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async, getUser(),
                     forceUpload == null ? false : forceUpload, true);
+        } catch (SameAutomationPackageOriginException e) {
+            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -364,6 +369,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-write")
     public Response createOrUpdateAutomationPackage(@QueryParam("async") Boolean async,
                                                     @QueryParam("version") String apVersion,
+                                                    @QueryParam("forceUpload") Boolean forceUpload,
                                                     @QueryParam("activationExpr") String activationExpression,
                                                     @FormDataParam("file") InputStream uploadedInputStream,
                                                     @FormDataParam("file") FormDataContentDisposition fileDetail,
@@ -381,7 +387,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     keywordLibrarySource,
                     apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async, getUser(),
-                    false, true);
+                    forceUpload == null ? false : forceUpload, true);
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(Response.Status.CREATED);
@@ -389,6 +395,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 responseBuilder = Response.status(Response.Status.OK);
             }
             return responseBuilder.entity(result).build();
+        } catch (SameAutomationPackageOriginException e){
+            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }

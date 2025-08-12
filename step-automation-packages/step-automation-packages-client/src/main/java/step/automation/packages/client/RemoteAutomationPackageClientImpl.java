@@ -50,10 +50,13 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public String createAutomationPackage(File automationPackageFile, String automationPackageMvnSnippetXml, String apVersion, String activationExpr,
+    public String createAutomationPackage(File automationPackageFile, String automationPackageMvnSnippetXml, String apVersion, String activationExpr, Boolean forceUpload,
                                           File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException {
         return uploadPackage(automationPackageFile, automationPackageMvnSnippetXml, keywordLibraryFile, keywordLibraryMvnSnippetXml, multiPartEntity -> {
             Map<String, String> queryParams = new HashMap<>();
+            if (forceUpload != null) {
+                queryParams.put("forceUpload", String.valueOf(forceUpload));
+            }
             addQueryParams(apVersion, activationExpr, queryParams);
             Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
             return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.post(multiPartEntity, String.class));
@@ -72,7 +75,7 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     @Override
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile,
                                                                          String automationPackageMvnSnippetXml,
-                                                                         Boolean async, String apVersion, String activationExpr,
+                                                                         Boolean async, String apVersion, String activationExpr, Boolean forceUpload,
                                                                          File keywordLibraryFile,
                                                                          String keywordPackageMvnSnippetXml) throws AutomationPackageClientException {
         return uploadPackage(automationPackageFile, automationPackageMvnSnippetXml, keywordLibraryFile, keywordPackageMvnSnippetXml,
@@ -83,6 +86,9 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
                     if (async != null) {
                         queryParams.put("async", String.valueOf(async));
                     }
+                    if (forceUpload != null) {
+                        queryParams.put("forceUpload", String.valueOf(forceUpload));
+                    }
                     addQueryParams(apVersion, activationExpr, queryParams);
                     Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
                     return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
@@ -90,12 +96,15 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr, String keywordLibraryArtifactXml) throws AutomationPackageClientException {
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr, Boolean forceUpload, String keywordLibraryArtifactXml) throws AutomationPackageClientException {
         Map<String, String> queryParams = new HashMap<>();
 
         // if 'async' is not defined on client it will be resolved on the server ('false' by default)
         if (async != null) {
             queryParams.put("async", String.valueOf(async));
+        }
+        if (forceUpload != null) {
+            queryParams.put("forceUpload", String.valueOf(forceUpload));
         }
         if (activationExpr != null && !activationExpr.isEmpty()) {
             queryParams.put("activationExpr", activationExpr);

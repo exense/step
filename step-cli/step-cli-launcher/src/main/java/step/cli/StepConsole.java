@@ -97,6 +97,7 @@ public class StepConsole implements Callable<Integer> {
         @Option(names = {VERBOSE}, defaultValue = "false")
         protected boolean verbose;
 
+        // TODO: use other flag to force upload. Think about naming and description
         @Option(names = {FORCE}, defaultValue = "false", description = "To force execution in case of uncritical errors")
         protected boolean force;
 
@@ -308,26 +309,23 @@ public class StepConsole implements Callable<Integer> {
                 checkStepControllerVersion();
                 MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);
                 MavenArtifactIdentifier keywordLibMavenArtifact = getMavenArtifact(keywordLib);
-                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr,
-                        apMavenArtifact, apMavenArtifact != null ? null : prepareApFile(apFile),
-                        keywordLibMavenArtifact, keywordLibMavenArtifact != null || keywordLib == null || keywordLib.isEmpty() ? null : prepareKeywordLibFile(keywordLib));
-            }
-
-            // for tests
-            protected void executeTool(final String stepUrl, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr,
-                                       MavenArtifactIdentifier apMavenIdentifier, File apFile,
-                                       MavenArtifactIdentifier keywordLibMavenArtifact, File keywordLibFile) {
 
                 DeployAutomationPackageTool.Params params = new DeployAutomationPackageTool.Params()
-                        .setAutomationPackageMavenArtifact(apMavenIdentifier)
-                        .setAutomationPackageFile(apFile)
-                        .setStepProjectName(projectName)
-                        .setAuthToken(authToken)
+                        .setAutomationPackageMavenArtifact(apMavenArtifact)
+                        .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
+                        .setStepProjectName(getStepProjectName())
+                        .setAuthToken(getAuthToken())
                         .setAsync(async)
+                        .setForceUpload(force)
                         .setApVersion(apVersion)
                         .setActivationExpression(activationExpr)
                         .setKeywordLibraryMavenArtifact(keywordLibMavenArtifact)
-                        .setKeywordLibraryFile(keywordLibFile);
+                        .setKeywordLibraryFile(keywordLibMavenArtifact != null || keywordLib == null || keywordLib.isEmpty() ? null : prepareKeywordLibFile(keywordLib));
+                executeTool(stepUrl, params);
+            }
+
+            // for tests
+            protected void executeTool(final String stepUrl, DeployAutomationPackageTool.Params params) {
                 new DeployAutomationPackageTool(stepUrl, params).execute();
             }
         }
