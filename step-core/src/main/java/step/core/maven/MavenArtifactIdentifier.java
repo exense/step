@@ -98,6 +98,10 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
         return buffer.toString();
     }
 
+    public boolean isSnapshot(){
+        return getVersion() != null && getVersion().endsWith("-SNAPSHOT");
+    }
+
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;

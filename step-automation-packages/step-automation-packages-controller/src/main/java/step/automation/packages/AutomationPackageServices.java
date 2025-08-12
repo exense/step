@@ -132,6 +132,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-write")
     public String createAutomationPackage(@QueryParam("version") String apVersion,
                                           @QueryParam("activationExpr") String activationExpression,
+                                          @QueryParam("forceUpload") Boolean forceUpload,
                                           @FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @FormDataParam("apMavenSnippet") String apMavenSnippet,
@@ -146,8 +147,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     apFileSource,
                     apVersion, activationExpression,
                     keywordLibrarySource, getUser(),
-                    getObjectEnricher(),
-                    getObjectPredicate());
+                    forceUpload == null ? false : forceUpload, true,
+                    getObjectEnricher(), getObjectPredicate());
             return id == null ? null : id.toString();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
@@ -166,6 +167,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      *     <classifier>tests</scope>
      * </dependency>
      */
+    @Deprecated
     @POST
     @Path("/mvn")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -181,8 +183,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     mavenArtifactIdentifier, apVersion, activationExpression,
                     keywordLibrarySource,
                     getObjectEnricher(), getObjectPredicate(),
-                    getUser()
-            ).toString();
+                    getUser(),
+                    false, true).toString();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         } catch (ParserConfigurationException | IOException | SAXException e) {
@@ -305,6 +307,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @QueryParam("async") Boolean async,
                                                                  @QueryParam("version") String apVersion,
                                                                  @QueryParam("activationExpr") String activationExpression,
+                                                                 @QueryParam("forceUpload") Boolean forceUpload,
                                                                  @FormDataParam("file") InputStream uploadedInputStream,
                                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                                  @FormDataParam("apMavenSnippet") String apMavenSnippet,
@@ -320,8 +323,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     true, false, new ObjectId(id),
                     apFileSource, keywordLibrarySource,
                     apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), async != null && async, getUser()
-            );
+                    getObjectEnricher(), getObjectPredicate(), async != null && async, getUser(),
+                    forceUpload == null ? false : forceUpload, true);
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -377,8 +380,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     apFileSource,
                     keywordLibrarySource,
                     apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), async != null && async, getUser()
-            );
+                    getObjectEnricher(), getObjectPredicate(), async != null && async, getUser(),
+                    false, true);
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(Response.Status.CREATED);
@@ -401,6 +404,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      *     <scope>test</scope>
      * </dependency>
      */
+    @Deprecated
     @PUT
     @Path("/mvn")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -416,8 +420,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
                     mvnIdentifier, true, true, null, apVersion, activationExpression, keywordLibrarySource,
                     getObjectEnricher(), getObjectPredicate(),
-                    async == null ? false : async, getUser()
-            );
+                    async == null ? false : async, true, false
+                    , getUser());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         } catch (ParserConfigurationException | IOException | SAXException e) {
@@ -435,6 +439,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      * <scope>test</scope>
      * </dependency>
      */
+    @Deprecated
     @PUT
     @Path("/{id}/mvn")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -450,8 +455,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             AutomationPackageFileSource keywordLibrarySource = getKeywordLibrarySource(requestBody);
             return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
                     mvnIdentifier, true, false, new ObjectId(id), apVersion,
-                    activationExpression, keywordLibrarySource, getObjectEnricher(), getObjectPredicate(), async == null ? false : async, getUser()
-            );
+                    activationExpression, keywordLibrarySource, getObjectEnricher(), getObjectPredicate(), async == null ? false : async, true, false
+                    , getUser());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         } catch (ParserConfigurationException | IOException | SAXException e) {

@@ -65,8 +65,8 @@ public class ApLocalExecuteCommandHandler {
                 // TODO: for local execution we have no session and no user
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         false, true, null, automationPackageProvider, null, null,
-                        true, null, null, false, null, null
-                ).getId();
+                        true, null, null, false, null, null,
+                        false, true).getId();
 
                 PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);
                 List<StepClassParserResult> listPlans = automationPackageManager.getPackagePlans(automationPackageId)

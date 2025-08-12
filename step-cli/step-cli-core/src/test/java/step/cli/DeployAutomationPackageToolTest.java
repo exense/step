@@ -59,7 +59,7 @@ public class DeployAutomationPackageToolTest {
                 Mockito.anyBoolean(),
                 Mockito.any(), Mockito.any(),
                 Mockito.isNull(), Mockito.isNull())
-        ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID), null);
+        ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID, null), null);
         return remoteClient;
     }
 

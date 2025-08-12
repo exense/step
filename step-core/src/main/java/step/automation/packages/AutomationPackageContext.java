@@ -32,29 +32,26 @@ public class AutomationPackageContext {
     private ResourceManager resourceManager;
     private AutomationPackageArchive automationPackageArchive;
     private AutomationPackageContent packageContent;
-    private String keywordLibraryResource;
 
     private String actorUser;
     private ObjectEnricher enricher;
 
-    /**
-     * This field should be initialized when the automation package is uploaded to Step as resource.
-     * Usually it is performed in GeneralScriptFunction, where we need a reference to script (which is the AP itself).
-     * So when we save the GeneralScriptFunction we need to upload the AP as resource at first
-     */
-    private String uploadedPackageFileResource;
+
     private final Map<String, Object> extensions;
+
+    private final AutomationPackage automationPackage;
 
     public final AutomationPackageOperationMode operationMode;
 
-    public AutomationPackageContext(AutomationPackageOperationMode operationMode, ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive,
-                                    AutomationPackageContent packageContent, String keywordLibraryResource, String actorUser,
+    public AutomationPackageContext(AutomationPackage automationPackage,
+                                    AutomationPackageOperationMode operationMode, ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive,
+                                    AutomationPackageContent packageContent, String actorUser,
                                     ObjectEnricher enricher, Map<String, Object> extensions) {
+        this.automationPackage = automationPackage;
         this.operationMode = Objects.requireNonNull(operationMode);
         this.resourceManager = resourceManager;
         this.automationPackageArchive = automationPackageArchive;
         this.packageContent = packageContent;
-        this.keywordLibraryResource = keywordLibraryResource;
         this.actorUser = actorUser;
         this.enricher = enricher;
         this.extensions = extensions;
@@ -66,14 +63,6 @@ public class AutomationPackageContext {
 
     public AutomationPackageArchive getAutomationPackageArchive() {
         return automationPackageArchive;
-    }
-
-    public String getUploadedPackageFileResource() {
-        return uploadedPackageFileResource;
-    }
-
-    public void setUploadedPackageFileResource(String uploadedPackageFileResource) {
-        this.uploadedPackageFileResource = uploadedPackageFileResource;
     }
 
     public ObjectEnricher getEnricher() {
@@ -92,15 +81,15 @@ public class AutomationPackageContext {
         return packageContent;
     }
 
-    public String getKeywordLibraryResource() {
-        return keywordLibraryResource;
-    }
-
     public String getActorUser() {
         return actorUser;
     }
 
     public void setActorUser(String actorUser) {
         this.actorUser = actorUser;
+    }
+
+    public AutomationPackage getAutomationPackage() {
+        return automationPackage;
     }
 }

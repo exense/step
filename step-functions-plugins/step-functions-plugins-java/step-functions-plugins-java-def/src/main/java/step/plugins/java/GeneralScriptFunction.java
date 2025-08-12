@@ -18,21 +18,13 @@
  ******************************************************************************/
 package step.plugins.java;
 
-import step.attachments.FileResolver;
+import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.model.AutomationPackageContextual;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.functions.Function;
-import step.resources.InvalidResourceFormatException;
-import step.resources.Resource;
-import step.resources.ResourceManager;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * This class encapsulates the configuration parameters of functions (aka Keywords)
@@ -100,27 +92,12 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 	@Override
 	public GeneralScriptFunction applyAutomationPackageContext(AutomationPackageContext context) {
 		if (getScriptFile().get() == null || getScriptFile().get().isEmpty()) {
-			String uploadedPackageFileResource = context.getUploadedPackageFileResource();
-			if (uploadedPackageFileResource == null) {
-				File originalFile = context.getAutomationPackageArchive().getOriginalFile();
-				if (originalFile == null) {
-					throw new RuntimeException("General script functions can only be used within automation package archive");
-				}
-				try (InputStream is = new FileInputStream(originalFile)) {
-					Resource resource = context.getResourceManager().createResource(
-							ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), context.getEnricher(), context.getActorUser()
-                    );
-					uploadedPackageFileResource = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-
-					// fill context with just uploaded resource to upload it only once and reuse it in other general script functions
-					context.setUploadedPackageFileResource(uploadedPackageFileResource);
-				} catch (IOException | InvalidResourceFormatException e) {
-					throw new RuntimeException("General script function cannot be created", e);
-				}
+			AutomationPackage ap = context.getAutomationPackage();
+			if (ap != null && ap.getAutomationPackageResource() != null && !ap.getAutomationPackageResource().isEmpty()) {
+				setScriptFile(new DynamicValue<>(ap.getAutomationPackageResource()));
 			}
-			setScriptFile(new DynamicValue<>(uploadedPackageFileResource));
-			if(context.getKeywordLibraryResource() != null && !context.getKeywordLibraryResource().isEmpty()){
-				setLibrariesFile(new DynamicValue<>(context.getKeywordLibraryResource()));
+			if (ap != null && ap.getKeywordLibraryResource() != null && !ap.getKeywordLibraryResource().isEmpty()) {
+				setLibrariesFile(new DynamicValue<>(ap.getAutomationPackageResource()));
 			}
 		}
 		return this;
