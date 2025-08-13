@@ -79,12 +79,12 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         TestApDeployCommand.ExecutionParams usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals("abc", usedParams.authToken);
-        Assert.assertEquals("testProject", usedParams.projectName);
-        Assert.assertTrue(usedParams.async);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertEquals(usedParams.apVersion, "ver1");
-        Assert.assertEquals(usedParams.activationExpr, "true==true");
+        Assert.assertEquals("abc", usedParams.params.getAuthToken());
+        Assert.assertEquals("testProject", usedParams.params.getStepProjectName());
+        Assert.assertTrue(usedParams.params.getAsync());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+        Assert.assertEquals(usedParams.params.getApVersion(), "ver1");
+        Assert.assertEquals(usedParams.params.getActivationExpression(), "true==true");
 
         // for OS (required params only)
         deployExecHistory.clear();
@@ -93,8 +93,8 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertFalse(usedParams.async);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertFalse(usedParams.params.getAsync());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
 
         // incorrect parameters (project name / token)
         deployExecHistory.clear();
@@ -111,7 +111,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8081", usedParams.stepUrl);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
 
         // several properties files (containing url and project/token)
         deployExecHistory.clear();
@@ -120,21 +120,27 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8081", usedParams.stepUrl);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertEquals("abc", usedParams.authToken);
-        Assert.assertEquals("testProject", usedParams.projectName);
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+        Assert.assertEquals("abc", usedParams.params.getAuthToken());
+        Assert.assertEquals("testProject", usedParams.params.getStepProjectName());
 
         // deploy from artifactory
         deployExecHistory.clear();
-        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--apVersion=1.0.0");
+        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--apVersion=1.0.0", "--keywordLib=mvn:ch.exense.step:some-step-keyword-lib:1.0.0:tests");
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals("ch.exense.step", usedParams.mavenArtifact.getGroupId());
-        Assert.assertEquals("step-automation-packages-junit", usedParams.mavenArtifact.getArtifactId());
-        Assert.assertEquals("0.0.0", usedParams.mavenArtifact.getVersion());
-        Assert.assertEquals("tests", usedParams.mavenArtifact.getClassifier());
+
+        Assert.assertEquals("ch.exense.step", usedParams.params.getAutomationPackageMavenArtifact().getGroupId());
+        Assert.assertEquals("step-automation-packages-junit", usedParams.params.getAutomationPackageMavenArtifact().getArtifactId());
+        Assert.assertEquals("0.0.0", usedParams.params.getAutomationPackageMavenArtifact().getVersion());
+        Assert.assertEquals("tests", usedParams.params.getAutomationPackageMavenArtifact().getClassifier());
+
+        Assert.assertEquals("ch.exense.step", usedParams.params.getKeywordLibraryMavenArtifact().getGroupId());
+        Assert.assertEquals("some-step-keyword-lib", usedParams.params.getKeywordLibraryMavenArtifact().getArtifactId());
+        Assert.assertEquals("1.0.0", usedParams.params.getKeywordLibraryMavenArtifact().getVersion());
+        Assert.assertEquals("tests", usedParams.params.getKeywordLibraryMavenArtifact().getClassifier());
     }
 
     @Test
@@ -164,8 +170,8 @@ public class StepConsoleTest {
         Assert.assertEquals("timeout doesn't match", (Integer) 1000, usedParams.params.getExecutionResultTimeoutS());
         Assert.assertFalse(usedParams.params.getWaitForExecution());
         Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.params.getExecutionParameters());
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertNull(usedParams.params.getMavenArtifactIdentifier());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+        Assert.assertNull(usedParams.params.getAutomationPackageMavenArtifact());
 
         // minimum parameters
         remoteExecuteHistory.clear();
@@ -175,8 +181,8 @@ public class StepConsoleTest {
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertTrue(usedParams.params.getWaitForExecution());
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertNull(usedParams.params.getMavenArtifactIdentifier());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+        Assert.assertNull(usedParams.params.getAutomationPackageMavenArtifact());
 
         // use maven artifact instead of local file
         remoteExecuteHistory.clear();
@@ -185,7 +191,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests", null), usedParams.params.getMavenArtifactIdentifier());
+        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests", null), usedParams.params.getAutomationPackageMavenArtifact());
 
         // test various report types and output types
         remoteExecuteHistory.clear();
@@ -194,8 +200,8 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals(1, usedParams.params.getReports().size());
-        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.file), usedParams.params.getReports().get(0).getOutputModes());
+        Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
+        Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.file), usedParams.params.getReports().get(0).getOutputModes());
 
         remoteExecuteHistory.clear();
         res = runMain(histories, "ap", "execute", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080", "--reportType=junit;output=stdout", "--reportType=aggregated;output=file,stdout");
@@ -203,10 +209,10 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals(2, usedParams.params.getReports().size());
-        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(0).getOutputModes());
-        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.aggregated, usedParams.params.getReports().get(1).getReportType());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.file, AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(1).getOutputModes());
+        Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
+        Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(0).getOutputModes());
+        Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.aggregated, usedParams.params.getReports().get(1).getReportType());
+        Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.file, ExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(1).getOutputModes());
     }
 
     @Test
@@ -418,27 +424,15 @@ public class StepConsoleTest {
 
         public static class ExecutionParams {
             private String stepUrl;
-            private String projectName;
-            private String authToken;
-            private boolean async;
-            private String apVersion;
-            private String activationExpr;
-            private String apFile;
-            private MavenArtifactIdentifier mavenArtifact;
+            private DeployAutomationPackageTool.Params params;
         }
 
         @Override
-        protected void executeTool(String stepUrl1, String projectName, String authToken1, boolean async, String apVersion, String activationExpr, final MavenArtifactIdentifier mavenArtifact) {
+        protected void executeTool(final String stepUrl, DeployAutomationPackageTool.Params params) {
             if (testRegistry != null) {
                 ExecutionParams p = new ExecutionParams();
-                p.stepUrl = stepUrl1;
-                p.projectName = projectName;
-                p.authToken = authToken1;
-                p.async = async;
-                p.apFile = this.apFile;
-                p.apVersion = apVersion;
-                p.activationExpr = activationExpr;
-                p.mavenArtifact = mavenArtifact;
+                p.stepUrl = stepUrl;
+                p.params = params;
                 testRegistry.add(p);
             }
         }
@@ -464,8 +458,7 @@ public class StepConsoleTest {
 
         public static class RemoteExecutionParams {
             private String stepUrl;
-            private AbstractExecuteAutomationPackageTool.Params params;
-            private String apFile;
+            private ExecuteAutomationPackageTool.Params params;
         }
 
         public static class LocalExecutionParams {
@@ -490,12 +483,11 @@ public class StepConsoleTest {
         }
 
         @Override
-        protected void executeRemotely(String stepUrl, AbstractExecuteAutomationPackageTool.Params params) {
+        protected void executeRemotely(String stepUrl, ExecuteAutomationPackageTool.Params params) {
             if (remoteParams != null) {
                 RemoteExecutionParams p = new RemoteExecutionParams();
                 p.stepUrl = stepUrl;
                 p.params = params;
-                p.apFile = this.apFile;
 
                 remoteParams.add(p);
             }

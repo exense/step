@@ -64,15 +64,18 @@ public class ResourceServices extends AbstractStepAsyncServices {
 		resourceManager = globalContext.getResourceManager();
 		tableService = globalContext.require(TableService.class);
 	}
-	
+
+	// TODO: add new configs for duplication check
 	@POST
 	@Path("/content")
 	@Secured(right = "resource-write")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType,
-												 @QueryParam("duplicateCheck") Boolean checkForDuplicate, @QueryParam("directory") Boolean isDirectory,
+												 @FormDataParam("file") FormDataContentDisposition fileDetail,
+												 @QueryParam("type") String resourceType,
+												 @QueryParam("duplicateCheck") Boolean checkForDuplicate,
+												 @QueryParam("directory") Boolean isDirectory,
 												 @QueryParam("trackingAttribute") String trackingAttribute) throws IOException {
 		ObjectEnricher objectEnricher = getObjectEnricher();
 		
@@ -85,11 +88,10 @@ public class ResourceServices extends AbstractStepAsyncServices {
 			throw new RuntimeException("Missing resource type query parameter 'type'");
 		
 		try {
-			Resource resource = resourceManager.createResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate, objectEnricher, trackingAttribute);
+			// TODO: take user from auth context?
+			Resource resource = resourceManager.createTrackedResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), objectEnricher, trackingAttribute, null, new UploadedResourceOrigin().toStringRepresentation());
 			return new ResourceUploadResponse(resource, null);
-		} catch (SimilarResourceExistingException e) {
-			return new ResourceUploadResponse(e.getResource(), e.getSimilarResources());
-		} catch (InvalidResourceFormatException e) {
+		}  catch (InvalidResourceFormatException e) {
 			throw uploadFileNotAnArchive();
 		}
 	}
@@ -117,7 +119,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
 			throw new RuntimeException("Invalid arguments");
 
 		try {
-			Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName() );
+			Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName(), getSession().getUser().getUsername());
 			return new ResourceUploadResponse(resource, null);
 		} catch (InvalidResourceFormatException e) {
 			throw uploadFileNotAnArchive();

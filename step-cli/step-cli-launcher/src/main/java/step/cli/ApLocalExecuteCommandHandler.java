@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static step.cli.AbstractExecuteAutomationPackageTool.getPlanFilters;
+import static step.cli.ExecuteAutomationPackageTool.getPlanFilters;
 
 public class ApLocalExecuteCommandHandler {
 
@@ -58,12 +58,15 @@ public class ApLocalExecuteCommandHandler {
         }).withPluginsFromClasspath().build()) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
+            // TODO: keyword library
             try (InputStream is = new FileInputStream(apFile)) {
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
+
+                // TODO: for local execution we have no session and no user
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         false, true, null, automationPackageProvider, null, null,
-                        true, null, null, false
-                ).getId();
+                        true, null, null, false, null, null,
+                        false, true).getId();
 
                 PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);
                 List<StepClassParserResult> listPlans = automationPackageManager.getPackagePlans(automationPackageId)
@@ -86,7 +89,7 @@ public class ApLocalExecuteCommandHandler {
                         protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
                             log.error("Execution has been failed for plan {}. {}", parserResult.getName(), errorText);
 
-                            String executionTree = AbstractExecuteAutomationPackageTool.getExecutionTreeAsString(result);
+                            String executionTree = ExecuteAutomationPackageTool.getExecutionTreeAsString(result);
                             String detailMessage = errorText + "\n" + executionTree;
                             if(assertionError){
                                 detailMessage += "Assertion error. ";

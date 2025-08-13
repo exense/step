@@ -108,6 +108,7 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 
 			getLog().info("Package attributes: " + packageAttributes);
 
+			// TODO: this can be potentially replaced with some origin
 			String trackingAttribute = (getTrackingAttribute() == null || getTrackingAttribute().isEmpty())
 					? getProject().getGroupId() + "." + getProject().getArtifactId()
 					: getTrackingAttribute();
@@ -207,7 +208,8 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 				if (remoteLibArtifact.isSnapshot()) {
 					getLog().info("Actualizing snapshot library resource " + previousResource.getId());
 					try (FileInputStream is = new FileInputStream(remoteLibArtifact.getFile())) {
-						resourceManager.saveResourceContent(previousResource.getId().toString(), is, remoteLibArtifact.getFile().getName());
+						// TODO: how this even works? 'saveResourceContent' is not implemented in remote resource manager
+						resourceManager.saveResourceContent(previousResource.getId().toString(), is, remoteLibArtifact.getFile().getName(), null);
 					} catch (IOException e) {
 						throw new MojoExecutionException("Library file uploading exception", e);
 					}
@@ -215,14 +217,14 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 				return LibFileReference.resourceId(previousResource.getId().toString());
 			} else {
 				try (FileInputStream is = new FileInputStream(remoteLibArtifact.getFile())) {
-					Resource created = resourceManager.createResource(
+					Resource created = resourceManager.createTrackedResource(
 							ResourceManager.RESOURCE_TYPE_FUNCTIONS,
 							false,
 							is,
 							remoteLibArtifact.getFile().getName(),
-							false, null,
-							actualTrackingAttribute
-					);
+							null,
+							actualTrackingAttribute,
+							null, null);
 					getLog().info("Library resource has been created: " + created.getId().toString());
 					return LibFileReference.resourceId(created.getId().toString());
 				} catch (IOException e) {

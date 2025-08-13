@@ -35,22 +35,22 @@ public interface ResourceManager {
 	String RESOURCE_TYPE_ATTACHMENT = "attachment";
 	String RESOURCE_TYPE_TEMP = "temp";
 	String RESOURCE_TYPE_ISOLATED_AP = "isolatedAp";
+	String RESOURCE_TYPE_MAVEN_ARTIFACT = "mavenArtifact";
 
 	/**
-	 * @param resourceType the type of the resource
-	 * @param resourceStream the stream of the resource to be saved
+	 * @param resourceType     the type of the resource
+	 * @param resourceStream   the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename)
-	 * @param checkForDuplicates is duplicate should be checked
-	 * @param objectEnricher the {@link ObjectEnricher} of the context
-	 * @return the created {@link Resource} 
-	 * @throws IOException an IOException occurs during the call
-	 * @throws SimilarResourceExistingException a similar resource exist
+	 * @param objectEnricher   the {@link ObjectEnricher} of the context
+	 * @param actorUser
+	 * @return the created {@link Resource}
+	 * @throws IOException                      an IOException occurs during the call
 	 */
-	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException;
 
-	Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+	Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException;
 
-	ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException;
+	ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String actorUser) throws IOException;
 
 	/**
 	 * Test if a given resource id exists
@@ -78,13 +78,13 @@ public interface ResourceManager {
 
 	String getResourcesRootPath();
 
-	Resource createResource(String resourceType,
-							boolean isDirectory,
-							InputStream resourceStream,
-							String resourceFileName,
-							boolean checkForDuplicates,
-							ObjectEnricher objectEnricher,
-							String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+	Resource createTrackedResource(String resourceType,
+								   boolean isDirectory,
+								   InputStream resourceStream,
+								   String resourceFileName,
+								   ObjectEnricher objectEnricher,
+								   String trackingAttributeValue,
+								   String actorUser, String origin) throws IOException, InvalidResourceFormatException;
 
 	/**
 	 * Create a copy of the resource from a source repository
@@ -93,20 +93,21 @@ public interface ResourceManager {
 	 * @return the newly create resource {@link Resource}
 	 * @throws IOException, SimilarResourceExistingException or InvalidResourceFormatException that may occur during the call
 	 */
-	Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+	Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, InvalidResourceFormatException;
 
 	/**
 	 * Save the content provided as stream to an existing resource.
 	 * This creates a new {@link ResourceRevision} for the {@link Resource}
 	 * and saves the content provided as stream under this revision.
 	 *
-	 * @param resourceId the id of the resource to be updated
-	 * @param resourceStream the stream of the resource to be saved
+	 * @param resourceId       the id of the resource to be updated
+	 * @param resourceStream   the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename)
+	 * @param actorUser
 	 * @return the updated {@link Resource}
 	 * @throws IOException an IOException occurs during the call
 	 */
-	Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName)
+	Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String actorUser)
 			throws IOException, InvalidResourceFormatException;
 
 	/**
@@ -129,6 +130,11 @@ public interface ResourceManager {
 	List<Resource> findManyByCriteria(Map<String, String> criteria);
 
 	default void cleanup() {
+	}
+
+	enum DuplicatesDetectionMode {
+		md5,
+		tracking_value
 	}
 
 }

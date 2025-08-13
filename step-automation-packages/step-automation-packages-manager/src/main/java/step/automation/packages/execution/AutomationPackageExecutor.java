@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.AutomationPackageFileSource;
+import step.automation.packages.AutomationPackageManagerException;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.model.*;
@@ -89,7 +91,8 @@ public class AutomationPackageExecutor {
     }
 
     public List<String> runInIsolation(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters,
-                                       ObjectEnricher objectEnricher, ObjectPredicate objectPredicate) {
+                                       AutomationPackageFileSource keywordLibrarySource,
+                                       String actorUser, ObjectEnricher objectEnricher, ObjectPredicate objectPredicate) {
 
         ObjectId contextId = new ObjectId();
         List<String> executions = new ArrayList<>();
@@ -101,15 +104,23 @@ public class AutomationPackageExecutor {
         // 1) to store the original file into the isolatedAutomationPackageRepository and support re-execution
         // 2) to read the automation package and fill ap manager with plans, keywords etc.
 
-        // so at first we store the input stream as resource
-        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId, objectPredicate);
+        // so at first we store the input stream as resource (via IsolatedAutomationPackageRepository)
+        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId, objectPredicate, actorUser);
 
         // and then we read the ap from just stored file
         // create single execution context for the whole AP to execute all plans on the same ap manager (for performance reason)
-        IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createIsolatedPackageExecutionContext(objectEnricher, objectPredicate, contextId.toString(), apFile, true);
+        IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createIsolatedPackageExecutionContext(objectEnricher, objectPredicate, contextId.toString(), apFile, true, keywordLibrarySource);
         try {
             AutomationPackage automationPackage = executionContext.getAutomationPackage();
             String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
+
+            // TODO: here we upload the keyword library with 'isolatedAp' type to be cleaned up automatically via CleanupApResourcesJob
+            // TODO: and we use the mainAutomationPackageManager with main resourceManager to support the re-execution with this keyword library
+            try {
+                mainAutomationPackageManager.uploadKeywordLibrary(keywordLibrarySource, automationPackage, apName, objectEnricher, objectPredicate, actorUser, true);
+            } catch (Exception e) {
+                throw new AutomationPackageManagerException("Unable to upload the keyword library for isolated execution", e);
+            }
 
             // we have resolved the name of ap, and we need to save this name as custom field in resource to look up this resource during re-execution
             if (apFile.getResource() != null) {

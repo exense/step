@@ -74,18 +74,18 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
-    public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-        return getManagerForPersistence().createResource(resourceType, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+    public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().createResource(resourceType, resourceStream, resourceFileName, objectEnricher, actorUser);
     }
 
     @Override
-    public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-        return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+    public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, objectEnricher, actorUser);
     }
 
     @Override
-    public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException {
-        return getManagerForPersistence().createResourceContainer(resourceType, resourceFileName);
+    public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String actorUser) throws IOException {
+        return getManagerForPersistence().createResourceContainer(resourceType, resourceFileName, actorUser);
     }
 
     @Override
@@ -141,18 +141,19 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
-    public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-        return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+    public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher,
+                                          String trackingAttribute, String actorUser, String origin) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, objectEnricher, trackingAttribute);
     }
 
     @Override
-    public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+    public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, InvalidResourceFormatException {
         return getManagerForPersistence().copyResource(resource, sourceResourceManager);
     }
 
     @Override
-    public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName) throws IOException, InvalidResourceFormatException {
-        return getManagerForPersistence().saveResourceContent(resourceId, resourceStream, resourceFileName);
+    public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().saveResourceContent(resourceId, resourceStream, resourceFileName, actorUser);
     }
 
     @Override
