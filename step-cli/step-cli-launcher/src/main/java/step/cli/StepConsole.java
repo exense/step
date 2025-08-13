@@ -75,6 +75,7 @@ public class StepConsole implements Callable<Integer> {
         public static final String CONFIG = "-c";
         public static final String LOCAL = "--local";
         public static final String FORCE = "--force";
+        public static final String FORCE_UPLOAD = "--forceUpload";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
@@ -97,9 +98,12 @@ public class StepConsole implements Callable<Integer> {
         @Option(names = {VERBOSE}, defaultValue = "false")
         protected boolean verbose;
 
-        // TODO: use other flag to force upload. Think about naming and description
         @Option(names = {FORCE}, defaultValue = "false", description = "To force execution in case of uncritical errors")
         protected boolean force;
+
+        // TODO: use Think about naming and description
+        @Option(names = {FORCE_UPLOAD}, defaultValue = "false", description = "To force upload in case of other automation packages with same origin exist")
+        protected boolean forceUpload;
 
         protected String getStepProjectName() {
             return stepProjectName;
@@ -316,7 +320,7 @@ public class StepConsole implements Callable<Integer> {
                         .setStepProjectName(getStepProjectName())
                         .setAuthToken(getAuthToken())
                         .setAsync(async)
-                        .setForceUpload(force)
+                        .setForceUpload(forceUpload)
                         .setApVersion(apVersion)
                         .setActivationExpression(activationExpr)
                         .setKeywordLibraryMavenArtifact(keywordLibMavenArtifact)

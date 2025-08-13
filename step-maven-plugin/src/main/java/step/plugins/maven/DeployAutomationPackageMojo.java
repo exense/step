@@ -71,6 +71,9 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-deploy-auto-packages.lib-artifact-type", required = false)
     private String libArtifactType;
 
+    @Parameter(property = "step-deploy-auto-packages.force-upload", required = false)
+    private Boolean forceUpload;
+
     @Override
     protected ControllerCredentials getControllerCredentials() {
         String authToken = getAuthToken();
@@ -82,7 +85,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getApVersion(), getActivationExpression(), getLibArtifactPath()).execute();
+            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getApVersion(), getActivationExpression(), getLibArtifactPath(), getForceUpload()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -91,7 +94,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     protected DeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
-                                                     final String apVersion, final String activationExpr, String libArtifactPath) throws MojoExecutionException {
+                                                     final String apVersion, final String activationExpr, String libArtifactPath, Boolean forceUpload) throws MojoExecutionException {
         MavenArtifactIdentifier remoteApMavenIdentifier = getRemoteMavenIdentifier();
         File localApFile = remoteApMavenIdentifier != null ? null : DeployAutomationPackageMojo.this.getFileToUpload();
         return new MavenDeployAutomationPackageTool(
@@ -103,6 +106,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
                 .setStepProjectName(projectName)
                 .setAuthToken(authToken)
                 .setAsync(async)
+                .setForceUpload(forceUpload)
                 .setApVersion(apVersion)
                 .setActivationExpression(activationExpr)
         );
@@ -240,6 +244,14 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setLibArtifactPath(String libArtifactPath) {
         this.libArtifactPath = libArtifactPath;
+    }
+
+    public Boolean getForceUpload() {
+        return forceUpload;
+    }
+
+    public void setForceUpload(Boolean forceUpload) {
+        this.forceUpload = forceUpload;
     }
 
     protected boolean isLocalMavenArtifact() {

@@ -620,6 +620,9 @@ public class AutomationPackageManager {
     }
 
     public void reuploadOldAutomationPackages(List<ObjectId> automationPackagesForReupload, AutomationPackageArchiveProvider packageArchiveProvider, AutomationPackageFileSource keywordLibSource, ObjectEnricher objectEnricher, ObjectPredicate objectPredicate, String actorUser) {
+        if (automationPackagesForReupload == null) {
+            return;
+        }
         List<ObjectId> failedAps = new ArrayList<>();
         for (ObjectId objectId : automationPackagesForReupload) {
             try {
