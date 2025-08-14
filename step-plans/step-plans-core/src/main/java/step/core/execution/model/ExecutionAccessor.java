@@ -32,9 +32,10 @@ public interface ExecutionAccessor extends Accessor<Execution>, ExecutionProvide
 
 	/**
 	 * List active tests (i.e. status is not ENDED) from the database, when applicable prefer to get this list directly from the scheduler (in memory)
+	 * @param lastStartTime of the controller to limit the search of executions started after that time
 	 * @return the list of active executions
 	 */
-	List<Execution> getActiveTests();
+	List<Execution> getActiveTests(long lastStartTime);
 
 	List<Execution> getTestExecutionsByArtefactURL(RepositoryObjectReference objectReference);
 
