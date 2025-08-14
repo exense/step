@@ -44,7 +44,6 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
 	public void recover(GlobalContext context) throws Exception {
 		//At this stage the version manager plugin cannot be started yet, so we create a version manager directly here to read the last start time
 		VersionManager<GlobalContext> versionManager = new VersionManager<>(context);
-		logger.info("Getting the previous controller start time.");
 		versionManager.readLatestControllerLog();
 		ControllerLog latestControllerLog = versionManager.getLatestControllerLog();
 		ExecutionAccessor accessor = context.getExecutionAccessor();
