@@ -86,7 +86,9 @@ public class AggregatedReportViewBuilder {
     public AggregatedReport buildAggregatedReport(AggregatedReportViewRequest request) {
         Objects.requireNonNull(request);
         Execution execution = executionAccessor.get(executionId);
-        boolean isExecutionRunning = execution.getStatus().equals(ExecutionStatus.RUNNING);
+        ExecutionStatus status = execution.getStatus();
+        boolean isExecutionRunning = status.equals(ExecutionStatus.RUNNING);
+        boolean isExecutionAborting = status.equals(ExecutionStatus.ABORTING) || status.equals(ExecutionStatus.FORCING_ABORT);
         //Make sure the resolved Plan is available
         ResolvedPlanNode rootResolvedPlanNode = Optional.ofNullable(execution.getResolvedPlanRootNodeId()).map(resolvedPlanNodeCachedAccessor::getFromUnderlyingAccessor).orElse(null);
         if (rootResolvedPlanNode == null) {
@@ -97,7 +99,7 @@ public class AggregatedReportViewBuilder {
             // We now (SED-3882) also  wand to get the count for RUNNING artefacts which can only be retrieved from report nodes RAW data
             Map<String, Long> runningCountByArtefactHash = new HashMap<>();
             Map<String, List<Operation>> operationsByArtefactHash = new HashMap<>();
-            if (isExecutionRunning) {
+            if (isExecutionRunning || isExecutionAborting) {
                 try (Stream<ReportNode> reportNodeStream = mainReportNodeAccessor.getRunningReportNodesByExecutionID(executionId, getFrom(request), getTo(request))) {
                     reportNodeStream.forEach(reportNode -> {
                         runningCountByArtefactHash.merge(reportNode.getArtefactHash(), 1L, Long::sum);
