@@ -125,7 +125,7 @@ public class FunctionManagerImpl implements FunctionManager {
 			//Default routing
 			return;
 		} else if (routing.length == 1) {
-			if (routing[0].equals(Keyword.EXECUTE_ON_CONTROLLER)) {
+			if (routing[0].equals(Keyword.ROUTING_EXECUTE_ON_CONTROLLER)) {
 				function.setExecuteLocally(true);
 			} else {
 				throw new IllegalArgumentException("Invalid routing value: '" + routing[0] + "'. " +
@@ -136,7 +136,7 @@ public class FunctionManagerImpl implements FunctionManager {
 					"When specifying agent selection criteria as key-value pairs, " +
 					"the array must contain an even number of elements (key1, value1, key2, value2, ...).");
 		} else {
-			Map<String, String> map = new HashMap<>(); // preserves order
+			Map<String, String> map = new HashMap<>();
 			for (int i = 0; i < routing.length; i += 2) {
 				String key = routing[i];
 				String value = routing[i + 1];

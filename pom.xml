@@ -50,7 +50,7 @@
 		<step-framework.version>2025.8.7-6894c2c350d0023081de1127</step-framework.version>
 
 		<!-- tmp force api version in Step during dev, to be deleted before merge as long as with the usage in dependencies below -->
-		<step-api-temp-override.version>2025.8.15-689efd05d298ec4d7300d282</step-api-temp-override.version>
+		<step-api-temp-override.version>2025.8.15-689f0da8d298ec4d731ca699</step-api-temp-override.version>
 
 
 		<!-- external, non-transitive, dependencies -->
