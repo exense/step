@@ -49,6 +49,10 @@
 		<step-grid.version>2025.8.4-689096d0bf2221169f621d5d</step-grid.version>
 		<step-framework.version>2025.8.7-6894c2c350d0023081de1127</step-framework.version>
 
+		<!-- tmp force api version in Step during dev, to be deleted before merge as long as with the usage in dependencies below -->
+		<step-api-temp-override.version>2025.8.15-689efd05d298ec4d7300d282</step-api-temp-override.version>
+
+
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
 		<dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
@@ -111,6 +115,15 @@
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
+			<!-- We're temporarily forcing the step-api version here (which also sets the streaming version). TODO: remove block before merging to productive branch -->
+			<dependency>
+				<groupId>ch.exense.step</groupId>
+				<artifactId>step-api</artifactId>
+				<version>${step-api-temp-override.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
 			<dependency>
 				<groupId>ch.exense.step</groupId>
 				<artifactId>step-framework</artifactId>

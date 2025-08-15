@@ -49,6 +49,8 @@ public class AutomationPackageTestUtils {
     public static final String GENERAL_SCRIPT_KEYWORD = "GeneralScript keyword from AP";
     public static final String NODE_KEYWORD = "NodeAutomation";
     public static final String ANNOTATED_KEYWORD = "MyKeyword2";
+    public static final String ANNOTATED_KEYWORD_ROUTING_TO_CTRL = "MyKeywordWithRoutingToController";
+    public static final String ANNOTATED_KEYWORD_ROUTING_CRITERIA = "MyKeywordWithRoutingCriteria";
 
     public static final String SCHEDULE_1 = "firstSchedule";
     public static final String SCHEDULE_2 = "secondSchedule";
