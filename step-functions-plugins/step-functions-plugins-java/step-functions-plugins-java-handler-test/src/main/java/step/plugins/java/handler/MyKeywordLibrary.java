@@ -45,6 +45,26 @@ public class MyKeywordLibrary extends AbstractKeyword {
 			});
 		}
 	}
+
+	@Keyword(timeout=100, routing = {Keyword.ROUTING_EXECUTE_ON_CONTROLLER})
+	public void MyKeywordWithRoutingToController() {
+		output.add("MyKey", "MyValue");
+		if(properties!=null) {
+			properties.forEach((key, value)->{
+				output.add(key, value);
+			});
+		}
+	}
+
+	@Keyword(timeout=100, routing = {"OS","WINDOWS","TYPE","PLAYWRIGHT"})
+	public void MyKeywordWithRoutingCriteria() {
+		output.add("MyKey", "MyValue");
+		if(properties!=null) {
+			properties.forEach((key, value)->{
+				output.add(key, value);
+			});
+		}
+	}
 	
 	@Keyword
 	public void TestClassloader() {
