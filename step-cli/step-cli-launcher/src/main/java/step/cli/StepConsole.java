@@ -75,7 +75,7 @@ public class StepConsole implements Callable<Integer> {
         public static final String CONFIG = "-c";
         public static final String LOCAL = "--local";
         public static final String FORCE = "--force";
-        public static final String FORCE_UPLOAD = "--forceUpload";
+        public static final String FORCE_UPLOAD = "--allowUpdateOfOtherPackages";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
@@ -103,7 +103,7 @@ public class StepConsole implements Callable<Integer> {
 
         // TODO: use Think about naming and description
         @Option(names = {FORCE_UPLOAD}, defaultValue = "false", description = "To force upload in case of other automation packages with same origin exist")
-        protected boolean forceUpload;
+        protected boolean allowUpdateOfOtherPackages;
 
         protected String getStepProjectName() {
             return stepProjectName;
@@ -320,7 +320,7 @@ public class StepConsole implements Callable<Integer> {
                         .setStepProjectName(getStepProjectName())
                         .setAuthToken(getAuthToken())
                         .setAsync(async)
-                        .setForceUpload(forceUpload)
+                        .setallowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
                         .setApVersion(apVersion)
                         .setActivationExpression(activationExpr)
                         .setKeywordLibraryMavenArtifact(keywordLibMavenArtifact)

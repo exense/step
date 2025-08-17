@@ -58,6 +58,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceTypes.put(RESOURCE_TYPE_SECRET, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_PDF_TEST_SCENARIO_FILE, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_ISOLATED_AP, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_AP, new CustomResourceType(false));
 	}
 
 	public void registerResourceType(String name, ResourceType resourceType) {
@@ -66,7 +67,7 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String actorUser) throws IOException {
-		return createResourceContainer(resourceType, resourceFileName, false, null, actorUser);
+		return createResourceContainer(resourceType, resourceFileName, false, null, actorUser, null);
 	}
 
 	@Override
@@ -76,7 +77,7 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null, actorUser);
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null, actorUser, null);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
 		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();
@@ -105,8 +106,9 @@ public class ResourceManagerImpl implements ResourceManager {
 										  String resourceFileName,
                                           ObjectEnricher objectEnricher,
 										  String trackingAttribute,
-										  String actorUser, String origin) throws IOException, InvalidResourceFormatException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser);
+										  String actorUser,
+										  String origin) throws IOException, InvalidResourceFormatException {
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null, actorUser, origin);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
 		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();
@@ -117,8 +119,8 @@ public class ResourceManagerImpl implements ResourceManager {
 		return new ResourceRevisionContainer(resource, revision, this);
 	}
 
-	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory, String trackingAttribute, String actorUser) throws IOException {
-		Resource resource = createTrackedResource(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser);
+	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory, String trackingAttribute, String actorUser, String origin) throws IOException {
+		Resource resource = createTrackedResource(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser, origin);
 		ResourceRevision revision = createResourceRevisionContainer(resourceFileName, resource);
 		return new ResourceRevisionContainer(resource, revision, this);
 	}
@@ -298,7 +300,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		return com.google.common.io.Files.hash(file, Hashing.md5()).toString();
 	}
 
-	private Resource createTrackedResource(String resourceTypeId, String name, boolean isDirectory, String trackingAttribute, String actorUser) {
+	private Resource createTrackedResource(String resourceTypeId, String name, boolean isDirectory, String trackingAttribute, String actorUser, String origin) {
 		ResourceType resourceType = resourceTypes.get(resourceTypeId);
 		if(resourceType ==  null) {
 			throw new RuntimeException("Unknown resource type "+resourceTypeId);
@@ -324,6 +326,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		}
 		resource.setLastModificationDate(lastModificationDate);
 		resource.setLastModificationUser(actorUser);
+		resource.setOrigin(origin);
 
 		if (trackingAttribute != null && !trackingAttribute.isEmpty()) {
 			Map<String, Object> customFields = resource.getCustomFields();

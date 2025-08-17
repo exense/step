@@ -20,7 +20,6 @@
  */
 package step.automation.packages.kwlibrary;
 
-import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageManagerException;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.InputStreamToTempFileDownloader;

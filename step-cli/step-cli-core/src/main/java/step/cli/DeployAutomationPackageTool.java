@@ -58,7 +58,7 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
             try {
                 updateResult = automationPackageClient.createOrUpdateAutomationPackage(
                         params.getAutomationPackageFile(), mavenAutomationPackageXml,
-                        params.getAsync(), params.getApVersion(), params.getActivationExpression(), params.getForceUpload(),
+                        params.getAsync(), params.getApVersion(), params.getActivationExpression(), params.getallowUpdateOfOtherPackages(),
                         params.getKeywordLibraryFile(), mavenKeywordLibraryXml
                 );
 
@@ -91,7 +91,7 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
         private Boolean async;
         private String apVersion;
         private String activationExpression;
-        private Boolean forceUpload;
+        private Boolean allowUpdateOfOtherPackages;
         private File automationPackageFile;
         private MavenArtifactIdentifier automationPackageMavenArtifact;
 
@@ -173,12 +173,12 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
             return this;
         }
 
-        public Boolean getForceUpload() {
-            return forceUpload;
+        public Boolean getallowUpdateOfOtherPackages() {
+            return allowUpdateOfOtherPackages;
         }
 
-        public Params setForceUpload(Boolean forceUpload) {
-            this.forceUpload = forceUpload;
+        public Params setallowUpdateOfOtherPackages(Boolean allowUpdateOfOtherPackages) {
+            this.allowUpdateOfOtherPackages = allowUpdateOfOtherPackages;
             return this;
         }
 

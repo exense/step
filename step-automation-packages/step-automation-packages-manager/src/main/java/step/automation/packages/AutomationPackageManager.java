@@ -302,13 +302,13 @@ public class AutomationPackageManager {
                                                      String apVersion, String activationExpr,
                                                      AutomationPackageFileSource keywordLibrarySource,
                                                      ObjectEnricher enricher, ObjectPredicate objectPredicate,
-                                                     String actorUser, boolean forceUpload, boolean checkForSameOrigin) {
+                                                     String actorUser, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) {
         validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
         try {
             try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
                 return createOrUpdateAutomationPackage(false, true, null, provider, apVersion, activationExpr, false, enricher, objectPredicate,
                         false, keywordLibrarySource, actorUser,
-                        forceUpload, checkForSameOrigin).getId();
+                        allowUpdateOfOtherPackages, checkForSameOrigin).getId();
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -337,7 +337,7 @@ public class AutomationPackageManager {
      *
      * @param apSource           the content of automation package
      * @param actorUser
-     * @param forceUpload
+     * @param allowUpdateOfOtherPackages
      * @param checkForSameOrigin
      * @param enricher           the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate    the filter for automation package
@@ -345,12 +345,12 @@ public class AutomationPackageManager {
      * @throws AutomationPackageManagerException
      */
     public ObjectId createAutomationPackage(AutomationPackageFileSource apSource, String apVersion, String activationExpr,
-                                            AutomationPackageFileSource keywordLibrarySource, String actorUser, boolean forceUpload,
+                                            AutomationPackageFileSource keywordLibrarySource, String actorUser, boolean allowUpdateOfOtherPackages,
                                             boolean checkForSameOrigin, ObjectEnricher enricher,
                                             ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
         return createOrUpdateAutomationPackage(false, true, null,
                 apSource, keywordLibrarySource,
-                apVersion, activationExpr, enricher, objectPredicate, false, actorUser, forceUpload, checkForSameOrigin).getId();
+                apVersion, activationExpr, enricher, objectPredicate, false, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin).getId();
     }
 
     /**
@@ -362,7 +362,7 @@ public class AutomationPackageManager {
      * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate the filter for automation package
      * @param actorUser
-     * @param forceUpload
+     * @param allowUpdateOfOtherPackages
      * @return the id of created/updated package
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate,
@@ -371,10 +371,10 @@ public class AutomationPackageManager {
                                                                          AutomationPackageFileSource keywordLibrarySource,
                                                                          String apVersion, String activationExpr,
                                                                          ObjectEnricher enricher, ObjectPredicate objectPredicate,
-                                                                         boolean async, String actorUser, boolean forceUpload, boolean checkForSameOrigin) throws AutomationPackageManagerException {
+                                                                         boolean async, String actorUser, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) throws AutomationPackageManagerException {
         try {
             try (AutomationPackageArchiveProvider provider = getAutomationPackageArchiveProvider(apSource, objectPredicate)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibrarySource, actorUser, forceUpload, checkForSameOrigin);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibrarySource, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -390,7 +390,7 @@ public class AutomationPackageManager {
      * @param enricher           the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate    the filter for automation package
      * @param checkForSameOrigin
-     * @param forceUpload
+     * @param allowUpdateOfOtherPackages
      * @param actorUser
      * @return the id of created/updated package
      */
@@ -399,12 +399,12 @@ public class AutomationPackageManager {
                                                                                   String apVersion, String activationExpr,
                                                                                   AutomationPackageFileSource keywordLibrarySource,
                                                                                   ObjectEnricher enricher, ObjectPredicate objectPredicate,
-                                                                                  boolean async, boolean checkForSameOrigin, boolean forceUpload, String actorUser) throws AutomationPackageManagerException {
+                                                                                  boolean async, boolean checkForSameOrigin, boolean allowUpdateOfOtherPackages, String actorUser) throws AutomationPackageManagerException {
         try {
             validateMavenConfigAndArtifactClassifier(mavenArtifactIdentifier);
             try (AutomationPackageFromMavenProvider provider = new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(objectPredicate), mavenArtifactIdentifier)) {
                 // TODO: define keyword library from maven
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibrarySource, actorUser, forceUpload, checkForSameOrigin);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, keywordLibrarySource, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin);
             }
         } catch (IOException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
@@ -457,7 +457,7 @@ public class AutomationPackageManager {
      * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
      * @param objectPredicate           the filter for automation package
      * @param keywordLibrarySource
-     * @param forceUpload
+     * @param allowUpdateOfOtherPackages
      * @param checkForSameOrigin
      * @return the id of created/updated package
      * @throws SameAutomationPackageOriginException
@@ -467,7 +467,7 @@ public class AutomationPackageManager {
                                                                          AutomationPackageArchiveProvider automationPackageProvider, String apVersion, String activationExpr,
                                                                          boolean isLocalPackage, ObjectEnricher enricher, ObjectPredicate objectPredicate, boolean async,
                                                                          AutomationPackageFileSource keywordLibrarySource, String actorUser,
-                                                                         boolean forceUpload, boolean checkForSameOrigin) throws AutomationPackageManagerException, SameAutomationPackageOriginException {
+                                                                         boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) throws AutomationPackageManagerException, SameAutomationPackageOriginException {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
@@ -510,7 +510,7 @@ public class AutomationPackageManager {
 
         SimilarAutomationPackages similarAutomationPackages = findAutomationPackagesWithSameOrigin(objectPredicate, keywordLibrarySource, checkForSameOrigin, apOrigin, oldPackage);
 
-        if (!forceUpload) {
+        if (!allowUpdateOfOtherPackages) {
             if (similarAutomationPackages.apWithSameOriginExists() || similarAutomationPackages.apWithSameKeywordLibExists()) {
                 throw new SameAutomationPackageOriginException(similarAutomationPackages.getApWithSameOrigin(), similarAutomationPackages.getApWithSameKeywordLib());
             }
@@ -648,7 +648,7 @@ public class AutomationPackageManager {
         }
         try (InputStream is = new FileInputStream(originalFile)) {
             Resource resource = resourceManager.createTrackedResource(
-                    ResourceManager.RESOURCE_TYPE_FUNCTIONS, false, is, originalFile.getName(), enricher, null, actorUser, apOrigin
+                    ResourceManager.RESOURCE_TYPE_AP, false, is, originalFile.getName(), enricher, null, actorUser, apOrigin
             );
             String resourceString = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
             newPackage.setAutomationPackageResource(resourceString);
@@ -679,7 +679,10 @@ public class AutomationPackageManager {
                         log.info("Existing keyword library {} with resource id {} has been detected and will be reused in AP {}", keywordLibrary.getName(), oldResources.get(0).getId().toHexString(), apName);
                         keywordLibraryResource = oldResources.get(0);
                     } else {
-                        keywordLibraryResource = resourceManager.createTrackedResource(resourceType, false, fis, keywordLibrary.getName(), enricher, keywordLibraryProvider.getTrackingValue(), actorUser, origin == null ? null : origin.toStringRepresentation());
+                        keywordLibraryResource = resourceManager.createTrackedResource(
+                                resourceType, false, fis, keywordLibrary.getName(), enricher, null,
+                                actorUser, origin == null ? null : origin.toStringRepresentation()
+                        );
                     }
                     keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
                     newPackage.setKeywordLibraryOrigin(keywordLibraryProvider.getOrigin() == null ? null : keywordLibraryProvider.getOrigin().toStringRepresentation());

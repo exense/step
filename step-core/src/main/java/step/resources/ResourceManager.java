@@ -35,7 +35,7 @@ public interface ResourceManager {
 	String RESOURCE_TYPE_ATTACHMENT = "attachment";
 	String RESOURCE_TYPE_TEMP = "temp";
 	String RESOURCE_TYPE_ISOLATED_AP = "isolatedAp";
-	String RESOURCE_TYPE_MAVEN_ARTIFACT = "mavenArtifact";
+	String RESOURCE_TYPE_AP = "automationPackage";
 
 	/**
 	 * @param resourceType     the type of the resource
@@ -72,6 +72,10 @@ public interface ResourceManager {
 
 	Resource getResource(String resourceId);
 
+	default List<Resource> getResourcesByOrigin(String origin){
+		return findManyByCriteria(Map.of("origin", origin));
+	}
+
 	ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException;
 
 	ResourceRevision getResourceRevision(String resourceRevisionId);
@@ -83,7 +87,7 @@ public interface ResourceManager {
 								   InputStream resourceStream,
 								   String resourceFileName,
 								   ObjectEnricher objectEnricher,
-								   String trackingAttributeValue,
+								   String trackingAttribute,
 								   String actorUser, String origin) throws IOException, InvalidResourceFormatException;
 
 	/**

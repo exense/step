@@ -420,6 +420,8 @@ public class AutomationPackageManagerOSTest {
         String fileName = "step-automation-packages-sample1.jar";
         File automationPackageJar = new File("src/test/resources/samples/" + fileName);
 
+        FileResolver fileResolver = new FileResolver(resourceManager);
+
         SampleUploadingResult r = new SampleUploadingResult();
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
@@ -443,6 +445,10 @@ public class AutomationPackageManagerOSTest {
             Assert.assertEquals("uploaded:", r.storedPackage.getAutomationPackageOrigin());
             log.info("AP resource: {}", r.storedPackage.getAutomationPackageResource());
             Assert.assertNotNull(r.storedPackage.getAutomationPackageResource());
+
+            Resource resourceByAutomationPackage = resourceManager.getResource(fileResolver.resolveResourceId(r.storedPackage.getAutomationPackageResource()));
+            Assert.assertEquals("uploaded:", resourceByAutomationPackage.getOrigin());
+            Assert.assertEquals(r.storedPackage.getId(), resourceByAutomationPackage.getCustomField("automationPackageId"));
 
             // upload package without keyword library
             Assert.assertNull(r.storedPackage.getKeywordLibraryOrigin());

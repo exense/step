@@ -28,15 +28,15 @@ import java.util.List;
 public interface AutomationPackageClient extends Closeable {
 
     String createAutomationPackage(File automationPackageFile, String automationPackageMvnSnippetXml,
-                                   String apVersion, String activationExpr, Boolean forceUpload,
+                                   String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
                                    File keywordLibraryFile, String keywordLibraryFileMvnSnippetXml) throws AutomationPackageClientException;
 
     AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, String automationPackageMvnSnippetXml,
-                                                                  Boolean async, String apVersion, String activationExpr, Boolean forceUpload,
+                                                                  Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
                                                                   File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException;
 
     @Deprecated(since = "Will be removed after switching to the new UI")
-    AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr, Boolean forceUpload, String keywordLibraryArtifactXml) throws AutomationPackageClientException;
+    AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages, String keywordLibraryArtifactXml) throws AutomationPackageClientException;
 
     List<String> executeAutomationPackage(File automationPackageFile,
                                           IsolatedAutomationPackageExecutionParameters params,

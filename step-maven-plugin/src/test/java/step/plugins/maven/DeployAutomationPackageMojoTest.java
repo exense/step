@@ -55,7 +55,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         mojo.setStepProjectName(TENANT_1.getName());
         mojo.setAuthToken("dummyToken");
         mojo.setAsync(false);
-        mojo.setForceUpload(true);
+        mojo.setallowUpdateOfOtherPackages(true);
 
         MavenProject mockedProject = Mockito.mock(MavenProject.class);
         Artifact mainArtifact = createArtifactMock();
@@ -79,18 +79,18 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         private String toolProjectName;
         private String toolAuthToken;
         private Boolean toolAsync;
-        private Boolean toolForceUpload;
+        private Boolean toolallowUpdateOfOtherPackages;
 
         public DeployAutomationPackageMojoTestable() {
         }
 
         @Override
-        protected DeployAutomationPackageTool createTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr, String libArtifactPath, Boolean forceUpload) {
+        protected DeployAutomationPackageTool createTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr, String libArtifactPath, Boolean allowUpdateOfOtherPackages) {
             this.toolAsync = async;
             this.toolUrl = url;
             this.toolProjectName = projectName;
             this.toolAuthToken = authToken;
-            this.toolForceUpload = forceUpload;
+            this.toolallowUpdateOfOtherPackages = allowUpdateOfOtherPackages;
             return mockedTool;
         }
 

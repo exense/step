@@ -133,7 +133,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-write")
     public String createAutomationPackage(@QueryParam("version") String apVersion,
                                           @QueryParam("activationExpr") String activationExpression,
-                                          @QueryParam("forceUpload") Boolean forceUpload,
+                                          @QueryParam("allowUpdateOfOtherPackages") Boolean allowUpdateOfOtherPackages,
                                           @FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @FormDataParam("apMavenSnippet") String apMavenSnippet,
@@ -148,7 +148,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     apFileSource,
                     apVersion, activationExpression,
                     keywordLibrarySource, getUser(),
-                    forceUpload == null ? false : forceUpload, true,
+                    allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true,
                     getObjectEnricher(), getObjectPredicate());
             return id == null ? null : id.toString();
         } catch (SameAutomationPackageOriginException e){
@@ -310,7 +310,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @QueryParam("async") Boolean async,
                                                                  @QueryParam("version") String apVersion,
                                                                  @QueryParam("activationExpr") String activationExpression,
-                                                                 @QueryParam("forceUpload") Boolean forceUpload,
+                                                                 @QueryParam("allowUpdateOfOtherPackages") Boolean allowUpdateOfOtherPackages,
                                                                  @FormDataParam("file") InputStream uploadedInputStream,
                                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                                  @FormDataParam("apMavenSnippet") String apMavenSnippet,
@@ -327,7 +327,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     apFileSource, keywordLibrarySource,
                     apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async, getUser(),
-                    forceUpload == null ? false : forceUpload, true);
+                    allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
         } catch (SameAutomationPackageOriginException e) {
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
         } catch (AutomationPackageManagerException e) {
@@ -369,7 +369,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-write")
     public Response createOrUpdateAutomationPackage(@QueryParam("async") Boolean async,
                                                     @QueryParam("version") String apVersion,
-                                                    @QueryParam("forceUpload") Boolean forceUpload,
+                                                    @QueryParam("allowUpdateOfOtherPackages") Boolean allowUpdateOfOtherPackages,
                                                     @QueryParam("activationExpr") String activationExpression,
                                                     @FormDataParam("file") InputStream uploadedInputStream,
                                                     @FormDataParam("file") FormDataContentDisposition fileDetail,
@@ -387,7 +387,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     keywordLibrarySource,
                     apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async, getUser(),
-                    forceUpload == null ? false : forceUpload, true);
+                    allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(Response.Status.CREATED);

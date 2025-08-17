@@ -19,7 +19,6 @@
 package step.resources;
 
 import ch.exense.commons.io.FileHelper;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
@@ -32,7 +31,6 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepAsyncServices;
-import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.EntityManager;
 import step.core.objectenricher.ObjectEnricher;
@@ -76,7 +74,8 @@ public class ResourceServices extends AbstractStepAsyncServices {
 												 @QueryParam("type") String resourceType,
 												 @QueryParam("duplicateCheck") Boolean checkForDuplicate,
 												 @QueryParam("directory") Boolean isDirectory,
-												 @QueryParam("trackingAttribute") String trackingAttribute) throws IOException {
+												 @QueryParam("trackingAttribute") String trackingAttribute,
+												 @QueryParam("origin") String origin) throws IOException {
 		ObjectEnricher objectEnricher = getObjectEnricher();
 		
 		if(checkForDuplicate == null) {
@@ -88,8 +87,11 @@ public class ResourceServices extends AbstractStepAsyncServices {
 			throw new RuntimeException("Missing resource type query parameter 'type'");
 		
 		try {
-			// TODO: take user from auth context?
-			Resource resource = resourceManager.createTrackedResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), objectEnricher, trackingAttribute, null, new UploadedResourceOrigin().toStringRepresentation());
+			Resource resource = resourceManager.createTrackedResource(
+					resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), objectEnricher,
+					trackingAttribute, getSession().getUser().getUsername(),
+					origin == null ? new UploadedResourceOrigin().toStringRepresentation() : origin
+			);
 			return new ResourceUploadResponse(resource, null);
 		}  catch (InvalidResourceFormatException e) {
 			throw uploadFileNotAnArchive();

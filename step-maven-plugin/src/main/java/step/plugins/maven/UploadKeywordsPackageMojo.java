@@ -32,6 +32,7 @@ import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.entities.EntityManager;
+import step.core.maven.MavenArtifactIdentifier;
 import step.functions.packages.FunctionPackage;
 import step.functions.packages.client.LibFileReference;
 import step.functions.packages.client.RemoteFunctionPackageClientImpl;
@@ -224,7 +225,9 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 							remoteLibArtifact.getFile().getName(),
 							null,
 							actualTrackingAttribute,
-							null, null);
+							null,
+							new MavenArtifactIdentifier(remoteLibArtifact.getGroupId(), remoteLibArtifact.getArtifactId(), remoteLibArtifact.getVersion(), remoteLibArtifact.getClassifier(), "jar").toStringRepresentation()
+					);
 					getLog().info("Library resource has been created: " + created.getId().toString());
 					return LibFileReference.resourceId(created.getId().toString());
 				} catch (IOException e) {

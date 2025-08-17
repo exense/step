@@ -86,10 +86,10 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart) {
-		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, null);
+		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, null, null);
 	}
 	
-	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, String trackingValue) {
+	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, String trackingAttribute, String origin) {
 		MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
         multiPart.bodyPart(bodyPart);
@@ -97,8 +97,11 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
         Map<String, String> params = new HashMap<>();
         params.put("type", type);
 		params.put("directory", Boolean.toString(isDirectory));
-		if (trackingValue != null) {
-			params.put("trackingAttribute", trackingValue);
+		if (trackingAttribute != null) {
+			params.put("trackingAttribute", trackingAttribute);
+		}
+		if (origin != null) {
+			params.put("origin", origin);
 		}
 		// in RemoteResourceManager we ignore actor user, because in remote services he will be automatically resolved from authentication context
         Builder b = requestBuilder("/rest/resources/content", params);
@@ -137,12 +140,12 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 
 	@Override
 	public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher,
-										  String trackingValue, String actorUser, String origin) {
+										  String trackingAttribute, String actorUser, String origin) {
 		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 
 		// !!! in fact, 'checkForDuplicates' parameter is ignored, because the list of found duplicated resources (with the same hash sums)
 		// is located in ResourceUploadResponse.similarResources, but we ignore this list here and just take the uploaded resource
-		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, trackingValue);
+		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, trackingAttribute, origin);
 		return upload.getResource();
 	}
 

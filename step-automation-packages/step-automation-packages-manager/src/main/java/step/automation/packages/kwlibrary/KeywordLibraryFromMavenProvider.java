@@ -61,8 +61,4 @@ public class KeywordLibraryFromMavenProvider implements AutomationPackageKeyword
         return mavenArtifactIdentifier == null ? null : mavenArtifactIdentifier.toShortString();
     }
 
-    @Override
-    public String getResourceType() {
-        return ResourceManager.RESOURCE_TYPE_MAVEN_ARTIFACT;
-    }
 }
