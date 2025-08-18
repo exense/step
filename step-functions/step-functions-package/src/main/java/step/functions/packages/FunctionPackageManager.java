@@ -266,14 +266,17 @@ public class FunctionPackageManager implements Closeable {
 			}
 
 			newFunction.setManaged(true);
-			newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally() ||
-					(newFunction instanceof CompositeFunction));
 
-			Map<String, String> tokenSelectionCriteria = newFunction.getTokenSelectionCriteria();
 			//Routing directly defined at the keyword annotation level takes precedence over the one defined at the package level
-			if (tokenSelectionCriteria == null || tokenSelectionCriteria.isEmpty()) {
+			boolean executeLocally = newFunction.isExecuteLocally();
+			Map<String, String> tokenSelectionCriteria = newFunction.getTokenSelectionCriteria();
+			//If no routing is defined at the keyword level, we apply the one from the package
+			if ((tokenSelectionCriteria == null || tokenSelectionCriteria.isEmpty()) && !executeLocally) {
+				newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally() ||
+						(newFunction instanceof CompositeFunction));
 				newFunction.setTokenSelectionCriteria(newFunctionPackage.getTokenSelectionCriteria());
 			}
+
 			newFunction.addCustomField(FunctionPackageEntity.FUNCTION_PACKAGE_ID,
 					newFunctionPackage.getId().toString());
 
