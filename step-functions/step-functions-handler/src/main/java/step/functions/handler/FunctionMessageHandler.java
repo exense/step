@@ -30,16 +30,16 @@ import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
-import step.grid.contextbuilder.*;
+import step.grid.contextbuilder.ApplicationContextBuilder;
+import step.grid.contextbuilder.LocalResourceApplicationContextFactory;
+import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
+import step.reporting.LiveReporting;
 import step.streaming.client.upload.StreamingUploadProvider;
-import step.streaming.client.upload.StreamingUploads;
 import step.streaming.common.StreamingResourceUploadContext;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.util.HashMap;
@@ -110,7 +110,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 
-			functionHandler.setStreamingUploads(initializeStreamingUploads(input));
+			functionHandler.setLiveReporting(initializeLiveReporting(input.getProperties()));
 
 			// Handle the input
 			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
@@ -138,21 +138,23 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		});
 	}
 
-	private StreamingUploads initializeStreamingUploads(Input<?> input) throws Exception {
+	private LiveReporting initializeLiveReporting(Map<String, String> properties) throws Exception {
 		applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new LocalResourceApplicationContextFactory(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar"), true);
 		return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> {
 			// There's no easy way to do this in the AbstractFunctionHandler itself, because
 			// the only place where the Input properties are guaranteed to be available is in the (abstract)
 			// handle() method (which would then have to be implemented in all subclasses). So we do it here.
-			String uploadContextId = input.getProperties().get(StreamingResourceUploadContext.PARAMETER_NAME);
+
+			// We currently only support Websocket uploads; if this changes in the future, here is the place to modify the logic.
+			String uploadContextId = properties.get(StreamingResourceUploadContext.PARAMETER_NAME);
 			if (uploadContextId != null) {
 				// This information could also be retrieved from somewhere else (e.g. this.agentTokenServices....),
 				// for now it's in the inputs provided by the controller itself.
-				String host = input.getProperties().get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
+				String host = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
 				while (host.endsWith("/")) {
 					host = host.substring(0, host.length() - 1);
 				}
-				String path = input.getProperties().get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH);
+				String path = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH);
 				while (path.startsWith("/")) {
 					path = path.substring(1);
 				}
@@ -165,9 +167,10 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 						aClass.getClassLoader(), new Class[]{StreamingUploadProvider.class},
 						(proxy, method, args) -> applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> method.invoke(streamingUploadProvider, args))
 				);
-				return new  StreamingUploads(proxiedProvider);
+				return new LiveReporting(proxiedProvider);
 			} else {
-				return null;
+				// This will now fall back to auto-determining a streaming provider, usually one that discards all uploads. See the API implementation for details.
+				return new LiveReporting(null);
 			}
 		});
 	}

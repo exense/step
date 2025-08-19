@@ -26,12 +26,13 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import step.automation.packages.AutomationPackageFromFolderProvider;
 import step.automation.packages.AutomationPackageReadingException;
+import step.cli.apignore.ApIgnoreFileFilter;
 import step.client.controller.ControllerServicesClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.Constants;
 import step.core.Version;
-import step.cli.apignore.ApIgnoreFileFilter;
 import step.core.maven.MavenArtifactIdentifier;
+import step.reporting.LiveReporting;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,6 +72,7 @@ public class StepConsole implements Callable<Integer> {
         public static final String STEP_URL = "--stepUrl";
         public static final String PROJECT_NAME = "--projectName";
         public static final String TOKEN = "--token";
+        public static final String STEP_USER = "--stepUser";
         public static final String VERBOSE = "--verbose";
         public static final String CONFIG = "-c";
         public static final String LOCAL = "--local";
@@ -91,10 +93,10 @@ public class StepConsole implements Callable<Integer> {
         @Option(names = {TOKEN}, paramLabel = "<API key>", description = "The API key (token) to authenticate to the remote Step server")
         protected String authToken;
 
-        @Option(names = {"--stepUser"}, description = "To execute on behalf of the provided user")
+        @Option(names = {STEP_USER}, description = "To execute on behalf of the provided user")
         protected String stepUser;
 
-        @Option(names = {VERBOSE}, defaultValue = "false")
+        @Option(names = {VERBOSE}, defaultValue = "false", description = "Verbose mode: prints the applied configuration")
         protected boolean verbose;
 
         @Option(names = {FORCE}, defaultValue = "false", description = "To force execution in case of uncritical errors")
@@ -117,11 +119,11 @@ public class StepConsole implements Callable<Integer> {
 
         public void checkEeOptionsConsistency(CommandLine.Model.CommandSpec spec) {
             // The auth token for Step EE and the project name (for EE) must be used together
-            if(getAuthToken() != null && !getAuthToken().isEmpty()){
+            if (getAuthToken() != null && !getAuthToken().isEmpty()) {
                 checkRequiredParam(spec, getStepProjectName(), PROJECT_NAME);
             }
 
-            if(getStepProjectName() != null && !getStepProjectName().isEmpty()){
+            if (getStepProjectName() != null && !getStepProjectName().isEmpty()) {
                 checkRequiredParam(spec, getAuthToken(), TOKEN);
             }
         }
@@ -227,7 +229,7 @@ public class StepConsole implements Callable<Integer> {
                 }
             }
 
-            protected ControllerServicesClient createControllerServicesClient(){
+            protected ControllerServicesClient createControllerServicesClient() {
                 return new ControllerServicesClient(getControllerCredentials());
             }
 
@@ -241,7 +243,7 @@ public class StepConsole implements Callable<Integer> {
                     new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getVersion());
                 } catch (ControllerVersionValidator.ValidationException e) {
                     if (e.getResult().getStatus() == ControllerVersionValidator.Status.MINOR_MISMATCH) {
-                        String warn = "The CLI version (" + e.getResult().getClientVersion() + ") does not exactly match the server version (" +  e.getResult().getServerVersion() + "), but they are considered compatible. It's recommended to use matching versions.";
+                        String warn = "The CLI version (" + e.getResult().getClientVersion() + ") does not exactly match the server version (" + e.getResult().getServerVersion() + "), but they are considered compatible. It's recommended to use matching versions.";
                         log.warn(warn);
                     } else {
                         String err = "Version mismatch. The server version (" + e.getResult().getServerVersion() + ") is incompatible with the current CLI version (" + e.getResult().getClientVersion() + "). Please ensure both the CLI and server are running compatible versions.";
@@ -360,6 +362,9 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports", defaultValue = "reports")
             protected File reportDir;
 
+            @Option(names = {"--streamingUploadsDir"}, description = "The local folder to store streaming uploads, only relevant for local executions. If not set, uploads will be processed but discarded. If set, the respective directory must exist.")
+            protected File streamingUploadsDir;
+
             @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
 
@@ -401,6 +406,9 @@ public class StepConsole implements Callable<Integer> {
                 if (!local) {
                     handleApRemoteExecuteCommand();
                 } else {
+                    if (streamingUploadsDir != null) {
+                        System.setProperty(LiveReporting.ConfigPropertyKeys.STREAMING_UPLOADS_DIRECTORY, streamingUploadsDir.getAbsolutePath());
+                    }
                     handleApLocalExecuteCommand();
                 }
                 return 0;
@@ -527,10 +535,10 @@ public class StepConsole implements Callable<Integer> {
         CommandLine.ParseResult parseResult = null;
         try {
             parseResult = clForFinder.parseArgs(args);
-        } catch (CommandLine.ParameterException ex){
+        } catch (CommandLine.ParameterException ex) {
             try {
                 return clForFinder.getParameterExceptionHandler().handleParseException(ex, args);
-            } catch (Exception handlerException){
+            } catch (Exception handlerException) {
                 // exception during exception handling
                 throw new RuntimeException("Unexpected exception", ex);
             }

@@ -22,8 +22,6 @@ import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.handlers.javahandler.KeywordExecutor;
-import step.reporting.LiveReporting;
-import step.streaming.client.upload.StreamingUploads;
 
 import javax.json.JsonObject;
 
@@ -31,8 +29,7 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		StreamingUploads streamingUploads = this.getStreamingUploads();
-		KeywordExecutor executor = new KeywordExecutor(false, new LiveReporting(streamingUploads));
+		KeywordExecutor executor = new KeywordExecutor(false, getLiveReporting());
 		return executor.handle(input, getTokenSession(), getTokenReservationSession(), mergeAllProperties(input));
 	}
 }
