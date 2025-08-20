@@ -110,7 +110,7 @@
 									<type>jar</type>
 									<overWrite>false</overWrite>
 									<outputDirectory>${project.basedir}/src/test/resources/remote</outputDirectory>
-									<destFileName>java-plugin-handler-test.jar</destFileName>
+									<destFileName>java-plugin-handler-remote-test.jar</destFileName>
 								</artifactItem>
 							</artifactItems>
 							<overWriteReleases>true</overWriteReleases>

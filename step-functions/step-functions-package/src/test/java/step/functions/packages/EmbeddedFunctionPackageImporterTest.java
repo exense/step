@@ -76,9 +76,8 @@ public class EmbeddedFunctionPackageImporterTest {
 		Assert.assertEquals(5, functionIDs.size());
 		functionIDs.forEach(f->{
 			GeneralScriptFunction function = (GeneralScriptFunction) functionAccessor.get(f);
-			//Routing criteria are direclty defined for the keyword MyKeywordWithRoutingCriteria that takes precedence over the package local setting
-			boolean localExpected = (isLocal && !"MyKeywordWithRoutingCriteria".equals(function.getAttribute(AbstractOrganizableObject.NAME))) ||
-					(!isLocal && "MyKeywordWithRoutingToController".equals(function.getAttribute(AbstractOrganizableObject.NAME)));
+			//Routing to controller defined at keyword level as the priority
+			boolean localExpected = (isLocal || "MyKeywordWithRoutingToController".equals(function.getAttribute(AbstractOrganizableObject.NAME)));
 			assertEquals(localExpected, function.isExecuteLocally());
 		});
 	}

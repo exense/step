@@ -267,14 +267,17 @@ public class FunctionPackageManager implements Closeable {
 
 			newFunction.setManaged(true);
 
-			//Routing directly defined at the keyword annotation level takes precedence over the one defined at the package level
-			boolean executeLocally = newFunction.isExecuteLocally();
-			Map<String, String> tokenSelectionCriteria = newFunction.getTokenSelectionCriteria();
-			//If no routing is defined at the keyword level, we apply the one from the package
-			if ((tokenSelectionCriteria == null || tokenSelectionCriteria.isEmpty()) && !executeLocally) {
-				newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally() ||
-						(newFunction instanceof CompositeFunction));
-				newFunction.setTokenSelectionCriteria(newFunctionPackage.getTokenSelectionCriteria());
+			//Execute on controller true has priority whether it is defined at package or keyword level and forced for composite Keywords
+			newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally() || newFunction.isExecuteLocally() ||
+																			(newFunction instanceof CompositeFunction));
+			//Token selection criteria maps are merged; for keys defined twice, values from the package override the ones from the keyword
+			Map<String, String> tokenSelectionCriteriaFromFunction = newFunction.getTokenSelectionCriteria();
+			Map<String, String> tokenSelectionCriteriaFromPackage = newFunctionPackage.getTokenSelectionCriteria();
+			if (tokenSelectionCriteriaFromFunction == null) {
+				newFunction.setTokenSelectionCriteria(tokenSelectionCriteriaFromPackage);
+			} else if (tokenSelectionCriteriaFromPackage != null) {
+				tokenSelectionCriteriaFromFunction.putAll(tokenSelectionCriteriaFromPackage);
+				newFunction.setTokenSelectionCriteria(tokenSelectionCriteriaFromFunction);
 			}
 
 			newFunction.addCustomField(FunctionPackageEntity.FUNCTION_PACKAGE_ID,
