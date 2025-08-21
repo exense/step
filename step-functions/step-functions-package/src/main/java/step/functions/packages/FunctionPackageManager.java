@@ -266,9 +266,20 @@ public class FunctionPackageManager implements Closeable {
 			}
 
 			newFunction.setManaged(true);
-			newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally() ||
-					(newFunction instanceof CompositeFunction));
-			newFunction.setTokenSelectionCriteria(newFunctionPackage.getTokenSelectionCriteria());
+
+			//Execute on controller true has priority whether it is defined at package or keyword level and forced for composite Keywords
+			newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally() || newFunction.isExecuteLocally() ||
+																			(newFunction instanceof CompositeFunction));
+			//Token selection criteria maps are merged; for keys defined twice, values from the package override the ones from the keyword
+			Map<String, String> tokenSelectionCriteriaFromFunction = newFunction.getTokenSelectionCriteria();
+			Map<String, String> tokenSelectionCriteriaFromPackage = newFunctionPackage.getTokenSelectionCriteria();
+			if (tokenSelectionCriteriaFromFunction == null) {
+				newFunction.setTokenSelectionCriteria(tokenSelectionCriteriaFromPackage);
+			} else if (tokenSelectionCriteriaFromPackage != null) {
+				tokenSelectionCriteriaFromFunction.putAll(tokenSelectionCriteriaFromPackage);
+				newFunction.setTokenSelectionCriteria(tokenSelectionCriteriaFromFunction);
+			}
+
 			newFunction.addCustomField(FunctionPackageEntity.FUNCTION_PACKAGE_ID,
 					newFunctionPackage.getId().toString());
 
