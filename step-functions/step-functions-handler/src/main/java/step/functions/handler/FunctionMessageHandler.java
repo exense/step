@@ -110,7 +110,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 
-			functionHandler.setLiveReporting(initializeLiveReporting(input.getProperties()));
+			LiveReporting liveReporting = initializeLiveReporting(input.getProperties());
+			functionHandler.setLiveReporting(liveReporting);
 
 			// Handle the input
 			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
@@ -119,6 +120,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			@SuppressWarnings("unchecked")
 			Output<?> output = functionHandler.handle(input);
 			measurementsBuilder.stopMeasure(customMeasureData());
+
+			liveReporting.close();
 
 			List<Measure> outputMeasures = output.getMeasures();
 			// Add type="custom" to all output measures
