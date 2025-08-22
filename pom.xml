@@ -50,7 +50,7 @@
 		<step-grid.version>2025.8.19-68a479c9a5fd2f5679d16d19</step-grid.version>
 		<step-framework.version>2025.7.29-688877f34e318f3fad34ded4</step-framework.version>
 		<!-- TODO: REMOVE temporary overrides (and usages) before merging to productive branch -->
-<!--		<step-api-temp-override.version>0.0.0-SNAPSHOT</step-api-temp-override.version>-->
+		<step-api-temp-override.version>2025.8.21-68a72c6ba5fd2f56796ae745</step-api-temp-override.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
@@ -117,14 +117,14 @@
 		<dependencies>
 			<!-- We're temporarily forcing the step-api version here (which also sets the streaming version).
 			TODO: remove block before merging to productive branch -->
-			<!-- reenable when needed, otherwise delete -->
-<!--			<dependency>-->
-<!--				<groupId>ch.exense.step</groupId>-->
-<!--				<artifactId>step-api</artifactId>-->
-<!--				<version>${step-api-temp-override.version}</version>-->
-<!--				<type>pom</type>-->
-<!--				<scope>import</scope>-->
-<!--			</dependency>-->
+<!--			 reenable when needed, otherwise delete-->
+			<dependency>
+				<groupId>ch.exense.step</groupId>
+				<artifactId>step-api</artifactId>
+				<version>${step-api-temp-override.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
 
 			<dependency>
 				<groupId>ch.exense.step</groupId>

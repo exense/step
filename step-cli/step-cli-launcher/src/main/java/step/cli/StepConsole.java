@@ -32,7 +32,6 @@ import step.client.credentials.ControllerCredentials;
 import step.core.Constants;
 import step.core.Version;
 import step.core.maven.MavenArtifactIdentifier;
-import step.reporting.LiveReporting;
 
 import java.io.File;
 import java.io.IOException;
@@ -362,9 +361,6 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports", defaultValue = "reports")
             protected File reportDir;
 
-            @Option(names = {"--streamingUploadsDir"}, description = "The local folder to store streaming uploads, only relevant for local executions. If not set, uploads will be processed but discarded. If set, the respective directory must exist.")
-            protected File streamingUploadsDir;
-
             @Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
             protected Map<String, String> executionParameters;
 
@@ -406,9 +402,6 @@ public class StepConsole implements Callable<Integer> {
                 if (!local) {
                     handleApRemoteExecuteCommand();
                 } else {
-                    if (streamingUploadsDir != null) {
-                        System.setProperty(LiveReporting.ConfigPropertyKeys.STREAMING_UPLOADS_DIRECTORY, streamingUploadsDir.getAbsolutePath());
-                    }
                     handleApLocalExecuteCommand();
                 }
                 return 0;
