@@ -49,8 +49,9 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 	}
 
 	@Override
-	public List<Execution> getActiveTests() {
-		return collectionDriver.find(Filters.not(Filters.equals("status", "ENDED")), null, null, null, 0)
+	public List<Execution> getActiveTests(long startedAtOrAfter) {
+		return collectionDriver.find(Filters.and(List.of(Filters.not(Filters.equals("status", "ENDED")),
+						Filters.gte("startTime", startedAtOrAfter))), null, null, null, 0)
 				.collect(Collectors.toList());
 	}
 
@@ -150,12 +151,6 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 	@Override
 	public Iterable<Execution> findLastStarted(int limit) {
 		return collectionDriver.find(Filters.empty(), new SearchOrder("startTime", -1), 0, limit, 0)
-				.collect(Collectors.toList());
-	}
-
-	@Override
-	public Iterable<Execution> findLastEnded(int limit) {
-		return collectionDriver.find(Filters.empty(), new SearchOrder("endTime", -1), 0, limit, 0)
 				.collect(Collectors.toList());
 	}
 

@@ -15,6 +15,7 @@ import step.core.plugins.Plugin;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.SchedulerServices;
 import step.framework.server.CORSRequestResponseFilter;
+import step.versionmanager.ControllerLog;
 import step.versionmanager.VersionManager;
 
 import java.io.IOException;
@@ -41,9 +42,13 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
 
 	@Override
 	public void recover(GlobalContext context) throws Exception {
+		//At this stage the version manager plugin cannot be started yet, so we create a version manager directly here to read the last start time
+		VersionManager<GlobalContext> versionManager = new VersionManager<>(context);
+		versionManager.readLatestControllerLog();
+		ControllerLog latestControllerLog = versionManager.getLatestControllerLog();
 		ExecutionAccessor accessor = context.getExecutionAccessor();
-		List<Execution> executions = accessor.getActiveTests();
-		if(executions!=null && executions.size()>0) {
+		List<Execution> executions = accessor.getActiveTests((latestControllerLog == null) ? 0 : latestControllerLog.getStart().getTime());
+		if(executions!=null && !executions.isEmpty()) {
 			logger.warn("Found " + executions.size() + " executions in an inconsistent state. The system might not have been shutdown cleanly or crashed."
 					+ "Starting recovery...");
 			for(Execution e:executions) {

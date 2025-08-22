@@ -23,6 +23,7 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import step.core.artefacts.reports.aggregated.AggregatedReport;
 import step.reports.CustomReportType;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
@@ -265,7 +266,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 	 */
 	public AggregatedReportView getAggregatedReportView(String executionId) {
 		Builder b = requestBuilder("/rest/executions/"+executionId + "/report/aggregated");
-		return executeRequest(()->b.get(AggregatedReportView.class));
+		return executeRequest(()->b.get(AggregatedReport.class)).aggregatedReportView;
 	}
 
 	/**
