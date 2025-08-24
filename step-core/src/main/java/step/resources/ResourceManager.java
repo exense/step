@@ -136,9 +136,4 @@ public interface ResourceManager {
 	default void cleanup() {
 	}
 
-	enum DuplicatesDetectionMode {
-		md5,
-		tracking_value
-	}
-
 }

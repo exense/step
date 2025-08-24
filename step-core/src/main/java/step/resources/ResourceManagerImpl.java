@@ -108,7 +108,7 @@ public class ResourceManagerImpl implements ResourceManager {
 										  String trackingAttribute,
 										  String actorUser,
 										  String origin) throws IOException, InvalidResourceFormatException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null, actorUser, origin);
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser, origin);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
 		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();

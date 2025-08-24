@@ -63,7 +63,6 @@ public class ResourceServices extends AbstractStepAsyncServices {
 		tableService = globalContext.require(TableService.class);
 	}
 
-	// TODO: add new configs for duplication check
 	@POST
 	@Path("/content")
 	@Secured(right = "resource-write")
@@ -72,15 +71,11 @@ public class ResourceServices extends AbstractStepAsyncServices {
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
 												 @FormDataParam("file") FormDataContentDisposition fileDetail,
 												 @QueryParam("type") String resourceType,
-												 @QueryParam("duplicateCheck") Boolean checkForDuplicate,
 												 @QueryParam("directory") Boolean isDirectory,
 												 @QueryParam("trackingAttribute") String trackingAttribute,
 												 @QueryParam("origin") String origin) throws IOException {
 		ObjectEnricher objectEnricher = getObjectEnricher();
-		
-		if(checkForDuplicate == null) {
-			checkForDuplicate = true;
-		}
+
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
 		if (resourceType == null || resourceType.length() == 0)

@@ -448,7 +448,7 @@ public class AutomationPackageManagerOSTest {
 
             Resource resourceByAutomationPackage = resourceManager.getResource(fileResolver.resolveResourceId(r.storedPackage.getAutomationPackageResource()));
             Assert.assertEquals("uploaded:", resourceByAutomationPackage.getOrigin());
-            Assert.assertEquals(r.storedPackage.getId(), resourceByAutomationPackage.getCustomField("automationPackageId"));
+            Assert.assertEquals(r.storedPackage.getId().toString(), resourceByAutomationPackage.getCustomField("automationPackageId"));
 
             // upload package without keyword library
             Assert.assertNull(r.storedPackage.getKeywordLibraryOrigin());

@@ -19,12 +19,12 @@
 package step.automation.packages;
 
 import step.commons.activation.Expression;
-import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractTrackedObject;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
 
-public class AutomationPackage extends AbstractOrganizableObject implements EnricheableObject {
+public class AutomationPackage extends AbstractTrackedObject implements EnricheableObject {
 
     private AutomationPackageStatus status;
     private String version;

@@ -279,7 +279,7 @@ public class AutomationPackageManager {
         String automationPackageId = automationPackage.getId().toHexString();
         if (automationPackageLocks.tryWriteLock(automationPackageId)) {
             try {
-                deleteAutomationPackageEntities(automationPackage, actorUser);
+                deleteAutomationPackageEntities(automationPackage, null, actorUser);
                 automationPackageAccessor.remove(automationPackage.getId());
                 log.info("Automation package ({}) has been removed", id);
             } finally {
@@ -290,11 +290,11 @@ public class AutomationPackageManager {
         }
     }
 
-    protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, String actorUser) {
+    protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, AutomationPackage newPackage, String actorUser) {
         deleteFunctions(automationPackage);
         deletePlans(automationPackage);
         // schedules will be deleted in deleteAdditionalData via hooks
-        deleteResources(automationPackage);
+        deleteResources(automationPackage, newPackage);
         deleteAdditionalData(automationPackage, new AutomationPackageContext(automationPackage, operationMode, resourceManager, null,  null, actorUser, null, extensions));
     }
 
@@ -517,7 +517,6 @@ public class AutomationPackageManager {
         }
 
         // keep old package id
-
         newPackage = createNewInstance(
                 apOriginString,
                 automationPackageArchive.getOriginalFileName(),
@@ -538,7 +537,7 @@ public class AutomationPackageManager {
         // always upload the automation package file as resource
         uploadApResource(automationPackageArchive, newPackage, apOriginString, enricherForIncludedEntities, actorUser);
 
-        // upload keyword package if provided
+        // upload keyword library if provided
         String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibrarySource, newPackage, packageContent.getName(), enricherForIncludedEntities, objectPredicate, actorUser, false);
 
         fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, keywordLibraryResourceString, actorUser, objectPredicate);
@@ -651,6 +650,7 @@ public class AutomationPackageManager {
                     ResourceManager.RESOURCE_TYPE_AP, false, is, originalFile.getName(), enricher, null, actorUser, apOrigin
             );
             String resourceString = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
+            log.info("The resource has been been linked with AP '{}': {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), resourceString);
             newPackage.setAutomationPackageResource(resourceString);
             return resourceString;
         } catch (IOException | InvalidResourceFormatException e) {
@@ -757,7 +757,7 @@ public class AutomationPackageManager {
             }
             // delete old package entities
             if (oldPackage != null) {
-                deleteAutomationPackageEntities(oldPackage, actorUser);
+                deleteAutomationPackageEntities(oldPackage, newPackage, actorUser);
             }
             // persist all staged entities
             persistStagedEntities(newPackage, staging, enricherForIncludedEntities, automationPackageArchive, packageContent, keywordLibraryResource);
@@ -1005,10 +1005,24 @@ public class AutomationPackageManager {
         return functions;
     }
 
-    protected List<Resource> deleteResources(AutomationPackage automationPackage) {
+    protected List<Resource> deleteResources(AutomationPackage automationPackage, AutomationPackage newAutomationPackage) {
         List<Resource> resources = getPackageResources(automationPackage.getId());
         for (Resource resource : resources) {
             try {
+                // workaround to avoid the deletion of resources already linked with new automation package
+                if (newAutomationPackage.getAutomationPackageResource() != null) {
+                    if (Objects.equals(FileResolver.RESOURCE_PREFIX + resource.getId().toString(), newAutomationPackage.getAutomationPackageResource())) {
+                        continue;
+                    }
+                }
+                if (newAutomationPackage.getKeywordLibraryResource() != null) {
+                    if (Objects.equals(FileResolver.RESOURCE_PREFIX + resource.getId().toString(), newAutomationPackage.getKeywordLibraryResource())) {
+                        continue;
+                    }
+                }
+
+                // TODO: make debug
+                log.info("Remove the resource linked with AP '{}':{}", automationPackage.getAttribute(AbstractOrganizableObject.NAME), resource.getId().toHexString());
                 resourceManager.deleteResource(resource.getId().toString());
             } catch (Exception e) {
                 log.error("Error while deleting resource {} for automation package {}",
