@@ -21,6 +21,7 @@ package step.cli;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.AutomationPackageFileSource;
 import step.automation.packages.AutomationPackageFromInputStreamProvider;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageReadingException;
@@ -48,7 +49,7 @@ public class ApLocalExecuteCommandHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApLocalExecuteCommandHandler.class);
 
-    public void execute(File apFile, String includePlans, String excludePlans, String includeCategories,
+    public void execute(File apFile, File kwLibFile, String includePlans, String excludePlans, String includeCategories,
                         String excludeCategories, Map<String, String> executionParameters) throws StepCliExecutionException {
         try (ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
             @Override
@@ -58,14 +59,16 @@ public class ApLocalExecuteCommandHandler {
         }).withPluginsFromClasspath().build()) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
-            // TODO: keyword library
+            InputStream kwFileInputStream = null;
             try (InputStream is = new FileInputStream(apFile)) {
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
-
-                // TODO: for local execution we have no session and no user
+                AutomationPackageFileSource kwLibFileSource = null;
+                if(kwLibFile != null){
+                    kwFileInputStream = new FileInputStream(kwLibFile);
+                }
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         false, true, null, automationPackageProvider, null, null,
-                        true, null, null, false, null, null,
+                        true, null, null, false, kwLibFileSource, null,
                         false, true).getId();
 
                 PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);
@@ -125,6 +128,14 @@ public class ApLocalExecuteCommandHandler {
                 throw new RuntimeException("IO exception for " + apFile.getAbsolutePath(), e);
             } catch (AutomationPackageReadingException e) {
                 throw new RuntimeException("AP reading exception", e);
+            } finally {
+                if (kwFileInputStream != null) {
+                    try {
+                        kwFileInputStream.close();
+                    } catch (IOException e) {
+                        log.error("Input stream for KW file cannot be closed", e);
+                    }
+                }
             }
         }
     }

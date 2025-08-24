@@ -494,7 +494,7 @@ public class StepConsoleTest {
         }
 
         @Override
-        protected void executeLocally(File file, String includePlans, String excludePlans,
+        protected void executeLocally(File file, File kwLibFile, String includePlans, String excludePlans,
                                       String includeCategories, String excludeCategories, Map<String, String> executionParameters) {
             if (localParams != null) {
                 LocalExecutionParams p = new LocalExecutionParams();

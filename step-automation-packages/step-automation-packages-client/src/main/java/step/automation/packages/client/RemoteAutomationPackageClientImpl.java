@@ -26,7 +26,6 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import step.automation.packages.AutomationPackageUpdateResult;
-import step.automation.packages.client.model.AutomationPackageFromMavenRequest;
 import step.client.ControllerClientException;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.client.AbstractRemoteClient;
@@ -93,33 +92,6 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
                     Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
                     return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
                 });
-    }
-
-    @Override
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages, String keywordLibraryArtifactXml) throws AutomationPackageClientException {
-        Map<String, String> queryParams = new HashMap<>();
-
-        // if 'async' is not defined on client it will be resolved on the server ('false' by default)
-        if (async != null) {
-            queryParams.put("async", String.valueOf(async));
-        }
-        if (allowUpdateOfOtherPackages != null) {
-            queryParams.put("allowUpdateOfOtherPackages", String.valueOf(allowUpdateOfOtherPackages));
-        }
-        if (activationExpr != null && !activationExpr.isEmpty()) {
-            queryParams.put("activationExpr", activationExpr);
-        }
-        if (apVersion != null && !apVersion.isEmpty()) {
-            queryParams.put("version", apVersion);
-        }
-        Invocation.Builder builder = requestBuilder("/rest/automation-packages/mvn", queryParams);
-
-        AutomationPackageFromMavenRequest request = new AutomationPackageFromMavenRequest();
-        request.setApMavenSnippetXml(mavenArtifactXml);
-        if (keywordLibraryArtifactXml != null) {
-            request.setKeywordLibraryMavenSnippetXml(keywordLibraryArtifactXml);
-        }
-        return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(Entity.entity(request, MediaType.APPLICATION_JSON_TYPE), AutomationPackageUpdateResult.class));
     }
 
     @Override

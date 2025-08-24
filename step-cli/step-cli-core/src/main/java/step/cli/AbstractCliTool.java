@@ -102,6 +102,19 @@ public abstract class AbstractCliTool implements CliToolLogging {
         }
         builder.append("</version>");
 
+        // classifier and type are optional fields
+        if (identifier.getClassifier() != null) {
+            builder.append("<classifier>");
+            builder.append(identifier.getClassifier());
+            builder.append("</classifier>");
+        }
+
+        if (identifier.getType() != null) {
+            builder.append("<type>");
+            builder.append(identifier.getType());
+            builder.append("</type>");
+        }
+
         builder.append("</dependency>");
         return builder.toString();
     }

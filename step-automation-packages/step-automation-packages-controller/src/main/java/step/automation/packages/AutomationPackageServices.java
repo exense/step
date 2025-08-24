@@ -22,7 +22,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.api.client.http.HttpStatusCodes;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
@@ -32,8 +31,6 @@ import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.xml.sax.SAXException;
-import step.automation.packages.client.model.AutomationPackageFromMavenRequest;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
@@ -49,8 +46,6 @@ import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.function.Consumer;
@@ -156,51 +151,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
-    }
-
-    // TODO: remove after UI is switched to the universal endpoint
-    /**
-     * @param requestBody
-     * Example:
-     * <dependency>
-     *     <groupId>junit</groupId>
-     *     <artifactId>junit</artifactId>
-     *     <version>4.13.2</version>
-     *     <scope>test</scope>
-     *     <classifier>tests</scope>
-     * </dependency>
-     */
-    @Deprecated
-    @POST
-    @Path("/mvn")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
-    @Secured(right = "automation-package-write")
-    public String createAutomationPackageFromMaven(@QueryParam("version") String apVersion,
-                                                   @QueryParam("activationExpr") String activationExpression,
-                                                   @RequestBody AutomationPackageFromMavenRequest requestBody) {
-        try {
-            MavenArtifactIdentifier mavenArtifactIdentifier = getMavenArtifactIdentifierFromXml(requestBody.getApMavenSnippetXml());
-            AutomationPackageFileSource keywordLibrarySource = getKeywordLibrarySource(requestBody);
-            return automationPackageManager.createAutomationPackageFromMaven(
-                    mavenArtifactIdentifier, apVersion, activationExpression,
-                    keywordLibrarySource,
-                    getObjectEnricher(), getObjectPredicate(),
-                    getUser(),
-                    false, true).toString();
-        } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new RuntimeException("Cannot parse the maven artifact xml", e);
-        }
-    }
-
-    private AutomationPackageFileSource getKeywordLibrarySource(AutomationPackageFromMavenRequest requestBody) throws ParserConfigurationException, IOException, SAXException {
-        AutomationPackageFileSource keywordLibrarySource = null;
-        if(requestBody.getKeywordLibraryMavenSnippetXml() != null && !requestBody.getKeywordLibraryMavenSnippetXml().isEmpty()){
-            keywordLibrarySource = AutomationPackageFileSource.withMavenIdentifier(getMavenArtifactIdentifierFromXml(requestBody.getKeywordLibraryMavenSnippetXml()));
-        }
-        return keywordLibrarySource;
     }
 
     protected MavenArtifactIdentifier getMavenArtifactIdentifierFromXml(String mavenArtifactXml) throws JsonProcessingException {
@@ -399,76 +349,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
-        }
-    }
-
-    // TODO: remove after UI is switched to the universal endpoint
-    /**
-     * Example:
-     * <dependency>
-     *     <groupId>junit</groupId>
-     *     <artifactId>junit</artifactId>
-     *     <version>4.13.2</version>
-     *     <scope>test</scope>
-     * </dependency>
-     */
-    @Deprecated
-    @PUT
-    @Path("/mvn")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "automation-package-write")
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(@QueryParam("async") Boolean async,
-                                                                                  @QueryParam("version") String apVersion,
-                                                                                  @QueryParam("activationExpr") String activationExpression,
-                                                                                  @RequestBody AutomationPackageFromMavenRequest requestBody) {
-        try {
-            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(requestBody.getApMavenSnippetXml());
-            AutomationPackageFileSource keywordLibrarySource = getKeywordLibrarySource(requestBody);
-            return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
-                    mvnIdentifier, true, true, null, apVersion, activationExpression, keywordLibrarySource,
-                    getObjectEnricher(), getObjectPredicate(),
-                    async == null ? false : async, true, false
-                    , getUser());
-        } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new RuntimeException("Cannot parse the maven artifact xml", e);
-        }
-    }
-
-    // TODO: remove after UI is switched to the universal endpoint
-    /**
-     * Example:
-     * <dependency>
-     * <groupId>junit</groupId>
-     * <artifactId>junit</artifactId>
-     * <version>4.13.2</version>
-     * <scope>test</scope>
-     * </dependency>
-     */
-    @Deprecated
-    @PUT
-    @Path("/{id}/mvn")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "automation-package-write")
-    public AutomationPackageUpdateResult updateAutomationPackageFromMaven(@PathParam("id") String id,
-                                                                          @QueryParam("async") Boolean async,
-                                                                          @QueryParam("version") String apVersion,
-                                                                          @QueryParam("activationExpr") String activationExpression,
-                                                                          @RequestBody AutomationPackageFromMavenRequest requestBody) {
-        try {
-            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(requestBody.getApMavenSnippetXml());
-            AutomationPackageFileSource keywordLibrarySource = getKeywordLibrarySource(requestBody);
-            return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
-                    mvnIdentifier, true, false, new ObjectId(id), apVersion,
-                    activationExpression, keywordLibrarySource, getObjectEnricher(), getObjectPredicate(), async == null ? false : async, true, false
-                    , getUser());
-        } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new RuntimeException("Cannot parse the maven artifact xml", e);
         }
     }
 

@@ -57,7 +57,6 @@ public class YamlGeneralScriptFunction extends AbstractYamlFunction<GeneralScrip
             res.setScriptFile(new DynamicValue<>(uploaded));
         }
 
-        // TODO: should be taken from library file uploaded with automation package
         String librariesFilePath = librariesFile.get();
         uploaded = resourceUploader.applyResourceReference(librariesFilePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
         if (uploaded != null) {

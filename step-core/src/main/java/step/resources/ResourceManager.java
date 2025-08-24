@@ -92,12 +92,14 @@ public interface ResourceManager {
 
 	/**
 	 * Create a copy of the resource from a source repository
-	 * @param resource the source resource {@link Resource} to be copied
+	 *
+	 * @param resource              the source resource {@link Resource} to be copied
 	 * @param sourceResourceManager the source resource manager to copy from
+	 * @param actorUser
 	 * @return the newly create resource {@link Resource}
 	 * @throws IOException, SimilarResourceExistingException or InvalidResourceFormatException that may occur during the call
 	 */
-	Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, InvalidResourceFormatException;
+	Resource copyResource(Resource resource, ResourceManager sourceResourceManager, String actorUser) throws IOException, InvalidResourceFormatException;
 
 	/**
 	 * Save the content provided as stream to an existing resource.

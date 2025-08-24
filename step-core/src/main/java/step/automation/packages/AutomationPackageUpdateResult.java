@@ -23,15 +23,15 @@ import org.bson.types.ObjectId;
 public class AutomationPackageUpdateResult {
     private AutomationPackageUpdateStatus status;
     private ObjectId id;
-    private SimilarAutomationPackages similarAutomationPackages;
+    private ConflictingAutomationPackages conflictingAutomationPackages;
 
     public AutomationPackageUpdateResult() {
     }
 
-    public AutomationPackageUpdateResult(AutomationPackageUpdateStatus status, ObjectId id, SimilarAutomationPackages similarAutomationPackages) {
+    public AutomationPackageUpdateResult(AutomationPackageUpdateStatus status, ObjectId id, ConflictingAutomationPackages conflictingAutomationPackages) {
         this.status = status;
         this.id = id;
-        this.similarAutomationPackages = similarAutomationPackages;
+        this.conflictingAutomationPackages = conflictingAutomationPackages;
     }
 
     public AutomationPackageUpdateStatus getStatus() {
@@ -50,11 +50,11 @@ public class AutomationPackageUpdateResult {
         this.id = id;
     }
 
-    public SimilarAutomationPackages getSimilarAutomationPackages() {
-        return similarAutomationPackages;
+    public ConflictingAutomationPackages getSimilarAutomationPackages() {
+        return conflictingAutomationPackages;
     }
 
-    public void setSimilarAutomationPackages(SimilarAutomationPackages similarAutomationPackages) {
-        this.similarAutomationPackages = similarAutomationPackages;
+    public void setSimilarAutomationPackages(ConflictingAutomationPackages conflictingAutomationPackages) {
+        this.conflictingAutomationPackages = conflictingAutomationPackages;
     }
 }

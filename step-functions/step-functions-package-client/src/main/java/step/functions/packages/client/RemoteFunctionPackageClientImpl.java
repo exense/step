@@ -44,7 +44,6 @@ public class RemoteFunctionPackageClientImpl extends AbstractRemoteClient implem
 				// upload new file as library (or reuse the existing resource with the same has sum)
 				File file = packageLibraryFile.getFile();
 				try {
-					// TODO: here we tried to protect against duplicated resources, but this functionality is removed now
 					// actor user is null here, because it doesn't make sense in the remote client - user will be anyway resolved on server side
 					remoteResourceManager.createResource("functions", new FileInputStream(file), file.getName(),null, null);
 				} catch (step.resources.InvalidResourceFormatException e) {

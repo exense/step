@@ -71,6 +71,12 @@ public class ResourceImporter implements BiConsumer<Object, ImportContext> {
 			String origResourceId) {
 		try {
 			Resource resource2 = new Resource();
+
+			resource2.setCreationDate(resource.getCreationDate());
+			resource2.setCreationUser(resource.getCreationUser());
+			resource2.setLastModificationDate(resource.getLastModificationDate());
+			resource2.setLastModificationUser(resource.getLastModificationUser());
+
 			resource2.setResourceName(resource.getResourceName());
 			resource2.setId(new ObjectId(origResourceId));
 			resource2.setCurrentRevisionId(resource.getCurrentRevisionId());

@@ -128,12 +128,12 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
     }
     
     public String toShortString() {
-        String res = String.format(MVN_PREFIX + ":%s:%s:%s", this.getArtifactId(), getGroupId(), getVersion());
+        String res = String.format(MVN_PREFIX + ":%s:%s:%s", getGroupId(),  this.getArtifactId(), getVersion());
         if (this.getClassifier() != null) {
-            res += this.getClassifier();
+            res += ":" + this.getClassifier();
         }
         if (this.getType() != null) {
-            res += this.getType();
+            res +=  ":" + this.getType();
         }
         return res;
     }

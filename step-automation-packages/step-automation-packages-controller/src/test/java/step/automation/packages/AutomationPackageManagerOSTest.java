@@ -62,6 +62,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,13 +159,24 @@ public class AutomationPackageManagerOSTest {
 
     @Test
     public void testCrud() throws IOException {
+        Date testStartDate = new Date();
+
         // 1. Upload new package
         SampleUploadingResult r = uploadSample1WithAsserts(true, false, false);
+
+        // creation date and user are set
+        Date apCreationDate = r.storedPackage.getCreationDate();
+        Date currentDate = new Date();
+        Assert.assertTrue("Test start date: " + testStartDate.toInstant() + "; Current date: " + currentDate.toInstant() + "; AP creation date: " + apCreationDate.toInstant(),
+                !apCreationDate.toInstant().isBefore(testStartDate.toInstant()) && !apCreationDate.toInstant().isAfter(currentDate.toInstant())
+        );
+        Assert.assertEquals(r.storedPackage.getCreationUser(), "testUser");
 
         // 2. Update the package - some entities are updated, some entities are added
         String fileName = "step-automation-packages-sample1-extended.jar";
         File automationPackageJar = new File("src/test/resources/samples/" + fileName);
         try (InputStream is = new FileInputStream(automationPackageJar)) {
+            Date updateTime = new Date();
             AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
                     true, true, null,
                     AutomationPackageFileSource.withInputStream(is, fileName),
@@ -175,6 +187,14 @@ public class AutomationPackageManagerOSTest {
 
             // id of existing package is returned
             Assert.assertEquals(r.storedPackage.getId().toString(), resultId.toString());
+
+            // creation date is not changed after update
+            AutomationPackage updatedPackage = automationPackageAccessor.get(result.getId());
+            Assert.assertEquals(r.storedPackage.getCreationDate().toInstant(), updatedPackage.getCreationDate().toInstant());
+            Assert.assertEquals(r.storedPackage.getCreationUser(), updatedPackage.getCreationUser());
+
+            Assert.assertTrue(updatedPackage.getLastModificationDate().after(r.storedPackage.getCreationDate()) && updatedPackage.getLastModificationDate().before(new Date()));
+            Assert.assertEquals(updatedPackage.getLastModificationUser(), "testUser");
 
             r.storedPackage = automationPackageAccessor.get(resultId);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
@@ -442,6 +462,7 @@ public class AutomationPackageManagerOSTest {
 
             r.storedPackage = automationPackageAccessor.get(result);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
+
             log.info("AP resource: {}", r.storedPackage.getAutomationPackageResource());
             Assert.assertNotNull(r.storedPackage.getAutomationPackageResource());
 

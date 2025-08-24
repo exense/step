@@ -24,11 +24,11 @@ import org.bson.types.ObjectId;
 
 import java.util.List;
 
-public class SimilarAutomationPackages {
+public class ConflictingAutomationPackages {
     private List<ObjectId> apWithSameOrigin = null;
     private List<ObjectId> apWithSameKeywordLib = null;
 
-    public SimilarAutomationPackages() {
+    public ConflictingAutomationPackages() {
     }
 
     public List<ObjectId> getApWithSameOrigin() {

@@ -39,7 +39,7 @@ public class KeywordLibraryFromInputStreamProvider implements AutomationPackageK
         try {
             tempFile = InputStreamToTempFileDownloader.copyStreamToTempFile(packageStream, fileName);
         } catch (Exception ex) {
-            throw new AutomationPackageManagerException("Unable to store automation package file", ex);
+            throw new AutomationPackageManagerException("Unable to store the keyword library file", ex);
         }
     }
 

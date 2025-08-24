@@ -147,8 +147,8 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
-    public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, InvalidResourceFormatException {
-        return getManagerForPersistence().copyResource(resource, sourceResourceManager);
+    public Resource copyResource(Resource resource, ResourceManager sourceResourceManager, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().copyResource(resource, sourceResourceManager, actorUser);
     }
 
     @Override

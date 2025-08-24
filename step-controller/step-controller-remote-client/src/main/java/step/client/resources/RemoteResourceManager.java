@@ -143,14 +143,12 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 										  String trackingAttribute, String actorUser, String origin) {
 		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 
-		// !!! in fact, 'checkForDuplicates' parameter is ignored, because the list of found duplicated resources (with the same hash sums)
-		// is located in ResourceUploadResponse.similarResources, but we ignore this list here and just take the uploaded resource
 		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, trackingAttribute, origin);
 		return upload.getResource();
 	}
 
 	@Override
-	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) {
+	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager, String actorUser) {
 		throw new RuntimeException("Not implemented");
 	}
 

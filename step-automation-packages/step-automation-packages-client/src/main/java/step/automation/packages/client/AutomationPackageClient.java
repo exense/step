@@ -35,9 +35,6 @@ public interface AutomationPackageClient extends Closeable {
                                                                   Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
                                                                   File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException;
 
-    @Deprecated(since = "Will be removed after switching to the new UI")
-    AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages, String keywordLibraryArtifactXml) throws AutomationPackageClientException;
-
     List<String> executeAutomationPackage(File automationPackageFile,
                                           IsolatedAutomationPackageExecutionParameters params,
                                           File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException;

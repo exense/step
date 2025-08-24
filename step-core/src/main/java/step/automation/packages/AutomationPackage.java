@@ -31,7 +31,6 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
     private Expression activationExpression;
 
     private String automationPackageResource;
-
     private String keywordLibraryResource;
 
     public AutomationPackageStatus getStatus() {

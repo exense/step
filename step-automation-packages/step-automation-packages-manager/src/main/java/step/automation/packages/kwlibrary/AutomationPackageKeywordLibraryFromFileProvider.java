@@ -18,22 +18,35 @@
  *  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *  *****************************************************************************
  */
-package step.resources;
+package step.automation.packages.kwlibrary;
 
-import step.core.maven.MavenArtifactIdentifier;
+import step.automation.packages.AutomationPackageReadingException;
+import step.resources.ResourceOrigin;
+import step.resources.UploadedResourceOrigin;
 
-public class ResourceOriginFactory {
-    public static ResourceOrigin fromStringRepresentation(String stringRepresentation) {
-        if (stringRepresentation == null || stringRepresentation.isEmpty()) {
-            return null;
-        }
+import java.io.File;
+import java.io.IOException;
 
-        if (stringRepresentation.startsWith(MavenArtifactIdentifier.MVN_PREFIX + ":")) {
-            return MavenArtifactIdentifier.fromShortString(stringRepresentation);
-        } else if (stringRepresentation.startsWith(ResourceOriginType.uploaded.name().toLowerCase())) {
-            return new UploadedResourceOrigin();
-        } else {
-            throw new IllegalArgumentException("");
-        }
+public class AutomationPackageKeywordLibraryFromFileProvider implements AutomationPackageKeywordLibraryProvider {
+
+    private final File file;
+
+    public AutomationPackageKeywordLibraryFromFileProvider(File file) {
+        this.file = file;
+    }
+
+    @Override
+    public File getKeywordLibrary() throws AutomationPackageReadingException {
+        return file;
+    }
+
+    @Override
+    public ResourceOrigin getOrigin() {
+        return new UploadedResourceOrigin();
+    }
+
+    @Override
+    public void close() throws IOException {
+        // do nothing
     }
 }

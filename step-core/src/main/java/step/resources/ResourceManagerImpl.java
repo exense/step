@@ -19,7 +19,6 @@
 package step.resources;
 
 import ch.exense.commons.io.FileHelper;
-import com.google.common.hash.Hashing;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,10 +83,11 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
-	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, InvalidResourceFormatException {
-		// TODO: need to copy user and creation/modification date?
+	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager, String actorUser) throws IOException, InvalidResourceFormatException {
+		Resource resourceCopy = resource.copy(actorUser);
 		File resourceFile = sourceResourceManager.getResourceFile(resource.getId().toHexString()).getResourceFile();
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resource);
+
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceCopy);
 		if(resource.isDirectory()) {
 			FileHelper.zip(resourceFile.getParentFile(), resourceContainer.getOutputStream());
 		} else {
@@ -127,9 +127,6 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, ObjectEnricher objectEnricher) throws IOException, InvalidResourceFormatException {
 		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
-		String checksum = getMD5Checksum(resourceRevisionFile);
-		resourceRevision.setChecksum(checksum);
-
 		resource.setCurrentRevisionId(resourceRevision.getId());
 
 		if(objectEnricher != null) {
@@ -296,10 +293,6 @@ public class ResourceManagerImpl implements ResourceManager {
 		return revision;
 	}
 
-	private String getMD5Checksum(File file) throws IOException {
-		return com.google.common.io.Files.hash(file, Hashing.md5()).toString();
-	}
-
 	private Resource createTrackedResource(String resourceTypeId, String name, boolean isDirectory, String trackingAttribute, String actorUser, String origin) {
 		ResourceType resourceType = resourceTypes.get(resourceTypeId);
 		if(resourceType ==  null) {
@@ -309,7 +302,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		String resourceName;
 		resourceName = getResourceName(name, isDirectory);
 
-		Resource resource = new Resource();
+		Resource resource = new Resource(actorUser);
 		resource.addAttribute(AbstractOrganizableObject.NAME, resourceName);
 		resource.setResourceName(resourceName);
 		resource.setResourceType(resourceTypeId);
@@ -319,13 +312,10 @@ public class ResourceManagerImpl implements ResourceManager {
 		// fill tracking fields
 		ObjectId sourceId = resource.getId();
 		Resource existing = (sourceId != null) ? resourceAccessor.get(sourceId) : null;
-		Date lastModificationDate = new Date();
-		if (existing == null) {
-			resource.setCreationDate(lastModificationDate);
-			resource.setCreationUser(actorUser);
+		if (existing != null) {
+			resource.setCreationDate(existing.getCreationDate());
+			resource.setCreationUser(existing.getCreationUser());
 		}
-		resource.setLastModificationDate(lastModificationDate);
-		resource.setLastModificationUser(actorUser);
 		resource.setOrigin(origin);
 
 		if (trackingAttribute != null && !trackingAttribute.isEmpty()) {

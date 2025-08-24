@@ -44,7 +44,9 @@ public class AutomationPackageContext {
     public final AutomationPackageOperationMode operationMode;
 
     public AutomationPackageContext(AutomationPackage automationPackage,
-                                    AutomationPackageOperationMode operationMode, ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive,
+                                    AutomationPackageOperationMode operationMode,
+                                    ResourceManager resourceManager,
+                                    AutomationPackageArchive automationPackageArchive,
                                     AutomationPackageContent packageContent, String actorUser,
                                     ObjectEnricher enricher, Map<String, Object> extensions) {
         this.automationPackage = automationPackage;

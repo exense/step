@@ -75,7 +75,7 @@ public class StepConsole implements Callable<Integer> {
         public static final String CONFIG = "-c";
         public static final String LOCAL = "--local";
         public static final String FORCE = "--force";
-        public static final String FORCE_UPLOAD = "--allowUpdateOfOtherPackages";
+        public static final String ALLOW_UPDATE_OF_OTHER_PACKAGES = "--allowUpdateOfOtherPackages";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
@@ -101,8 +101,8 @@ public class StepConsole implements Callable<Integer> {
         @Option(names = {FORCE}, defaultValue = "false", description = "To force execution in case of uncritical errors")
         protected boolean force;
 
-        // TODO: use Think about naming and description
-        @Option(names = {FORCE_UPLOAD}, defaultValue = "false", description = "To force upload in case of other automation packages with same origin exist")
+        @Option(names = {ALLOW_UPDATE_OF_OTHER_PACKAGES}, defaultValue = "false",
+                description = "To force update of another automation packages in case they reference the same maven artifact")
         protected boolean allowUpdateOfOtherPackages;
 
         protected String getStepProjectName() {
@@ -176,8 +176,7 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The automation-package.yaml file or the folder containing it")
             protected String apFile;
 
-            // TODO: description
-            @Option(names = {"--keywordLib"})
+            @Option(names = {"--keywordLib"}, paramLabel = "<KeywordLibrary>", description = "The file (jar) containing the keyword library for the automation package")
             protected String keywordLib;
 
             /**
@@ -434,12 +433,17 @@ public class StepConsole implements Callable<Integer> {
                     throw new StepCliExecutionException("The report generation is not supported for local execution");
                 }
 
-                executeLocally(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
+                File kwLibFile = null;
+                if (keywordLib != null && !keywordLib.isEmpty()) {
+                    kwLibFile = prepareKeywordLibFile(keywordLib);
+                }
+
+                executeLocally(file, kwLibFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
-            protected void executeLocally(File file, String includePlans, String excludePlans, String includeCategories,
+            protected void executeLocally(File file, File kwLibFile, String includePlans, String excludePlans, String includeCategories,
                                           String excludeCategories, Map<String, String> executionParameters) {
-                new ApLocalExecuteCommandHandler().execute(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
+                new ApLocalExecuteCommandHandler().execute(file, kwLibFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
             public void checkStepUrlRequired() {
