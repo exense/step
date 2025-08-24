@@ -30,10 +30,8 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
     private String version;
     private Expression activationExpression;
 
-    private String automationPackageOrigin;
     private String automationPackageResource;
 
-    private String keywordLibraryOrigin;
     private String keywordLibraryResource;
 
     public AutomationPackageStatus getStatus() {
@@ -72,14 +70,6 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
         this.keywordLibraryResource = keywordLibraryResource;
     }
 
-    public String getAutomationPackageOrigin() {
-        return automationPackageOrigin;
-    }
-
-    public void setAutomationPackageOrigin(String automationPackageOrigin) {
-        this.automationPackageOrigin = automationPackageOrigin;
-    }
-
     @EntityReference(type= EntityManager.resources)
     public String getAutomationPackageResource() {
         return automationPackageResource;
@@ -89,11 +79,4 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
         this.automationPackageResource = automationPackageResource;
     }
 
-    public String getKeywordLibraryOrigin() {
-        return keywordLibraryOrigin;
-    }
-
-    public void setKeywordLibraryOrigin(String keywordLibraryOrigin) {
-        this.keywordLibraryOrigin = keywordLibraryOrigin;
-    }
 }

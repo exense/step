@@ -442,7 +442,6 @@ public class AutomationPackageManagerOSTest {
 
             r.storedPackage = automationPackageAccessor.get(result);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
-            Assert.assertEquals("uploaded:", r.storedPackage.getAutomationPackageOrigin());
             log.info("AP resource: {}", r.storedPackage.getAutomationPackageResource());
             Assert.assertNotNull(r.storedPackage.getAutomationPackageResource());
 
@@ -451,7 +450,6 @@ public class AutomationPackageManagerOSTest {
             Assert.assertEquals(r.storedPackage.getId().toString(), resourceByAutomationPackage.getCustomField("automationPackageId"));
 
             // upload package without keyword library
-            Assert.assertNull(r.storedPackage.getKeywordLibraryOrigin());
             Assert.assertNull(r.storedPackage.getKeywordLibraryResource());
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());

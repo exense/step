@@ -25,6 +25,4 @@ import java.util.List;
 
 public interface AutomationPackageAccessor extends Accessor<AutomationPackage> {
 
-    List<AutomationPackage> getByOrigin(String origin);
-    List<AutomationPackage> getByKeywordLibOrigin(String kwLibOrigin);
 }

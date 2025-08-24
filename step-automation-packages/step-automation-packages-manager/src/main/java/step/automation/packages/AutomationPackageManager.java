@@ -508,7 +508,9 @@ public class AutomationPackageManager {
         ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
         String apOriginString = apOrigin == null ? null : apOrigin.toStringRepresentation();
 
-        SimilarAutomationPackages similarAutomationPackages = findAutomationPackagesWithSameOrigin(objectPredicate, keywordLibrarySource, checkForSameOrigin, apOrigin, oldPackage);
+        SimilarAutomationPackages similarAutomationPackages = findAutomationPackagesWithSameOrigin(
+                objectPredicate, keywordLibrarySource, checkForSameOrigin, apOrigin, oldPackage
+        );
 
         if (!allowUpdateOfOtherPackages) {
             if (similarAutomationPackages.apWithSameOriginExists() || similarAutomationPackages.apWithSameKeywordLibExists()) {
@@ -588,28 +590,42 @@ public class AutomationPackageManager {
         }
     }
 
-    private SimilarAutomationPackages findAutomationPackagesWithSameOrigin(ObjectPredicate objectPredicate, AutomationPackageFileSource keywordLibrarySource, boolean checkForSameOrigin, ResourceOrigin apOrigin, AutomationPackage oldPackage) {
+    private SimilarAutomationPackages findAutomationPackagesWithSameOrigin(ObjectPredicate objectPredicate,
+                                                                           AutomationPackageFileSource keywordLibrarySource,
+                                                                           boolean checkForSameOrigin,
+                                                                           ResourceOrigin apOrigin,
+                                                                           AutomationPackage oldPackage) {
         SimilarAutomationPackages similarAutomationPackages = new SimilarAutomationPackages();
-        if(checkForSameOrigin) {
-            // TODO: apply validation for maven snapshots only?
+        if (checkForSameOrigin) {
             if (apOrigin != null && apOrigin.getOriginType() == ResourceOriginType.mvn) {
-                similarAutomationPackages.setApWithSameOrigin(
-                        automationPackageAccessor.getByOrigin(apOrigin.toStringRepresentation())
-                                .stream()
-                                .map(AbstractIdentifiableObject::getId)
-                                .filter(id -> oldPackage == null || !Objects.equals(oldPackage.getId(), id))
-                                .collect(Collectors.toList())
-                );
+                List<ObjectId> automationPackagesWithSameOrigin = new ArrayList<>();
+                List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation());
+                for (Resource resource : resourcesByOrigin) {
+                    String automationPackageIdLinkedWithResource = resource.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
+                    if (automationPackageIdLinkedWithResource != null) {
+                        if (oldPackage == null || !Objects.equals(oldPackage.getId().toString(), automationPackageIdLinkedWithResource)) {
+                            automationPackagesWithSameOrigin.add(new ObjectId(automationPackageIdLinkedWithResource));
+                        }
+                    }
+                }
+                similarAutomationPackages.setApWithSameOrigin(automationPackagesWithSameOrigin);
             }
+
             try (AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate)) {
                 ResourceOrigin keywordLibOrigin = keywordLibraryProvider.getOrigin();
                 if (keywordLibOrigin != null && keywordLibOrigin.getOriginType() == ResourceOriginType.mvn) {
-                    similarAutomationPackages.setApWithSameKeywordLib(
-                            automationPackageAccessor.getByKeywordLibOrigin(keywordLibOrigin.toStringRepresentation())
-                                    .stream().map(AbstractIdentifiableObject::getId)
-                                    .filter(id -> oldPackage == null &&  !Objects.equals(id, oldPackage.getId()))
-                                    .collect(Collectors.toList())
-                    );
+                    List<ObjectId> apWithSameKeywordLib = new ArrayList<>();
+                    List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(keywordLibOrigin.toStringRepresentation());
+
+                    for (Resource resource : resourcesByOrigin) {
+                        String automationPackageIdLinkedWithResource = resource.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
+                        if (automationPackageIdLinkedWithResource != null) {
+                            if (oldPackage == null || !Objects.equals(oldPackage.getId().toHexString(), automationPackageIdLinkedWithResource)) {
+                                apWithSameKeywordLib.add(new ObjectId(automationPackageIdLinkedWithResource));
+                            }
+                        }
+                    }
+                    similarAutomationPackages.setApWithSameKeywordLib(apWithSameKeywordLib);
                 }
             } catch (IOException e) {
                 throw new AutomationPackageManagerException("Unable to get the keyword source: " + keywordLibrarySource, e);
@@ -685,7 +701,6 @@ public class AutomationPackageManager {
                         );
                     }
                     keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
-                    newPackage.setKeywordLibraryOrigin(keywordLibraryProvider.getOrigin() == null ? null : keywordLibraryProvider.getOrigin().toStringRepresentation());
                     newPackage.setKeywordLibraryResource(keywordLibraryResourceString);
                 }
             }
@@ -952,7 +967,6 @@ public class AutomationPackageManager {
         }
         newPackage.addAttribute(AbstractOrganizableObject.NAME, packageContent.getName());
         newPackage.addAttribute(AbstractOrganizableObject.VERSION, packageContent.getVersion());
-        newPackage.setAutomationPackageOrigin(origin);
 
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
         if (activationExpr != null && !activationExpr.isEmpty()) {
