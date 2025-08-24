@@ -20,7 +20,7 @@ package step.cli.reports;
 
 import ch.exense.commons.io.FileHelper;
 import com.google.common.io.Files;
-import step.cli.AbstractExecuteAutomationPackageTool;
+import step.cli.ExecuteAutomationPackageTool;
 import step.cli.CliToolLogging;
 import step.client.executions.RemoteExecutionManager;
 import step.core.execution.model.Execution;
@@ -47,10 +47,10 @@ public class JUnitReportCreator implements ReportCreator {
     }
 
     @Override
-    public void createReport(Map<String, Execution> executions, List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) throws IOException {
+    public void createReport(Map<String, Execution> executions, List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) throws IOException {
         File preparedReport = prepareCustomReportOnServer(new ArrayList<>(executions.keySet()), logging);
 
-        for (AbstractExecuteAutomationPackageTool.ReportOutputMode outputMode : outputModes) {
+        for (ExecuteAutomationPackageTool.ReportOutputMode outputMode : outputModes) {
             switch (outputMode) {
                 case file:
                     // automatically unzip file
@@ -106,7 +106,7 @@ public class JUnitReportCreator implements ReportCreator {
             customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), CustomReportType.JUNITZIP, includeAttachments, relativePathToOutputDir.toFile().getPath());
             outputFile = new File(outputFolder, customReport.getFileName());
         }
-        logging.logInfo("Saving execution report (" + AbstractExecuteAutomationPackageTool.ReportType.junit + ") into " + outputFile.getAbsolutePath(), null);
+        logging.logInfo("Saving execution report (" + ExecuteAutomationPackageTool.ReportType.junit + ") into " + outputFile.getAbsolutePath(), null);
 
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
             fos.write(customReport.getContent());

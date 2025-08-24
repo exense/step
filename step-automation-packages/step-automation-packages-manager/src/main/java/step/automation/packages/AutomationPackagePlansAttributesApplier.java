@@ -52,18 +52,22 @@ public class AutomationPackagePlansAttributesApplier {
         this.fileResolver = new FileResolver(resourceManager);
     }
 
-    public void applySpecialAttributesToPlans(List<Plan> plans,
+    public void applySpecialAttributesToPlans(AutomationPackage newPackage,
+                                              List<Plan> plans,
                                               AutomationPackageArchive automationPackageArchive,
                                               AutomationPackageContent packageContent,
-                                              ObjectEnricher objectEnricher, Map<String, Object> extensions, AutomationPackageOperationMode operationMode) {
-        AutomationPackageContext apContext = prepareContext(operationMode, automationPackageArchive, packageContent, objectEnricher, extensions);
+                                              String actorUser,
+                                              ObjectEnricher objectEnricher, Map<String, Object> extensions,
+                                              AutomationPackageOperationMode operationMode) {
+        AutomationPackageContext apContext = prepareContext(newPackage, operationMode, automationPackageArchive, packageContent, actorUser, objectEnricher, extensions);
         for (Plan plan : plans) {
             applySpecialValuesForArtifact(plan.getRoot(), apContext);
         }
     }
 
-    protected AutomationPackageContext prepareContext(AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, Map<String, Object> extensions) {
-        return new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, enricher, extensions);
+    protected AutomationPackageContext prepareContext(AutomationPackage automationPackage, AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
+                                                      String actorUser, ObjectEnricher enricher, Map<String, Object> extensions) {
+        return new AutomationPackageContext(automationPackage, operationMode, resourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
     }
 
     private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageContext apContext) {

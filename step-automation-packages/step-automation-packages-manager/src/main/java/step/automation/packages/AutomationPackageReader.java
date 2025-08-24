@@ -202,7 +202,6 @@ public class AutomationPackageReader {
                             function.setScriptFile(new DynamicValue<>(scriptFile));
                         }
 
-                        // libraries file is not used is automation package (only required for compatibility with StepJarParser)
                         if (librariesFile != null) {
                             function.setLibrariesFile(new DynamicValue<>(librariesFile));
                         }

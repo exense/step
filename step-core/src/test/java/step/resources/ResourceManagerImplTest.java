@@ -53,7 +53,7 @@ public class ResourceManagerImplTest {
 	@Test
 	public void test() throws Exception {
 		// Create a resource
-		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false, null);
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, "testUser");
 		assertNotNull(resource);
 		
 		// Assert that the resource has been persisted
@@ -75,7 +75,7 @@ public class ResourceManagerImplTest {
 		assertResourceContent(resourceContent);
 		
 		// Update the resource content with another name
-		resourceManager.saveResourceContent(resourceId, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource2.txt");
+		resourceManager.saveResourceContent(resourceId, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource2.txt", "testUser");
 		Resource actualResource = resourceManager.getResource(resourceId);
 		// Assert that the resource name matches with the new uploaded content
 		assertEquals("TestResource2.txt", actualResource.getResourceName());
@@ -111,7 +111,7 @@ public class ResourceManagerImplTest {
 		// Assert that the resource doesn't exist anymore and that the correct exception is thrown
 		Exception actualException = null;
 		try {
-			resourceManager.saveResourceContent(resourceId, null, null);			
+			resourceManager.saveResourceContent(resourceId, null, null, "testUser");
 		} catch (Exception e) {
 			actualException = e;
 		}
@@ -121,7 +121,7 @@ public class ResourceManagerImplTest {
 
 	@Test
 	public void testResourceContainer() throws Exception {
-		ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_FUNCTIONS, "TestResource.txt");
+		ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_FUNCTIONS, "TestResource.txt", "testUser");
 		ByteStreams.copy(this.getClass().getResourceAsStream("TestResource.txt"), resourceContainer.getOutputStream());
 		resourceContainer.save(null);
 
@@ -133,25 +133,9 @@ public class ResourceManagerImplTest {
 	}
 
 	@Test
-	public void testDuplicateResource() throws Exception {
-		// Create a resource
-		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
-		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource2.txt"), "TestResource2.txt", true, null);
-		resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", false, null);
-		SimilarResourceExistingException actualException = null;
-		try {
-			resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
-		} catch (SimilarResourceExistingException e) {
-			actualException = e;
-		}
-		assertNotNull(actualException);
-		assertEquals(2, actualException.getSimilarResources().size());
-	}
-	
-	@Test
 	public void testDeletedResourceException() throws Exception {
 		// Create a resource
-		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, "testUser");
 		File resourceFileActual = new File(rootFolder.getAbsolutePath()+"/"+ResourceManager.RESOURCE_TYPE_FUNCTIONS+"/"+resource.getId().toString()+"/"+resource.getCurrentRevisionId().toString()+"/TestResource.txt");
 		resourceFileActual.delete();
 		
@@ -168,7 +152,7 @@ public class ResourceManagerImplTest {
 	@Test
 	public void testEphemeralResources() throws Exception {
 		// Create a resource
-		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
+		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, "testUser");
 		
 		String resourceId = resource.getId().toString();
 		ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
@@ -187,7 +171,7 @@ public class ResourceManagerImplTest {
 	@Test
 	public void testEphemeralResources2() throws Exception {
 		// Create a resource
-		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", true, null);
+		Resource resource = resourceManager.createResource("temp", this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, "testUser");
 		
 		String resourceId = resource.getId().toString();
 		ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(resourceId);
@@ -230,7 +214,7 @@ public class ResourceManagerImplTest {
 		FileHelper.zip(tempFolder, zippedFolder);
 
 		// Create a directory resource
-		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, true, new FileInputStream(zippedFolder), "TestResource.zip", true, null);
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, true, new FileInputStream(zippedFolder), "TestResource.zip", null, "testUser");
 		assertEquals("TestResource", resource.getAttribute(AbstractOrganizableObject.NAME));
 		assertEquals("TestResource", resource.getResourceName());
 
@@ -257,7 +241,7 @@ public class ResourceManagerImplTest {
 		ResourceRevision resourceRevision = resourceManager.getResourceRevision(actualResource.getCurrentRevisionId().toString());
 		assertEquals("TestResource", resourceRevision.getResourceFileName());
 
-		Resource updatedResource = resourceManager.saveResourceContent(resourceId, new FileInputStream(resourceContentFile), "newName.zip");
+		Resource updatedResource = resourceManager.saveResourceContent(resourceId, new FileInputStream(resourceContentFile), "newName.zip", "testUser");
 		// Assert that the name of the resource and the resourceName have been updated accordingly
 		assertEquals("newName", updatedResource.getAttribute(AbstractOrganizableObject.NAME));
 		assertEquals("newName", updatedResource.getResourceName());

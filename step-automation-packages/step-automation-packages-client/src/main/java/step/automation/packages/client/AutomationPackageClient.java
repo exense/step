@@ -27,13 +27,17 @@ import java.util.List;
 
 public interface AutomationPackageClient extends Closeable {
 
-    String createAutomationPackage(File automationPackageFile, String apVersion, String activationExpr) throws AutomationPackageClientException;
+    String createAutomationPackage(File automationPackageFile, String automationPackageMvnSnippetXml,
+                                   String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
+                                   File keywordLibraryFile, String keywordLibraryFileMvnSnippetXml) throws AutomationPackageClientException;
 
-    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, Boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException;
+    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, String automationPackageMvnSnippetXml,
+                                                                  Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
+                                                                  File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException;
 
-    AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException;
-
-    List<String> executeAutomationPackage(File automationPackageFile, IsolatedAutomationPackageExecutionParameters params) throws AutomationPackageClientException;
+    List<String> executeAutomationPackage(File automationPackageFile,
+                                          IsolatedAutomationPackageExecutionParameters params,
+                                          File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException;
 
     void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
 }

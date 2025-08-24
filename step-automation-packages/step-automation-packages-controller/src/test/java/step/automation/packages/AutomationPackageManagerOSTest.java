@@ -62,6 +62,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,19 +159,42 @@ public class AutomationPackageManagerOSTest {
 
     @Test
     public void testCrud() throws IOException {
+        Date testStartDate = new Date();
+
         // 1. Upload new package
         SampleUploadingResult r = uploadSample1WithAsserts(true, false, false);
+
+        // creation date and user are set
+        Date apCreationDate = r.storedPackage.getCreationDate();
+        Date currentDate = new Date();
+        Assert.assertTrue("Test start date: " + testStartDate.toInstant() + "; Current date: " + currentDate.toInstant() + "; AP creation date: " + apCreationDate.toInstant(),
+                !apCreationDate.toInstant().isBefore(testStartDate.toInstant()) && !apCreationDate.toInstant().isAfter(currentDate.toInstant())
+        );
+        Assert.assertEquals(r.storedPackage.getCreationUser(), "testUser");
 
         // 2. Update the package - some entities are updated, some entities are added
         String fileName = "step-automation-packages-sample1-extended.jar";
         File automationPackageJar = new File("src/test/resources/samples/" + fileName);
         try (InputStream is = new FileInputStream(automationPackageJar)) {
-            AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, null, null, false);
+            Date updateTime = new Date();
+            AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
+                    true, true, null,
+                    AutomationPackageFileSource.withInputStream(is, fileName),
+                    null, null, null, null, null, false, "testUser",
+                    false, true);
             Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
             ObjectId resultId = result.getId();
 
             // id of existing package is returned
             Assert.assertEquals(r.storedPackage.getId().toString(), resultId.toString());
+
+            // creation date is not changed after update
+            AutomationPackage updatedPackage = automationPackageAccessor.get(result.getId());
+            Assert.assertEquals(r.storedPackage.getCreationDate().toInstant(), updatedPackage.getCreationDate().toInstant());
+            Assert.assertEquals(r.storedPackage.getCreationUser(), updatedPackage.getCreationUser());
+
+            Assert.assertTrue(updatedPackage.getLastModificationDate().after(r.storedPackage.getCreationDate()) && updatedPackage.getLastModificationDate().before(new Date()));
+            Assert.assertEquals(updatedPackage.getLastModificationUser(), "testUser");
 
             r.storedPackage = automationPackageAccessor.get(resultId);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
@@ -238,7 +262,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(r.storedTask.getId(), r2.storedTask.getId());
 
         // 4. Delete package by name - everything should be removed
-        manager.removeAutomationPackage(r2.storedPackage.getId(), null);
+        manager.removeAutomationPackage(r2.storedPackage.getId(), "testUser", null);
 
         Assert.assertEquals(0, automationPackageAccessor.stream().count());
 
@@ -310,7 +334,7 @@ public class AutomationPackageManagerOSTest {
 
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
-            result = manager.createAutomationPackage(is, fileName, null, null, null, null);
+            result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, fileName), null, null, null, "testUser", false, true, null, null);
             AutomationPackage storedPackage = automationPackageAccessor.get(result);
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
@@ -332,7 +356,7 @@ public class AutomationPackageManagerOSTest {
     @Test
     public void testInvalidFile() throws IOException {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/picture.png")) {
-            manager.createAutomationPackage(is, "picture.png", null, null, null, null);
+            manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, "picture.png"), null, null, null, "testUser", false, true, null, null);
             Assert.fail("The exception should be thrown in case of invalid automation package file");
         } catch (AutomationPackageManagerException ex) {
             // ok - invalid file should cause the exception
@@ -343,7 +367,7 @@ public class AutomationPackageManagerOSTest {
     public void testZipArchive() throws IOException {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/step-automation-packages.zip")) {
             ObjectId result;
-            result = manager.createAutomationPackage(is, "step-automation-packages.zip", null, null, null, null);
+            result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, "step-automation-packages.zip"), null, null, null, "testUser", false, true, null, null);
             AutomationPackage storedPackage = automationPackageAccessor.get(result);
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
@@ -416,13 +440,18 @@ public class AutomationPackageManagerOSTest {
         String fileName = "step-automation-packages-sample1.jar";
         File automationPackageJar = new File("src/test/resources/samples/" + fileName);
 
+        FileResolver fileResolver = new FileResolver(resourceManager);
+
         SampleUploadingResult r = new SampleUploadingResult();
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
             if (createNew) {
-                result = manager.createAutomationPackage(is, fileName, null, null, null, null);
+                result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, fileName), null, null, null, "testUser", false, true, null, null);
             } else {
-                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null, is, fileName, null, null, null, null, async);
+                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null,
+                        AutomationPackageFileSource.withInputStream(is, fileName),
+                        null, null, null, null, null, async, "testUser",
+                        false, true);
                 if (async && expectedDelay) {
                     Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
                 } else {
@@ -433,6 +462,16 @@ public class AutomationPackageManagerOSTest {
 
             r.storedPackage = automationPackageAccessor.get(result);
             Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
+
+            log.info("AP resource: {}", r.storedPackage.getAutomationPackageResource());
+            Assert.assertNotNull(r.storedPackage.getAutomationPackageResource());
+
+            Resource resourceByAutomationPackage = resourceManager.getResource(fileResolver.resolveResourceId(r.storedPackage.getAutomationPackageResource()));
+            Assert.assertEquals("uploaded:", resourceByAutomationPackage.getOrigin());
+            Assert.assertEquals(r.storedPackage.getId().toString(), resourceByAutomationPackage.getCustomField("automationPackageId"));
+
+            // upload package without keyword library
+            Assert.assertNull(r.storedPackage.getKeywordLibraryResource());
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(PLANS_COUNT, storedPlans.size());
