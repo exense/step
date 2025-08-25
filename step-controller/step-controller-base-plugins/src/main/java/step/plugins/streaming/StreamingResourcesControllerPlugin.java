@@ -16,6 +16,7 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.resources.ResourceManagerControllerPlugin;
 import step.streaming.common.StreamingResourceUploadContexts;
 import step.streaming.server.*;
 import step.streaming.websocket.server.DefaultWebsocketServerEndpointSessionsHandler;
@@ -66,12 +67,8 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
 
         websocketBaseUrl = websocketBaseUri.toString();
 
-        // FIXME - temporary code - make configurable
-        File storageBaseDir = new File(System.getProperty("os.name").toLowerCase().contains("win") ? "C:/Temp/streaming-storage" : "/tmp/streaming-storage");
-        Path controllerData = Paths.get("/home/controller/data");
-        if (Files.exists(controllerData)) {
-            storageBaseDir = new File(controllerData.toString(), "streaming-storage");
-        }
+        File resourcesRootDir = new File(ResourceManagerControllerPlugin.getResourceDir(context.getConfiguration()));
+        File storageBaseDir = new File(resourcesRootDir, "streamedAttachment");
 
         FilesystemStreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageBaseDir);
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
