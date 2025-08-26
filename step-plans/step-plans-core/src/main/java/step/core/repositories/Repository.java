@@ -33,7 +33,7 @@ public interface Repository {
 		throw new UnsupportedOperationException("This repository doesn't support getArtifact method");
 	}
 
-	TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception;
+	TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate, String actorUser) throws Exception;
 
 	ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception;
 

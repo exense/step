@@ -43,7 +43,7 @@ public class AbstractRepositoryTest {
             }
 
             @Override
-            public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+            public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate, String actorUser) {
                 return null;
             }
 

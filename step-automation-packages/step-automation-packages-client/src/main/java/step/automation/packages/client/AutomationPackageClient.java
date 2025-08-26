@@ -36,7 +36,7 @@ public interface AutomationPackageClient extends Closeable {
                                                                   File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException;
 
     List<String> executeAutomationPackage(File automationPackageFile,
-                                          IsolatedAutomationPackageExecutionParameters params,
+                                          String apMavenSnippetXml, IsolatedAutomationPackageExecutionParameters params,
                                           File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException;
 
     void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;

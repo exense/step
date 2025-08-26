@@ -96,14 +96,14 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     }
 
     @Override
-    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate, String actorUser) throws Exception {
         PackageExecutionContext ctx = null;
         try {
             File artifact = getArtifact(repositoryParameters, objectPredicate);
 
             // keyword library file is not required here
             ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(),
-                    new AutomationPackageFile(artifact, null), false, null, null);
+                    new AutomationPackageFile(artifact, null), false, null, actorUser);
             TestSetStatusOverview overview = new TestSetStatusOverview();
             List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
                     .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
@@ -123,7 +123,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         ImportResult result = new ImportResult();
         try {
             try {
-                ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate());
+                ctx = getOrRestorePackageExecutionContext(repositoryParameters, context.getObjectEnricher(), context.getObjectPredicate(), context.getExecutionParameters().getUserID());
                 //If context is shared across multiple executions, it was created externally and will be closed by the creator,
                 // otherwise it should be closed once the executions ends from the execution context
                 if (!ctx.isShared()) {
@@ -294,7 +294,10 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return plan.getAttributes().get(AbstractOrganizableObject.NAME);
     }
 
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId, ObjectPredicate objectPredicate, String actorUser) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName,
+                                                       IsolatedAutomationPackageExecutionParameters parameters,
+                                                       ObjectId contextId, ObjectPredicate objectPredicate,
+                                                       String actorUser) {
         // for files provided by artifact repository we don't store the file as resource, but just load the file from this repository
         RepositoryObjectReference repositoryObject = parameters.getOriginalRepositoryObject();
         if (repositoryObject == null) {
@@ -304,7 +307,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return new AutomationPackageFile(artifact, null);
     }
 
-    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate) {
+    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate, String actorUser) {
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
 
         // Execution context can be created in-advance and shared between several plans
@@ -323,11 +326,10 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 if (kwLibFile != null && kwLibFile.getFile() != null) {
                     fis = new FileInputStream(kwLibFile.getFile());
                 }
-                // TODO: pass user
                 return createIsolatedPackageExecutionContext(
                         enricher, predicate, contextId, apFile, false,
                         kwLibFile == null ? null : AutomationPackageFileSource.withInputStream(fis, kwLibFile.getFile().getName()),
-                        null
+                        actorUser
                 );
             } catch (FileNotFoundException e) {
                 throw new AutomationPackageManagerException("Keyword lib file not found: " + kwLibFile.getFile().getAbsolutePath(), e);

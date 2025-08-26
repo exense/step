@@ -45,7 +45,7 @@ public class MavenArtifactRepositoryFormattingIssueTest extends AbstractMavenArt
         // getTestSetStatusOverview
         Exception actualException = null;
         try {
-            artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, null);
+            artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, null, "testUser");
         } catch (Exception e) {
             actualException = e;
         }

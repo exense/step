@@ -36,8 +36,6 @@ import step.core.maven.MavenArtifactIdentifier;
 import step.core.plans.PlanFilter;
 import step.core.plans.filters.*;
 import step.core.plans.runner.PlanRunnerResult;
-import step.core.repositories.RepositoryObjectReference;
-import step.repositories.ArtifactRepositoryConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -112,9 +110,11 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
             List<String> executionIds;
             try {
                 executionIds = automationPackageClient.executeAutomationPackage(
-                        params.getAutomationPackageFile(), executionParameters,
-                        params.getKeywordLibraryFile(), params.getKeywordLibraryMavenArtifact() == null ? null : createMavenArtifactXml(params.getKeywordLibraryMavenArtifact())
-                );
+                        params.getAutomationPackageFile(),
+                        params.getAutomationPackageMavenArtifact() == null ? null : createMavenArtifactXml(params.getAutomationPackageMavenArtifact()),
+                        executionParameters,
+                        params.getKeywordLibraryFile(),
+                        params.getKeywordLibraryMavenArtifact() == null ? null : createMavenArtifactXml(params.getKeywordLibraryMavenArtifact()));
             } catch (AutomationPackageClientException e) {
                 throw logAndThrow("Error while executing automation package: " + e.getMessage());
             }
@@ -268,16 +268,6 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
         executionParameters.setPlanFilter(getPlanFilters(params.getIncludePlans(), params.getExcludePlans(), params.getIncludeCategories(), params.getExcludeCategories()));
         executionParameters.setWrapIntoTestSet(params.getWrapIntoTestSet());
         executionParameters.setNumberOfThreads(params.getNumberOfThreads());
-
-        if (params.getAutomationPackageMavenArtifact() != null) {
-            Map<String, String> repositoryParameters = new HashMap<>();
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, params.getAutomationPackageMavenArtifact().getArtifactId());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, params.getAutomationPackageMavenArtifact().getGroupId());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, params.getAutomationPackageMavenArtifact().getVersion());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, params.getAutomationPackageMavenArtifact().getClassifier());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE, params.getAutomationPackageMavenArtifact().getType());
-            executionParameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, repositoryParameters));
-        }
 
         return executionParameters;
     }

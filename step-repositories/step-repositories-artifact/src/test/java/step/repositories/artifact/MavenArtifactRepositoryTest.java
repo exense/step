@@ -9,7 +9,6 @@ import step.core.repositories.ImportResult;
 import step.core.repositories.TestRunStatus;
 import step.core.repositories.TestSetStatusOverview;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,7 +43,7 @@ public class MavenArtifactRepositoryTest extends AbstractMavenArtifactRepository
         assertEquals("TestSet", artefactInfo.getType());
 
         // getTestSetStatusOverview
-        TestSetStatusOverview testSetStatusOverview = artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, null);
+        TestSetStatusOverview testSetStatusOverview = artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, null, "testUser");
         List<String> expected = Stream.of(
                 "plans/composite-simple-plan.yml", "plans/plan2.plan", "My custom keyword name",
                 "explicitPlanWithExecutionParameter", "planWithAssert", "testAutomation.plan", "plans/plan3.plan",
@@ -74,7 +73,7 @@ public class MavenArtifactRepositoryTest extends AbstractMavenArtifactRepository
 
         // getTestSetStatusOverview
         try {
-            artifactRepository.getTestSetStatusOverview(Map.of(), null);
+            artifactRepository.getTestSetStatusOverview(Map.of(), null, "testUser");
         } catch (Exception e) {
             actualException = e;
         }

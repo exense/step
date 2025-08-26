@@ -96,8 +96,10 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
 
     @Override
     public List<String> executeAutomationPackage(File automationPackageFile,
+                                                 String apMavenSnippetXml,
                                                  IsolatedAutomationPackageExecutionParameters params,
-                                                 File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException {
+                                                 File keywordLibraryFile,
+                                                 String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException {
         // TODO: tricky moment - the automationPackageMvnSnippet is provided in params
         MultiPart multiPart = prepareFileDataMultiPart(automationPackageFile, null, keywordLibraryFile, keywordLibraryMvnSnippetXml);
         FormDataBodyPart paramsBodyPart = new FormDataBodyPart("executionParams", params, MediaType.APPLICATION_JSON_TYPE);

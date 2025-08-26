@@ -63,7 +63,7 @@ public class ApLocalExecuteCommandHandler {
             try (InputStream is = new FileInputStream(apFile)) {
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
                 AutomationPackageFileSource kwLibFileSource = null;
-                if(kwLibFile != null){
+                if (kwLibFile != null) {
                     kwFileInputStream = new FileInputStream(kwLibFile);
                 }
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
