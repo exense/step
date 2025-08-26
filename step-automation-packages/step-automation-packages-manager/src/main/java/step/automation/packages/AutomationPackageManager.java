@@ -94,7 +94,8 @@ public class AutomationPackageManager {
      * context please use the separate in-memory automation package manager created via
      * {@link AutomationPackageManager#createIsolated(ObjectId, FunctionTypeRegistry, FunctionAccessor)}
      */
-    private AutomationPackageManager(AutomationPackageOperationMode operationMode, AutomationPackageAccessor automationPackageAccessor,
+    private AutomationPackageManager(AutomationPackageOperationMode operationMode,
+                                     AutomationPackageAccessor automationPackageAccessor,
                                      FunctionManager functionManager,
                                      FunctionAccessor functionAccessor,
                                      PlanAccessor planAccessor,
@@ -174,7 +175,8 @@ public class AutomationPackageManager {
                                                                                   FunctionTypeRegistry functionTypeRegistry,
                                                                                   FunctionAccessor mainFunctionAccessor,
                                                                                   AutomationPackageReader reader,
-                                                                                  AutomationPackageHookRegistry hookRegistry) {
+                                                                                  AutomationPackageHookRegistry hookRegistry,
+                                                                                  AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
 
         ResourceManager resourceManager = new LocalResourceManagerImpl(new File("resources_" + isolatedContextId.toString()));
         InMemoryFunctionAccessorImpl inMemoryFunctionRepository = new InMemoryFunctionAccessorImpl();
@@ -191,7 +193,7 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry, reader,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
-                null
+                mavenConfigProvider
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -234,7 +236,7 @@ public class AutomationPackageManager {
      * @return the automation manager with in-memory accessors for plans and keywords
      */
     public AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor){
-        return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getPackageReader(), automationPackageHookRegistry);
+        return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getPackageReader(), automationPackageHookRegistry, mavenConfigProvider);
     }
 
     public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
@@ -508,7 +510,7 @@ public class AutomationPackageManager {
         uploadApResource(automationPackageArchive, newPackage, apOriginString, enricherForIncludedEntities, actorUser);
 
         // upload keyword library if provided
-        String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibrarySource, newPackage, packageContent.getName(), enricherForIncludedEntities, objectPredicate, actorUser, false);
+        String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibrarySource, newPackage, packageContent.getName(), enricherForIncludedEntities, objectPredicate, actorUser);
 
         fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, keywordLibraryResourceString, actorUser, objectPredicate);
 
@@ -649,7 +651,7 @@ public class AutomationPackageManager {
         }
     }
 
-    public String uploadKeywordLibrary(AutomationPackageFileSource keywordLibrarySource, AutomationPackage newPackage, String apName, ObjectEnricher enricher, ObjectPredicate objectPredicate, String actorUser, boolean forIsolatedExecution) {
+    public String uploadKeywordLibrary(AutomationPackageFileSource keywordLibrarySource, AutomationPackage newPackage, String apName, ObjectEnricher enricher, ObjectPredicate objectPredicate, String actorUser) {
         String keywordLibraryResourceString = null;
         try (AutomationPackageKeywordLibraryProvider keywordLibraryProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate)) {
             File keywordLibrary = keywordLibraryProvider.getKeywordLibrary();
@@ -657,7 +659,7 @@ public class AutomationPackageManager {
             if (keywordLibrary != null) {
                 try (FileInputStream fis = new FileInputStream(keywordLibrary)) {
                     // for isolated execution we always use the isolatedAp resource type to support auto cleanup after execution
-                    String resourceType = forIsolatedExecution ? ResourceManager.RESOURCE_TYPE_ISOLATED_AP : keywordLibraryProvider.getResourceType();
+                    String resourceType = this.operationMode == AutomationPackageOperationMode.ISOLATED ? ResourceManager.RESOURCE_TYPE_ISOLATED_KW_LIB : keywordLibraryProvider.getResourceType();
 
                     ResourceOrigin origin = keywordLibraryProvider.getOrigin();
                     List<Resource> oldResources = null;
@@ -687,7 +689,7 @@ public class AutomationPackageManager {
         return keywordLibraryResourceString;
     }
 
-    private AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate) {
+    public AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate) {
         if (keywordLibrarySource != null) {
             if (keywordLibrarySource.useMavenIdentifier()) {
                 return new KeywordLibraryFromMavenProvider(mavenConfigProvider.getConfig(predicate), keywordLibrarySource.getMavenArtifactIdentifier());
@@ -698,7 +700,8 @@ public class AutomationPackageManager {
         return new NoKeywordLibraryProvider();
     }
 
-    private AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource, ObjectPredicate predicate) throws AutomationPackageReadingException {
+    public AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource,
+                                                                                 ObjectPredicate predicate) throws AutomationPackageReadingException {
         if (apFileSource != null) {
             if (apFileSource.useMavenIdentifier()) {
                 return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier());
@@ -1091,6 +1094,10 @@ public class AutomationPackageManager {
 
     public AutomationPackageAccessor getAutomationPackageAccessor() {
         return automationPackageAccessor;
+    }
+
+    public AutomationPackageMavenConfig getMavenConfig(ObjectPredicate objectPredicate) {
+        return mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(objectPredicate);
     }
 
     public void cleanup() {

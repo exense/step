@@ -26,7 +26,6 @@ import step.artefacts.TestSet;
 import step.automation.packages.AutomationPackage;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageFileSource;
-import step.automation.packages.AutomationPackageManagerException;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.model.*;
@@ -39,11 +38,7 @@ import step.core.repositories.RepositoryObjectReference;
 import step.repositories.ArtifactRepositoryConstants;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -90,13 +85,31 @@ public class AutomationPackageExecutor {
         return runExecutions(automationPackage, LOCAL_AUTOMATION_PACKAGE, null, null, mainAutomationPackageManager, parameters, objectEnricher);
     }
 
-    public List<String> runInIsolation(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters,
+    public List<String> runInIsolation(AutomationPackageFileSource automationPackageFileSource,
+                                       IsolatedAutomationPackageExecutionParameters parameters,
                                        AutomationPackageFileSource keywordLibrarySource,
                                        String actorUser, ObjectEnricher objectEnricher, ObjectPredicate objectPredicate) {
 
         ObjectId contextId = new ObjectId();
         List<String> executions = new ArrayList<>();
 
+        // populate execution parameters with maven artifact identifier and then use MavenArtifactRepository to process the AP
+        if (automationPackageFileSource.useMavenIdentifier()) {
+            Map<String, String> parametersFromRequest = parameters.getOriginalRepositoryObject().getRepositoryParameters();
+            Map<String, String> extendedParameters = parametersFromRequest == null ? new HashMap<>() : new HashMap<>(parametersFromRequest);
+            extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, automationPackageFileSource.getMavenArtifactIdentifier().getArtifactId());
+            extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, automationPackageFileSource.getMavenArtifactIdentifier().getGroupId());
+            extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, automationPackageFileSource.getMavenArtifactIdentifier().getVersion());
+            if (automationPackageFileSource.getMavenArtifactIdentifier().getClassifier() != null) {
+                extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, automationPackageFileSource.getMavenArtifactIdentifier().getClassifier());
+            }
+            if (automationPackageFileSource.getMavenArtifactIdentifier().getType() != null) {
+                extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE, automationPackageFileSource.getMavenArtifactIdentifier().getType());
+            }
+            parameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, extendedParameters));
+        }
+
+        // if no repository object is specified, we use the ISOLATED_AUTOMATION_PACKAGE repo and store the original file as temporary resource to support re-execution
         String repoId = parameters.getOriginalRepositoryObject() != null ? parameters.getOriginalRepositoryObject().getRepositoryID() : ISOLATED_AUTOMATION_PACKAGE;
         RepositoryWithAutomationPackageSupport repository = (RepositoryWithAutomationPackageSupport) repositoryObjectManager.getRepository(repoId);
 
@@ -105,22 +118,21 @@ public class AutomationPackageExecutor {
         // 2) to read the automation package and fill ap manager with plans, keywords etc.
 
         // so at first we store the input stream as resource (via IsolatedAutomationPackageRepository)
-        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(apInputStream, inputStreamFileName, parameters, contextId, objectPredicate, actorUser);
+        // and if the automation package is provided as maven snippet, inputStream and fileName will be empty, but it is OK, because they are not required in MavenArtifactRepository
+        IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(
+                automationPackageFileSource.getInputStream(), automationPackageFileSource.getFileName(),
+                parameters, contextId, objectPredicate, actorUser
+        );
 
         // and then we read the ap from just stored file
         // create single execution context for the whole AP to execute all plans on the same ap manager (for performance reason)
-        IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createIsolatedPackageExecutionContext(objectEnricher, objectPredicate, contextId.toString(), apFile, true, keywordLibrarySource);
+        IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createIsolatedPackageExecutionContext(
+                objectEnricher, objectPredicate, contextId.toString(), apFile, true, keywordLibrarySource, actorUser
+        );
         try {
             AutomationPackage automationPackage = executionContext.getAutomationPackage();
             String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
 
-            // TODO: here we upload the keyword library with 'isolatedAp' type to be cleaned up automatically via CleanupApResourcesJob
-            // TODO: and we use the mainAutomationPackageManager with main resourceManager to support the re-execution with this keyword library
-            try {
-                mainAutomationPackageManager.uploadKeywordLibrary(keywordLibrarySource, automationPackage, apName, objectEnricher, objectPredicate, actorUser, true);
-            } catch (Exception e) {
-                throw new AutomationPackageManagerException("Unable to upload the keyword library for isolated execution", e);
-            }
 
             // we have resolved the name of ap, and we need to save this name as custom field in resource to look up this resource during re-execution
             if (apFile.getResource() != null) {

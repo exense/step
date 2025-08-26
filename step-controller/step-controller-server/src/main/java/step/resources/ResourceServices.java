@@ -153,6 +153,14 @@ public class ResourceServices extends AbstractStepAsyncServices {
 		resourceManager.deleteResource(resourceId);
 	}
 
+	@DELETE
+	@Secured
+	@Path("/{id}/revisions")
+	@Secured(right = "resource-delete")
+	public void deleteResourceRevisions(@PathParam("id") String resourceId) {
+		resourceManager.deleteResourceRevisionContent(resourceId);
+	}
+
 	@POST
 	@Path("/bulk/delete")
 	@Consumes(MediaType.APPLICATION_JSON)

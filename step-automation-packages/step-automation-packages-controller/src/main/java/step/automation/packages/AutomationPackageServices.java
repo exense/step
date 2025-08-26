@@ -165,7 +165,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-execute")
     public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
-//                                                 @FormDataParam("apMavenSnippet") String apMavenSnippet,
+                                                 @FormDataParam("apMavenSnippet") String apMavenSnippet,
                                                  @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
                                                  @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail,
                                                  @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart,
@@ -191,9 +191,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
 
         try {
             AutomationPackageFileSource keywordLibrarySource = getFileSource(keywordLibraryInputStream, keywordLibraryFileDetail, keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ");
+            AutomationPackageFileSource apSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for ap: ");
             return automationPackageExecutor.runInIsolation(
-                    automationPackageInputStream,
-                    fileDetail == null ? null : fileDetail.getFileName(),
+                    apSource,
                     executionParameters,
                     keywordLibrarySource, getUser(),
                     getObjectEnricher(),

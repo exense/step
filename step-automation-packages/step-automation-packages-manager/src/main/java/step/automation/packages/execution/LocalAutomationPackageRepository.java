@@ -37,6 +37,7 @@ import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
+import step.resources.ResourceManager;
 
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,8 @@ import java.util.stream.Collectors;
  */
 public class LocalAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
 
-    public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor) {
-        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor);
+    public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, ResourceManager resourceManager) {
+        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor, resourceManager);
     }
 
     @Override

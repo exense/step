@@ -166,6 +166,12 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	@Override
+	public void deleteResourceRevisionContent(String resourceId) {
+		Builder b = requestBuilder("/rest/resources/"+resourceId +"/revisions");
+		executeRequest(()-> b.delete());
+	}
+
+	@Override
 	public List<Resource> findManyByCriteria(Map<String, String> criteria) {
 		Builder b = requestBuilder("/rest/resources/find");
 		Entity<Map<String, String>> entity = Entity.entity(criteria, MediaType.APPLICATION_JSON);

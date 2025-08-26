@@ -35,6 +35,7 @@ public interface ResourceManager {
 	String RESOURCE_TYPE_ATTACHMENT = "attachment";
 	String RESOURCE_TYPE_TEMP = "temp";
 	String RESOURCE_TYPE_ISOLATED_AP = "isolatedAp";
+	String RESOURCE_TYPE_ISOLATED_KW_LIB = "isolatedKwLib";
 	String RESOURCE_TYPE_AP = "automationPackage";
 
 	/**
@@ -132,6 +133,8 @@ public interface ResourceManager {
 	 * @param resourceId the id of the {@link Resource} to be deleted
 	 */
 	void deleteResource(String resourceId);
+
+	void deleteResourceRevisionContent(String resourceId);
 
 	List<Resource> findManyByCriteria(Map<String, String> criteria);
 

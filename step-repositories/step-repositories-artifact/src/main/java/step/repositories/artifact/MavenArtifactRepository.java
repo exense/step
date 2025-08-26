@@ -30,6 +30,7 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.parameter.ParameterManager;
 import step.repositories.ArtifactRepositoryConstants;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.util.Map;
@@ -43,9 +44,9 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     private final ParameterManager parameterManager;
     private final File localRepository;
 
-    public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor,  Configuration configuration,
-                                   ControllerSettingAccessor controllerSettingAccessor, ParameterManager parameterManager) {
-        super(Set.of(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION), manager, functionTypeRegistry, functionAccessor);
+    public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, Configuration configuration,
+                                   ControllerSettingAccessor controllerSettingAccessor, ParameterManager parameterManager, ResourceManager resourceManager) {
+        super(Set.of(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION), manager, functionTypeRegistry, functionAccessor, resourceManager);
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.controllerSettingAccessor = controllerSettingAccessor;
         this.parameterManager = parameterManager;

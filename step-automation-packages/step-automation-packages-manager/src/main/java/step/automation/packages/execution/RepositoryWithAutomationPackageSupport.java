@@ -24,10 +24,8 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.CallPlan;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageManagerException;
-import step.automation.packages.AutomationPackageFileSource;
+import step.attachments.FileResolver;
+import step.automation.packages.*;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
@@ -35,6 +33,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
+import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
@@ -47,16 +46,18 @@ import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
-import step.resources.LayeredResourceManager;
-import step.resources.Resource;
-import step.resources.ResourceManager;
+import step.resources.*;
 
 import java.io.*;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static step.automation.packages.execution.IsolatedAutomationPackageRepository.CONTEXT_ID_CUSTOM_FIELD;
+import static step.automation.packages.execution.IsolatedAutomationPackageRepository.LAST_EXECUTION_TIME_CUSTOM_FIELD;
 import static step.planbuilder.BaseArtefacts.callPlan;
 
 public abstract class RepositoryWithAutomationPackageSupport extends AbstractRepository {
@@ -76,12 +77,18 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     protected final AutomationPackageManager manager;
     protected final FunctionTypeRegistry functionTypeRegistry;
     protected final FunctionAccessor functionAccessor;
+    protected final ResourceManager resourceManager;
 
-    public RepositoryWithAutomationPackageSupport(Set<String> canonicalRepositoryParameters, AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor) {
+    public RepositoryWithAutomationPackageSupport(Set<String> canonicalRepositoryParameters,
+                                                  AutomationPackageManager manager,
+                                                  FunctionTypeRegistry functionTypeRegistry,
+                                                  FunctionAccessor functionAccessor,
+                                                  ResourceManager resourceManager) {
         super(canonicalRepositoryParameters);
         this.manager = manager;
         this.functionTypeRegistry = functionTypeRegistry;
         this.functionAccessor = functionAccessor;
+        this.resourceManager = resourceManager;
     }
 
     protected boolean isLayeredAccessor(Accessor<?> accessor) {
@@ -92,9 +99,11 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
         PackageExecutionContext ctx = null;
         try {
-            // TODO: pass library file
             File artifact = getArtifact(repositoryParameters, objectPredicate);
-            ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(), new AutomationPackageFile(artifact, null), false, null);
+
+            // keyword library file is not required here
+            ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(),
+                    new AutomationPackageFile(artifact, null), false, null, null);
             TestSetStatusOverview overview = new TestSetStatusOverview();
             List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
                     .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
@@ -178,6 +187,32 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             } catch (IOException e) {
                 log.error("Unable to clean up the automation package context for execution {}", context.getExecutionId(), e);
             }
+        }
+    }
+
+    protected AutomationPackageFile getAutomationPackageFileByResource(String contextId, Resource resource, ObjectPredicate objectPredicate) {
+        File file = null;
+
+        ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(resource.getId().toString());
+        if (fileHandle != null) {
+            file = fileHandle.getResourceFile();
+        }
+        if (file == null || !file.exists()) {
+            if (!tryToReloadResourceFromMaven(resource, objectPredicate)) {
+                throw new AutomationPackageManagerException("Automation package file is not found for execution context " + contextId);
+            }
+        }
+
+        updateLastExecution(resource);
+        return new AutomationPackageFile(file, resource);
+    }
+
+    protected void updateLastExecution(Resource resource) {
+        try {
+            resource.addCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+            resourceManager.saveResource(resource);
+        } catch (IOException exception) {
+            throw new AutomationPackageManagerException("Cannot update the execution time for automation package " + resource.getCustomField(AP_NAME_CUSTOM_FIELD));
         }
     }
 
@@ -265,7 +300,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         if (repositoryObject == null) {
             throw new AutomationPackageManagerException("Unable to resolve AP file. Repository object is undefined");
         }
-        File artifact = getArtifact(parameters.getOriginalRepositoryObject().getRepositoryParameters(), objectPredicate);
+        File artifact = getArtifact(repositoryObject.getRepositoryParameters(), objectPredicate);
         return new AutomationPackageFile(artifact, null);
     }
 
@@ -278,10 +313,33 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             if (contextId == null) {
                 contextId = new ObjectId().toString();
             }
-            // TODO: pass keyword lib
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
             AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters, predicate);
-            return createIsolatedPackageExecutionContext(enricher, predicate, contextId, apFile, false, null);
+
+            // Restore keyword library file
+            AutomationPackageFile kwLibFile = restoreKwFile(contextId, predicate);
+            FileInputStream fis = null;
+            try {
+                if (kwLibFile != null && kwLibFile.getFile() != null) {
+                    fis = new FileInputStream(kwLibFile.getFile());
+                }
+                // TODO: pass user
+                return createIsolatedPackageExecutionContext(
+                        enricher, predicate, contextId, apFile, false,
+                        kwLibFile == null ? null : AutomationPackageFileSource.withInputStream(fis, kwLibFile.getFile().getName()),
+                        null
+                );
+            } catch (FileNotFoundException e) {
+                throw new AutomationPackageManagerException("Keyword lib file not found: " + kwLibFile.getFile().getAbsolutePath(), e);
+            } finally {
+                if (fis != null) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                        log.error("Cannot close the file input stream", e);
+                    }
+                }
+            }
         }
         return current;
     }
@@ -294,8 +352,45 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return new AutomationPackageFile(artifact, null);
     }
 
-    public PackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate, String contextId, AutomationPackageFile apFile, boolean shared,
-                                                                         AutomationPackageFileSource keywordLibrarySource) {
+    protected AutomationPackageFile restoreKwFile(String contextId, ObjectPredicate objectPredicate){
+        List<Resource> foundResources = resourceManager.findManyByCriteria(
+                Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_KW_LIB,
+                        "customFields." + CONTEXT_ID_CUSTOM_FIELD, contextId)
+        );
+        Resource resource = null;
+        if (!foundResources.isEmpty()) {
+            resource = foundResources.get(0);
+        } else {
+            return null;
+        }
+        return getAutomationPackageFileByResource(contextId, resource, objectPredicate);
+    }
+
+    protected boolean tryToReloadResourceFromMaven(Resource resource, ObjectPredicate objectPredicate) {
+        File file;
+        if (resource.getOrigin() != null && resource.getOrigin().startsWith(MavenArtifactIdentifier.MVN_PREFIX)) {
+            MavenArtifactIdentifier mavenArtifactIdentifier = MavenArtifactIdentifier.fromShortString(resource.getOrigin());
+            if (!mavenArtifactIdentifier.isSnapshot()) {
+                log.warn("The maven artifact {} cannot be reloaded, because it is SNAPSHOT", mavenArtifactIdentifier.toStringRepresentation());
+            } else {
+                try {
+                    // restore the automation package file from maven
+                    file = MavenArtifactDownloader.getFile(manager.getMavenConfig(objectPredicate), mavenArtifactIdentifier);
+                    try (FileInputStream fis = new FileInputStream(file)) {
+                        resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
+                        return true;
+                    }
+                } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
+                    throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", ex);
+                }
+            }
+        }
+        return false;
+    }
+
+    public PackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate,
+                                                                         String contextId, AutomationPackageFile apFile, boolean shared,
+                                                                         AutomationPackageFileSource keywordLibrarySource, String actorUser) {
         // prepare the isolated in-memory automation package manager with the only one automation package
         AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
                 new ObjectId(contextId), functionTypeRegistry,
@@ -305,8 +400,23 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         // create single automation package in isolated manager
         try (FileInputStream fis = new FileInputStream(apFile.getFile())) {
             // the apVersion is null (we always use the actual version), because we only create the isolated in-memory AP here
-            // TODO: actorUser?
-            inMemoryPackageManager.createAutomationPackage(AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()), null, null, keywordLibrarySource, null, false, true, enricher, predicate);
+            ObjectId apId = inMemoryPackageManager.createAutomationPackage(
+                    AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()),
+                    null, null, keywordLibrarySource, actorUser, false,
+                    true, enricher, predicate
+            );
+
+            AutomationPackage storedAutomationPackage = inMemoryPackageManager.getAutomationPackageById(apId, predicate);
+            if (storedAutomationPackage.getKeywordLibraryResource() != null) {
+                // a hack to support re-execution of automation package - we need to bind the keyword library resource with current context
+                Resource kwLibResource = resourceManager.getResource(new FileResolver(resourceManager).resolveResourceId(storedAutomationPackage.getAutomationPackageResource()));
+                if (kwLibResource == null) {
+                    throw new AutomationPackageManagerException("Keyword library resource is not found by ID: " + storedAutomationPackage.getKeywordLibraryResource());
+                }
+                kwLibResource.addCustomField(CONTEXT_ID_CUSTOM_FIELD, contextId);
+                kwLibResource.addCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+                resourceManager.saveResource(kwLibResource);
+            }
         } catch (IOException e) {
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
         }

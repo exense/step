@@ -174,6 +174,13 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
+    public void deleteResourceRevisionContent(String resourceId) {
+        for (ResourceManager resourceManager : resourceManagers) {
+            resourceManager.deleteResourceRevisionContent(resourceId);
+        }
+    }
+
+    @Override
     public List<Resource> findManyByCriteria(Map<String, String> criteria) {
         return layeredSearch(resourceManager -> resourceManager.findManyByCriteria(criteria));
     }

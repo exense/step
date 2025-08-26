@@ -167,6 +167,12 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public void deleteResource(String resourceId) {
+		deleteResourceRevisionContent(resourceId);
+		resourceAccessor.remove(new ObjectId(resourceId));
+	}
+
+	@Override
+	public void deleteResourceRevisionContent(String resourceId) {
 		Resource resource = getResource(resourceId);
 
 		resourceRevisionAccessor.getResourceRevisionsByResourceId(resourceId).forEachRemaining(
@@ -176,8 +182,6 @@ public class ResourceManagerImpl implements ResourceManager {
 		if(resourceContainer.exists()) {
 			FileHelper.deleteFolder(resourceContainer);
 		}
-
-		resourceAccessor.remove(resource.getId());
 	}
 
 	@Override
