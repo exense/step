@@ -57,6 +57,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
 	public static final String FUNCTION_TYPE_KEY = "$functionType";
 	public static final String BRANCH_HANDLER_INITIALIZER = "handler-initializer";
+
 	private static final Logger logger = LoggerFactory.getLogger(FunctionMessageHandler.class);
 
 	// Cached object mapper for message payload serialization
