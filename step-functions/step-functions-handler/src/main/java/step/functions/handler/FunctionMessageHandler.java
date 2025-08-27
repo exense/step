@@ -21,6 +21,8 @@ package step.functions.handler;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.constants.StreamingConstants;
 import step.core.reports.Measure;
 import step.core.reports.MeasurementsBuilder;
@@ -55,6 +57,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
 	public static final String FUNCTION_TYPE_KEY = "$functionType";
 	public static final String BRANCH_HANDLER_INITIALIZER = "handler-initializer";
+	private static final Logger logger = LoggerFactory.getLogger(FunctionMessageHandler.class);
 
 	// Cached object mapper for message payload serialization
 	private final ObjectMapper mapper;
@@ -181,6 +184,10 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 					path = path.substring(1);
 				}
 				URI uri = URI.create(String.format("%s/%s?%s=%s", host, path, StreamingResourceUploadContext.PARAMETER_NAME, uploadContextId));
+				if (logger.isDebugEnabled()) {
+					// Don't log context id, it's "semi-secret"
+					logger.debug("Effective URL for Websocket uploads: {}", String.format("%s/%s", host, path));
+				}
 
 				@SuppressWarnings("unchecked") Class<StreamingUploadProvider> aClass = (Class<StreamingUploadProvider>) Thread.currentThread().getContextClassLoader().loadClass("step.streaming.websocket.client.upload.WebsocketUploadProvider");
 				StreamingUploadProvider streamingUploadProvider = aClass.getDeclaredConstructor(URI.class).newInstance(uri);
