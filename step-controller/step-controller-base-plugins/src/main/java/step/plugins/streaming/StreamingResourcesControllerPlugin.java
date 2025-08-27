@@ -1,5 +1,6 @@
 package step.plugins.streaming;
 
+import ch.exense.commons.app.Configuration;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.HandshakeResponse;
@@ -14,6 +15,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.resources.ResourceManagerControllerPlugin;
@@ -26,9 +28,6 @@ import step.streaming.websocket.server.WebsocketUploadEndpoint;
 
 import java.io.File;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.function.Supplier;
 
 import static step.plugins.streaming.StepStreamingResourceManager.ATTRIBUTE_STEP_SESSION;
@@ -48,21 +47,8 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
 
-        // FIXME: this is quick and dirty for now, so it runs both on dev machines (OS/EE) and (hopefully) the grid.
-        // There needs to be some better logic.
-        int controllerPort = context.getConfiguration().getPropertyAsInteger("port", 8080);
-        String controllerUrl = context.getConfiguration().getProperty("controller.url");
-        if (controllerUrl == null) {
-            controllerUrl = "http://localhost:" + controllerPort;
-            logger.warn("controller.url is not set in step.properties, unable to determine correct URL for streaming services. Will use {} instead, but this will not be accessible remotely.", controllerUrl);
-        } else if (controllerUrl.equals("http://localhost:4201")) {
-            // adjust (only for websockets, not globally)
-            controllerUrl = "http://localhost:" + controllerPort;
-        }
-        // remove trailing slash if present
-        if (controllerUrl.endsWith("/")) {
-            controllerUrl = controllerUrl.substring(0, controllerUrl.length() - 1);
-        }
+        String controllerUrl = checkAndGetControllerHttpUrl(context.getConfiguration());
+        // We need the websocket variant
         URI websocketBaseUri = URI.create(controllerUrl.replaceFirst("^http", "ws"));
 
         websocketBaseUrl = websocketBaseUri.toString();
@@ -81,6 +67,42 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeUploadConfig(manager));
         context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeDownloadConfig(manager));
         logger.info("Streaming Websockets plugin started, upload/download URLs: {}, {}", websocketBaseUri + UPLOAD_PATH, websocketBaseUri + DOWNLOAD_PATH);
+    }
+
+    private static String checkAndGetControllerHttpUrl(Configuration conf) throws PluginCriticalException {
+        String confUrl = conf.getProperty("controller.url", null);
+        if (confUrl == null) {
+            throw new PluginCriticalException("Configuration parameter 'controller.url' is required. " +
+                    "Please configure a valid URL in step.properties");
+        }
+        // Special case for people using Step EE who have never touched the default example configuration item -- which
+        // was previously accepted even though it produced invalid links, but is now considered a configuration error.
+        if (confUrl.equals("http://step.controller.mydomain.com:8080")) {
+            throw new PluginCriticalException(String.format(
+                    "Configuration parameter 'controller.url' with value '%s' is invalid. " +
+                            "Please configure a valid URL in step.properties",
+                    confUrl));
+        }
+        // Used in development configurations, because UI and services use different ports;
+        // should not be needed nor defined in production.
+        String servicesUrl = conf.getProperty("controller.services.url", null);
+        if (servicesUrl != null) {
+            confUrl = servicesUrl;
+        }
+        // Simple sanity check
+        if (!confUrl.matches("^https?://.+")) {
+            throw new PluginCriticalException(String.format(
+                    "Configuration parameter 'controller.url' with value '%s' is invalid. " +
+                            "The URL must start with http:// or https:// . " +
+                            "Please configure a valid URL in step.properties",
+                    confUrl));
+        }
+
+        // remove trailing slash in case it's present
+        if (confUrl.endsWith("/")) {
+            confUrl = confUrl.substring(0, confUrl.length() - 1);
+        }
+        return confUrl;
     }
 
     private static class EndpointConfigurator extends ServerEndpointConfig.Configurator {
