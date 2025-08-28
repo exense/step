@@ -20,9 +20,14 @@ package step.cli;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.client.model.AutomationPackageSource;
+import step.automation.packages.client.model.FileSource;
+import step.automation.packages.client.model.MavenSnippetSource;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.maven.MavenArtifactIdentifier;
+
+import java.io.File;
 
 public abstract class AbstractCliTool implements CliToolLogging {
 
@@ -117,5 +122,19 @@ public abstract class AbstractCliTool implements CliToolLogging {
 
         builder.append("</dependency>");
         return builder.toString();
+    }
+
+    protected AutomationPackageSource createSource(File file, String mavenSnippet) {
+        if (mavenSnippet != null && file != null) {
+            throw new IllegalArgumentException("You cannot use both file and maven snippet as file source");
+        }
+
+        if (mavenSnippet != null) {
+            return new MavenSnippetSource(mavenSnippet);
+        } else if (file != null) {
+            return new FileSource(file);
+        } else {
+            return null;
+        }
     }
 }

@@ -110,11 +110,9 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
             List<String> executionIds;
             try {
                 executionIds = automationPackageClient.executeAutomationPackage(
-                        params.getAutomationPackageFile(),
-                        params.getAutomationPackageMavenArtifact() == null ? null : createMavenArtifactXml(params.getAutomationPackageMavenArtifact()),
+                        createSource(params.getAutomationPackageFile(), createMavenArtifactXml(params.getAutomationPackageMavenArtifact())),
                         executionParameters,
-                        params.getKeywordLibraryFile(),
-                        params.getKeywordLibraryMavenArtifact() == null ? null : createMavenArtifactXml(params.getKeywordLibraryMavenArtifact()));
+                        createSource(params.getKeywordLibraryFile(), createMavenArtifactXml(params.getKeywordLibraryMavenArtifact())));
             } catch (AutomationPackageClientException e) {
                 throw logAndThrow("Error while executing automation package: " + e.getMessage());
             }

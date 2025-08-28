@@ -27,6 +27,7 @@ import java.io.InputStream;
 public class AutomationPackageFileSource {
 
     private MavenArtifactIdentifier mavenArtifactIdentifier;
+
     private String fileName;
     private InputStream inputStream;
 

@@ -19,6 +19,7 @@
 package step.automation.packages.client;
 
 import step.automation.packages.AutomationPackageUpdateResult;
+import step.automation.packages.client.model.AutomationPackageSource;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 
 import java.io.Closeable;
@@ -27,17 +28,18 @@ import java.util.List;
 
 public interface AutomationPackageClient extends Closeable {
 
-    String createAutomationPackage(File automationPackageFile, String automationPackageMvnSnippetXml,
+    String createAutomationPackage(AutomationPackageSource automationPackageSource,
                                    String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
-                                   File keywordLibraryFile, String keywordLibraryFileMvnSnippetXml) throws AutomationPackageClientException;
+                                   AutomationPackageSource keywordLibrarySource) throws AutomationPackageClientException;
 
-    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, String automationPackageMvnSnippetXml,
+    AutomationPackageUpdateResult createOrUpdateAutomationPackage(AutomationPackageSource automationPackageSource,
                                                                   Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
-                                                                  File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException;
+                                                                  AutomationPackageSource keywordLibrarySource) throws AutomationPackageClientException;
 
-    List<String> executeAutomationPackage(File automationPackageFile,
-                                          String apMavenSnippetXml, IsolatedAutomationPackageExecutionParameters params,
-                                          File keywordLibraryFile, String keywordLibraryMvnSnippetXml) throws AutomationPackageClientException;
+    List<String> executeAutomationPackage(AutomationPackageSource automationPackageSource,
+                                          IsolatedAutomationPackageExecutionParameters params,
+                                          AutomationPackageSource keywordLibSource) throws AutomationPackageClientException;
 
     void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
+
 }

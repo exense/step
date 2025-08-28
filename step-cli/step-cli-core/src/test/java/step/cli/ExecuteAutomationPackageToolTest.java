@@ -9,6 +9,7 @@ import step.artefacts.Echo;
 import step.artefacts.reports.EchoReportNode;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
+import step.automation.packages.client.model.AutomationPackageSource;
 import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.Tenant;
@@ -70,7 +71,7 @@ public class ExecuteAutomationPackageToolTest {
         RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
         RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.isNull(), Mockito.isNull())).thenReturn(executionIds);
+        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(executionIds);
 
         ExecuteAutomationPackageToolTestable tool = createTool(true, remoteExecutionManagerMock, remoteAutomationPackageClientMock);
         tool.execute();
@@ -97,7 +98,7 @@ public class ExecuteAutomationPackageToolTest {
         RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
         RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.isNull(), Mockito.isNull())).thenReturn(executionIds);
+        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(executionIds);
 
         ExecuteAutomationPackageToolTestable tool = createTool(true, remoteExecutionManagerMock, remoteAutomationPackageClientMock);
         Assert.assertThrows(StepCliExecutionException.class, tool::execute);
@@ -114,7 +115,7 @@ public class ExecuteAutomationPackageToolTest {
         RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
         RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.isNull(), Mockito.isNull())).thenReturn(executionIds);
+        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(executionIds);
 
         ExecuteAutomationPackageToolTestable tool = createTool(true, remoteExecutionManagerMock, remoteAutomationPackageClientMock);
         Assert.assertThrows(StepCliExecutionException.class, tool::execute);
@@ -131,7 +132,7 @@ public class ExecuteAutomationPackageToolTest {
         RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
         RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.isNull(), Mockito.isNull())).thenReturn(executionIds);
+        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(executionIds);
 
         ExecuteAutomationPackageToolTestable tool = createTool(false, remoteExecutionManagerMock, remoteAutomationPackageClientMock);
         tool.execute();
@@ -139,15 +140,14 @@ public class ExecuteAutomationPackageToolTest {
     }
 
     private static void assertAutomationPackageClientMockCalls(RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws AutomationPackageClientException {
-        ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
+        ArgumentCaptor<AutomationPackageSource> fileCaptor = ArgumentCaptor.forClass(AutomationPackageSource.class);
         // TODO: improve test - check the library file
-        ArgumentCaptor<File> libraryFileCaptor = ArgumentCaptor.forClass(File.class);
+        ArgumentCaptor<AutomationPackageSource> libraryFileCaptor = ArgumentCaptor.forClass(AutomationPackageSource.class);
         ArgumentCaptor<IsolatedAutomationPackageExecutionParameters> executionParamsCaptor = ArgumentCaptor.forClass(IsolatedAutomationPackageExecutionParameters.class);
         Mockito.verify(remoteAutomationPackageClientMock, Mockito.times(1)).executeAutomationPackage(
-                fileCaptor.capture(), Mockito.any(), executionParamsCaptor.capture(), libraryFileCaptor.capture(),
-                Mockito.isNull());
-        File capturedFile = fileCaptor.getValue();
-        Assert.assertEquals("test-file-jar-with-dependencies.jar", capturedFile.getName());
+                fileCaptor.capture(), executionParamsCaptor.capture(), libraryFileCaptor.capture());
+        AutomationPackageSource capturedFile = fileCaptor.getValue();
+        Assert.assertEquals("test-file-jar-with-dependencies.jar", capturedFile.getFile().getName());
 
         IsolatedAutomationPackageExecutionParameters captured = executionParamsCaptor.getValue();
         Assert.assertEquals("testUser", captured.getUserID());

@@ -57,9 +57,9 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
 
             try {
                 updateResult = automationPackageClient.createOrUpdateAutomationPackage(
-                        params.getAutomationPackageFile(), mavenAutomationPackageXml,
+                        createSource(params.getAutomationPackageFile(), mavenAutomationPackageXml),
                         params.getAsync(), params.getApVersion(), params.getActivationExpression(), params.getallowUpdateOfOtherPackages(),
-                        params.getKeywordLibraryFile(), mavenKeywordLibraryXml
+                        createSource(params.getKeywordLibraryFile(), mavenKeywordLibraryXml)
                 );
 
                 if (updateResult != null && updateResult.getId() != null) {
