@@ -21,6 +21,7 @@ package step.automation.packages.junit;
 import org.bson.types.ObjectId;
 import step.automation.packages.AutomationPackageFromClassLoaderProvider;
 import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.kwlibrary.NoKeywordLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.ExecutionEngine;
@@ -47,7 +48,7 @@ public class JUnitPlansProvider {
             AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(testClass.getClassLoader());
             ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                     false, true, null, automationPackageProvider, null, null,
-                    true, null, null, false, null, null,
+                    true, null, null, false, new NoKeywordLibraryProvider(), null,
                     false, true).getId();
 
             List<PlanFilter> planFilterList = new ArrayList<>();

@@ -50,7 +50,7 @@ public class DeployAutomationPackageToolTest {
                 );
         Mockito.verify(automationPackageClient, Mockito.times(1)).close();
         Mockito.verifyNoMoreInteractions(automationPackageClient);
-        Assert.assertEquals(testFile, packageFileCaptor.getValue());
+        Assert.assertEquals(testFile, packageFileCaptor.getValue().getFile());
     }
 
     private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {

@@ -103,6 +103,11 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
     }
 
     @Override
+    public boolean isUnmodifiable() {
+        return !isSnapshot();
+    }
+
+    @Override
     public boolean equals(Object object) {
         if (this == object) return true;
         if (object == null || getClass() != object.getClass()) return false;

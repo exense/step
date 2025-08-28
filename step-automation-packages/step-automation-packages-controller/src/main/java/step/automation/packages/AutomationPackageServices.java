@@ -289,6 +289,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         AutomationPackageFileSource automationPackageFileSource = null;
         try {
             automationPackageFileSource = AutomationPackageFileSource.empty();
+            if (uploadedInputStream != null && apMavenSnippet != null) {
+                throw new ControllerServiceException("You cannot use both file and maven snippet");
+            }
             if (uploadedInputStream != null) {
                 automationPackageFileSource.addInputStream(uploadedInputStream, fileDetail == null ? null : fileDetail.getFileName());
             }

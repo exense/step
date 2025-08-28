@@ -86,6 +86,10 @@ public abstract class AbstractCliTool implements CliToolLogging {
     }
 
     protected String createMavenArtifactXml(MavenArtifactIdentifier identifier) {
+        if (identifier == null) {
+            return null;
+        }
+
         StringBuilder builder = new StringBuilder();
         builder.append("<dependency>");
 
