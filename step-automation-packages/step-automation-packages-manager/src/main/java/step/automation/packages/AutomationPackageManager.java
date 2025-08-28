@@ -449,7 +449,7 @@ public class AutomationPackageManager {
         String apOriginString = apOrigin == null ? null : apOrigin.toStringRepresentation();
 
         ConflictingAutomationPackages conflictingAutomationPackages = findAutomationPackagesWithSameOrigin(
-                keywordLibraryProvider, checkForSameOrigin, apOrigin, oldPackage
+                keywordLibraryProvider, checkForSameOrigin, apOrigin, oldPackage, objectPredicate
         );
 
         if (!allowUpdateOfOtherPackages) {
@@ -479,7 +479,7 @@ public class AutomationPackageManager {
         uploadApResource(automationPackageArchive, newPackage, apOriginString, enricherForIncludedEntities, actorUser);
 
         // upload keyword library if provided
-        String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibraryProvider, newPackage, packageContent.getName(), enricherForIncludedEntities, actorUser);
+        String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibraryProvider, newPackage, packageContent.getName(), enricherForIncludedEntities, objectPredicate, actorUser);
 
         fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, keywordLibraryResourceString, actorUser, objectPredicate);
 
@@ -532,12 +532,13 @@ public class AutomationPackageManager {
     private ConflictingAutomationPackages findAutomationPackagesWithSameOrigin(AutomationPackageKeywordLibraryProvider kwLibProvider,
                                                                                boolean checkForSameOrigin,
                                                                                ResourceOrigin apOrigin,
-                                                                               AutomationPackage oldPackage) {
+                                                                               AutomationPackage oldPackage,
+                                                                               ObjectPredicate objectPredicate) {
         ConflictingAutomationPackages conflictingAutomationPackages = new ConflictingAutomationPackages();
         if (checkForSameOrigin) {
-            if (apOrigin != null && apOrigin.getOriginType() == ResourceOriginType.mvn) {
+            if (apOrigin != null && !apOrigin.isUnmodifiable()) {
                 List<ObjectId> automationPackagesWithSameOrigin = new ArrayList<>();
-                List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation());
+                List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate);
                 for (Resource resource : resourcesByOrigin) {
                     String automationPackageIdLinkedWithResource = resource.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
                     if (automationPackageIdLinkedWithResource != null) {
@@ -552,7 +553,7 @@ public class AutomationPackageManager {
             ResourceOrigin keywordLibOrigin = kwLibProvider == null ? null : kwLibProvider.getOrigin();
             if (keywordLibOrigin != null && keywordLibOrigin.getOriginType() == ResourceOriginType.mvn) {
                 List<ObjectId> apWithSameKeywordLib = new ArrayList<>();
-                List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(keywordLibOrigin.toStringRepresentation());
+                List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(keywordLibOrigin.toStringRepresentation(), objectPredicate);
 
                 for (Resource resource : resourcesByOrigin) {
                     String automationPackageIdLinkedWithResource = resource.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
@@ -615,7 +616,9 @@ public class AutomationPackageManager {
         }
     }
 
-    public String uploadKeywordLibrary(AutomationPackageKeywordLibraryProvider kwLibProvider, AutomationPackage newPackage, String apName, ObjectEnricher enricher, String actorUser) {
+    public String uploadKeywordLibrary(AutomationPackageKeywordLibraryProvider kwLibProvider, AutomationPackage newPackage,
+                                       String apName, ObjectEnricher enricher, ObjectPredicate objectPredicate,
+                                       String actorUser) {
         String keywordLibraryResourceString = null;
         try {
             File keywordLibrary = kwLibProvider.getKeywordLibrary();
@@ -628,7 +631,7 @@ public class AutomationPackageManager {
                     ResourceOrigin origin = kwLibProvider.getOrigin();
                     List<Resource> oldResources = null;
                     if (origin != null && origin.isUnmodifiable()) {
-                        oldResources = resourceManager.findManyByCriteria(Map.of("origin", origin.toStringRepresentation()));
+                        oldResources = resourceManager.getResourcesByOrigin(origin.toStringRepresentation(), objectPredicate);
                     }
                     log.info("The new keyword library ({}) has been uploaded as ({})", kwLibProvider, keywordLibraryResource);
                     if (oldResources != null && !oldResources.isEmpty()) {

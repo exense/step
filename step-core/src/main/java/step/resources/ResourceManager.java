@@ -19,11 +19,13 @@
 package step.resources;
 
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectPredicate;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public interface ResourceManager {
 
@@ -73,8 +75,13 @@ public interface ResourceManager {
 
 	Resource getResource(String resourceId);
 
-	default List<Resource> getResourcesByOrigin(String origin){
-		return findManyByCriteria(Map.of("origin", origin));
+	default List<Resource> getResourcesByOrigin(String origin, ObjectPredicate objectPredicate){
+		// TODO: we have to use ObjectFilter instead of objectPredicate, but it is harder to use it in implementations like RemoteResourceManager
+		List<Resource> res = findManyByCriteria(Map.of("origin", origin));
+		if(objectPredicate !=null){
+			res = res.stream().filter(objectPredicate).collect(Collectors.toList());
+		}
+		return res;
 	}
 
 	ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException;
