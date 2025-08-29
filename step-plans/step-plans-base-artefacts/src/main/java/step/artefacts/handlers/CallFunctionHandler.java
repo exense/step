@@ -226,7 +226,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				so we can populate the attachment metadata in realtime and attach it to the report node.
 				*/
 
-				// FIXME: This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
+				// FIXME: SED-4192 (Step 30+) This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
                 StreamingResourceUploadContexts uploadContexts = context.get(StreamingResourceUploadContexts.class);
 				if (uploadContexts != null) {
 					uploadContext = new StreamingResourceUploadContext();
