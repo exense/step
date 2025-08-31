@@ -134,7 +134,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		}
 
 		resourceRevisionAccessor.save(resourceRevision);
-		resourceAccessor.save(resource);
+		fillPredefinedFieldsAndSave(resource);
 
         if(resource.isDirectory()) {
 			boolean isArchive = FileHelper.isArchive(resourceRevisionFile);
@@ -145,7 +145,7 @@ public class ResourceManagerImpl implements ResourceManager {
 				FileHelper.unzip(revisionFileToUnzip, resourceRevisionFile.toPath().getParent().toFile());
 				revisionFileToUnzip.delete();
 				resourceRevisionAccessor.save(resourceRevision);
-				resourceAccessor.save(resource);
+				fillPredefinedFieldsAndSave(resource);
 			} else {
 				throw new InvalidResourceFormatException();
 			}
@@ -313,15 +313,9 @@ public class ResourceManagerImpl implements ResourceManager {
 		resource.setEphemeral(resourceType.isEphemeral());
 		resource.setDirectory(isDirectory);
 
-		// fill tracking fields
-		ObjectId sourceId = resource.getId();
-		Resource existing = (sourceId != null) ? resourceAccessor.get(sourceId) : null;
-		if (existing != null) {
-			resource.setCreationDate(existing.getCreationDate());
-			resource.setCreationUser(existing.getCreationUser());
-		}
 		resource.setOrigin(origin);
 
+		// this TRACKING_FIELD is used to track the keyword packages
 		if (trackingAttribute != null && !trackingAttribute.isEmpty()) {
 			Map<String, Object> customFields = resource.getCustomFields();
 			if (customFields == null) {
@@ -359,11 +353,24 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public Resource saveResource(Resource resource) throws IOException {
+		return fillPredefinedFieldsAndSave(resource);
+	}
+
+	private Resource fillPredefinedFieldsAndSave(Resource resource) {
 		// Ensure that the name remains in sync with resourceName
 		resource.addAttribute(AbstractOrganizableObject.NAME, resource.getResourceName());
+
+		// if we update the existing resource we must ensure that we don't change the creator and creation date
+		ObjectId sourceId = resource.getId();
+		Resource existing = (sourceId != null) ? resourceAccessor.get(sourceId) : null;
+		if (existing != null) {
+			resource.setCreationDate(existing.getCreationDate());
+			resource.setCreationUser(existing.getCreationUser());
+		}
+
 		return resourceAccessor.save(resource);
 	}
-	
+
 	@Override
 	public ResourceRevision saveResourceRevision(ResourceRevision resourceRevision) throws IOException {
 		return resourceRevisionAccessor.save(resourceRevision);
