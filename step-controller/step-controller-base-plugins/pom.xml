@@ -36,6 +36,20 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>com.thoughtworks.xstream</groupId>
+			<artifactId>xstream</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.streaming</groupId>
+			<artifactId>step-streaming-impl-server</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.streaming</groupId>
+			<artifactId>step-streaming-impl-websocket-server</artifactId>
+		</dependency>
+
+		<!-- TEST dependencies -->
+		<dependency>
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-controller-server</artifactId>
 			<version>${project.version}</version>
@@ -43,8 +57,14 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.thoughtworks.xstream</groupId>
-			<artifactId>xstream</artifactId>
+			<groupId>ch.exense.streaming</groupId>
+			<artifactId>step-streaming-impl-websocket-client-download</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.streaming</groupId>
+			<artifactId>step-streaming-impl-websocket-client-upload</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>
