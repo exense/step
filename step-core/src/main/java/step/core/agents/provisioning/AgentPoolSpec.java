@@ -31,6 +31,10 @@ public class AgentPoolSpec {
     public String displayName;
     public Map<String, String> attributes;
     public int numberOfTokens;
+    /**
+     * The base Url of the remote agent pool factory to be used to provision agent pools using this template
+     */
+    public String factoryUrl;
     public Set<AgentPoolProvisioningParameter> supportedProvisioningParameters;
 
     public AgentPoolSpec() {

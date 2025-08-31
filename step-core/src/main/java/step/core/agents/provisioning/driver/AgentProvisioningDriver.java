@@ -19,6 +19,10 @@
 
 package step.core.agents.provisioning.driver;
 
+import step.core.agents.provisioning.AgentPoolSpec;
+
+import java.util.Set;
+
 public interface AgentProvisioningDriver {
 
     /**
@@ -57,4 +61,11 @@ public interface AgentProvisioningDriver {
      * @param provisioningRequestId the unique id of the provisioning request
      */
     void deprovisionTokens(String provisioningRequestId) throws Exception;
+
+    /**
+     * Register or keep alive an external agent pool template. Registered templates are evicted after a configurable TTL
+     * This method has to be called periodically to keep them alive
+     * @param agentPoolSpecs the specification of the external agent pool to be registered
+     */
+    void registerExternalAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs);
 }

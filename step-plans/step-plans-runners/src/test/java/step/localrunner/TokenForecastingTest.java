@@ -1144,6 +1144,11 @@ public class TokenForecastingTest {
 		public void deprovisionTokens(String provisioningRequestId) {
 
 		}
+
+		@Override
+		public void registerExternalAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs) {
+
+		}
 	}
 
 
