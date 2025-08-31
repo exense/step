@@ -79,6 +79,7 @@ public class AutomationPackageManager {
 
     protected final ResourceManager resourceManager;
     protected final AutomationPackageHookRegistry automationPackageHookRegistry;
+    protected DefaultProvidersResolver providersResolver;
     protected boolean isIsolated = false;
     protected final AutomationPackageLocks automationPackageLocks;
 
@@ -122,6 +123,8 @@ public class AutomationPackageManager {
         this.resourceManager = resourceManager;
         this.automationPackageLocks = automationPackageLocks;
         this.operationMode = Objects.requireNonNull(operationMode);
+
+        this.providersResolver = new DefaultProvidersResolver();
 
         addDefaultExtensions();
     }
@@ -656,27 +659,14 @@ public class AutomationPackageManager {
         return keywordLibraryResourceString;
     }
 
-    public AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate) {
-        if (keywordLibrarySource != null) {
-            if (keywordLibrarySource.useMavenIdentifier()) {
-                return new KeywordLibraryFromMavenProvider(mavenConfigProvider.getConfig(predicate), keywordLibrarySource.getMavenArtifactIdentifier());
-            } else if (keywordLibrarySource.getInputStream() != null) {
-                return new KeywordLibraryFromInputStreamProvider(keywordLibrarySource.getInputStream(), keywordLibrarySource.getFileName());
-            }
-        }
-        return new NoKeywordLibraryProvider();
+    public AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource,
+                                                                             ObjectPredicate predicate) {
+        return this.providersResolver.getKeywordLibraryProvider(keywordLibrarySource, predicate, mavenConfigProvider);
     }
 
     public AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource,
-                                                                                 ObjectPredicate predicate) throws AutomationPackageReadingException {
-        if (apFileSource != null) {
-            if (apFileSource.useMavenIdentifier()) {
-                return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier());
-            } else if (apFileSource.getInputStream() != null) {
-                return new AutomationPackageFromInputStreamProvider(apFileSource.getInputStream(), apFileSource.getFileName());
-            }
-        }
-        throw new AutomationPackageManagerException("The automation package is not provided");
+                                                                                ObjectPredicate predicate) throws AutomationPackageReadingException {
+        return this.providersResolver.getAutomationPackageArchiveProvider(apFileSource, predicate, mavenConfigProvider);
     }
 
     /**
@@ -985,19 +975,18 @@ public class AutomationPackageManager {
         for (Resource resource : resources) {
             try {
                 // workaround to avoid the deletion of resources already linked with new automation package
-                if (newAutomationPackage.getAutomationPackageResource() != null) {
+                if (newAutomationPackage != null && newAutomationPackage.getAutomationPackageResource() != null) {
                     if (Objects.equals(FileResolver.RESOURCE_PREFIX + resource.getId().toString(), newAutomationPackage.getAutomationPackageResource())) {
                         continue;
                     }
                 }
-                if (newAutomationPackage.getKeywordLibraryResource() != null) {
+                if (newAutomationPackage != null && newAutomationPackage.getKeywordLibraryResource() != null) {
                     if (Objects.equals(FileResolver.RESOURCE_PREFIX + resource.getId().toString(), newAutomationPackage.getKeywordLibraryResource())) {
                         continue;
                     }
                 }
 
-                // TODO: make debug
-                log.info("Remove the resource linked with AP '{}':{}", automationPackage.getAttribute(AbstractOrganizableObject.NAME), resource.getId().toHexString());
+                log.debug("Remove the resource linked with AP '{}':{}", automationPackage.getAttribute(AbstractOrganizableObject.NAME), resource.getId().toHexString());
                 resourceManager.deleteResource(resource.getId().toString());
             } catch (Exception e) {
                 log.error("Error while deleting resource {} for automation package {}",
@@ -1065,6 +1054,14 @@ public class AutomationPackageManager {
         return automationPackageAccessor;
     }
 
+    public DefaultProvidersResolver getProvidersResolver() {
+        return providersResolver;
+    }
+
+    public void setProvidersResolver(DefaultProvidersResolver providersResolver) {
+        this.providersResolver = providersResolver;
+    }
+
     public AutomationPackageMavenConfig getMavenConfig(ObjectPredicate objectPredicate) {
         return mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(objectPredicate);
     }
@@ -1088,6 +1085,55 @@ public class AutomationPackageManager {
         public HookEntry(String fieldName, List<?> values) {
             this.fieldName = fieldName;
             this.values = values;
+        }
+    }
+
+    public interface AutomationPackageProvidersResolver {
+
+        AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource,
+                                                                             ObjectPredicate predicate,
+                                                                             AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) throws AutomationPackageReadingException;
+
+        AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource,
+                                                                          ObjectPredicate predicate,
+                                                                          AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider);
+    }
+
+    public static class DefaultProvidersResolver implements AutomationPackageProvidersResolver {
+        @Override
+        public AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource,
+                                                                                    ObjectPredicate predicate,
+                                                                                    AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) throws AutomationPackageReadingException {
+            if (apFileSource != null) {
+                if (apFileSource.useMavenIdentifier()) {
+                    return createAutomationPackageFromMavenProvider(apFileSource, predicate, mavenConfigProvider);
+                } else if (apFileSource.getInputStream() != null) {
+                    return new AutomationPackageFromInputStreamProvider(apFileSource.getInputStream(), apFileSource.getFileName());
+                }
+            }
+            throw new AutomationPackageManagerException("The automation package is not provided");
+        }
+
+        protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
+            return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier());
+        }
+
+        @Override
+        public AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource,
+                                                                                 ObjectPredicate predicate,
+                                                                                 AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
+            if (keywordLibrarySource != null) {
+                if (keywordLibrarySource.useMavenIdentifier()) {
+                    return createKeywordLibraryFromMavenProvider(keywordLibrarySource, predicate, mavenConfigProvider);
+                } else if (keywordLibrarySource.getInputStream() != null) {
+                    return new KeywordLibraryFromInputStreamProvider(keywordLibrarySource.getInputStream(), keywordLibrarySource.getFileName());
+                }
+            }
+            return new NoKeywordLibraryProvider();
+        }
+
+        protected KeywordLibraryFromMavenProvider createKeywordLibraryFromMavenProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
+            return new KeywordLibraryFromMavenProvider(mavenConfigProvider.getConfig(predicate), keywordLibrarySource.getMavenArtifactIdentifier());
         }
     }
 

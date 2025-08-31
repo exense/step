@@ -29,6 +29,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
@@ -58,10 +59,7 @@ import step.plugins.node.NodeFunctionType;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -87,6 +85,8 @@ public class AutomationPackageManagerOSTest {
 
     // 3 parameters from one fragment and 1 from another
     public static final int PARAMETERS_COUNT = 4;
+    private static final String SAMPLE1_FILE_NAME = "step-automation-packages-sample1.jar";
+    private final String SAMPLE1_EXTENDED_FILE_NAME = "step-automation-packages-sample1-extended.jar";
 
     private AutomationPackageManager manager;
     private AutomationPackageAccessorImpl automationPackageAccessor;
@@ -134,10 +134,12 @@ public class AutomationPackageManagerOSTest {
                 automationPackageLocks,
                 null
         );
+
+        this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>()));
     }
 
     private static FunctionTypeRegistry prepareTestFunctionTypeRegistry(Configuration configuration, LocalResourceManagerImpl resourceManager) {
-        FunctionTypeRegistry functionTypeRegistry =  new FunctionTypeRegistryImpl(new FileResolver(resourceManager), new MockedGridClientImpl(), new ObjectHookRegistry());
+        FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(resourceManager), new MockedGridClientImpl(), new ObjectHookRegistry());
         functionTypeRegistry.registerFunctionType(new JMeterFunctionType(configuration));
         functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(configuration));
         functionTypeRegistry.registerFunctionType(new CompositeFunctionType(new ObjectHookRegistry()));
@@ -159,10 +161,28 @@ public class AutomationPackageManagerOSTest {
 
     @Test
     public void testCrud() throws IOException {
-        Date testStartDate = new Date();
 
         // 1. Upload new package
-        SampleUploadingResult r = uploadSample1WithAsserts(true, false, false);
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File extendedAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_EXTENDED_FILE_NAME);
+
+        try (InputStream is = new FileInputStream(automationPackageJar);
+             InputStream isExt = new FileInputStream(extendedAutomationPackageJar);
+             InputStream isDuplicate = new FileInputStream(automationPackageJar)
+        ) {
+            AutomationPackageFileSource sample1FileSource = AutomationPackageFileSource.withInputStream(is, SAMPLE1_FILE_NAME);
+            AutomationPackageFileSource extendedFileSource = AutomationPackageFileSource.withInputStream(isExt, SAMPLE1_EXTENDED_FILE_NAME);
+            AutomationPackageFileSource sample1FileSourceDuplicate = AutomationPackageFileSource.withInputStream(isDuplicate, SAMPLE1_FILE_NAME);
+
+            testCrud(sample1FileSource, extendedFileSource, sample1FileSourceDuplicate);
+        }
+    }
+
+    private void testCrud(AutomationPackageFileSource sample1FileSource, AutomationPackageFileSource extendedFileSource, AutomationPackageFileSource sample1FileSourceDuplicate) throws IOException {
+        Date testStartDate = new Date();
+
+        // upload sample
+        SampleUploadingResult r = uploadSample1WithAsserts(sample1FileSource, true, false, false);
 
         // creation date and user are set
         Date apCreationDate = r.storedPackage.getCreationDate();
@@ -173,89 +193,83 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(r.storedPackage.getCreationUser(), "testUser");
 
         // 2. Update the package - some entities are updated, some entities are added
-        String fileName = "step-automation-packages-sample1-extended.jar";
-        File automationPackageJar = new File("src/test/resources/samples/" + fileName);
-        try (InputStream is = new FileInputStream(automationPackageJar)) {
-            Date updateTime = new Date();
-            AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
-                    true, true, null,
-                    AutomationPackageFileSource.withInputStream(is, fileName),
-                    null, null, null, null, null, false, "testUser",
-                    false, true);
-            Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
-            ObjectId resultId = result.getId();
+        AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
+                true, true, null, extendedFileSource,
+                null, null, null, null, null, false, "testUser",
+                false, true);
+        Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
+        ObjectId resultId = result.getId();
 
-            // id of existing package is returned
-            Assert.assertEquals(r.storedPackage.getId().toString(), resultId.toString());
+        // id of existing package is returned
+        Assert.assertEquals(r.storedPackage.getId().toString(), resultId.toString());
 
-            // creation date is not changed after update
-            AutomationPackage updatedPackage = automationPackageAccessor.get(result.getId());
-            Assert.assertEquals(r.storedPackage.getCreationDate().toInstant(), updatedPackage.getCreationDate().toInstant());
-            Assert.assertEquals(r.storedPackage.getCreationUser(), updatedPackage.getCreationUser());
+        // creation date is not changed after update
+        AutomationPackage updatedPackage = automationPackageAccessor.get(result.getId());
+        Assert.assertEquals(r.storedPackage.getCreationDate().toInstant(), updatedPackage.getCreationDate().toInstant());
+        Assert.assertEquals(r.storedPackage.getCreationUser(), updatedPackage.getCreationUser());
 
-            Assert.assertTrue(updatedPackage.getLastModificationDate().after(r.storedPackage.getCreationDate()) && updatedPackage.getLastModificationDate().before(new Date()));
-            Assert.assertEquals(updatedPackage.getLastModificationUser(), "testUser");
+        Assert.assertTrue(updatedPackage.getLastModificationDate().after(r.storedPackage.getCreationDate()) && updatedPackage.getLastModificationDate().before(new Date()));
+        Assert.assertEquals(updatedPackage.getLastModificationUser(), "testUser");
 
-            r.storedPackage = automationPackageAccessor.get(resultId);
-            Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
+        r.storedPackage = automationPackageAccessor.get(resultId);
+        Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
-            // 5 plans have been updated, 1 plan has been added
-            List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(PLANS_COUNT + 1, storedPlans.size());
+        // 5 plans have been updated, 1 plan has been added
+        List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
+        Assert.assertEquals(PLANS_COUNT + 1, storedPlans.size());
 
-            Plan updatedPlan = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR)).findFirst().orElse(null);
-            Plan updatedPlanPlainText = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT)).findFirst().orElse(null);
-            Assert.assertNotNull(updatedPlan);
-            Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR).getId(), updatedPlan.getId());
-            Assert.assertNotNull(updatedPlanPlainText);
-            Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT).getId(), updatedPlanPlainText.getId());
+        Plan updatedPlan = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR)).findFirst().orElse(null);
+        Plan updatedPlanPlainText = storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT)).findFirst().orElse(null);
+        Assert.assertNotNull(updatedPlan);
+        Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR).getId(), updatedPlan.getId());
+        Assert.assertNotNull(updatedPlanPlainText);
+        Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT).getId(), updatedPlanPlainText.getId());
 
-            Assert.assertNotNull(storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_2)).findFirst().orElse(null));
+        Assert.assertNotNull(storedPlans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(PLAN_NAME_FROM_DESCRIPTOR_2)).findFirst().orElse(null));
 
-            // 6 functions have been updated, 1 function has been added
-            List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(KEYWORDS_COUNT + 1, storedFunctions.size());
+        // 6 functions have been updated, 1 function has been added
+        List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
+        Assert.assertEquals(KEYWORDS_COUNT + 1, storedFunctions.size());
 
-            Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
-            Assert.assertNotNull(updatedFunction);
-            Assert.assertEquals(findFunctionByClassAndName(r.storedFunctions, JMeterFunction.class, J_METER_KEYWORD_1).getId(), updatedFunction.getId());
+        Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
+        Assert.assertNotNull(updatedFunction);
+        Assert.assertEquals(findFunctionByClassAndName(r.storedFunctions, JMeterFunction.class, J_METER_KEYWORD_1).getId(), updatedFunction.getId());
 
-            Assert.assertNotNull(storedFunctions.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_2)).findFirst().orElse(null));
+        Assert.assertNotNull(storedFunctions.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_2)).findFirst().orElse(null));
 
-            // 1 task has been updated, 1 task has been added
-            List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
-            Assert.assertEquals(2, storedTasks.size());
+        // 1 task has been updated, 1 task has been added
+        List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
+        Assert.assertEquals(2, storedTasks.size());
 
-            ExecutiontTaskParameters updatedTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals(SCHEDULE_1)).findFirst().orElse(null);
-            Assert.assertNotNull(updatedTask);
-            Assert.assertEquals(r.storedTask.getId(), updatedTask.getId());
-            Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR).getId().toHexString(), updatedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
+        ExecutiontTaskParameters updatedTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals(SCHEDULE_1)).findFirst().orElse(null);
+        Assert.assertNotNull(updatedTask);
+        Assert.assertEquals(r.storedTask.getId(), updatedTask.getId());
+        Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR).getId().toHexString(), updatedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
 
-            // new task is configured as inactive in sample
-            ExecutiontTaskParameters newTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals(SCHEDULE_2)).findFirst().orElse(null);
-            Assert.assertNotNull(newTask);
-            assertFalse(newTask.isActive());
+        // new task is configured as inactive in sample
+        ExecutiontTaskParameters newTask = storedTasks.stream().filter(t -> t.getAttribute(AbstractOrganizableObject.NAME).equals(SCHEDULE_2)).findFirst().orElse(null);
+        Assert.assertNotNull(newTask);
+        assertFalse(newTask.isActive());
 
-            // 2 parameter are saved
-            List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result.getId())).collect(Collectors.toList());
-            Assert.assertEquals(2, allParameters.size());
+        // 2 parameter are saved
+        List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result.getId())).collect(Collectors.toList());
+        Assert.assertEquals(2, allParameters.size());
 
-            Parameter parameter = allParameters.stream().filter(p -> "myKey".equals(p.getKey())).findFirst().orElseThrow();
-            assertEquals("myValue", parameter.getValue().get());
-            assertEquals("some description", parameter.getDescription());
-            assertEquals("abc", parameter.getActivationExpression().getScript());
-            assertNull(parameter.getActivationExpression().getScriptEngine());
-            assertEquals((Integer) 10, parameter.getPriority());
-            assertEquals(true, parameter.getProtectedValue());
-            assertEquals(ParameterScope.GLOBAL, parameter.getScope());
-            assertEquals(null, parameter.getScopeEntity());
+        Parameter parameter = allParameters.stream().filter(p -> "myKey".equals(p.getKey())).findFirst().orElseThrow();
+        assertEquals("myValue", parameter.getValue().get());
+        assertEquals("some description", parameter.getDescription());
+        assertEquals("abc", parameter.getActivationExpression().getScript());
+        assertNull(parameter.getActivationExpression().getScriptEngine());
+        assertEquals((Integer) 10, parameter.getPriority());
+        assertEquals(true, parameter.getProtectedValue());
+        assertEquals(ParameterScope.GLOBAL, parameter.getScope());
+        assertEquals(null, parameter.getScopeEntity());
 
-            parameter = allParameters.stream().filter(p -> "myKey2".equals(p.getKey())).findFirst().orElseThrow();
-            assertEquals("some description 2", parameter.getDescription());
-        }
+        parameter = allParameters.stream().filter(p -> "myKey2".equals(p.getKey())).findFirst().orElseThrow();
+        assertEquals("some description 2", parameter.getDescription());
 
         // 3. Upload the original sample again - added plans/functions/tasks from step 2 should be removed
-        SampleUploadingResult r2 = uploadSample1WithAsserts(false, false, false);
+        SampleUploadingResult r2 = uploadSample1WithAsserts(sample1FileSourceDuplicate, false, false, false);
         Assert.assertEquals(r.storedPackage.getId(), r2.storedPackage.getId());
         Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR), findPlanByName(r2.storedPlans, PLAN_NAME_FROM_DESCRIPTOR));
         Assert.assertEquals(toIds(r.storedFunctions), toIds(r2.storedFunctions));
@@ -275,56 +289,61 @@ public class AutomationPackageManagerOSTest {
 
     @Test
     public void testUpdateMetadata() throws IOException {
-        // 1. Upload new package
-        SampleUploadingResult r = uploadSample1WithAsserts(true, false, false);
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        try (InputStream is = new FileInputStream(automationPackageJar)) {
 
-        // 2. Update package metadata - change version
-        manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver1", null, null);
+            // 1. Upload new package
+            SampleUploadingResult r = uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is, SAMPLE1_FILE_NAME), true, false, false);
 
-        AutomationPackage actualAp = automationPackageAccessor.get(r.storedPackage.getId());
-        Assert.assertEquals("ver1", actualAp.getVersion());
-        Assert.assertEquals("My package.ver1", actualAp.getAttribute(AbstractOrganizableObject.NAME));
+            // 2. Update package metadata - change version
+            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver1", null, null);
 
-        // 3. Update version again and add some activation expression
-        manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver2", "true == true", null);
-        actualAp = automationPackageAccessor.get(r.storedPackage.getId());
-        Assert.assertEquals("ver2", actualAp.getVersion());
-        Assert.assertEquals("My package.ver2", actualAp.getAttribute(AbstractOrganizableObject.NAME));
-        Assert.assertEquals("true == true", actualAp.getActivationExpression().getScript());
+            AutomationPackage actualAp = automationPackageAccessor.get(r.storedPackage.getId());
+            Assert.assertEquals("ver1", actualAp.getVersion());
+            Assert.assertEquals("My package.ver1", actualAp.getAttribute(AbstractOrganizableObject.NAME));
 
-        // check that the new activation expression is propagated to all plans and keywords
-        List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-        Assert.assertEquals(PLANS_COUNT, storedPlans.size());
-        for (Plan storedPlan : storedPlans) {
-            Assert.assertEquals("true == true", storedPlan.getActivationExpression().getScript());
+            // 3. Update version again and add some activation expression
+            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver2", "true == true", null);
+            actualAp = automationPackageAccessor.get(r.storedPackage.getId());
+            Assert.assertEquals("ver2", actualAp.getVersion());
+            Assert.assertEquals("My package.ver2", actualAp.getAttribute(AbstractOrganizableObject.NAME));
+            Assert.assertEquals("true == true", actualAp.getActivationExpression().getScript());
+
+            // check that the new activation expression is propagated to all plans and keywords
+            List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
+            Assert.assertEquals(PLANS_COUNT, storedPlans.size());
+            for (Plan storedPlan : storedPlans) {
+                Assert.assertEquals("true == true", storedPlan.getActivationExpression().getScript());
+            }
+
+            List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
+            Assert.assertEquals(KEYWORDS_COUNT, storedFunctions.size());
+            for (Function storedFunction : storedFunctions) {
+                Assert.assertEquals("true == true", storedFunction.getActivationExpression().getScript());
+            }
+
+            // 4. remove version and activation expression
+            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), null, null, null);
+
+            actualAp = automationPackageAccessor.get(r.storedPackage.getId());
+            Assert.assertEquals("My package", actualAp.getAttribute(AbstractOrganizableObject.NAME));
+            Assert.assertNull(actualAp.getActivationExpression());
+            Assert.assertNull(actualAp.getVersion());
+
+            // check that the new activation expression is propagated to all plans and keywords
+            storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
+            Assert.assertEquals(PLANS_COUNT, storedPlans.size());
+            for (Plan storedPlan : storedPlans) {
+                Assert.assertNull(storedPlan.getActivationExpression());
+            }
+
+            storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
+            Assert.assertEquals(KEYWORDS_COUNT, storedFunctions.size());
+            for (Function storedFunction : storedFunctions) {
+                Assert.assertNull(storedFunction.getActivationExpression());
+            }
         }
 
-        List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-        Assert.assertEquals(KEYWORDS_COUNT, storedFunctions.size());
-        for (Function storedFunction : storedFunctions) {
-            Assert.assertEquals("true == true", storedFunction.getActivationExpression().getScript());
-        }
-
-        // 4. remove version and activation expression
-        manager.updateAutomationPackageMetadata(r.storedPackage.getId(), null, null, null);
-
-        actualAp = automationPackageAccessor.get(r.storedPackage.getId());
-        Assert.assertEquals("My package", actualAp.getAttribute(AbstractOrganizableObject.NAME));
-        Assert.assertNull(actualAp.getActivationExpression());
-        Assert.assertNull(actualAp.getVersion());
-
-        // check that the new activation expression is propagated to all plans and keywords
-        storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-        Assert.assertEquals(PLANS_COUNT, storedPlans.size());
-        for (Plan storedPlan : storedPlans) {
-            Assert.assertNull(storedPlan.getActivationExpression());
-        }
-
-        storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-        Assert.assertEquals(KEYWORDS_COUNT, storedFunctions.size());
-        for (Function storedFunction : storedFunctions) {
-            Assert.assertNull( storedFunction.getActivationExpression());
-        }
     }
 
     @Test
@@ -377,52 +396,82 @@ public class AutomationPackageManagerOSTest {
 
     @Test
     public void testUpdateAsync() throws IOException, InterruptedException {
-        // 1. Upload new package
-        SampleUploadingResult r = uploadSample1WithAsserts(true, true, false);
-        uploadSample1WithAsserts(false, true, false);
-        ExecutorService executor = Executors.newFixedThreadPool(1);
-        executor.submit(() -> {
-            PlanRunnerResult execute = newExecutionEngineBuilder().build().execute(r.storedPlans.get(0));
-        });
-        //Give some time to let the execution start
-        Thread.sleep(500);
-        uploadSample1WithAsserts(false, true, true);
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+
+        try(InputStream is1 = new FileInputStream(automationPackageJar);
+            InputStream is2 = new FileInputStream(automationPackageJar);
+            InputStream is3 = new FileInputStream(automationPackageJar)) {
+            // 1. Upload new package
+            SampleUploadingResult r = uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is1, SAMPLE1_FILE_NAME), true, true, false);
+            uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is2, SAMPLE1_FILE_NAME), false, true, false);
+            ExecutorService executor = Executors.newFixedThreadPool(1);
+            executor.submit(() -> {
+                PlanRunnerResult execute = newExecutionEngineBuilder().build().execute(r.storedPlans.get(0));
+            });
+
+            //Give some time to let the execution start
+            Thread.sleep(500);
+            uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is3, SAMPLE1_FILE_NAME), false, true, true);
+        }
     }
 
     @Test
     public void testGetAllEntities() throws IOException {
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+
+        try(InputStream is1 = new FileInputStream(automationPackageJar)) {
+            // 1. Upload new package
+            SampleUploadingResult r = uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is1, SAMPLE1_FILE_NAME), true, false, false);
+
+            // 2. Get all stored entities
+            Map<String, List<? extends AbstractOrganizableObject>> allEntities = manager.getAllEntities(r.storedPackage.getId());
+
+            // 3. Compare with expected
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+            JsonNode actualJsonNode = objectMapper.valueToTree(allEntities);
+            log.info("{}", actualJsonNode);
+
+            Assert.assertEquals(4, allEntities.size());
+            List<Function> keywords = (List<Function>) allEntities.get("keywords");
+            Assert.assertEquals(KEYWORDS_COUNT, keywords.size());
+            findFunctionByClassAndName(keywords, JMeterFunction.class, J_METER_KEYWORD_1);
+
+            List<Plan> plans = (List<Plan>) allEntities.get("plans");
+            Assert.assertEquals(PLANS_COUNT, plans.size());
+            findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR);
+
+            List<ExecutiontTaskParameters> schedules = (List<ExecutiontTaskParameters>) allEntities.get("schedules");
+            Assert.assertEquals(SCHEDULES_COUNT, schedules.size());
+            findByName(schedules, SCHEDULE_1);
+
+            List<Parameter> parameters = (List<Parameter>) allEntities.get("parameters");
+            Assert.assertEquals(PARAMETERS_COUNT, parameters.size());
+            Assert.assertTrue(parameters.stream().anyMatch(p -> p.getDescription().equals("some description")));
+
+            // parameter from parameters2.yml
+            Assert.assertTrue(parameters.stream().anyMatch(p -> p.getKey().equals("myKey2")));
+        }
+    }
+
+    @Test
+    public void testMavenArtifacts() throws IOException {
         // 1. Upload new package
-        SampleUploadingResult r = uploadSample1WithAsserts(true, false, false);
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File extendedAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_EXTENDED_FILE_NAME);
 
-        // 2. Get all stored entities
-        Map<String, List<? extends AbstractOrganizableObject>> allEntities = manager.getAllEntities(r.storedPackage.getId());
+        MavenArtifactIdentifier sampleIdentifier = new MavenArtifactIdentifier("test-group", "test-artifact", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier extSampleIdentifier = new MavenArtifactIdentifier("test-group", "test-artifact-ext", "1.0.0-SNAPSHOT", null, null);
 
-        // 3. Compare with expected
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        providersResolver.getMavenArtifactMocks().put(sampleIdentifier, automationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(extSampleIdentifier, extendedAutomationPackageJar);
 
-        JsonNode actualJsonNode = objectMapper.valueToTree(allEntities);
-        log.info("{}", actualJsonNode);
+        AutomationPackageFileSource sampleSource = AutomationPackageFileSource.withMavenIdentifier(sampleIdentifier);
+        AutomationPackageFileSource extSampleSource = AutomationPackageFileSource.withMavenIdentifier(extSampleIdentifier);
 
-        Assert.assertEquals(4, allEntities.size());
-        List<Function> keywords = (List<Function>) allEntities.get("keywords");
-        Assert.assertEquals(KEYWORDS_COUNT, keywords.size());
-        findFunctionByClassAndName(keywords, JMeterFunction.class, J_METER_KEYWORD_1);
-
-        List<Plan> plans = (List<Plan>) allEntities.get("plans");
-        Assert.assertEquals(PLANS_COUNT, plans.size());
-        findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR);
-
-        List<ExecutiontTaskParameters> schedules = (List<ExecutiontTaskParameters>) allEntities.get("schedules");
-        Assert.assertEquals(SCHEDULES_COUNT, schedules.size());
-        findByName(schedules, SCHEDULE_1);
-
-        List<Parameter> parameters = (List<Parameter>) allEntities.get("parameters");
-        Assert.assertEquals(PARAMETERS_COUNT, parameters.size());
-        Assert.assertTrue(parameters.stream().anyMatch(p -> p.getDescription().equals("some description")));
-
-        // parameter from parameters2.yml
-        Assert.assertTrue(parameters.stream().anyMatch(p -> p.getKey().equals("myKey2")));
+        testCrud(sampleSource, extSampleSource, sampleSource);
     }
 
     private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
@@ -436,107 +485,110 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(expectedFileName, resource.getResourceName());
     }
 
-    private SampleUploadingResult uploadSample1WithAsserts(boolean createNew, boolean async, boolean expectedDelay) throws IOException {
-        String fileName = "step-automation-packages-sample1.jar";
-        File automationPackageJar = new File("src/test/resources/samples/" + fileName);
-
+    private SampleUploadingResult uploadSample1WithAsserts(AutomationPackageFileSource sample1FileSource, boolean createNew, boolean async, boolean expectedDelay) throws IOException {
         FileResolver fileResolver = new FileResolver(resourceManager);
 
         SampleUploadingResult r = new SampleUploadingResult();
-        try (InputStream is = new FileInputStream(automationPackageJar)) {
-            ObjectId result;
-            if (createNew) {
-                result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, fileName), null, null, null, "testUser", false, true, null, null);
+
+        ObjectId result;
+        if (createNew) {
+            result = manager.createAutomationPackage(sample1FileSource, null, null, null, "testUser", false, true, null, null);
+        } else {
+            AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null,
+                    sample1FileSource,
+                    null, null, null, null, null, async, "testUser",
+                    false, true);
+            if (async && expectedDelay) {
+                Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
             } else {
-                AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null,
-                        AutomationPackageFileSource.withInputStream(is, fileName),
-                        null, null, null, null, null, async, "testUser",
-                        false, true);
-                if (async && expectedDelay) {
-                    Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
-                } else {
-                    Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, updateResult.getStatus());
-                }
-                result = updateResult.getId();
+                Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, updateResult.getStatus());
             }
-
-            r.storedPackage = automationPackageAccessor.get(result);
-            Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
-
-            log.info("AP resource: {}", r.storedPackage.getAutomationPackageResource());
-            Assert.assertNotNull(r.storedPackage.getAutomationPackageResource());
-
-            Resource resourceByAutomationPackage = resourceManager.getResource(fileResolver.resolveResourceId(r.storedPackage.getAutomationPackageResource()));
-            Assert.assertEquals("uploaded:", resourceByAutomationPackage.getOrigin());
-            Assert.assertEquals(r.storedPackage.getId().toString(), resourceByAutomationPackage.getCustomField("automationPackageId"));
-
-            // upload package without keyword library
-            Assert.assertNull(r.storedPackage.getKeywordLibraryResource());
-
-            List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(PLANS_COUNT, storedPlans.size());
-
-            r.storedPlans = storedPlans;
-            Plan planFromDescriptor = findPlanByName(storedPlans, PLAN_NAME_FROM_DESCRIPTOR);
-            Assert.assertNotNull(planFromDescriptor);
-            Assert.assertNotNull(findPlanByName(storedPlans, PLAN_FROM_PLANS_ANNOTATION));
-            Assert.assertNotNull(findPlanByName(storedPlans, INLINE_PLAN));
-            Assert.assertNotNull(findPlanByName(storedPlans, PLAN_NAME_WITH_COMPOSITE));
-
-            r.storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(KEYWORDS_COUNT, r.storedFunctions.size());
-            findFunctionByClassAndName(r.storedFunctions, JMeterFunction.class, J_METER_KEYWORD_1);
-            findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
-            findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, INLINE_PLAN);
-            findFunctionByClassAndName(r.storedFunctions, NodeFunction.class, NODE_KEYWORD);
-            CompositeFunction compositeKeyword = (CompositeFunction) findFunctionByClassAndName(r.storedFunctions, CompositeFunction.class, COMPOSITE_KEYWORD);
-            // by default, the 'executeLocally' flag for composite is 'true'
-            Assert.assertTrue(compositeKeyword.isExecuteLocally());
-            Assert.assertNotNull(compositeKeyword.getPlan());
-
-            // the default plan name is taken from keyword name
-            Assert.assertEquals("Composite keyword from AP", compositeKeyword.getPlan().getAttribute(AbstractOrganizableObject.NAME));
-
-            List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(SCHEDULES_COUNT, storedTasks.size());
-            r.storedTask = storedTasks.get(0);
-            Assert.assertEquals(SCHEDULE_1, r.storedTask.getAttribute(AbstractOrganizableObject.NAME));
-            Assert.assertEquals("0 15 10 ? * *", r.storedTask.getCronExpression());
-            Assert.assertNotNull(r.storedTask.getCronExclusions());
-            Assert.assertEquals(List.of("0 0 9 25 * ?", "0 0 9 20 * ?"), r.storedTask.getCronExclusions().stream().map(CronExclusion::getCronExpression).collect(Collectors.toList()));
-            Assert.assertTrue(r.storedTask.isActive());
-            Assert.assertEquals("local", r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryID());
-            Assert.assertEquals(planFromDescriptor.getId().toHexString(), r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
-
-            List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(PARAMETERS_COUNT, allParameters.size());
-            Parameter parameter = allParameters.get(0);
-            assertEquals("myKey", parameter.getKey());
-            assertEquals("myValue", parameter.getValue().get());
-            assertEquals("some description", parameter.getDescription());
-            assertEquals("abc", parameter.getActivationExpression().getScript());
-            assertNull(parameter.getActivationExpression().getScriptEngine());
-            assertEquals((Integer) 10, parameter.getPriority());
-            assertEquals(true, parameter.getProtectedValue());
-            assertEquals(ParameterScope.APPLICATION, parameter.getScope());
-            assertEquals("entity", parameter.getScopeEntity());
-
-            parameter = allParameters.get(SCHEDULES_COUNT);
-            assertEquals("mySimpleKey", parameter.getKey());
-            assertFalse(parameter.getValue().isDynamic());
-            assertEquals("mySimpleValue", parameter.getValue().get());
-            assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global by default
-
-            parameter = allParameters.get(2);
-            assertEquals("myDynamicParam", parameter.getKey());
-            assertTrue(parameter.getValue().isDynamic());
-            assertEquals("mySimpleKey", parameter.getValue().getExpression());
-            assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global by default
-
-            // parameter from parameters2.yml
-            parameter = allParameters.get(3);
-            assertEquals("myKey2", parameter.getKey());
+            result = updateResult.getId();
         }
+
+        r.storedPackage = automationPackageAccessor.get(result);
+        Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
+
+        log.info("AP resource: {}", r.storedPackage.getAutomationPackageResource());
+        Assert.assertNotNull(r.storedPackage.getAutomationPackageResource());
+
+        Resource resourceByAutomationPackage = resourceManager.getResource(fileResolver.resolveResourceId(r.storedPackage.getAutomationPackageResource()));
+        if(sample1FileSource.useMavenIdentifier()){
+            Assert.assertEquals(
+                    sample1FileSource.getMavenArtifactIdentifier().toStringRepresentation(),
+                    resourceByAutomationPackage.getOrigin()
+            );
+        } else {
+            Assert.assertEquals("uploaded:", resourceByAutomationPackage.getOrigin());
+        }
+        Assert.assertEquals(r.storedPackage.getId().toString(), resourceByAutomationPackage.getCustomField("automationPackageId"));
+
+        // upload package without keyword library
+        Assert.assertNull(r.storedPackage.getKeywordLibraryResource());
+
+        List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+        Assert.assertEquals(PLANS_COUNT, storedPlans.size());
+
+        r.storedPlans = storedPlans;
+        Plan planFromDescriptor = findPlanByName(storedPlans, PLAN_NAME_FROM_DESCRIPTOR);
+        Assert.assertNotNull(planFromDescriptor);
+        Assert.assertNotNull(findPlanByName(storedPlans, PLAN_FROM_PLANS_ANNOTATION));
+        Assert.assertNotNull(findPlanByName(storedPlans, INLINE_PLAN));
+        Assert.assertNotNull(findPlanByName(storedPlans, PLAN_NAME_WITH_COMPOSITE));
+
+        r.storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+        Assert.assertEquals(KEYWORDS_COUNT, r.storedFunctions.size());
+        findFunctionByClassAndName(r.storedFunctions, JMeterFunction.class, J_METER_KEYWORD_1);
+        findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
+        findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, INLINE_PLAN);
+        findFunctionByClassAndName(r.storedFunctions, NodeFunction.class, NODE_KEYWORD);
+        CompositeFunction compositeKeyword = (CompositeFunction) findFunctionByClassAndName(r.storedFunctions, CompositeFunction.class, COMPOSITE_KEYWORD);
+        // by default, the 'executeLocally' flag for composite is 'true'
+        Assert.assertTrue(compositeKeyword.isExecuteLocally());
+        Assert.assertNotNull(compositeKeyword.getPlan());
+
+        // the default plan name is taken from keyword name
+        Assert.assertEquals("Composite keyword from AP", compositeKeyword.getPlan().getAttribute(AbstractOrganizableObject.NAME));
+
+        List<ExecutiontTaskParameters> storedTasks = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+        Assert.assertEquals(SCHEDULES_COUNT, storedTasks.size());
+        r.storedTask = storedTasks.get(0);
+        Assert.assertEquals(SCHEDULE_1, r.storedTask.getAttribute(AbstractOrganizableObject.NAME));
+        Assert.assertEquals("0 15 10 ? * *", r.storedTask.getCronExpression());
+        Assert.assertNotNull(r.storedTask.getCronExclusions());
+        Assert.assertEquals(List.of("0 0 9 25 * ?", "0 0 9 20 * ?"), r.storedTask.getCronExclusions().stream().map(CronExclusion::getCronExpression).collect(Collectors.toList()));
+        Assert.assertTrue(r.storedTask.isActive());
+        Assert.assertEquals("local", r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryID());
+        Assert.assertEquals(planFromDescriptor.getId().toHexString(), r.storedTask.getExecutionsParameters().getRepositoryObject().getRepositoryParameters().get("planid"));
+
+        List<Parameter> allParameters = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
+        Assert.assertEquals(PARAMETERS_COUNT, allParameters.size());
+        Parameter parameter = allParameters.get(0);
+        assertEquals("myKey", parameter.getKey());
+        assertEquals("myValue", parameter.getValue().get());
+        assertEquals("some description", parameter.getDescription());
+        assertEquals("abc", parameter.getActivationExpression().getScript());
+        assertNull(parameter.getActivationExpression().getScriptEngine());
+        assertEquals((Integer) 10, parameter.getPriority());
+        assertEquals(true, parameter.getProtectedValue());
+        assertEquals(ParameterScope.APPLICATION, parameter.getScope());
+        assertEquals("entity", parameter.getScopeEntity());
+
+        parameter = allParameters.get(SCHEDULES_COUNT);
+        assertEquals("mySimpleKey", parameter.getKey());
+        assertFalse(parameter.getValue().isDynamic());
+        assertEquals("mySimpleValue", parameter.getValue().get());
+        assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global by default
+
+        parameter = allParameters.get(2);
+        assertEquals("myDynamicParam", parameter.getKey());
+        assertTrue(parameter.getValue().isDynamic());
+        assertEquals("mySimpleKey", parameter.getValue().getExpression());
+        assertEquals(ParameterScope.GLOBAL, parameter.getScope()); // global by default
+
+        // parameter from parameters2.yml
+        parameter = allParameters.get(3);
+        assertEquals("myKey2", parameter.getKey());
         return r;
     }
 

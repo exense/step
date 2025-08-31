@@ -464,7 +464,6 @@ public class StepConsole implements Callable<Integer> {
                         new ExecuteAutomationPackageTool.Params()
                                 .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
                                 .setAutomationPackageMavenArtifact(apMavenArtifact)
-                                .setAutomationPackageMavenArtifact(getMavenArtifact(apFile))
                                 .setKeywordLibraryFile(keywordLibMavenArtifact != null || keywordLib == null || keywordLib.isEmpty() ? null : prepareKeywordLibFile(keywordLib))
                                 .setKeywordLibraryMavenArtifact(keywordLibMavenArtifact)
                                 .setStepProjectName(getStepProjectName())

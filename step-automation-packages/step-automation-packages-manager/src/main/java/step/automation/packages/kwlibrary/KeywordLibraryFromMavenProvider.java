@@ -31,8 +31,8 @@ import java.io.IOException;
 
 public class KeywordLibraryFromMavenProvider implements AutomationPackageKeywordLibraryProvider {
 
-    private final AutomationPackageMavenConfig mavenConfig;
-    private final MavenArtifactIdentifier mavenArtifactIdentifier;
+    protected AutomationPackageMavenConfig mavenConfig;
+    protected final MavenArtifactIdentifier mavenArtifactIdentifier;
 
     public KeywordLibraryFromMavenProvider(AutomationPackageMavenConfig mavenConfig,
                                            MavenArtifactIdentifier mavenArtifactIdentifier) {
