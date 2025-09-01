@@ -46,13 +46,20 @@ public class ExpressionHandler implements AutoCloseable {
 	}
 	
 	public ExpressionHandler(String scriptBaseClass) {
-		this(scriptBaseClass, null, 1000, -1);
+		this(scriptBaseClass, null, 1000, 8, -1);
 	}
 	
-	public ExpressionHandler(String scriptBaseClass, Integer executionTimeWarningTreshold, int poolMaxTotal, int poolMaxIdle) {
+	public ExpressionHandler(String scriptBaseClass, Integer executionTimeWarningTreshold, int poolMaxTotal,  int poolMaxTotalPerKey, int poolMaxIdlePerKey) {
 		super();
 		this.scriptBaseClass = scriptBaseClass;
-		this.groovyPool = new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxIdle);
+		this.groovyPool = new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey);
+		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
+	}
+
+	protected ExpressionHandler(String scriptBaseClass, GroovyPoolFactory groovyPoolFactory, Integer executionTimeWarningTreshold, int poolMaxTotal,  int poolMaxTotalPerKey, int poolMaxIdlePerKey) {
+		super();
+		this.scriptBaseClass = scriptBaseClass;
+		this.groovyPool = new GroovyPool(groovyPoolFactory, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey);
 		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
 	}
 

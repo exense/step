@@ -28,15 +28,19 @@ public class GroovyPool implements AutoCloseable{
 		
 	private GenericKeyedObjectPool<GroovyPoolKey, GroovyPoolEntry> pool;
 
-	public GroovyPool(String scriptBaseClass, int poolMaxTotal, int poolMaxIdle) {
+	public GroovyPool(String scriptBaseClass, int poolMaxTotal, int poolMaxTotalPerKey, int poolMaxIdlePerKey) {
+		this(new GroovyPoolFactory(scriptBaseClass), poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey);
+	}
+
+	public GroovyPool(GroovyPoolFactory groovyPoolFactory, int poolMaxTotal, int poolMaxTotalPerKey, int poolMaxIdlePerKey) {
 		super();
 		
 		try {
-			pool = new GenericKeyedObjectPool<>(new GroovyPoolFactory(scriptBaseClass));
+			pool = new GenericKeyedObjectPool<>(groovyPoolFactory);
 			pool.setTestOnBorrow(true);
 			pool.setMaxTotal(poolMaxTotal);
-			//pool.setMaxActive(-1);
-			pool.setMaxIdlePerKey(poolMaxIdle);
+			pool.setMaxTotalPerKey(poolMaxTotalPerKey);
+			pool.setMaxIdlePerKey(poolMaxIdlePerKey);
 			pool.setBlockWhenExhausted(true);
 			pool.setTimeBetweenEvictionRunsMillis(30000);
 			pool.setMinEvictableIdleTimeMillis(-1);
@@ -51,6 +55,12 @@ public class GroovyPool implements AutoCloseable{
 		GroovyPoolKey key = new GroovyPoolKey(script);
 		GroovyPoolEntry entry;
 		try {
+			if (pool.getNumActive() == pool.getMaxTotal()) {
+				logger.warn("The groovy pool is exhausted.");
+			}
+			if (pool.getNumActive(key) == pool.getMaxTotalPerKey()) {
+				logger.warn("The groovy pool is exhausted for the expression {}.", script);
+			}
 			entry = pool.borrowObject(key);
 			return entry;
 		} catch (Exception e) {
@@ -70,6 +80,8 @@ public class GroovyPool implements AutoCloseable{
 			logger.warn("An error occurred while returning script: " + (String)((entry!=null&&entry.key!=null)?entry.key.getScript():"N/A"), e);
 		}
 	}
+
+
 
 	@Override
 	public void close() {
