@@ -1146,7 +1146,7 @@ public class TokenForecastingTest {
 		}
 
 		@Override
-		public void registerExternalAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs) {
+		public void registerRemoteAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs) {
 
 		}
 	}

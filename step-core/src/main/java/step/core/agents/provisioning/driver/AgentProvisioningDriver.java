@@ -63,9 +63,9 @@ public interface AgentProvisioningDriver {
     void deprovisionTokens(String provisioningRequestId) throws Exception;
 
     /**
-     * Register or keep alive an external agent pool template. Registered templates are evicted after a configurable TTL
+     * Register or keep alive a remote agent pool template. Registered templates are evicted after a configurable TTL
      * This method has to be called periodically to keep them alive
-     * @param agentPoolSpecs the specification of the external agent pool to be registered
+     * @param agentPoolSpecs the specification of the remote agent pool to be registered
      */
-    void registerExternalAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs);
+    void registerRemoteAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs);
 }
