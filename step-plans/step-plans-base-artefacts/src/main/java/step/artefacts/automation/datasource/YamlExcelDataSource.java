@@ -32,6 +32,8 @@ public class YamlExcelDataSource extends AbstractYamlDataSource<ExcelDataPool> {
 
     protected DynamicValue<Boolean> headers = new DynamicValue<>(true);
 
+    protected DynamicValue<String> password = null;
+
     public YamlExcelDataSource() {
         super("excel");
     }

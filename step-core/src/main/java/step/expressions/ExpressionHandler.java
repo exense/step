@@ -18,22 +18,21 @@
  ******************************************************************************/
 package step.expressions;
 
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
+import groovy.lang.*;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import groovy.lang.Binding;
-import groovy.lang.MissingPropertyException;
-import groovy.lang.Script;
+import static step.expressions.ProtectionAwareGroovySetup.setupProtectionAwareOperations;
 
 public class ExpressionHandler implements AutoCloseable {
 		
-	private static Logger logger = LoggerFactory.getLogger(ExpressionHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(ExpressionHandler.class);
 	
 	private final GroovyPool groovyPool;
 	
@@ -54,26 +53,46 @@ public class ExpressionHandler implements AutoCloseable {
 		this.scriptBaseClass = scriptBaseClass;
 		this.groovyPool = new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxIdle);
 		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
+		setupProtectionAwareOperations();
 	}
 
 	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings) {
+		return evaluateGroovyExpression(expression, bindings, false);
+	}
+
+	/**
+	 * Evaluate a groovy expression using provided binding. Not that special binding of type ProtectableBinding will be handled depending on the values of the related parameters
+	 * @param expression the groovy expression to be evaluated
+	 * @param bindings the map of bindings (variables) available for the evaluation
+	 * @param canAccessProtectedValue whether protected values provided as ProtectableBinding can be access. Accessing such binding with no access will throw an exception
+	 * @return the result of the groovy evaluation
+	 */
+	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings, boolean canAccessProtectedValue) {
 		try {
 			Object result;
-			try {			
+			Set<String> excludedProtectedBindingKeys = new HashSet<>();
+			try {
 				if(logger.isDebugEnabled()) {
 					logger.debug("Groovy evaluation:\n" + expression);
 				}
+
+				// Set the protection context
+				ProtectionContext.set(canAccessProtectedValue);
 				
-				Binding binding = new Binding(); 
-				
+				Binding binding = new Binding();
 				if(bindings!=null) {
 					for(Entry<String, Object> varEntry : bindings.entrySet()) {
+						String key = varEntry.getKey();
 						Object value =  varEntry.getValue();
-						binding.setVariable(varEntry.getKey(), value);
-					}				
+						if (!canAccessProtectedValue && value instanceof ProtectableBinding && ((ProtectableBinding) value).isProtected) {
+							excludedProtectedBindingKeys.add(key);
+						} else {
+							binding.setVariable(key, value);
+						}
+					}
 				}
 				
-				long t1 = System.currentTimeMillis();	
+				long t1 = System.currentTimeMillis();
 				try {
 					GroovyPoolEntry entry = groovyPool.borrowShell(expression);
 					try {
@@ -98,8 +117,6 @@ public class ExpressionHandler implements AutoCloseable {
 						}
 					}
 					throw e;
-				} catch (Exception e) {
-					throw e;
 				}
 				long duration = System.currentTimeMillis()-t1;
 				
@@ -111,18 +128,23 @@ public class ExpressionHandler implements AutoCloseable {
 						logger.debug("Groovy-Evaluation of following expression took " + duration + ".ms: "+ expression);
 					}
 				}
-				
+
 				if(logger.isDebugEnabled()) {
 					logger.debug("Groovy result:\n" + result);
 				}
-				
 				return result;
 			} catch (CompilationFailedException cfe) {
 				throw new RuntimeException(
 						"Error while compiling groovy expression: '" + expression + "'", cfe);
 			} catch (MissingPropertyException mpe) {
-				throw new RuntimeException(
-						"Error while resolving groovy properties in expression: '" + expression + "'. The property '" + mpe.getProperty() + "' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accesible in current scope.", mpe);
+				String property = mpe.getProperty();
+				String baseMessage = "Error while resolving groovy properties in expression: '" + expression + "'. ";
+				if (excludedProtectedBindingKeys.contains(property)) {
+					throw new RuntimeException(baseMessage + "The property '" + property + "' is protected and can only be used as Keyword's inputs or Keyword's properties.");
+				} else {
+					throw new RuntimeException(
+							baseMessage + "The property '" + property + "' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accessible in current scope.");
+				}
 			} catch (Exception e){
 				throw new RuntimeException(
 						"Error while running groovy expression: '" + expression + "'", e);
@@ -132,8 +154,19 @@ public class ExpressionHandler implements AutoCloseable {
 				logger.error("An error occurred while evaluation groovy expression " + expression, e);
 			}
 			throw e;
+		} finally {
+			// Always clear the context
+			ProtectionContext.clear();
 		}
 	}
+
+	public static Object checkProtectionAnWrapIfRequired(boolean isParentProtected, Object value, String key) {
+		if (isParentProtected) {
+			return new ProtectableBinding(true, value, key);
+		}
+		return value;
+	}
+
 
 	@Override
 	public void close() {

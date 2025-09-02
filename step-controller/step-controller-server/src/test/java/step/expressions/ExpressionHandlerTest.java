@@ -25,9 +25,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import org.junit.Assert;
-
-import static junit.framework.Assert.*;
+import static org.junit.Assert.*;
 
 public class ExpressionHandlerTest {
 
@@ -39,7 +37,7 @@ public class ExpressionHandlerTest {
         }
 		assertEquals(2,o);
 	}
-	
+
 	@Test
 	public void testBindings() {
         Object o;
@@ -50,7 +48,7 @@ public class ExpressionHandlerTest {
         }
         assertEquals("value", o.toString());
 	}
-	
+
 	@Test
 	public void testScriptBaseClass() {
         Object o;
@@ -78,4 +76,49 @@ public class ExpressionHandlerTest {
         }
         assertEquals("foo", o.toString());
 	}
+
+    @Test
+    public void testProtectableBindings() {
+        Object o;
+        try (ExpressionHandler e = new ExpressionHandler(null)) {
+            Map<String, Object> b = new HashMap<>();
+            b.put("simpleBinding", "value");
+            b.put("protectableBindingNonProtected", new ProtectableBinding(false,"nonProtectedValue", "protectableBindingNonProtected"));
+            b.put("protectableBindingProtected", new ProtectableBinding(true,"protectedValue", "protectableBindingProtected"));
+            o = e.evaluateGroovyExpression("simpleBinding", b, false);
+            assertEquals("value", o.toString());
+            o = e.evaluateGroovyExpression("protectableBindingNonProtected", b, false);
+            assertEquals("nonProtectedValue", o.toString());
+            assertThrows("Error while resolving groovy properties in expression: 'protectableBindingProtected'. The property 'protectableBindingProtected' is protected and can only be used as Keyword's inputs or Keyword's properties.",
+                    RuntimeException.class, () -> e.evaluateGroovyExpression("protectableBindingProtected", b, false));
+            o = e.evaluateGroovyExpression("simpleBinding", b, true);
+            assertEquals("value", o.toString());
+            o = e.evaluateGroovyExpression("protectableBindingNonProtected", b, true);
+            assertEquals("nonProtectedValue", o.toString());
+            o = e.evaluateGroovyExpression("protectableBindingProtected", b, true);
+            assertEquals("***protectableBindingProtected***", o.toString());
+            assertTrue(o instanceof ProtectableBinding);
+            ProtectableBinding pb = (ProtectableBinding) o;
+            assertEquals("protectedValue", pb.value.toString());
+            assertEquals("***protectableBindingProtected***", pb.obfuscatedValue);
+
+            assertThrows("Error while resolving groovy properties in expression: 'simpleBinding + \" \" + protectableBindingNonProtected + \" \" + protectableBindingProtected'. The property 'protectableBindingProtected' is protected and can only be used as Keyword's inputs or Keyword's properties.",
+                    RuntimeException.class, () -> e.evaluateGroovyExpression("simpleBinding + \" \" + protectableBindingNonProtected + \" \" + protectableBindingProtected", b, false));
+
+            o = e.evaluateGroovyExpression("simpleBinding + \" \" + protectableBindingNonProtected + \" \" + protectableBindingProtected", b, true);
+            assertEquals("***value nonProtectedValue ***protectableBindingProtected******", o.toString());
+            assertTrue(o instanceof ProtectableBinding);
+            pb = (ProtectableBinding) o;
+            assertEquals("value nonProtectedValue protectedValue", pb.value.toString());
+            assertEquals("***value nonProtectedValue ***protectableBindingProtected******", pb.obfuscatedValue);
+
+            o = e.evaluateGroovyExpression("protectableBindingProtected  + \" \" + simpleBinding + \" \" + protectableBindingNonProtected", b, true);
+            assertEquals("***protectableBindingProtected*** value nonProtectedValue", o.toString());
+            assertTrue(o instanceof ProtectableBinding);
+            pb = (ProtectableBinding) o;
+            assertEquals("protectedValue value nonProtectedValue", pb.value.toString());
+            assertEquals("***protectableBindingProtected*** value nonProtectedValue", pb.obfuscatedValue);
+        }
+
+    }
 }

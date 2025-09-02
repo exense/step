@@ -32,6 +32,8 @@ public class ExcelDataPool extends DataPoolConfiguration {
 	DynamicValue<String> file = new DynamicValue<>();
 	
 	DynamicValue<String> worksheet = new DynamicValue<>();
+
+	DynamicValue<String> password = new DynamicValue<>();
 	
 	DynamicValue<Boolean> headers = new DynamicValue<>(true);
 
@@ -58,5 +60,13 @@ public class ExcelDataPool extends DataPoolConfiguration {
 
 	public void setWorksheet(DynamicValue<String> worksheet) {
 		this.worksheet = worksheet;
+	}
+
+	public DynamicValue<String> getPassword() {
+		return password;
+	}
+
+	public void setPassword(DynamicValue<String> password) {
+		this.password = password;
 	}
 }

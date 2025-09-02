@@ -258,6 +258,9 @@ root:
         forWrite:
           dynamic: false
           value: false
+        protect:
+          dynamic: false
+          value: false
         start:
           dynamic: false
           value: 1
@@ -365,6 +368,9 @@ root:
         forWrite:
           dynamic: false
           value: false
+        protect:
+          dynamic: false
+          value: false
         start:
           dynamic: false
           value: 1
@@ -412,6 +418,9 @@ root:
       dataSource:
         _class: "step.datapool.sequence.IntSequenceDataPool"
         forWrite:
+          dynamic: false
+          value: false
+        protect:
           dynamic: false
           value: false
         start:

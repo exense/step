@@ -44,6 +44,9 @@ root:
         forWrite:
           dynamic: false
           value: false
+        protect:
+          dynamic: false
+          value: false
         start:
           dynamic: false
           value: 10
