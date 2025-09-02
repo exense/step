@@ -51,23 +51,49 @@ public class ExpressionHandlerTest {
     }
 
     @Test
-    public void testPool() {
+    public void testPool() throws Exception {
+        // Create factory and spy on it with custom answer
+        GroovyPoolFactory realFactory = new GroovyPoolFactory(null); // your scriptBaseClass
+        GroovyPoolFactory spyFactory = Mockito.spy(realFactory);
+        // Track compilations manually
+        AtomicInteger compilationCounter = new AtomicInteger(0);
+        Map<String, Integer> expressionCompilationCount = new ConcurrentHashMap<>();
+        // Configure spy to track calls
+        doAnswer(invocation -> {
+            GroovyPoolKey key = invocation.getArgument(0);
+            String expression = key.getScript();
+            int count = compilationCounter.incrementAndGet();
+            expressionCompilationCount.merge(expression, 1, Integer::sum);
+            logger.debug("COMPILATION #{} - Expression: '{}'", count,
+                    expression.length() > 50 ? expression.substring(0, 50) + "..." : expression);
+
+            // Call the real method
+            return invocation.callRealMethod();
+
+
+        }).when(spyFactory).makeObject(any(GroovyPoolKey.class));
         Object o;
-        try (ExpressionHandler e = new ExpressionHandler(null, 2 ,2 ,2, 2)) {
+        try (ExpressionHandler e = new ExpressionHandler(null, spyFactory, 2 ,2 ,2, 2, 1)) {
             o = e.evaluateGroovyExpression("1+1", null);
             assertEquals(2, o);
+            assertEquals(1, compilationCounter.get());
+            assertEquals(1, expressionCompilationCount.get("1+1").intValue());
             o = e.evaluateGroovyExpression("2+2", null);
             assertEquals(4, o);
+            assertEquals(2, compilationCounter.get());
+            assertEquals(1, expressionCompilationCount.get("2+2").intValue());
+            o = e.evaluateGroovyExpression("2+2", null);
+            assertEquals(4, o);
+            assertEquals(2, compilationCounter.get());
+            assertEquals(1, expressionCompilationCount.get("2+2").intValue());
             o = e.evaluateGroovyExpression("3+3", null);
             assertEquals(6, o);
-            o = e.evaluateGroovyExpression("3+3", null);
-            assertEquals(6, o);
-            o = e.evaluateGroovyExpression("3+3", null);
-            assertEquals(6, o);
+            assertEquals(3, compilationCounter.get());
+            assertEquals(1, expressionCompilationCount.get("3+3").intValue());
             o = e.evaluateGroovyExpression("1+1", null);
             assertEquals(2, o);
-            o = e.evaluateGroovyExpression("2+2", null);
-            assertEquals(4, o);
+            assertEquals(4, compilationCounter.get());
+            assertEquals(2, expressionCompilationCount.get("1+1").intValue());
         }
     }
 
@@ -204,7 +230,7 @@ public class ExpressionHandlerTest {
 
         }).when(spyFactory).makeObject(any(GroovyPoolKey.class));
 
-        try (ExpressionHandler handler = new ExpressionHandler( null, spyFactory,null, poolSize, maxPoolPerKey, maxIdlePerKey)) {
+        try (ExpressionHandler handler = new ExpressionHandler( null, spyFactory,null, poolSize, maxPoolPerKey, maxIdlePerKey, 1)) {
 
             logger.info("=== PHASE 1: Expression 1 dominates the pool ===");
 

@@ -40,26 +40,26 @@ public class ExpressionHandler implements AutoCloseable {
 	private final Integer executionTimeWarningTreshold;
 	
 	private final String scriptBaseClass;
-	
+
 	public ExpressionHandler() {
 		this(null);
 	}
 	
 	public ExpressionHandler(String scriptBaseClass) {
-		this(scriptBaseClass, null, 1000, 8, -1);
+		this(scriptBaseClass, null, 1000, 8, -1, null);
 	}
 	
-	public ExpressionHandler(String scriptBaseClass, Integer executionTimeWarningTreshold, int poolMaxTotal,  int poolMaxTotalPerKey, int poolMaxIdlePerKey) {
+	public ExpressionHandler(String scriptBaseClass, Integer executionTimeWarningTreshold, int poolMaxTotal,  int poolMaxTotalPerKey, int poolMaxIdlePerKey, Integer monitoringIntervalSeconds) {
 		super();
 		this.scriptBaseClass = scriptBaseClass;
-		this.groovyPool = new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey);
+		this.groovyPool = new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
 		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
 	}
 
-	protected ExpressionHandler(String scriptBaseClass, GroovyPoolFactory groovyPoolFactory, Integer executionTimeWarningTreshold, int poolMaxTotal,  int poolMaxTotalPerKey, int poolMaxIdlePerKey) {
+	protected ExpressionHandler(String scriptBaseClass, GroovyPoolFactory groovyPoolFactory, Integer executionTimeWarningTreshold, int poolMaxTotal,  int poolMaxTotalPerKey, int poolMaxIdlePerKey, Integer monitoringIntervalSeconds) {
 		super();
 		this.scriptBaseClass = scriptBaseClass;
-		this.groovyPool = new GroovyPool(groovyPoolFactory, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey);
+		this.groovyPool = new GroovyPool(groovyPoolFactory, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
 		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
 	}
 
