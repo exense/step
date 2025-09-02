@@ -30,6 +30,7 @@ import step.artefacts.handlers.functions.FunctionGroupSession;
 import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.attachments.SkippedAttachmentMeta;
 import step.attachments.StreamingAttachmentMeta;
 import step.common.managedoperations.OperationManager;
 import step.constants.StreamingConstants;
@@ -243,6 +244,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 
 					uploadContexts.registerListener(uploadContext.contextId, new StreamingResourceUploadContextListener() {
+
+						@Override
+						public void onResourceCreationRefused(StreamingResourceMetadata metadata, String reasonPhrase) {
+							node.getAttachments().add(new SkippedAttachmentMeta(metadata.getFilename(), reasonPhrase));
+							reportNodeAccessor.save(node);
+						}
 
 						@Override
 						public void onResourceCreated(String resourceId, StreamingResourceMetadata metadata) {

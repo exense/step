@@ -40,6 +40,7 @@ import step.reporting.LiveReporting;
 import step.streaming.client.upload.StreamingUploadProvider;
 import step.streaming.common.StreamingResourceUploadContext;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.util.HashMap;
@@ -168,7 +169,14 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 
 				StreamingUploadProvider proxiedProvider = (StreamingUploadProvider) Proxy.newProxyInstance(
 						aClass.getClassLoader(), new Class[]{StreamingUploadProvider.class},
-						(proxy, method, args) -> applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> method.invoke(streamingUploadProvider, args))
+						(proxy, method, args) -> {
+							try {
+								return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> method.invoke(streamingUploadProvider, args));
+							} catch (InvocationTargetException ite) {
+								// rethrow the original exception instead of InvocationTargetException, (usually) conforming to the method's throws signature unless it's a RuntimeException or similar
+								throw ite.getCause();
+							}
+						}
 				);
 				return new LiveReporting(proxiedProvider);
 			} else {

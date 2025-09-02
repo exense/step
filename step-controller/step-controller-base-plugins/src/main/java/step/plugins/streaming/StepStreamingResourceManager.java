@@ -9,10 +9,7 @@ import step.core.deployment.AuthorizationException;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.framework.server.Session;
 import step.framework.server.access.AuthorizationManager;
-import step.streaming.common.QuotaExceededException;
-import step.streaming.common.StreamingResourceMetadata;
-import step.streaming.common.StreamingResourceReference;
-import step.streaming.common.StreamingResourceUploadContexts;
+import step.streaming.common.*;
 import step.streaming.server.DefaultStreamingResourceManager;
 import step.streaming.server.StreamingResourcesStorageBackend;
 
@@ -39,7 +36,7 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
             logger.warn("AuthorizationManager and/or ObjectHookRegistry missing from context, all permission checks will refuse access");
         }
         //FIXME: temporary, will be configurable; null == no quota for that particular check
-        Integer maxResourcesPerExecution = 4;
+        Integer maxResourcesPerExecution = 3;
         Long maxBytesPerResource = 100L;
         Long maxBytesPerExecution = 500L;
 
@@ -62,7 +59,13 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
         String executionId = (String) uploadContexts.getContext(uploadContextId).getAttributes().get(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID);
         if (quotaChecker != null) {
             // This will throw a QuotaExceededException if quota would be exceeded. We want to avoid even creating an actual resource in this case.
-            String reservation = quotaChecker.reserveNewResource(executionId);
+            String reservation;
+            try {
+                reservation = quotaChecker.reserveNewResource(executionId);
+            } catch (QuotaExceededException e) {
+                uploadContexts.onResourceCreationRefused(uploadContextId, metadata, e.getMessage());
+                throw e;
+            }
             try {
                 String resourceId = super.registerNewResource(metadata, uploadContextId);
                 quotaChecker.bindResourceId(reservation, executionId, resourceId);
