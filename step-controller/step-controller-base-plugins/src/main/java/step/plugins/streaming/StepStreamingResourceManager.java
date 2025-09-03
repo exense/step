@@ -1,5 +1,6 @@
 package step.plugins.streaming;
 
+import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.constants.StreamingConstants;
@@ -35,15 +36,25 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
             // this shouldn't happen in production, but may be the case in some unit tests where it's harmless and not required
             logger.warn("AuthorizationManager and/or ObjectHookRegistry missing from context, all permission checks will refuse access");
         }
-        //FIXME: temporary, will be configurable; null == no quota for that particular check
-        Integer maxResourcesPerExecution = 3;
-        Long maxBytesPerResource = 100L;
-        Long maxBytesPerExecution = 500L;
+
+        // Quota enforcement (note we're internally talking about resources, but for users the term attachment is more meaningful)
+        Configuration conf = globalContext.getConfiguration();
+        Integer maxAttachmentsPerExecution = conf.getPropertyAsInteger("streaming.attachments.quota.maxAttachmentsPerExecution", 100);
+        Long maxBytesPerAttachment = conf.getPropertyAsLong("streaming.attachments.quota.maxBytesPerAttachment", 100_000_000L);
+        Long maxBytesPerExecution = conf.getPropertyAsLong("streaming.attachments.quota.maxBytesPerExecution", -1L);
+
+        // handle "unlimited" case
+        if (maxBytesPerAttachment != null && maxBytesPerAttachment < 0) maxBytesPerAttachment = null;
+        if (maxBytesPerExecution != null && maxBytesPerExecution < 0) maxBytesPerExecution = null;
+        if (maxAttachmentsPerExecution != null && maxAttachmentsPerExecution < 0) maxAttachmentsPerExecution = null;
 
         // Micro-optimization: only enable quota checker if at least one limit is to be enforced
-        if (maxResourcesPerExecution != null || maxBytesPerResource != null || maxBytesPerExecution != null) {
-            quotaChecker = new StreamingQuotaChecker(maxResourcesPerExecution, maxBytesPerResource, maxBytesPerExecution);
+        if (maxAttachmentsPerExecution != null || maxBytesPerAttachment != null || maxBytesPerExecution != null) {
+            logger.info("Streaming attachment quotas (null==unlimited): maxBytesPerAttachment={} maxBytesPerExecution={} maxAttachmentsPerExecution={}",
+                    maxBytesPerAttachment, maxBytesPerExecution, maxAttachmentsPerExecution);
+            quotaChecker = new StreamingQuotaChecker(maxAttachmentsPerExecution, maxBytesPerAttachment, maxBytesPerExecution);
         } else {
+            logger.info("Streaming attachment quota management disabled, all quotas are unlimited");
             quotaChecker = null;
         }
     }
