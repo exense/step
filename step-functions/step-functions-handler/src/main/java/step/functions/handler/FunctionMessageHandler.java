@@ -46,6 +46,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
@@ -163,9 +165,12 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 					path = path.substring(1);
 				}
 				URI uri = URI.create(String.format("%s/%s?%s=%s", host, path, StreamingResourceUploadContext.PARAMETER_NAME, uploadContextId));
+				// FIXME: this mimics the previous implementation where each provider (and therefore each function) instantiated its own thread pool.
+				//  I assume we can tighten this, for instance so we'd use a single bounded thread pool for all Keyword executions per agent.
+				ExecutorService executorService = Executors.newFixedThreadPool(100);
 
 				@SuppressWarnings("unchecked") Class<StreamingUploadProvider> aClass = (Class<StreamingUploadProvider>) Thread.currentThread().getContextClassLoader().loadClass("step.streaming.websocket.client.upload.WebsocketUploadProvider");
-				StreamingUploadProvider streamingUploadProvider = aClass.getDeclaredConstructor(URI.class).newInstance(uri);
+				StreamingUploadProvider streamingUploadProvider = aClass.getDeclaredConstructor(ExecutorService.class, URI.class).newInstance(executorService, uri);
 
 				StreamingUploadProvider proxiedProvider = (StreamingUploadProvider) Proxy.newProxyInstance(
 						aClass.getClassLoader(), new Class[]{StreamingUploadProvider.class},
