@@ -21,6 +21,8 @@ package step.functions.handler;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.constants.StreamingConstants;
 import step.core.reports.Measure;
 import step.core.reports.MeasurementsBuilder;
@@ -48,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Optional;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
@@ -57,6 +60,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
 	public static final String FUNCTION_TYPE_KEY = "$functionType";
 	public static final String BRANCH_HANDLER_INITIALIZER = "handler-initializer";
+
+	private static final Logger logger = LoggerFactory.getLogger(FunctionMessageHandler.class);
 
 	// Cached object mapper for message payload serialization
 	private final ObjectMapper mapper;
@@ -110,7 +115,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 					handlerClass, token.getSession(), token.getTokenReservationSession(), mergedAgentProperties);
 
 			// Deserialize the Input from the message payload
-			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
+			JavaType javaType = mapper.getTypeFactory().constructParametricType(Input.class, functionHandler.getInputPayloadClass());
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 
 			LiveReporting liveReporting = initializeLiveReporting(input.getProperties());
@@ -154,21 +159,43 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			// We currently only support Websocket uploads; if this changes in the future, here is the place to modify the logic.
 			String uploadContextId = properties.get(StreamingResourceUploadContext.PARAMETER_NAME);
 			if (uploadContextId != null) {
-				// This information could also be retrieved from somewhere else (e.g. this.agentTokenServices....),
-				// for now it's in the inputs provided by the controller itself.
-				String host = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
+				String host; // actually contains scheme, hostname, and potentially port.
+				// If present, agent-side configuration overrides the default value.
+				// Note: in case we use the URL in other places, this should probably be put somewhere else (maybe
+				// LiveReporting itself), but that's for the future.
+				// Note: both agentProperties or the value might be undefined.
+				String agentConfUrl = Optional.ofNullable(agentTokenServices.getAgentProperties())
+						.map(m -> m.get("step.reporting.url"))
+						.orElse(null);
+				if (agentConfUrl != null) {
+					// just a sanity check really
+					if (!agentConfUrl.matches("^https?://.+")) {
+						throw new IllegalArgumentException("Invalid URL in 'step.reporting.url' (agent-side configuration): " + agentConfUrl);
+					}
+					host = agentConfUrl.replaceAll("^http", "ws");
+				} else {
+					// The controller defines a default URL, derived from controller.url in step.properties.
+					// This is always defined, and already has the correct Websocket prefix.
+					host = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
+				}
+				// Strip trailing slashes, just in case there are any (normally not expected)
 				while (host.endsWith("/")) {
 					host = host.substring(0, host.length() - 1);
 				}
 				String path = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH);
+				// Strip leading slashes, just in case
 				while (path.startsWith("/")) {
 					path = path.substring(1);
 				}
 				URI uri = URI.create(String.format("%s/%s?%s=%s", host, path, StreamingResourceUploadContext.PARAMETER_NAME, uploadContextId));
+				if (logger.isDebugEnabled()) {
+					// Don't log context id, it's "semi-secret"
+					logger.debug("Effective URL for Websocket uploads: {}", String.format("%s/%s", host, path));
+				}
+
 				// FIXME: this mimics the previous implementation where each provider (and therefore each function) instantiated its own thread pool.
 				//  I assume we can tighten this, for instance so we'd use a single bounded thread pool for all Keyword executions per agent.
 				ExecutorService executorService = Executors.newFixedThreadPool(100);
-
 				@SuppressWarnings("unchecked") Class<StreamingUploadProvider> aClass = (Class<StreamingUploadProvider>) Thread.currentThread().getContextClassLoader().loadClass("step.streaming.websocket.client.upload.WebsocketUploadProvider");
 				StreamingUploadProvider streamingUploadProvider = aClass.getDeclaredConstructor(ExecutorService.class, URI.class).newInstance(executorService, uri);
 
