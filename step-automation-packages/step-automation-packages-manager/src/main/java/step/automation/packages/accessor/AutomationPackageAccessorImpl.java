@@ -27,4 +27,5 @@ public class AutomationPackageAccessorImpl extends AbstractAccessor<AutomationPa
     public AutomationPackageAccessorImpl(Collection<AutomationPackage> collectionDriver) {
         super(collectionDriver);
     }
+
 }

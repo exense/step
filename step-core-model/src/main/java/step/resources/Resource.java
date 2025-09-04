@@ -21,9 +21,13 @@ package step.resources;
 import org.bson.types.ObjectId;
 
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractTrackedObject;
 import step.core.objectenricher.EnricheableObject;
 
-public class Resource extends AbstractOrganizableObject implements EnricheableObject {
+import java.util.Date;
+import java.util.HashMap;
+
+public class Resource extends AbstractTrackedObject implements EnricheableObject, Cloneable {
 
 	public static final String TRACKING_FIELD = "tracking";
 
@@ -36,7 +40,17 @@ public class Resource extends AbstractOrganizableObject implements EnricheableOb
 	protected boolean directory;
 	
 	protected boolean ephemeral;
-	
+
+	protected String origin;
+
+	public Resource() {
+		this(null);
+	}
+
+	public Resource(String actorUser){
+		applyNewCreator(actorUser);
+	}
+
 	public ObjectId getCurrentRevisionId() {
 		return currentRevisionId;
 	}
@@ -75,5 +89,41 @@ public class Resource extends AbstractOrganizableObject implements EnricheableOb
 
 	public void setDirectory(boolean directory) {
 		this.directory = directory;
+	}
+
+	public String getOrigin() {
+		return origin;
+	}
+
+	public void setOrigin(String origin) {
+		this.origin = origin;
+	}
+
+	public void applyNewCreator(String actorUser){
+		Date now = new Date();
+		setCreationDate(now);
+		setCreationUser(actorUser);
+		setLastModificationDate(now);
+		setLastModificationUser(actorUser);
+	}
+
+	public Resource copy(String actorUser) {
+		try {
+			Resource copy = (Resource) this.clone();
+
+			// create new instance of attributes and custom fields
+			if (this.getAttributes() != null) {
+				copy.setAttributes(new HashMap<>(this.getAttributes()));
+			}
+			if (this.getCustomFields() != null) {
+				copy.setCustomFields(new HashMap<>(this.getCustomFields()));
+			}
+
+			// set new creation date and user
+			copy.applyNewCreator(actorUser);
+			return copy;
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException("Clone not supported", e);
+		}
 	}
 }

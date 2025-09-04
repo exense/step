@@ -32,6 +32,7 @@ import step.controller.multitenancy.client.RemoteMultitenancyClientImpl;
 import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.entities.EntityManager;
+import step.core.maven.MavenArtifactIdentifier;
 import step.functions.packages.FunctionPackage;
 import step.functions.packages.client.LibFileReference;
 import step.functions.packages.client.RemoteFunctionPackageClientImpl;
@@ -108,6 +109,7 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 
 			getLog().info("Package attributes: " + packageAttributes);
 
+			// TODO: this can be potentially replaced with some origin
 			String trackingAttribute = (getTrackingAttribute() == null || getTrackingAttribute().isEmpty())
 					? getProject().getGroupId() + "." + getProject().getArtifactId()
 					: getTrackingAttribute();
@@ -207,7 +209,8 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 				if (remoteLibArtifact.isSnapshot()) {
 					getLog().info("Actualizing snapshot library resource " + previousResource.getId());
 					try (FileInputStream is = new FileInputStream(remoteLibArtifact.getFile())) {
-						resourceManager.saveResourceContent(previousResource.getId().toString(), is, remoteLibArtifact.getFile().getName());
+						// TODO: how this even works? 'saveResourceContent' is not implemented in remote resource manager
+						resourceManager.saveResourceContent(previousResource.getId().toString(), is, remoteLibArtifact.getFile().getName(), null);
 					} catch (IOException e) {
 						throw new MojoExecutionException("Library file uploading exception", e);
 					}
@@ -215,13 +218,15 @@ public class UploadKeywordsPackageMojo extends AbstractStepPluginMojo {
 				return LibFileReference.resourceId(previousResource.getId().toString());
 			} else {
 				try (FileInputStream is = new FileInputStream(remoteLibArtifact.getFile())) {
-					Resource created = resourceManager.createResource(
+					Resource created = resourceManager.createTrackedResource(
 							ResourceManager.RESOURCE_TYPE_FUNCTIONS,
 							false,
 							is,
 							remoteLibArtifact.getFile().getName(),
-							false, null,
-							actualTrackingAttribute
+							null,
+							actualTrackingAttribute,
+							null,
+							new MavenArtifactIdentifier(remoteLibArtifact.getGroupId(), remoteLibArtifact.getArtifactId(), remoteLibArtifact.getVersion(), remoteLibArtifact.getClassifier(), "jar").toStringRepresentation()
 					);
 					getLog().info("Library resource has been created: " + created.getId().toString());
 					return LibFileReference.resourceId(created.getId().toString());

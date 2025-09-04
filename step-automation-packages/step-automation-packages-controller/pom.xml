@@ -28,6 +28,7 @@
             <version>${project.version}</version>
         </dependency>
 
+
         <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-functions-plugins-defs-all-os</artifactId>

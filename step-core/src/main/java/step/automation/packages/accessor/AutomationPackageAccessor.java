@@ -21,5 +21,8 @@ package step.automation.packages.accessor;
 import step.automation.packages.AutomationPackage;
 import step.core.accessors.Accessor;
 
+import java.util.List;
+
 public interface AutomationPackageAccessor extends Accessor<AutomationPackage> {
+
 }

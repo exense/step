@@ -37,11 +37,6 @@ import step.repositories.ArtifactRepositoryConstants;
 @Plugin(dependencies = {ControllerSettingPlugin.class, AutomationPackagePlugin.class, ParameterManagerPlugin.class, ControllerSettingPlugin.class})
 public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
 
-    private static final Logger logger = LoggerFactory.getLogger(ArtifactRepositoryPlugin.class);
-
-    public static final String MAVEN_REPO_ID = ArtifactRepositoryConstants.MAVEN_REPO_ID;
-    public static final String RESOURCE_REPO_ID = ArtifactRepositoryConstants.RESOURCE_REPO_ID;
-
     @Override
     public void afterInitializeData(GlobalContext context) throws Exception {
         super.afterInitializeData(context);
@@ -53,13 +48,14 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
                 context.require(FunctionTypeRegistry.class),
                 context.require(FunctionAccessor.class),
                 configuration, controllerSettingAccessor,
-                context.require(ParameterManager.class));
+                context.require(ParameterManager.class),
+                context.getResourceManager());
         ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(
                 context.getResourceManager(),
                 context.require(AutomationPackageManager.class),
                 context.require(FunctionTypeRegistry.class),
                 context.require(FunctionAccessor.class));
-        context.getRepositoryObjectManager().registerRepository(MAVEN_REPO_ID, mavenRepository);
-        context.getRepositoryObjectManager().registerRepository(RESOURCE_REPO_ID, resourceRepository);
+        context.getRepositoryObjectManager().registerRepository(ArtifactRepositoryConstants.MAVEN_REPO_ID, mavenRepository);
+        context.getRepositoryObjectManager().registerRepository(ArtifactRepositoryConstants.RESOURCE_REPO_ID, resourceRepository);
     }
 }

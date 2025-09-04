@@ -29,6 +29,7 @@ import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.ArtefactInfo;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.util.Map;
@@ -38,8 +39,10 @@ public abstract class AbstractArtifactRepository extends RepositoryWithAutomatio
 
 	protected static final Logger logger = LoggerFactory.getLogger(MavenArtifactRepository.class);
 
-	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor) {
-		super(canonicalRepositoryParameters, manager, functionTypeRegistry, functionAccessor);
+	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, AutomationPackageManager manager,
+									  FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor,
+									  ResourceManager resourceManager) {
+		super(canonicalRepositoryParameters, manager, functionTypeRegistry, functionAccessor, resourceManager);
 	}
 
 	protected static String getMandatoryRepositoryParameter(Map<String, String> repositoryParameters, String paramKey) {
