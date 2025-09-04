@@ -4,6 +4,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +13,7 @@ import step.attachments.FileResolver;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.AnnotationScanner;
 import step.functions.Function;
+import step.functions.manager.FunctionManagerImpl;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.ExecutionContextCacheConfiguration;
 import step.grid.contextbuilder.LocalFileApplicationContextFactory;
@@ -89,6 +91,11 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 							function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
 
 							function.getCallTimeout().setValue(annotation.timeout());
+							try {
+								FunctionManagerImpl.applyRoutingFromAnnotation(function, annotation);
+							} catch (Exception e) {
+								return handleError(functions, e);
+							}
 
 							if (packageLibrariesFile != null) {
 								function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
@@ -102,9 +109,7 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 						try {
 							res.setSchema(schemaCreator.createJsonSchemaForKeyword(m));
 						} catch (JsonSchemaPreparationException ex) {
-							functions.exception = ex.getMessage();
-							functions.functions.clear();
-							return functions;
+							return handleError(functions, ex);
 						}
 
 						String htmlTemplate = res.getAttributes().remove("htmlTemplate");
@@ -120,6 +125,12 @@ public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 		} catch (Throwable e) {
 			functions.exception = e.getClass().getName() + ": " + e.getMessage();
 		}
+		return functions;
+	}
+
+	private FunctionList handleError(FunctionList functions, Exception ex) {
+		functions.exception = ex.getMessage();
+		functions.functions.clear();
 		return functions;
 	}
 
