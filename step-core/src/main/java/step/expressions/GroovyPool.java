@@ -56,7 +56,7 @@ public class GroovyPool implements AutoCloseable{
 			if (monitoringIntervalSeconds != null) {
 				ThreadFactory threadFactory = new ThreadFactoryBuilder()
 						.setNameFormat("groovy-pool-monitor-%d")
-						.setDaemon(false)
+						.setDaemon(true)
 						.build();
 				scheduler = Executors.newScheduledThreadPool(1, threadFactory);
 				scheduler.scheduleAtFixedRate(this::checkPoolHealth, monitoringIntervalSeconds, monitoringIntervalSeconds, TimeUnit.SECONDS);
