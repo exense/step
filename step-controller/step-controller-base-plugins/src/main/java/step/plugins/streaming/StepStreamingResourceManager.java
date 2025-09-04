@@ -24,7 +24,7 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
 
     private final AuthorizationManager<User, Session<User>> authorizationManager;
     private final ObjectHookRegistry objectHookRegistry;
-    private final StreamingQuotaChecker quotaChecker;
+    private final QuotaCheckers quotaCheckers;
 
     @SuppressWarnings("unchecked")
     public StepStreamingResourceManager(GlobalContext globalContext, StreamingResourceCollectionCatalogBackend catalog, StreamingResourcesStorageBackend storage, Function<String, StreamingResourceReference> referenceProducerFunction, StreamingResourceUploadContexts uploadContexts) {
@@ -37,26 +37,9 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
             logger.warn("AuthorizationManager and/or ObjectHookRegistry missing from context, all permission checks will refuse access");
         }
 
-        // Quota enforcement (note we're internally talking about resources, but for users the term attachment is more meaningful)
-        Configuration conf = globalContext.getConfiguration();
-        Integer maxAttachmentsPerExecution = conf.getPropertyAsInteger("streaming.attachments.quota.maxAttachmentsPerExecution", 100);
-        Long maxBytesPerAttachment = conf.getPropertyAsLong("streaming.attachments.quota.maxBytesPerAttachment", 100_000_000L);
-        Long maxBytesPerExecution = conf.getPropertyAsLong("streaming.attachments.quota.maxBytesPerExecution", -1L);
-
-        // handle "unlimited" case
-        if (maxBytesPerAttachment != null && maxBytesPerAttachment < 0) maxBytesPerAttachment = null;
-        if (maxBytesPerExecution != null && maxBytesPerExecution < 0) maxBytesPerExecution = null;
-        if (maxAttachmentsPerExecution != null && maxAttachmentsPerExecution < 0) maxAttachmentsPerExecution = null;
-
-        // Micro-optimization: only enable quota checker if at least one limit is to be enforced
-        if (maxAttachmentsPerExecution != null || maxBytesPerAttachment != null || maxBytesPerExecution != null) {
-            logger.info("Streaming attachment quotas (null==unlimited): maxBytesPerAttachment={} maxBytesPerExecution={} maxAttachmentsPerExecution={}",
-                    maxBytesPerAttachment, maxBytesPerExecution, maxAttachmentsPerExecution);
-            quotaChecker = new StreamingQuotaChecker(maxAttachmentsPerExecution, maxBytesPerAttachment, maxBytesPerExecution);
-        } else {
-            logger.info("Streaming attachment quota management disabled, all quotas are unlimited");
-            quotaChecker = null;
-        }
+        QuotaLimits globalLimits = QuotaLimits.fromStepProperties(globalContext.getConfiguration());
+        logger.info("Streaming attachment global quotas (null==unlimited): {}", globalLimits);
+        quotaCheckers = new QuotaCheckers(globalLimits);
     }
 
     @Override
@@ -67,22 +50,28 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
 
     @Override
     public String registerNewResource(StreamingResourceMetadata metadata, String uploadContextId) throws QuotaExceededException, IOException {
-        String executionId = (String) uploadContexts.getContext(uploadContextId).getAttributes().get(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID);
+        // guaranteed to exist because we require upload context
+        StreamingResourceUploadContext uploadContext = uploadContexts.getContext(uploadContextId);
+        String executionId = (String) uploadContext.getAttributes().get(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID);
+        QuotaChecker quotaChecker = quotaCheckers.getForExecution(executionId, uploadContext);
         if (quotaChecker != null) {
             // This will throw a QuotaExceededException if quota would be exceeded. We want to avoid even creating an actual resource in this case.
             String reservation;
             try {
-                reservation = quotaChecker.reserveNewResource(executionId);
+                reservation = quotaChecker.reserveNewResource();
             } catch (QuotaExceededException e) {
                 uploadContexts.onResourceCreationRefused(uploadContextId, metadata, e.getMessage());
                 throw e;
             }
             try {
                 String resourceId = super.registerNewResource(metadata, uploadContextId);
-                quotaChecker.bindResourceId(reservation, executionId, resourceId);
+                // bind resource in checker for tracking
+                quotaChecker.bindResourceId(reservation, resourceId);
+                // register this tracker for quick lookup for per-resource updates
+                quotaCheckers.setForResource(resourceId, quotaChecker);
                 return resourceId;
             } catch (IOException e) {
-                quotaChecker.cancelReservation(executionId, reservation);
+                quotaChecker.cancelReservation(reservation);
                 throw e;
             }
         } else {
@@ -92,6 +81,7 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
 
     @Override
     protected void onSizeChanged(String resourceId, long currentSize) throws QuotaExceededException {
+        QuotaChecker quotaChecker = quotaCheckers.getForResource(resourceId);
         if (quotaChecker != null) {
             // throws QuotaExceededException when quotas are exceeded.
             // Any other kind of exception would probably be caused by a bug somewhere...
@@ -99,12 +89,10 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
         }
     }
 
-    // Required to know when executions are finished, so quota checker can clean up.
+    // Required to know when executions are finished, so quota checkers can be cleaned up.
     // "registration" is done automatically and on the fly.
     void unregisterExecution(String executionId) {
-        if (quotaChecker != null) {
-            quotaChecker.unregisterExecution(executionId);
-        }
+        quotaCheckers.removeExecution(executionId);
     }
 
 

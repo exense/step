@@ -233,6 +233,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					uploadContext = new StreamingResourceUploadContext();
 					uploadContexts.registerContext(uploadContext);
 					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID, context.getExecutionId());
+					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.VARIABLES_MANAGER, context.getVariablesManager());
+					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.REPORT_NODE, node);
 					ObjectEnricher enricher = context.getObjectEnricher();
 					if (enricher != null) {
 						uploadContext.getAttributes().put(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER, enricher);

@@ -128,6 +128,8 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
                 executionContext.put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, UPLOAD_PATH);
             }
 
+
+
             @Override
             public void afterExecutionEnd(ExecutionContext context) {
                 // unregisters the execution with manager (registration is on-demand,
