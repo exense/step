@@ -30,6 +30,7 @@ import step.artefacts.handlers.functions.FunctionGroupSession;
 import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.attachments.SkippedAttachmentMeta;
 import step.attachments.StreamingAttachmentMeta;
 import step.common.managedoperations.OperationManager;
 import step.constants.StreamingConstants;
@@ -226,12 +227,14 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				so we can populate the attachment metadata in realtime and attach it to the report node.
 				*/
 
-				// FIXME: This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
+				// FIXME: SED-4192 (Step 30+) This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
                 StreamingResourceUploadContexts uploadContexts = context.get(StreamingResourceUploadContexts.class);
 				if (uploadContexts != null) {
 					uploadContext = new StreamingResourceUploadContext();
 					uploadContexts.registerContext(uploadContext);
 					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID, context.getExecutionId());
+					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.VARIABLES_MANAGER, context.getVariablesManager());
+					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.REPORT_NODE, node);
 					ObjectEnricher enricher = context.getObjectEnricher();
 					if (enricher != null) {
 						uploadContext.getAttributes().put(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER, enricher);
@@ -243,6 +246,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 
 					uploadContexts.registerListener(uploadContext.contextId, new StreamingResourceUploadContextListener() {
+
+						@Override
+						public void onResourceCreationRefused(StreamingResourceMetadata metadata, String reasonPhrase) {
+							node.getAttachments().add(new SkippedAttachmentMeta(metadata.getFilename(), reasonPhrase));
+							reportNodeAccessor.save(node);
+						}
 
 						@Override
 						public void onResourceCreated(String resourceId, StreamingResourceMetadata metadata) {
