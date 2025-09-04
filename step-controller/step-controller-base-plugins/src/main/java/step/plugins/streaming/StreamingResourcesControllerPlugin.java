@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.constants.StreamingConstants;
 import step.core.GlobalContext;
+import step.core.controller.StepControllerPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
@@ -20,7 +21,9 @@ import step.engine.plugins.ExecutionEnginePlugin;
 import step.resources.ResourceManagerControllerPlugin;
 import step.resources.StreamingResourceContentProvider;
 import step.streaming.common.StreamingResourceUploadContexts;
-import step.streaming.server.*;
+import step.streaming.server.FilesystemStreamingResourcesStorageBackend;
+import step.streaming.server.StreamingResourceManager;
+import step.streaming.server.URITemplateBasedReferenceProducer;
 import step.streaming.websocket.server.DefaultWebsocketServerEndpointSessionsHandler;
 import step.streaming.websocket.server.WebsocketDownloadEndpoint;
 import step.streaming.websocket.server.WebsocketServerEndpointSessionsHandler;
@@ -48,21 +51,8 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
 
-        // FIXME: this is quick and dirty for now, so it runs both on dev machines (OS/EE) and (hopefully) the grid.
-        // There needs to be some better logic.
-        int controllerPort = context.getConfiguration().getPropertyAsInteger("port", 8080);
-        String controllerUrl = context.getConfiguration().getProperty("controller.url");
-        if (controllerUrl == null) {
-            controllerUrl = "http://localhost:" + controllerPort;
-            logger.warn("controller.url is not set in step.properties, unable to determine correct URL for streaming services. Will use {} instead, but this will not be accessible remotely.", controllerUrl);
-        } else if (controllerUrl.equals("http://localhost:4201")) {
-            // adjust (only for websockets, not globally)
-            controllerUrl = "http://localhost:" + controllerPort;
-        }
-        // remove trailing slash if present
-        if (controllerUrl.endsWith("/")) {
-            controllerUrl = controllerUrl.substring(0, controllerUrl.length() - 1);
-        }
+        String controllerUrl = StepControllerPlugin.getControllerUrl(context.getConfiguration(), true, true);
+        // We need the websocket variant
         URI websocketBaseUri = URI.create(controllerUrl.replaceFirst("^http", "ws"));
 
         websocketBaseUrl = websocketBaseUri.toString();
@@ -86,6 +76,7 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     private static class EndpointConfigurator extends ServerEndpointConfig.Configurator {
 
         private final Supplier<Endpoint> constructor;
+
         public EndpointConfigurator(Supplier<Endpoint> constructor) {
             this.constructor = constructor;
         }
@@ -135,6 +126,8 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
                 executionContext.put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, websocketBaseUrl);
                 executionContext.put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, UPLOAD_PATH);
             }
+
+
 
             @Override
             public void afterExecutionEnd(ExecutionContext context) {
