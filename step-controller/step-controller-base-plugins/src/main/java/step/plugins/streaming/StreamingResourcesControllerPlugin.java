@@ -11,6 +11,7 @@ import step.constants.StreamingConstants;
 import step.core.GlobalContext;
 import step.core.controller.StepControllerPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.AbstractControllerPlugin;
@@ -18,6 +19,7 @@ import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.resources.ResourceManagerControllerPlugin;
+import step.resources.StreamingResourceContentProvider;
 import step.streaming.common.StreamingResourceUploadContexts;
 import step.streaming.server.FilesystemStreamingResourcesStorageBackend;
 import step.streaming.server.StreamingResourceManager;
@@ -111,6 +113,12 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
         return new AbstractExecutionEnginePlugin() {
+            @Override
+            public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
+                // required by AP reporting for fetching attachments
+                executionEngineContext.put(StreamingResourceContentProvider.class, manager);
+            }
+
             @Override
             public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
                 // Makes streaming available to the execution

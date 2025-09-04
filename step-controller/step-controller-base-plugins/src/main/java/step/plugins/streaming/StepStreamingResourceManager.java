@@ -10,14 +10,16 @@ import step.core.deployment.AuthorizationException;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.framework.server.Session;
 import step.framework.server.access.AuthorizationManager;
+import step.resources.StreamingResourceContentProvider;
 import step.streaming.common.*;
 import step.streaming.server.DefaultStreamingResourceManager;
 import step.streaming.server.StreamingResourcesStorageBackend;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.function.Function;
 
-public class StepStreamingResourceManager extends DefaultStreamingResourceManager {
+public class StepStreamingResourceManager extends DefaultStreamingResourceManager implements StreamingResourceContentProvider {
     private static final Logger logger = LoggerFactory.getLogger(StepStreamingResourceManager.class);
     static final String ATTRIBUTE_STEP_SESSION = "stepSession";
 
@@ -129,5 +131,10 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
         } catch (Exception e) {
             throw new AuthorizationException(e.getMessage());
         }
+    }
+
+    @Override
+    public InputStream getResourceContentStream(String resourceId) throws Exception {
+        return openStream(resourceId, 0, getStatus(resourceId).getCurrentSize());
     }
 }

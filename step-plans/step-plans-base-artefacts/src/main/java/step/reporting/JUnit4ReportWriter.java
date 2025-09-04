@@ -24,6 +24,8 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestSet;
+import step.attachments.SkippedAttachmentMeta;
+import step.attachments.StreamingAttachmentMeta;
 import step.reports.CustomReportType;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.reports.*;
@@ -343,9 +345,12 @@ public class JUnit4ReportWriter implements ReportWriter {
 
 	private void writeAttachmentTag(String testCaseId, AttachmentMeta attachment, Writer writer, String reportFileName) {
 		if (junit4ReportConfig.isAddAttachments() && junit4ReportConfig.getAttachmentResourceManager() != null) {
+			// Writes tags similar to the following example to the report:
 			// [[ATTACHMENT|screenshots/dashboard.png]]
-			ResourceRevisionFileHandle content = junit4ReportConfig.getAttachmentResourceManager().getResourceFile(attachment.getId().toString());
-
+			if (attachment instanceof SkippedAttachmentMeta) {
+				log.warn("Unable to add attachment to report {} as the attachment was skipped during execution: id={} name={}", reportFileName, attachment.getId(), attachment.getName());
+				return;
+			}
 			String rootFolder = junit4ReportConfig.getAttachmentsRootFolder();
 			if (rootFolder == null) {
 				rootFolder = "";
@@ -363,10 +368,8 @@ public class JUnit4ReportWriter implements ReportWriter {
 				subfolders += File.separator;
 			}
 
-			// TODO: maybe add timestamp to guarantee unique name
-			String attachmentFileName = content.getResourceFile().getName();
 			try {
-				writer.write(String.format("[[ATTACHMENT|%s%s]]",  rootFolder + subfolders + testCaseId + File.separator, attachmentFileName));
+				writer.write(String.format("[[ATTACHMENT|%s%s]]", rootFolder + subfolders + testCaseId + File.separator, attachment.getName()));
 				writer.write('\n');
 			} catch (Exception ex) {
 				log.error("Unable to add the attachment to junit report", ex);
