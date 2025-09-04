@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.expressions;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public class GroovyPool implements AutoCloseable{
@@ -52,11 +54,11 @@ public class GroovyPool implements AutoCloseable{
 			pool.setTimeBetweenEvictionRuns(Duration.ofMillis(30000));;
 			pool.setMinEvictableIdle(Duration.ofMillis(-1));
 			if (monitoringIntervalSeconds != null) {
-				scheduler = Executors.newScheduledThreadPool(1, r -> {
-					Thread thread = new Thread(r, "GroovyPoolMonitor");
-					thread.setDaemon(true);
-					return thread;
-				});
+				ThreadFactory threadFactory = new ThreadFactoryBuilder()
+						.setNameFormat("groovy-pool-monitor-%d")
+						.setDaemon(false)
+						.build();
+				scheduler = Executors.newScheduledThreadPool(1, threadFactory);
 				scheduler.scheduleAtFixedRate(this::checkPoolHealth, monitoringIntervalSeconds, monitoringIntervalSeconds, TimeUnit.SECONDS);
 			}
 		} catch(Exception e) {
@@ -98,7 +100,8 @@ public class GroovyPool implements AutoCloseable{
 			int maxTotal = pool.getMaxTotal();
 
 			if (active >= maxTotal * 0.9) { // 90% threshold
-				logger.warn("Groovy pool nearly exhausted: {}/{} active objects", active, maxTotal);
+				logger.warn("Groovy pool capacity at risk: {}/{} active objects. You could increase the total pool size in the step.properties (i.e. tec.expressions.pool.maxtotal=" + maxTotal*2 + ")"
+						, active, maxTotal);
 			}
 			checkHotKeys(numActivePerKey);
 		} catch (Exception e) {
@@ -111,7 +114,7 @@ public class GroovyPool implements AutoCloseable{
 		int maxPerKey = pool.getMaxTotalPerKey();
 		numActivePerKey.forEach((key,activePerKey) -> {
 			if (activePerKey >= maxPerKey * 0.9) {
-				logger.warn("Pool exhausted for expression '{}': {}/{} active",
+				logger.warn("Groovy pool capacity at risk for expression '{}': {}/{} active. You could increase the pool size per expression in the step.properties (i.e. tec.expressions.pool.maxTotalPerKey=" + maxPerKey*2 + ")",
 						key, activePerKey, maxPerKey);
 			}
 		});
