@@ -21,9 +21,10 @@ package step.core.agents.provisioning.driver;
 
 import step.core.agents.provisioning.AgentPoolSpec;
 
+import java.io.Closeable;
 import java.util.Set;
 
-public interface AgentProvisioningDriver {
+public interface AgentProvisioningDriver extends Closeable {
 
     /**
      * @return the agent provisioning configuration
@@ -68,4 +69,8 @@ public interface AgentProvisioningDriver {
      * @param agentPoolSpecs the specification of the remote agent pool to be registered
      */
     void registerRemoteAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs);
+
+    default void close() {
+        // Default implementation does nothing
+    }
 }
