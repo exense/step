@@ -20,8 +20,14 @@ package step.cli;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.client.model.AutomationPackageSource;
+import step.automation.packages.client.model.FileSource;
+import step.automation.packages.client.model.MavenSnippetSource;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
+import step.core.maven.MavenArtifactIdentifier;
+
+import java.io.File;
 
 public abstract class AbstractCliTool implements CliToolLogging {
 
@@ -76,6 +82,63 @@ public abstract class AbstractCliTool implements CliToolLogging {
     protected void addProjectHeaderToRemoteClient(String stepProjectName, AbstractRemoteClient remoteClient) {
         if (stepProjectName != null && !stepProjectName.isEmpty()) {
             remoteClient.getHeaders().addProjectName(stepProjectName);
+        }
+    }
+
+    protected String createMavenArtifactXml(MavenArtifactIdentifier identifier) {
+        if (identifier == null) {
+            return null;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("<dependency>");
+
+        builder.append("<groupId>");
+        if(identifier.getGroupId() != null){
+            builder.append(identifier.getGroupId());
+        }
+        builder.append("</groupId>");
+
+        builder.append("<artifactId>");
+        if(identifier.getArtifactId() != null){
+            builder.append(identifier.getArtifactId());
+        }
+        builder.append("</artifactId>");
+
+        builder.append("<version>");
+        if(identifier.getVersion() != null){
+            builder.append(identifier.getVersion());
+        }
+        builder.append("</version>");
+
+        // classifier and type are optional fields
+        if (identifier.getClassifier() != null) {
+            builder.append("<classifier>");
+            builder.append(identifier.getClassifier());
+            builder.append("</classifier>");
+        }
+
+        if (identifier.getType() != null) {
+            builder.append("<type>");
+            builder.append(identifier.getType());
+            builder.append("</type>");
+        }
+
+        builder.append("</dependency>");
+        return builder.toString();
+    }
+
+    protected AutomationPackageSource createSource(File file, String mavenSnippet) {
+        if (mavenSnippet != null && file != null) {
+            throw new IllegalArgumentException("You cannot use both file and maven snippet as file source");
+        }
+
+        if (mavenSnippet != null) {
+            return new MavenSnippetSource(mavenSnippet);
+        } else if (file != null) {
+            return new FileSource(file);
+        } else {
+            return null;
         }
     }
 }

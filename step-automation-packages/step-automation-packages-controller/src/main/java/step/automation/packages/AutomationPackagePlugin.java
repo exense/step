@@ -27,6 +27,7 @@ import step.automation.packages.execution.AutomationPackageExecutor;
 import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
+import step.core.agents.provisioning.driver.AgentProvisioningStatus;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
@@ -45,6 +46,7 @@ import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManagerControllerPlugin;
 
 import java.io.File;
+import java.util.Map;
 
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS;
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
@@ -68,16 +70,15 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         automationPackageLocks = new AutomationPackageLocks(readLockTimeout);
         context.put(AutomationPackageLocks.class, automationPackageLocks);
 
-        AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(
-                context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class)
-        );
+        Collection<AutomationPackage> collection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
+
+        AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(collection);
         context.put(AutomationPackageAccessor.class, packageAccessor);
         context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
 
-        Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
-
-        Table<AutomationPackage> collection = new Table<>(automationPackageCollection, "automation-package-read", true);
-        context.get(TableRegistry.class).register(AutomationPackageEntity.entityName, collection);
+        Table<AutomationPackage> table = new Table<>(collection, "automation-package-read", true)
+                .withResultItemTransformer(new AutomationPackageTableTransformer(context.getResourceManager()));
+        context.get(TableRegistry.class).register(AutomationPackageEntity.entityName, table);
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
 

@@ -31,4 +31,9 @@ public class LayeredResourceAccessor extends LayeredAccessor<Resource> implement
     public LayeredResourceAccessor(List<? extends Accessor<Resource>> accessors) {
         super(accessors);
     }
+
+    @Override
+    public List<Resource> findByOrigin(String origin) {
+        return layeredLookup(resourceAccessor -> ((ResourceAccessor) resourceAccessor).findByOrigin(origin));
+    }
 }

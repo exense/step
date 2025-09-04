@@ -36,8 +36,6 @@ import step.core.maven.MavenArtifactIdentifier;
 import step.core.plans.PlanFilter;
 import step.core.plans.filters.*;
 import step.core.plans.runner.PlanRunnerResult;
-import step.core.repositories.RepositoryObjectReference;
-import step.repositories.ArtifactRepositoryConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,12 +45,12 @@ import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTool {
+public class ExecuteAutomationPackageTool extends AbstractCliTool {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractExecuteAutomationPackageTool.class);
+    private static final Logger logger = LoggerFactory.getLogger(ExecuteAutomationPackageTool.class);
     private final Params params;
 
-    public AbstractExecuteAutomationPackageTool(String url, Params params) {
+    public ExecuteAutomationPackageTool(String url, Params params) {
         super(url);
         this.params = params;
     }
@@ -75,6 +73,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     }
 
     protected void executePackageOnStep() throws StepCliExecutionException {
+        params.validate();
+
         File outputFolder = null;
 
         // prepare folders to store requested reports
@@ -105,18 +105,14 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient();
              RemoteExecutionManager remoteExecutionManager = createRemoteExecutionManager()) {
-            File automationPackageFile = null;
-
-            // if group id and artifact id are specified, this means, that don't want to send the artifact (binary) to the controller,
-            if (useLocalArtifact()) {
-                automationPackageFile = getAutomationPackageFile();
-            }
-
             IsolatedAutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
 
             List<String> executionIds;
             try {
-                executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
+                executionIds = automationPackageClient.executeAutomationPackage(
+                        createSource(params.getAutomationPackageFile(), createMavenArtifactXml(params.getAutomationPackageMavenArtifact())),
+                        executionParameters,
+                        createSource(params.getKeywordLibraryFile(), createMavenArtifactXml(params.getKeywordLibraryMavenArtifact())));
             } catch (AutomationPackageClientException e) {
                 throw logAndThrow("Error while executing automation package: " + e.getMessage());
             }
@@ -181,7 +177,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     }
 
     protected boolean useLocalArtifact() {
-        return params.getMavenArtifactIdentifier() == null;
+        return params.getAutomationPackageMavenArtifact() == null;
     }
 
     protected void waitForExecutionFinish(RemoteExecutionManager remoteExecutionManager, List<String> executionIds) throws StepCliExecutionException {
@@ -239,8 +235,6 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         }
     }
 
-    protected abstract File getAutomationPackageFile() throws StepCliExecutionException;
-
     @Override
     protected ControllerCredentials getControllerCredentials() {
         String authToken = params.getAuthToken();
@@ -273,16 +267,6 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         executionParameters.setWrapIntoTestSet(params.getWrapIntoTestSet());
         executionParameters.setNumberOfThreads(params.getNumberOfThreads());
 
-        if (params.getMavenArtifactIdentifier() != null) {
-            Map<String, String> repositoryParameters = new HashMap<>();
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, params.getMavenArtifactIdentifier().getArtifactId());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, params.getMavenArtifactIdentifier().getGroupId());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, params.getMavenArtifactIdentifier().getVersion());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, params.getMavenArtifactIdentifier().getClassifier());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE, params.getMavenArtifactIdentifier().getType());
-            executionParameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, repositoryParameters));
-        }
-
         return executionParameters;
     }
 
@@ -308,6 +292,11 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     }
 
     public static class Params {
+        private File automationPackageFile;
+        private MavenArtifactIdentifier automationPackageMavenArtifact;
+        private File keywordLibraryFile;
+        private MavenArtifactIdentifier keywordLibraryMavenArtifact;
+
         private String stepProjectName;
         private String userId;
         private String authToken;
@@ -321,12 +310,13 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         private String excludePlans;
         private Boolean wrapIntoTestSet;
         private Integer numberOfThreads;
-        private MavenArtifactIdentifier mavenArtifactIdentifier;
+
         private String includeCategories;
         private String excludeCategories;
 
         private List<Report> reports;
         private File reportOutputDir;
+
 
         public String getStepProjectName() {
             return stepProjectName;
@@ -372,8 +362,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return excludeCategories;
         }
 
-        public MavenArtifactIdentifier getMavenArtifactIdentifier() {
-            return mavenArtifactIdentifier;
+        public MavenArtifactIdentifier getAutomationPackageMavenArtifact() {
+            return automationPackageMavenArtifact;
         }
 
         public Boolean getWrapIntoTestSet() {
@@ -447,8 +437,8 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
             return this;
         }
 
-        public Params setMavenArtifactIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier) {
-            this.mavenArtifactIdentifier = mavenArtifactIdentifier;
+        public Params setAutomationPackageMavenArtifact(MavenArtifactIdentifier automationPackageMavenArtifact) {
+            this.automationPackageMavenArtifact = automationPackageMavenArtifact;
             return this;
         }
 
@@ -470,6 +460,42 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         public Params setReports(List<Report> reports) {
             this.reports = reports;
             return this;
+        }
+
+        public File getKeywordLibraryFile() {
+            return keywordLibraryFile;
+        }
+
+        public Params setKeywordLibraryFile(File keywordLibraryFile) {
+            this.keywordLibraryFile = keywordLibraryFile;
+            return this;
+        }
+
+        public MavenArtifactIdentifier getKeywordLibraryMavenArtifact() {
+            return keywordLibraryMavenArtifact;
+        }
+
+        public Params setKeywordLibraryMavenArtifact(MavenArtifactIdentifier keywordLibraryMavenArtifact) {
+            this.keywordLibraryMavenArtifact = keywordLibraryMavenArtifact;
+            return this;
+        }
+
+        public File getAutomationPackageFile() {
+            return automationPackageFile;
+        }
+
+        public Params setAutomationPackageFile(File automationPackageFile) {
+            this.automationPackageFile = automationPackageFile;
+            return this;
+        }
+
+        public void validate() throws StepCliExecutionException {
+            if (getAutomationPackageFile() != null && getAutomationPackageMavenArtifact() != null) {
+                throw new StepCliExecutionException("Invalid parameters detected. The automation package should be referenced either as local file or as maven snipped");
+            }
+            if (getKeywordLibraryFile() != null && getKeywordLibraryMavenArtifact() != null) {
+                throw new StepCliExecutionException("Invalid parameters detected. The keyword library should be referenced either as local file or as maven snipped");
+            }
         }
     }
 
