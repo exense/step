@@ -8,9 +8,10 @@ public class SkippedAttachmentMeta extends AttachmentMeta {
         super(null);
     }
 
-    public SkippedAttachmentMeta(String name, String reason) {
+    public SkippedAttachmentMeta(String name, String mimeType, String reason) {
         super(null);
         this.name = name;
+        this.mimeType = mimeType;
         this.reason = reason;
     }
 
