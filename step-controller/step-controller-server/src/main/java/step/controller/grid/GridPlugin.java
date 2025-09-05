@@ -42,10 +42,12 @@ import step.grid.client.GridClient;
 import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.client.TokenLifecycleStrategy;
+import step.grid.client.security.ClientSecurityConfiguration;
 import step.grid.contextbuilder.ExecutionContextCacheConfiguration;
 import step.grid.filemanager.FileManagerConfiguration;
 import step.grid.filemanager.FileManagerImplConfig;
 import step.grid.io.AgentErrorCode;
+import step.grid.security.SecurityConfiguration;
 import step.resources.ResourceManagerControllerPlugin;
 
 @Plugin(dependencies= {ResourceManagerControllerPlugin.class})
@@ -57,6 +59,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 	public static final String GRID_FILENAMANGER_FILE_CLEANUP_ENABLED = "grid.filenamanger.file.cleanup.enabled";
 	public static final String GRID_FILENAMANGER_FILE_CLEANUP_INTERVAL_MINUTES = "grid.filenamanger.file.cleanup.interval.minutes";
 	public static final String GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES = "grid.filemanager.file.cleanup.last.access.threshold.minutes";
+	public static final String AGENT_SERVICES_JWT_SECRET_KEY = "grid.client.agentServices.jwtSecretKey";
 
 	private GridImpl grid;
 	private GridClient client;
@@ -68,11 +71,15 @@ public class GridPlugin extends AbstractControllerPlugin {
 		
 		Integer gridPort = configuration.getPropertyAsInteger("grid.port",8081);
 		Integer tokenTTL = configuration.getPropertyAsInteger("grid.ttl",60000);
-		
+		String jwtSecretKey = configuration.getProperty("grid.security.jwtSecretKey");
+
 		String fileManagerPath = configuration.getProperty("grid.filemanager.path", "filemanager");
 		
 		GridImplConfig gridConfig = new GridImplConfig();
 		gridConfig.setTtl(tokenTTL);
+		if (jwtSecretKey != null && !jwtSecretKey.isEmpty()) {
+			gridConfig.setSecurity(new SecurityConfiguration(true, jwtSecretKey));
+		}
 
 		gridConfig.setTokenAffinityEvaluatorClass(configuration.getProperty("grid.tokens.affinityevaluator.classname"));
 		Map<String, String> tokenAffinityEvaluatorProperties = configuration.getPropertyNames().stream().filter(p->(p instanceof String && p.toString().startsWith("grid.tokens.affinityevaluator")))
@@ -147,6 +154,10 @@ public class GridPlugin extends AbstractControllerPlugin {
 		gridClientConfiguration.setAllowInvalidSslCertificates(configuration.getPropertyAsBoolean("grid.client.ssl.allowinvalidcertificate", false));
 		gridClientConfiguration.setMaxStringLength(configuration.getPropertyAsInteger("grid.client.max.string.length.bytes", gridClientConfiguration.getMaxStringLength()));
 		gridClientConfiguration.setLocalTokenExecutionContextCacheConfiguration(new ExecutionContextCacheConfiguration());
+		String jwtSecretKey = configuration.getProperty(AGENT_SERVICES_JWT_SECRET_KEY);
+		if (jwtSecretKey != null) {
+			gridClientConfiguration.setSecurity(new ClientSecurityConfiguration(jwtSecretKey));
+		}
 		return gridClientConfiguration;
 	}
 
