@@ -21,6 +21,8 @@ package step.expressions;
 import groovy.lang.GroovyObjectSupport;
 import org.codehaus.groovy.runtime.InvokerHelper;
 
+import java.util.Arrays;
+
 public class ProtectedBinding extends GroovyObjectSupport {
     public static final String OBFUSCATE_MARKER = "***";
     public final Object value;
@@ -69,8 +71,8 @@ public class ProtectedBinding extends GroovyObjectSupport {
         if (context != null && context.canAccessProtectedValue()) {
             // Special handling for String plus method to use our custom logic
             if ("plus".equals(methodName) && value instanceof String) {
-                Object newValue = InvokerHelper.invokeMethod(value, methodName, args);
-                Object newObfuscatedValue = InvokerHelper.invokeMethod(obfuscatedValue, methodName, args);
+                Object newValue = InvokerHelper.invokeMethod(value, methodName, transformArgs(args, false));
+                Object newObfuscatedValue = InvokerHelper.invokeMethod(obfuscatedValue, methodName, transformArgs(args, true));
                 return new ProtectedBinding(newValue, key+"+", newObfuscatedValue.toString());
             } else {
                 Object o = InvokerHelper.invokeMethod(value, methodName, args);
@@ -80,6 +82,20 @@ public class ProtectedBinding extends GroovyObjectSupport {
         } else {
             throw new ProtectedPropertyException("Cannot invoke method '" + methodName + "' on the protected variable '" + key + "'");
         }
+    }
+
+    private Object transformArgs(Object args, boolean obfuscated) {
+        if (args.getClass().isArray()) {
+            Object[] array = (Object[]) args;
+            return Arrays.stream(array).map(e -> transformObject(obfuscated, e)).toArray();
+        } else {
+            return transformObject(obfuscated, args);
+        }
+    }
+
+    private static Object transformObject(boolean obfuscated, Object e) {
+        return (e instanceof ProtectedBinding) ? obfuscated ?
+                ((ProtectedBinding) e).obfuscatedValue : ((ProtectedBinding) e).value : e;
     }
 
     @Override

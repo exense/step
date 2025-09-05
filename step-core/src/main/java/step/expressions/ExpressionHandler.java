@@ -129,6 +129,10 @@ public class ExpressionHandler implements AutoCloseable {
 					}
 				}
 
+				// Handle GString results that contain ProtectedBinding
+				if (result instanceof GString) {
+					result = ProtectionAwareGroovySetup.handleGStringWithProtectedBindings((GString) result);
+				}
 				if(logger.isDebugEnabled()) {
 					logger.debug("Groovy result:\n" + result);
 				}

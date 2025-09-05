@@ -311,7 +311,7 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 		assertNull(node.getError());
 		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
 		assertEquals("{\"protectedParamInput\":\"protectedParamValue\",\"simpleParamInput\":\"simpleParamValue\",\"simpleValueInput\":\"simpleValue\",\"concatInput\":\"simpleParamValueprotectedParamValue\",\"protectedParamProperty\":\"protectedParamValue\",\"simpleParamProperty\":\"simpleParamValue\",\"keywordParam1Property\":\"keywordParam1Value\",\"keywordParam2PropertyIsNull\":true}", node.getOutput());
-		assertEquals("{\"protectedParam\":\"***protectedParam***\",\"simpleValue\":\"simpleValue\",\"simpleParam\":\"simpleParamValue\",\"concat\":\"***simpleParamValue***protectedParam******\"}", node.getInput());
+		assertEquals("{\"protectedParam\":\"***protectedParam***\",\"simpleValue\":\"simpleValue\",\"simpleParam\":\"simpleParamValue\",\"concat\":\"simpleParamValue***protectedParam***\"}", node.getInput());
 	}
 
 	@Test

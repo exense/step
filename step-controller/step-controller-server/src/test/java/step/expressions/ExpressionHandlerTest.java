@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -84,6 +85,7 @@ public class ExpressionHandlerTest {
             Map<String, Object> b = new HashMap<>();
             b.put("simpleBinding", "value");
             b.put("protectedBinding", new ProtectedBinding("protectedValue", "protectedBinding"));
+            b.put("otherProtectedBinding", new ProtectedBinding("otherProtectedValue", "otherProtectedBinding"));
             o = e.evaluateGroovyExpression("simpleBinding", b, false);
             assertEquals("value", o.toString());
             assertThrows("Error while resolving groovy properties in expression: 'protectedBinding'. The property 'protectedBinding' is protected and can only be used as Keyword's inputs or Keyword's properties.",
@@ -100,12 +102,12 @@ public class ExpressionHandlerTest {
             assertThrows("Error while resolving groovy properties in expression: 'simpleBinding + \" \" + protectedBinding'. The property 'protectedBinding' is protected and can only be used as Keyword's inputs or Keyword's properties.",
                     RuntimeException.class, () -> e.evaluateGroovyExpression("simpleBinding + \" \"+ protectedBinding", b, false));
 
-            o = e.evaluateGroovyExpression("simpleBinding + \" \"+ protectedBinding", b, true);
-            assertEquals("***value ***protectedBinding******", o.toString());
+            o = e.evaluateGroovyExpression("\"some text: \" + simpleBinding + \" \"+ protectedBinding", b, true);
+            assertEquals("some text: value ***protectedBinding***", o.toString());
             assertTrue(o instanceof ProtectedBinding);
             pb = (ProtectedBinding) o;
-            assertEquals("value protectedValue", pb.value.toString());
-            assertEquals("***value ***protectedBinding******", pb.obfuscatedValue);
+            assertEquals("some text: value protectedValue", pb.value.toString());
+            assertEquals("some text: value ***protectedBinding***", pb.obfuscatedValue);
 
             o = e.evaluateGroovyExpression("protectedBinding  + \" \" + simpleBinding", b, true);
             assertEquals("***protectedBinding*** value", o.toString());
@@ -113,7 +115,42 @@ public class ExpressionHandlerTest {
             pb = (ProtectedBinding) o;
             assertEquals("protectedValue value", pb.value.toString());
             assertEquals("***protectedBinding*** value", pb.obfuscatedValue);
+
+            o = e.evaluateGroovyExpression("otherProtectedBinding + \" \"+ protectedBinding", b, true);
+            Assert.assertEquals("***otherProtectedBinding*** ***protectedBinding***", o.toString());
+            Assert.assertEquals("otherProtectedValue protectedValue", ((ProtectedBinding) o).value.toString());
         }
 
+    }
+
+    @Test
+    public void testProtectedBindingsWithGString() {
+        Object o;
+        try (ExpressionHandler e = new ExpressionHandler(null)) {
+            Map<String, Object> b = new HashMap<>();
+            b.put("simpleBinding", "value");
+            b.put("protectedBinding", new ProtectedBinding("protectedValue", "protectedBinding"));
+            b.put("otherProtectedBinding", new ProtectedBinding("otherProtectedValue", "otherProtectedBinding"));
+            o = e.evaluateGroovyExpression("\"${simpleBinding} ${protectedBinding}\"", b, true);
+            assertEquals("value ***protectedBinding***", o.toString());
+            assertTrue(o instanceof ProtectedBinding);
+            assertEquals("value protectedValue",((ProtectedBinding) o).value.toString());
+            assertThrows("Error while resolving groovy properties in expression: '\"${simpleBinding} ${protectedBinding}\"'. The property 'protectedBinding' is protected and can only be used as Keyword's inputs or Keyword's properties.",
+                    RuntimeException.class, () -> e.evaluateGroovyExpression("\"${simpleBinding} ${protectedBinding}\"", b, false));
+
+            o = e.evaluateGroovyExpression("\"${simpleBinding} some thing \" + simpleBinding" , b, true);
+            assertEquals("value some thing value", o.toString());
+            assertTrue(o instanceof String);
+
+            o = e.evaluateGroovyExpression("\"${otherProtectedBinding} some thing \" + protectedBinding" , b, true);
+            assertEquals("***otherProtectedBinding*** some thing ***protectedBinding***", o.toString());
+            assertTrue(o instanceof ProtectedBinding);
+            assertEquals("otherProtectedValue some thing protectedValue",((ProtectedBinding) o).value.toString());
+
+            o = e.evaluateGroovyExpression("\"${simpleBinding} some thing \" + protectedBinding" , b, true);
+            assertEquals("value some thing ***protectedBinding***", o.toString());
+            assertTrue(o instanceof ProtectedBinding);
+            assertEquals("value some thing protectedValue",((ProtectedBinding) o).value.toString());
+        }
     }
 }
