@@ -30,14 +30,13 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
-import step.expressions.ProtectableBinding;
+import step.expressions.ProtectedBinding;
 import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -70,8 +69,9 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 					
 					HashMap<String, Object> newVariable = new HashMap<>();
 					String key = testArtefact.getItem().get();
-					ProtectableBinding protectableBinding = new ProtectableBinding(dataSet.isProtectedDataSource(), nextValue.getValue(), key);
-					newVariable.put(key, protectableBinding);
+					Object value = dataSet.isProtectedDataSource() ?
+							new ProtectedBinding(nextValue.getValue(), key) : nextValue.getValue();
+					newVariable.put(key, value);
 					newVariable.put(testArtefact.getGlobalCounter().get(), rowCount);
 					newVariable.put(testArtefact.getUserItem().get(), 1);
 
@@ -141,8 +141,9 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 
 							HashMap<String, Object> newVariable = new HashMap<>();
 							String key = testArtefact.getItem().get();
-							ProtectableBinding protectableBinding = new ProtectableBinding(dataSet.isProtectedDataSource(), workItem.getValue(), key);
-							newVariable.put(key, protectableBinding);
+							Object value = dataSet.isProtectedDataSource() ?
+									new ProtectedBinding(workItem.getValue(), key) : workItem.getValue();
+							newVariable.put(key, value);
 							newVariable.put(testArtefact.getGlobalCounter().get(), i);
 							newVariable.put(testArtefact.getUserItem().get(), control.getWorkerId());
 

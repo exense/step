@@ -18,44 +18,32 @@
  ******************************************************************************/
 package step.core.dynamicbeans;
 
-public class EvaluationResult {
+/**
+ * Properties of type ProtectedDynamicValue have access to protected bindings
+ * the protected evaluation results are stored in protectedResult which is not serializable
+ * @param <T>
+ */
+public class ProtectedDynamicValue<T> extends DynamicValue<T> {
 
-	Object resultValue;
-
-	Object protectedValue;
-	
-	Exception evaluationException;
-
-	public EvaluationResult() {
+	public ProtectedDynamicValue() {
 		super();
 	}
 
-	public EvaluationResult(Object resultValue) {
-		super();
-		this.resultValue = resultValue;
+	public ProtectedDynamicValue(T value) {
+		super(value);
 	}
 
-	public Object getResultValue() {
-		return resultValue;
+	public ProtectedDynamicValue(String expression, String expressionType) {
+		super(expression, expressionType);
 	}
 
-	public void setResultValue(Object resultValue) {
-		this.resultValue = resultValue;
+	@Override
+	protected boolean hasProtectedAccess() {
+		return true;
 	}
 
-	public Object getProtectedValue() {
-		return protectedValue;
-	}
-
-	public void setProtectedValue(Object protectedValue) {
-		this.protectedValue = protectedValue;
-	}
-
-	public Exception getEvaluationException() {
-		return evaluationException;
-	}
-
-	public void setEvaluationException(Exception evaluationException) {
-		this.evaluationException = evaluationException;
+	@Override
+	public DynamicValue<T> cloneValue() {
+		return super._cloneValue(new ProtectedDynamicValue<>());
 	}
 }

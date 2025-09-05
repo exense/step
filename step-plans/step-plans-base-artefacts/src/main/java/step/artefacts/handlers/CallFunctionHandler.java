@@ -52,7 +52,7 @@ import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.variables.VariablesManager;
 import step.datapool.DataSetHandle;
-import step.expressions.ProtectableBinding;
+import step.expressions.ProtectedBinding;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
@@ -401,9 +401,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		context.getVariablesManager().getAllVariables().forEach((key,value)->{
 			Object actualValue = value;
 			//Properties are allowed to include protected values
-			if (value instanceof ProtectableBinding) {
-				ProtectableBinding pb = (ProtectableBinding) value;
-				actualValue = ((ProtectableBinding) value).value;
+			if (value instanceof ProtectedBinding) {
+				actualValue = ((ProtectedBinding) value).value;
 			}
 			properties.put(key, actualValue!=null?actualValue.toString():"");
 		});

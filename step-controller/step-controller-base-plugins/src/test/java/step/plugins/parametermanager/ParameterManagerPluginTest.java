@@ -42,6 +42,7 @@ import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.variables.VariablesManager;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.expressions.ExpressionHandler;
+import step.expressions.ProtectedBinding;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -171,22 +172,19 @@ public class ParameterManagerPluginTest {
 		ExecutionContext executionContext = newExecutionContext(parameterManagerPlugin);
 		VariablesManager variablesManager = executionContext.getVariablesManager();
 		parameterManagerPlugin.executionStart(executionContext);
-		// None of the parameters should be available as they are all protected
-		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithoutScope"));
-		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithGlobalScope"));
+		// The parameters should be available as protected binding
+		Assert.assertEquals("***MyProtectedParameterWithoutScope***", variablesManager.getVariable("MyProtectedParameterWithoutScope").toString());
+		Assert.assertEquals("***MyProtectedParameterWithGlobalScope***", variablesManager.getVariable("MyProtectedParameterWithGlobalScope").toString());
 		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithApplicationScope"));
 		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithFunctionScope"));
-		
-		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction1"));
-		
-		// All parameters matching the scope should now be available
-		Assert.assertNotNull(variablesManager.getVariable("MyProtectedParameterWithoutScope"));
-		Assert.assertNotNull(variablesManager.getVariable("MyProtectedParameterWithGlobalScope"));
-		Assert.assertNotNull(variablesManager.getVariable("MyProtectedParameterWithApplicationScope"));
-		Assert.assertNotNull(variablesManager.getVariable("MyProtectedParameterWithFunctionScope"));
 
-		// Parameters not matching the scope should 
-		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithOtherApplicationScope"));
+		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction1"));
+
+		// All parameters should now be available and their value should be decrypted
+		assertProtectedVariable(variablesManager, "MyProtectedParameterWithoutScope");
+		assertProtectedVariable(variablesManager, "MyProtectedParameterWithGlobalScope");
+		assertProtectedVariable(variablesManager, "MyProtectedParameterWithApplicationScope");
+		assertProtectedVariable(variablesManager, "MyProtectedParameterWithFunctionScope");
 	}
 	
 	@Test
@@ -227,19 +225,19 @@ public class ParameterManagerPluginTest {
 		VariablesManager variablesManager = executionContext.getVariablesManager();
 
 		parameterManagerPlugin.executionStart(executionContext);
-		// None of the parameters should be available as they are all protected
-		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithoutScope"));
-		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithGlobalScope"));
+		// The parameters should be available as protected binding
+		Assert.assertEquals("***MyProtectedParameterWithoutScope***", variablesManager.getVariable("MyProtectedParameterWithoutScope").toString());
+		Assert.assertEquals("***MyProtectedParameterWithGlobalScope***", variablesManager.getVariable("MyProtectedParameterWithGlobalScope").toString());
 		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithApplicationScope"));
 		Assert.assertNull(variablesManager.getVariable("MyProtectedParameterWithFunctionScope"));
 		
 		parameterManagerPlugin.beforeFunctionExecution(executionContext, executionContext.getCurrentReportNode(), newFunction("MyApp", "MyFunction1"));
 
 		// All parameters should now be available and their value should be decrypted
-		assertVariable(variablesManager, "MyProtectedParameterWithoutScope");
-		assertVariable(variablesManager, "MyProtectedParameterWithGlobalScope");
-		assertVariable(variablesManager, "MyProtectedParameterWithApplicationScope");
-		assertVariable(variablesManager, "MyProtectedParameterWithFunctionScope");
+		assertProtectedVariable(variablesManager, "MyProtectedParameterWithoutScope");
+		assertProtectedVariable(variablesManager, "MyProtectedParameterWithGlobalScope");
+		assertProtectedVariable(variablesManager, "MyProtectedParameterWithApplicationScope");
+		assertProtectedVariable(variablesManager, "MyProtectedParameterWithFunctionScope");
 	}
 	
 	@Test
@@ -375,6 +373,13 @@ public class ParameterManagerPluginTest {
 		variable = variablesManager.getVariableAsString(variableName);
 		Assert.assertNotNull(variable);
 		assertEquals("Value", variable);
+	}
+
+	private void assertProtectedVariable(VariablesManager variablesManager, String variableName) {
+		Object variable = variablesManager.getVariable(variableName);
+		Assert.assertNotNull(variable);
+		Assert.assertTrue(variable instanceof ProtectedBinding);
+		assertEquals("Value", ((ProtectedBinding) variable).value);
 	}
 
 	protected ExecutionContext newExecutionContext(ExecutionEnginePlugin parameterPlugin) {

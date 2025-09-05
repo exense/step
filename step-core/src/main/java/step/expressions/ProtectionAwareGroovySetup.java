@@ -62,18 +62,14 @@ public class ProtectionAwareGroovySetup {
     }
 
     public static Object protectionAwarePlus(String left, Object right) {
-        if (right instanceof ProtectableBinding) {
-            ProtectableBinding pb = (ProtectableBinding) right;
-            if (pb.isProtected) {
-                ProtectionContext context = ProtectionContext.get();
-                if (context != null && context.canAccessProtectedValue()) {
-                    String result = left + pb.value.toString();
-                    return new ProtectableBinding(true, result, left + pb.obfuscatedValue);
-                } else {
-                  throw new ProtectedPropertyException("The property " + pb.key + " is protected");
-                }
+        if (right instanceof ProtectedBinding) {
+            ProtectedBinding pb = (ProtectedBinding) right;
+            ProtectionContext context = ProtectionContext.get();
+            if (context != null && context.canAccessProtectedValue()) {
+                String result = left + pb.value.toString();
+                return new ProtectedBinding(result, left + pb.obfuscatedValue);
             } else {
-                return left + pb.value.toString();
+              throw new ProtectedPropertyException("The property " + pb.key + " is protected");
             }
         }
         // Default behavior

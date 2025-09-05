@@ -38,7 +38,7 @@ import step.core.variables.VariablesManager;
 import step.engine.execution.ExecutionManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.BasePlugin;
-import step.expressions.ProtectableBinding;
+import step.expressions.ProtectedBinding;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -184,7 +184,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 			List<Parameter> scopeValueSpecificParameters = scopeSpecificParameters.get(scopeValue);
 			if(scopeValueSpecificParameters != null) {
 				scopeValueSpecificParameters.forEach(p->{
-					varMan.putVariable(node, VariableType.IMMUTABLE, p.getKey(), getParameterValueAsProtectableBinding(p, getParameterManagerFromContext(context), p.getKey()));
+					varMan.putVariable(node, VariableType.IMMUTABLE, p.getKey(), getParameterAsBindingValue(p, getParameterManagerFromContext(context), p.getKey()));
 				});
 			}
 		}
@@ -208,10 +208,10 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		});
 	}
 
-	private Object getParameterValueAsProtectableBinding(Parameter p, ParameterManager parameterManager, String key) {
+	private Object getParameterAsBindingValue(Parameter p, ParameterManager parameterManager, String key) {
 		String value = getParameterValue(p, parameterManager);
 		boolean isProtected = p.getProtectedValue();
-		return byPassProtectedParameters ? value : new ProtectableBinding(isProtected, value, key);
+		return byPassProtectedParameters ? value : (isProtected) ? new ProtectedBinding(value, key) : value;
 	}
 
 	private String getParameterValue(Parameter p, ParameterManager parameterManager) {

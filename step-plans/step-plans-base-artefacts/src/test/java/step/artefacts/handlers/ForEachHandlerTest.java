@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
+import ch.exense.commons.app.Configuration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,20 +30,29 @@ import step.artefacts.ForEachBlock;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.reports.CallFunctionReportNode;
+import step.artefacts.reports.EchoReportNode;
+import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.collections.inmemory.InMemoryCollection;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.dynamicbeans.DynamicValueResolver;
+import step.core.dynamicbeans.ProtectedDynamicValue;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
+import step.datapool.excel.ExcelDataPool;
 import step.datapool.json.JsonArrayDataPoolConfiguration;
 import step.engine.plugins.FunctionPlugin;
 import step.expressions.ExpressionHandler;
 import step.functions.io.Output;
+import step.parameter.Parameter;
+import step.parameter.ParameterManager;
+import step.planbuilder.BaseArtefacts;
+import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
 import javax.json.Json;
@@ -53,19 +63,25 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static step.artefacts.handlers.AbstractFunctionHandlerTest.newMyFunctionTypePlugin;
+import static step.datapool.DataSources.EXCEL;
 import static step.datapool.DataSources.JSON_ARRAY;
+import static step.datapool.excel.ExcelFunctionsTest.getResourceFile;
 
 public class ForEachHandlerTest {
 
 	private static final Logger logger = LoggerFactory.getLogger(ForEachHandlerTest.class);
 	private ExecutionEngine executionEngine;
+	private AbstractAccessor<Parameter> parameterAccessor;
+	private ParameterManager parameterManager;
 
 	@Before
 	public void before() {
 		DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
+		parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
+		parameterManager = new ParameterManager(parameterAccessor, null, new Configuration(), resolver);
 		executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
-				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()
-				).build();
+				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin())
+				.withPlugin(new ParameterManagerPlugin(parameterManager)).build();
 	}
 
 	@After
@@ -139,6 +155,51 @@ public class ForEachHandlerTest {
 
 	}
 
+	@Test
+	public void testPasswordProtectedExcel() throws IOException {
+		testPasswordProtectedExcel(false);
+	}
+
+	@Test
+	public void testPasswordProtectedExcelDynamic() throws IOException {
+		testPasswordProtectedExcel(true);
+	}
+
+	private void testPasswordProtectedExcel(boolean dynamic) throws IOException {
+		ForEachBlock f = new ForEachBlock();
+
+		if (dynamic) {
+			Parameter parameter = new Parameter(null, "excelPassword", "testPassword", "");
+			parameter.setProtectedValue(true);
+			parameterAccessor.save(parameter);
+		}
+		ExcelDataPool excelDataPool = new ExcelDataPool();
+		excelDataPool.setFile(new DynamicValue<>(getResourceFile("ExcelWithPassword.xlsx").getAbsolutePath()));
+		//excelDataPool.setPassword(new ProtectedDynamicValue<>("passwordParam", null));
+		if (dynamic) {
+			excelDataPool.setPassword(new ProtectedDynamicValue<>("excelPassword", null));
+		} else {
+			excelDataPool.setPassword(new ProtectedDynamicValue<>("testPassword"));
+		}
+		excelDataPool.setProtect(new DynamicValue<>(false));
+
+		f.setDataSource(excelDataPool);
+		f.setDataSourceType(EXCEL);
+		f.setItem(new DynamicValue<String>("row"));
+		f.setGlobalCounter(new DynamicValue<String>("globalCounter"));
+		f.setUserItem(new DynamicValue<String>("userId"));
+
+		Plan plan = PlanBuilder.create().startBlock(f).add(BaseArtefacts.echo("row.User")).endBlock().build();
+		PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
+		planRunnerResult.printTree();
+
+		assertEquals(ReportNodeStatus.PASSED, planRunnerResult.getResult());
+		EchoReportNode node = getFirstEchoReportNode(planRunnerResult);
+		assertNull(node.getError());
+		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		assertEquals("Test1", node.getEcho());
+	}
+
 	private MyFunction newPassingFunctionWithInput() {
 		MyFunction function = new MyFunction(input -> {
 			Output<JsonObject> output = new Output<>();
@@ -155,5 +216,12 @@ public class ForEachHandlerTest {
 		ReportNode iteration1 = result.getReportTreeAccessor().getChildren(forReport.getId().toString()).next();
 		return (CallFunctionReportNode) result.getReportTreeAccessor().getChildren(iteration1.getId().toString()).next();
 	}
+
+	protected static EchoReportNode getFirstEchoReportNode(PlanRunnerResult result) {
+		ReportNode forReport = result.getReportTreeAccessor().getChildren(result.getRootReportNode().getId().toString()).next();
+		ReportNode iteration1 = result.getReportTreeAccessor().getChildren(forReport.getId().toString()).next();
+		return (EchoReportNode) result.getReportTreeAccessor().getChildren(iteration1.getId().toString()).next();
+	}
 }
+
 

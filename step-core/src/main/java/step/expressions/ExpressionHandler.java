@@ -61,10 +61,10 @@ public class ExpressionHandler implements AutoCloseable {
 	}
 
 	/**
-	 * Evaluate a groovy expression using provided binding. Not that special binding of type ProtectableBinding will be handled depending on the values of the related parameters
+	 * Evaluate a groovy expression using provided binding. Not that special binding of type ProtectedBinding will be handled depending on the granted access right
 	 * @param expression the groovy expression to be evaluated
 	 * @param bindings the map of bindings (variables) available for the evaluation
-	 * @param canAccessProtectedValue whether protected values provided as ProtectableBinding can be access. Accessing such binding with no access will throw an exception
+	 * @param canAccessProtectedValue whether protected values provided as ProtectedBinding can be access. Accessing such binding with no access will throw an exception
 	 * @return the result of the groovy evaluation
 	 */
 	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings, boolean canAccessProtectedValue) {
@@ -84,7 +84,7 @@ public class ExpressionHandler implements AutoCloseable {
 					for(Entry<String, Object> varEntry : bindings.entrySet()) {
 						String key = varEntry.getKey();
 						Object value =  varEntry.getValue();
-						if (!canAccessProtectedValue && value instanceof ProtectableBinding && ((ProtectableBinding) value).isProtected) {
+						if (!canAccessProtectedValue && value instanceof ProtectedBinding) {
 							excludedProtectedBindingKeys.add(key);
 						} else {
 							binding.setVariable(key, value);
@@ -162,7 +162,7 @@ public class ExpressionHandler implements AutoCloseable {
 
 	public static Object checkProtectionAnWrapIfRequired(boolean isParentProtected, Object value, String key) {
 		if (isParentProtected) {
-			return new ProtectableBinding(true, value, key);
+			return new ProtectedBinding(value, key);
 		}
 		return value;
 	}

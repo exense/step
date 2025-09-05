@@ -22,6 +22,7 @@ import java.util.Map;
 
 import groovy.lang.GString;
 import step.expressions.ExpressionHandler;
+import step.expressions.ProtectedBinding;
 
 public class DynamicValueResolver {
 	
@@ -38,14 +39,29 @@ public class DynamicValueResolver {
 			String exprType = dynamicValue.expressionType;
 			EvaluationResult result = new EvaluationResult();
 			try {
-				Object evaluationResult = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings);
-				// When using placeholders in strings, groovy returns an object of type GString. 
+				Object evaluationResult;
+				Object protectedResult = null;
+				if (dynamicValue instanceof ProtectedDynamicValue) {
+					Object o = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings, true);
+					if (o instanceof ProtectedBinding) {
+						ProtectedBinding pb = (ProtectedBinding) o;
+						protectedResult = pb.value;
+						evaluationResult = pb.obfuscatedValue;
+					} else {
+						evaluationResult = o;
+					}
+				} else {
+					evaluationResult = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings);
+				}
+				// When using placeholders in strings, groovy returns an object of type GString.
 				// Curiously the class GSting doesn't extend String. For this reason we call the toString() method here
-				// to avoid later casting issues when DynamicValue.get() is called 
-				if(evaluationResult instanceof GString) {
+				// to avoid later casting issues when DynamicValue.get() is called
+				if (evaluationResult instanceof GString) {
 					evaluationResult = evaluationResult.toString();
 				}
-				result.setResultValue(evaluationResult);			
+				protectedResult = (protectedResult == null) ? evaluationResult : (protectedResult instanceof GString) ? protectedResult.toString() : protectedResult;
+				result.setResultValue(evaluationResult);
+				result.setProtectedValue(protectedResult);
 			} catch (Exception e) {
 				result.setEvaluationException(e);
 			}
