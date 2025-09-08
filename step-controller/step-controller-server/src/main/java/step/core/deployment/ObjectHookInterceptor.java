@@ -37,10 +37,12 @@ import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.access.User;
 import step.core.collections.PojoFilter;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.objectenricher.ObjectAccessException;
 import step.core.ql.OQLFilterBuilder;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
@@ -49,6 +51,7 @@ import step.framework.server.security.Secured;
 @Provider
 public class ObjectHookInterceptor extends AbstractStepServices implements ReaderInterceptor, WriterInterceptor  {
 
+	public static final String ENTITY_ACCESS_DENIED = "ENTITY_ACCESS_DENIED";
 	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(ObjectHookInterceptor.class);
 
@@ -56,6 +59,8 @@ public class ObjectHookInterceptor extends AbstractStepServices implements Reade
 	private ExtendedUriInfo extendendUriInfo;
 	
 	private ObjectHookRegistry objectHookRegistry;
+
+	private final Predicate<Object> isNotEnricheable = e->!(e instanceof EnricheableObject);
 	
 	@PostConstruct
 	public void init() throws Exception {
@@ -70,9 +75,13 @@ public class ObjectHookInterceptor extends AbstractStepServices implements Reade
 			EnricheableObject enricheableObject = (EnricheableObject) entity;
 			Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
 			if (annotation == null) {
-				Session session = getSession();
-				if (!objectHookRegistry.isObjectAcceptableInContext(session, enricheableObject)) {
-					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "Authorization error", "You're not allowed to edit this object from within this context");
+				Session<User> session = getSession();
+				ObjectAccessException accessException = objectHookRegistry.checkObjectAccess(session, enricheableObject);
+				if (accessException != null) {
+					throw new ControllerServiceException(
+						HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
+						accessException.getMessage(), accessException.getViolations()
+					);
 				} else {
 					ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
 					objectEnricher.accept(enricheableObject);
@@ -82,24 +91,34 @@ public class ObjectHookInterceptor extends AbstractStepServices implements Reade
 		return entity;
 	}
 
-	private Predicate<Object> isNotEnricheable = e->!(e instanceof EnricheableObject);
-
 	@Override
 	public void aroundWriteTo(WriterInterceptorContext context) 
 			throws IOException, WebApplicationException {
 		Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
 		if(annotation == null) {
 			Object entity = context.getEntity();
-			Session session = getSession();
+			Session<User> session = getSession();
 			String oqlFilter = objectHookRegistry.getObjectFilter(session).getOQLFilter();
 			PojoFilter<Object> filter = OQLFilterBuilder.getPojoFilter(oqlFilter);
 			Predicate<Object> predicate = isNotEnricheable.or(filter);
+			//When returning list of entities we filter the entities accessible from the current context (predicate)
 			if(entity instanceof List) {
 				List<?> list = (List<?>)entity;
 				final List<?> newList = list.stream().filter(predicate).collect(Collectors.toList());
 				context.setEntity(newList);
 			} else {
+				//For single entity we first check access based on predicate, in case access is not granted we can get detailed violations with checkObjectAccess
 				if(!predicate.test(entity)) {
+					if (entity instanceof EnricheableObject) {
+						ObjectAccessException accessException = objectHookRegistry.checkObjectAccess(session, (EnricheableObject) entity);
+						if (accessException != null) {
+							throw new ControllerServiceException(
+								HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
+								accessException.getMessage(), accessException.getViolations()
+							);
+						}
+					}
+					//We should not enter this case anymore unless there is a discrepancy between the predicate and checkObjectAccess implementation
 					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to access this object from within this context");
 				}
 			}
