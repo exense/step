@@ -449,11 +449,13 @@ public class AutomationPackageManager {
 
         // validate if we have the APs with same origin
         ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
-        String apOriginString = apOrigin == null ? null : apOrigin.toStringRepresentation();
 
-        ConflictingAutomationPackages conflictingAutomationPackages = findAutomationPackagesWithSameOrigin(
-                keywordLibraryProvider, checkForSameOrigin, apOrigin, oldPackage, objectPredicate
-        );
+        ConflictingAutomationPackages conflictingAutomationPackages;
+        if (checkForSameOrigin) {
+            conflictingAutomationPackages = findConflictingAutomationPackages(keywordLibraryProvider, apOrigin, oldPackage, objectPredicate);
+        } else {
+            conflictingAutomationPackages = new ConflictingAutomationPackages();
+        }
 
         if (!allowUpdateOfOtherPackages) {
             if (conflictingAutomationPackages.apWithSameOriginExists() || conflictingAutomationPackages.apWithSameKeywordLibExists()) {
@@ -479,7 +481,7 @@ public class AutomationPackageManager {
         ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
 
         // always upload the automation package file as resource
-        uploadApResource(automationPackageArchive, newPackage, apOriginString, enricherForIncludedEntities, actorUser);
+        uploadApResourceIfRequired(automationPackageArchive, newPackage, apOrigin, enricherForIncludedEntities, actorUser, objectPredicate);
 
         // upload keyword library if provided
         String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibraryProvider, newPackage, packageContent.getName(), enricherForIncludedEntities, objectPredicate, actorUser);
@@ -506,12 +508,11 @@ public class AutomationPackageManager {
                 AutomationPackage finalNewPackage = newPackage;
 
                 // copy to the final variable to use it in lambda expression
-                String finalKeywordLibraryResourceString = keywordLibraryResourceString;
                 delayedUpdateExecutor.submit(() -> {
                     try {
                         updateAutomationPackage(
                                 oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities,
-                                false, automationPackageArchive, finalKeywordLibraryResourceString, actorUser,
+                                false, automationPackageArchive, keywordLibraryResourceString, actorUser,
                                 conflictingAutomationPackages.getApWithSameOrigin(), automationPackageProvider,
                                 keywordLibraryProvider, enricher, objectPredicate
                         );
@@ -532,42 +533,44 @@ public class AutomationPackageManager {
         }
     }
 
-    private ConflictingAutomationPackages findAutomationPackagesWithSameOrigin(AutomationPackageKeywordLibraryProvider kwLibProvider,
-                                                                               boolean checkForSameOrigin,
-                                                                               ResourceOrigin apOrigin,
-                                                                               AutomationPackage oldPackage,
-                                                                               ObjectPredicate objectPredicate) {
+    private ConflictingAutomationPackages findConflictingAutomationPackages(AutomationPackageKeywordLibraryProvider kwLibProvider,
+                                                                            ResourceOrigin apOrigin,
+                                                                            AutomationPackage oldPackage,
+                                                                            ObjectPredicate objectPredicate) {
         ConflictingAutomationPackages conflictingAutomationPackages = new ConflictingAutomationPackages();
-        if (checkForSameOrigin) {
-            if (apOrigin != null && !apOrigin.isUnmodifiable()) {
-                List<ObjectId> automationPackagesWithSameOrigin = new ArrayList<>();
-                List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate);
-                for (Resource resource : resourcesByOrigin) {
-                    String automationPackageIdLinkedWithResource = resource.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
-                    if (automationPackageIdLinkedWithResource != null) {
-                        if (oldPackage == null || !Objects.equals(oldPackage.getId().toString(), automationPackageIdLinkedWithResource)) {
-                            automationPackagesWithSameOrigin.add(new ObjectId(automationPackageIdLinkedWithResource));
-                        }
+
+        // when we search the conflicting automation packages by origin (by AP file or by used keyword library), we only need to take into account
+        // the libraries with identifiable (to search the resource by origin) and modifiable (i.e. SNAPSHOT) origins,
+        // because for non-identifiable origins we will always upload the new resource and for unmodifiable origins - reuse the exiting resource
+        // (both these cases are not conflicting and don't require the additional confirmation from user)
+        if (apOrigin != null && apOrigin.isIdentifiable() && apOrigin.isModifiable()) {
+            List<ObjectId> automationPackagesWithSameOrigin = new ArrayList<>();
+            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate);
+            for (Resource resource : resourcesByOrigin) {
+                String automationPackageIdLinkedWithResource = resource.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
+                if (automationPackageIdLinkedWithResource != null) {
+                    if (oldPackage == null || !Objects.equals(oldPackage.getId().toString(), automationPackageIdLinkedWithResource)) {
+                        automationPackagesWithSameOrigin.add(new ObjectId(automationPackageIdLinkedWithResource));
                     }
                 }
-                conflictingAutomationPackages.setApWithSameOrigin(automationPackagesWithSameOrigin);
             }
+            conflictingAutomationPackages.setApWithSameOrigin(automationPackagesWithSameOrigin);
+        }
 
-            ResourceOrigin keywordLibOrigin = kwLibProvider == null ? null : kwLibProvider.getOrigin();
-            if (keywordLibOrigin != null && keywordLibOrigin.getOriginType() == ResourceOriginType.mvn) {
-                List<ObjectId> apWithSameKeywordLib = new ArrayList<>();
-                List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(keywordLibOrigin.toStringRepresentation(), objectPredicate);
+        ResourceOrigin keywordLibOrigin = kwLibProvider == null ? null : kwLibProvider.getOrigin();
+        if (keywordLibOrigin != null && keywordLibOrigin.isIdentifiable() && keywordLibOrigin.isModifiable()) {
+            List<ObjectId> apWithSameKeywordLib = new ArrayList<>();
+            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(keywordLibOrigin.toStringRepresentation(), objectPredicate);
 
-                for (Resource resource : resourcesByOrigin) {
-                    String automationPackageIdLinkedWithResource = resource.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
-                    if (automationPackageIdLinkedWithResource != null) {
-                        if (oldPackage == null || !Objects.equals(oldPackage.getId().toHexString(), automationPackageIdLinkedWithResource)) {
-                            apWithSameKeywordLib.add(new ObjectId(automationPackageIdLinkedWithResource));
-                        }
+            for (Resource resource : resourcesByOrigin) {
+                String automationPackageIdLinkedWithResource = resource.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, String.class);
+                if (automationPackageIdLinkedWithResource != null) {
+                    if (oldPackage == null || !Objects.equals(oldPackage.getId().toHexString(), automationPackageIdLinkedWithResource)) {
+                        apWithSameKeywordLib.add(new ObjectId(automationPackageIdLinkedWithResource));
                     }
                 }
-                conflictingAutomationPackages.setApWithSameKeywordLib(apWithSameKeywordLib);
             }
+            conflictingAutomationPackages.setApWithSameKeywordLib(apWithSameKeywordLib);
         }
         return conflictingAutomationPackages;
     }
@@ -601,22 +604,42 @@ public class AutomationPackageManager {
         }
     }
 
-    private String uploadApResource(AutomationPackageArchive automationPackageArchive, AutomationPackage newPackage, String apOrigin, ObjectEnricher enricher, String actorUser) {
+    private String uploadApResourceIfRequired(AutomationPackageArchive automationPackageArchive,
+                                              AutomationPackage newPackage,
+                                              ResourceOrigin apOrigin,
+                                              ObjectEnricher enricher, String actorUser,
+                                              ObjectPredicate objectPredicate) {
         File originalFile = automationPackageArchive.getOriginalFile();
         if (originalFile == null) {
             return null;
         }
-        try (InputStream is = new FileInputStream(originalFile)) {
-            Resource resource = resourceManager.createTrackedResource(
-                    ResourceManager.RESOURCE_TYPE_AP, false, is, originalFile.getName(), enricher, null, actorUser, apOrigin
-            );
-            String resourceString = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-            log.info("The resource has been been linked with AP '{}': {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), resourceString);
-            newPackage.setAutomationPackageResource(resourceString);
-            return resourceString;
-        } catch (IOException | InvalidResourceFormatException e) {
-            throw new RuntimeException("General script function cannot be created", e);
+
+        Resource resource = null;
+
+        // just reuse the existing resource of unmodifiable origin (i.e non-SNAPSHOT)
+        if(apOrigin != null && apOrigin.isIdentifiable() && !apOrigin.isModifiable()){
+            List<Resource> existingResource = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate);
+            if(existingResource != null && !existingResource.isEmpty()){
+                resource = existingResource.get(0);
+            }
         }
+
+        // create the new resource if the old one cannot be reused
+        if (resource == null) {
+            try (InputStream is = new FileInputStream(originalFile)) {
+                resource = resourceManager.createTrackedResource(
+                        ResourceManager.RESOURCE_TYPE_AP, false, is, originalFile.getName(), enricher, null, actorUser,
+                        apOrigin == null ? null : apOrigin.toStringRepresentation()
+                );
+            } catch (IOException | InvalidResourceFormatException e) {
+                throw new RuntimeException("General script function cannot be created", e);
+            }
+        }
+
+        String resourceString = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
+        log.info("The resource has been been linked with AP '{}': {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), resourceString);
+        newPackage.setAutomationPackageResource(resourceString);
+        return resourceString;
     }
 
     public String uploadKeywordLibrary(AutomationPackageKeywordLibraryProvider kwLibProvider, AutomationPackage newPackage,
@@ -625,28 +648,38 @@ public class AutomationPackageManager {
         String keywordLibraryResourceString = null;
         try {
             File keywordLibrary = kwLibProvider.getKeywordLibrary();
-            Resource keywordLibraryResource = null;
+            Resource uploadedResource = null;
             if (keywordLibrary != null) {
                 try (FileInputStream fis = new FileInputStream(keywordLibrary)) {
                     // for isolated execution we always use the isolatedAp resource type to support auto cleanup after execution
                     String resourceType = this.operationMode == AutomationPackageOperationMode.ISOLATED ? ResourceManager.RESOURCE_TYPE_ISOLATED_KW_LIB : kwLibProvider.getResourceType();
 
+                    // we can reuse the existing old resource in case it is identifiable (can be found by origin) and unmodifiable
                     ResourceOrigin origin = kwLibProvider.getOrigin();
-                    List<Resource> oldResources = null;
-                    if (origin != null && origin.isUnmodifiable()) {
-                        oldResources = resourceManager.getResourcesByOrigin(origin.toStringRepresentation(), objectPredicate);
+                    List<Resource> oldResource = null;
+                    if (origin != null && origin.isIdentifiable()) {
+                        oldResource = resourceManager.getResourcesByOrigin(origin.toStringRepresentation(), objectPredicate);
                     }
-                    log.info("The new keyword library ({}) has been uploaded as ({})", kwLibProvider, keywordLibraryResource);
-                    if (oldResources != null && !oldResources.isEmpty()) {
-                        log.info("Existing keyword library {} with resource id {} has been detected and will be reused in AP {}", keywordLibrary.getName(), oldResources.get(0).getId().toHexString(), apName);
-                        keywordLibraryResource = oldResources.get(0);
+
+                    if (oldResource != null && !oldResource.isEmpty()) {
+                        if (!origin.isModifiable()) {
+                            // for unmodifiable origins we just reused the previously uploaded resource
+                            log.info("Existing keyword library {} with resource id {} has been detected and will be reused in AP {}", keywordLibrary.getName(), oldResource.get(0).getId().toHexString(), apName);
+                            uploadedResource = oldResource.get(0);
+                        } else {
+                            // for modifiable resources (i.e. SNAPSHOTS) we can reuse the old resource id and metadata, but we need to reupload the content
+                            log.info("Existing resource {} for keyword library {} will be actualized and reused in AP {}", oldResource.get(0).getId().toHexString(), keywordLibrary.getName(), apName);
+                            uploadedResource = resourceManager.saveResourceContent(oldResource.get(0).getId().toHexString(), fis, keywordLibrary.getName(), actorUser);
+                        }
                     } else {
-                        keywordLibraryResource = resourceManager.createTrackedResource(
+                        // old resource is not found - we create a new one
+                        uploadedResource = resourceManager.createTrackedResource(
                                 resourceType, false, fis, keywordLibrary.getName(), enricher, null,
                                 actorUser, origin == null ? null : origin.toStringRepresentation()
                         );
+                        log.info("The new keyword library ({}) has been uploaded as ({})", kwLibProvider, uploadedResource);
                     }
-                    keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + keywordLibraryResource.getId().toString();
+                    keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + uploadedResource.getId().toString();
                     newPackage.setKeywordLibraryResource(keywordLibraryResourceString);
                 }
             }
@@ -974,7 +1007,7 @@ public class AutomationPackageManager {
         List<Resource> resources = getPackageResources(automationPackage.getId());
         for (Resource resource : resources) {
             try {
-                // workaround to avoid the deletion of resources already linked with new automation package
+                // to avoid the deletion of resources already linked with new automation package
                 if (newAutomationPackage != null && newAutomationPackage.getAutomationPackageResource() != null) {
                     if (Objects.equals(FileResolver.RESOURCE_PREFIX + resource.getId().toString(), newAutomationPackage.getAutomationPackageResource())) {
                         continue;

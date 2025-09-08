@@ -23,5 +23,15 @@ package step.resources;
 public interface ResourceOrigin {
     ResourceOriginType getOriginType();
     String toStringRepresentation();
-    default boolean isUnmodifiable() {return false;};
+
+    default boolean isModifiable(){
+        return true;
+    }
+
+    /**
+     * Determines if the resource of this origin can be found via its {@link #toStringRepresentation()}
+     */
+    default boolean isIdentifiable(){
+        return false;
+    }
 }

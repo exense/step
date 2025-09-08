@@ -157,7 +157,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         return new MavenArtifactIdentifierFromXmlParser(xmlMapper).parse(mavenArtifactXml);
     }
 
-    // TODO: tricky moment - the apMavenSnippet is defined in executionParams as 'originalRepositoryObject'
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)

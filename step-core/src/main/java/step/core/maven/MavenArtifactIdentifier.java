@@ -102,9 +102,13 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
         return getVersion() != null && getVersion().endsWith("-SNAPSHOT");
     }
 
+    public boolean isModifiable(){
+        return isSnapshot();
+    }
+
     @Override
-    public boolean isUnmodifiable() {
-        return !isSnapshot();
+    public boolean isIdentifiable() {
+        return true;
     }
 
     @Override

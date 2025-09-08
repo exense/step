@@ -77,7 +77,7 @@ public class AutomationPackageFileSource {
     public boolean useMavenIdentifier() {
         if (getMavenArtifactIdentifier() != null) {
             if (getInputStream() != null) {
-                throw new AutomationPackageManagerException("Keyword library should either be uploaded via maven identifier or via input stream");
+                throw new AutomationPackageManagerException("The resource should either be uploaded via maven identifier or via input stream");
             }
             return true;
         }
