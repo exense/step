@@ -49,16 +49,15 @@ public class ExpressionHandler implements AutoCloseable {
 	}
 	
 	public ExpressionHandler(String scriptBaseClass, Integer executionTimeWarningTreshold, int poolMaxTotal,  int poolMaxTotalPerKey, int poolMaxIdlePerKey, Integer monitoringIntervalSeconds) {
-		super();
-		this.scriptBaseClass = scriptBaseClass;
-		this.groovyPool = new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
-		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
+		this(scriptBaseClass, null, executionTimeWarningTreshold, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
 	}
 
+	// Only used directly to pass a custom groovyPoolFactory in Junit test
 	protected ExpressionHandler(String scriptBaseClass, GroovyPoolFactory groovyPoolFactory, Integer executionTimeWarningTreshold, int poolMaxTotal,  int poolMaxTotalPerKey, int poolMaxIdlePerKey, Integer monitoringIntervalSeconds) {
 		super();
 		this.scriptBaseClass = scriptBaseClass;
-		this.groovyPool = new GroovyPool(groovyPoolFactory, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
+		this.groovyPool = (groovyPoolFactory != null) ? new GroovyPool(groovyPoolFactory, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds) :
+				new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
 		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
 		setupProtectionAwareOperations();
 	}
