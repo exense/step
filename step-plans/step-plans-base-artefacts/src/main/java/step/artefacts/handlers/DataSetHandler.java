@@ -39,7 +39,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static step.expressions.ExpressionHandler.checkProtectionAnWrapIfRequired;
+import static step.expressions.ExpressionHandler.checkProtectionAndWrapIfRequired;
 
 public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode> {
 		
@@ -75,12 +75,12 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 						row = dataSet.next();
 					}
 				}
-				return row != null ? checkProtectionAnWrapIfRequired(artefact.getDataSource().getProtect().get(), row.getValue(), "next()") : null;
+				return row != null ? checkProtectionAndWrapIfRequired(artefact.getDataSource().getProtect().get(), row.getValue(), "next()") : null;
 			}
 		}
 
 		public synchronized Object nextChunk(int size) {
-			return checkProtectionAnWrapIfRequired(artefact.getDataSource().getProtect().get(),
+			return checkProtectionAndWrapIfRequired(artefact.getDataSource().getProtect().get(),
 					new DataPoolChunk(IntStream.range(0, size).mapToObj(i -> next()).filter(Objects::nonNull).collect(Collectors.toList())), "nextChunk()");
 		}
 

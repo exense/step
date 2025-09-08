@@ -144,10 +144,10 @@ public class ExpressionHandler implements AutoCloseable {
 				String property = mpe.getProperty();
 				String baseMessage = "Error while resolving groovy properties in expression: '" + expression + "'. ";
 				if (excludedProtectedBindingKeys.contains(property)) {
-					throw new RuntimeException(baseMessage + "The property '" + property + "' is protected and can only be used as Keyword's inputs or Keyword's properties.");
+					throw new RuntimeException(baseMessage + "The property '" + property + "' is protected and can only be used as a Keyword input or property.");
 				} else {
 					throw new RuntimeException(
-							baseMessage + "The property '" + property + "' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accessible in current scope.");
+							baseMessage + "The property '" + property + "' could not be found (or accessed). Make sure that the property is defined as variable or parameter and is accessible in the current scope.");
 				}
 			} catch (Exception e){
 				throw new RuntimeException(
@@ -164,7 +164,7 @@ public class ExpressionHandler implements AutoCloseable {
 		}
 	}
 
-	public static Object checkProtectionAnWrapIfRequired(boolean isParentProtected, Object value, String key) {
+	public static Object checkProtectionAndWrapIfRequired(boolean isParentProtected, Object value, String key) {
 		if (isParentProtected) {
 			return new ProtectedBinding(value, key);
 		}

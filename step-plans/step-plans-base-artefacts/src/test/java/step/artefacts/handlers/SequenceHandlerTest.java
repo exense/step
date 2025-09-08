@@ -476,7 +476,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 		Assert.assertEquals("Sequence:TECHNICAL_ERROR:\n" +
 				" [BEFORE]\n" +
 				"  Echo(In Before):PASSED:\n" +
-				"  Set(null = null):TECHNICAL_ERROR:Error while resolving groovy properties in expression: 'test'. The property 'test' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accessible in current scope.\n" +
+				"  Set(null = null):TECHNICAL_ERROR:Error while resolving groovy properties in expression: 'test'. The property 'test' could not be found (or accessed). Make sure that the property is defined as variable or parameter and is accessible in the current scope.\n" +
 				" [AFTER]\n" +
 				"  Echo(after sequence):PASSED:\n" , writer.toString());
 	}
@@ -526,7 +526,7 @@ public class SequenceHandlerTest extends AbstractArtefactHandlerTest {
 				"  Echo(In Before):PASSED:\n" +
 				"  Set(myVar = test):PASSED:\n" +
 				" Echo(in main sequence):PASSED:\n" +
-				" Echo:TECHNICAL_ERROR:Error while resolving groovy properties in expression: ''myVar is ' + myVarNotExists'. The property 'myVarNotExists' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accessible in current scope.\n" +
+				" Echo:TECHNICAL_ERROR:Error while resolving groovy properties in expression: ''myVar is ' + myVarNotExists'. The property 'myVarNotExists' could not be found (or accessed). Make sure that the property is defined as variable or parameter and is accessible in the current scope.\n" +
 				" [AFTER]\n" +
 				"  Echo(after sequence):PASSED:\n" , writer.toString());
 	}

@@ -76,10 +76,7 @@ public class DynamicBeanResolver {
 				for(PropertyDescriptor descriptor:beanInfo.getPropertyDescriptors()) {
 					Method method = descriptor.getReadMethod();
 					if(method!=null) {
-						if (method.getReturnType().equals(ProtectedDynamicValue.class)) {
-							Object value = method.invoke(o);
-							evaluateDynamicValue(bindings, (ProtectedDynamicValue<?>) value);
-						} else if(method.getReturnType().equals(DynamicValue.class)) {
+						if(DynamicValue.class.isAssignableFrom(method.getReturnType())) {
 							Object value = method.invoke(o);
 							evaluateDynamicValue(bindings, (DynamicValue<?>) value);
 						} else if(method.isAnnotationPresent(ContainsDynamicValues.class)) {
@@ -164,10 +161,7 @@ public class DynamicBeanResolver {
 	private Object cloneDynamicValue(AccessibleObject fieldOrMethod, Object oldValue) {
 		Object newValue;
 		if (oldValue != null) {
-			if (oldValue instanceof ProtectedDynamicValue) {
-				ProtectedDynamicValue<?> protectedDynamicValue = (ProtectedDynamicValue<?>) oldValue;
-				newValue = protectedDynamicValue.cloneValue();
-			} else if (oldValue instanceof DynamicValue) {
+			if (oldValue instanceof DynamicValue) {
 				DynamicValue<?> dynamicValue = (DynamicValue<?>) oldValue;
 				newValue = dynamicValue.cloneValue();
 			} else if (fieldOrMethod.isAnnotationPresent(ContainsDynamicValues.class)) {

@@ -22,12 +22,18 @@ public class ProtectionContext {
     private static final ThreadLocal<ProtectionContext> CONTEXT = new ThreadLocal<>();
 
     private final boolean canAccessProtectedValue;
+    private final boolean isSet;
 
-    public ProtectionContext(boolean canAccess) {
+    private ProtectionContext(boolean canAccess) {
         this.canAccessProtectedValue = canAccess;
+        this.isSet = true;
     }
 
     public static void set(boolean canAccess) {
+        ProtectionContext existing = CONTEXT.get();
+        if (existing != null && existing.isSet) {
+            throw new IllegalStateException("ProtectionContext has already been set for this thread and cannot be overridden");
+        }
         CONTEXT.set(new ProtectionContext(canAccess));
     }
 

@@ -41,17 +41,16 @@ public class DynamicValueResolver {
 			try {
 				Object evaluationResult;
 				Object protectedResult = null;
-				if (dynamicValue instanceof ProtectedDynamicValue) {
-					Object o = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings, true);
-					if (o instanceof ProtectedBinding) {
-						ProtectedBinding pb = (ProtectedBinding) o;
-						protectedResult = pb.value;
-						evaluationResult = pb.obfuscatedValue;
-					} else {
-						evaluationResult = o;
-					}
+
+				Object o = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings, dynamicValue.hasProtectedAccess());
+				//If access to protected bindings is granted to this dynamicValue, the protected result is added directly to the EvaluationResult
+				if (dynamicValue.hasProtectedAccess() && o instanceof ProtectedBinding) {
+					ProtectedBinding pb = (ProtectedBinding) o;
+					protectedResult = pb.value;
+					evaluationResult = pb.obfuscatedValue;
 				} else {
-					evaluationResult = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings);
+					//Otherwise the evaluation result is return as such (ProtectedBindings remain protected)
+					evaluationResult = o;
 				}
 				// When using placeholders in strings, groovy returns an object of type GString.
 				// Curiously the class GSting doesn't extend String. For this reason we call the toString() method here
