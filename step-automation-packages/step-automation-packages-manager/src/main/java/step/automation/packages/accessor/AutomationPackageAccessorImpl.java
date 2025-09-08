@@ -24,8 +24,8 @@ import step.core.collections.Collection;
 
 public class AutomationPackageAccessorImpl extends AbstractAccessor<AutomationPackage> implements AutomationPackageAccessor {
 
-    public AutomationPackageAccessorImpl(Collection<AutomationPackage> collectionDriver) {
-        super(collectionDriver);
+    public AutomationPackageAccessorImpl(Collection<? extends AutomationPackage> collectionDriver) {
+        super((Collection<AutomationPackage>) collectionDriver);
     }
 
 }

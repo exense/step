@@ -22,12 +22,11 @@ package step.automation.packages;
 
 import step.attachments.FileResolver;
 import step.framework.server.Session;
-import step.resources.Resource;
 import step.resources.ResourceManager;
 
 import java.util.function.BiFunction;
 
-public class AutomationPackageTableTransformer implements BiFunction<AutomationPackage, Session<?>, AutomationPackage> {
+public class AutomationPackageTableTransformer implements BiFunction<AutomationPackageTableRecord, Session<?>, AutomationPackageTableRecord> {
 
     private final ResourceManager resourceManager;
     private final FileResolver fileResolver;
@@ -38,13 +37,13 @@ public class AutomationPackageTableTransformer implements BiFunction<AutomationP
     }
 
     @Override
-    public AutomationPackage apply(AutomationPackage automationPackage, Session<?> session) {
+    public AutomationPackageTableRecord apply(AutomationPackageTableRecord automationPackage, Session<?> session) {
         if(automationPackage == null){
             return null;
         }
 
         // extend the original object with information about linked resources
-        ExtendedAutomationPackage res = new ExtendedAutomationPackage(automationPackage);
+        AutomationPackageTableRecord res = new AutomationPackageTableRecord(automationPackage);
         if(fileResolver.isResource(automationPackage.getAutomationPackageResource())){
             String resourceId = fileResolver.resolveResourceId(automationPackage.getAutomationPackageResource());
             res.setAutomationPackageResourceObj(resourceManager.getResource(resourceId));
@@ -58,29 +57,4 @@ public class AutomationPackageTableTransformer implements BiFunction<AutomationP
         return res;
     }
 
-    private static class ExtendedAutomationPackage extends AutomationPackage {
-        private Resource automationPackageResourceObj;
-        private Resource keywordLibraryResourceObj;
-
-        public ExtendedAutomationPackage(AutomationPackage automationPackage) {
-            super(automationPackage.getStatus(), automationPackage.getVersion(), automationPackage.getActivationExpression(),
-                    automationPackage.getAutomationPackageResource(), automationPackage.getKeywordLibraryResource());
-        }
-
-        public Resource getAutomationPackageResourceObj() {
-            return automationPackageResourceObj;
-        }
-
-        public void setAutomationPackageResourceObj(Resource automationPackageResourceObj) {
-            this.automationPackageResourceObj = automationPackageResourceObj;
-        }
-
-        public Resource getKeywordLibraryResourceObj() {
-            return keywordLibraryResourceObj;
-        }
-
-        public void setKeywordLibraryResourceObj(Resource keywordLibraryResourceObj) {
-            this.keywordLibraryResourceObj = keywordLibraryResourceObj;
-        }
-    }
 }
