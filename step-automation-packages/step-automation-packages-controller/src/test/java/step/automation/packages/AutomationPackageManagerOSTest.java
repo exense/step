@@ -538,8 +538,8 @@ public class AutomationPackageManagerOSTest {
                 null, null, null, null, false, "testUser",
                 true, true
         );
-        Assert.assertEquals(List.of(echoApResult.getId()), ap1Result.getSimilarAutomationPackages().getApWithSameKeywordLib());
-        Assert.assertTrue(ap1Result.getSimilarAutomationPackages().getApWithSameOrigin().isEmpty());
+        Assert.assertEquals(List.of(echoApResult.getId()), ap1Result.getConflictingAutomationPackages().getApWithSameKeywordLib());
+        Assert.assertTrue(ap1Result.getConflictingAutomationPackages().getApWithSameOrigin().isEmpty());
 
         // the keyword lib for 'echo' package should be automatically re-uploaded
         AutomationPackage ap1 = automationPackageAccessor.get(ap1Result.getId().toHexString());
@@ -584,8 +584,8 @@ public class AutomationPackageManagerOSTest {
                 false, true
         );
 
-        Assert.assertFalse(result.getSimilarAutomationPackages().apWithSameKeywordLibExists());
-        Assert.assertFalse(result.getSimilarAutomationPackages().apWithSameOriginExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
         AutomationPackage ap1 = automationPackageAccessor.get(result.getId());
         checkResources(ap1, SAMPLE1_FILE_NAME, KW_LIB_FILE_NAME,
                 sampleSnapshot.toStringRepresentation(), kwLibSnapshot.toStringRepresentation()
@@ -601,8 +601,8 @@ public class AutomationPackageManagerOSTest {
         );
 
         AutomationPackage apEcho = automationPackageAccessor.get(result.getId());
-        Assert.assertFalse(result.getSimilarAutomationPackages().apWithSameKeywordLibExists());
-        Assert.assertFalse(result.getSimilarAutomationPackages().apWithSameOriginExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
 
         checkResources(apEcho, SAMPLE_ECHO_FILE_NAME, KW_LIB_FILE_NAME,
                 echoRelease.toStringRepresentation(), kwLibRelease.toStringRepresentation()
@@ -620,8 +620,8 @@ public class AutomationPackageManagerOSTest {
                 false, true
         );
         apEcho = automationPackageAccessor.get(result.getId());
-        Assert.assertFalse(result.getSimilarAutomationPackages().apWithSameKeywordLibExists());
-        Assert.assertFalse(result.getSimilarAutomationPackages().apWithSameOriginExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
 
         Resource echoReleaseResourceAfterUpdate = resourceManager.getResource(fileResolver.resolveResourceId(apEcho.getAutomationPackageResource()));
         Resource kwLibReleaseResourceAfterUpdate = resourceManager.getResource(fileResolver.resolveResourceId(apEcho.getKeywordLibraryResource()));
@@ -636,8 +636,8 @@ public class AutomationPackageManagerOSTest {
                 null, null, null, null, false, "testUser",
                 false, true
         );
-        Assert.assertFalse(result.getSimilarAutomationPackages().apWithSameKeywordLibExists());
-        Assert.assertFalse(result.getSimilarAutomationPackages().apWithSameOriginExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
 
         ap1 = automationPackageAccessor.get(result.getId());
         checkResources(ap1, SAMPLE1_EXTENDED_FILE_NAME, KW_LIB_FILE_NAME,

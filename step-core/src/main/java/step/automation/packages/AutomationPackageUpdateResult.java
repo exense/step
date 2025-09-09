@@ -50,11 +50,11 @@ public class AutomationPackageUpdateResult {
         this.id = id;
     }
 
-    public ConflictingAutomationPackages getSimilarAutomationPackages() {
+    public ConflictingAutomationPackages getConflictingAutomationPackages() {
         return conflictingAutomationPackages;
     }
 
-    public void setSimilarAutomationPackages(ConflictingAutomationPackages conflictingAutomationPackages) {
+    public void setConflictingAutomationPackages(ConflictingAutomationPackages conflictingAutomationPackages) {
         this.conflictingAutomationPackages = conflictingAutomationPackages;
     }
 }
