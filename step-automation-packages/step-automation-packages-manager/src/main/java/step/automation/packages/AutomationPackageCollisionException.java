@@ -25,10 +25,15 @@ import org.bson.types.ObjectId;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SameAutomationPackageOriginException extends AutomationPackageManagerException {
+public class AutomationPackageCollisionException extends AutomationPackageManagerException {
 
-    public SameAutomationPackageOriginException(List<ObjectId> automationPackagesWithSameOrigin,  List<ObjectId> automationPackagesWithSameKeywordLib){
+    protected List<ObjectId> automationPackagesWithSameOrigin;
+    protected List<ObjectId> automationPackagesWithSameKeywordLib;
+
+    public AutomationPackageCollisionException(List<ObjectId> automationPackagesWithSameOrigin, List<ObjectId> automationPackagesWithSameKeywordLib){
         super(createErrorMessage(automationPackagesWithSameOrigin, automationPackagesWithSameKeywordLib));
+        this.automationPackagesWithSameOrigin = automationPackagesWithSameOrigin;
+        this.automationPackagesWithSameKeywordLib = automationPackagesWithSameKeywordLib;
     }
 
     public static String createErrorMessage(List<ObjectId> automationPackagesWithSameOrigin, List<ObjectId> automationPackagesWithSameKeywordLib) {
@@ -47,5 +52,13 @@ public class SameAutomationPackageOriginException extends AutomationPackageManag
             res += "Automation packages with same keyword lib: " + automationPackagesWithSameKeywordLib.stream().map(ObjectId::toHexString).collect(Collectors.joining(","));
         }
         return res;
+    }
+
+    public List<ObjectId> getAutomationPackagesWithSameOrigin() {
+        return automationPackagesWithSameOrigin;
+    }
+
+    public List<ObjectId> getAutomationPackagesWithSameKeywordLib() {
+        return automationPackagesWithSameKeywordLib;
     }
 }

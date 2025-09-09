@@ -146,7 +146,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true,
                     getObjectEnricher(), getObjectPredicate());
             return id == null ? null : id.toString();
-        } catch (SameAutomationPackageOriginException e){
+        } catch (AutomationPackageCollisionException e){
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
@@ -277,7 +277,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async, getUser(),
                     allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
-        } catch (SameAutomationPackageOriginException e) {
+        } catch (AutomationPackageCollisionException e) {
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
@@ -347,7 +347,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 responseBuilder = Response.status(Response.Status.OK);
             }
             return responseBuilder.entity(result).build();
-        } catch (SameAutomationPackageOriginException e){
+        } catch (AutomationPackageCollisionException e){
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());

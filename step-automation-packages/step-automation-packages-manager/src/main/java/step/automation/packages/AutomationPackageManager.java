@@ -400,7 +400,7 @@ public class AutomationPackageManager {
      * @param allowUpdateOfOtherPackages
      * @param checkForSameOrigin
      * @return the id of created/updated package
-     * @throws SameAutomationPackageOriginException
+     * @throws AutomationPackageCollisionException
      * @throws AutomationPackageManagerException
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
@@ -410,7 +410,7 @@ public class AutomationPackageManager {
                                                                          ObjectPredicate objectPredicate, boolean async,
                                                                          AutomationPackageKeywordLibraryProvider keywordLibraryProvider,
                                                                          String actorUser,
-                                                                         boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) throws AutomationPackageManagerException, SameAutomationPackageOriginException {
+                                                                         boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) throws AutomationPackageManagerException, AutomationPackageCollisionException {
         AutomationPackageArchive automationPackageArchive;
         AutomationPackageContent packageContent;
 
@@ -459,7 +459,7 @@ public class AutomationPackageManager {
 
         if (!allowUpdateOfOtherPackages) {
             if (conflictingAutomationPackages.apWithSameOriginExists() || conflictingAutomationPackages.apWithSameKeywordLibExists()) {
-                throw new SameAutomationPackageOriginException(conflictingAutomationPackages.getApWithSameOrigin(), conflictingAutomationPackages.getApWithSameKeywordLib());
+                throw new AutomationPackageCollisionException(conflictingAutomationPackages.getApWithSameOrigin(), conflictingAutomationPackages.getApWithSameKeywordLib());
             }
         }
 

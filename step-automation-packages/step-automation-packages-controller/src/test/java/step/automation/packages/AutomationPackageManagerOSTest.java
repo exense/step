@@ -481,8 +481,79 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
+    public void testResourceCollision(){
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File extendedAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_EXTENDED_FILE_NAME);
+        File echoAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
+        File kwLibJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+
+        MavenArtifactIdentifier sampleSnapshot = new MavenArtifactIdentifier("test-group", "ap1", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier extSampleRelease = new MavenArtifactIdentifier("test-group", "ap1-ext", "1.0.0-RELEASE", null, null);
+        MavenArtifactIdentifier echoRelease = new MavenArtifactIdentifier("test-group", "ap1-echo", "1.0.0-RELEASE", null, null);
+        MavenArtifactIdentifier echoSnapshot = new MavenArtifactIdentifier("test-group", "ap1-echo", "1.0.0-SNAPSHOT", null, null);
+
+        MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier kwLibRelease = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-RELEASE", null, null);
+
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, automationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(extSampleRelease, extendedAutomationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(echoRelease, echoAutomationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(echoSnapshot, echoAutomationPackageJar);
+
+        providersResolver.getMavenArtifactMocks().put(kwLibRelease, kwLibJar);
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibJar);
+
+        // upload SNAPSHOT AP (echo) + SNAPSHOT LIB (echo)
+        AutomationPackageUpdateResult echoApResult = manager.createOrUpdateAutomationPackage(
+                true, true, null,
+                AutomationPackageFileSource.withMavenIdentifier(echoSnapshot),
+                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
+                null, null, null, null, false, "testUser",
+                false, true
+        );
+
+        AutomationPackageUpdateResult ap1Result;
+        try {
+            // try to upload another AP with same snapshot lib - collision should be detected
+            manager.createOrUpdateAutomationPackage(
+                    true, true, null,
+                    AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
+                    AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
+                    null, null, null, null, false, "testUser",
+                    false, true
+            );
+            Assert.fail("Exception hasn't been thrown");
+        } catch (AutomationPackageCollisionException ex){
+            log.info("{}", ex.getMessage());
+            Assert.assertTrue(ex.getAutomationPackagesWithSameOrigin().isEmpty());
+            Assert.assertEquals(List.of(echoApResult.getId()), ex.getAutomationPackagesWithSameKeywordLib());
+        }
+
+        // try again with 'allowUpdateOfOtherPackages' flag
+        ap1Result = manager.createOrUpdateAutomationPackage(
+                true, true, null,
+                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
+                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
+                null, null, null, null, false, "testUser",
+                true, true
+        );
+        Assert.assertEquals(List.of(echoApResult.getId()), ap1Result.getSimilarAutomationPackages().getApWithSameKeywordLib());
+        Assert.assertTrue(ap1Result.getSimilarAutomationPackages().getApWithSameOrigin().isEmpty());
+
+        // the keyword lib for 'echo' package should be automatically re-uploaded
+        AutomationPackage ap1 = automationPackageAccessor.get(ap1Result.getId().toHexString());
+        checkResources(ap1, SAMPLE1_FILE_NAME, KW_LIB_FILE_NAME, sampleSnapshot.toStringRepresentation(), kwLibSnapshot.toStringRepresentation());
+
+        AutomationPackage echoAp = automationPackageAccessor.get(echoApResult.getId().toHexString());
+        checkResources(echoAp, SAMPLE_ECHO_FILE_NAME, KW_LIB_FILE_NAME, echoSnapshot.toStringRepresentation(), kwLibSnapshot.toStringRepresentation());
+
+        // both automation packages now reference the same keyword lib resource
+        assertEquals(ap1.getKeywordLibraryResource(), echoAp.getKeywordLibraryResource());
+    }
+
+    @Test
     public void testReuseReleaseResource(){
-        // 1. Upload new package
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File extendedAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_EXTENDED_FILE_NAME);
         File echoAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
