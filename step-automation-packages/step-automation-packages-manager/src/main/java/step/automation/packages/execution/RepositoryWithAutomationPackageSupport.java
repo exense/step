@@ -411,7 +411,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             AutomationPackage storedAutomationPackage = inMemoryPackageManager.getAutomationPackageById(apId, predicate);
             if (storedAutomationPackage.getKeywordLibraryResource() != null) {
                 // a hack to support re-execution of automation package - we need to bind the keyword library resource with current context
-                Resource kwLibResource = resourceManager.getResource(new FileResolver(resourceManager).resolveResourceId(storedAutomationPackage.getAutomationPackageResource()));
+                Resource kwLibResource = resourceManager.getResource(new FileResolver(resourceManager).resolveResourceId(storedAutomationPackage.getKeywordLibraryResource()));
                 if (kwLibResource == null) {
                     throw new AutomationPackageManagerException("Keyword library resource is not found by ID: " + storedAutomationPackage.getKeywordLibraryResource());
                 }

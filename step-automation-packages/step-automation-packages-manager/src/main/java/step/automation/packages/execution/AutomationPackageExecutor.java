@@ -133,7 +133,6 @@ public class AutomationPackageExecutor {
             AutomationPackage automationPackage = executionContext.getAutomationPackage();
             String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
 
-
             // we have resolved the name of ap, and we need to save this name as custom field in resource to look up this resource during re-execution
             if (apFile.getResource() != null) {
                 repository.setApNameForResource(apFile.getResource(), apName);
