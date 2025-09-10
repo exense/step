@@ -173,10 +173,10 @@ public class StepConsole implements Callable<Integer> {
 
         public static abstract class AbstractApCommand extends AbstractStepCommand {
 
-            @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The automation-package.yaml file or the folder containing it")
+            @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The path to the automation-package.yaml file or to the folder or the archive containing it. Maven coordinate are supported.")
             protected String apFile;
 
-            @Option(names = {"--keywordLib"}, paramLabel = "<KeywordLibrary>", description = "The file (jar) containing the keyword library for the automation package")
+            @Option(names = {"--keywordLib"}, paramLabel = "<KeywordLibrary>", description = "The path or maven coordinate to the archive file containing the keyword library for the automation package")
             protected String keywordLib;
 
             /**
@@ -185,7 +185,7 @@ public class StepConsole implements Callable<Integer> {
              *
              * @param param the source of AP
              */
-            protected File prepareFile(String param, String entityNameForLog) {
+            protected File prepareFile(String param, String entityNameForLog, boolean checkApFolder) {
                 try {
                     File file = null;
                     if (param == null) {
@@ -198,7 +198,9 @@ public class StepConsole implements Callable<Integer> {
 
                     if (file.isDirectory()) {
                         // check if the folder is AP (contains the yaml descriptor)
-                        checkApFolder(file);
+                        if(checkApFolder) {
+                            checkApFolder(file);
+                        }
 
                         Function<File, Boolean> fileFilter = null;
                         File apIgnoreFile = new File(file, AP_IGNORE_NAME);
@@ -223,11 +225,11 @@ public class StepConsole implements Callable<Integer> {
             }
 
             protected File prepareApFile(String param) {
-                return prepareFile(param, "automation package");
+                return prepareFile(param, "automation package", true);
             }
 
             protected File prepareKeywordLibFile(String param) {
-                return prepareFile(param, "keyword library");
+                return prepareFile(param, "keyword library", false);
             }
 
             private void checkApFolder(File param) throws IOException {

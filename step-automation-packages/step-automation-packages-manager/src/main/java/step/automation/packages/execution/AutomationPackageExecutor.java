@@ -95,18 +95,7 @@ public class AutomationPackageExecutor {
 
         // populate execution parameters with maven artifact identifier and then use MavenArtifactRepository to process the AP
         if (automationPackageFileSource.useMavenIdentifier()) {
-            Map<String, String> parametersFromRequest = parameters.getOriginalRepositoryObject().getRepositoryParameters();
-            Map<String, String> extendedParameters = parametersFromRequest == null ? new HashMap<>() : new HashMap<>(parametersFromRequest);
-            extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, automationPackageFileSource.getMavenArtifactIdentifier().getArtifactId());
-            extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, automationPackageFileSource.getMavenArtifactIdentifier().getGroupId());
-            extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, automationPackageFileSource.getMavenArtifactIdentifier().getVersion());
-            if (automationPackageFileSource.getMavenArtifactIdentifier().getClassifier() != null) {
-                extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, automationPackageFileSource.getMavenArtifactIdentifier().getClassifier());
-            }
-            if (automationPackageFileSource.getMavenArtifactIdentifier().getType() != null) {
-                extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE, automationPackageFileSource.getMavenArtifactIdentifier().getType());
-            }
-            parameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, extendedParameters));
+            fillParametersWithMavenRepositoryObject(automationPackageFileSource, parameters);
         }
 
         // if no repository object is specified, we use the ISOLATED_AUTOMATION_PACKAGE repo and store the original file as temporary resource to support re-execution
@@ -144,6 +133,21 @@ public class AutomationPackageExecutor {
             waitForAllLaunchedExecutions(executions, apFile.getFile().getName(), executionContext);
         }
         return executions;
+    }
+
+    private void fillParametersWithMavenRepositoryObject(AutomationPackageFileSource automationPackageFileSource, IsolatedAutomationPackageExecutionParameters parameters) {
+        Map<String, String> parametersFromRequest = parameters.getOriginalRepositoryObject() == null ? null : parameters.getOriginalRepositoryObject().getRepositoryParameters();
+        Map<String, String> extendedParameters = parametersFromRequest == null ? new HashMap<>() : new HashMap<>(parametersFromRequest);
+        extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, automationPackageFileSource.getMavenArtifactIdentifier().getArtifactId());
+        extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, automationPackageFileSource.getMavenArtifactIdentifier().getGroupId());
+        extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, automationPackageFileSource.getMavenArtifactIdentifier().getVersion());
+        if (automationPackageFileSource.getMavenArtifactIdentifier().getClassifier() != null) {
+            extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, automationPackageFileSource.getMavenArtifactIdentifier().getClassifier());
+        }
+        if (automationPackageFileSource.getMavenArtifactIdentifier().getType() != null) {
+            extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE, automationPackageFileSource.getMavenArtifactIdentifier().getType());
+        }
+        parameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, extendedParameters));
     }
 
     private List<String> runExecutions(AutomationPackage automationPackage,
