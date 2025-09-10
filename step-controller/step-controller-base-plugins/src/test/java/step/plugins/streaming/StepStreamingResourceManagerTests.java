@@ -65,7 +65,7 @@ public class StepStreamingResourceManagerTests {
     }
 
     @Test
-    public void testCreationAndFindAndDeletion() throws IOException {
+    public void testCreationAndFindAndDeletion() throws Exception {
         StreamingResourceUploadContexts uploadContexts = new StreamingResourceUploadContexts();
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(globalContext);
         StreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageDirectory);

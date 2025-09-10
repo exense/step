@@ -11,6 +11,7 @@ import step.constants.StreamingConstants;
 import step.core.GlobalContext;
 import step.core.controller.StepControllerPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.AbstractControllerPlugin;
@@ -18,6 +19,7 @@ import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.resources.ResourceManagerControllerPlugin;
+import step.resources.StreamingResourceContentProvider;
 import step.streaming.common.StreamingResourceUploadContexts;
 import step.streaming.server.FilesystemStreamingResourcesStorageBackend;
 import step.streaming.server.StreamingResourceManager;
@@ -42,6 +44,7 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     private static final Logger logger = LoggerFactory.getLogger(StreamingResourcesControllerPlugin.class);
     private final WebsocketServerEndpointSessionsHandler sessionsHandler = new DefaultWebsocketServerEndpointSessionsHandler();
     private final StreamingResourceUploadContexts uploadContexts = new StreamingResourceUploadContexts();
+    private StepStreamingResourceManager manager;
     private String websocketBaseUrl;
 
     @Override
@@ -60,7 +63,7 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         FilesystemStreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageBaseDir);
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
         URITemplateBasedReferenceProducer referenceProducer = new URITemplateBasedReferenceProducer(websocketBaseUri, DOWNLOAD_PATH, DOWNLOAD_PARAMETER_NAME);
-        StepStreamingResourceManager manager = new StepStreamingResourceManager(context, catalog, storage, referenceProducer, uploadContexts);
+        manager = new StepStreamingResourceManager(context, catalog, storage, referenceProducer, uploadContexts);
 
         context.put(StepStreamingResourceManager.class, manager);
         context.getServiceRegistrationCallback().registerService(StreamingResourceServices.class);
@@ -82,7 +85,10 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         public void modifyHandshake(ServerEndpointConfig config, HandshakeRequest request, HandshakeResponse response) {
             HttpSession httpSession = (HttpSession) request.getHttpSession();
             if (httpSession != null) {
-                config.getUserProperties().put(ATTRIBUTE_STEP_SESSION, httpSession.getAttribute("session"));
+                Object session = httpSession.getAttribute(ATTRIBUTE_STEP_SESSION);
+                if (session != null) {
+                    config.getUserProperties().put(ATTRIBUTE_STEP_SESSION, httpSession.getAttribute("session"));
+                }
             }
         }
 
@@ -108,10 +114,26 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
         return new AbstractExecutionEnginePlugin() {
             @Override
+            public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
+                // required by AP reporting for fetching attachments
+                executionEngineContext.put(StreamingResourceContentProvider.class, manager);
+            }
+
+            @Override
             public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+                // Makes streaming available to the execution
                 executionContext.put(StreamingResourceUploadContexts.class, uploadContexts);
                 executionContext.put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, websocketBaseUrl);
                 executionContext.put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, UPLOAD_PATH);
+            }
+
+
+
+            @Override
+            public void afterExecutionEnd(ExecutionContext context) {
+                // unregisters the execution with manager (registration is on-demand,
+                // but execution end needs to be signaled explicitly)
+                manager.unregisterExecution(context.getExecutionId());
             }
         };
     }
