@@ -57,8 +57,8 @@ public class QuotaLimits {
         Long maxBytesPerResource = negativeToNull(conf.getPropertyAsLong(MAX_BYTES_PER_RESOURCE, -1L));
         Long maxBytesPerExecution = negativeToNull(conf.getPropertyAsLong(MAX_BYTES_PER_EXECUTION, 500_000_000L));
         Long maxResourcesPerExecution = negativeToNull(conf.getPropertyAsLong(MAX_RESOURCES_PER_EXECUTION, -1L));
-        // Users have to explicitly opt in to allow runtime overriding
-        boolean runtimeOverridable = conf.getPropertyAsBoolean(RUNTIME_OVERRIDABLE, false); // FIXME
+        // Users have to explicitly opt in in step.properties to allow runtime overriding
+        boolean runtimeOverridable = conf.getPropertyAsBoolean(RUNTIME_OVERRIDABLE, false);
         return new QuotaLimits(maxBytesPerResource, maxBytesPerExecution, maxResourcesPerExecution, runtimeOverridable);
     }
 

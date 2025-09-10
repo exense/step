@@ -11,7 +11,7 @@ public class QuotaCheckerTests {
 
     // Helpers ----------------------------------------------------------------
 
-    private static QuotaChecker newChecker(long maxResourcesPerExecution, long maxBytesPerResource, Long maxBytesPerExecution) {
+    private static QuotaChecker newChecker(Long maxResourcesPerExecution, Long maxBytesPerResource, Long maxBytesPerExecution) {
         return new QuotaChecker(UUID.randomUUID().toString(), new QuotaLimits(maxBytesPerResource, maxBytesPerExecution, maxResourcesPerExecution, false));
     }
 
@@ -24,7 +24,7 @@ public class QuotaCheckerTests {
 
     @Test
     public void reserveAndBindWithinCountQuotaSucceeds() throws Exception {
-        QuotaChecker checker = newChecker(2, 10_000L, 100_000L);
+        QuotaChecker checker = newChecker(2L, 10_000L, 100_000L);
         reserveAndBind(checker, "r1");
         reserveAndBind(checker, "r2");
         // no exception -> success
@@ -32,7 +32,7 @@ public class QuotaCheckerTests {
 
     @Test
     public void reserveWhenQuotaReachedThrowsQuotaExceeded() throws Exception {
-        QuotaChecker checker = newChecker(2, 10_000L, 100_000L);
+        QuotaChecker checker = newChecker(2L, 10_000L, 100_000L);
         checker.reserveNewResource();
         checker.reserveNewResource();
 
@@ -41,8 +41,16 @@ public class QuotaCheckerTests {
     }
 
     @Test
+    public void reserveBindAndCancelWhenNoLimits() throws Exception {
+        QuotaChecker checker = newChecker(null, null, null);
+        reserveAndBind(checker, "r1");
+        String reservation = checker.reserveNewResource();
+        checker.cancelReservation(reservation);
+    }
+
+    @Test
     public void cancelReservationFreesSlot() throws Exception {
-        QuotaChecker checker = newChecker(2, 10_000L, 100_000L);
+        QuotaChecker checker = newChecker(2L, 10_000L, 100_000L);
 
         String t1 = checker.reserveNewResource();
         String t2 = checker.reserveNewResource();
@@ -58,7 +66,7 @@ public class QuotaCheckerTests {
 
     @Test
     public void bindWithUnknownReservationThrowsIllegalState() {
-        QuotaChecker checker = newChecker(2, 10_000L, 100_000L);
+        QuotaChecker checker = newChecker(2L, 10_000L, 100_000L);
         IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> checker.bindResourceId("no-such-token", "rX"));
         assertTrue(ex.getMessage().contains("Reservation token not found"));
@@ -66,7 +74,7 @@ public class QuotaCheckerTests {
 
     @Test
     public void bindDuplicateResourceIdThrowsIllegalState() throws Exception {
-        QuotaChecker checker = newChecker(3, 10_000L, 100_000L);
+        QuotaChecker checker = newChecker(3L, 10_000L, 100_000L);
         String t1 = checker.reserveNewResource();
         checker.bindResourceId(t1, "r1");
 
@@ -78,7 +86,7 @@ public class QuotaCheckerTests {
 
     @Test
     public void perResourceQuotaExceededThrowsQuotaExceeded() throws Exception {
-        QuotaChecker checker = newChecker(3, 100L, null); // no per-execution cap
+        QuotaChecker checker = newChecker(3L, 100L, null); // no per-execution cap
         reserveAndBind(checker, "r1");
 
         checker.onSizeChanged("r1", 100L); // at limit
@@ -89,7 +97,7 @@ public class QuotaCheckerTests {
 
     @Test
     public void perExecutionQuotaEnforcedNoOvershootSingleExecution() throws Exception {
-        QuotaChecker checker = newChecker(5, 10_000L, 150L); // exec cap = 150 bytes
+        QuotaChecker checker = newChecker(5L, 10_000L, 150L); // exec cap = 150 bytes
         reserveAndBind(checker, "r1");
         reserveAndBind(checker, "r2");
 
@@ -112,7 +120,7 @@ public class QuotaCheckerTests {
 
     @Test
     public void totalsUpdateWithMultipleResourcesPerExecution() throws Exception {
-        QuotaChecker checker = newChecker(10, 1_000_000L, 1_000_000L);
+        QuotaChecker checker = newChecker(10L, 1_000_000L, 1_000_000L);
 
         reserveAndBind(checker, "r1");
         reserveAndBind(checker, "r2");
@@ -136,8 +144,8 @@ public class QuotaCheckerTests {
     @Test
     public void independentTotalsAcrossExecutions() throws Exception {
         // Per-execution cap = 400 bytes; enforce per execution independently
-        QuotaChecker exec1 = newChecker(10, 1_000_000L, 400L);
-        QuotaChecker exec2 = newChecker(10, 1_000_000L, 400L);
+        QuotaChecker exec1 = newChecker(10L, 1_000_000L, 400L);
+        QuotaChecker exec2 = newChecker(10L, 1_000_000L, 400L);
 
         reserveAndBind(exec1, "r1");
         reserveAndBind(exec2, "s1");
@@ -171,7 +179,7 @@ public class QuotaCheckerTests {
 
     @Test
     public void decreasingSizeForSingleResourceThrowsIllegalArgument() throws Exception {
-        QuotaChecker checker = newChecker(2, 10_000L, 10_000L);
+        QuotaChecker checker = newChecker(2L, 10_000L, 10_000L);
         reserveAndBind(checker, "r1");
 
         checker.onSizeChanged("r1", 10L);
@@ -180,7 +188,7 @@ public class QuotaCheckerTests {
 
     @Test
     public void noPerExecutionCapAllowsLargeTotals() throws Exception {
-        QuotaChecker checker = newChecker(5, 1_000_000_000_000L, null); // exec cap disabled
+        QuotaChecker checker = newChecker(5L, 1_000_000_000_000L, null); // exec cap disabled
         reserveAndBind(checker, "a");
         reserveAndBind(checker, "b");
         reserveAndBind(checker, "c");

@@ -62,6 +62,8 @@ public class QuotaChecker {
 
         if (limits.maxResourcesPerExecution == null) {
             logger.debug("reserveNewResource: no count quota enforced; executionId={}, token={}", executionId, token);
+            // this is easier than using special cases (no limits == no reservation) in bind/cancel
+            reservations.add(token);
             return token;
         }
 
@@ -89,7 +91,7 @@ public class QuotaChecker {
         Objects.requireNonNull(resourceId, "resourceId");
         synchronized (this) {
             if (!reservations.remove(reservation)) {
-                throw new IllegalStateException("Reservation token not found");
+                throw new IllegalStateException("Reservation token " + reservation + " not found");
             }
             if (resources.putIfAbsent(resourceId, 0L) != null) {
                 throw new IllegalStateException("Resource already bound: " + resourceId);

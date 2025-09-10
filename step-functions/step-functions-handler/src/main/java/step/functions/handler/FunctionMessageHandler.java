@@ -38,6 +38,7 @@ import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
+import step.grid.threads.NamedThreadFactory;
 import step.reporting.LiveReporting;
 import step.streaming.client.upload.StreamingUploadProvider;
 import step.streaming.common.StreamingResourceUploadContext;
@@ -66,6 +67,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	// Cached object mapper for message payload serialization
 	private final ObjectMapper mapper;
 
+	private ExecutorService liveReportingExecutor;
 	private ApplicationContextBuilder applicationContextBuilder;
 
 	public FunctionHandlerFactory functionHandlerFactory;
@@ -79,6 +81,26 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	@Override
 	public void init(AgentTokenServices agentTokenServices) {
 		super.init(agentTokenServices);
+
+		String liveReportingPoolSizeAgentPropsKey = "step.reporting.livereporting.poolsize";
+		int liveReportingPoolSizeDefault = 100;
+		// Looks complicated, but actually just means: try to get the value from the agent properties,
+		// and if anything goes wrong fall back to the default
+		int liveReportingPoolSize =
+				Optional.ofNullable(agentTokenServices.getAgentProperties())
+						.map(m -> m.get(liveReportingPoolSizeAgentPropsKey))
+						.map(String::trim)
+						.flatMap(s -> {
+							try {
+								return Optional.of(Integer.parseInt(s));
+							} catch (NumberFormatException e) {
+								return Optional.empty();
+							}
+						})
+						.orElse(liveReportingPoolSizeDefault);
+
+		liveReportingExecutor = Executors.newFixedThreadPool(liveReportingPoolSize, NamedThreadFactory.create("livereporting-executor"));
+
 		applicationContextBuilder = new ApplicationContextBuilder(this.getClass().getClassLoader(),
 				agentTokenServices.getApplicationContextBuilder().getApplicationContextConfiguration());
 
@@ -193,11 +215,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 					logger.debug("Effective URL for Websocket uploads: {}", String.format("%s/%s", host, path));
 				}
 
-				// FIXME: this mimics the previous implementation where each provider (and therefore each function) instantiated its own thread pool.
-				//  I assume we can tighten this, for instance so we'd use a single bounded thread pool for all Keyword executions per agent.
-				ExecutorService executorService = Executors.newFixedThreadPool(100);
 				@SuppressWarnings("unchecked") Class<StreamingUploadProvider> aClass = (Class<StreamingUploadProvider>) Thread.currentThread().getContextClassLoader().loadClass("step.streaming.websocket.client.upload.WebsocketUploadProvider");
-				StreamingUploadProvider streamingUploadProvider = aClass.getDeclaredConstructor(ExecutorService.class, URI.class).newInstance(executorService, uri);
+				StreamingUploadProvider streamingUploadProvider = aClass.getDeclaredConstructor(ExecutorService.class, URI.class).newInstance(liveReportingExecutor, uri);
 
 				StreamingUploadProvider proxiedProvider = (StreamingUploadProvider) Proxy.newProxyInstance(
 						aClass.getClassLoader(), new Class[]{StreamingUploadProvider.class},
