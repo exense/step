@@ -22,7 +22,7 @@ import java.util.Map;
 
 import groovy.lang.GString;
 import step.expressions.ExpressionHandler;
-import step.expressions.ProtectedBinding;
+import step.expressions.ProtectedVariable;
 
 public class DynamicValueResolver {
 	
@@ -44,8 +44,8 @@ public class DynamicValueResolver {
 
 				Object o = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings, dynamicValue.hasProtectedAccess());
 				//If access to protected bindings is granted to this dynamicValue, the protected result is added directly to the EvaluationResult
-				if (dynamicValue.hasProtectedAccess() && o instanceof ProtectedBinding) {
-					ProtectedBinding pb = (ProtectedBinding) o;
+				if (dynamicValue.hasProtectedAccess() && o instanceof ProtectedVariable) {
+					ProtectedVariable pb = (ProtectedVariable) o;
 					protectedResult = pb.value;
 					evaluationResult = pb.obfuscatedValue;
 				} else {

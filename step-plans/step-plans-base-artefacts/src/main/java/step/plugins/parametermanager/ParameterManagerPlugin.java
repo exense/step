@@ -38,7 +38,7 @@ import step.core.variables.VariablesManager;
 import step.engine.execution.ExecutionManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.BasePlugin;
-import step.expressions.ProtectedBinding;
+import step.expressions.ProtectedVariable;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -211,7 +211,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	private Object getParameterAsBindingValue(Parameter p, ParameterManager parameterManager, String key) {
 		String value = getParameterValue(p, parameterManager);
 		boolean isProtected = p.getProtectedValue();
-		return byPassProtectedParameters ? value : (isProtected) ? new ProtectedBinding(value, key) : value;
+		return byPassProtectedParameters ? value : (isProtected) ? new ProtectedVariable(key, value) : value;
 	}
 
 	private String getParameterValue(Parameter p, ParameterManager parameterManager) {

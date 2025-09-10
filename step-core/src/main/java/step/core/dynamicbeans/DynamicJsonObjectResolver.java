@@ -28,7 +28,7 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonValue;
 
 import step.core.json.JsonProviderCache;
-import step.expressions.ProtectedBinding;
+import step.expressions.ProtectedVariable;
 
 public class DynamicJsonObjectResolver {
 	
@@ -152,8 +152,8 @@ public class DynamicJsonObjectResolver {
 				Object normalEvaluate;
 				Object obfuscatedEvaluate;
 				Object result = valueResolver.evaluate(jsonObject, bindings, canAccessProtectedValue);
-				if (result instanceof ProtectedBinding) {
-					ProtectedBinding protectedBinding = (ProtectedBinding) result;
+				if (result instanceof ProtectedVariable) {
+					ProtectedVariable protectedBinding = (ProtectedVariable) result;
 					normalEvaluate = protectedBinding.value;
 					obfuscatedEvaluate = protectedBinding.obfuscatedValue;
 				} else {

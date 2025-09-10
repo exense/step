@@ -18,15 +18,17 @@
  ******************************************************************************/
 package step.expressions;
 
-public class ProtectionContext {
+public final class ProtectionContext {
     private static final ThreadLocal<ProtectionContext> CONTEXT = new ThreadLocal<>();
 
     private final boolean canAccessProtectedValue;
     private final boolean isSet;
+    private final Tokenizer tokenizer;
 
     private ProtectionContext(boolean canAccess) {
         this.canAccessProtectedValue = canAccess;
         this.isSet = true;
+        this.tokenizer = new Tokenizer();
     }
 
     public static void set(boolean canAccess) {
@@ -47,4 +49,7 @@ public class ProtectionContext {
 
     // Getters
     public boolean canAccessProtectedValue() { return canAccessProtectedValue; }
+
+    // package-private access for ProtectedBinding (not exported to Groovy)
+    Tokenizer tokenizer() { return tokenizer; }
 }

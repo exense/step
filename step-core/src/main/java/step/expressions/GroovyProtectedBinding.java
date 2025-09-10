@@ -21,24 +21,26 @@ package step.expressions;
 import groovy.lang.GroovyObjectSupport;
 import org.codehaus.groovy.runtime.InvokerHelper;
 
-import java.util.Arrays;
-
-public class ProtectedBinding extends GroovyObjectSupport {
+public class GroovyProtectedBinding extends GroovyObjectSupport {
     public static final String OBFUSCATE_MARKER = "***";
-    public final Object value;
-    public final String key;
-    public final String obfuscatedValue;
+    protected final Object value;
+    protected final String key;
+    protected final String obfuscatedValue;
 
 
-    public ProtectedBinding(Object value, String key) {
-        this(value, key, obfuscate(key));
+    public GroovyProtectedBinding(String key, Object value) {
+        this(key, value, obfuscate(key));
     }
 
-    private static String obfuscate(String hint) {
+    public GroovyProtectedBinding(ProtectedVariable value) {
+        this(value.key, value.value, value.obfuscatedValue);
+    }
+
+    public static String obfuscate(String hint) {
         return OBFUSCATE_MARKER + hint + OBFUSCATE_MARKER;
     }
 
-    public ProtectedBinding(Object value, String key, String obfuscatedValue) {
+    private GroovyProtectedBinding(String key, Object value, String obfuscatedValue) {
         this.value = value;;
         this.key = key;
         this.obfuscatedValue = obfuscatedValue;
@@ -50,7 +52,7 @@ public class ProtectedBinding extends GroovyObjectSupport {
         if (context != null && context.canAccessProtectedValue()) {
             Object propertyValue = InvokerHelper.getProperty(value, propertyName);
             String newKey = key + "." + propertyName;
-            return new ProtectedBinding(propertyValue, newKey, obfuscate(newKey));
+            return new GroovyProtectedBinding(newKey, propertyValue, obfuscate(newKey));
         } else {
             throw new ProtectedPropertyException("The property " + propertyName + " of " + key + " is protected");
         }
@@ -62,6 +64,8 @@ public class ProtectedBinding extends GroovyObjectSupport {
         if (context == null || !context.canAccessProtectedValue()) {
             // Cannot set a property of a protected object if access is not granted
             throw new ProtectedPropertyException("The property " + propertyName + " of " + key + " is protected");
+        } else {
+            InvokerHelper.setProperty(value, propertyName, newValue);
         }
     }
 
@@ -69,42 +73,42 @@ public class ProtectedBinding extends GroovyObjectSupport {
     public Object invokeMethod(String methodName, Object args) {
         ProtectionContext context = ProtectionContext.get();
         if (context != null && context.canAccessProtectedValue()) {
-            // Special handling for String plus method to use our custom logic
-            if ("plus".equals(methodName) && value instanceof String) {
-                Object newValue = InvokerHelper.invokeMethod(value, methodName, transformArgs(args, false));
-                Object newObfuscatedValue = InvokerHelper.invokeMethod(obfuscatedValue, methodName, transformArgs(args, true));
-                return new ProtectedBinding(newValue, key+"+", newObfuscatedValue.toString());
+            // Special handling for String, only plus method is allowed and use custom logic
+            if (value instanceof String){
+                if ("plus".equals(methodName) && value instanceof String) {
+                    return InvokerHelper.invokeMethod(this.toString(), methodName, args);
+                    //Object newObfuscatedValue = InvokerHelper.invokeMethod(obfuscatedValue, methodName, transformArgs(args, true));
+                    //return new GroovyProtectedBinding(key + "+", newValue, newObfuscatedValue.toString());
+                } else {
+                    throw new ProtectedPropertyException("Method '" + methodName + "' is not allowed on protected variables. It was invoked on '" + key + "'.");
+                }
             } else {
                 Object o = InvokerHelper.invokeMethod(value, methodName, args);
                 String newKey = key + "." + methodName;
-                return new ProtectedBinding(o, newKey);
+                return new GroovyProtectedBinding(newKey, o);
             }
         } else {
             throw new ProtectedPropertyException("Cannot invoke method '" + methodName + "' on the protected variable '" + key + "'");
         }
     }
 
-    private Object transformArgs(Object args, boolean obfuscated) {
-        if (args.getClass().isArray()) {
-            Object[] array = (Object[]) args;
-            return Arrays.stream(array).map(e -> transformObject(obfuscated, e)).toArray();
-        } else {
-            return transformObject(obfuscated, args);
-        }
-    }
-
-    private static Object transformObject(boolean obfuscated, Object e) {
-        return (e instanceof ProtectedBinding) ? obfuscated ?
-                ((ProtectedBinding) e).obfuscatedValue : ((ProtectedBinding) e).value : e;
-    }
-
     @Override
     public String toString() {
         ProtectionContext context = ProtectionContext.get();
         if (context == null || !context.canAccessProtectedValue()) {
-            return obfuscatedValue; //TODO should we rather throw an exception here?
+            throw new ProtectedPropertyException("Cannot invoke method 'toString' on the protected variable '" + key + "'");
         } else {
-            return value.toString();
+            return context.tokenizer().tokenFor(String.valueOf(value), obfuscatedValue);
+        }
+    }
+
+    //Set custom intellij rendered for debugging
+    public String toObfuscatedString() {
+        ProtectionContext context = ProtectionContext.get();
+        if (context == null || !context.canAccessProtectedValue()) {
+            throw new ProtectedPropertyException("Cannot invoke method 'toString' on the protected variable '" + key + "'");
+        } else {
+            return obfuscatedValue;
         }
     }
 }

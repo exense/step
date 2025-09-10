@@ -28,8 +28,6 @@ import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static step.expressions.ProtectionAwareGroovySetup.setupProtectionAwareOperations;
-
 public class ExpressionHandler implements AutoCloseable {
 		
 	private static final Logger logger = LoggerFactory.getLogger(ExpressionHandler.class);
@@ -59,7 +57,6 @@ public class ExpressionHandler implements AutoCloseable {
 		this.groovyPool = (groovyPoolFactory != null) ? new GroovyPool(groovyPoolFactory, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds) :
 				new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
 		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
-		setupProtectionAwareOperations();
 	}
 
 	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings) {
@@ -90,10 +87,14 @@ public class ExpressionHandler implements AutoCloseable {
 					for(Entry<String, Object> varEntry : bindings.entrySet()) {
 						String key = varEntry.getKey();
 						Object value =  varEntry.getValue();
-						if (!canAccessProtectedValue && value instanceof ProtectedBinding) {
+						if (!canAccessProtectedValue && value instanceof ProtectedVariable) {
 							excludedProtectedBindingKeys.add(key);
 						} else {
-							binding.setVariable(key, value);
+							if (value instanceof ProtectedVariable) {
+								binding.setVariable(key, new GroovyProtectedBinding((ProtectedVariable) value));
+							} else {
+								binding.setVariable(key, value);
+							}
 						}
 					}
 				}
@@ -136,8 +137,16 @@ public class ExpressionHandler implements AutoCloseable {
 				}
 
 				// Handle GString results that contain ProtectedBinding
-				if (result instanceof GString) {
-					result = ProtectionAwareGroovySetup.handleGStringWithProtectedBindings((GString) result);
+				Tokenizer tokenizer = ProtectionContext.get().tokenizer();
+				if (canAccessProtectedValue && (result instanceof GString || result instanceof String)) {
+					result = tokenizer.renderBoth(result.toString());
+				}
+				//GroovyProtectedBinding can also be returned when canAccessProtectedValue is false, (ex dataRow.next())
+				if (result instanceof GroovyProtectedBinding) {
+					GroovyProtectedBinding resultAsPB = (GroovyProtectedBinding) result;
+					Object clearValue = (resultAsPB.value instanceof GString || resultAsPB.value instanceof String) ?
+							tokenizer.render(resultAsPB.value.toString(), true) : resultAsPB.value;
+					result = new ProtectedVariable(resultAsPB.key, clearValue, tokenizer.render(resultAsPB.obfuscatedValue, false));
 				}
 				if(logger.isDebugEnabled()) {
 					logger.debug("Groovy result:\n" + result);
@@ -172,7 +181,7 @@ public class ExpressionHandler implements AutoCloseable {
 
 	public static Object checkProtectionAndWrapIfRequired(boolean isParentProtected, Object value, String key) {
 		if (isParentProtected) {
-			return new ProtectedBinding(value, key);
+			return new GroovyProtectedBinding(key, value);
 		}
 		return value;
 	}

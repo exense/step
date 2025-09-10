@@ -55,6 +55,94 @@ public class ExpressionHandlerTest {
     }
 
     @Test
+    @Ignore
+    public void benchmarkToString() {
+        //AtomicLong totalDuration = new AtomicLong(0);
+        for (int j=0; j< 20; j++) {
+            long startTime = System.currentTimeMillis();
+            for (int i = 0; i < 10; i++) {
+                testStrings();
+            }
+            System.out.println("Total time for 10 iterations: " + (System.currentTimeMillis() - startTime) + "ms");
+        }
+    }
+
+    @Test
+    public void testStrings() {
+        testStringsWithBindings(Map.of("var1", "stringOne", "var2", "stringTwo"), false, false);
+
+        testStringsWithBindings(Map.of("var1", new ProtectedVariable("var1", "stringOne"), "var2", new ProtectedVariable("var2", "stringTwo")), true, true);
+
+        testStringsWithBindings(Map.of("var1", new ProtectedVariable("var1", "stringOne"), "var2", "stringTwo"), true, false);
+
+        testStringsWithBindings(Map.of("var1", "stringOne", "var2", new ProtectedVariable("var2", "stringTwo")), false, true);
+
+
+        try (ExpressionHandler e = new ExpressionHandler()) {
+            Exception ex = assertThrows("Method 'substring' is not allowed on protected variables. It was invoked on 'var2'.", RuntimeException.class, () -> e.evaluateGroovyExpression("var1 + \" \" + var2.substring(2)",
+                    Map.of("var1", new ProtectedVariable("var1", "stringOne"), "var2", new ProtectedVariable("var2", "stringTwo")),
+                    true));
+            assertEquals("Error while running groovy expression: 'var1 + \" \" + var2.substring(2)'", ex.getMessage());
+
+            ex =assertThrows("Error while running groovy expression: 'var1 + \" ${var2}\".substring(2)'", RuntimeException.class, () -> e.evaluateGroovyExpression("var1 + \" ${var2}\".substring(2)",
+                    Map.of("var1", new ProtectedVariable("var1", "stringOne"), "var2", new ProtectedVariable("var2", "stringTwo")), true));
+            assertEquals("Error while running groovy expression: 'var1 + \" ${var2}\".substring(2)'", ex.getMessage());
+        }
+    }
+
+    private void testStringsWithBindings(Map<String, Object> bindings, boolean var1Protected, boolean var2Protected) {
+        String expectedResultObfuscated2Variables = (var1Protected ? "***var1*** " : "stringOne ") + (var2Protected ? "***var2***" : "stringTwo");
+        String expectedResultObfuscated2ndAsVariable = "stringOne " + (var2Protected ? "***var2***" : "stringTwo");
+        String expectedResultObfuscated1stAsVariable = (var1Protected ? "***var1*** " : "stringOne ") + "stringTwo";
+        try (ExpressionHandler e = new ExpressionHandler()) {
+            testStringConcatenationExpression(e, "\"stringOne\" + \" \" + \"stringTwo\"", bindings, "stringOne stringTwo");
+
+            testStringConcatenationExpression(e, "var1 + \" \" + var2", bindings, expectedResultObfuscated2Variables);
+
+            testStringConcatenationExpression(e, "var1 + \" \" + \"stringTwo\"", bindings, expectedResultObfuscated1stAsVariable);
+
+            testStringConcatenationExpression(e, "\"stringOne\" + \" \" + var2", bindings, expectedResultObfuscated2ndAsVariable);
+
+            testStringConcatenationExpression(e, "\"${var1} \" + var2", bindings, expectedResultObfuscated2Variables);
+
+            testStringConcatenationExpression(e, "\"${var1} \" + \"stringTwo\"", bindings, expectedResultObfuscated1stAsVariable);
+
+            testStringConcatenationExpression(e, "\"${var1} ${var2}\"", bindings, expectedResultObfuscated2Variables);
+
+            testStringConcatenationExpression(e, "\"stringOne\" + \" ${var2}\"", bindings, expectedResultObfuscated2ndAsVariable);
+
+            testStringConcatenationExpression(e, "var1 + \" ${var2}\"", bindings, expectedResultObfuscated2Variables);
+        }
+    }
+
+    private static void testStringConcatenationExpression(ExpressionHandler e, String expression, Map<String, Object> bindings, String expectedResultObfuscated) {
+        //System.out.println("-------------------- Testing " + expression + " -------------------------------");
+        Object o;
+        o = e.evaluateGroovyExpression(expression, bindings, true);
+        boolean useProtectedBinginds = expectedResultObfuscated.contains("***");
+        Object result = o;
+        if (useProtectedBinginds) {
+            assertTrue(o instanceof ProtectedVariable);
+            result = ((ProtectedVariable) o).value;
+            assertEquals(expectedResultObfuscated, ((ProtectedVariable) o).obfuscatedValue);
+        }
+        //System.out.println("-------------------- evaluation result as string " + o.toString() + " -------------------------------");
+        assertEquals("stringOne stringTwo", result);
+    }
+
+    @Test
+    public void testMaps() {
+        try (ExpressionHandler e = new ExpressionHandler()) {
+            Map<String, String> row = Map.of("col1", "value1", "col2", "value2");
+            Object o = e.evaluateGroovyExpression("row.col1", Map.of("row", new ProtectedVariable("row", row)), true);
+            assertTrue(o instanceof ProtectedVariable);
+            ProtectedVariable pv = (ProtectedVariable) o;
+            assertEquals("value1", pv.value);
+            assertEquals("***row.col1***", pv.obfuscatedValue);
+        }
+    }
+
+    @Test
     public void testPool() throws Exception {
         // Create factory and spy on it with custom answer
         GroovyPoolFactory realFactory = new GroovyPoolFactory(null); // your scriptBaseClass
@@ -146,8 +234,8 @@ public class ExpressionHandlerTest {
         try (ExpressionHandler e = new ExpressionHandler(null)) {
             Map<String, Object> b = new HashMap<>();
             b.put("simpleBinding", "value");
-            b.put("protectedBinding", new ProtectedBinding("protectedValue", "protectedBinding"));
-            b.put("otherProtectedBinding", new ProtectedBinding("otherProtectedValue", "otherProtectedBinding"));
+            b.put("protectedBinding", new ProtectedVariable("protectedBinding", "protectedValue"));
+            b.put("otherProtectedBinding", new ProtectedVariable("otherProtectedBinding", "otherProtectedValue"));
             o = e.evaluateGroovyExpression("simpleBinding", b, false);
             assertEquals("value", o.toString());
             assertThrows("Error while resolving groovy properties in expression: 'protectedBinding'. The property 'protectedBinding' is protected and can only be used as Keyword's inputs or Keyword's properties.",
@@ -156,8 +244,8 @@ public class ExpressionHandlerTest {
             assertEquals("value", o.toString());
             o = e.evaluateGroovyExpression("protectedBinding", b, true);
             assertEquals("***protectedBinding***", o.toString());
-            assertTrue(o instanceof ProtectedBinding);
-            ProtectedBinding pb = (ProtectedBinding) o;
+            assertTrue(o instanceof ProtectedVariable);
+            ProtectedVariable pb = (ProtectedVariable) o;
             assertEquals("protectedValue", pb.value.toString());
             assertEquals("***protectedBinding***", pb.obfuscatedValue);
 
@@ -166,21 +254,21 @@ public class ExpressionHandlerTest {
 
             o = e.evaluateGroovyExpression("\"some text: \" + simpleBinding + \" \"+ protectedBinding", b, true);
             assertEquals("some text: value ***protectedBinding***", o.toString());
-            assertTrue(o instanceof ProtectedBinding);
-            pb = (ProtectedBinding) o;
+            assertTrue(o instanceof ProtectedVariable);
+            pb = (ProtectedVariable) o;
             assertEquals("some text: value protectedValue", pb.value.toString());
             assertEquals("some text: value ***protectedBinding***", pb.obfuscatedValue);
 
             o = e.evaluateGroovyExpression("protectedBinding  + \" \" + simpleBinding", b, true);
             assertEquals("***protectedBinding*** value", o.toString());
-            assertTrue(o instanceof ProtectedBinding);
-            pb = (ProtectedBinding) o;
+            assertTrue(o instanceof ProtectedVariable);
+            pb = (ProtectedVariable) o;
             assertEquals("protectedValue value", pb.value.toString());
             assertEquals("***protectedBinding*** value", pb.obfuscatedValue);
 
             o = e.evaluateGroovyExpression("otherProtectedBinding + \" \"+ protectedBinding", b, true);
             Assert.assertEquals("***otherProtectedBinding*** ***protectedBinding***", o.toString());
-            Assert.assertEquals("otherProtectedValue protectedValue", ((ProtectedBinding) o).value.toString());
+            Assert.assertEquals("otherProtectedValue protectedValue", ((ProtectedVariable) o).value.toString());
         }
 
     }
@@ -191,12 +279,12 @@ public class ExpressionHandlerTest {
         try (ExpressionHandler e = new ExpressionHandler(null)) {
             Map<String, Object> b = new HashMap<>();
             b.put("simpleBinding", "value");
-            b.put("protectedBinding", new ProtectedBinding("protectedValue", "protectedBinding"));
-            b.put("otherProtectedBinding", new ProtectedBinding("otherProtectedValue", "otherProtectedBinding"));
+            b.put("protectedBinding", new ProtectedVariable("protectedBinding", "protectedValue"));
+            b.put("otherProtectedBinding", new ProtectedVariable("otherProtectedBinding", "otherProtectedValue"));
             o = e.evaluateGroovyExpression("\"${simpleBinding} ${protectedBinding}\"", b, true);
             assertEquals("value ***protectedBinding***", o.toString());
-            assertTrue(o instanceof ProtectedBinding);
-            assertEquals("value protectedValue",((ProtectedBinding) o).value.toString());
+            assertTrue(o instanceof ProtectedVariable);
+            assertEquals("value protectedValue",((ProtectedVariable) o).value.toString());
             assertThrows("Error while resolving groovy properties in expression: '\"${simpleBinding} ${protectedBinding}\"'. The property 'protectedBinding' is protected and can only be used as Keyword's inputs or Keyword's properties.",
                     RuntimeException.class, () -> e.evaluateGroovyExpression("\"${simpleBinding} ${protectedBinding}\"", b, false));
 
@@ -206,14 +294,23 @@ public class ExpressionHandlerTest {
 
             o = e.evaluateGroovyExpression("\"${otherProtectedBinding} some thing \" + protectedBinding" , b, true);
             assertEquals("***otherProtectedBinding*** some thing ***protectedBinding***", o.toString());
-            assertTrue(o instanceof ProtectedBinding);
-            assertEquals("otherProtectedValue some thing protectedValue",((ProtectedBinding) o).value.toString());
+            assertTrue(o instanceof ProtectedVariable);
+            assertEquals("otherProtectedValue some thing protectedValue",((ProtectedVariable) o).value.toString());
 
             o = e.evaluateGroovyExpression("\"${simpleBinding} some thing \" + protectedBinding" , b, true);
             assertEquals("value some thing ***protectedBinding***", o.toString());
-            assertTrue(o instanceof ProtectedBinding);
-            assertEquals("value some thing protectedValue",((ProtectedBinding) o).value.toString());
+            assertTrue(o instanceof ProtectedVariable);
+            assertEquals("value some thing protectedValue",((ProtectedVariable) o).value.toString());
         }
+    }
+
+    @Test
+    public void benchmark() throws Exception {
+        String expr1 = "\"string\" + \"string\"";
+        String expr1bis = "param1 + \"string\"";
+        String expr2 = "param1 + param2";
+        String expr2bis = "\"${param1} something ${param2}\"";
+        benchmarkGroovyPoolConfig(10, 1000,1000,50,-1, expr1, expr1bis, expr2, expr2bis);
     }
 
     @Test
@@ -270,15 +367,20 @@ public class ExpressionHandlerTest {
     }
 
 
-
     private static void benchmarkGroovyPoolConfig(int threadsPerExpression, int iterationsPerThread, int poolSize, int maxPoolPerKey, int maxIdlePerKey) throws Exception {
-        logger.info(">>>> Benchmark with poolSize {}, threadsPerExpression {}, iterationsPerThread {}, maxPoolPerKey {}, maxIdlePerKey {}"
-                , poolSize, threadsPerExpression, iterationsPerThread, maxPoolPerKey, maxIdlePerKey);
-
         final String EXPRESSION_1 = "Thread.sleep(20); return 20;";
         final String EXPRESSION_2 = "Thread.sleep(1); return 1;";
         final String EXPRESSION_1_BIS = "Thread.sleep(21); return 21;;";
         final String EXPRESSION_2_BIS = "Thread.sleep(2); return 2;";
+        benchmarkGroovyPoolConfig(threadsPerExpression, iterationsPerThread, poolSize, maxPoolPerKey, maxIdlePerKey, EXPRESSION_1, EXPRESSION_2, EXPRESSION_1_BIS, EXPRESSION_2_BIS);
+    }
+
+    private static void benchmarkGroovyPoolConfig(int threadsPerExpression, int iterationsPerThread, int poolSize, int maxPoolPerKey, int maxIdlePerKey, String EXPRESSION_1,
+                                                  String EXPRESSION_2, String EXPRESSION_1_BIS, String EXPRESSION_2_BIS) throws Exception {
+        logger.info(">>>> Benchmark with poolSize {}, threadsPerExpression {}, iterationsPerThread {}, maxPoolPerKey {}, maxIdlePerKey {}"
+                , poolSize, threadsPerExpression, iterationsPerThread, maxPoolPerKey, maxIdlePerKey);
+
+
 
         // Track compilations manually
         AtomicInteger compilationCounter = new AtomicInteger(0);
@@ -368,14 +470,16 @@ public class ExpressionHandlerTest {
             // Performance comparison
             double expr1Phase1Avg = expr1TotalTime.get() / (double) threadsPerExpression / iterationsPerThread / 1_000_000.0;
             double expr1Phase2Avg = expr1Phase2TotalTime.get() / (double) threadsPerExpression / iterationsPerThread / 1_000_000.0;
+            double expr1BisPhase2Avg = expr1BisTotalTime.get() / (double) threadsPerExpression / iterationsPerThread / 1_000_000.0;
             double expr2Avg = expr2TotalTime.get() / (double) threadsPerExpression / iterationsPerThread / 1_000_000.0;
+            double expr2BisAvg = expr2BisTotalTime.get() / (double) threadsPerExpression / iterationsPerThread / 1_000_000.0;
 
             logger.info("<<<< Summary results Benchmark with poolSize {}, threadsPerExpression {}, iterationsPerThread {}, maxPoolPerKey {}, maxIdlePerKey {}}"
                     , poolSize, threadsPerExpression, iterationsPerThread, maxPoolPerKey, maxIdlePerKey);
             logger.info("Performance compilations phase 1: {}", compilationStatsPhase1);
             logger.info("Performance compilations phase 2: {}", compilationStatsPhase2);
-            logger.info("Performance - Total compilations {}, Phase1 {}ms, Phase2 {}ms, Expr1 Phase1: {}ms, Expr1 Phase2: {}ms, Expr2: {}ms",
-                    compilationCounter.get(), phase1DurationMs, phase2DurationMs, expr1Phase1Avg, expr1Phase2Avg, expr2Avg);
+            logger.info("Performance - Total compilations {}, Phase1 {}ms, Phase2 {}ms, Expr1 Phase1: {}ms, Expr1 Phase2: {}ms, Expr1Bis: {}ms, Expr2: {}ms, Expr2Bis: {}ms",
+                    compilationCounter.get(), phase1DurationMs, phase2DurationMs, expr1Phase1Avg, expr1Phase2Avg, expr1BisPhase2Avg, expr2Avg, expr2BisAvg);
         }
     }
 
@@ -394,7 +498,7 @@ public class ExpressionHandlerTest {
                 try {
                     for (int j = 0; j < iterationsPerThread; j++) {
                         long startTime = System.nanoTime();
-                        Object result = handler.evaluateGroovyExpression(EXPRESSION_1, Map.of("input", input));
+                        Object result = handler.evaluateGroovyExpression(EXPRESSION_1, Map.of("input", input,"param1", "paramValue","param2","param2Value"));
                         long duration = System.nanoTime() - startTime;
                         expr1TotalTime.addAndGet(duration);
                         assertNotNull(result);

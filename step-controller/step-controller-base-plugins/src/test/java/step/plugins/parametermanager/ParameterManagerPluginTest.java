@@ -42,7 +42,7 @@ import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.variables.VariablesManager;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.expressions.ExpressionHandler;
-import step.expressions.ProtectedBinding;
+import step.expressions.ProtectedVariable;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -378,8 +378,8 @@ public class ParameterManagerPluginTest {
 	private void assertProtectedVariable(VariablesManager variablesManager, String variableName) {
 		Object variable = variablesManager.getVariable(variableName);
 		Assert.assertNotNull(variable);
-		Assert.assertTrue(variable instanceof ProtectedBinding);
-		assertEquals("Value", ((ProtectedBinding) variable).value);
+		Assert.assertTrue(variable instanceof ProtectedVariable);
+		assertEquals("Value", ((ProtectedVariable) variable).value);
 	}
 
 	protected ExecutionContext newExecutionContext(ExecutionEnginePlugin parameterPlugin) {
