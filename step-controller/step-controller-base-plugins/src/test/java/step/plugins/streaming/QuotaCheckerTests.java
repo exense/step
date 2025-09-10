@@ -69,7 +69,7 @@ public class QuotaCheckerTests {
         QuotaChecker checker = newChecker(2L, 10_000L, 100_000L);
         IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> checker.bindResourceId("no-such-token", "rX"));
-        assertTrue(ex.getMessage().contains("Reservation token not found"));
+        assertTrue(ex.getMessage().startsWith("Reservation token ") && ex.getMessage().endsWith(" not found"));
     }
 
     @Test
