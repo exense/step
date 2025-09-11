@@ -43,18 +43,17 @@ public class AutomationPackageTableTransformer implements BiFunction<AutomationP
         }
 
         // extend the original object with information about linked resources
-        AutomationPackageTableRecord res = new AutomationPackageTableRecord(automationPackage);
         if(fileResolver.isResource(automationPackage.getAutomationPackageResource())){
             String resourceId = fileResolver.resolveResourceId(automationPackage.getAutomationPackageResource());
-            res.setAutomationPackageResourceObj(resourceManager.getResource(resourceId));
+            automationPackage.setAutomationPackageResourceObj(resourceManager.getResource(resourceId));
         }
 
         if(fileResolver.isResource(automationPackage.getKeywordLibraryResource())){
             String resourceId = fileResolver.resolveResourceId(automationPackage.getKeywordLibraryResource());
-            res.setKeywordLibraryResourceObj(resourceManager.getResource(resourceId));
+            automationPackage.setKeywordLibraryResourceObj(resourceManager.getResource(resourceId));
         }
 
-        return res;
+        return automationPackage;
     }
 
 }

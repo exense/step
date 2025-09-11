@@ -29,11 +29,6 @@ public class AutomationPackageTableRecord extends AutomationPackage {
     public AutomationPackageTableRecord() {
     }
 
-    public AutomationPackageTableRecord(AutomationPackage automationPackage) {
-        super(automationPackage.getStatus(), automationPackage.getVersion(), automationPackage.getActivationExpression(),
-                automationPackage.getAutomationPackageResource(), automationPackage.getKeywordLibraryResource());
-    }
-
     public Resource getAutomationPackageResourceObj() {
         return automationPackageResourceObj;
     }
