@@ -5,10 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,10 +57,7 @@ import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 
 import java.io.*;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -88,7 +82,10 @@ public class AutomationPackageManagerOSTest {
     private static final String SAMPLE1_FILE_NAME = "step-automation-packages-sample1.jar";
     private static final String SAMPLE1_EXTENDED_FILE_NAME = "step-automation-packages-sample1-extended.jar";
     private static final String SAMPLE_ECHO_FILE_NAME = "step-automation-packages-sample-echo.jar";
+
     private static final String KW_LIB_FILE_NAME = "step-automation-packages-kw-lib.jar";
+    private static final String KW_LIB_FILE_UPDATED_NAME = "step-automation-packages-kw-lib-updated.jar";
+    private static final String KW_LIB_FILE_RELEASE_NAME = "step-automation-packages-kw-lib-release.jar";
 
     private AutomationPackageManager manager;
     private AutomationPackageAccessorImpl automationPackageAccessor;
@@ -485,7 +482,8 @@ public class AutomationPackageManagerOSTest {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File extendedAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_EXTENDED_FILE_NAME);
         File echoAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
-        File kwLibJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+        File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+        File kwLibReleaseJar = new File("src/test/resources/samples/" + KW_LIB_FILE_RELEASE_NAME);
 
         MavenArtifactIdentifier sampleSnapshot = new MavenArtifactIdentifier("test-group", "ap1", "1.0.0-SNAPSHOT", null, null);
         MavenArtifactIdentifier extSampleRelease = new MavenArtifactIdentifier("test-group", "ap1-ext", "1.0.0-RELEASE", null, null);
@@ -501,8 +499,8 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(echoRelease, echoAutomationPackageJar);
         providersResolver.getMavenArtifactMocks().put(echoSnapshot, echoAutomationPackageJar);
 
-        providersResolver.getMavenArtifactMocks().put(kwLibRelease, kwLibJar);
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibJar);
+        providersResolver.getMavenArtifactMocks().put(kwLibRelease, kwLibReleaseJar);
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
 
         // upload SNAPSHOT AP (echo) + SNAPSHOT LIB (echo)
         AutomationPackageUpdateResult echoApResult = manager.createOrUpdateAutomationPackage(
@@ -647,6 +645,67 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(kwLibReleaseResource.getId(), newKwLibResourceForAp.getId());
     }
 
+    @Ignore
+    @Test
+    public void testVersioning(){
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File echoAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
+        File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+        File kwLibUpdatedSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_UPDATED_NAME);
+
+        MavenArtifactIdentifier sampleSnapshot = new MavenArtifactIdentifier("test-group", "ap1", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier echoRelease = new MavenArtifactIdentifier("test-group", "ap1-echo", "1.0.0-RELEASE", null, null);
+        MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
+
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, automationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(echoRelease, echoAutomationPackageJar);
+
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
+
+        // upload echo AP (echo RELEASE) + SNAPSHOT LIB
+        AutomationPackageUpdateResult resultEcho = manager.createOrUpdateAutomationPackage(
+                true, true, null,
+                AutomationPackageFileSource.withMavenIdentifier(echoRelease),
+                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
+                null, null, null, null, false, "testUser",
+                false, true
+        );
+        log.info("Echo AP: {}", resultEcho.getId());
+
+        // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1 (WITHOUT CHECK FOR DUPLICATES)
+        AutomationPackageUpdateResult resultV1 = manager.createOrUpdateAutomationPackage(
+                true, true, null,
+                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
+                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
+                "v1", null, null, null, false, "testUser",
+                false, false
+        );
+        log.info("AP v1: {}", resultV1.getId());
+
+        // imitate the snapshot update
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
+
+        // upload main AP (sample SNAPSHOT) + UPDATED SNAPSHOT LIB - VERSION 2 (WITH CHECK FOR DUPLICATES)
+        try {
+            AutomationPackageUpdateResult resultV2 = manager.createOrUpdateAutomationPackage(
+                    true, true, null,
+                    AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
+                    AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
+                    "v2", null, null, null, false, "testUser",
+                    false, true
+            );
+            fail();
+        } catch (AutomationPackageCollisionException ex){
+            // both packages reuse the same keyword lib
+            Assert.assertEquals(Set.of(resultV1.getId(), resultEcho.getId()), new HashSet<>(ex.getAutomationPackagesWithSameKeywordLib()));
+
+            // v1 reuses the same AP artifact (SNAPSHOT)
+            Assert.assertEquals(Set.of(resultV1.getId()), new HashSet<>(ex.getAutomationPackagesWithSameOrigin()));
+        }
+
+    }
+
     private void checkResources(AutomationPackage ap1, String expectedApFileName, String expectedKwFileName,
                                 String expectedApOrigin, String expectedKwOrigin) {
         Resource ap1Resource = resourceManager.getResource(fileResolver.resolveResourceId(ap1.getAutomationPackageResource()));
@@ -705,7 +764,9 @@ public class AutomationPackageManagerOSTest {
         } else {
             Assert.assertEquals("uploaded:", resourceByAutomationPackage.getOrigin());
         }
-        Assert.assertEquals(r.storedPackage.getId().toString(), resourceByAutomationPackage.getCustomField("automationPackageId"));
+
+        // we don't add the link from resource to the automation package, because we need to support one-to-many relationship between resource and AP
+        Assert.assertNull(r.storedPackage.getId().toString(), resourceByAutomationPackage.getCustomField("automationPackageId"));
 
         // upload package without keyword library
         Assert.assertNull(r.storedPackage.getKeywordLibraryResource());
