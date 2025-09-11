@@ -19,13 +19,12 @@
 package step.automation.packages.accessor;
 
 import step.automation.packages.AutomationPackage;
-import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 
-public class AutomationPackageAccessorImpl extends AbstractAccessor<AutomationPackage> implements AutomationPackageAccessor {
+public class AutomationPackageAccessorImpl extends AbstractAutomationPackageAccessor {
 
-    public AutomationPackageAccessorImpl(Collection<? extends AutomationPackage> collectionDriver) {
-        super((Collection<AutomationPackage>) collectionDriver);
+    public AutomationPackageAccessorImpl(Collection<AutomationPackage> collectionDriver) {
+        super(collectionDriver);
     }
 
 }

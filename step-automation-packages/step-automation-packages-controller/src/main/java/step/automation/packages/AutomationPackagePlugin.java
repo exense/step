@@ -69,13 +69,14 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         context.put(AutomationPackageLocks.class, automationPackageLocks);
 
         // for table services we use the extended AutomationPackage object containing more information about linked resources
-        Collection<AutomationPackageTableRecord> collection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackageTableRecord.class);
+        Collection<AutomationPackageTableRecord> extendedCollection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackageTableRecord.class);
+        Collection<AutomationPackage> collection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
 
         AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(collection);
         context.put(AutomationPackageAccessor.class, packageAccessor);
         context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
 
-        Table<AutomationPackageTableRecord> table = new Table<>(collection, "automation-package-read", true)
+        Table<AutomationPackageTableRecord> table = new Table<>(extendedCollection, "automation-package-read", true)
                 .withResultItemTransformer(new AutomationPackageTableTransformer(context.getResourceManager()));
         context.get(TableRegistry.class).register(AutomationPackageEntity.entityName, table);
 

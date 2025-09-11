@@ -22,10 +22,10 @@ import step.automation.packages.AutomationPackage;
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.inmemory.InMemoryCollection;
 
-public class InMemoryAutomationPackageAccessorImpl extends AbstractAccessor<AutomationPackage> implements AutomationPackageAccessor {
+public class InMemoryAutomationPackageAccessorImpl extends AbstractAutomationPackageAccessor implements AutomationPackageAccessor {
 
     public InMemoryAutomationPackageAccessorImpl() {
-        super(new InMemoryCollection<AutomationPackage>());
+        super(new InMemoryCollection<>());
     }
 
 }
