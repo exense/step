@@ -55,7 +55,7 @@ public class FileResolver {
 		return file;
 	}
 	
-	public String resolveResourceId(String path) {
+	public static String resolveResourceId(String path) {
 		String resourceId;
 		if(path != null && path.startsWith(RESOURCE_PREFIX)) {
 			resourceId = extractResourceId(path);
@@ -73,7 +73,7 @@ public class FileResolver {
 		return RESOURCE_PREFIX + resourceId;
 	}
 
-	protected String extractResourceId(String path) {
+	protected static String extractResourceId(String path) {
 		return path.replace(RESOURCE_PREFIX, "");
 	}
 	

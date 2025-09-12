@@ -621,11 +621,20 @@ public class AutomationPackageManager {
 
         Resource resource = null;
 
-        // just reuse the existing resource of unmodifiable origin (i.e non-SNAPSHOT)
-        if(apOrigin != null && apOrigin.isIdentifiable() && !apOrigin.isModifiable()){
+        if (apOrigin != null && apOrigin.isIdentifiable()) {
             List<Resource> existingResource = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate);
-            if(existingResource != null && !existingResource.isEmpty()){
+            if (existingResource != null && !existingResource.isEmpty()) {
                 resource = existingResource.get(0);
+
+                // we just reuse the existing resource of unmodifiable origin (i.e non-SNAPSHOT)
+                // abd for SNAPSHOTs we keep the same resource id, but update the content
+                if (apOrigin.isModifiable()) {
+                    try (InputStream is = new FileInputStream(originalFile)) {
+                        resource = resourceManager.saveResourceContent(resource.getId().toHexString(), is, originalFile.getName(), actorUser);
+                    } catch (IOException | InvalidResourceFormatException e) {
+                        throw new RuntimeException("General script function cannot be created", e);
+                    }
+                }
             }
         }
 
@@ -1075,7 +1084,7 @@ public class AutomationPackageManager {
 
                     if (canBeDeleted) {
                         log.debug("Remove the resource linked with AP '{}':{}", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), apResourceToCheck);
-                        resourceManager.deleteResource(fileResolver.resolveResourceId(apResourceToCheck));
+                        resourceManager.deleteResource(FileResolver.resolveResourceId(apResourceToCheck));
                     }
                 }
             }
