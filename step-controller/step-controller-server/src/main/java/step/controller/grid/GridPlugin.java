@@ -18,17 +18,9 @@
  ******************************************************************************/
 package step.controller.grid;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
+import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import ch.exense.commons.app.Configuration;
 import step.controller.grid.services.GridServices;
 import step.core.GlobalContext;
 import step.core.plugins.AbstractControllerPlugin;
@@ -42,13 +34,20 @@ import step.grid.client.GridClient;
 import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.client.TokenLifecycleStrategy;
-import step.grid.client.security.ClientSecurityConfiguration;
 import step.grid.contextbuilder.ExecutionContextCacheConfiguration;
 import step.grid.filemanager.FileManagerConfiguration;
 import step.grid.filemanager.FileManagerImplConfig;
 import step.grid.io.AgentErrorCode;
-import step.grid.security.SecurityConfiguration;
+import step.grid.security.JwtAuthenticationFilter;
+import step.grid.security.SymmetricSecurityConfiguration;
 import step.resources.ResourceManagerControllerPlugin;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Plugin(dependencies= {ResourceManagerControllerPlugin.class})
 public class GridPlugin extends AbstractControllerPlugin {
@@ -59,7 +58,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 	public static final String GRID_FILENAMANGER_FILE_CLEANUP_ENABLED = "grid.filenamanger.file.cleanup.enabled";
 	public static final String GRID_FILENAMANGER_FILE_CLEANUP_INTERVAL_MINUTES = "grid.filenamanger.file.cleanup.interval.minutes";
 	public static final String GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES = "grid.filemanager.file.cleanup.last.access.threshold.minutes";
-	public static final String AGENT_SERVICES_JWT_SECRET_KEY = "grid.client.agentServices.jwtSecretKey";
+	public static final String GRID_SECURITY_JWT_SECRET_KEY = "grid.security.jwtSecretKey";
 
 	private GridImpl grid;
 	private GridClient client;
@@ -71,14 +70,16 @@ public class GridPlugin extends AbstractControllerPlugin {
 		
 		Integer gridPort = configuration.getPropertyAsInteger("grid.port",8081);
 		Integer tokenTTL = configuration.getPropertyAsInteger("grid.ttl",60000);
-		String jwtSecretKey = configuration.getProperty("grid.security.jwtSecretKey");
+		String jwtSecretKey = configuration.getProperty(GRID_SECURITY_JWT_SECRET_KEY);
 
 		String fileManagerPath = configuration.getProperty("grid.filemanager.path", "filemanager");
 		
 		GridImplConfig gridConfig = new GridImplConfig();
 		gridConfig.setTtl(tokenTTL);
-		if (jwtSecretKey != null && !jwtSecretKey.isEmpty()) {
-			gridConfig.setSecurity(new SecurityConfiguration(true, jwtSecretKey));
+		SymmetricSecurityConfiguration gridSecurity = new SymmetricSecurityConfiguration(jwtSecretKey);
+		gridConfig.setSecurity(gridSecurity);
+		if (gridSecurity.isJwtAuthenticationEnabled()) {
+			context.getServiceRegistrationCallback().register(new JwtAuthenticationFilter(gridSecurity.jwtSecretKey));
 		}
 
 		gridConfig.setTokenAffinityEvaluatorClass(configuration.getProperty("grid.tokens.affinityevaluator.classname"));
@@ -114,7 +115,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 
 		TokenLifecycleStrategy tokenLifecycleStrategy = getTokenLifecycleStrategy(configuration);
 		
-		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration, fileManagerConfig);
+		GridClientConfiguration gridClientConfiguration = buildGridClientConfiguration(configuration, fileManagerConfig, gridSecurity);
 		client = new LocalGridClientImpl(gridClientConfiguration, tokenLifecycleStrategy, grid);
 
 		context.put(TokenLifecycleStrategy.class, tokenLifecycleStrategy);
@@ -142,7 +143,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 				agentErrors);
 	}
 
-	protected GridClientConfiguration buildGridClientConfiguration(Configuration configuration, FileManagerConfiguration fileManagerConfig) {
+	protected GridClientConfiguration buildGridClientConfiguration(Configuration configuration, FileManagerConfiguration fileManagerConfig, SymmetricSecurityConfiguration gridSecurity) {
 		GridClientConfiguration gridClientConfiguration = new GridClientConfiguration();
 		gridClientConfiguration.setNoMatchExistsTimeout(configuration.getPropertyAsLong("grid.client.token.selection.nomatch.timeout.ms", gridClientConfiguration.getNoMatchExistsTimeout()));
 		gridClientConfiguration.setMatchExistsTimeout(configuration.getPropertyAsLong("grid.client.token.selection.matchexist.timeout.ms", gridClientConfiguration.getMatchExistsTimeout()));
@@ -154,10 +155,7 @@ public class GridPlugin extends AbstractControllerPlugin {
 		gridClientConfiguration.setAllowInvalidSslCertificates(configuration.getPropertyAsBoolean("grid.client.ssl.allowinvalidcertificate", false));
 		gridClientConfiguration.setMaxStringLength(configuration.getPropertyAsInteger("grid.client.max.string.length.bytes", gridClientConfiguration.getMaxStringLength()));
 		gridClientConfiguration.setLocalTokenExecutionContextCacheConfiguration(new ExecutionContextCacheConfiguration());
-		String jwtSecretKey = configuration.getProperty(AGENT_SERVICES_JWT_SECRET_KEY);
-		if (jwtSecretKey != null) {
-			gridClientConfiguration.setSecurity(new ClientSecurityConfiguration(jwtSecretKey));
-		}
+		gridClientConfiguration.setGridSecurity(gridSecurity);
 		return gridClientConfiguration;
 	}
 
