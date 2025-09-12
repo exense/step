@@ -91,7 +91,8 @@ public class DynamicJsonObjectResolver {
 
 
 	/**
-	 * This method is the only one that can evaluate groovy expression using protected binding, it will return a DualJsonResult containing the actual results and the obfuscated version
+	 * This method is the only one that can evaluate dynamic expressions that contain protected bindings. It returns a DualJsonResult containing the actual result and the obfuscated version
+
  	 * @param o the json object to be evaluated recursively
 	 * @param bindings the set of bindings (variables) that are used for the evaluation of groovy expressions contained in the provided object
 	 * @param canAccessProtectedValue whether access to protected value is granted
