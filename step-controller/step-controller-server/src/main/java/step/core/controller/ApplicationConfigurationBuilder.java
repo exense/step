@@ -18,6 +18,7 @@ public class ApplicationConfigurationBuilder {
 	private Map<String, String> miscParams = new HashMap<>();
 	private String defaultUrl;
 	private String title;
+	private String contextRoot;
 	private boolean forceLegacyReporting;
 
 
@@ -91,6 +92,11 @@ public class ApplicationConfigurationBuilder {
 		return this;
 	}
 
+	public ApplicationConfigurationBuilder setContextRoot(String contextRoot) {
+		this.contextRoot = contextRoot;
+		return this;
+	}
+
 	public ApplicationConfigurationBuilder setForceLegacyReporting(boolean forceLegacyReporting) {
 		this.forceLegacyReporting = forceLegacyReporting;
 		return this;
@@ -98,7 +104,8 @@ public class ApplicationConfigurationBuilder {
 
 	public ApplicationConfiguration build() {
 		return new ApplicationConfiguration(authentication, authenticatorName, demo, debug, noLoginMask,
-				passwordManagement, userManagement, roleManagement, projectMembershipManagement, roles, miscParams, defaultUrl, title, forceLegacyReporting);
+				passwordManagement, userManagement, roleManagement, projectMembershipManagement, roles, miscParams,
+				defaultUrl, title, contextRoot, forceLegacyReporting);
 	}
 
 

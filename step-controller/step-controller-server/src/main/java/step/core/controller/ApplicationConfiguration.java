@@ -47,12 +47,15 @@ public class ApplicationConfiguration {
 	
 	String title;
 
+	String contextRoot;
+
 	boolean forceLegacyReporting;
 
 	public ApplicationConfiguration(boolean authentication, String authenticatorName, boolean demo, boolean debug,
 									boolean noLoginMask, boolean passwordManagement, boolean userManagement,
 									boolean roleManagement, boolean projectMembershipManagement,
-									List<String> roles, Map<String, String> miscParams, String defaultUrl, String title, boolean forceLegacyReporting) {
+									List<String> roles, Map<String, String> miscParams, String defaultUrl, String title,
+									String contextRoot, boolean forceLegacyReporting) {
 		this.authentication = authentication;
 		this.authenticatorName = authenticatorName;
 		this.demo = demo;
@@ -66,6 +69,7 @@ public class ApplicationConfiguration {
 		this.miscParams = miscParams;
 		this.defaultUrl = defaultUrl;
 		this.title = title;
+		this.contextRoot = contextRoot;
 		this.forceLegacyReporting = forceLegacyReporting;
 	}
 
@@ -115,6 +119,10 @@ public class ApplicationConfiguration {
 
 	public String getTitle() {
 		return title;
+	}
+
+	public String getContextRoot() {
+		return contextRoot;
 	}
 
 	public String getAuthenticatorName() {
