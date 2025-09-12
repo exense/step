@@ -64,11 +64,15 @@ public class ExpressionHandler implements AutoCloseable {
 	}
 
 	/**
-	 * Evaluate a groovy expression using provided binding. Not that special binding of type ProtectedBinding will be handled depending on the granted access right
+	 * Evaluate a groovy expression using provided binding. Not that special binding of type ProtectedVariable will be handled depending on the granted access right:
+	 * <ul>
+	 *     <li>access granted: expression are allowed to use protected bindings. If the expression uses any protected binding, then the result is returned as a ProtectedVariable containing both the clear and obfuscated values.</li>
+	 *     <li>access denied: if the expression uses any protected binding, an exception is thrown.</li>
+	 * </ul>
 	 * @param expression the groovy expression to be evaluated
 	 * @param bindings the map of bindings (variables) available for the evaluation
-	 * @param canAccessProtectedValue whether protected values provided as ProtectedBinding can be access. Accessing such binding with no access will throw an exception
-	 * @return the result of the groovy evaluation
+	 * @param canAccessProtectedValue whether protected values provided as ProtectedVariable can be accessed.
+	 * @return the result of the groovy evaluation. For expressions using protected bindings (when access is granted), the result is a ProtectedVariable containing both the clear and obfuscated values
 	 */
 	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings, boolean canAccessProtectedValue) {
 		try {
@@ -87,14 +91,14 @@ public class ExpressionHandler implements AutoCloseable {
 					for(Entry<String, Object> varEntry : bindings.entrySet()) {
 						String key = varEntry.getKey();
 						Object value =  varEntry.getValue();
-						if (!canAccessProtectedValue && value instanceof ProtectedVariable) {
-							excludedProtectedBindingKeys.add(key);
-						} else {
-							if (value instanceof ProtectedVariable) {
+						if (value instanceof ProtectedVariable) {
+							if (canAccessProtectedValue) {
 								binding.setVariable(key, new GroovyProtectedBinding((ProtectedVariable) value));
 							} else {
-								binding.setVariable(key, value);
+								excludedProtectedBindingKeys.add(key);
 							}
+						} else {
+							binding.setVariable(key, value);
 						}
 					}
 				}
@@ -136,7 +140,8 @@ public class ExpressionHandler implements AutoCloseable {
 					}
 				}
 
-				// Handle GString results that contain ProtectedBinding
+				// If canAccessProtectedValue is true, the evaluation results of type String and GString many contains tokenized
+				// protected bindings. As post-processing, we transform any such tokenized string back into a Protected Variable containing both the clear and obfuscated values
 				Tokenizer tokenizer = ProtectionContext.get().tokenizer();
 				if (canAccessProtectedValue && (result instanceof GString || result instanceof String)) {
 					result = tokenizer.renderBoth(result.toString());
@@ -144,6 +149,7 @@ public class ExpressionHandler implements AutoCloseable {
 				//GroovyProtectedBinding can also be returned when canAccessProtectedValue is false, (ex dataRow.next())
 				if (result instanceof GroovyProtectedBinding) {
 					GroovyProtectedBinding resultAsPB = (GroovyProtectedBinding) result;
+					//GroovyProtectedBinding values of type String can also be tokenized and need post-processing.
 					Object clearValue = (resultAsPB.value instanceof GString || resultAsPB.value instanceof String) ?
 							tokenizer.render(resultAsPB.value.toString(), true) : resultAsPB.value;
 					result = new ProtectedVariable(resultAsPB.key, clearValue, tokenizer.render(resultAsPB.obfuscatedValue, false));

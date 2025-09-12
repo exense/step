@@ -404,7 +404,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			if (value instanceof ProtectedVariable) {
 				actualValue = ((ProtectedVariable) value).value;
 			}
-			properties.put(key, actualValue!=null?actualValue.toString():"");
+			properties.put(key, actualValue != null ? actualValue.toString() : "");
 		});
 		properties.put(AbstractFunctionHandler.PARENTREPORTID_KEY, context.getCurrentReportNode().getId().toString());
 		

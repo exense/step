@@ -40,7 +40,7 @@ public class DynamicJsonObjectResolver {
 	}
 
 	/**
-	 * This method evaluates all groovy expression found in the provided object and return a resolved objects containing the evaluation results. This method does not have access to protected bindings
+	 * This method evaluates all groovy expression found in the provided object and return a resolved object containing the evaluation results. This method does not have access to protected bindings
 	 * @param o the json object to be evaluated recursively
 	 * @param bindings the set of bindings (variables) that are used for the evaluation of groovy expressions contained in the provided object
 	 * @return the resolved json object
@@ -163,30 +163,10 @@ public class DynamicJsonObjectResolver {
 				}
 
 				// Handle normal result
-				Object normalFinalResult;
-				if (normalEvaluate instanceof JsonObject) {
-					DualJsonEvaluationResult subResult = evaluateInternal((JsonObject) normalEvaluate, bindings, canAccessProtectedValue);
-					normalFinalResult = subResult.normalResult;
-				} else if (normalEvaluate instanceof JsonArray) {
-					JsonArray jsonArray = (JsonArray) normalEvaluate;
-					DualArrayEvaluationResult arrayResult = evaluateJsonArrayDual(jsonArray, bindings, canAccessProtectedValue);
-					normalFinalResult = arrayResult.normalResult;
-				} else {
-					normalFinalResult = normalEvaluate;
-				}
+				Object normalFinalResult = getFinalResult(bindings, canAccessProtectedValue, normalEvaluate, false);
 
 				// Handle obfuscated result
-				Object obfuscatedFinalResult;
-				if (obfuscatedEvaluate instanceof JsonObject) {
-					DualJsonEvaluationResult subResult = evaluateInternal((JsonObject) obfuscatedEvaluate, bindings, canAccessProtectedValue);
-					obfuscatedFinalResult = subResult.obfuscatedResult;
-				} else if (obfuscatedEvaluate instanceof JsonArray) {
-					JsonArray jsonArray = (JsonArray) obfuscatedEvaluate;
-					DualArrayEvaluationResult arrayResult = evaluateJsonArrayDual(jsonArray, bindings, canAccessProtectedValue);
-					obfuscatedFinalResult = arrayResult.obfuscatedResult;
-				} else {
-					obfuscatedFinalResult = obfuscatedEvaluate;
-				}
+				Object obfuscatedFinalResult  = getFinalResult(bindings, canAccessProtectedValue, obfuscatedEvaluate, true);
 
 				return new DualValueEvaluationResult(normalFinalResult, obfuscatedFinalResult);
 			} else {
@@ -200,6 +180,19 @@ public class DynamicJsonObjectResolver {
 		} else {
 			// Primitive value - same for both normal and obfuscated
 			return new DualValueEvaluationResult(v, v);
+		}
+	}
+
+	private Object getFinalResult(Map<String, Object> bindings, boolean canAccessProtectedValue, Object intermediateResult, boolean obfuscated) {
+		if (intermediateResult instanceof JsonObject) {
+			DualJsonEvaluationResult subResult = evaluateInternal((JsonObject) intermediateResult, bindings, canAccessProtectedValue);
+			return (obfuscated) ? subResult.obfuscatedResult : subResult.normalResult;
+		} else if (intermediateResult instanceof JsonArray) {
+			JsonArray jsonArray = (JsonArray) intermediateResult;
+			DualArrayEvaluationResult arrayResult = evaluateJsonArrayDual(jsonArray, bindings, canAccessProtectedValue);
+			return (obfuscated) ? arrayResult.obfuscatedResult :arrayResult.normalResult;
+		} else {
+			return intermediateResult;
 		}
 	}
 
