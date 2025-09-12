@@ -20,6 +20,7 @@ package step.core.deployment;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -76,11 +77,12 @@ public class ObjectHookInterceptor extends AbstractStepServices implements Reade
 			Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
 			if (annotation == null) {
 				Session<User> session = getSession();
-				ObjectAccessException accessException = objectHookRegistry.checkObjectAccess(session, enricheableObject);
-				if (accessException != null) {
+				Optional<ObjectAccessException> accessException = objectHookRegistry.isObjectEditableInContext(session, enricheableObject);
+				if (accessException.isPresent()) {
+					ObjectAccessException objectAccessException = accessException.get();
 					throw new ControllerServiceException(
 						HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
-						accessException.getMessage(), accessException.getViolations()
+							objectAccessException.getMessage(), objectAccessException.getViolations()
 					);
 				} else {
 					ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
@@ -107,19 +109,16 @@ public class ObjectHookInterceptor extends AbstractStepServices implements Reade
 				final List<?> newList = list.stream().filter(predicate).collect(Collectors.toList());
 				context.setEntity(newList);
 			} else {
-				//For single entity we first check access based on predicate, in case access is not granted we can get detailed violations with checkObjectAccess
-				if(!predicate.test(entity)) {
-					if (entity instanceof EnricheableObject) {
-						ObjectAccessException accessException = objectHookRegistry.checkObjectAccess(session, (EnricheableObject) entity);
-						if (accessException != null) {
-							throw new ControllerServiceException(
-								HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
-								accessException.getMessage(), accessException.getViolations()
-							);
-						}
+				//For single entity we check read access for the entity
+				if (entity instanceof EnricheableObject) {
+					Optional<ObjectAccessException> accessException = objectHookRegistry.isObjectReadableInContext(session, (EnricheableObject) entity);
+					if (accessException.isPresent()) {
+						ObjectAccessException objectAccessException = accessException.get();
+						throw new ControllerServiceException(
+							HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
+								objectAccessException.getMessage(), objectAccessException.getViolations()
+						);
 					}
-					//We should not enter this case anymore unless there is a discrepancy between the predicate and checkObjectAccess implementation
-					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to access this object from within this context");
 				}
 			}
 		}
