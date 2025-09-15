@@ -20,16 +20,22 @@ package step.automation.packages.functions;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
+import step.functions.sample.JavaSampleKeyword;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
 
-import java.util.ArrayList;
-
-public class AdditionalKeywordLib extends AbstractKeyword {
+public class AdditionalKeywordLib extends AbstractKeyword implements JavaSampleKeyword {
 
 	@Keyword(name = "KeywordWithExternalLibCall")
 	public void KeywordWithExternalLibCall() {
 		MultiValuedMap<String, String> apacheCommonsMap = new ArrayListValuedHashMap<>();
 		System.out.println("Keyword from library called!!!");
+		System.out.println(callMe());
+	}
+
+	@Override
+	public String callMe() {
+		System.out.println("Implemented!!!");
+		return "OK";
 	}
 }

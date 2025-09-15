@@ -348,7 +348,10 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             }
             return responseBuilder.entity(result).build();
         } catch (AutomationPackageCollisionException e){
-            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
+            ControllerServiceException ex = new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
+            // to avoid stack trace in ErrorFilter
+            ex.setTechnicalError(false);
+            throw ex;
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
