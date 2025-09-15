@@ -86,7 +86,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		super.init(agentTokenServices);
 
 		String liveReportingPoolSizeAgentPropsKey = "step.reporting.livereporting.poolsize";
-		int liveReportingPoolSizeDefault = 4; // ThreadPools.getDefaultPoolSize();
+		int liveReportingPoolSizeDefault = 100; // ThreadPools.getDefaultPoolSize();
 		// Looks complicated, but actually just means: try to get the value from the agent properties,
 		// and if anything goes wrong fall back to the default
 		int liveReportingPoolSize =
@@ -104,7 +104,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 
 		// FIXME: figure out the final strategy here
 		//liveReportingExecutor = ThreadPools.createPoolExecutor("livereporting", liveReportingPoolSize, 10000);
-		liveReportingExecutor = Executors.newFixedThreadPool(10, NamedThreadFactory.create("livereporting"));
+		liveReportingExecutor = Executors.newFixedThreadPool(liveReportingPoolSize, NamedThreadFactory.create("livereporting"));
 
 		applicationContextBuilder = new ApplicationContextBuilder(this.getClass().getClassLoader(),
 				agentTokenServices.getApplicationContextBuilder().getApplicationContextConfiguration());
