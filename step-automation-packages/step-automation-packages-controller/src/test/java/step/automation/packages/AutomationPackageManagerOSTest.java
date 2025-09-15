@@ -739,8 +739,11 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(SAMPLE1_FILE_NAME, apV2Revision.getResourceFile().getName());
 
         // check that the main file for AP Echo is not touched
-        ResourceRevisionFileHandle echoResourceRevision = resourceManager.getResourceFile(FileResolver.resolveResourceId(apVer2.getKeywordLibraryResource()));
+        ResourceRevisionFileHandle echoResourceRevision = resourceManager.getResourceFile(FileResolver.resolveResourceId(apEcho.getAutomationPackageResource()));
         Assert.assertEquals(SAMPLE_ECHO_FILE_NAME, echoResourceRevision.getResourceFile().getName());
+        //Check the echo KW lib point to the new SNAPSHOT
+        ResourceRevisionFileHandle kwLibRevisionEcho = resourceManager.getResourceFile(FileResolver.resolveResourceId(apEcho.getKeywordLibraryResource()));
+        Assert.assertEquals(KW_LIB_FILE_UPDATED_NAME, kwLibRevisionEcho.getResourceFile().getName());
     }
 
     private void checkResources(AutomationPackage ap1, String expectedApFileName, String expectedKwFileName,
