@@ -220,7 +220,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 				copy.setScriptFile(new DynamicValue<>(""));//reset script to setup a new one
 				String scriptFileValue = scriptFile.get();
 
-				boolean isResource = fileResolver.isResource(scriptFileValue);
+				boolean isResource = FileResolver.isResource(scriptFileValue);
 				if (isResource) {
 					scriptFileValue = fileResolver.resolve(scriptFileValue).getAbsolutePath();
 					newFile = setupScriptFileAsResource(copy, new FileInputStream(scriptFileValue));

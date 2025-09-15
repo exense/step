@@ -44,7 +44,7 @@ public class FunctionPackageManagerTest {
 		resourceManager = new LocalResourceManagerImpl();
 		resolver = new FileResolver(resourceManager);
 		pm = new FunctionPackageManager(p, f, resourceManager,
-				resolver,new Configuration(), new ObjectHookRegistry());
+                new Configuration(), new ObjectHookRegistry());
 	}
 	
 	@After

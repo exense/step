@@ -147,7 +147,7 @@ public class ExportManagerTest {
 				.register(new Entity<>(Parameter.ENTITY_NAME, parameterAccessor, Parameter.class))
 				.register(new PlanEntity(planAccessor, new PlanLocator(planAccessor, selectorHelper), entityManager))
 				.register(new FunctionEntity(functionAccessor, functionLocator, entityManager))
-				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver, entityManager))
+				.register(new ResourceEntity(resourceAccessor, entityManager))
 				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
 		entityManager.registerExportHook(new ParameterManagerControllerPlugin.ParameterExportBiConsumer());

@@ -14,12 +14,9 @@ public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 
 	private final Logger logger = LoggerFactory.getLogger(ResourceEntity.class);
 
-	private final FileResolver fileResolver;
-	
-	public ResourceEntity(Accessor<Resource> accessor, ResourceManager resourceManager, FileResolver fileResolver, EntityManager entityManager) {
+    public ResourceEntity(Accessor<Resource> accessor, EntityManager entityManager) {
 		super(EntityManager.resources, accessor, Resource.class);
-		this.fileResolver = fileResolver;
-		entityManager.addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
+        entityManager.addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
 			
 			@Override
 			public void onVisitEntity(Object t, EntityTreeVisitorContext visitorContext) {
@@ -79,8 +76,8 @@ public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 	private String resolveResourceId(Object valueToResolve) {
 		if(valueToResolve instanceof String) {
 			String path = (String) valueToResolve;
-			if(fileResolver.isResource(path)) {
-				return fileResolver.resolveResourceId(path);
+			if(FileResolver.isResource(path)) {
+				return FileResolver.resolveResourceId(path);
 			} else {
 				return null;
 			}
@@ -92,8 +89,8 @@ public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 	private String newPathForResourceId(Object valueToResolve, String newEntityId) {
 		if(valueToResolve instanceof String) {
 			String path = (String) valueToResolve;
-			if(fileResolver.isResource(path)) {
-				return fileResolver.createPathForResourceId(newEntityId);
+			if(FileResolver.isResource(path)) {
+				return FileResolver.createPathForResourceId(newEntityId);
 			} else {
 				return null;
 			}

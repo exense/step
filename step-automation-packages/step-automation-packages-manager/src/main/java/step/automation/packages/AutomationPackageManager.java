@@ -1069,8 +1069,7 @@ public class AutomationPackageManager {
 
     private void deleteMainApResourceIfPossible(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, String apResourceToCheck) {
         try {
-            FileResolver fileResolver = new FileResolver(resourceManager);
-            if (apResourceToCheck != null && fileResolver.isResource(apResourceToCheck)) {
+            if (apResourceToCheck != null && FileResolver.isResource(apResourceToCheck)) {
                 boolean canBeDeleted = true;
                 if (newAutomationPackage != null && (Objects.equals(newAutomationPackage.getAutomationPackageResource(), apResourceToCheck) || Objects.equals(newAutomationPackage.getKeywordLibraryResource(), apResourceToCheck))) {
                     log.info("Resource {} cannot be deleted, because it is reused in new automation package: {}", apResourceToCheck, newAutomationPackage.getAttribute(AbstractOrganizableObject.NAME));

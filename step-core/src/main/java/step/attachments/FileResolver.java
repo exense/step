@@ -65,11 +65,11 @@ public class FileResolver {
 		return resourceId;
 	}
 	
-	public boolean isResource(String path) {
+	public static boolean isResource(String path) {
 		return path != null && path.startsWith(RESOURCE_PREFIX);
 	}
 	
-	public String createPathForResourceId(String resourceId) {
+	public static String createPathForResourceId(String resourceId) {
 		return RESOURCE_PREFIX + resourceId;
 	}
 

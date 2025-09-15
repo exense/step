@@ -58,6 +58,7 @@ import step.resources.Resource;
 import step.resources.ResourceRevisionFileHandle;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -647,7 +648,7 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
-    public void testVersioning(){
+    public void testKwLibVersioning(){
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File echoAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
         File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
@@ -744,6 +745,61 @@ public class AutomationPackageManagerOSTest {
         //Check the echo KW lib point to the new SNAPSHOT
         ResourceRevisionFileHandle kwLibRevisionEcho = resourceManager.getResourceFile(FileResolver.resolveResourceId(apEcho.getKeywordLibraryResource()));
         Assert.assertEquals(KW_LIB_FILE_UPDATED_NAME, kwLibRevisionEcho.getResourceFile().getName());
+    }
+
+    @Test
+    public void testApSnapshotReupload() throws IOException {
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File updatedAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_EXTENDED_FILE_NAME);
+        File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+
+        MavenArtifactIdentifier sampleSnapshot = new MavenArtifactIdentifier("test-group", "ap1", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
+
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, automationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
+
+        // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
+        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(
+                true, true, null,
+                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
+                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
+                "v1", null, null, null, false, "testUser",
+                true, true
+        );
+
+        // check used AP resource
+        AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
+        ResourceRevisionFileHandle ap1Revision = resourceManager.getResourceFile(FileResolver.resolveResourceId(ap1.getAutomationPackageResource()));
+        Assert.assertArrayEquals(Files.readAllBytes(automationPackageJar.toPath()), Files.readAllBytes(ap1Revision.getResourceFile().toPath()));
+
+        // UPDATE THE SNAPSHOT CONTENT IN MAVEN !!!
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, updatedAutomationPackageJar);
+
+        // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
+        AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(
+                true, true, null,
+                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
+                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
+                "v1", null, null, null, false, "testUser",
+                true, true
+        );
+        AutomationPackage ap2 = automationPackageAccessor.get(result2.getId());
+
+        // the automation package should use updated snapshot content
+        ResourceRevisionFileHandle ap2Revision = resourceManager.getResourceFile(FileResolver.resolveResourceId(ap2.getAutomationPackageResource()));
+        Assert.assertArrayEquals(Files.readAllBytes(updatedAutomationPackageJar.toPath()), Files.readAllBytes(ap2Revision.getResourceFile().toPath()));
+
+        // the resource id should NOT be changed, because we reuploaded the snapshot with same resource id
+        Assert.assertEquals(ap1.getAutomationPackageResource(), ap2.getAutomationPackageResource());
+
+        // automation packages entities should be taken from updated snapshot
+        List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(ap2.getId())).collect(Collectors.toList());
+        Assert.assertEquals(KEYWORDS_COUNT + 1, storedFunctions.size());
+
+        Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
+        Assert.assertNotNull(updatedFunction);
     }
 
     private void checkResources(AutomationPackage ap1, String expectedApFileName, String expectedKwFileName,

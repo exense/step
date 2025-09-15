@@ -29,7 +29,6 @@ import step.core.accessors.AbstractUser;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessorImpl;
-import step.core.collections.*;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanNodeAccessor;
 import step.core.collections.Collection;
@@ -197,7 +196,7 @@ public class Controller {
 				.register(new ScheduleEntity(context.getScheduleAccessor(), ExecutiontTaskParameters.class, entityManager))
 				.register(new Entity<>(EntityManager.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class))
 				.register(new Entity<>(EntityManager.users, context.getUserAccessor(), User.class))
-				.register(new ResourceEntity(resourceAccessor, resourceManager, context.getFileResolver(), entityManager))
+				.register(new ResourceEntity(resourceAccessor, entityManager))
 				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
 		entityManager.registerImportHook(new ResourceImporter(context.getResourceManager()));
