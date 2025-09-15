@@ -630,6 +630,7 @@ public class AutomationPackageManager {
                 // abd for SNAPSHOTs we keep the same resource id, but update the content
                 if (apOrigin.isModifiable()) {
                     try (InputStream is = new FileInputStream(originalFile)) {
+                        resourceManager.deleteResourceRevisionContent(resource.getId().toHexString());
                         resource = resourceManager.saveResourceContent(resource.getId().toHexString(), is, originalFile.getName(), actorUser);
                     } catch (IOException | InvalidResourceFormatException e) {
                         throw new RuntimeException("General script function cannot be created", e);
@@ -683,6 +684,7 @@ public class AutomationPackageManager {
                         } else {
                             // for modifiable resources (i.e. SNAPSHOTS) we can reuse the old resource id and metadata, but we need to reupload the content
                             log.info("Existing resource {} for keyword library {} will be actualized and reused in AP {}", oldResource.get(0).getId().toHexString(), keywordLibrary.getName(), apName);
+                            resourceManager.deleteResourceRevisionContent(oldResource.get(0).getId().toHexString());
                             uploadedResource = resourceManager.saveResourceContent(oldResource.get(0).getId().toHexString(), fis, keywordLibrary.getName(), actorUser);
                         }
                     } else {
