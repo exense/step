@@ -1,6 +1,5 @@
 package step.plugins.entity;
 
-import org.apache.poi.sl.draw.geom.GuideIf;
 import step.core.AbstractContext;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractIdentifiableObject;
