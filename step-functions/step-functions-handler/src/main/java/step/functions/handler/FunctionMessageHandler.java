@@ -42,6 +42,7 @@ import step.grid.threads.NamedThreadFactory;
 import step.reporting.LiveReporting;
 import step.streaming.client.upload.StreamingUploadProvider;
 import step.streaming.common.StreamingResourceUploadContext;
+//import step.streaming.util.ThreadPools;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
@@ -49,9 +50,9 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.Optional;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
@@ -85,7 +86,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		super.init(agentTokenServices);
 
 		String liveReportingPoolSizeAgentPropsKey = "step.reporting.livereporting.poolsize";
-		int liveReportingPoolSizeDefault = 10;
+		int liveReportingPoolSizeDefault = 4; // ThreadPools.getDefaultPoolSize();
 		// Looks complicated, but actually just means: try to get the value from the agent properties,
 		// and if anything goes wrong fall back to the default
 		int liveReportingPoolSize =
@@ -101,7 +102,9 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 						})
 						.orElse(liveReportingPoolSizeDefault);
 
-		liveReportingExecutor = Executors.newFixedThreadPool(liveReportingPoolSize, NamedThreadFactory.create("livereporting-executor"));
+		// FIXME: figure out the final strategy here
+		//liveReportingExecutor = ThreadPools.createPoolExecutor("livereporting", liveReportingPoolSize, 10000);
+		liveReportingExecutor = Executors.newFixedThreadPool(10, NamedThreadFactory.create("livereporting"));
 
 		applicationContextBuilder = new ApplicationContextBuilder(this.getClass().getClassLoader(),
 				agentTokenServices.getApplicationContextBuilder().getApplicationContextConfiguration());

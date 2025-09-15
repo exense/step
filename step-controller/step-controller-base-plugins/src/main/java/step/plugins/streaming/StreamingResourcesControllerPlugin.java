@@ -24,6 +24,7 @@ import step.streaming.common.StreamingResourceUploadContexts;
 import step.streaming.server.FilesystemStreamingResourcesStorageBackend;
 import step.streaming.server.StreamingResourceManager;
 import step.streaming.server.URITemplateBasedReferenceProducer;
+import step.streaming.util.ThreadPools;
 import step.streaming.websocket.server.DefaultWebsocketServerEndpointSessionsHandler;
 import step.streaming.websocket.server.WebsocketDownloadEndpoint;
 import step.streaming.websocket.server.WebsocketServerEndpointSessionsHandler;
@@ -31,6 +32,7 @@ import step.streaming.websocket.server.WebsocketUploadEndpoint;
 
 import java.io.File;
 import java.net.URI;
+import java.util.concurrent.*;
 import java.util.function.Supplier;
 
 import static step.plugins.streaming.StepStreamingResourceManager.ATTRIBUTE_STEP_SESSION;
@@ -63,7 +65,9 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         FilesystemStreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageBaseDir);
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
         URITemplateBasedReferenceProducer referenceProducer = new URITemplateBasedReferenceProducer(websocketBaseUri, DOWNLOAD_PATH, DOWNLOAD_PARAMETER_NAME);
-        manager = new StepStreamingResourceManager(context, catalog, storage, referenceProducer, uploadContexts);
+        ExecutorService uploadProcessorPool = ThreadPools.createPoolExecutor("ws-upload-processor", ThreadPools.getDefaultPoolSize(), 102400);
+        //ExecutorService uploadProcessorPool = Executors.newFixedThreadPool(16, ThreadPools.namedDaemon("ws-uploads"));
+        manager = new StepStreamingResourceManager(context, catalog, storage, referenceProducer, uploadContexts, uploadProcessorPool);
 
         context.put(StepStreamingResourceManager.class, manager);
         context.getServiceRegistrationCallback().registerService(StreamingResourceServices.class);

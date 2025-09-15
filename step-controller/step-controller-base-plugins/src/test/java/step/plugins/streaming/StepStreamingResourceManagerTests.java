@@ -10,11 +10,10 @@ import step.constants.StreamingConstants;
 import step.core.GlobalContext;
 import step.core.collections.CollectionFactory;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
-import step.core.deployment.AuthorizationException;
-import step.framework.server.Session;
 import step.streaming.common.*;
 import step.streaming.server.FilesystemStreamingResourcesStorageBackend;
 import step.streaming.server.StreamingResourcesStorageBackend;
+import step.streaming.util.ThreadPools;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -30,7 +29,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 @Ignore
 public class StepStreamingResourceManagerTests {
@@ -70,7 +68,7 @@ public class StepStreamingResourceManagerTests {
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(globalContext);
         StreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageDirectory);
         Function<String, StreamingResourceReference> refProducer = resourceId -> new StreamingResourceReference(URI.create("http://dummy/" + resourceId));
-        StepStreamingResourceManager manager = new StepStreamingResourceManager(globalContext, catalog, storage, refProducer, uploadContexts);
+        StepStreamingResourceManager manager = new StepStreamingResourceManager(globalContext, catalog, storage, refProducer, uploadContexts, ThreadPools.createPoolExecutor("ws-upload-processor"));
 
         // Simulate an upload; we basically manually do the steps that the framework normally does
         StreamingResourceUploadContext uploadContext = new StreamingResourceUploadContext();
@@ -80,7 +78,7 @@ public class StepStreamingResourceManagerTests {
         String resourceId = manager.registerNewResource(new StreamingResourceMetadata("dummy.txt", StreamingResourceMetadata.CommonMimeTypes.TEXT_PLAIN, true), uploadContext.contextId);
 
         // Write data
-        manager.writeChunk(resourceId, new ByteArrayInputStream("line1\nline2".getBytes()));
+        manager.writeChunk(resourceId, new ByteArrayInputStream("line1\nline2".getBytes()), true);
         manager.markCompleted(resourceId);
 
         assertEquals(new StreamingResourceStatus(StreamingResourceTransferStatus.COMPLETED, 11, 2L), manager.getStatus(resourceId));
