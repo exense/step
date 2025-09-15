@@ -140,17 +140,17 @@ public class ExpressionHandler implements AutoCloseable {
 					}
 				}
 
-				// If canAccessProtectedValue is true, the evaluation results of type String and GString many contains tokenized
+				// If canAccessProtectedValue is true, the evaluation results of type String and GString may contain tokenized
 				// protected bindings. As post-processing, we transform any such tokenized string back into a Protected Variable containing both the clear and obfuscated values
 				Tokenizer tokenizer = ProtectionContext.get().tokenizer();
-				if (canAccessProtectedValue && (result instanceof GString || result instanceof String)) {
+				if (canAccessProtectedValue && isStringValue(result)) {
 					result = tokenizer.renderBoth(result.toString());
 				}
 				//GroovyProtectedBinding can also be returned when canAccessProtectedValue is false, (ex dataRow.next())
 				if (result instanceof GroovyProtectedBinding) {
 					GroovyProtectedBinding resultAsPB = (GroovyProtectedBinding) result;
 					//GroovyProtectedBinding values of type String can also be tokenized and need post-processing.
-					Object clearValue = (resultAsPB.value instanceof GString || resultAsPB.value instanceof String) ?
+					Object clearValue = isStringValue(resultAsPB.value) ?
 							tokenizer.render(resultAsPB.value.toString(), true) : resultAsPB.value;
 					result = new ProtectedVariable(resultAsPB.key, clearValue, tokenizer.render(resultAsPB.obfuscatedValue, false));
 				}
@@ -183,6 +183,10 @@ public class ExpressionHandler implements AutoCloseable {
 			// Always clear the context
 			ProtectionContext.clear();
 		}
+	}
+
+	private static boolean isStringValue(Object value) {
+		return value instanceof GString || value instanceof String;
 	}
 
 	public static Object checkProtectionAndWrapIfRequired(boolean isParentProtected, Object value, String key) {

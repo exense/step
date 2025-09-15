@@ -129,7 +129,7 @@ public abstract class DataSet<T extends DataPoolConfiguration> {
 	}
 
 	public boolean isProtectedDataSource(){
-		return configuration.getProtect().get();
+		return (configuration.getProtect() != null) ? configuration.getProtect().get() : false;
 	}
 	
 	public final synchronized DataPoolRow next() {
