@@ -958,10 +958,9 @@ public class AutomationPackageManager {
         newPackage.addAttribute(AbstractOrganizableObject.VERSION, packageContent.getVersion());
 
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
+        newPackage.setVersion(apVersion);
         if (activationExpr != null && !activationExpr.isEmpty()) {
             newPackage.setActivationExpression(new Expression(activationExpr));
-            // TODO: why we only set version when the activation expression is passed?
-            newPackage.setVersion(apVersion);
         }
         if (enricher != null) {
             enricher.accept(newPackage);

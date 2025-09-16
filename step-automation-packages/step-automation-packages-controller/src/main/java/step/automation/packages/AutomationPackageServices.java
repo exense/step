@@ -353,7 +353,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             ex.setTechnicalError(false);
             throw ex;
         } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
+            throw new ControllerServiceException(e.getMessage(), e);
         }
     }
 
