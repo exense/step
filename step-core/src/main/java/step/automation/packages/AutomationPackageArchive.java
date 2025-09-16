@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static step.automation.packages.AutomationPackageArchiveType.JAVA;
@@ -37,6 +38,7 @@ public class AutomationPackageArchive implements Closeable {
 
     private final ClassLoader classLoader;
     private final File originalFile;
+    private final File keywordLibFile;
     private boolean internalClassLoader = false;
     private final AutomationPackageArchiveType type;
     private final ResourcePathMatchingResolver pathMatchingResourceResolver;
@@ -44,11 +46,12 @@ public class AutomationPackageArchive implements Closeable {
     public AutomationPackageArchive(ClassLoader classLoader) {
         this.classLoader = classLoader;
         this.originalFile = null;
+        this.keywordLibFile = null;
         this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
         this.type = JAVA;
     }
 
-    public AutomationPackageArchive(File automationPackageFile) throws AutomationPackageReadingException {
+    public AutomationPackageArchive(File automationPackageFile, File keywordLibFile) throws AutomationPackageReadingException {
         this.internalClassLoader = true;
         if (!automationPackageFile.exists()) {
             throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " doesn't exist");
@@ -57,13 +60,23 @@ public class AutomationPackageArchive implements Closeable {
             throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " is neither zip archive nor jar file nor directory");
         }
         this.originalFile = automationPackageFile;
+        this.keywordLibFile = keywordLibFile;
         this.type = JAVA; //Only supported type for now
         try {
-            this.classLoader = new URLClassLoader(new URL[]{automationPackageFile.toURI().toURL()}, null);
+            this.classLoader = createClassloaderForApWithKeywordLib(automationPackageFile, keywordLibFile);
             this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
         } catch (MalformedURLException ex) {
             throw new AutomationPackageReadingException("Unable to read automation package", ex);
         }
+    }
+
+    public static URLClassLoader createClassloaderForApWithKeywordLib(File automationPackageFile, File keywordLibFile) throws MalformedURLException {
+        List<URL> classLoaderUrls = new ArrayList<>();
+        classLoaderUrls.add(automationPackageFile.toURI().toURL());
+        if (keywordLibFile != null) {
+            classLoaderUrls.add(keywordLibFile.toURI().toURL());
+        }
+        return new URLClassLoader(classLoaderUrls.toArray(new URL[]{}), null);
     }
 
     private static boolean isArchive(File f) {
@@ -115,6 +128,10 @@ public class AutomationPackageArchive implements Closeable {
 
     public ClassLoader getClassLoader() {
         return classLoader;
+    }
+
+    public File getKeywordLibFile(){
+        return keywordLibFile;
     }
 
     public File getOriginalFile() {

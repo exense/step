@@ -64,11 +64,11 @@ public class ApLocalExecuteCommandHandler {
 
             InputStream kwFileInputStream = null;
             try (InputStream is = new FileInputStream(apFile)) {
-                AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
                 if (kwLibFile != null) {
                     kwFileInputStream = new FileInputStream(kwLibFile);
                 }
                 AutomationPackageKeywordLibraryProvider kwFromInputStreamProvider = kwFileInputStream == null ? new NoKeywordLibraryProvider() : new KeywordLibraryFromInputStreamProvider(kwFileInputStream, kwLibFile.getName());
+                AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName(), kwFromInputStreamProvider);
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         false, true, null, automationPackageProvider, null, null,
                         true, null, null, false, kwFromInputStreamProvider, null,

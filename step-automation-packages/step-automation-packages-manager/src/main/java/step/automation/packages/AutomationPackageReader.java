@@ -52,6 +52,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -153,8 +154,13 @@ public class AutomationPackageReader {
     private void fillAutomationPackageWithAnnotatedKeywordsAndPlans(AutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException {
 
         // for file-based packages we create class loader for file, otherwise we just use class loader from archive
+        // TODO: forSpecificJarFromURLClassLoader doesn't work here (failing tests in step.automation.packages.AutomationPackageManagerOSTest
         File originalFile = archive.getOriginalFile();
-        try (AnnotationScanner annotationScanner = originalFile != null ? AnnotationScanner.forSpecificJar(originalFile) : AnnotationScanner.forAllClassesFromClassLoader(archive.getClassLoader())) {
+        try (AnnotationScanner annotationScanner = originalFile != null
+//                ? AnnotationScanner.forSpecificJarFromURLClassLoader(AutomationPackageArchive.createClassloaderForApWithKeywordLib(originalFile, archive.getKeywordLibFile()))
+                ? AnnotationScanner.forSpecificJar(originalFile)
+                : AnnotationScanner.forAllClassesFromClassLoader(archive.getClassLoader())
+        ) {
 
             // this code duplicates the StepJarParser, but here we don't set the scriptFile and librariesFile to GeneralScriptFunctions
             // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
@@ -172,6 +178,9 @@ public class AutomationPackageReader {
         } catch (JsonSchemaPreparationException e) {
             throw new AutomationPackageReadingException("Cannot read the json schema from annotated keyword", e);
         }
+        // catch (MalformedURLException e) {
+        //    throw new AutomationPackageReadingException("Cannot read the automation package content", e);
+        // }
     }
 
     public static List<JavaAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
@@ -334,7 +343,8 @@ public class AutomationPackageReader {
     }
 
     public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion) throws AutomationPackageReadingException {
-        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackage)) {
+        // TODO: fix
+        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackage, null)) {
             return readAutomationPackage(automationPackageArchive, apVersion, false);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);

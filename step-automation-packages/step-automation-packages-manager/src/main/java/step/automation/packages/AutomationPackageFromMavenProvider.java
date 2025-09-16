@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
 import step.core.maven.MavenArtifactIdentifier;
 import step.resources.ResourceOrigin;
 
@@ -27,18 +28,21 @@ import java.io.IOException;
 public class AutomationPackageFromMavenProvider implements AutomationPackageArchiveProvider {
 
     protected final MavenArtifactIdentifier mavenArtifactIdentifier;
+    private final AutomationPackageKeywordLibraryProvider keywordLibraryProvider;
     protected final AutomationPackageMavenConfig mavenConfig;
 
     public AutomationPackageFromMavenProvider(AutomationPackageMavenConfig mavenConfig,
-                                              MavenArtifactIdentifier mavenArtifactIdentifier) {
+                                              MavenArtifactIdentifier mavenArtifactIdentifier,
+                                              AutomationPackageKeywordLibraryProvider keywordLibraryProvider) {
         this.mavenConfig = mavenConfig;
         this.mavenArtifactIdentifier = mavenArtifactIdentifier;
+        this.keywordLibraryProvider = keywordLibraryProvider;
     }
 
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
         // The same client as in MavenArtifactRepository
-        return new AutomationPackageArchive(getFile());
+        return new AutomationPackageArchive(getFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
     }
 
     protected File getFile() throws AutomationPackageReadingException {

@@ -20,6 +20,7 @@
  */
 package step.automation.packages;
 
+import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
 import step.automation.packages.kwlibrary.KeywordLibraryFromMavenProvider;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectPredicate;
@@ -36,8 +37,15 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
     }
 
     @Override
-    protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
-        return new MockedAutomationPackageFromMavenProvider(mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier());
+    protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource,
+                                                                                          ObjectPredicate predicate,
+                                                                                          AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
+                                                                                          AutomationPackageKeywordLibraryProvider keywordLibraryProvider) {
+        return new MockedAutomationPackageFromMavenProvider(
+                mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(predicate),
+                apFileSource.getMavenArtifactIdentifier(),
+                keywordLibraryProvider
+        );
     }
 
     @Override
@@ -53,9 +61,10 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
 
         public MockedAutomationPackageFromMavenProvider(
                 AutomationPackageMavenConfig mavenConfig,
-                MavenArtifactIdentifier mavenArtifactIdentifier
+                MavenArtifactIdentifier mavenArtifactIdentifier,
+                AutomationPackageKeywordLibraryProvider keywordLibraryProvider
         ) {
-            super(mavenConfig, mavenArtifactIdentifier);
+            super(mavenConfig, mavenArtifactIdentifier, keywordLibraryProvider);
         }
 
         @Override

@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
 import step.resources.ResourceOrigin;
 import step.resources.UploadedResourceOrigin;
 
@@ -27,14 +28,16 @@ import java.io.IOException;
 public class AutomationPackageFromFolderProvider implements AutomationPackageArchiveProvider {
 
     private final File apFolder;
+    private final AutomationPackageKeywordLibraryProvider keywordLibraryProvider;
 
-    public AutomationPackageFromFolderProvider(File apFolder) {
+    public AutomationPackageFromFolderProvider(File apFolder, AutomationPackageKeywordLibraryProvider keywordLibraryProvider) {
         this.apFolder = apFolder;
+        this.keywordLibraryProvider = keywordLibraryProvider;
     }
 
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-        return new AutomationPackageArchive(apFolder);
+        return new AutomationPackageArchive(apFolder, keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
     }
 
     @Override

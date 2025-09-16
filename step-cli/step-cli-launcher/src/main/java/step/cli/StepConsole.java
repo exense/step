@@ -233,7 +233,8 @@ public class StepConsole implements Callable<Integer> {
             }
 
             private void checkApFolder(File param) throws IOException {
-                try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param)) {
+                // keyword library is not required here, because we only need to check the automation package descriptor
+                try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param, null)) {
                     try {
                         if (!apProvider.getAutomationPackageArchive().hasAutomationPackageDescriptor()) {
                             throw new StepCliExecutionException("The AP folder " + param.getAbsolutePath() + " doesn't contain the AP descriptor file");

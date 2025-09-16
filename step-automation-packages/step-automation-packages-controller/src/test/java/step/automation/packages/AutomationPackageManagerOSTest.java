@@ -84,6 +84,7 @@ public class AutomationPackageManagerOSTest {
     private static final String SAMPLE1_FILE_NAME = "step-automation-packages-sample1.jar";
     private static final String SAMPLE1_EXTENDED_FILE_NAME = "step-automation-packages-sample1-extended.jar";
     private static final String SAMPLE_ECHO_FILE_NAME = "step-automation-packages-sample-echo.jar";
+    private static final String KW_LIB_CALL_FILE_NAME = "step-automation-packages-kw-lib-call.jar";
 
     private static final String KW_LIB_FILE_NAME = "step-automation-packages-kw-lib.jar";
     private static final String KW_LIB_FILE_UPDATED_NAME = "step-automation-packages-kw-lib-updated.jar";
@@ -100,7 +101,6 @@ public class AutomationPackageManagerOSTest {
     private Accessor<Parameter> parameterAccessor;
 
     private AutomationPackageLocks automationPackageLocks = new AutomationPackageLocks(AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT);
-    private FileResolver fileResolver;
 
     @Before
     public void before() {
@@ -139,7 +139,6 @@ public class AutomationPackageManagerOSTest {
 
         this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>()));
 
-        this.fileResolver = new FileResolver(resourceManager);
     }
 
     private static FunctionTypeRegistry prepareTestFunctionTypeRegistry(Configuration configuration, LocalResourceManagerImpl resourceManager) {
@@ -800,6 +799,33 @@ public class AutomationPackageManagerOSTest {
 
         Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
         Assert.assertNotNull(updatedFunction);
+    }
+
+    @Ignore
+    @Test
+    public void testKeywordLibClassLoader(){
+        File kwLibCallApJar = new File("src/test/resources/samples/" + KW_LIB_CALL_FILE_NAME);
+        File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+
+        MavenArtifactIdentifier sampleSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib-call", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
+
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, kwLibCallApJar);
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
+
+        // upload main AP (sample SNAPSHOT using classes from LIB) + SNAPSHOT LIB
+        AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
+                true, true, null,
+                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
+                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
+                null, null, null, null, false, "testUser",
+                true, true
+        );
+
+        // deploy should not fail
+        Assert.assertEquals(AutomationPackageUpdateStatus.CREATED, result.getStatus());
+
     }
 
     private void checkResources(AutomationPackage ap1, String expectedApFileName, String expectedKwFileName,

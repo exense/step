@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
 import step.resources.ResourceOrigin;
 import step.resources.UploadedResourceOrigin;
 
@@ -29,7 +30,7 @@ public class AutomationPackageFromInputStreamProvider implements AutomationPacka
     private final AutomationPackageArchive archive;
     private InputStreamToTempFileDownloader.TempFile tempFile;
 
-    public AutomationPackageFromInputStreamProvider(InputStream packageStream, String fileName) throws AutomationPackageReadingException {
+    public AutomationPackageFromInputStreamProvider(InputStream packageStream, String fileName, AutomationPackageKeywordLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException {
         // store automation package into temp file
         try {
             tempFile = InputStreamToTempFileDownloader.copyStreamToTempFile(packageStream, fileName);
@@ -37,7 +38,7 @@ public class AutomationPackageFromInputStreamProvider implements AutomationPacka
             throw new AutomationPackageManagerException("Unable to store automation package file", ex);
         }
 
-        this.archive = new AutomationPackageArchive(tempFile.getTempFile());
+        this.archive = new AutomationPackageArchive(tempFile.getTempFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
     }
 
     @Override

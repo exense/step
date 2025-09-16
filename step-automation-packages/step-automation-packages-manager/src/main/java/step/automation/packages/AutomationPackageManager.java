@@ -343,8 +343,8 @@ public class AutomationPackageManager {
                                                                          ObjectEnricher enricher, ObjectPredicate objectPredicate,
                                                                          boolean async, String actorUser, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) throws AutomationPackageManagerException {
         try {
-            try (AutomationPackageArchiveProvider provider = getAutomationPackageArchiveProvider(apSource, objectPredicate);
-                 AutomationPackageKeywordLibraryProvider kwLibProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate)) {
+            try (AutomationPackageKeywordLibraryProvider kwLibProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate);
+                 AutomationPackageArchiveProvider provider = getAutomationPackageArchiveProvider(apSource, objectPredicate, kwLibProvider)) {
                 return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, kwLibProvider, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
@@ -714,8 +714,9 @@ public class AutomationPackageManager {
     }
 
     public AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource,
-                                                                                ObjectPredicate predicate) throws AutomationPackageReadingException {
-        return this.providersResolver.getAutomationPackageArchiveProvider(apFileSource, predicate, mavenConfigProvider);
+                                                                                ObjectPredicate predicate,
+                                                                                AutomationPackageKeywordLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException {
+        return this.providersResolver.getAutomationPackageArchiveProvider(apFileSource, predicate, mavenConfigProvider, keywordLibraryProvider);
     }
 
     /**
@@ -1191,7 +1192,8 @@ public class AutomationPackageManager {
 
         AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource,
                                                                              ObjectPredicate predicate,
-                                                                             AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) throws AutomationPackageReadingException;
+                                                                             AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
+                                                                             AutomationPackageKeywordLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException;
 
         AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource,
                                                                           ObjectPredicate predicate,
@@ -1202,19 +1204,23 @@ public class AutomationPackageManager {
         @Override
         public AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource,
                                                                                     ObjectPredicate predicate,
-                                                                                    AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) throws AutomationPackageReadingException {
+                                                                                    AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
+                                                                                    AutomationPackageKeywordLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException {
             if (apFileSource != null) {
                 if (apFileSource.useMavenIdentifier()) {
-                    return createAutomationPackageFromMavenProvider(apFileSource, predicate, mavenConfigProvider);
+                    return createAutomationPackageFromMavenProvider(apFileSource, predicate, mavenConfigProvider, keywordLibraryProvider);
                 } else if (apFileSource.getInputStream() != null) {
-                    return new AutomationPackageFromInputStreamProvider(apFileSource.getInputStream(), apFileSource.getFileName());
+                    return new AutomationPackageFromInputStreamProvider(apFileSource.getInputStream(), apFileSource.getFileName(), keywordLibraryProvider);
                 }
             }
             throw new AutomationPackageManagerException("The automation package is not provided");
         }
 
-        protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
-            return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier());
+        protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource,
+                                                                                              ObjectPredicate predicate,
+                                                                                              AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
+                                                                                              AutomationPackageKeywordLibraryProvider keywordLibraryProvider) {
+            return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier(), keywordLibraryProvider);
         }
 
         @Override
