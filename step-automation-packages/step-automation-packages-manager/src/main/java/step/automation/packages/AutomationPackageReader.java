@@ -154,11 +154,9 @@ public class AutomationPackageReader {
     private void fillAutomationPackageWithAnnotatedKeywordsAndPlans(AutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException {
 
         // for file-based packages we create class loader for file, otherwise we just use class loader from archive
-        // TODO: forSpecificJarFromURLClassLoader doesn't work here (failing tests in step.automation.packages.AutomationPackageManagerOSTest
         File originalFile = archive.getOriginalFile();
         try (AnnotationScanner annotationScanner = originalFile != null
-//                ? AnnotationScanner.forSpecificJarFromURLClassLoader(AutomationPackageArchive.createClassloaderForApWithKeywordLib(originalFile, archive.getKeywordLibFile()))
-                ? AnnotationScanner.forSpecificJar(originalFile)
+                ? AnnotationScanner.forSpecificJarFromURLClassLoader(AutomationPackageArchive.createClassloaderForApWithKeywordLib(originalFile, archive.getKeywordLibFile()))
                 : AnnotationScanner.forAllClassesFromClassLoader(archive.getClassLoader())
         ) {
 
@@ -177,10 +175,9 @@ public class AutomationPackageReader {
             res.getPlans().addAll(annotatedPlans);
         } catch (JsonSchemaPreparationException e) {
             throw new AutomationPackageReadingException("Cannot read the json schema from annotated keyword", e);
+        } catch (MalformedURLException e) {
+            throw new AutomationPackageReadingException("Cannot read the automation package content", e);
         }
-        // catch (MalformedURLException e) {
-        //    throw new AutomationPackageReadingException("Cannot read the automation package content", e);
-        // }
     }
 
     public static List<JavaAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {

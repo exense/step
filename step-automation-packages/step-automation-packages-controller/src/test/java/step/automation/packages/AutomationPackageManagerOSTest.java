@@ -801,7 +801,6 @@ public class AutomationPackageManagerOSTest {
         Assert.assertNotNull(updatedFunction);
     }
 
-    @Ignore
     @Test
     public void testKeywordLibClassLoader(){
         File kwLibCallApJar = new File("src/test/resources/samples/" + KW_LIB_CALL_FILE_NAME);

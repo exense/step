@@ -76,7 +76,7 @@ public class AutomationPackageArchive implements Closeable {
         if (keywordLibFile != null) {
             classLoaderUrls.add(keywordLibFile.toURI().toURL());
         }
-        return new URLClassLoader(classLoaderUrls.toArray(new URL[]{}), null);
+        return new URLClassLoader(classLoaderUrls.toArray(new URL[]{}));
     }
 
     private static boolean isArchive(File f) {
