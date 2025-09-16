@@ -693,7 +693,7 @@ public class AutomationPackageManager {
                                 resourceType, false, fis, keywordLibrary.getName(), enricher, null,
                                 actorUser, origin == null ? null : origin.toStringRepresentation()
                         );
-                        log.info("The new keyword library ({}) has been uploaded as ({})", kwLibProvider, uploadedResource);
+                        log.info("The new keyword library ({}) has been uploaded as ({})", kwLibProvider, uploadedResource.getId().toHexString());
                     }
                     keywordLibraryResourceString = FileResolver.RESOURCE_PREFIX + uploadedResource.getId().toString();
                     newPackage.setKeywordLibraryResource(keywordLibraryResourceString);

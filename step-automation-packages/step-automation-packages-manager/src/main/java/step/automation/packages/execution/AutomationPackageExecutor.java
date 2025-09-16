@@ -23,9 +23,8 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestSet;
-import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageFileSource;
+import step.automation.packages.*;
+import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.model.*;
@@ -36,13 +35,17 @@ import step.core.plans.PlanFilter;
 import step.core.repositories.RepositoryObjectManager;
 import step.core.repositories.RepositoryObjectReference;
 import step.repositories.ArtifactRepositoryConstants;
+import step.resources.ResourceManagerImpl;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.KEYWORD_LIBRARY_MAVEN_SOURCE;
+import static step.repositories.ArtifactRepositoryConstants.MAVEN_REPO_ID;
 
 public class AutomationPackageExecutor {
 
@@ -82,7 +85,7 @@ public class AutomationPackageExecutor {
         // throws an exception if ap doesn't exist
         AutomationPackage automationPackage = mainAutomationPackageManager.getAutomatonPackageById(automationPackageId, objectPredicate);
 
-        return runExecutions(automationPackage, LOCAL_AUTOMATION_PACKAGE, null, null, mainAutomationPackageManager, parameters, objectEnricher);
+        return runExecutions(automationPackage, LOCAL_AUTOMATION_PACKAGE, null, null, mainAutomationPackageManager, parameters, objectEnricher, null);
     }
 
     public List<String> runInIsolation(AutomationPackageFileSource automationPackageFileSource,
@@ -110,14 +113,41 @@ public class AutomationPackageExecutor {
         // and if the automation package is provided as maven snippet, inputStream and fileName will be empty, but it is OK, because they are not required in MavenArtifactRepository
         IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(
                 automationPackageFileSource.getInputStream(), automationPackageFileSource.getFileName(),
-                parameters, contextId, objectPredicate, actorUser
+                parameters, contextId, objectPredicate, actorUser, ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP
         );
+
+        //For the KW library we also need to get it from the corresponding provider. We cannot reuse the package repository (isolated, maven...)
+        // because the source maybe different. Also for maven we should have the same behaviour and re-download from maven for re-execution
+        // we therefore also must store the source in the repository parameters
+        IsolatedAutomationPackageRepository.AutomationPackageFile kwLibraryAutomationPackageFile = null;
+        Map<String, String> additionalRepositoryParameters = new HashMap<>();
+        try (AutomationPackageKeywordLibraryProvider kwLibProvider = mainAutomationPackageManager.getKeywordLibraryProvider(keywordLibrarySource, objectPredicate)) {
+            File keywordLibraryFile = kwLibProvider.getKeywordLibrary();
+            //For maven we actually don't store the file as resource it will be re-downloaded for re-execution, so we only store the source in the repo parameters
+            if (keywordLibraryFile != null) {
+                if (keywordLibrarySource.useMavenIdentifier()) {
+                    additionalRepositoryParameters.put(KEYWORD_LIBRARY_MAVEN_SOURCE, keywordLibrarySource.getMavenArtifactIdentifier().toStringRepresentation());
+                    kwLibraryAutomationPackageFile = new IsolatedAutomationPackageRepository.AutomationPackageFile(keywordLibraryFile, null);
+                } else {
+                    try (InputStream fis = new FileInputStream(kwLibProvider.getKeywordLibrary())) {
+                        RepositoryWithAutomationPackageSupport kwLibraryRepository = (RepositoryWithAutomationPackageSupport) repositoryObjectManager.getRepository(ISOLATED_AUTOMATION_PACKAGE);
+                        kwLibraryAutomationPackageFile = kwLibraryRepository.getApFileForExecution(
+                                fis, kwLibProvider.getKeywordLibrary().getName(),
+                                parameters, contextId, objectPredicate, actorUser, ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_KW_LIB
+                        );
+                    }
+                }
+            }
+        } catch (IOException | AutomationPackageReadingException e) {
+            throw new AutomationPackageManagerException("Unable to read the provided keyword library", e);
+        }
 
         // and then we read the ap from just stored file
         // create single execution context for the whole AP to execute all plans on the same ap manager (for performance reason)
         IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createIsolatedPackageExecutionContext(
-                objectEnricher, objectPredicate, contextId.toString(), apFile, true, keywordLibrarySource, actorUser
+                objectEnricher, objectPredicate, contextId.toString(), apFile, true, kwLibraryAutomationPackageFile, actorUser
         );
+
         try {
             AutomationPackage automationPackage = executionContext.getAutomationPackage();
             String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
@@ -127,7 +157,7 @@ public class AutomationPackageExecutor {
                 repository.setApNameForResource(apFile.getResource(), apName);
             }
 
-            executions = runExecutions(automationPackage, repoId, parameters.getOriginalRepositoryObject(), contextId, executionContext.getAutomationPackageManager(), parameters, objectEnricher);
+            executions = runExecutions(automationPackage, repoId, parameters.getOriginalRepositoryObject(), contextId, executionContext.getAutomationPackageManager(), parameters, objectEnricher, additionalRepositoryParameters);
         } finally {
             // after all plans are executed we can clean up the context (remove temporary files prepared for isolated execution)
             waitForAllLaunchedExecutions(executions, apFile.getFile().getName(), executionContext);
@@ -147,14 +177,14 @@ public class AutomationPackageExecutor {
         if (automationPackageFileSource.getMavenArtifactIdentifier().getType() != null) {
             extendedParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE, automationPackageFileSource.getMavenArtifactIdentifier().getType());
         }
-        parameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, extendedParameters));
+        parameters.setOriginalRepositoryObject(new RepositoryObjectReference(MAVEN_REPO_ID, extendedParameters));
     }
 
     private List<String> runExecutions(AutomationPackage automationPackage,
                                        String repoId, RepositoryObjectReference originalRepositoryObject,
                                        ObjectId contextId, AutomationPackageManager apManager,
                                        AutomationPackageExecutionParameters parameters,
-                                       ObjectEnricher objectEnricher) {
+                                       ObjectEnricher objectEnricher, Map<String, String> additionalRepositoryParameters) {
         List<String> executions = new ArrayList<>();
         List<Plan> applicablePlans = new ArrayList<>();
         PlanFilter planFilter = parameters.getPlanFilter();
@@ -174,7 +204,7 @@ public class AutomationPackageExecutor {
             for (Plan plan : applicablePlans) {
                 ExecutionParameters params = prepareExecutionParams(
                         parameters, apName, apID, contextId, repoId, originalRepositoryObject, plan.getAttribute(AbstractOrganizableObject.NAME),
-                        CommonExecutionParameters.defaultDescription(plan), plan.getRoot().getClass().getSimpleName(), objectEnricher
+                        CommonExecutionParameters.defaultDescription(plan), plan.getRoot().getClass().getSimpleName(), objectEnricher, additionalRepositoryParameters
                 );
                 String newExecutionId = this.scheduler.execute(params);
                 if (newExecutionId != null) {
@@ -186,7 +216,7 @@ public class AutomationPackageExecutor {
             ExecutionParameters params = prepareExecutionParams(
                     parameters, apName, apID, contextId, repoId, originalRepositoryObject,
                     somePlansFiltered ? applicablePlans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.joining(",")) : null,
-                    null, TestSet.class.getSimpleName(), objectEnricher
+                    null, TestSet.class.getSimpleName(), objectEnricher, additionalRepositoryParameters
             );
             String newExecutionId = this.scheduler.execute(params);
             if (newExecutionId != null) {
@@ -199,7 +229,7 @@ public class AutomationPackageExecutor {
     private ExecutionParameters prepareExecutionParams(AutomationPackageExecutionParameters parameters, String apName,
                                                        String apID, ObjectId contextId, String repoId,
                                                        RepositoryObjectReference originalRepositoryObject,
-                                                       String includePlans, String defaultDescription, String rootType, ObjectEnricher objectEnricher) {
+                                                       String includePlans, String defaultDescription, String rootType, ObjectEnricher objectEnricher, Map<String, String> additionalRepositoryParameters) {
         ExecutionParameters params = parameters.toExecutionParameters();
 
         HashMap<String, String> repositoryParameters = new HashMap<>();
@@ -222,6 +252,9 @@ public class AutomationPackageExecutor {
         // store the reference from original repository object
         if (originalRepositoryObject != null && originalRepositoryObject.getRepositoryParameters() != null) {
             repositoryParameters.putAll(originalRepositoryObject.getRepositoryParameters());
+        }
+        if (additionalRepositoryParameters != null) {
+            repositoryParameters.putAll(additionalRepositoryParameters);
         }
 
         params.setRepositoryObject(new RepositoryObjectReference(repoId, repositoryParameters));

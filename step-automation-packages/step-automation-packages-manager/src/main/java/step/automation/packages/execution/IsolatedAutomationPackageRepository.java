@@ -111,9 +111,11 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     }
 
     @Override
-    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName, IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId, ObjectPredicate objectPredicate, String actorUser) {
+    public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName,
+                                                       IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId,
+                                                       ObjectPredicate objectPredicate, String actorUser, String resourceType) {
         // for files from input stream we save persists the resource to support re-execution
-        Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName, actorUser);
+        Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName, actorUser, resourceType);
         File file = getApFileByResource(apResource);
         return new AutomationPackageFile(file, apResource);
     }
@@ -250,11 +252,11 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
     }
 
-    public Resource saveApResource(String contextId, InputStream apStream, String fileName, String actorUser) {
+    public Resource saveApResource(String contextId, InputStream apStream, String fileName, String actorUser, String resourceType) {
         // store file in temporary storage to support rerun
         try {
             // find by resource type and contextId (or apName and override)
-            ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP, fileName, actorUser);
+            ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(resourceType, fileName, actorUser);
 
             Resource resource = resourceContainer.getResource();
             resource.addCustomField(CONTEXT_ID_CUSTOM_FIELD, contextId);
