@@ -87,12 +87,13 @@ public class ReportNodeTimeSeries implements AutoCloseable {
     }
 
 
-    public Map<String, Map<String, Bucket>> queryByExecutionIdAndGroupByArtefactHashAndStatuses(String executionId, Range range) {
+    public Map<String, Map<String, Bucket>> queryByExecutionIdAndGroupBy(String executionId, Range range, String groupLevel1, String groupLevel2) {
         Filter filter = Filters.equals("attributes." + EXECUTION_ID, executionId);
+        Set<String> groupBy = Set.of(groupLevel1, groupLevel2);
         TimeSeriesAggregationQueryBuilder queryBuilder = new TimeSeriesAggregationQueryBuilder()
                 .withOptimizationType(TimeSeriesOptimizationType.MOST_ACCURATE)
                 .withFilter(filter)
-                .withGroupDimensions(Set.of(ARTEFACT_HASH, STATUS))
+                .withGroupDimensions(groupBy)
                 .split(1);
 
         if (range != null) {
@@ -100,11 +101,11 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         }
         return timeSeries.getAggregationPipeline().collect(queryBuilder.build())
                 .getSeries().entrySet().stream()
-                .filter(e -> e.getKey().containsKey(ARTEFACT_HASH) && e.getKey().containsKey(STATUS))
+                .filter(e -> e.getKey().keySet().containsAll(groupBy))
                 .collect(Collectors.groupingBy(
-                        e -> (String) e.getKey().get(ARTEFACT_HASH), // outer key
+                        e -> (String) e.getKey().get(groupLevel1), // outer key
                         Collectors.toMap(
-                                e -> (String)  e.getKey().get(STATUS),    // inner key
+                                e -> (String)  e.getKey().get(groupLevel2),    // inner key
                                 e -> e.getValue().values().stream().findFirst().orElse(new Bucket())
                         )
                 ));
