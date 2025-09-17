@@ -57,4 +57,8 @@ public class GroovyPoolKey {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return script;
+	}
 }
