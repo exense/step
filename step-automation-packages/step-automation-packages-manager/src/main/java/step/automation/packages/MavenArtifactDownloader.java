@@ -48,7 +48,7 @@ public class MavenArtifactDownloader {
                     mavenArtifactIdentifier.getVersion())
             );
         } catch (SettingsBuildingException | org.eclipse.aether.resolution.ArtifactResolutionException e) {
-            throw new AutomationPackageReadingException("Unable to download maven artifact", e);
+            throw new AutomationPackageReadingException("Unable to download maven artifact " + mavenArtifactIdentifier.toStringRepresentation(), e);
         }
     }
 }

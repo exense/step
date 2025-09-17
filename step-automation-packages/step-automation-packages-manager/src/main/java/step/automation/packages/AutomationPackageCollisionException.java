@@ -51,6 +51,9 @@ public class AutomationPackageCollisionException extends AutomationPackageManage
             }
             res += "Automation packages with same keyword lib: " + automationPackagesWithSameKeywordLib.stream().map(ObjectId::toHexString).collect(Collectors.joining(","));
         }
+        if (!res.isBlank()) {
+            res += "\n. Use the option 'allowUpdateOfOtherPackages' to allow the update. All automation packages referencing the same artefacts with be updated in the process.";
+        }
         return res;
     }
 
