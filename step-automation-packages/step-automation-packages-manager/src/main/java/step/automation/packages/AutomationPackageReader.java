@@ -339,9 +339,8 @@ public class AutomationPackageReader {
         }
     }
 
-    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion) throws AutomationPackageReadingException {
-        // TODO: fix
-        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackage, null)) {
+    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {
+        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackage, keywordLib)) {
             return readAutomationPackage(automationPackageArchive, apVersion, false);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
