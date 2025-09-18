@@ -46,8 +46,6 @@ import step.reporting.impl.LiveMeasureSink;
 import step.streaming.client.upload.StreamingUploadProvider;
 import step.streaming.common.StreamingResourceUploadContext;
 
-//import step.streaming.util.ThreadPools;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
 import java.net.URI;
@@ -55,8 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
@@ -72,8 +69,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	// Cached object mapper for message payload serialization
 	private final ObjectMapper mapper;
 
-	private ExecutorService liveReportingExecutor;
-	// This is actually a Jakarta WebsocketContainer, but instantiated dynamically using a separate class loader
+	private ThreadPoolExecutor liveReportingExecutor;
+	// This is actually a Jakarta WebSocketContainer, but instantiated dynamically using a separate class loader
 	private volatile Object webSocketContainer;
 	private ApplicationContextBuilder applicationContextBuilder;
 
@@ -85,26 +82,35 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
 	}
 
+	private int getFromAgentPropsOrDefault(String configKey, int defaultValue) {
+		Optional<String> agentPropsOverridingPoolSize = Optional.ofNullable(agentTokenServices.getAgentProperties())
+				.map(m -> m.get(configKey));
+		if (agentPropsOverridingPoolSize.isPresent()) {
+			try {
+				return Integer.parseInt(agentPropsOverridingPoolSize.get());
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException("Invalid agent properties override for " + configKey + ": " + agentPropsOverridingPoolSize.get());
+			}
+		}
+		return defaultValue;
+	}
+
 	@Override
 	public void init(AgentTokenServices agentTokenServices) {
 		super.init(agentTokenServices);
 
-		String liveReportingPoolSizeAgentPropsKey = "step.reporting.livereporting.poolsize";
-		int liveReportingPoolSize = 10;
+		int liveReportingPoolSize = getFromAgentPropsOrDefault("step.reporting.livereporting.poolsize", 100);
+		int liveReportingQueueSize = getFromAgentPropsOrDefault("step.reporting.livereporting.queuesize", 1000);
 
-		Optional<String> agentPropsOverridingPoolSize = Optional.ofNullable(agentTokenServices.getAgentProperties())
-				.map(m -> m.get(liveReportingPoolSizeAgentPropsKey));
-		if (agentPropsOverridingPoolSize.isPresent()) {
-			try {
-				liveReportingPoolSize = Integer.parseInt(agentPropsOverridingPoolSize.get());
-			} catch (NumberFormatException e) {
-				throw new IllegalArgumentException("Invalid agent properties override for " + liveReportingPoolSizeAgentPropsKey + ": " + agentPropsOverridingPoolSize.get());
-			}
-		}
+		// Behavior: This dynamically scales up/down between 0 and liveReportingPoolSize threads,
+		// and if all threads are occupied, allows to queue a maximum of liveReportingQueueSize tasks before rejecting.
+		liveReportingExecutor = new ThreadPoolExecutor(liveReportingPoolSize, liveReportingPoolSize,
+				30L, TimeUnit.SECONDS,
+				new ArrayBlockingQueue<>(liveReportingQueueSize),
+				NamedThreadFactory.create("livereporting", true)
+		);
+		liveReportingExecutor.allowCoreThreadTimeOut(true);
 
-		// FIXME: figure out the final strategy here
-		//liveReportingExecutor = ThreadPools.createPoolExecutor("livereporting", liveReportingPoolSize, 10000);
-		liveReportingExecutor = Executors.newFixedThreadPool(liveReportingPoolSize, NamedThreadFactory.create("livereporting"));
 
 		applicationContextBuilder = new ApplicationContextBuilder(this.getClass().getClassLoader(),
 				agentTokenServices.getApplicationContextBuilder().getApplicationContextConfiguration());
