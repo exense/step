@@ -47,10 +47,10 @@
 		<!-- internal dependencies -->
 		<dependencies.version>2025.6.25</dependencies.version>
 
-		<step-grid.version>2025.8.27-68aec2a00ad99e784e7d04ac</step-grid.version>
+		<step-grid.version>2025.9.18-68cc111bc07d327dfe4423b2</step-grid.version>
 		<step-framework.version>2025.8.22-68a887b0a5fd2f5679a819d2</step-framework.version>
 		<!-- TODO: REMOVE temporary overrides (and usages) before merging to productive branch -->
-		<step-api-temp-override.version>2025.9.17-68ca55cdc07d327dfe2da13d</step-api-temp-override.version>
+		<step-api-temp-override.version>2025.9.18-68cc0b9cc07d327dfe3eb39d</step-api-temp-override.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>

@@ -1,5 +1,6 @@
 package step.plugins.streaming;
 
+import ch.exense.commons.app.Configuration;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.HandshakeResponse;
@@ -18,6 +19,7 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.grid.threads.NamedThreadFactory;
 import step.resources.ResourceManagerControllerPlugin;
 import step.resources.StreamingResourceContentProvider;
 import step.streaming.common.StreamingResourceUploadContexts;
@@ -53,6 +55,8 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
 
+        Configuration conf = context.getConfiguration();
+
         String controllerUrl = StepControllerPlugin.getControllerUrl(context.getConfiguration(), true, true);
         // We need the websocket variant
         URI websocketBaseUri = URI.create(controllerUrl.replaceFirst("^http", "ws"));
@@ -65,7 +69,19 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         FilesystemStreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageBaseDir);
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
         URITemplateBasedReferenceProducer referenceProducer = new URITemplateBasedReferenceProducer(websocketBaseUri, DOWNLOAD_PATH, DOWNLOAD_PARAMETER_NAME);
-        ExecutorService uploadProcessorPool = ThreadPools.createPoolExecutor("ws-upload-processor", ThreadPools.getDefaultPoolSize(), 102400);
+
+        int uploadsPoolSize = conf.getPropertyAsInteger("streaming.uploads.poolsize", 16);
+        int uploadsQueueSize = conf.getPropertyAsInteger("streaming.uploads.queuesize", 1000);
+
+        // behavior: this will scale up to uploadsPoolSize threads when needed (and back down to 0 when idle),
+        // then will start enqueuing requests up to the pool size before rejecting them
+        ThreadPoolExecutor uploadProcessorPool = new ThreadPoolExecutor(uploadsPoolSize, uploadsPoolSize,
+                30L, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(uploadsQueueSize),
+                NamedThreadFactory.create("ws-upload-processor", true)
+        );
+        uploadProcessorPool.allowCoreThreadTimeOut(true);
+
         //ExecutorService uploadProcessorPool = Executors.newFixedThreadPool(16, ThreadPools.namedDaemon("ws-uploads"));
         manager = new StepStreamingResourceManager(context, catalog, storage, referenceProducer, uploadContexts, uploadProcessorPool);
 
