@@ -137,7 +137,7 @@ public class AutomationPackageManagerOSTest {
                 null
         );
 
-        this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>()));
+        this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>(), resourceManager));
 
     }
 
@@ -824,8 +824,51 @@ public class AutomationPackageManagerOSTest {
 
         // deploy should not fail
         Assert.assertEquals(AutomationPackageUpdateStatus.CREATED, result.getStatus());
-
     }
+
+    @Test
+    public void testUploadByResourceId() throws IOException {
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+
+        MavenArtifactIdentifier sampleSnapshot = new MavenArtifactIdentifier("test-group", "ap1", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
+
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, automationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
+
+        // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
+        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(
+                true, true, null,
+                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
+                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
+                "v1", null, null, null, false, "testUser",
+                true, true
+        );
+
+        // check used AP resource
+        AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
+        Resource ap1Resource = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getAutomationPackageResource()));
+        Resource kwLibResource = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getKeywordLibraryResource()));
+
+        // upload main AP (by resource id) + SNAPSHOT LIB (by resource id) - VERSION 2
+        AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(
+                true, true, null,
+                AutomationPackageFileSource.withResourceId(ap1Resource.getId().toHexString()),
+                AutomationPackageFileSource.withResourceId(kwLibResource.getId().toHexString()),
+                "v2", null, null, null, false, "testUser",
+                true, true
+        );
+
+        // AP reuses old resource, but have new ID
+        AutomationPackage ap2 = automationPackageAccessor.get(result2.getId());
+        Assert.assertNotEquals(ap1.getId(), ap2.getId());
+
+        // the resources have been reused
+        Assert.assertEquals(ap1.getAutomationPackageResource(), ap2.getAutomationPackageResource());
+        Assert.assertEquals(ap1.getKeywordLibraryResource(), ap2.getKeywordLibraryResource());
+     }
 
     private void checkResources(AutomationPackage ap1, String expectedApFileName, String expectedKwFileName,
                                 String expectedApOrigin, String expectedKwOrigin) {
@@ -877,12 +920,12 @@ public class AutomationPackageManagerOSTest {
         Assert.assertNotNull(r.storedPackage.getAutomationPackageResource());
 
         Resource resourceByAutomationPackage = resourceManager.getResource(fileResolver.resolveResourceId(r.storedPackage.getAutomationPackageResource()));
-        if(sample1FileSource.useMavenIdentifier()){
+        if(sample1FileSource.getMode() == AutomationPackageFileSource.Mode.MAVEN){
             Assert.assertEquals(
                     sample1FileSource.getMavenArtifactIdentifier().toStringRepresentation(),
                     resourceByAutomationPackage.getOrigin()
             );
-        } else {
+        } else if(sample1FileSource.getMode() == AutomationPackageFileSource.Mode.INPUT_STREAM){
             Assert.assertEquals("uploaded:", resourceByAutomationPackage.getOrigin());
         }
 

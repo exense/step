@@ -24,6 +24,7 @@ import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvide
 import step.automation.packages.kwlibrary.KeywordLibraryFromMavenProvider;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectPredicate;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.util.Map;
@@ -32,7 +33,8 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
 
     private final Map<MavenArtifactIdentifier, File> mavenArtifactMocks;
 
-    public MockedAutomationPackageProvidersResolver(Map<MavenArtifactIdentifier, File> mavenArtifactMocks){
+    public MockedAutomationPackageProvidersResolver(Map<MavenArtifactIdentifier, File> mavenArtifactMocks, ResourceManager resourceManager){
+        super(resourceManager);
         this.mavenArtifactMocks = mavenArtifactMocks;
     }
 

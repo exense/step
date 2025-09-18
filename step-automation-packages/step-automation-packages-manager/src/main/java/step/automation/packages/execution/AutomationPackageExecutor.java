@@ -97,7 +97,7 @@ public class AutomationPackageExecutor {
         List<String> executions = new ArrayList<>();
 
         // populate execution parameters with maven artifact identifier and then use MavenArtifactRepository to process the AP
-        if (automationPackageFileSource.useMavenIdentifier()) {
+        if (automationPackageFileSource.getMode() == AutomationPackageFileSource.Mode.MAVEN) {
             fillParametersWithMavenRepositoryObject(automationPackageFileSource, parameters);
         }
 
@@ -125,7 +125,7 @@ public class AutomationPackageExecutor {
             File keywordLibraryFile = kwLibProvider.getKeywordLibrary();
             //For maven we actually don't store the file as resource it will be re-downloaded for re-execution, so we only store the source in the repo parameters
             if (keywordLibraryFile != null) {
-                if (keywordLibrarySource.useMavenIdentifier()) {
+                if (keywordLibrarySource.getMode() == AutomationPackageFileSource.Mode.MAVEN) {
                     additionalRepositoryParameters.put(KEYWORD_LIBRARY_MAVEN_SOURCE, keywordLibrarySource.getMavenArtifactIdentifier().toStringRepresentation());
                     kwLibraryAutomationPackageFile = new IsolatedAutomationPackageRepository.AutomationPackageFile(keywordLibraryFile, null);
                 } else {

@@ -21,18 +21,38 @@
 package step.automation.packages.kwlibrary;
 
 import step.automation.packages.AutomationPackageReadingException;
+import step.core.objectenricher.ObjectPredicate;
+import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceOrigin;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.List;
 
 public interface AutomationPackageKeywordLibraryProvider extends Closeable {
+
     File getKeywordLibrary() throws AutomationPackageReadingException;
 
     ResourceOrigin getOrigin();
 
     default String getResourceType() {
         return ResourceManager.RESOURCE_TYPE_AP_LIBRARY;
+    }
+
+    default boolean isModifiableResource() {
+        return getOrigin() == null ? false : getOrigin().isModifiable();
+    }
+
+    default boolean canLookupResources() {
+        return getOrigin() == null ? false : getOrigin().isIdentifiable();
+    }
+
+    default List<Resource> lookupExistingResources(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
+        if (canLookupResources() && getOrigin() != null) {
+            return resourceManager.getResourcesByOrigin(getOrigin().toStringRepresentation(), objectPredicate);
+        } else {
+            throw new UnsupportedOperationException("Resources cannot be looked up for provider " + this.getClass().getSimpleName());
+        }
     }
 }

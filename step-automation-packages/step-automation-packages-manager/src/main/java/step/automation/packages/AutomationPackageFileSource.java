@@ -23,11 +23,14 @@ package step.automation.packages;
 import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AutomationPackageFileSource {
 
     private MavenArtifactIdentifier mavenArtifactIdentifier;
 
+    private String resourceId;
     private String fileName;
     private InputStream inputStream;
 
@@ -47,6 +50,12 @@ public class AutomationPackageFileSource {
         return res;
     }
 
+    public static AutomationPackageFileSource withResourceId(String resourceId){
+        AutomationPackageFileSource res = new AutomationPackageFileSource();
+        res.resourceId = resourceId;
+        return res;
+    }
+
     public static AutomationPackageFileSource empty(){
         return new AutomationPackageFileSource();
     }
@@ -63,6 +72,10 @@ public class AutomationPackageFileSource {
         return inputStream;
     }
 
+    public String getResourceId() {
+        return resourceId;
+    }
+
     public AutomationPackageFileSource addInputStream(InputStream inputStream, String fileName){
         this.inputStream = inputStream;
         this.fileName = fileName;
@@ -74,22 +87,47 @@ public class AutomationPackageFileSource {
         return this;
     }
 
-    public boolean useMavenIdentifier() {
+
+    public AutomationPackageFileSource addResourceId(String resourceId){
+        this.resourceId = resourceId;
+        return this;
+    }
+
+    public Mode getMode() throws AutomationPackageManagerException {
+        List<Mode> modes = new ArrayList<>();
         if (getMavenArtifactIdentifier() != null) {
-            if (getInputStream() != null) {
-                throw new AutomationPackageManagerException("The resource should either be uploaded via maven identifier or via input stream");
-            }
-            return true;
+            modes.add(Mode.MAVEN);
         }
-        return false;
+        if (getInputStream() != null) {
+            modes.add(Mode.INPUT_STREAM);
+        }
+        if (getResourceId() != null) {
+            modes.add(Mode.RESOURCE_ID);
+        }
+        if (modes.size() > 1) {
+            throw new AutomationPackageManagerException("Ambiguous file definition :" + modes + ". Please use only one of this modes");
+        }
+        if (modes.isEmpty()) {
+            return Mode.EMPTY;
+        } else {
+            return modes.get(0);
+        }
     }
 
     @Override
     public String toString() {
         return "AutomationPackageFileSource{" +
                 "mavenArtifactIdentifier=" + mavenArtifactIdentifier +
+                ", resourceId='" + resourceId + '\'' +
                 ", fileName='" + fileName + '\'' +
                 ", inputStream=" + (inputStream == null ? "no" : "yes") +
                 '}';
+    }
+
+    public enum Mode {
+        INPUT_STREAM,
+        MAVEN,
+        RESOURCE_ID,
+        EMPTY
     }
 }

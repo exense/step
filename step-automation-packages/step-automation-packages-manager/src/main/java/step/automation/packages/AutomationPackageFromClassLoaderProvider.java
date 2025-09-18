@@ -43,6 +43,5 @@ public class AutomationPackageFromClassLoaderProvider implements AutomationPacka
 
     @Override
     public void close() throws IOException {
-
     }
 }

@@ -51,7 +51,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.Map;
 
-// TODO: improve the swagger doc for endpoint and params
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
 public class AutomationPackageServices extends AbstractStepAsyncServices {
@@ -103,7 +102,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     /**
-     *
      * @param apVersion
      * @param activationExpression
      * @param automationPackageInputStream
@@ -134,10 +132,12 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                           @FormDataParam("apMavenSnippet") String apMavenSnippet,
                                           @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
                                           @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail,
-                                          @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet) {
+                                          @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet,
+                                          @FormDataParam("apResourceId") String apResourceId,
+                                          @FormDataParam("keywordLibraryResourceId") String keywordLibraryResourceId) {
         try {
-            AutomationPackageFileSource apFileSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for automation package: ");
-            AutomationPackageFileSource keywordLibrarySource = getFileSource(keywordLibraryInputStream, keywordLibraryFileDetail, keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ");
+            AutomationPackageFileSource apFileSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for automation package: ", apResourceId);
+            AutomationPackageFileSource keywordLibrarySource = getFileSource(keywordLibraryInputStream, keywordLibraryFileDetail, keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ", keywordLibraryResourceId);
 
             ObjectId id = automationPackageManager.createAutomationPackage(
                     apFileSource,
@@ -168,7 +168,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                  @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
                                                  @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail,
                                                  @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart,
-                                                 @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet) {
+                                                 @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet,
+                                                 @FormDataParam("apResourceId") String apResourceId,
+                                                 @FormDataParam("keywordLibraryResourceId") String keywordLibraryResourceId) {
         IsolatedAutomationPackageExecutionParameters executionParameters;
         if (executionParamsBodyPart != null) {
             // The workaround to parse execution parameters as application/json even if the Content-Type for this part is not explicitly set in request
@@ -189,8 +191,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
 
         try {
-            AutomationPackageFileSource keywordLibrarySource = getFileSource(keywordLibraryInputStream, keywordLibraryFileDetail, keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ");
-            AutomationPackageFileSource apSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for ap: ");
+            AutomationPackageFileSource keywordLibrarySource = getFileSource(keywordLibraryInputStream, keywordLibraryFileDetail, keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ", keywordLibraryResourceId);
+            AutomationPackageFileSource apSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for ap: ", apResourceId);
+            // TODO: support resource id for AP and keyword lib
             return automationPackageExecutor.runInIsolation(
                     apSource,
                     executionParameters,
@@ -265,11 +268,21 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @FormDataParam("apMavenSnippet") String apMavenSnippet,
                                                                  @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
                                                                  @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail,
-                                                                 @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet) {
+                                                                 @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet,
+                                                                 @FormDataParam("apResourceId") String apResourceId,
+                                                                 @FormDataParam("keywordLibraryResourceId") String keywordLibraryResourceId) {
         checkAutomationPackageAcceptable(id);
         try {
-            AutomationPackageFileSource apFileSource = getFileSource(uploadedInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for automation package: ");
-            AutomationPackageFileSource keywordLibrarySource = getFileSource(keywordLibraryInputStream, keywordLibraryFileDetail, keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ");
+            AutomationPackageFileSource apFileSource = getFileSource(
+                    uploadedInputStream, fileDetail,
+                    apMavenSnippet, "Invalid maven snippet for automation package: ",
+                    apResourceId
+            );
+            AutomationPackageFileSource keywordLibrarySource = getFileSource(
+                    keywordLibraryInputStream, keywordLibraryFileDetail,
+                    keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ",
+                    keywordLibraryResourceId
+            );
 
             return automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
@@ -284,18 +297,18 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
-    private AutomationPackageFileSource getFileSource(InputStream uploadedInputStream, FormDataContentDisposition fileDetail, String apMavenSnippet, String invalidSnippetErrorText) {
+    private AutomationPackageFileSource getFileSource(InputStream uploadedInputStream, FormDataContentDisposition fileDetail, String apMavenSnippet, String invalidSnippetErrorText, String resourceId) {
         AutomationPackageFileSource automationPackageFileSource = null;
         try {
             automationPackageFileSource = AutomationPackageFileSource.empty();
-            if (uploadedInputStream != null && apMavenSnippet != null) {
-                throw new ControllerServiceException("You cannot use both file and maven snippet");
-            }
             if (uploadedInputStream != null) {
                 automationPackageFileSource.addInputStream(uploadedInputStream, fileDetail == null ? null : fileDetail.getFileName());
             }
             if (apMavenSnippet != null) {
                 automationPackageFileSource.addMavenIdentifier(getMavenArtifactIdentifierFromXml(apMavenSnippet));
+            }
+            if(resourceId != null){
+                automationPackageFileSource.addResourceId(resourceId);
             }
         } catch (JsonProcessingException e) {
             throw new ControllerServiceException(invalidSnippetErrorText + e.getMessage());
@@ -328,10 +341,20 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam("apMavenSnippet") String apMavenSnippet,
                                                     @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
                                                     @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail,
-                                                    @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet) {
+                                                    @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet,
+                                                    @FormDataParam("apResourceId") String apResourceId,
+                                                    @FormDataParam("keywordLibraryResourceId") String keywordLibraryResourceId) {
         try {
-            AutomationPackageFileSource apFileSource = getFileSource(uploadedInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for automation package: ");
-            AutomationPackageFileSource keywordLibrarySource = getFileSource(keywordLibraryInputStream, keywordLibraryFileDetail, keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ");
+            AutomationPackageFileSource apFileSource = getFileSource(
+                    uploadedInputStream, fileDetail,
+                    apMavenSnippet, "Invalid maven snippet for automation package: ",
+                    apResourceId
+            );
+            AutomationPackageFileSource keywordLibrarySource = getFileSource(
+                    keywordLibraryInputStream, keywordLibraryFileDetail,
+                    keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ",
+                    keywordLibraryResourceId
+            );
 
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
                     true, true, null,

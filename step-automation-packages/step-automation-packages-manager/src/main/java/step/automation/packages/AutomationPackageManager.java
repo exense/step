@@ -125,7 +125,7 @@ public class AutomationPackageManager {
         this.automationPackageLocks = automationPackageLocks;
         this.operationMode = Objects.requireNonNull(operationMode);
 
-        this.providersResolver = new DefaultProvidersResolver();
+        this.providersResolver = new DefaultProvidersResolver(resourceManager);
 
         addDefaultExtensions();
     }
@@ -453,7 +453,7 @@ public class AutomationPackageManager {
 
         ConflictingAutomationPackages conflictingAutomationPackages;
         if (checkForSameOrigin) {
-            conflictingAutomationPackages = findConflictingAutomationPackages(keywordLibraryProvider, apOrigin, oldPackage, objectPredicate);
+            conflictingAutomationPackages = findConflictingAutomationPackages(keywordLibraryProvider, automationPackageProvider, oldPackage, objectPredicate);
         } else {
             conflictingAutomationPackages = new ConflictingAutomationPackages();
         }
@@ -483,7 +483,7 @@ public class AutomationPackageManager {
 
         // always upload the automation package file as resource
         // NOTE: for the main ap resource don't need to enrich the resource with automation package id (because the same resource can be shared between several automation packages) - so we use simple enricher
-        uploadApResourceIfRequired(automationPackageArchive, newPackage, apOrigin, enricher, actorUser, objectPredicate);
+        uploadApResourceIfRequired(automationPackageProvider, automationPackageArchive, newPackage, apOrigin, enricher, actorUser, objectPredicate);
 
         // upload keyword library if provided
         // NOTE: for keyword lib we don't need to enrich the resource with automation package id (because the same lib can be shared between several automation packages) - so we use simple enricher
@@ -537,7 +537,7 @@ public class AutomationPackageManager {
     }
 
     private ConflictingAutomationPackages findConflictingAutomationPackages(AutomationPackageKeywordLibraryProvider kwLibProvider,
-                                                                            ResourceOrigin apOrigin,
+                                                                            AutomationPackageArchiveProvider automationPackageProvider,
                                                                             AutomationPackage oldPackage,
                                                                             ObjectPredicate objectPredicate) {
         ConflictingAutomationPackages conflictingAutomationPackages = new ConflictingAutomationPackages();
@@ -547,7 +547,8 @@ public class AutomationPackageManager {
         // because for non-identifiable origins we will always upload the new resource and for unmodifiable origins - reuse the exiting resource
         // (both these cases are not conflicting and don't require the additional confirmation from user)
         List<ObjectId> automationPackagesWithSameOrigin = new ArrayList<>();
-        if (apOrigin != null && apOrigin.isIdentifiable() && apOrigin.isModifiable()) {
+        ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
+        if (apOrigin != null && automationPackageProvider.canLookupResources() && automationPackageProvider.isModifiableResource()) {
             List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate);
             for (Resource resource : resourcesByOrigin) {
               automationPackagesWithSameOrigin.addAll(findAutomationPackagesByMainResource(FileResolver.RESOURCE_PREFIX + resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
@@ -557,7 +558,7 @@ public class AutomationPackageManager {
 
         Set<ObjectId> apWithSameKeywordLib = new HashSet<>();
         ResourceOrigin keywordLibOrigin = kwLibProvider == null ? null : kwLibProvider.getOrigin();
-        if (keywordLibOrigin != null && keywordLibOrigin.isIdentifiable() && keywordLibOrigin.isModifiable()) {
+        if (keywordLibOrigin != null && kwLibProvider.canLookupResources() && kwLibProvider.isModifiableResource()) {
             List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(keywordLibOrigin.toStringRepresentation(), objectPredicate);
             for (Resource resource : resourcesByOrigin) {
                 apWithSameKeywordLib.addAll(findAutomationPackagesByMainResource(FileResolver.RESOURCE_PREFIX + resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
@@ -609,7 +610,8 @@ public class AutomationPackageManager {
         }
     }
 
-    private String uploadApResourceIfRequired(AutomationPackageArchive automationPackageArchive,
+    private String uploadApResourceIfRequired(AutomationPackageArchiveProvider apProvider,
+                                              AutomationPackageArchive automationPackageArchive,
                                               AutomationPackage newPackage,
                                               ResourceOrigin apOrigin,
                                               ObjectEnricher enricher, String actorUser,
@@ -621,20 +623,22 @@ public class AutomationPackageManager {
 
         Resource resource = null;
 
-        if (apOrigin != null && apOrigin.isIdentifiable()) {
-            List<Resource> existingResource = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate);
-            if (existingResource != null && !existingResource.isEmpty()) {
-                resource = existingResource.get(0);
+        List<Resource> existingResource = null;
+        if (apProvider.canLookupResources()) {
+            existingResource = apProvider.lookupExistingResources(resourceManager, objectPredicate);
+        }
 
-                // we just reuse the existing resource of unmodifiable origin (i.e non-SNAPSHOT)
-                // abd for SNAPSHOTs we keep the same resource id, but update the content
-                if (apOrigin.isModifiable()) {
-                    try (InputStream is = new FileInputStream(originalFile)) {
-                        resourceManager.deleteResourceRevisionContent(resource.getId().toHexString());
-                        resource = resourceManager.saveResourceContent(resource.getId().toHexString(), is, originalFile.getName(), actorUser);
-                    } catch (IOException | InvalidResourceFormatException e) {
-                        throw new RuntimeException("General script function cannot be created", e);
-                    }
+        if (existingResource != null && !existingResource.isEmpty()) {
+            resource = existingResource.get(0);
+
+            // we just reuse the existing resource of unmodifiable origin (i.e non-SNAPSHOT)
+            // abd for SNAPSHOTs we keep the same resource id, but update the content
+            if (apProvider.isModifiableResource()) {
+                try (InputStream is = new FileInputStream(originalFile)) {
+                    resourceManager.deleteResourceRevisionContent(resource.getId().toHexString());
+                    resource = resourceManager.saveResourceContent(resource.getId().toHexString(), is, originalFile.getName(), actorUser);
+                } catch (IOException | InvalidResourceFormatException e) {
+                    throw new RuntimeException("General script function cannot be created", e);
                 }
             }
         }
@@ -670,14 +674,13 @@ public class AutomationPackageManager {
                     String resourceType = this.operationMode == AutomationPackageOperationMode.ISOLATED ? ResourceManager.RESOURCE_TYPE_ISOLATED_KW_LIB : kwLibProvider.getResourceType();
 
                     // we can reuse the existing old resource in case it is identifiable (can be found by origin) and unmodifiable
-                    ResourceOrigin origin = kwLibProvider.getOrigin();
                     List<Resource> oldResource = null;
-                    if (origin != null && origin.isIdentifiable()) {
-                        oldResource = resourceManager.getResourcesByOrigin(origin.toStringRepresentation(), objectPredicate);
+                    if (kwLibProvider.canLookupResources()) {
+                        oldResource = kwLibProvider.lookupExistingResources(resourceManager, objectPredicate);
                     }
 
                     if (oldResource != null && !oldResource.isEmpty()) {
-                        if (!origin.isModifiable()) {
+                        if (!kwLibProvider.isModifiableResource()) {
                             // for unmodifiable origins we just reused the previously uploaded resource
                             log.info("Existing keyword library {} with resource id {} has been detected and will be reused in AP {}", keywordLibrary.getName(), oldResource.get(0).getId().toHexString(), apName);
                             uploadedResource = oldResource.get(0);
@@ -688,6 +691,8 @@ public class AutomationPackageManager {
                             uploadedResource = resourceManager.saveResourceContent(oldResource.get(0).getId().toHexString(), fis, keywordLibrary.getName(), actorUser);
                         }
                     } else {
+                        ResourceOrigin origin = kwLibProvider.getOrigin();
+
                         // old resource is not found - we create a new one
                         uploadedResource = resourceManager.createTrackedResource(
                                 resourceType, false, fis, keywordLibrary.getName(), enricher, null,
@@ -1200,16 +1205,28 @@ public class AutomationPackageManager {
     }
 
     public static class DefaultProvidersResolver implements AutomationPackageProvidersResolver {
+
+        private final ResourceManager resourceManager;
+
+        public DefaultProvidersResolver(ResourceManager resourceManager) {
+            this.resourceManager = resourceManager;
+        }
+
         @Override
         public AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource,
                                                                                     ObjectPredicate predicate,
                                                                                     AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
                                                                                     AutomationPackageKeywordLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException {
             if (apFileSource != null) {
-                if (apFileSource.useMavenIdentifier()) {
+                if (apFileSource.getMode() == AutomationPackageFileSource.Mode.MAVEN) {
                     return createAutomationPackageFromMavenProvider(apFileSource, predicate, mavenConfigProvider, keywordLibraryProvider);
-                } else if (apFileSource.getInputStream() != null) {
+                } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.INPUT_STREAM) {
                     return new AutomationPackageFromInputStreamProvider(apFileSource.getInputStream(), apFileSource.getFileName(), keywordLibraryProvider);
+                } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.RESOURCE_ID) {
+                    return new AutomationPackageFromResourceIdProvider(resourceManager, apFileSource.getResourceId(), keywordLibraryProvider);
+                } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.EMPTY) {
+                    // automation package archive is mandatory
+                    throw new AutomationPackageManagerException("The automation package is not provided");
                 }
             }
             throw new AutomationPackageManagerException("The automation package is not provided");
@@ -1227,13 +1244,20 @@ public class AutomationPackageManager {
                                                                                  ObjectPredicate predicate,
                                                                                  AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
             if (keywordLibrarySource != null) {
-                if (keywordLibrarySource.useMavenIdentifier()) {
+                if (keywordLibrarySource.getMode() == AutomationPackageFileSource.Mode.MAVEN) {
                     return createKeywordLibraryFromMavenProvider(keywordLibrarySource, predicate, mavenConfigProvider);
-                } else if (keywordLibrarySource.getInputStream() != null) {
+                } else if (keywordLibrarySource.getMode() == AutomationPackageFileSource.Mode.INPUT_STREAM) {
                     return new KeywordLibraryFromInputStreamProvider(keywordLibrarySource.getInputStream(), keywordLibrarySource.getFileName());
+                } else if(keywordLibrarySource.getMode() == AutomationPackageFileSource.Mode.RESOURCE_ID){
+                    return new KeywordLibraryFromResourceIdProvider(resourceManager, keywordLibrarySource.getResourceId());
+                } else if(keywordLibrarySource.getMode() == AutomationPackageFileSource.Mode.EMPTY){
+                    return new NoKeywordLibraryProvider();
+                } else {
+                    throw new AutomationPackageManagerException("Unsupported mode for keyword library source: " + keywordLibrarySource.getMode());
                 }
+            } else {
+                return new NoKeywordLibraryProvider();
             }
-            return new NoKeywordLibraryProvider();
         }
 
         protected KeywordLibraryFromMavenProvider createKeywordLibraryFromMavenProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {

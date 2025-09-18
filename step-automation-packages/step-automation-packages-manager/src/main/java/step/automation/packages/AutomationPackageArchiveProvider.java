@@ -18,12 +18,34 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.core.objectenricher.ObjectPredicate;
+import step.resources.Resource;
+import step.resources.ResourceManager;
 import step.resources.ResourceOrigin;
 
 import java.io.Closeable;
+import java.util.List;
 
 public interface AutomationPackageArchiveProvider extends Closeable {
+
     AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException;
 
     ResourceOrigin getOrigin();
+
+    default boolean isModifiableResource() {
+        return getOrigin() == null ? false : getOrigin().isModifiable();
+    }
+
+    default boolean canLookupResources() {
+        return getOrigin() == null ? false : getOrigin().isIdentifiable();
+    }
+
+    default List<Resource> lookupExistingResources(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
+        // by default, we look up resources by resource origin
+        if (canLookupResources() && getOrigin() != null) {
+            return resourceManager.getResourcesByOrigin(getOrigin().toStringRepresentation(), objectPredicate);
+        } else {
+            throw new UnsupportedOperationException("Resources cannot be looked up for provider " + this.getClass().getSimpleName());
+        }
+    }
 }

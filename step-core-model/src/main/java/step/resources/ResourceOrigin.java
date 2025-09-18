@@ -21,7 +21,9 @@
 package step.resources;
 
 public interface ResourceOrigin {
+
     ResourceOriginType getOriginType();
+
     String toStringRepresentation();
 
     default boolean isModifiable(){

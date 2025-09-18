@@ -51,7 +51,6 @@ public class AutomationPackageFromInputStreamProvider implements AutomationPacka
         return new UploadedResourceOrigin();
     }
 
-
     @Override
     public void close() throws IOException {
         // cleanup temp file
