@@ -1,5 +1,7 @@
 agentPort: '8082'
 gridHost: http://localhost:8081
+#gridSecurity:
+#  jwtSecretKey: 6S7lhTV89ENqZqQXFgcpFSX8anpbosW/CSBe30l8NCQ=
 registrationPeriod: 1000
 tokenGroups:
 - capacity: 10
