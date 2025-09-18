@@ -86,21 +86,17 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		super.init(agentTokenServices);
 
 		String liveReportingPoolSizeAgentPropsKey = "step.reporting.livereporting.poolsize";
-		int liveReportingPoolSizeDefault = 100; // ThreadPools.getDefaultPoolSize();
-		// Looks complicated, but actually just means: try to get the value from the agent properties,
-		// and if anything goes wrong fall back to the default
-		int liveReportingPoolSize =
-				Optional.ofNullable(agentTokenServices.getAgentProperties())
-						.map(m -> m.get(liveReportingPoolSizeAgentPropsKey))
-						.map(String::trim)
-						.flatMap(s -> {
-							try {
-								return Optional.of(Integer.parseInt(s));
-							} catch (NumberFormatException e) {
-								return Optional.empty();
-							}
-						})
-						.orElse(liveReportingPoolSizeDefault);
+		int liveReportingPoolSize = 10;
+
+		Optional<String> agentPropsOverridingPoolSize = Optional.ofNullable(agentTokenServices.getAgentProperties())
+				.map(m -> m.get(liveReportingPoolSizeAgentPropsKey));
+		if (agentPropsOverridingPoolSize.isPresent()) {
+			try {
+				liveReportingPoolSize = Integer.parseInt(agentPropsOverridingPoolSize.get());
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException("Invalid agent properties override for " + liveReportingPoolSizeAgentPropsKey + ": " + agentPropsOverridingPoolSize.get());
+			}
+		}
 
 		// FIXME: figure out the final strategy here
 		//liveReportingExecutor = ThreadPools.createPoolExecutor("livereporting", liveReportingPoolSize, 10000);
