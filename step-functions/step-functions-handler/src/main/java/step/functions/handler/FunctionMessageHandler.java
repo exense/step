@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.constants.LiveMeasureConstants;
 import step.constants.StreamingConstants;
 import step.core.reports.Measure;
 import step.core.reports.MeasurementsBuilder;
@@ -40,8 +41,11 @@ import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 import step.grid.threads.NamedThreadFactory;
 import step.reporting.LiveReporting;
+import step.reporting.impl.RestUploadingLiveMeasureSink;
+import step.reporting.impl.LiveMeasureSink;
 import step.streaming.client.upload.StreamingUploadProvider;
 import step.streaming.common.StreamingResourceUploadContext;
+
 //import step.streaming.util.ThreadPools;
 
 import java.lang.reflect.InvocationTargetException;
@@ -179,6 +183,9 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			// the only place where the Input properties are guaranteed to be available is in the (abstract)
 			// handle() method (which would then have to be implemented in all subclasses). So we do it here.
 
+			StreamingUploadProvider uploadProvider = null;
+			LiveMeasureSink measureSink = null;
+
 			// We currently only support Websocket uploads; if this changes in the future, here is the place to modify the logic.
 			String uploadContextId = properties.get(StreamingResourceUploadContext.PARAMETER_NAME);
 			if (uploadContextId != null) {
@@ -204,11 +211,14 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 							}
 						}
 				);
-				return new LiveReporting(proxiedProvider);
-			} else {
-				// This will now fall back to auto-determining a streaming provider, usually one that discards all uploads. See the API implementation for details.
-				return new LiveReporting(null);
+				uploadProvider = streamingUploadProvider;
 			}
+
+			String measuresInjectUrl = properties.get(LiveMeasureConstants.AttributeNames.LIVEMEASURE_INJECTION_URL);
+			if (measuresInjectUrl != null) {
+				measureSink = new RestUploadingLiveMeasureSink(measuresInjectUrl);
+			}
+			return new LiveReporting(uploadProvider, measureSink);
 		});
 	}
 

@@ -33,6 +33,7 @@ import step.attachments.AttachmentMeta;
 import step.attachments.SkippedAttachmentMeta;
 import step.attachments.StreamingAttachmentMeta;
 import step.common.managedoperations.OperationManager;
+import step.constants.LiveMeasureConstants;
 import step.constants.StreamingConstants;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
@@ -73,10 +74,10 @@ import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.tokenpool.Interest;
 import step.plugins.functions.types.CompositeFunction;
+import step.reporting.fixme.LiveMeasureContexts;
 import step.streaming.common.*;
 
 import java.io.StringReader;
-import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -215,6 +216,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
 			StreamingResourceUploadContext uploadContext = null;
+			String liveMeasureContextHandle = null;
 
 			try {
 				String agentUrl = token.getAgent().getAgentUrl();
@@ -222,11 +224,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				node.setTokenId(token.getID());
 
 				Token gridToken = token.getToken();
+
+
+
 				/* Support for streaming uploads produced during this call. We create and register a new context,
 				provide the necessary information for the upload provider, and set up a listener for the context,
 				so we can populate the attachment metadata in realtime and attach it to the report node.
 				*/
-
 				// FIXME: SED-4192 (Step 30+) This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
                 StreamingResourceUploadContexts uploadContexts = context.get(StreamingResourceUploadContexts.class);
 				if (uploadContexts != null) {
@@ -279,6 +283,17 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 							}
 						}
 					});
+				}
+
+				LiveMeasureContexts liveMeasureContexts = context.get(LiveMeasureContexts.class);
+				if (liveMeasureContexts != null) {
+					// react to incoming measures
+					liveMeasureContextHandle = liveMeasureContexts.register(measures -> {
+						logger.error("Received {} measures, TODO: add them to reportnode", measures.size());
+					});
+					// set up the plumbing to let the handler know where to forward measures
+					String url = liveMeasureContexts.getInjectionUrl(liveMeasureContextHandle);
+					input.getProperties().put(LiveMeasureConstants.AttributeNames.LIVEMEASURE_INJECTION_URL, url);
 				}
 
 				if(gridToken.isLocal()) {
@@ -337,6 +352,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				}
 				if (uploadContext != null) {
 					context.require(StreamingResourceUploadContexts.class).unregisterContext(uploadContext);
+				}
+				if (liveMeasureContextHandle != null) {
+					context.require(LiveMeasureContexts.class).unregister(liveMeasureContextHandle);
 				}
 				callChildrenArtefacts(node, testArtefact);
 			}
