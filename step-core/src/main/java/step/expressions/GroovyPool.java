@@ -18,28 +18,49 @@
  ******************************************************************************/
 package step.expressions;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 public class GroovyPool implements AutoCloseable{
 	
 	private static final Logger logger = LoggerFactory.getLogger(GroovyPool.class);
 		
 	private GenericKeyedObjectPool<GroovyPoolKey, GroovyPoolEntry> pool;
+	private ScheduledExecutorService scheduler = null;
 
-	public GroovyPool(String scriptBaseClass, int poolMaxTotal, int poolMaxIdle) {
+	public GroovyPool(String scriptBaseClass, int poolMaxTotal, int poolMaxTotalPerKey, int poolMaxIdlePerKey, Integer monitoringIntervalSeconds) {
+		this(new GroovyPoolFactory(scriptBaseClass), poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
+	}
+
+	public GroovyPool(GroovyPoolFactory groovyPoolFactory, int poolMaxTotal, int poolMaxTotalPerKey, int poolMaxIdlePerKey, Integer monitoringIntervalSeconds) {
 		super();
 		
 		try {
-			pool = new GenericKeyedObjectPool<>(new GroovyPoolFactory(scriptBaseClass));
+			pool = new GenericKeyedObjectPool<>(groovyPoolFactory);
 			pool.setTestOnBorrow(true);
 			pool.setMaxTotal(poolMaxTotal);
-			//pool.setMaxActive(-1);
-			pool.setMaxIdlePerKey(poolMaxIdle);
+			pool.setMaxTotalPerKey(poolMaxTotalPerKey);
+			pool.setMaxIdlePerKey(poolMaxIdlePerKey);
 			pool.setBlockWhenExhausted(true);
-			pool.setTimeBetweenEvictionRunsMillis(30000);
-			pool.setMinEvictableIdleTimeMillis(-1);
+			pool.setTimeBetweenEvictionRuns(Duration.ofMillis(30000));;
+			pool.setMinEvictableIdle(Duration.ofMillis(-1));
+			if (monitoringIntervalSeconds != null) {
+				ThreadFactory threadFactory = new ThreadFactoryBuilder()
+						.setNameFormat("groovy-pool-monitor-%d")
+						.setDaemon(true)
+						.build();
+				scheduler = Executors.newScheduledThreadPool(1, threadFactory);
+				scheduler.scheduleAtFixedRate(this::checkPoolHealth, monitoringIntervalSeconds, monitoringIntervalSeconds, TimeUnit.SECONDS);
+			}
 		} catch(Exception e) {
 			String errorMessage = "An error occurred while starting GroovyPool.";
 			logger.error(errorMessage, e);
@@ -71,8 +92,46 @@ public class GroovyPool implements AutoCloseable{
 		}
 	}
 
+
+	private void checkPoolHealth() {
+		try {
+			Map<String, Integer> numActivePerKey = pool.getNumActivePerKey();
+			int active = numActivePerKey.values().stream().mapToInt(Integer::intValue).sum();
+			int maxTotal = pool.getMaxTotal();
+
+			if (active >= maxTotal * 0.9) { // 90% threshold
+				logger.warn("Groovy pool capacity at risk: {}/{} active objects. You could increase the total pool size in the step.properties (i.e. tec.expressions.pool.maxtotal=" + maxTotal*2 + ")"
+						, active, maxTotal);
+			}
+			checkHotKeys(numActivePerKey);
+		} catch (Exception e) {
+			logger.debug("Error monitoring pool", e);
+		}
+	}
+
+	private void checkHotKeys(Map<String, Integer> numActivePerKey ) {
+		Map<String, Integer> numWaitersByKey = pool.getNumWaitersByKey();
+		int maxPerKey = pool.getMaxTotalPerKey();
+		numActivePerKey.forEach((key,activePerKey) -> {
+			if (activePerKey >= maxPerKey * 0.9) {
+				logger.warn("Groovy pool capacity at risk for expression '{}': {}/{} active. You could increase the pool size per expression in the step.properties (i.e. tec.expressions.pool.maxTotalPerKey=" + maxPerKey*2 + ")",
+						key, activePerKey, maxPerKey);
+			}
+		});
+		numWaitersByKey.forEach((key, waitersPerKey) -> {
+			if (waitersPerKey > 0) {
+				logger.warn("Waiters to borrow an element from the Pool for expression '{}': {}/{} active, waiters: {}",
+						key, numActivePerKey.get(key), maxPerKey, waitersPerKey);
+			}
+		});
+	}
+
+
 	@Override
 	public void close() {
 		pool.close();
+		if (scheduler != null) {
+			scheduler.shutdown();
+		}
 	}
 }
