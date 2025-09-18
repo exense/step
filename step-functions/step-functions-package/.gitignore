@@ -1,3 +1,4 @@
 temp/
 /resources/
 /src/test/resources/local/java-plugin-handler-test.jar
+/src/test/resources/remote/java-plugin-handler-remote-test.jar
