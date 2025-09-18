@@ -80,7 +80,7 @@
 		<!-- staging nexus -->
 		<repository>
 			<id>nexus-staging</id>
-			<url>https://nexus-enterprise.exense.ch/repository/staging-maven/</url>
+			<url>https://nexus-enterprise-staging-new.exense.ch/repository/staging-maven/</url>
 		</repository>
 		<!-- private nexus -->
 		<repository>
