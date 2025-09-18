@@ -92,7 +92,7 @@ public class QuotaCheckerTests {
         checker.onSizeChanged("r1", 100L); // at limit
 
         QuotaExceededException ex = assertThrows(QuotaExceededException.class, () -> checker.onSizeChanged("r1", 101L));
-        assertTrue(ex.getMessage().contains("per-resource size quota"));
+        assertTrue(ex.getMessage().contains("resource size quota"));
     }
 
     @Test
@@ -108,7 +108,7 @@ public class QuotaCheckerTests {
 
         // Would push total to 160 (>150) -> must fail; r2 remains unchanged
         QuotaExceededException ex = assertThrows(QuotaExceededException.class, () -> checker.onSizeChanged("r2", 60L));
-        assertTrue(ex.getMessage().contains("would exceed quota"));
+        assertTrue(ex.getMessage().contains("reached quota"));
         assertEquals(Long.valueOf(0L), checker.resources.get("r2")); // unchanged
         assertEquals(100L, checker.totalBytes.get()); // unchanged
 
@@ -168,7 +168,7 @@ public class QuotaCheckerTests {
 
         // Try to exceed exec1 cap by growing r2 -> should fail; exec2 unaffected
         QuotaExceededException ex = assertThrows(QuotaExceededException.class, () -> exec1.onSizeChanged("r2", 350L)); // delta +50 => 450 > 400
-        assertTrue(ex.getMessage().contains("would exceed quota"));
+        assertTrue(ex.getMessage().contains("reached quota"));
         assertEquals(400L, exec1.totalBytes.get()); // unchanged
 
         // exec2 can still grow within its own cap
@@ -198,4 +198,15 @@ public class QuotaCheckerTests {
         checker.onSizeChanged("c", 350_000_000_000L);
         // no exception -> success; totalBytes is not updated when cap disabled
     }
+
+    @Test
+    public void reserveRefusedWhenTotalAlreadyOverCap() {
+        QuotaChecker checker = newChecker(10L, 1_000_000L, 150L);
+        // Simulate a situation where previous uploads already pushed the total over the (now lower) cap.
+        checker.totalBytes.set(160L);
+
+        QuotaExceededException ex = assertThrows(QuotaExceededException.class, checker::reserveNewResource);
+        assertTrue(ex.getMessage().contains("reached quota"));
+    }
+
 }

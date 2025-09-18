@@ -60,6 +60,16 @@ public class QuotaChecker {
     public String reserveNewResource() throws QuotaExceededException {
         String token = UUID.randomUUID().toString();
 
+        // If total is already above the per-execution cap, refuse new reservations.
+        if (limits.maxBytesPerExecution != null && totalBytes.get() >= limits.maxBytesPerExecution) {
+            String msg = String.format(
+                    "Total size for execution %s reached quota %d",
+                    executionId, limits.maxBytesPerExecution);
+            logger.debug("reserveNewResource: totalBytes={} exceeds cap {} for execution {}",
+                    totalBytes.get(), limits.maxBytesPerExecution, executionId);
+            throw new QuotaExceededException(msg);
+        }
+
         if (limits.maxResourcesPerExecution == null) {
             logger.debug("reserveNewResource: no count quota enforced; executionId={}, token={}", executionId, token);
             // this is easier than using special cases (no limits == no reservation) in bind/cancel
@@ -140,7 +150,7 @@ public class QuotaChecker {
         if (limits.maxBytesPerExecution != null) {
             if (!tryGrow(totalBytes, delta, limits.maxBytesPerExecution)) {
                 String msg = String.format(
-                        "Total size for execution %s would exceed quota %d",
+                        "Total size for execution %s reached quota %d",
                         executionId, limits.maxBytesPerExecution);
                 logger.warn(msg);
                 throw new QuotaExceededException(msg);
@@ -154,10 +164,10 @@ public class QuotaChecker {
     private void checkSizeQuotaPerResource(String resourceId, long currentSize) throws QuotaExceededException {
         if (limits.maxBytesPerResource != null && currentSize > limits.maxBytesPerResource) {
             String msg = String.format(
-                    "Resource %s exceeds per-resource size quota %d in execution %s, aborting upload",
-                    resourceId, limits.maxBytesPerResource, executionId);
+                    "Resource %s reached resource size quota %d",
+                    resourceId, limits.maxBytesPerResource);
             logger.warn(msg);
-            throw new  QuotaExceededException(msg);
+            throw new QuotaExceededException(msg);
         }
     }
 

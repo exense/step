@@ -1,6 +1,5 @@
 package step.plugins.streaming;
 
-import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.constants.StreamingConstants;
@@ -17,6 +16,7 @@ import step.streaming.server.StreamingResourcesStorageBackend;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 public class StepStreamingResourceManager extends DefaultStreamingResourceManager implements StreamingResourceContentProvider {
@@ -29,8 +29,13 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
     private final QuotaCheckers quotaCheckers;
 
     @SuppressWarnings("unchecked")
-    public StepStreamingResourceManager(GlobalContext globalContext, StreamingResourceCollectionCatalogBackend catalog, StreamingResourcesStorageBackend storage, Function<String, StreamingResourceReference> referenceProducerFunction, StreamingResourceUploadContexts uploadContexts) {
-        super(catalog, storage, referenceProducerFunction, uploadContexts);
+    public StepStreamingResourceManager(GlobalContext globalContext,
+                                        StreamingResourceCollectionCatalogBackend catalog,
+                                        StreamingResourcesStorageBackend storage,
+                                        Function<String, StreamingResourceReference> referenceProducerFunction,
+                                        StreamingResourceUploadContexts uploadContexts,
+                                        ExecutorService uploadsPool) {
+        super(catalog, storage, referenceProducerFunction, uploadContexts, uploadsPool);
 
         authorizationManager = globalContext.get(AuthorizationManager.class);
         objectHookRegistry = globalContext.get(ObjectHookRegistry.class);

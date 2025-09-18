@@ -49,9 +49,8 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.Optional;
+import java.util.concurrent.*;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
@@ -67,7 +66,9 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	// Cached object mapper for message payload serialization
 	private final ObjectMapper mapper;
 
-	private ExecutorService liveReportingExecutor;
+	private ThreadPoolExecutor liveReportingExecutor;
+	// This is actually a Jakarta WebSocketContainer, but instantiated dynamically using a separate class loader
+	private volatile Object webSocketContainer;
 	private ApplicationContextBuilder applicationContextBuilder;
 
 	public FunctionHandlerFactory functionHandlerFactory;
@@ -78,28 +79,35 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
 	}
 
+	private int getFromAgentPropsOrDefault(String configKey, int defaultValue) {
+		Optional<String> agentPropsOverridingPoolSize = Optional.ofNullable(agentTokenServices.getAgentProperties())
+				.map(m -> m.get(configKey));
+		if (agentPropsOverridingPoolSize.isPresent()) {
+			try {
+				return Integer.parseInt(agentPropsOverridingPoolSize.get());
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException("Invalid agent properties override for " + configKey + ": " + agentPropsOverridingPoolSize.get());
+			}
+		}
+		return defaultValue;
+	}
+
 	@Override
 	public void init(AgentTokenServices agentTokenServices) {
 		super.init(agentTokenServices);
 
-		String liveReportingPoolSizeAgentPropsKey = "step.reporting.livereporting.poolsize";
-		int liveReportingPoolSizeDefault = 100;
-		// Looks complicated, but actually just means: try to get the value from the agent properties,
-		// and if anything goes wrong fall back to the default
-		int liveReportingPoolSize =
-				Optional.ofNullable(agentTokenServices.getAgentProperties())
-						.map(m -> m.get(liveReportingPoolSizeAgentPropsKey))
-						.map(String::trim)
-						.flatMap(s -> {
-							try {
-								return Optional.of(Integer.parseInt(s));
-							} catch (NumberFormatException e) {
-								return Optional.empty();
-							}
-						})
-						.orElse(liveReportingPoolSizeDefault);
+		int liveReportingPoolSize = getFromAgentPropsOrDefault("step.reporting.livereporting.poolsize", 100);
+		int liveReportingQueueSize = getFromAgentPropsOrDefault("step.reporting.livereporting.queuesize", 1000);
 
-		liveReportingExecutor = Executors.newFixedThreadPool(liveReportingPoolSize, NamedThreadFactory.create("livereporting-executor"));
+		// Behavior: This dynamically scales up/down between 0 and liveReportingPoolSize threads,
+		// and if all threads are occupied, allows to queue a maximum of liveReportingQueueSize tasks before rejecting.
+		liveReportingExecutor = new ThreadPoolExecutor(liveReportingPoolSize, liveReportingPoolSize,
+				30L, TimeUnit.SECONDS,
+				new ArrayBlockingQueue<>(liveReportingQueueSize),
+				NamedThreadFactory.create("livereporting", true)
+		);
+		liveReportingExecutor.allowCoreThreadTimeOut(true);
+
 
 		applicationContextBuilder = new ApplicationContextBuilder(this.getClass().getClassLoader(),
 				agentTokenServices.getApplicationContextBuilder().getApplicationContextConfiguration());
@@ -181,45 +189,19 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			// We currently only support Websocket uploads; if this changes in the future, here is the place to modify the logic.
 			String uploadContextId = properties.get(StreamingResourceUploadContext.PARAMETER_NAME);
 			if (uploadContextId != null) {
-				String host; // actually contains scheme, hostname, and potentially port.
-				// If present, agent-side configuration overrides the default value.
-				// Note: in case we use the URL in other places, this should probably be put somewhere else (maybe
-				// LiveReporting itself), but that's for the future.
-				// Note: both agentProperties or the value might be undefined.
-				String agentConfUrl = Optional.ofNullable(agentTokenServices.getAgentProperties())
-						.map(m -> m.get("step.reporting.url"))
-						.orElse(null);
-				if (agentConfUrl != null) {
-					// just a sanity check really
-					if (!agentConfUrl.matches("^https?://.+")) {
-						throw new IllegalArgumentException("Invalid URL in 'step.reporting.url' (agent-side configuration): " + agentConfUrl);
+				URI websocketUploadUri = getWebsocketUploadUri(properties, uploadContextId);
+				@SuppressWarnings("unchecked") Class<StreamingUploadProvider> providerClass = (Class<StreamingUploadProvider>) Thread.currentThread().getContextClassLoader().loadClass("step.streaming.websocket.client.upload.WebsocketUploadProvider");
+				if (webSocketContainer == null) {
+					synchronized(FunctionMessageHandler.this) {
+						if (webSocketContainer == null) {
+							webSocketContainer = providerClass.getDeclaredMethod("instantiateWebSocketContainer").invoke(null);
+						}
 					}
-					host = agentConfUrl.replaceAll("^http", "ws");
-				} else {
-					// The controller defines a default URL, derived from controller.url in step.properties.
-					// This is always defined, and already has the correct Websocket prefix.
-					host = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
 				}
-				// Strip trailing slashes, just in case there are any (normally not expected)
-				while (host.endsWith("/")) {
-					host = host.substring(0, host.length() - 1);
-				}
-				String path = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH);
-				// Strip leading slashes, just in case
-				while (path.startsWith("/")) {
-					path = path.substring(1);
-				}
-				URI uri = URI.create(String.format("%s/%s?%s=%s", host, path, StreamingResourceUploadContext.PARAMETER_NAME, uploadContextId));
-				if (logger.isDebugEnabled()) {
-					// Don't log context id, it's "semi-secret"
-					logger.debug("Effective URL for Websocket uploads: {}", String.format("%s/%s", host, path));
-				}
-
-				@SuppressWarnings("unchecked") Class<StreamingUploadProvider> aClass = (Class<StreamingUploadProvider>) Thread.currentThread().getContextClassLoader().loadClass("step.streaming.websocket.client.upload.WebsocketUploadProvider");
-				StreamingUploadProvider streamingUploadProvider = aClass.getDeclaredConstructor(ExecutorService.class, URI.class).newInstance(liveReportingExecutor, uri);
+				StreamingUploadProvider streamingUploadProvider = providerClass.getDeclaredConstructor(Object.class, ExecutorService.class, URI.class).newInstance(webSocketContainer, liveReportingExecutor, websocketUploadUri);
 
 				StreamingUploadProvider proxiedProvider = (StreamingUploadProvider) Proxy.newProxyInstance(
-						aClass.getClassLoader(), new Class[]{StreamingUploadProvider.class},
+						providerClass.getClassLoader(), new Class[]{StreamingUploadProvider.class},
 						(proxy, method, args) -> {
 							try {
 								return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> method.invoke(streamingUploadProvider, args));
@@ -235,6 +217,40 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 				return new LiveReporting(null);
 			}
 		});
+	}
+
+	private URI getWebsocketUploadUri(Map<String, String> properties, String uploadContextId) {
+		String host; // actually contains scheme, hostname, and potentially port.
+		// If present, agent-side configuration overrides the default value, but both agentProperties or the value might be undefined.
+		String agentConfUrl = Optional.ofNullable(agentTokenServices.getAgentProperties())
+				.map(m -> m.get("step.reporting.url"))
+				.orElse(null);
+		if (agentConfUrl != null) {
+			// just a sanity check really
+			if (!agentConfUrl.matches("^https?://.+")) {
+				throw new IllegalArgumentException("Invalid URL in 'step.reporting.url' (agent-side configuration): " + agentConfUrl);
+			}
+			host = agentConfUrl.replaceAll("^http", "ws");
+		} else {
+			// The controller defines a default URL, derived from controller.url in step.properties.
+			// This is always defined, and already has the correct Websocket prefix.
+			host = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
+		}
+		// Strip trailing slashes, just in case there are any (normally not expected)
+		while (host.endsWith("/")) {
+			host = host.substring(0, host.length() - 1);
+		}
+		String path = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH);
+		// Strip leading slashes, just in case
+		while (path.startsWith("/")) {
+			path = path.substring(1);
+		}
+		URI uri = URI.create(String.format("%s/%s?%s=%s", host, path, StreamingResourceUploadContext.PARAMETER_NAME, uploadContextId));
+		if (logger.isDebugEnabled()) {
+			// Don't log context id, it's "semi-secret"
+			logger.debug("Effective URL for Websocket uploads: {}", String.format("%s/%s", host, path));
+		}
+		return uri;
 	}
 
 	protected void addCustomTypeToOutputMeasures(List<Measure> outputMeasures) {
@@ -282,6 +298,13 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	public void close() throws Exception {
 		if (applicationContextBuilder != null) {
 			applicationContextBuilder.close();
+		}
+		if (liveReportingExecutor != null) {
+			liveReportingExecutor.shutdownNow();
+		}
+		if (webSocketContainer != null) {
+			webSocketContainer.getClass().getMethod("stop").invoke(webSocketContainer);
+			webSocketContainer = null;
 		}
 	}
 }
