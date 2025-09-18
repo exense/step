@@ -10,7 +10,7 @@
 			"PARAMETERS": [
 				{
 					"NAME": "DEVELOPMENT",
-					"URL": "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/",
+					"URL": "nexus-staging::https://nexus-enterprise-staging-new.exense.ch/repository/staging-maven/",
 					"CONFIG": "SkipJavadoc"
 				},
 				{
@@ -32,7 +32,7 @@
 			"PARAMETERS": [
 				{
 					"NAME": "DEVELOPMENT",
-					"URL": "nexus-staging https://nexus-enterprise-staging.exense.ch/repository/staging-npm/"
+					"URL": "nexus-staging https://nexus-enterprise-staging-new.exense.ch/repository/staging-npm/"
 				},
 				{
 					"NAME": "INTEGRATION",
