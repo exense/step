@@ -147,7 +147,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     getObjectEnricher(), getObjectPredicate());
             return id == null ? null : id.toString();
         } catch (AutomationPackageCollisionException e){
-            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
+            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, AutomationPackageCollisionException.class.getName(), e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -278,7 +278,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     getObjectEnricher(), getObjectPredicate(), async != null && async, getUser(),
                     allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
         } catch (AutomationPackageCollisionException e) {
-            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
+            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, AutomationPackageCollisionException.class.getName(), e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -348,7 +348,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             }
             return responseBuilder.entity(result).build();
         } catch (AutomationPackageCollisionException e){
-            ControllerServiceException ex = new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, e.getMessage());
+            ControllerServiceException ex = new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, AutomationPackageCollisionException.class.getName(), e.getMessage());
             // to avoid stack trace in ErrorFilter
             ex.setTechnicalError(false);
             throw ex;

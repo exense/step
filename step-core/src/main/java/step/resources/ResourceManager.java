@@ -39,6 +39,7 @@ public interface ResourceManager {
 	String RESOURCE_TYPE_ISOLATED_AP = "isolatedAp";
 	String RESOURCE_TYPE_ISOLATED_KW_LIB = "isolatedKwLib";
 	String RESOURCE_TYPE_AP = "automationPackage";
+	String RESOURCE_TYPE_AP_LIBRARY = "automationPackageLibrary";
 
 	/**
 	 * @param resourceType     the type of the resource

@@ -149,7 +149,7 @@ public class AutomationPackagePlansAttributesApplier {
 
     private String uploadAutomationPackageResource(String yamlResourceRef, AutomationPackageContext apContext) {
         AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
-        Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_FUNCTIONS, apContext);
+        Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_DATASOURCE, apContext);
         String result = null;
         if (resource != null) {
             result = FileResolver.RESOURCE_PREFIX + resource.getId().toString();

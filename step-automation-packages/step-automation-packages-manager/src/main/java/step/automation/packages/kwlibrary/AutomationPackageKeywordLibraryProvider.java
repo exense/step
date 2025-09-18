@@ -33,6 +33,6 @@ public interface AutomationPackageKeywordLibraryProvider extends Closeable {
     ResourceOrigin getOrigin();
 
     default String getResourceType() {
-        return ResourceManager.RESOURCE_TYPE_FUNCTIONS;
+        return ResourceManager.RESOURCE_TYPE_AP_LIBRARY;
     }
 }
