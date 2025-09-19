@@ -105,9 +105,9 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         public void modifyHandshake(ServerEndpointConfig config, HandshakeRequest request, HandshakeResponse response) {
             HttpSession httpSession = (HttpSession) request.getHttpSession();
             if (httpSession != null) {
-                Object session = httpSession.getAttribute(ATTRIBUTE_STEP_SESSION);
+                Object session = httpSession.getAttribute("session");
                 if (session != null) {
-                    config.getUserProperties().put(ATTRIBUTE_STEP_SESSION, httpSession.getAttribute("session"));
+                    config.getUserProperties().put(ATTRIBUTE_STEP_SESSION, session);
                 }
             }
         }
