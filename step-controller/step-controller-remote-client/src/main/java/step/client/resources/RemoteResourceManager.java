@@ -86,10 +86,10 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart) {
-		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, null, null);
+		return upload(bodyPart, ResourceManager.RESOURCE_TYPE_STAGING_CONTEXT_FILES, false, null, null, null);
 	}
 	
-	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, String trackingAttribute, String origin) {
+	protected ResourceUploadResponse upload(FormDataBodyPart bodyPart, String type, boolean isDirectory, String trackingAttribute, String origin, Long originTimestamp) {
 		MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
         multiPart.bodyPart(bodyPart);
@@ -102,6 +102,9 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 		}
 		if (origin != null) {
 			params.put("origin", origin);
+		}
+		if (originTimestamp != null) {
+			params.put("originTimestamp", Long.toString(originTimestamp));
 		}
 		// in RemoteResourceManager we ignore actor user, because in remote services he will be automatically resolved from authentication context
         Builder b = requestBuilder("/rest/resources/content", params);
@@ -135,15 +138,15 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	@Override
 	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName,
 								   ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
-		return createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, objectEnricher, null, actorUser, null);
+		return createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, objectEnricher, null, actorUser, null, null);
 	}
 
 	@Override
 	public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher,
-										  String trackingAttribute, String actorUser, String origin) {
+										  String trackingAttribute, String actorUser, String origin, Long originTimestamp) {
 		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 
-		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, trackingAttribute, origin);
+		ResourceUploadResponse upload = upload(bodyPart, resourceType, isDirectory, trackingAttribute, origin, originTimestamp);
 		return upload.getResource();
 	}
 

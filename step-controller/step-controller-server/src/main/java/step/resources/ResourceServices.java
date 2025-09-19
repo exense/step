@@ -73,7 +73,8 @@ public class ResourceServices extends AbstractStepAsyncServices {
 												 @QueryParam("type") String resourceType,
 												 @QueryParam("directory") Boolean isDirectory,
 												 @QueryParam("trackingAttribute") String trackingAttribute,
-												 @QueryParam("origin") String origin) throws IOException {
+												 @QueryParam("origin") String origin,
+												 @QueryParam("originTimestamp") Long originTimestamp) throws IOException {
 		ObjectEnricher objectEnricher = getObjectEnricher();
 
 		if (uploadedInputStream == null || fileDetail == null)
@@ -85,7 +86,8 @@ public class ResourceServices extends AbstractStepAsyncServices {
 			Resource resource = resourceManager.createTrackedResource(
 					resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), objectEnricher,
 					trackingAttribute, getSession().getUser().getUsername(),
-					origin == null ? new UploadedResourceOrigin().toStringRepresentation() : origin
+					origin == null ? new UploadedResourceOrigin().toStringRepresentation() : origin,
+					originTimestamp
 			);
 			return new ResourceUploadResponse(resource, null);
 		}  catch (InvalidResourceFormatException e) {

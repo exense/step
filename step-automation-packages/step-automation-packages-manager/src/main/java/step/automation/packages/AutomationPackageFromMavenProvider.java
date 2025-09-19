@@ -20,42 +20,25 @@ package step.automation.packages;
 
 import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
 import step.core.maven.MavenArtifactIdentifier;
-import step.resources.ResourceOrigin;
+import step.core.objectenricher.ObjectPredicate;
+import step.resources.ResourceManager;
 
-import java.io.File;
-import java.io.IOException;
+public class AutomationPackageFromMavenProvider extends AbstractAutomationPackageFromMavenProvider implements AutomationPackageArchiveProvider {
 
-public class AutomationPackageFromMavenProvider implements AutomationPackageArchiveProvider {
-
-    protected final MavenArtifactIdentifier mavenArtifactIdentifier;
-    private final AutomationPackageKeywordLibraryProvider keywordLibraryProvider;
-    protected final AutomationPackageMavenConfig mavenConfig;
+    private final AutomationPackageArchive archive;
 
     public AutomationPackageFromMavenProvider(AutomationPackageMavenConfig mavenConfig,
                                               MavenArtifactIdentifier mavenArtifactIdentifier,
-                                              AutomationPackageKeywordLibraryProvider keywordLibraryProvider) {
-        this.mavenConfig = mavenConfig;
-        this.mavenArtifactIdentifier = mavenArtifactIdentifier;
-        this.keywordLibraryProvider = keywordLibraryProvider;
+                                              AutomationPackageKeywordLibraryProvider keywordLibraryProvider,
+                                              ResourceManager resourceManager, ObjectPredicate objectPredicate) throws AutomationPackageReadingException {
+        super(mavenConfig, mavenArtifactIdentifier, resourceManager, objectPredicate);
+        this.archive = new AutomationPackageArchive(resolvedMavenArtefact.artifactFile, keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
     }
 
     @Override
-    public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-        // The same client as in MavenArtifactRepository
-        return new AutomationPackageArchive(getFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
+    public AutomationPackageArchive getAutomationPackageArchive()  {
+        return archive;
     }
 
-    protected File getFile() throws AutomationPackageReadingException {
-        return MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier);
-    }
 
-    @Override
-    public ResourceOrigin getOrigin() {
-        return mavenArtifactIdentifier;
-    }
-
-    @Override
-    public void close() throws IOException {
-
-    }
 }

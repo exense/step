@@ -97,7 +97,8 @@ public interface ResourceManager {
 								   String resourceFileName,
 								   ObjectEnricher objectEnricher,
 								   String trackingAttribute,
-								   String actorUser, String origin) throws IOException, InvalidResourceFormatException;
+								   String actorUser, String origin,
+								   Long originTimestamp) throws IOException, InvalidResourceFormatException;
 
 	/**
 	 * Create a copy of the resource from a source repository

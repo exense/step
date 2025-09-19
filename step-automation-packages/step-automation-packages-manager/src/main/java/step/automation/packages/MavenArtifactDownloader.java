@@ -24,30 +24,46 @@ import org.apache.maven.settings.building.SettingsBuildingException;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import step.core.maven.MavenArtifactIdentifier;
 import step.repositories.artifact.MavenArtifactClient;
-
-import java.io.File;
+import step.repositories.artifact.ResolvedMavenArtifact;
+import step.repositories.artifact.SnapshotMetadata;
 
 public class MavenArtifactDownloader {
-    public static File getFile(AutomationPackageMavenConfig mavenConfig, MavenArtifactIdentifier mavenArtifactIdentifier) throws AutomationPackageReadingException {
+    public static ResolvedMavenArtifact getFile(AutomationPackageMavenConfig mavenConfig, MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) throws AutomationPackageReadingException {
         try {
-            if (mavenConfig == null) {
-                throw new AutomationPackageReadingException("Maven config is not resolved");
-            }
-            if (mavenConfig.getMavenSettingsXml() == null) {
-                throw new AutomationPackageManagerException("Maven settings xml is not resolved");
-            }
-            if (mavenConfig.getLocalFileRepository() == null) {
-                throw new AutomationPackageManagerException("Maven local file repository is not resolved");
-            }
-            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(mavenConfig.getMavenSettingsXml(), mavenConfig.getLocalFileRepository());
-            return mavenArtifactClient.getArtifact(new DefaultArtifact(
-                    mavenArtifactIdentifier.getGroupId(),
-                    mavenArtifactIdentifier.getArtifactId(),
-                    mavenArtifactIdentifier.getClassifier(),
-                    mavenArtifactIdentifier.getType() == null || mavenArtifactIdentifier.getType().isEmpty() ? "jar" : mavenArtifactIdentifier.getType(),
-                    mavenArtifactIdentifier.getVersion())
-            );
+            MavenArtifactClient mavenArtifactClient = getMavenArtifactClient(mavenConfig);
+            return mavenArtifactClient.getArtifact(getDefaultArtifact(mavenArtifactIdentifier), existingSnapshotTimestamp);
         } catch (SettingsBuildingException | org.eclipse.aether.resolution.ArtifactResolutionException e) {
+            throw new AutomationPackageReadingException("Unable to download maven artifact " + mavenArtifactIdentifier.toStringRepresentation(), e);
+        }
+    }
+
+    private static DefaultArtifact getDefaultArtifact(MavenArtifactIdentifier mavenArtifactIdentifier) {
+        return new DefaultArtifact(
+                mavenArtifactIdentifier.getGroupId(),
+                mavenArtifactIdentifier.getArtifactId(),
+                mavenArtifactIdentifier.getClassifier(),
+                mavenArtifactIdentifier.getType() == null || mavenArtifactIdentifier.getType().isEmpty() ? "jar" : mavenArtifactIdentifier.getType(),
+                mavenArtifactIdentifier.getVersion());
+    }
+
+    private static MavenArtifactClient getMavenArtifactClient(AutomationPackageMavenConfig mavenConfig) throws AutomationPackageReadingException, SettingsBuildingException {
+        if (mavenConfig == null) {
+            throw new AutomationPackageReadingException("Maven config is not resolved");
+        }
+        if (mavenConfig.getMavenSettingsXml() == null) {
+            throw new AutomationPackageManagerException("Maven settings xml is not resolved");
+        }
+        if (mavenConfig.getLocalFileRepository() == null) {
+            throw new AutomationPackageManagerException("Maven local file repository is not resolved");
+        }
+        MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(mavenConfig.getMavenSettingsXml(), mavenConfig.getLocalFileRepository());
+        return mavenArtifactClient;
+    }
+
+    public static SnapshotMetadata fetchSnapshotMetadata(AutomationPackageMavenConfig mavenConfig, MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) throws AutomationPackageReadingException {
+        try {
+            return getMavenArtifactClient(mavenConfig).fetchSnapshotMetadata(getDefaultArtifact(mavenArtifactIdentifier), existingSnapshotTimestamp);
+        } catch (SettingsBuildingException e) {
             throw new AutomationPackageReadingException("Unable to download maven artifact " + mavenArtifactIdentifier.toStringRepresentation(), e);
         }
     }

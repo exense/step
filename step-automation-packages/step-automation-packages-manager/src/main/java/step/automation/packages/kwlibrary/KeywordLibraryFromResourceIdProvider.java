@@ -20,57 +20,20 @@
  */
 package step.automation.packages.kwlibrary;
 
-import step.attachments.FileResolver;
+import step.automation.packages.AbstractAutomationPackageFromResourceIdProvider;
 import step.automation.packages.AutomationPackageReadingException;
-import step.core.objectenricher.ObjectPredicate;
-import step.resources.Resource;
 import step.resources.ResourceManager;
-import step.resources.ResourceOrigin;
-import step.resources.ResourceRevisionFileHandle;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.List;
 
-public class KeywordLibraryFromResourceIdProvider implements AutomationPackageKeywordLibraryProvider {
-
-    private final ResourceManager resourceManager;
-    private final String resourceId;
+public class KeywordLibraryFromResourceIdProvider extends AbstractAutomationPackageFromResourceIdProvider implements AutomationPackageKeywordLibraryProvider {
 
     public KeywordLibraryFromResourceIdProvider(ResourceManager resourceManager, String resourceId) {
-        this.resourceManager = resourceManager;
-        this.resourceId = resourceId;
+        super(resourceManager, resourceId);
     }
 
     @Override
     public File getKeywordLibrary() throws AutomationPackageReadingException {
-        ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(resourceId);
-        return resourceFile == null ? null : resourceFile.getResourceFile();
-    }
-
-    @Override
-    public ResourceOrigin getOrigin() {
-        return null;
-    }
-
-    @Override
-    public void close() throws IOException {
-
-    }
-
-    @Override
-    public boolean canLookupResources() {
-        return true;
-    }
-
-    @Override
-    public boolean isModifiableResource() {
-        return false;
-    }
-
-    @Override
-    public List<Resource> lookupExistingResources(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
-        Resource r = resourceManager.getResource(resourceId);
-        return r == null ? List.of() : List.of(r);
+       return resource.getResourceFile();
     }
 }

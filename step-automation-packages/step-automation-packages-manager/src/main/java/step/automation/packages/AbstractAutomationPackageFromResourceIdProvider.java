@@ -20,7 +20,6 @@
  */
 package step.automation.packages;
 
-import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
 import step.core.objectenricher.ObjectPredicate;
 import step.resources.Resource;
 import step.resources.ResourceManager;
@@ -30,21 +29,46 @@ import step.resources.ResourceRevisionFileHandle;
 import java.io.IOException;
 import java.util.List;
 
-public class AutomationPackageFromResourceIdProvider extends AbstractAutomationPackageFromResourceIdProvider implements AutomationPackageArchiveProvider {
+public class AbstractAutomationPackageFromResourceIdProvider implements AutomationPackageProvider {
 
-    private final AutomationPackageArchive archive;
+    protected final String resourceId;
+    protected final ResourceRevisionFileHandle resource;
 
-    public AutomationPackageFromResourceIdProvider(ResourceManager resourceManager, String resourceId, AutomationPackageKeywordLibraryProvider keywordLibraryProvider) {
-        super(resourceManager, resourceId);
-        try {
-            this.archive = new AutomationPackageArchive(resource.getResourceFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
-        } catch (AutomationPackageReadingException e) {
-            throw new AutomationPackageManagerException("Unable to load automation package by resource id: " + resourceId);
+    public AbstractAutomationPackageFromResourceIdProvider(ResourceManager resourceManager, String resourceId) {
+        this.resourceId = resourceId;
+
+
+        this.resource = resourceManager.getResourceFile(resourceId);
+        if (resource == null) {
+            throw new AutomationPackageManagerException("Automation package archive hasn't been found by ID: " + resourceId);
         }
     }
 
     @Override
-    public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-        return archive;
+    public ResourceOrigin getOrigin() {
+        return null;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (resource != null) {
+            resource.close();
+        }
+    }
+
+    @Override
+    public boolean isModifiableResource() {
+        return false;
+    }
+
+    @Override
+    public boolean canLookupResources() {
+        return true;
+    }
+
+    @Override
+    public List<Resource> lookupExistingResources(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
+        Resource r = resourceManager.getResource(resourceId);
+        return r == null ? List.of() : List.of(r);
     }
 }

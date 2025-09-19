@@ -346,8 +346,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         String maven_source = repositoryParameters.get(KEYWORD_LIBRARY_MAVEN_SOURCE);
         if (maven_source != null && !maven_source.isBlank()) {
             AutomationPackageFileSource keywordLibraryFileSource = AutomationPackageFileSource.withMavenIdentifier(MavenArtifactIdentifier.fromShortString(maven_source));
-            AutomationPackageKeywordLibraryProvider keywordLibraryProvider = manager.getKeywordLibraryProvider(keywordLibraryFileSource, objectPredicate);
             try {
+                AutomationPackageKeywordLibraryProvider keywordLibraryProvider = manager.getKeywordLibraryProvider(keywordLibraryFileSource, objectPredicate);
                 return new AutomationPackageFile(keywordLibraryProvider.getKeywordLibrary(), null);
             } catch (AutomationPackageReadingException e) {
                 throw new AutomationPackageManagerException("Unable to resolve keyword library with maven source " + maven_source, e);
@@ -376,7 +376,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             } else {
                 try {
                     // restore the automation package file from maven
-                    file = MavenArtifactDownloader.getFile(manager.getMavenConfig(objectPredicate), mavenArtifactIdentifier);
+                    file = MavenArtifactDownloader.getFile(manager.getMavenConfig(objectPredicate), mavenArtifactIdentifier, null).artifactFile;
                     try (FileInputStream fis = new FileInputStream(file)) {
                         resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
                         return true;

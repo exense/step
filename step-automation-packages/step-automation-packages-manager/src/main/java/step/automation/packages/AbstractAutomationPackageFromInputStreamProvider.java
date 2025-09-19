@@ -18,24 +18,34 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
 import step.resources.ResourceOrigin;
 import step.resources.UploadedResourceOrigin;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-public class AutomationPackageFromInputStreamProvider extends AbstractAutomationPackageFromInputStreamProvider implements AutomationPackageArchiveProvider {
+public class AbstractAutomationPackageFromInputStreamProvider implements AutomationPackageProvider {
 
-    private final AutomationPackageArchive archive;
+    protected InputStreamToTempFileDownloader.TempFile tempFile;
 
-    public AutomationPackageFromInputStreamProvider(InputStream packageStream, String fileName, AutomationPackageKeywordLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException {
-        super(packageStream, fileName);
-        this.archive = new AutomationPackageArchive(tempFile.getTempFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
+    public AbstractAutomationPackageFromInputStreamProvider(InputStream packageStream, String fileName) throws AutomationPackageReadingException {
+        // store automation package into temp file
+        try {
+            tempFile = InputStreamToTempFileDownloader.copyStreamToTempFile(packageStream, fileName);
+        } catch (Exception ex) {
+            throw new AutomationPackageManagerException("Unable to store automation package file", ex);
+        }
+
     }
 
     @Override
-    public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-        return this.archive;
+    public ResourceOrigin getOrigin() {
+        return new UploadedResourceOrigin();
+    }
+
+    @Override
+    public void close() throws IOException {
+        // cleanup temp file
+        InputStreamToTempFileDownloader.cleanupTempFiles(tempFile);
     }
 }

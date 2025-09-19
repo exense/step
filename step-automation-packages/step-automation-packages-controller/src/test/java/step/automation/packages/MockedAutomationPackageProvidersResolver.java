@@ -24,6 +24,7 @@ import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvide
 import step.automation.packages.kwlibrary.KeywordLibraryFromMavenProvider;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectPredicate;
+import step.repositories.artifact.ResolvedMavenArtifact;
 import step.resources.ResourceManager;
 
 import java.io.File;
@@ -31,9 +32,9 @@ import java.util.Map;
 
 public class MockedAutomationPackageProvidersResolver extends AutomationPackageManager.DefaultProvidersResolver {
 
-    private final Map<MavenArtifactIdentifier, File> mavenArtifactMocks;
+    private final Map<MavenArtifactIdentifier, ResolvedMavenArtifact> mavenArtifactMocks;
 
-    public MockedAutomationPackageProvidersResolver(Map<MavenArtifactIdentifier, File> mavenArtifactMocks, ResourceManager resourceManager){
+    public MockedAutomationPackageProvidersResolver(Map<MavenArtifactIdentifier, ResolvedMavenArtifact> mavenArtifactMocks, ResourceManager resourceManager){
         super(resourceManager);
         this.mavenArtifactMocks = mavenArtifactMocks;
     }
@@ -42,7 +43,8 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
     protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource,
                                                                                           ObjectPredicate predicate,
                                                                                           AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
-                                                                                          AutomationPackageKeywordLibraryProvider keywordLibraryProvider) {
+                                                                                          AutomationPackageKeywordLibraryProvider keywordLibraryProvider,
+                                                                                          ResourceManager resourceManager) throws AutomationPackageReadingException {
         return new MockedAutomationPackageFromMavenProvider(
                 mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(predicate),
                 apFileSource.getMavenArtifactIdentifier(),
@@ -51,11 +53,13 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
     }
 
     @Override
-    protected KeywordLibraryFromMavenProvider createKeywordLibraryFromMavenProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
-        return new MockedKeywordLibraryFromMavenProvider(mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(predicate), keywordLibrarySource.getMavenArtifactIdentifier());
+    protected KeywordLibraryFromMavenProvider createKeywordLibraryFromMavenProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider, ResourceManager resourceManager) throws AutomationPackageReadingException {
+        return new MockedKeywordLibraryFromMavenProvider(mavenConfigProvider == null ? null :
+                mavenConfigProvider.getConfig(predicate), keywordLibrarySource.getMavenArtifactIdentifier(),
+                resourceManager, predicate);
     }
 
-    public Map<MavenArtifactIdentifier, File> getMavenArtifactMocks() {
+    public Map<MavenArtifactIdentifier, ResolvedMavenArtifact> getMavenArtifactMocks() {
         return mavenArtifactMocks;
     }
 
@@ -65,24 +69,25 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
                 AutomationPackageMavenConfig mavenConfig,
                 MavenArtifactIdentifier mavenArtifactIdentifier,
                 AutomationPackageKeywordLibraryProvider keywordLibraryProvider
-        ) {
-            super(mavenConfig, mavenArtifactIdentifier, keywordLibraryProvider);
+        ) throws AutomationPackageReadingException {
+            super(mavenConfig, mavenArtifactIdentifier, keywordLibraryProvider, null, null);
         }
 
+
         @Override
-        protected File getFile() {
+        protected ResolvedMavenArtifact getResolvedMavenArtefact() {
             return mavenArtifactMocks.get(mavenArtifactIdentifier);
         }
     }
 
     private class MockedKeywordLibraryFromMavenProvider extends KeywordLibraryFromMavenProvider {
 
-        public MockedKeywordLibraryFromMavenProvider(AutomationPackageMavenConfig mavenConfig, MavenArtifactIdentifier mavenArtifactIdentifier) {
-            super(mavenConfig, mavenArtifactIdentifier);
+        public MockedKeywordLibraryFromMavenProvider(AutomationPackageMavenConfig mavenConfig, MavenArtifactIdentifier mavenArtifactIdentifier, ResourceManager resourceManager, ObjectPredicate objectPredicate) throws AutomationPackageReadingException {
+            super(mavenConfig, mavenArtifactIdentifier, resourceManager, objectPredicate);
         }
 
         @Override
-        public File getKeywordLibrary() throws AutomationPackageReadingException {
+        protected ResolvedMavenArtifact getResolvedMavenArtefact() {
             return mavenArtifactMocks.get(mavenArtifactIdentifier);
         }
     }

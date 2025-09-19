@@ -20,39 +20,27 @@
  */
 package step.automation.packages.kwlibrary;
 
+import step.automation.packages.AbstractAutomationPackageFromMavenProvider;
 import step.automation.packages.AutomationPackageMavenConfig;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.MavenArtifactDownloader;
 import step.core.maven.MavenArtifactIdentifier;
-import step.resources.ResourceOrigin;
+import step.core.objectenricher.ObjectPredicate;
+import step.resources.ResourceManager;
 
 import java.io.File;
-import java.io.IOException;
 
-public class KeywordLibraryFromMavenProvider implements AutomationPackageKeywordLibraryProvider {
-
-    protected AutomationPackageMavenConfig mavenConfig;
-    protected final MavenArtifactIdentifier mavenArtifactIdentifier;
+public class KeywordLibraryFromMavenProvider extends AbstractAutomationPackageFromMavenProvider implements AutomationPackageKeywordLibraryProvider {
 
     public KeywordLibraryFromMavenProvider(AutomationPackageMavenConfig mavenConfig,
-                                           MavenArtifactIdentifier mavenArtifactIdentifier) {
-        this.mavenConfig = mavenConfig;
-        this.mavenArtifactIdentifier = mavenArtifactIdentifier;
+                                           MavenArtifactIdentifier mavenArtifactIdentifier,
+                                           ResourceManager resourceManager, ObjectPredicate objectPredicate) throws AutomationPackageReadingException {
+        super(mavenConfig, mavenArtifactIdentifier, resourceManager, objectPredicate);
     }
 
     @Override
     public File getKeywordLibrary() throws AutomationPackageReadingException {
-        return MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier);
+        return resolvedMavenArtefact.artifactFile;
     }
 
-    @Override
-    public ResourceOrigin getOrigin() {
-        return mavenArtifactIdentifier;
-    }
-
-    @Override
-    public void close() throws IOException {
-
-    }
 
 }

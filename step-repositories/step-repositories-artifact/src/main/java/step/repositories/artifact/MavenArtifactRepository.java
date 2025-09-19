@@ -89,7 +89,7 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
             String groupId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID);
             String classifier = repositoryParameters.get(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER);
             String type = repositoryParameters.get(ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE);
-            return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, type == null || type.isEmpty() ? "jar" : type, version));
+            return mavenArtifactClient.getArtifact(new DefaultArtifact(groupId, artifactId, classifier, type == null || type.isEmpty() ? "jar" : type, version)).artifactFile;
         } catch (SettingsBuildingException | ArtifactResolutionException e) {
             throw new RuntimeException(e);
         }

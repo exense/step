@@ -68,7 +68,7 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String actorUser) throws IOException {
-		return createResourceContainer(resourceType, resourceFileName, false, null, actorUser, null);
+		return createResourceContainer(resourceType, resourceFileName, false, null, actorUser, null, null);
 	}
 
 	@Override
@@ -78,7 +78,7 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null, actorUser, null);
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null, actorUser, null, null);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
 		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();
@@ -109,8 +109,8 @@ public class ResourceManagerImpl implements ResourceManager {
                                           ObjectEnricher objectEnricher,
 										  String trackingAttribute,
 										  String actorUser,
-										  String origin) throws IOException, InvalidResourceFormatException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser, origin);
+										  String origin, Long originTimestamp) throws IOException, InvalidResourceFormatException {
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser, origin, originTimestamp);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
 		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();
@@ -121,8 +121,8 @@ public class ResourceManagerImpl implements ResourceManager {
 		return new ResourceRevisionContainer(resource, revision, this);
 	}
 
-	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory, String trackingAttribute, String actorUser, String origin) throws IOException {
-		Resource resource = createTrackedResource(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser, origin);
+	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory, String trackingAttribute, String actorUser, String origin, Long originTimestamp) throws IOException {
+		Resource resource = createTrackedResource(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser, origin, originTimestamp);
 		ResourceRevision revision = createResourceRevisionContainer(resourceFileName, resource);
 		return new ResourceRevisionContainer(resource, revision, this);
 	}
@@ -299,7 +299,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		return revision;
 	}
 
-	private Resource createTrackedResource(String resourceTypeId, String name, boolean isDirectory, String trackingAttribute, String actorUser, String origin) {
+	private Resource createTrackedResource(String resourceTypeId, String name, boolean isDirectory, String trackingAttribute, String actorUser, String origin, Long originTimestamp) {
 		ResourceType resourceType = resourceTypes.get(resourceTypeId);
 		if(resourceType ==  null) {
 			throw new RuntimeException("Unknown resource type "+resourceTypeId);
@@ -316,6 +316,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		resource.setDirectory(isDirectory);
 
 		resource.setOrigin(origin);
+		resource.setOriginTimestamp(originTimestamp);
 
 		// this TRACKING_FIELD is used to track the keyword packages
 		if (trackingAttribute != null && !trackingAttribute.isEmpty()) {

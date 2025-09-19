@@ -142,8 +142,8 @@ public class LayeredResourceManager implements ResourceManager {
 
     @Override
     public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher,
-                                          String trackingAttribute, String actorUser, String origin) throws IOException, InvalidResourceFormatException {
-        return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, objectEnricher, trackingAttribute);
+                                          String trackingAttribute, String actorUser, String origin, Long originTimestamp) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, objectEnricher, trackingAttribute, actorUser, origin, originTimestamp);
     }
 
     @Override

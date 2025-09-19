@@ -53,6 +53,7 @@ import step.plugins.jmeter.JMeterFunction;
 import step.plugins.jmeter.JMeterFunctionType;
 import step.plugins.node.NodeFunction;
 import step.plugins.node.NodeFunctionType;
+import step.repositories.artifact.ResolvedMavenArtifact;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.Resource;
 import step.resources.ResourceRevisionFileHandle;
@@ -468,8 +469,8 @@ public class AutomationPackageManagerOSTest {
         MavenArtifactIdentifier extSampleIdentifierSnapshot = new MavenArtifactIdentifier("test-group", "ap1-ext", "1.0.0-SNAPSHOT", null, null);
 
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
-        providersResolver.getMavenArtifactMocks().put(sampleIdentifierSnapshot, automationPackageJar);
-        providersResolver.getMavenArtifactMocks().put(extSampleIdentifierSnapshot, extendedAutomationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(sampleIdentifierSnapshot, new ResolvedMavenArtifact(automationPackageJar, null));
+        providersResolver.getMavenArtifactMocks().put(extSampleIdentifierSnapshot, new ResolvedMavenArtifact(extendedAutomationPackageJar, null));
 
         AutomationPackageFileSource sampleSource = AutomationPackageFileSource.withMavenIdentifier(sampleIdentifierSnapshot);
         AutomationPackageFileSource extSampleSource = AutomationPackageFileSource.withMavenIdentifier(extSampleIdentifierSnapshot);
@@ -495,13 +496,13 @@ public class AutomationPackageManagerOSTest {
         MavenArtifactIdentifier kwLibRelease = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-RELEASE", null, null);
 
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, automationPackageJar);
-        providersResolver.getMavenArtifactMocks().put(extSampleRelease, extendedAutomationPackageJar);
-        providersResolver.getMavenArtifactMocks().put(echoRelease, echoAutomationPackageJar);
-        providersResolver.getMavenArtifactMocks().put(echoSnapshot, echoAutomationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, null));
+        providersResolver.getMavenArtifactMocks().put(extSampleRelease, new ResolvedMavenArtifact(extendedAutomationPackageJar, null));
+        providersResolver.getMavenArtifactMocks().put(echoRelease, new ResolvedMavenArtifact(echoAutomationPackageJar, null));
+        providersResolver.getMavenArtifactMocks().put(echoSnapshot, new ResolvedMavenArtifact(echoAutomationPackageJar, null));
 
-        providersResolver.getMavenArtifactMocks().put(kwLibRelease, kwLibReleaseJar);
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
+        providersResolver.getMavenArtifactMocks().put(kwLibRelease, new ResolvedMavenArtifact(kwLibReleaseJar, null));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, null));
 
         // upload SNAPSHOT AP (echo) + SNAPSHOT LIB (echo)
         AutomationPackageUpdateResult echoApResult = manager.createOrUpdateAutomationPackage(
@@ -567,12 +568,12 @@ public class AutomationPackageManagerOSTest {
         MavenArtifactIdentifier kwLibRelease = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-RELEASE", null, null);
 
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, automationPackageJar);
-        providersResolver.getMavenArtifactMocks().put(extSampleRelease, extendedAutomationPackageJar);
-        providersResolver.getMavenArtifactMocks().put(echoRelease, echoAutomationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, null));
+        providersResolver.getMavenArtifactMocks().put(extSampleRelease, new ResolvedMavenArtifact(extendedAutomationPackageJar, null));
+        providersResolver.getMavenArtifactMocks().put(echoRelease, new ResolvedMavenArtifact(echoAutomationPackageJar, null));
 
-        providersResolver.getMavenArtifactMocks().put(kwLibRelease, kwLibJar);
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibJar);
+        providersResolver.getMavenArtifactMocks().put(kwLibRelease, new ResolvedMavenArtifact(kwLibJar, null));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibJar, null));
 
         // upload SNAPSHOT AP + SNAPSHOT LIB
         AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
@@ -658,10 +659,10 @@ public class AutomationPackageManagerOSTest {
         MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
 
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, automationPackageJar);
-        providersResolver.getMavenArtifactMocks().put(echoRelease, echoAutomationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, null));
+        providersResolver.getMavenArtifactMocks().put(echoRelease, new ResolvedMavenArtifact(echoAutomationPackageJar, null));
 
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, null));
 
         // upload echo AP (echo RELEASE) + SNAPSHOT LIB
         AutomationPackageUpdateResult resultEcho = manager.createOrUpdateAutomationPackage(
@@ -684,7 +685,7 @@ public class AutomationPackageManagerOSTest {
         log.info("AP v1: {}", resultV1.getId());
 
         // imitate the snapshot update
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibUpdatedSnapshotJar);
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibUpdatedSnapshotJar, null));
 
         // upload main AP (sample SNAPSHOT) + UPDATED SNAPSHOT LIB - VERSION 2 (WITH CHECK FOR DUPLICATES)
         try {
@@ -756,8 +757,8 @@ public class AutomationPackageManagerOSTest {
         MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
 
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, automationPackageJar);
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, null));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, null));
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
         AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(
@@ -774,7 +775,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertArrayEquals(Files.readAllBytes(automationPackageJar.toPath()), Files.readAllBytes(ap1Revision.getResourceFile().toPath()));
 
         // UPDATE THE SNAPSHOT CONTENT IN MAVEN !!!
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, updatedAutomationPackageJar);
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(updatedAutomationPackageJar, null));
 
         // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
         AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(
@@ -810,8 +811,8 @@ public class AutomationPackageManagerOSTest {
         MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
 
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, kwLibCallApJar);
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(kwLibCallApJar, null));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, null));
 
         // upload main AP (sample SNAPSHOT using classes from LIB) + SNAPSHOT LIB
         AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
@@ -835,8 +836,8 @@ public class AutomationPackageManagerOSTest {
         MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
 
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, automationPackageJar);
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, kwLibSnapshotJar);
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, null));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, null));
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
         AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(

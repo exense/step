@@ -11,12 +11,12 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.connector.basic.BasicRepositoryConnectorFactory;
 import org.eclipse.aether.impl.DefaultServiceLocator;
+import org.eclipse.aether.metadata.DefaultMetadata;
+import org.eclipse.aether.metadata.Metadata;
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.resolution.ArtifactRequest;
-import org.eclipse.aether.resolution.ArtifactResolutionException;
-import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.resolution.*;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
@@ -26,7 +26,14 @@ import org.eclipse.aether.util.repository.DefaultMirrorSelector;
 import org.eclipse.aether.util.repository.DefaultProxySelector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.util.*;
 
@@ -82,23 +89,174 @@ public class MavenArtifactClient {
         return result;
     }
 
-    public File getArtifact(final Artifact artifact) throws ArtifactResolutionException {
+    public ResolvedMavenArtifact getArtifact(final Artifact artifact) throws ArtifactResolutionException {
+        return getArtifact(artifact, null);
+    }
+
+    public ResolvedMavenArtifact getArtifact(final Artifact artifact, Long currentSnapshotTimestamp) throws ArtifactResolutionException {
         RepositorySystemSession session = getSession();
         ArtifactRequest artifactRequest = new ArtifactRequest();
         artifactRequest.setArtifact(artifact);
-        artifactRequest.setRepositories(getEnabledRepositoriesFromProfile());
+        List<RemoteRepository> enabledRepositoriesFromProfile = getEnabledRepositoriesFromProfile();
+        artifactRequest.setRepositories(enabledRepositoriesFromProfile);
         File result;
 
         ArtifactResult artifactResult = repositorySystem.resolveArtifact(session, artifactRequest);
         Artifact resolvedArtifact = artifactResult.getArtifact();
         if (resolvedArtifact != null) {
             result = resolvedArtifact.getFile();
+            // 3. Get the latest metadata after download (same timestamp for all classifiers)
+            SnapshotMetadata latestMetadata = fetchSnapshotMetadata(artifact, session, currentSnapshotTimestamp);
+            return new ResolvedMavenArtifact(result, latestMetadata);
         } else {
             artifactResult.getExceptions().forEach(e -> logger.error("Error while resolving artifact " + artifact.toString(), e));
             throw new RuntimeException("The resolution of the artifact failed. See the logs for more details");
         }
+    }
 
-        return result;
+    private static boolean isNewSnapshot(Long existingSnapshotTimestamp, long snapshotRemoteTimestamp) {
+        return existingSnapshotTimestamp == null || snapshotRemoteTimestamp <= 0 || snapshotRemoteTimestamp > existingSnapshotTimestamp;
+    }
+
+    public SnapshotMetadata fetchSnapshotMetadata(Artifact artifact, Long existingSnapshotTimestamp) {
+        RepositorySystemSession session = getSession();
+        return fetchSnapshotMetadata(artifact, session, existingSnapshotTimestamp);
+    }
+
+    private SnapshotMetadata fetchSnapshotMetadata(Artifact artifact, RepositorySystemSession session, Long existingSnapshotTimestamp) {
+        List<RemoteRepository> repositories = getEnabledRepositoriesFromProfile();
+
+        for (RemoteRepository repository : repositories) {
+            try {
+                // Use the correct DefaultMetadata constructor
+                Metadata metadata = new DefaultMetadata(
+                        artifact.getGroupId(),
+                        artifact.getArtifactId(),
+                        artifact.getVersion(),
+                        "maven-metadata.xml",
+                        Metadata.Nature.RELEASE_OR_SNAPSHOT
+                );
+
+                MetadataRequest metadataRequest = new MetadataRequest();
+                metadataRequest.setMetadata(metadata);
+                metadataRequest.setRepository(repository); // Singular!
+
+                List<MetadataResult> results = repositorySystem.resolveMetadata(
+                        session, Collections.singletonList(metadataRequest));
+
+                if (!results.isEmpty() && !results.get(0).isMissing()) {
+                    File metadataFile = results.get(0).getMetadata().getFile();
+                    if (metadataFile != null) {
+                        return parseSnapshotMetadata(metadataFile, existingSnapshotTimestamp);
+                    }
+                }
+            } catch (Exception e) {
+                logger.debug("Failed to fetch metadata from repository {}: {}",
+                        repository.getId(), e.getMessage());
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Parses maven-metadata.xml file to extract snapshot information
+     *
+     * @param metadataFile The maven-metadata.xml file
+     * @return SnapshotMetadata object with parsed information
+     */
+    public static SnapshotMetadata parseSnapshotMetadata(File metadataFile, Long existingSnapshotTimestamp) {
+        if (metadataFile == null || !metadataFile.exists()) {
+            return null;
+        }
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(metadataFile);
+
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath xpath = xPathFactory.newXPath();
+
+            // Extract snapshot timestamp
+            String timestamp = getTextContent(xpath, doc, "//versioning/snapshot/timestamp");
+
+            // Extract build number
+            String buildNumberStr = getTextContent(xpath, doc, "//versioning/snapshot/buildNumber");
+            int buildNumber = -1;
+            if (buildNumberStr != null && !buildNumberStr.isEmpty()) {
+                try {
+                    buildNumber = Integer.parseInt(buildNumberStr);
+                } catch (NumberFormatException e) {
+                    logger.warn("Invalid build number in metadata: {}", buildNumberStr);
+                }
+            }
+
+            // Extract lastUpdated - keeping as reference but lastUpdated is usually inaccurate, it better to use the Snapshot timestamp
+            //String lastUpdatedStr = getTextContent(xpath, doc, "//versioning/lastUpdated");
+
+            long snapshotRemoteTimestamp = timestampToEpochMillis(timestamp);
+            return new SnapshotMetadata(timestamp, snapshotRemoteTimestamp, buildNumber, isNewSnapshot(existingSnapshotTimestamp, snapshotRemoteTimestamp));
+
+        } catch (Exception e) {
+            logger.error("Failed to parse snapshot metadata from file: {}", metadataFile, e);
+            return null;
+        }
+    }
+
+    /**
+     * Converts Maven timestamp format (yyyyMMdd.HHmmss) to epoch milliseconds
+     */
+    public static long timestampToEpochMillis(String mavenTimestamp) {
+        if (mavenTimestamp == null || mavenTimestamp.trim().isEmpty()) {
+            return -1;
+        }
+
+        try {
+            // Parse format: yyyyMMdd.HHmmss -> yyyy-MM-dd HH:mm:ss
+            String[] parts = mavenTimestamp.split("\\.");
+            if (parts.length != 2) {
+                return -1;
+            }
+
+            String datePart = parts[0]; // yyyyMMdd
+            String timePart = parts[1]; // HHmmss
+
+            if (datePart.length() != 8 || timePart.length() != 6) {
+                return -1;
+            }
+
+            // Extract components
+            int year = Integer.parseInt(datePart.substring(0, 4));
+            int month = Integer.parseInt(datePart.substring(4, 6));
+            int day = Integer.parseInt(datePart.substring(6, 8));
+
+            int hour = Integer.parseInt(timePart.substring(0, 2));
+            int minute = Integer.parseInt(timePart.substring(2, 4));
+            int second = Integer.parseInt(timePart.substring(4, 6));
+
+            // Create LocalDateTime and convert to epoch
+            java.time.LocalDateTime dateTime = java.time.LocalDateTime.of(year, month, day, hour, minute, second);
+            return dateTime.atZone(java.time.ZoneOffset.UTC).toInstant().toEpochMilli();
+
+        } catch (Exception e) {
+            // Return -1 if parsing fails
+            return -1;
+        }
+    }
+
+
+    /**
+     * Helper method to extract text content from XML using XPath
+     */
+    private static String getTextContent(XPath xpath, Document doc, String expression) {
+        try {
+            Node node = (Node) xpath.evaluate(expression, doc, XPathConstants.NODE);
+            return node != null ? node.getTextContent().trim() : null;
+        } catch (Exception e) {
+            logger.debug("XPath expression '{}' not found or invalid", expression);
+            return null;
+        }
     }
 
     private DefaultRepositorySystemSession getSession() {

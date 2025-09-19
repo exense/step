@@ -637,6 +637,9 @@ public class AutomationPackageManager {
                 try (InputStream is = new FileInputStream(originalFile)) {
                     resourceManager.deleteResourceRevisionContent(resource.getId().toHexString());
                     resource = resourceManager.saveResourceContent(resource.getId().toHexString(), is, originalFile.getName(), actorUser);
+                    //update snapshot timestamp
+                    resource.setOriginTimestamp(apProvider.getSnapshotTimestamp());
+                    resourceManager.saveResource(resource);
                 } catch (IOException | InvalidResourceFormatException e) {
                     throw new RuntimeException("General script function cannot be created", e);
                 }
@@ -648,7 +651,7 @@ public class AutomationPackageManager {
             try (InputStream is = new FileInputStream(originalFile)) {
                 resource = resourceManager.createTrackedResource(
                         ResourceManager.RESOURCE_TYPE_AP, false, is, originalFile.getName(), enricher, null, actorUser,
-                        apOrigin == null ? null : apOrigin.toStringRepresentation()
+                        apOrigin == null ? null : apOrigin.toStringRepresentation(), apProvider.getSnapshotTimestamp()
                 );
             } catch (IOException | InvalidResourceFormatException e) {
                 throw new RuntimeException("General script function cannot be created", e);
@@ -689,6 +692,9 @@ public class AutomationPackageManager {
                             log.info("Existing resource {} for keyword library {} will be actualized and reused in AP {}", oldResource.get(0).getId().toHexString(), keywordLibrary.getName(), apName);
                             resourceManager.deleteResourceRevisionContent(oldResource.get(0).getId().toHexString());
                             uploadedResource = resourceManager.saveResourceContent(oldResource.get(0).getId().toHexString(), fis, keywordLibrary.getName(), actorUser);
+                            //update snapshot timestamp
+                            uploadedResource.setOriginTimestamp(kwLibProvider.getSnapshotTimestamp());
+                            resourceManager.saveResource(uploadedResource);
                         }
                     } else {
                         ResourceOrigin origin = kwLibProvider.getOrigin();
@@ -696,7 +702,8 @@ public class AutomationPackageManager {
                         // old resource is not found - we create a new one
                         uploadedResource = resourceManager.createTrackedResource(
                                 resourceType, false, fis, keywordLibrary.getName(), enricher, null,
-                                actorUser, origin == null ? null : origin.toStringRepresentation()
+                                actorUser, origin == null ? null : origin.toStringRepresentation(),
+                                kwLibProvider.getSnapshotTimestamp()
                         );
                         log.info("The new keyword library ({}) has been uploaded as ({})", kwLibProvider, uploadedResource.getId().toHexString());
                     }
@@ -714,7 +721,7 @@ public class AutomationPackageManager {
     }
 
     public AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource,
-                                                                             ObjectPredicate predicate) {
+                                                                             ObjectPredicate predicate) throws AutomationPackageReadingException {
         return this.providersResolver.getKeywordLibraryProvider(keywordLibrarySource, predicate, mavenConfigProvider);
     }
 
@@ -1201,7 +1208,7 @@ public class AutomationPackageManager {
 
         AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource,
                                                                           ObjectPredicate predicate,
-                                                                          AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider);
+                                                                          AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) throws AutomationPackageReadingException;
     }
 
     public static class DefaultProvidersResolver implements AutomationPackageProvidersResolver {
@@ -1219,7 +1226,7 @@ public class AutomationPackageManager {
                                                                                     AutomationPackageKeywordLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException {
             if (apFileSource != null) {
                 if (apFileSource.getMode() == AutomationPackageFileSource.Mode.MAVEN) {
-                    return createAutomationPackageFromMavenProvider(apFileSource, predicate, mavenConfigProvider, keywordLibraryProvider);
+                    return createAutomationPackageFromMavenProvider(apFileSource, predicate, mavenConfigProvider, keywordLibraryProvider, resourceManager);
                 } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.INPUT_STREAM) {
                     return new AutomationPackageFromInputStreamProvider(apFileSource.getInputStream(), apFileSource.getFileName(), keywordLibraryProvider);
                 } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.RESOURCE_ID) {
@@ -1235,17 +1242,18 @@ public class AutomationPackageManager {
         protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource,
                                                                                               ObjectPredicate predicate,
                                                                                               AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
-                                                                                              AutomationPackageKeywordLibraryProvider keywordLibraryProvider) {
-            return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier(), keywordLibraryProvider);
+                                                                                              AutomationPackageKeywordLibraryProvider keywordLibraryProvider,
+                                                                                              ResourceManager resourceManager) throws AutomationPackageReadingException {
+            return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier(), keywordLibraryProvider, resourceManager, predicate);
         }
 
         @Override
         public AutomationPackageKeywordLibraryProvider getKeywordLibraryProvider(AutomationPackageFileSource keywordLibrarySource,
                                                                                  ObjectPredicate predicate,
-                                                                                 AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
+                                                                                 AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) throws AutomationPackageReadingException {
             if (keywordLibrarySource != null) {
                 if (keywordLibrarySource.getMode() == AutomationPackageFileSource.Mode.MAVEN) {
-                    return createKeywordLibraryFromMavenProvider(keywordLibrarySource, predicate, mavenConfigProvider);
+                    return createKeywordLibraryFromMavenProvider(keywordLibrarySource, predicate, mavenConfigProvider, resourceManager);
                 } else if (keywordLibrarySource.getMode() == AutomationPackageFileSource.Mode.INPUT_STREAM) {
                     return new KeywordLibraryFromInputStreamProvider(keywordLibrarySource.getInputStream(), keywordLibrarySource.getFileName());
                 } else if(keywordLibrarySource.getMode() == AutomationPackageFileSource.Mode.RESOURCE_ID){
@@ -1260,8 +1268,8 @@ public class AutomationPackageManager {
             }
         }
 
-        protected KeywordLibraryFromMavenProvider createKeywordLibraryFromMavenProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
-            return new KeywordLibraryFromMavenProvider(mavenConfigProvider.getConfig(predicate), keywordLibrarySource.getMavenArtifactIdentifier());
+        protected KeywordLibraryFromMavenProvider createKeywordLibraryFromMavenProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider, ResourceManager resourceManager) throws AutomationPackageReadingException {
+            return new KeywordLibraryFromMavenProvider(mavenConfigProvider.getConfig(predicate), keywordLibrarySource.getMavenArtifactIdentifier(), resourceManager, predicate);
         }
     }
 

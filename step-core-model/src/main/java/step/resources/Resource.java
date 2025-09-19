@@ -20,7 +20,6 @@ package step.resources;
 
 import org.bson.types.ObjectId;
 
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.AbstractTrackedObject;
 import step.core.objectenricher.EnricheableObject;
 
@@ -42,6 +41,8 @@ public class Resource extends AbstractTrackedObject implements EnricheableObject
 	protected boolean ephemeral;
 
 	protected String origin;
+
+	protected Long originTimestamp;
 
 	public Resource() {
 		this(null);
@@ -97,6 +98,14 @@ public class Resource extends AbstractTrackedObject implements EnricheableObject
 
 	public void setOrigin(String origin) {
 		this.origin = origin;
+	}
+
+	public Long getOriginTimestamp() {
+		return originTimestamp;
+	}
+
+	public void setOriginTimestamp(Long originTimestamp) {
+		this.originTimestamp = originTimestamp;
 	}
 
 	public void applyNewCreator(String actorUser){

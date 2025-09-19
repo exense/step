@@ -26,8 +26,28 @@ import step.resources.ResourceOrigin;
 import java.io.Closeable;
 import java.util.List;
 
-public interface AutomationPackageArchiveProvider extends AutomationPackageProvider {
+public interface AutomationPackageProvider extends Closeable {
 
-    AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException;
+    ResourceOrigin getOrigin();
 
+    default boolean isModifiableResource() {
+        return getOrigin() == null ? false : getOrigin().isModifiable();
+    }
+
+    default boolean canLookupResources() {
+        return getOrigin() == null ? false : getOrigin().isIdentifiable();
+    }
+
+    default List<Resource> lookupExistingResources(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
+        // by default, we look up resources by resource origin
+        if (canLookupResources() && getOrigin() != null) {
+            return resourceManager.getResourcesByOrigin(getOrigin().toStringRepresentation(), objectPredicate);
+        } else {
+            throw new UnsupportedOperationException("Resources cannot be looked up for provider " + this.getClass().getSimpleName());
+        }
+    }
+
+    default Long getSnapshotTimestamp() {
+        return null;
+    }
 }

@@ -20,27 +20,16 @@
  */
 package step.automation.packages.kwlibrary;
 
-import step.automation.packages.AutomationPackageManagerException;
+import step.automation.packages.AbstractAutomationPackageFromInputStreamProvider;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.InputStreamToTempFileDownloader;
-import step.resources.ResourceOrigin;
-import step.resources.UploadedResourceOrigin;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 
-public class KeywordLibraryFromInputStreamProvider implements AutomationPackageKeywordLibraryProvider {
+public class KeywordLibraryFromInputStreamProvider extends AbstractAutomationPackageFromInputStreamProvider implements AutomationPackageKeywordLibraryProvider {
 
-    private InputStreamToTempFileDownloader.TempFile tempFile;
-
-    public KeywordLibraryFromInputStreamProvider(InputStream packageStream, String fileName) {
-        // store keyword library into temp file
-        try {
-            tempFile = InputStreamToTempFileDownloader.copyStreamToTempFile(packageStream, fileName);
-        } catch (Exception ex) {
-            throw new AutomationPackageManagerException("Unable to store the keyword library file", ex);
-        }
+    public KeywordLibraryFromInputStreamProvider(InputStream packageStream, String fileName) throws AutomationPackageReadingException {
+        super(packageStream, fileName);
     }
 
     @Override
@@ -48,14 +37,4 @@ public class KeywordLibraryFromInputStreamProvider implements AutomationPackageK
         return tempFile == null ? null : tempFile.getTempFile();
     }
 
-    @Override
-    public ResourceOrigin getOrigin() {
-        return new UploadedResourceOrigin();
-    }
-
-    @Override
-    public void close() throws IOException {
-        // cleanup temp file
-        InputStreamToTempFileDownloader.cleanupTempFiles(tempFile);
-    }
 }
