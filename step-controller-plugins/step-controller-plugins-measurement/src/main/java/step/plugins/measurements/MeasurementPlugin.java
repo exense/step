@@ -19,6 +19,7 @@ import step.core.plugins.Plugin;
 import step.core.reports.Measure;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.livereporting.LiveReportingPlugin;
 
 
 import java.util.*;
@@ -26,10 +27,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static step.plugins.measurements.MeasurementControllerPlugin.ThreadgroupGaugeName;
 
-@Plugin
+@Plugin(dependencies = LiveReportingPlugin.class)
 @IgnoreDuringAutoDiscovery
 public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
@@ -137,6 +139,13 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		if (generateMetrics(context) && node instanceof ThreadReportNode) {
 			processThreadReportNode(context, (ThreadReportNode) node, true);
 		}
+
+		if (node instanceof CallFunctionReportNode) {
+			LiveReportingPlugin.getLiveReportingContext(context).registerListener(measures -> {
+				List<Measurement> measurements = measures.stream().map(m -> createMeasurementForMeasure(context, node, m)).collect(Collectors.toList());
+				processMeasurements(measurements);
+			});
+		}
 	}
 
 	@Synchronized
@@ -221,18 +230,11 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
 				if (functionReport.getMeasures() != null) {
 					for (Measure measure : functionReport.getMeasures()) {
+						Measurement measurement = createMeasurementForMeasure(executionContext, node, measure);
 						Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
-						Measurement measurement = initMeasurement(executionContext);
-						measurement.addCustomFields(functionAttributes);
-						measurement.setName(measure.getName());
-						measurement.setType(measure.getData().get(TYPE).toString());
 						measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
-						measurement.setValue(measure.getDuration());
-						measurement.setBegin(measure.getBegin());
 						measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
-						enrichWithNodeAttributes(measurement, node);
-						enrichWithCustomData(measurement, measure.getData());
-						enrichWithAdditionalAttributes(measurement, executionContext);
+						measurement.addCustomFields(functionAttributes);
 						measurements.add(measurement);
 					}
 				}
@@ -247,6 +249,18 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		if (node instanceof ThreadReportNode) {
 			processThreadReportNode(executionContext, (ThreadReportNode) node, false);
 		}
+	}
+
+	private Measurement createMeasurementForMeasure(ExecutionContext executionContext, ReportNode node, Measure measure) {
+		Measurement measurement = initMeasurement(executionContext);
+		measurement.setName(measure.getName());
+		measurement.setType(measure.getData().get(TYPE).toString());
+		measurement.setValue(measure.getDuration());
+		measurement.setBegin(measure.getBegin());
+		enrichWithNodeAttributes(measurement, node);
+		enrichWithCustomData(measurement, measure.getData());
+		enrichWithAdditionalAttributes(measurement, executionContext);
+		return measurement;
 	}
 
 	protected Measurement initMeasurement(ExecutionContext executionContext) {

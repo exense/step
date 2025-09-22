@@ -33,7 +33,7 @@ import step.attachments.AttachmentMeta;
 import step.attachments.SkippedAttachmentMeta;
 import step.attachments.StreamingAttachmentMeta;
 import step.common.managedoperations.OperationManager;
-import step.constants.LiveMeasureConstants;
+import step.constants.LiveReportingConstants;
 import step.constants.StreamingConstants;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
@@ -73,8 +73,9 @@ import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.tokenpool.Interest;
+import step.livereporting.LiveReportingContext;
+import step.livereporting.LiveReportingPlugin;
 import step.plugins.functions.types.CompositeFunction;
-import step.reporting.fixme.LiveMeasureContexts;
 import step.streaming.common.*;
 
 import java.io.StringReader;
@@ -285,15 +286,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					});
 				}
 
-				LiveMeasureContexts liveMeasureContexts = context.get(LiveMeasureContexts.class);
-				if (liveMeasureContexts != null) {
-					// react to incoming measures
-					liveMeasureContextHandle = liveMeasureContexts.register(measures -> {
-						logger.error("Received {} measures, TODO: add them to reportnode", measures.size());
-					});
+				LiveReportingContext liveReportingContext = LiveReportingPlugin.getLiveReportingContext(context);
+				if (liveReportingContext != null) {
 					// set up the plumbing to let the handler know where to forward measures
-					String url = liveMeasureContexts.getInjectionUrl(liveMeasureContextHandle);
-					input.getProperties().put(LiveMeasureConstants.AttributeNames.LIVEMEASURE_INJECTION_URL, url);
+					String url = liveReportingContext.getReportingUrl();
+					input.getProperties().put(LiveReportingConstants.AttributeNames.LIVEREPORTING_CONTEXT_URL, url);
 				}
 
 				if(gridToken.isLocal()) {
@@ -352,9 +349,6 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				}
 				if (uploadContext != null) {
 					context.require(StreamingResourceUploadContexts.class).unregisterContext(uploadContext);
-				}
-				if (liveMeasureContextHandle != null) {
-					context.require(LiveMeasureContexts.class).unregister(liveMeasureContextHandle);
 				}
 				callChildrenArtefacts(node, testArtefact);
 			}

@@ -1,8 +1,8 @@
 package step.constants;
 
 // FIXME: This could be merged with the StreamingConstants, for instance as LiveReportingConstants
-public class LiveMeasureConstants {
+public class LiveReportingConstants {
     public static class AttributeNames {
-        public static final String LIVEMEASURE_INJECTION_URL = "livemeasure.injectUrl";
+        public static final String LIVEREPORTING_CONTEXT_URL = "$liveReportingContextUrl";
     }
 }

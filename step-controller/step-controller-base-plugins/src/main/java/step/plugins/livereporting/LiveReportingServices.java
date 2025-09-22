@@ -1,37 +1,35 @@
-package step.plugins.reporting;
+package step.plugins.livereporting;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.Unfiltered;
 import step.core.reports.Measure;
+import step.livereporting.LiveReportingContexts;
 
 import java.util.List;
 
 @Path("/reporting")
 @Tag(name = "Reporting")
-public class ReportingServices extends AbstractStepServices {
+public class LiveReportingServices extends AbstractStepServices {
 
-    private ReportingManager manager;
+    private LiveReportingContexts liveReportingContexts;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         GlobalContext globalContext = getContext();
-        manager = globalContext.get(ReportingManager.class);
+        liveReportingContexts = globalContext.require(LiveReportingContexts.class);
     }
 
     @POST
-    @Path("/live-measure")
+    @Path("/{contextId}/measures")
     @Consumes(MediaType.APPLICATION_JSON)
     @Unfiltered
-    public void injectMeasures(List<Measure> measures, @QueryParam("contextId") String contextId) {
-        manager.onMeasuresReceived(contextId, measures);
+    public void injectMeasures(List<Measure> measures, @PathParam("contextId") String contextId) {
+        liveReportingContexts.onMeasuresReceived(contextId, measures);
     }
 }

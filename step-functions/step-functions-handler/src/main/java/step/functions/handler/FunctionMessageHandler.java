@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.constants.LiveMeasureConstants;
+import step.constants.LiveReportingConstants;
 import step.constants.StreamingConstants;
 import step.core.reports.Measure;
 import step.core.reports.MeasurementsBuilder;
@@ -40,9 +40,8 @@ import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 import step.grid.threads.NamedThreadFactory;
+import step.livereporting.client.LiveReportingClient;
 import step.reporting.LiveReporting;
-import step.reporting.impl.RestUploadingLiveMeasureSink;
-import step.reporting.impl.LiveMeasureSink;
 import step.streaming.client.upload.StreamingUploadProvider;
 import step.streaming.common.StreamingResourceUploadContext;
 
@@ -53,7 +52,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
@@ -185,12 +187,13 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	private LiveReporting initializeLiveReporting(Map<String, String> properties) throws Exception {
 		applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new LocalResourceApplicationContextFactory(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar"), true);
 		return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> {
+			// TODO: move the creation of the upload provider to the LiveReportingClient
+
 			// There's no easy way to do this in the AbstractFunctionHandler itself, because
 			// the only place where the Input properties are guaranteed to be available is in the (abstract)
 			// handle() method (which would then have to be implemented in all subclasses). So we do it here.
 
 			StreamingUploadProvider uploadProvider = null;
-			LiveMeasureSink measureSink = null;
 
 			// We currently only support Websocket uploads; if this changes in the future, here is the place to modify the logic.
 			String uploadContextId = properties.get(StreamingResourceUploadContext.PARAMETER_NAME);
@@ -220,11 +223,26 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 				uploadProvider = streamingUploadProvider;
 			}
 
-			String measuresInjectUrl = properties.get(LiveMeasureConstants.AttributeNames.LIVEMEASURE_INJECTION_URL);
-			if (measuresInjectUrl != null) {
-				measureSink = new RestUploadingLiveMeasureSink(measuresInjectUrl);
+			LiveReportingClient liveReportingClientProxy = null;
+			String liveReportingUrl = properties.get(LiveReportingConstants.AttributeNames.LIVEREPORTING_CONTEXT_URL);
+			if (liveReportingUrl != null) {
+				Class<?> liveReportingClientClass = Thread.currentThread().getContextClassLoader().loadClass("step.livereporting.client.RemoteLiveReportingClient");
+
+				Object liveReportingClient = liveReportingClientClass.getDeclaredConstructor(String.class).newInstance(liveReportingUrl);
+
+				liveReportingClientProxy = (LiveReportingClient) Proxy.newProxyInstance(
+						liveReportingClientClass.getClassLoader(), new Class[]{LiveReportingClient.class},
+						(proxy, method, args) -> {
+							try {
+								return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> method.invoke(liveReportingClient, args));
+							} catch (InvocationTargetException ite) {
+								// rethrow the original exception instead of InvocationTargetException, (usually) conforming to the method's throws signature unless it's a RuntimeException or similar
+								throw ite.getCause();
+							}
+						}
+				);
 			}
-			return new LiveReporting(uploadProvider, measureSink);
+			return new LiveReporting(uploadProvider, liveReportingClientProxy != null ? liveReportingClientProxy.getLiveMeasureSink() : null);
 		});
 	}
 
