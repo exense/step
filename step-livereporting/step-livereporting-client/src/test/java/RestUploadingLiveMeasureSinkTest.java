@@ -18,6 +18,7 @@
  */
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.junit.Ignore;
 import org.junit.Test;
 import step.core.reports.Measure;
 import step.livereporting.client.RestUploadingLiveMeasureSink;
@@ -26,7 +27,7 @@ import java.util.Map;
 
 public class RestUploadingLiveMeasureSinkTest {
 
-    @JsonIgnore
+    @Ignore
     @Test
     public void accept() {
         // TODO finalize or remove this test
