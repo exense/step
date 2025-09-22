@@ -2,6 +2,7 @@ package step.plugins.measurements;
 
 import groovy.transform.Synchronized;
 import io.prometheus.client.Collector;
+import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.reports.CallFunctionReportNode;
@@ -19,8 +20,9 @@ import step.core.plugins.Plugin;
 import step.core.reports.Measure;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.functions.Function;
+import step.functions.io.Output;
 import step.livereporting.LiveReportingPlugin;
-
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -139,13 +141,19 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		if (generateMetrics(context) && node instanceof ThreadReportNode) {
 			processThreadReportNode(context, (ThreadReportNode) node, true);
 		}
+	}
 
-		if (node instanceof CallFunctionReportNode) {
-			LiveReportingPlugin.getLiveReportingContext(context).registerListener(measures -> {
-				List<Measurement> measurements = measures.stream().map(m -> createMeasurementForMeasure(context, node, m)).collect(Collectors.toList());
-				processMeasurements(measurements);
-			});
-		}
+	@Override
+	public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {
+		LiveReportingPlugin.getLiveReportingContext(context).registerListener(measures -> {
+			List<Measurement> measurements = measures.stream().map(m -> createMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
+			processMeasurements(measurements);
+		});
+	}
+
+	@Override
+	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {
+
 	}
 
 	@Synchronized
@@ -230,11 +238,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
 				if (functionReport.getMeasures() != null) {
 					for (Measure measure : functionReport.getMeasures()) {
-						Measurement measurement = createMeasurementForMeasure(executionContext, node, measure);
-						Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
-						measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
-						measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
-						measurement.addCustomFields(functionAttributes);
+						Measurement measurement = createMeasurement(executionContext, measure, functionReport);
 						measurements.add(measurement);
 					}
 				}
@@ -251,13 +255,17 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		}
 	}
 
-	private Measurement createMeasurementForMeasure(ExecutionContext executionContext, ReportNode node, Measure measure) {
+	private Measurement createMeasurement(ExecutionContext executionContext, Measure measure, CallFunctionReportNode functionReport) {
+		Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
 		Measurement measurement = initMeasurement(executionContext);
+		measurement.addCustomFields(functionAttributes);
 		measurement.setName(measure.getName());
 		measurement.setType(measure.getData().get(TYPE).toString());
+		measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
 		measurement.setValue(measure.getDuration());
 		measurement.setBegin(measure.getBegin());
-		enrichWithNodeAttributes(measurement, node);
+		measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
+		enrichWithNodeAttributes(measurement, functionReport);
 		enrichWithCustomData(measurement, measure.getData());
 		enrichWithAdditionalAttributes(measurement, executionContext);
 		return measurement;

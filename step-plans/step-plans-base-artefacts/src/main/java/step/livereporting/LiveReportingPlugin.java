@@ -35,7 +35,7 @@ public class LiveReportingPlugin extends AbstractExecutionEnginePlugin {
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
-        liveReportingContexts = parentContext.get(LiveReportingContexts.class);
+        liveReportingContexts = parentContext != null ? parentContext.get(LiveReportingContexts.class) : null;
         if (liveReportingContexts == null) {
             // TODO set up live reporting for local executions
             liveReportingContexts = new LiveReportingContexts("");
