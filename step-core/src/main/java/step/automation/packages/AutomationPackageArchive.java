@@ -18,8 +18,10 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.scanner.AnnotationScanner;
 
 import java.io.*;
 import java.net.MalformedURLException;
@@ -36,7 +38,8 @@ public class AutomationPackageArchive implements Closeable {
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchive.class);
     public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
 
-    private final ClassLoader classLoader;
+    private final ClassLoader classLoaderForMainApFile;
+    private final ClassLoader classLoaderForApAndLibraries;
     private final File originalFile;
     private final File keywordLibFile;
     private boolean internalClassLoader = false;
@@ -44,7 +47,8 @@ public class AutomationPackageArchive implements Closeable {
     private final ResourcePathMatchingResolver pathMatchingResourceResolver;
 
     public AutomationPackageArchive(ClassLoader classLoader) {
-        this.classLoader = classLoader;
+        this.classLoaderForMainApFile = classLoader;
+        this.classLoaderForApAndLibraries = classLoader;
         this.originalFile = null;
         this.keywordLibFile = null;
         this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
@@ -63,8 +67,13 @@ public class AutomationPackageArchive implements Closeable {
         this.keywordLibFile = keywordLibFile;
         this.type = JAVA; //Only supported type for now
         try {
-            this.classLoader = createClassloaderForApWithKeywordLib(automationPackageFile, keywordLibFile);
-            this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
+            // IMPORTANT!!! The class loader for descriptor file should contain only the main AP file and should not use the parent classloader
+            this.classLoaderForMainApFile = new URLClassLoader(new URL[]{automationPackageFile.toURI().toURL()}, null);
+            this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoaderForMainApFile);
+
+            // IMPORTANT!!! The class loader used to scan plans and keywords by annotations should contain all the classes from AP file and keyword lib
+            // (inclusive the parent classloader)
+            this.classLoaderForApAndLibraries = createClassloaderForApWithKeywordLib(automationPackageFile, keywordLibFile);
         } catch (MalformedURLException ex) {
             throw new AutomationPackageReadingException("Unable to read automation package", ex);
         }
@@ -91,7 +100,7 @@ public class AutomationPackageArchive implements Closeable {
 
     public boolean hasAutomationPackageDescriptor() {
         for (String metadataFile : METADATA_FILES) {
-            URL metadataFileUrl = classLoader.getResource(metadataFile);
+            URL metadataFileUrl = classLoaderForMainApFile.getResource(metadataFile);
             if (metadataFileUrl != null) {
                 return true;
             }
@@ -101,7 +110,7 @@ public class AutomationPackageArchive implements Closeable {
 
     public InputStream getDescriptorYaml() {
         for (String metadataFile : METADATA_FILES) {
-            InputStream yamlDescriptor = classLoader.getResourceAsStream(metadataFile);
+            InputStream yamlDescriptor = classLoaderForMainApFile.getResourceAsStream(metadataFile);
             if (yamlDescriptor != null) {
                 return yamlDescriptor;
             }
@@ -115,7 +124,7 @@ public class AutomationPackageArchive implements Closeable {
     }
 
     public URL getResource(String resourcePath) {
-        URL resource = classLoader.getResource(resourcePath);
+        URL resource = classLoaderForMainApFile.getResource(resourcePath);
         if (log.isDebugEnabled()) {
             log.debug("Obtain resource from automation package: {}", resource);
         }
@@ -126,8 +135,21 @@ public class AutomationPackageArchive implements Closeable {
         return pathMatchingResourceResolver.getResourcesByPattern(resourcePathPattern);
     }
 
-    public ClassLoader getClassLoader() {
-        return classLoader;
+    public ClassLoader getClassLoaderForMainApFile() {
+        return classLoaderForMainApFile;
+    }
+
+    public ClassLoader getClassLoaderForApAndLibraries() {
+        return classLoaderForApAndLibraries;
+    }
+
+    public AnnotationScanner createAnnotationScanner(){
+        // for file-based packages we create class loader for file, otherwise we just use class loader from archive
+        if (getOriginalFile() != null) {
+            return AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) getClassLoaderForApAndLibraries());
+        } else {
+            return AnnotationScanner.forAllClassesFromClassLoader(getClassLoaderForApAndLibraries());
+        }
     }
 
     public File getKeywordLibFile(){
@@ -144,8 +166,11 @@ public class AutomationPackageArchive implements Closeable {
 
     @Override
     public void close() throws IOException {
-        if (internalClassLoader && this.classLoader instanceof Closeable) {
-            ((Closeable) this.classLoader).close();
+        if (internalClassLoader && this.classLoaderForMainApFile instanceof Closeable) {
+            IOUtils.closeQuietly(((Closeable) this.classLoaderForMainApFile));
+        }
+        if (internalClassLoader && this.classLoaderForApAndLibraries instanceof Closeable) {
+            IOUtils.closeQuietly(((Closeable) this.classLoaderForApAndLibraries));
         }
     }
 

@@ -155,22 +155,11 @@ public class AutomationPackageReader {
 
     private void fillAutomationPackageWithAnnotatedKeywordsAndPlans(AutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException {
 
-        // for file-based packages we create class loader for file, otherwise we just use class loader from archive
-        File originalFile = archive.getOriginalFile();
-        AnnotationScanner annotationScanner = null;
-        URLClassLoader classLoaderForKeywordLib = null;
-        try {
-            if(originalFile != null){
-                classLoaderForKeywordLib = AutomationPackageArchive.createClassloaderForApWithKeywordLib(originalFile, archive.getKeywordLibFile());
-                annotationScanner = AnnotationScanner.forSpecificJarFromURLClassLoader(classLoaderForKeywordLib);
-            } else {
-                annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(archive.getClassLoader());
-            }
-
+        try (AnnotationScanner annotationScanner = archive.createAnnotationScanner()) {
             // this code duplicates the StepJarParser, but here we don't set the scriptFile and librariesFile to GeneralScriptFunctions
             // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
             List<JavaAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, isLocalPackage, null, null);
-            if(!scannedKeywords.isEmpty()){
+            if (!scannedKeywords.isEmpty()) {
                 log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getOriginalFileName()));
             }
             res.getKeywords().addAll(scannedKeywords);
@@ -182,15 +171,6 @@ public class AutomationPackageReader {
             res.getPlans().addAll(annotatedPlans);
         } catch (JsonSchemaPreparationException e) {
             throw new AutomationPackageReadingException("Cannot read the json schema from annotated keyword", e);
-        } catch (MalformedURLException e) {
-            throw new AutomationPackageReadingException("Cannot read the automation package content", e);
-        } finally {
-            if (annotationScanner != null) {
-                annotationScanner.close();
-            }
-            if (classLoaderForKeywordLib != null) {
-                IOUtils.closeQuietly(classLoaderForKeywordLib);
-            }
         }
     }
 
@@ -308,7 +288,7 @@ public class AutomationPackageReader {
                 boolean wildcard = false;
                 if (ResourcePathMatchingResolver.containsWildcard(plainTextPlan.getFile())) {
                     wildcard = true;
-                    ResourcePathMatchingResolver resourceResolver = new ResourcePathMatchingResolver(archive.getClassLoader());
+                    ResourcePathMatchingResolver resourceResolver = new ResourcePathMatchingResolver(archive.getClassLoaderForMainApFile());
                     urls = resourceResolver.getResourcesByPattern(plainTextPlan.getFile());
                 } else {
                     urls = List.of(archive.getResource(plainTextPlan.getFile()));
@@ -414,7 +394,7 @@ public class AutomationPackageReader {
                         if (originalFile != null) {
                             classLoader = new URLClassLoader(new URL[]{originalFile.toURI().toURL()});
                         } else {
-                            classLoader = archive.getClassLoader();
+                            classLoader = archive.getClassLoaderForMainApFile();
                         }
                         try (InputStream stream = classLoader.getResourceAsStream(file)) {
                             if (stream != null) {
