@@ -1039,32 +1039,7 @@ public class AutomationPackageManager {
         List<Resource> resources = getPackageResources(currentAutomationPackage.getId());
         for (Resource resource : resources) {
             try {
-
-                // to avoid the deletion of resources already linked with new automation package
-                List<String> otherAutomationPackagesWithSameResource = automationPackageAccessor.findByAutomationPackageResource(FileResolver.RESOURCE_PREFIX + resource.getId().toString())
-                        .stream()
-                        .map(a -> a.getAttribute(AbstractOrganizableObject.NAME))
-                        .collect(Collectors.toList());
-
-
-
-                if (newAutomationPackage != null && newAutomationPackage.getKeywordLibraryResource() != null) {
-                    if (Objects.equals(FileResolver.RESOURCE_PREFIX + resource.getId().toString(), newAutomationPackage.getKeywordLibraryResource())) {
-                        log.info("Resource {} cannot be deleted, because it is reused as keyword library in new automation package: {}", resource.getId().toHexString(), newAutomationPackage.getAttribute(AbstractOrganizableObject.NAME));
-                        continue;
-                    }
-                }
-
-                List<String> otherAutomationPackagesWithSameKeywordLib = automationPackageAccessor.findByKeywordLibResource(FileResolver.RESOURCE_PREFIX + resource.getId().toString())
-                        .stream()
-                        .map(a -> a.getAttribute(AbstractOrganizableObject.NAME))
-                        .collect(Collectors.toList());
-
-                if (!otherAutomationPackagesWithSameKeywordLib.isEmpty()) {
-                    log.info("Resource {} cannot be deleted, because it is reused in other automation packages as keyword library: {}", resource.getId().toHexString(), otherAutomationPackagesWithSameResource);
-                    continue;
-                }
-
+                // included resources are only used within the automation package (not shared between several packages, so they can be simply deleted)
                 log.debug("Remove the resource linked with AP '{}':{}", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), resource.getId().toHexString());
                 resourceManager.deleteResource(resource.getId().toString());
             } catch (Exception e) {
