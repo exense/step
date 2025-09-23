@@ -251,7 +251,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				
 				if(output.getAttachments()!=null) {
 					for(Attachment a:output.getAttachments()) {
-						AttachmentMeta attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+						AttachmentMeta attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName(), a.getMimeType());
 						node.addAttachment(attachmentMeta);
 					}
 				}

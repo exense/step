@@ -74,7 +74,7 @@ public class AutomationPackageManagerOSTest {
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManagerOSTest.class);
 
     // how many keywords and plans are defined in original sample
-    public static final int KEYWORDS_COUNT = 6;
+    public static final int KEYWORDS_COUNT = 8;
 
     // 2 annotated plans and 5 plans from yaml descriptor
     public static final int PLANS_COUNT = 7;
@@ -950,7 +950,11 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(KEYWORDS_COUNT, r.storedFunctions.size());
         findFunctionByClassAndName(r.storedFunctions, JMeterFunction.class, J_METER_KEYWORD_1);
         findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
-        findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, INLINE_PLAN);
+        Function kwRouteToController = findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD_ROUTING_TO_CTRL);
+            assertTrue(kwRouteToController.isExecuteLocally());
+            Function kwRoutingCriteria = findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD_ROUTING_CRITERIA);
+            Map<String, String> expectedRoutingCriteria = Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT");
+            assertEquals(expectedRoutingCriteria, kwRoutingCriteria.getTokenSelectionCriteria());findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, INLINE_PLAN);
         findFunctionByClassAndName(r.storedFunctions, NodeFunction.class, NODE_KEYWORD);
         CompositeFunction compositeKeyword = (CompositeFunction) findFunctionByClassAndName(r.storedFunctions, CompositeFunction.class, COMPOSITE_KEYWORD);
         // by default, the 'executeLocally' flag for composite is 'true'

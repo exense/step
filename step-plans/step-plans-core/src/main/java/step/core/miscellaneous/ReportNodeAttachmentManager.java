@@ -115,27 +115,27 @@ public class ReportNodeAttachmentManager {
 	}
 
 	public void attach(Throwable e, ReportNode node) {
-		attach(exceptionToAttachment(e), "exception.log", node);
+		attach(exceptionToAttachment(e), "exception.log", "text/plain", node);
 	}
 
-	public void attach(byte[] content, String filename, ReportNode reportNode ) {
-			reportNode.addAttachment(createAttachment(content, filename));
+	public void attach(byte[] content, String filename, String mimeType, ReportNode reportNode ) {
+			reportNode.addAttachment(createAttachment(content, filename, mimeType));
 	}
 	
-	public AttachmentMeta createAttachment(byte[] content, String filename) {
+	public AttachmentMeta createAttachment(byte[] content, String filename, String mimeType) {
 		if(checkAndUpateAttachmentQuota()) {
-			return createAttachmentWithoutQuotaCheck(content, filename);
+			return createAttachmentWithoutQuotaCheck(content, filename, mimeType);
 		} else {
 			String message = String.format("The attachment %s has been skipped because the execution generated more than" +
 					" the maximum number of attachments permitted. This quota can be changed by setting the variable %s with an higher value.", filename, QUOTA_VARNAME);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Execution {} - {}", context.getExecutionId(), message);
 			}
-			return new SkippedAttachmentMeta(filename, message);
+			return new SkippedAttachmentMeta(filename, mimeType, message);
 		}
 	}
 
-	public AttachmentMeta createAttachmentWithoutQuotaCheck(byte[] content, String filename) {
+	public AttachmentMeta createAttachmentWithoutQuotaCheck(byte[] content, String filename, String mimeType) {
 		ResourceRevisionContainer container;
 		try {
 			container = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_ATTACHMENT, filename, null);
@@ -158,6 +158,7 @@ public class ReportNodeAttachmentManager {
 			AttachmentMeta attachmentMeta = new AttachmentMeta();
 			attachmentMeta.setId(resource.getId());
 			attachmentMeta.setName(resource.getResourceName());
+			attachmentMeta.setMimeType(mimeType);
 			return attachmentMeta;
 		} catch (IOException e1) {
 			throw new RuntimeException("Error while createing resource container", e1);
