@@ -35,20 +35,34 @@ import java.util.List;
 public class RestUploadingLiveMeasureSink implements LiveMeasureSink {
 
     private static final Logger logger = LoggerFactory.getLogger(RestUploadingLiveMeasureSink.class);
+    private static final int DEFAULT_BATCH_SIZE = 50;
+    private static final long DEFAULT_FLUSH_INTERVAL_MS = 1000;
+
     private final String reportingContextUrl;
     private final Client client;
+    private final BatchProcessor<Measure> batchProcessor;
 
     public RestUploadingLiveMeasureSink(String reportingContextUrl) {
+        this(reportingContextUrl, DEFAULT_BATCH_SIZE, DEFAULT_FLUSH_INTERVAL_MS);
+    }
+
+    public RestUploadingLiveMeasureSink(String reportingContextUrl, int batchSize, long flushIntervalMs) {
         this.reportingContextUrl = reportingContextUrl;
-        client = ClientBuilder.newClient().register(JacksonFeature.class);
+        this.client = ClientBuilder.newClient().register(JacksonFeature.class);
+        this.batchProcessor = new BatchProcessor<>(batchSize, flushIntervalMs, this::sendMeasures, "measure-sink");
     }
 
     @Override
     public void accept(Measure measure) {
-        // TODO Implement batching
-        try (Response post = client.target(reportingContextUrl + "/measures").request().post(Entity.entity(List.of(measure), MediaType.APPLICATION_JSON_TYPE))) {
+        batchProcessor.add(measure);
+    }
+
+    private void sendMeasures(List<Measure> measures) {
+        try (Response post = client.target(reportingContextUrl + "/measures")
+                .request()
+                .post(Entity.entity(measures, MediaType.APPLICATION_JSON_TYPE))) {
             int status = post.getStatus();
-            if(status != 204) {
+            if (status != 204) {
                 // TODO improve error handling
                 throw new RuntimeException("Error while reporting measures. The live reporting service returned " + status);
             }
@@ -57,6 +71,7 @@ public class RestUploadingLiveMeasureSink implements LiveMeasureSink {
 
     @Override
     public void close() {
+        batchProcessor.close();
         client.close();
     }
 }

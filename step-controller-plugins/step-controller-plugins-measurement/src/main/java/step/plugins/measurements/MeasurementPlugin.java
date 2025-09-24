@@ -11,6 +11,7 @@ import step.artefacts.reports.ThreadReportNode;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
@@ -21,6 +22,7 @@ import step.core.reports.Measure;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
+import step.functions.handler.MeasureTypes;
 import step.functions.io.Output;
 import step.livereporting.LiveReportingPlugin;
 
@@ -260,7 +262,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		Measurement measurement = initMeasurement(executionContext);
 		measurement.addCustomFields(functionAttributes);
 		measurement.setName(measure.getName());
-		measurement.setType(measure.getData().get(TYPE).toString());
+		measurement.setType(getMeasureTypeOrDefault(measure));
 		measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
 		measurement.setValue(measure.getDuration());
 		measurement.setBegin(measure.getBegin());
@@ -269,6 +271,18 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		enrichWithCustomData(measurement, measure.getData());
 		enrichWithAdditionalAttributes(measurement, executionContext);
 		return measurement;
+	}
+
+	private static String getMeasureTypeOrDefault(Measure measure) {
+		String type = null;
+		Map<String, Object> data = measure.getData();
+		if (data != null) {
+			type = (String) measure.getData().get(MeasureTypes.ATTRIBUTE_TYPE);
+		}
+		if(type == null) {
+			type = MeasureTypes.TYPE_CUSTOM;
+		}
+		return type;
 	}
 
 	protected Measurement initMeasurement(ExecutionContext executionContext) {
@@ -299,7 +313,11 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	private void enrichWithNodeAttributes(Measurement measurement, ReportNode node) {
 		measurement.setExecId(node.getExecutionID());
 		measurement.addCustomField(RN_ID, node.getId().toString());
-		measurement.setStatus(node.getStatus().toString());
+		ReportNodeStatus nodeStatus = node.getStatus();
+		// For live measures, the status is still RUNNING. In this case, we don't persist it at all
+		if(nodeStatus != ReportNodeStatus.RUNNING) {
+			measurement.setStatus(nodeStatus.toString());
+		}
 	}
 
 	private void enrichWithCustomData(Measurement measurement, Map<String, Object> data) {
