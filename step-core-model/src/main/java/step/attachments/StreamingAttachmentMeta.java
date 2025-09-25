@@ -13,7 +13,6 @@ public class StreamingAttachmentMeta extends AttachmentMeta {
         FAILED,
     }
 
-    private String mimeType;
     private Long currentSize;
     private Long currentNumberOfLines;
     private Status status;
@@ -25,14 +24,6 @@ public class StreamingAttachmentMeta extends AttachmentMeta {
     public StreamingAttachmentMeta(ObjectId id, String name, String mimeType) {
         super(id);
         this.name = name;
-        this.mimeType = mimeType;
-    }
-
-    public String getMimeType() {
-        return mimeType;
-    }
-
-    public void setMimeType(String mimeType) {
         this.mimeType = mimeType;
     }
 

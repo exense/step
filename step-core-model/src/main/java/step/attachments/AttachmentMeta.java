@@ -37,6 +37,8 @@ public class AttachmentMeta {
 	
 	String name;
 
+	String mimeType;
+
 	public AttachmentMeta(ObjectId id) {
 		super();
 		_id = id;
@@ -63,4 +65,11 @@ public class AttachmentMeta {
 		this.name = name;
 	}
 
+	public String getMimeType() {
+		return mimeType;
+	}
+
+	public void setMimeType(String mimeType) {
+		this.mimeType = mimeType;
+	}
 }
