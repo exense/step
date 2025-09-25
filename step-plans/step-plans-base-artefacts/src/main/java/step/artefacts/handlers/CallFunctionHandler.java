@@ -249,7 +249,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 						@Override
 						public void onResourceCreationRefused(StreamingResourceMetadata metadata, String reasonPhrase) {
-							node.getAttachments().add(new SkippedAttachmentMeta(metadata.getFilename(), reasonPhrase));
+							node.getAttachments().add(new SkippedAttachmentMeta(metadata.getFilename(), metadata.getMimeType(), reasonPhrase));
 							reportNodeAccessor.save(node);
 						}
 
@@ -321,7 +321,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 				if(output.getAttachments()!=null) {
 					for(Attachment a:output.getAttachments()) {
-						AttachmentMeta attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+						AttachmentMeta attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName(), a.getMimeType());
 						node.addAttachment(attachmentMeta);
 					}
 				}
