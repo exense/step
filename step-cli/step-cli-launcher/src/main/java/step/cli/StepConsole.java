@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageFromFolderProvider;
 import step.automation.packages.AutomationPackageReadingException;
 import step.client.controller.ControllerServicesClient;
@@ -234,14 +235,14 @@ public class StepConsole implements Callable<Integer> {
 
             private void checkApFolder(File param) throws IOException {
                 // keyword library is not required here, because we only need to check the automation package descriptor
-                try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param, null)) {
-                    try {
-                        if (!apProvider.getAutomationPackageArchive().hasAutomationPackageDescriptor()) {
-                            throw new StepCliExecutionException("The AP folder " + param.getAbsolutePath() + " doesn't contain the AP descriptor file");
-                        }
-                    } catch (AutomationPackageReadingException e) {
-                        throw new StepCliExecutionException("Unable to read automation package from folder " + param.getAbsolutePath(), e);
+                try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param, null);
+                     AutomationPackageArchive apArchive = apProvider.getAutomationPackageArchive()) {
+                    if (!apArchive.hasAutomationPackageDescriptor()) {
+                        throw new StepCliExecutionException("The AP folder " + param.getAbsolutePath() + " doesn't contain the AP descriptor file");
                     }
+                } catch (AutomationPackageReadingException e) {
+                    throw new StepCliExecutionException("Unable to read automation package from folder " + param.getAbsolutePath(), e);
+
                 }
             }
 

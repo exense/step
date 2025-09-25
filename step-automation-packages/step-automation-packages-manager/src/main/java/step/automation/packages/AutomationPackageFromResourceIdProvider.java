@@ -32,19 +32,19 @@ import java.util.List;
 
 public class AutomationPackageFromResourceIdProvider extends AbstractAutomationPackageFromResourceIdProvider implements AutomationPackageArchiveProvider {
 
-    private final AutomationPackageArchive archive;
+    private final AutomationPackageKeywordLibraryProvider keywordLibraryProvider;
 
     public AutomationPackageFromResourceIdProvider(ResourceManager resourceManager, String resourceId, AutomationPackageKeywordLibraryProvider keywordLibraryProvider) {
         super(resourceManager, resourceId);
-        try {
-            this.archive = new AutomationPackageArchive(resource.getResourceFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
-        } catch (AutomationPackageReadingException e) {
-            throw new AutomationPackageManagerException("Unable to load automation package by resource id: " + resourceId);
-        }
+        this.keywordLibraryProvider = keywordLibraryProvider;
     }
 
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-        return archive;
+        try {
+            return new AutomationPackageArchive(resource.getResourceFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
+        } catch (AutomationPackageReadingException e) {
+            throw new AutomationPackageManagerException("Unable to load automation package by resource id: " + resourceId);
+        }
     }
 }

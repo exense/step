@@ -167,10 +167,10 @@ public class AutomationPackageArchive implements Closeable {
     @Override
     public void close() throws IOException {
         if (internalClassLoader && this.classLoaderForMainApFile instanceof Closeable) {
-            IOUtils.closeQuietly(((Closeable) this.classLoaderForMainApFile));
+            IOUtils.closeQuietly(((Closeable) this.classLoaderForMainApFile), e -> log.warn("Unable to close the classloader for AP file", e));
         }
         if (internalClassLoader && this.classLoaderForApAndLibraries instanceof Closeable) {
-            IOUtils.closeQuietly(((Closeable) this.classLoaderForApAndLibraries));
+            IOUtils.closeQuietly(((Closeable) this.classLoaderForApAndLibraries), e -> log.warn("Unable to close the classloader for keyword lib", e));
         }
     }
 

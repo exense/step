@@ -412,127 +412,124 @@ public class AutomationPackageManager {
                                                                          AutomationPackageKeywordLibraryProvider keywordLibraryProvider,
                                                                          String actorUser,
                                                                          boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) throws AutomationPackageManagerException, AutomationPackageCollisionException {
-        AutomationPackageArchive automationPackageArchive;
-        AutomationPackageContent packageContent;
 
-        AutomationPackage newPackage = null;
-        try {
-            automationPackageArchive = automationPackageProvider.getAutomationPackageArchive();
-            packageContent = readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
-        } catch (AutomationPackageReadingException e) {
-            throw new AutomationPackageManagerException("Unable to read automation package. Cause: " + e.getMessage(), e);
-        }
+        try (AutomationPackageArchive automationPackageArchive = automationPackageProvider.getAutomationPackageArchive()) {
+            AutomationPackage newPackage;
+            AutomationPackageContent packageContent = readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
 
-        AutomationPackage oldPackage;
-        if (explicitOldId != null) {
-            oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
+            AutomationPackage oldPackage;
+            if (explicitOldId != null) {
+                oldPackage = getAutomationPackageById(explicitOldId, objectPredicate);
 
-            String newName = packageContent.getName();
-            String oldName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
-            if (!Objects.equals(newName, oldName)) {
-                // the package with the same name shouldn't exist
-                AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
+                String newName = packageContent.getName();
+                String oldName = oldPackage.getAttribute(AbstractOrganizableObject.NAME);
+                if (!Objects.equals(newName, oldName)) {
+                    // the package with the same name shouldn't exist
+                    AutomationPackage existingPackageWithSameName = getAutomationPackageByName(newName, objectPredicate);
 
-                if (existingPackageWithSameName != null) {
-                    throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
-                            + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
+                    if (existingPackageWithSameName != null) {
+                        throw new AutomationPackageManagerException("Unable to change the package name to '" + newName
+                                + "'. Package with the same name already exists (" + existingPackageWithSameName.getId().toString() + ")");
+                    }
+                }
+            } else {
+                oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
+            }
+            if (!allowUpdate && oldPackage != null) {
+                throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
+            }
+            if (!allowCreate && oldPackage == null) {
+                throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
+            }
+
+            // validate if we have the APs with same origin
+            ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
+
+            ConflictingAutomationPackages conflictingAutomationPackages;
+            if (checkForSameOrigin) {
+                conflictingAutomationPackages = findConflictingAutomationPackages(keywordLibraryProvider, automationPackageProvider, oldPackage, objectPredicate);
+            } else {
+                conflictingAutomationPackages = new ConflictingAutomationPackages();
+            }
+
+            if (!allowUpdateOfOtherPackages) {
+                if (conflictingAutomationPackages.apWithSameOriginExists() || conflictingAutomationPackages.apWithSameKeywordLibExists()) {
+                    throw new AutomationPackageCollisionException(conflictingAutomationPackages.getApWithSameOrigin(), conflictingAutomationPackages.getApWithSameKeywordLib());
                 }
             }
-        } else {
-            oldPackage = getAutomationPackageByName(packageContent.getName(), objectPredicate);
-        }
-        if (!allowUpdate && oldPackage != null) {
-            throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' already exists");
-        }
-        if (!allowCreate && oldPackage == null) {
-            throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
-        }
 
-        // validate if we have the APs with same origin
-        ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
+            // keep old package id
+            newPackage = createNewInstance(
+                    automationPackageArchive.getOriginalFileName(),
+                    packageContent, apVersion, activationExpr, oldPackage, enricher, actorUser
+            );
 
-        ConflictingAutomationPackages conflictingAutomationPackages;
-        if (checkForSameOrigin) {
-            conflictingAutomationPackages = findConflictingAutomationPackages(keywordLibraryProvider, automationPackageProvider, oldPackage, objectPredicate);
-        } else {
-            conflictingAutomationPackages = new ConflictingAutomationPackages();
-        }
-
-        if (!allowUpdateOfOtherPackages) {
-            if (conflictingAutomationPackages.apWithSameOriginExists() || conflictingAutomationPackages.apWithSameKeywordLibExists()) {
-                throw new AutomationPackageCollisionException(conflictingAutomationPackages.getApWithSameOrigin(), conflictingAutomationPackages.getApWithSameKeywordLib());
+            // prepare staging collections
+            AutomationPackageStaging staging = createStaging();
+            List<ObjectEnricher> enrichers = new ArrayList<>();
+            if (enricher != null) {
+                enrichers.add(enricher);
             }
-        }
+            enrichers.add(new AutomationPackageLinkEnricher(newPackage.getId().toString()));
 
-        // keep old package id
-        newPackage = createNewInstance(
-                automationPackageArchive.getOriginalFileName(),
-                packageContent, apVersion, activationExpr, oldPackage, enricher, actorUser
-        );
+            // we enrich all included entities with automation package id
+            ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
 
-        // prepare staging collections
-        AutomationPackageStaging staging = createStaging();
-        List<ObjectEnricher> enrichers = new ArrayList<>();
-        if (enricher != null) {
-            enrichers.add(enricher);
-        }
-        enrichers.add(new AutomationPackageLinkEnricher(newPackage.getId().toString()));
+            // always upload the automation package file as resource
+            // NOTE: for the main ap resource don't need to enrich the resource with automation package id (because the same resource can be shared between several automation packages) - so we use simple enricher
+            uploadApResourceIfRequired(automationPackageProvider, automationPackageArchive, newPackage, apOrigin, enricher, actorUser, objectPredicate);
 
-        // we enrich all included entities with automation package id
-        ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
+            // upload keyword library if provided
+            // NOTE: for keyword lib we don't need to enrich the resource with automation package id (because the same lib can be shared between several automation packages) - so we use simple enricher
+            String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibraryProvider, newPackage, packageContent.getName(), enricher, objectPredicate, actorUser);
 
-        // always upload the automation package file as resource
-        // NOTE: for the main ap resource don't need to enrich the resource with automation package id (because the same resource can be shared between several automation packages) - so we use simple enricher
-        uploadApResourceIfRequired(automationPackageProvider, automationPackageArchive, newPackage, apOrigin, enricher, actorUser, objectPredicate);
+            fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, keywordLibraryResourceString, actorUser, objectPredicate);
 
-        // upload keyword library if provided
-        // NOTE: for keyword lib we don't need to enrich the resource with automation package id (because the same lib can be shared between several automation packages) - so we use simple enricher
-        String keywordLibraryResourceString = uploadKeywordLibrary(keywordLibraryProvider, newPackage, packageContent.getName(), enricher, objectPredicate, actorUser);
+            // persist and activate automation package
+            log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
+            boolean immediateWriteLock = tryObtainImmediateWriteLock(newPackage);
+            try {
+                if (oldPackage == null || !async || immediateWriteLock) {
+                    //If not async or if it's a new package, we synchronously wait on a write lock and update
+                    log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
+                    ObjectId result = updateAutomationPackage(oldPackage, newPackage,
+                            packageContent, staging, enricherForIncludedEntities,
+                            immediateWriteLock, automationPackageArchive, keywordLibraryResourceString, actorUser,
+                            conflictingAutomationPackages.getApWithSameOrigin(), automationPackageProvider, keywordLibraryProvider, enricher, objectPredicate);
+                    return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result, conflictingAutomationPackages);
+                } else {
+                    // async update
+                    log.info("Updating the automation package " + newPackage.getId().toString() + " asynchronously due to running execution(s).");
+                    newPackage.setStatus(AutomationPackageStatus.DELAYED_UPDATE);
+                    automationPackageAccessor.save(newPackage);
+                    AutomationPackage finalNewPackage = newPackage;
 
-        fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, keywordLibraryResourceString, actorUser, objectPredicate);
-
-        // persist and activate automation package
-        log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
-        boolean immediateWriteLock = tryObtainImmediateWriteLock(newPackage);
-        try {
-            if (oldPackage == null || !async || immediateWriteLock) {
-                //If not async or if it's a new package, we synchronously wait on a write lock and update
-                log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
-                ObjectId result = updateAutomationPackage(oldPackage, newPackage,
-                        packageContent, staging, enricherForIncludedEntities,
-                        immediateWriteLock, automationPackageArchive, keywordLibraryResourceString, actorUser,
-                        conflictingAutomationPackages.getApWithSameOrigin(), automationPackageProvider, keywordLibraryProvider, enricher, objectPredicate);
-                return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result, conflictingAutomationPackages);
-            } else {
-                // async update
-                log.info("Updating the automation package " + newPackage.getId().toString() + " asynchronously due to running execution(s).");
-                newPackage.setStatus(AutomationPackageStatus.DELAYED_UPDATE);
-                automationPackageAccessor.save(newPackage);
-                AutomationPackage finalNewPackage = newPackage;
-
-                // copy to the final variable to use it in lambda expression
-                delayedUpdateExecutor.submit(() -> {
-                    try {
-                        updateAutomationPackage(
-                                oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities,
-                                false, automationPackageArchive, keywordLibraryResourceString, actorUser,
-                                conflictingAutomationPackages.getApWithSameOrigin(), automationPackageProvider,
-                                keywordLibraryProvider, enricher, objectPredicate
-                        );
-                    } catch (Exception e) {
-                        log.error("Exception on delayed AP update", e);
-                    }
-                });
-                return new AutomationPackageUpdateResult(
-                        AutomationPackageUpdateStatus.UPDATE_DELAYED,
-                        newPackage.getId(),
-                        conflictingAutomationPackages
-                );
+                    // copy to the final variable to use it in lambda expression
+                    delayedUpdateExecutor.submit(() -> {
+                        try {
+                            updateAutomationPackage(
+                                    oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities,
+                                    false, automationPackageArchive, keywordLibraryResourceString, actorUser,
+                                    conflictingAutomationPackages.getApWithSameOrigin(), automationPackageProvider,
+                                    keywordLibraryProvider, enricher, objectPredicate
+                            );
+                        } catch (Exception e) {
+                            log.error("Exception on delayed AP update", e);
+                        }
+                    });
+                    return new AutomationPackageUpdateResult(
+                            AutomationPackageUpdateStatus.UPDATE_DELAYED,
+                            newPackage.getId(),
+                            conflictingAutomationPackages
+                    );
+                }
+            } finally {
+                if (immediateWriteLock) {
+                    releaseWriteLock(newPackage);
+                }
             }
-        } finally {
-            if (immediateWriteLock) {
-                releaseWriteLock(newPackage);
-            }
+        } catch (AutomationPackageReadingException | IOException e) {
+            throw new AutomationPackageManagerException("Unable to read automation package. Cause: " + e.getMessage(), e);
         }
     }
 

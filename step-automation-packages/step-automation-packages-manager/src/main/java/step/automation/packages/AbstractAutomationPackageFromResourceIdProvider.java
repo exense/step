@@ -36,8 +36,6 @@ public class AbstractAutomationPackageFromResourceIdProvider implements Automati
 
     public AbstractAutomationPackageFromResourceIdProvider(ResourceManager resourceManager, String resourceId) {
         this.resourceId = resourceId;
-
-
         this.resource = resourceManager.getResourceFile(resourceId);
         if (resource == null) {
             throw new AutomationPackageManagerException("Automation package archive hasn't been found by ID: " + resourceId);

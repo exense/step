@@ -54,9 +54,7 @@ import step.plugins.jmeter.JMeterFunctionType;
 import step.plugins.node.NodeFunction;
 import step.plugins.node.NodeFunctionType;
 import step.repositories.artifact.ResolvedMavenArtifact;
-import step.resources.LocalResourceManagerImpl;
-import step.resources.Resource;
-import step.resources.ResourceRevisionFileHandle;
+import step.resources.*;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -358,7 +356,6 @@ public class AutomationPackageManagerOSTest {
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
             result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, fileName), null, null, null, "testUser", false, true, null, null);
-            AutomationPackage storedPackage = automationPackageAccessor.get(result);
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(1, storedPlans.size());
@@ -391,7 +388,6 @@ public class AutomationPackageManagerOSTest {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/step-automation-packages.zip")) {
             ObjectId result;
             result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, "step-automation-packages.zip"), null, null, null, "testUser", false, true, null, null);
-            AutomationPackage storedPackage = automationPackageAccessor.get(result);
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(4, storedPlans.size());
@@ -748,7 +744,7 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
-    public void testApSnapshotReupload() throws IOException {
+    public void testApSnapshotReupload() throws IOException, InterruptedException {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File updatedAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_EXTENDED_FILE_NAME);
         File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
@@ -800,6 +796,8 @@ public class AutomationPackageManagerOSTest {
 
         Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
         Assert.assertNotNull(updatedFunction);
+
+        checkResourceCleanup(FileResolver.resolveResourceId(ap2.getAutomationPackageResource()), ap2Revision, null, null);
     }
 
     @Test
@@ -828,7 +826,7 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
-    public void testUploadByResourceId() throws IOException {
+    public void testReuseApByResourceId() throws IOException {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
 
@@ -851,7 +849,12 @@ public class AutomationPackageManagerOSTest {
         // check used AP resource
         AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
         Resource ap1Resource = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getAutomationPackageResource()));
+        ResourceRevisionFileHandle ap1File = resourceManager.getResourceFile(ap1Resource.getId().toHexString());
+        Assert.assertNotNull(ap1File);
+
         Resource kwLibResource = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getKeywordLibraryResource()));
+        ResourceRevisionFileHandle kwLibFile = resourceManager.getResourceFile(kwLibResource.getId().toHexString());
+        Assert.assertNotNull(kwLibFile);
 
         // upload main AP (by resource id) + SNAPSHOT LIB (by resource id) - VERSION 2
         AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(
@@ -869,7 +872,61 @@ public class AutomationPackageManagerOSTest {
         // the resources have been reused
         Assert.assertEquals(ap1.getAutomationPackageResource(), ap2.getAutomationPackageResource());
         Assert.assertEquals(ap1.getKeywordLibraryResource(), ap2.getKeywordLibraryResource());
-     }
+
+        // TODO: fix cleanup
+//        checkResourceCleanup(ap1Resource.getId().toHexString(), ap1File, kwLibResource.getId().toHexString(), kwLibFile);
+    }
+
+    @Test
+    public void testCreateAutomationPackageByResourceId() {
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+
+        Resource savedApResource;
+        Resource savedkwResource;
+        try (InputStream is = new FileInputStream(automationPackageJar);
+             InputStream kwIs = new FileInputStream(kwLibSnapshotJar);) {
+            savedApResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_AP, is, SAMPLE1_FILE_NAME, null, "testUser");
+            savedkwResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_AP_LIBRARY, kwIs, KW_LIB_FILE_NAME, null, "testUser");
+        } catch (IOException | InvalidResourceFormatException e) {
+            throw new RuntimeException("Unexpected exception", e);
+        }
+
+        // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
+        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(
+                true, true, null,
+                AutomationPackageFileSource.withResourceId(savedApResource.getId().toHexString()),
+                AutomationPackageFileSource.withResourceId(savedkwResource.getId().toHexString()),
+                "v1", null, null, null, false, "testUser",
+                true, true
+        );
+
+        AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
+
+        // the resources have been reused
+        Assert.assertEquals(savedApResource.getId().toHexString(), FileResolver.resolveResourceId(ap1.getAutomationPackageResource()));
+        Assert.assertEquals(savedkwResource.getId().toHexString(), FileResolver.resolveResourceId(ap1.getKeywordLibraryResource()));
+
+        ResourceRevisionFileHandle apFile = resourceManager.getResourceFile(savedApResource.getId().toHexString());
+        ResourceRevisionFileHandle kwLibFile = resourceManager.getResourceFile(savedkwResource.getId().toHexString());
+
+        // TODO: fix cleanup
+//        checkResourceCleanup(savedApResource.getId().toHexString(), apFile, savedkwResource.getId().toHexString(), kwLibFile);
+    }
+
+    private void checkResourceCleanup(String apResourceId, ResourceRevisionFileHandle ap1File,
+                                      String kwLibResourceId, ResourceRevisionFileHandle kwLibFile) {
+        // check that all used can be deleted (not blocked)
+        log.info("Delete AP resource: {}", apResourceId);
+        resourceManager.deleteResource(apResourceId);
+        Assert.assertFalse(ap1File.getResourceFile().exists());
+
+        if (kwLibResourceId != null) {
+            log.info("Delete keyword resource: {}", kwLibResourceId);
+            resourceManager.deleteResource(kwLibResourceId);
+            Assert.assertFalse(kwLibFile.getResourceFile().exists());
+        }
+    }
 
     private void checkResources(AutomationPackage ap1, String expectedApFileName, String expectedKwFileName,
                                 String expectedApOrigin, String expectedKwOrigin) {
