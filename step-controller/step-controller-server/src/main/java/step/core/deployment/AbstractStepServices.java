@@ -112,15 +112,27 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 	/**
 	 * The ObjectHookInterceptor.aroundReadFrom can only be used for POST request passing an entity as request BODY
 	 * This method can be used as helper for all other cases where checking if the entity is acceptable in given context (i.e. DELETE request...(
+	 *
 	 * @param entity the entity to be asserted
 	 */
 	protected void assertEntityIsAcceptableInContext(AbstractIdentifiableObject entity) {
-		if(entity instanceof EnricheableObject) {
+		if (!isEntityAcceptableInContext(entity)) {
+			throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "Authorization error", getPermissionDeniedMessage());
+		}
+	}
+
+	protected String getPermissionDeniedMessage() {
+		return "You're not allowed to edit this object from within this context";
+	}
+
+	protected boolean isEntityAcceptableInContext(AbstractIdentifiableObject entity) {
+		if (entity instanceof EnricheableObject) {
 			EnricheableObject enricheableObject = (EnricheableObject) entity;
 			Session session = getSession();
 			if (!objectHookRegistry.isObjectAcceptableInContext(session, enricheableObject)) {
-				throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "Authorization error", "You're not allowed to edit this object from within this context");
+				return false;
 			}
 		}
+		return true;
 	}
 }

@@ -21,7 +21,6 @@ package step.cli;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageFileSource;
 import step.automation.packages.AutomationPackageFromInputStreamProvider;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageReadingException;
@@ -71,7 +70,7 @@ public class ApLocalExecuteCommandHandler {
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName(), kwFromInputStreamProvider);
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         false, true, null, automationPackageProvider, null, null,
-                        true, null, null, false, kwFromInputStreamProvider, null,
+                        true, null, null, null, false, kwFromInputStreamProvider, null,
                         false, true).getId();
 
                 PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);

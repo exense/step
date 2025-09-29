@@ -197,8 +197,8 @@ public class AutomationPackageManagerOSTest {
         // 2. Update the package - some entities are updated, some entities are added
         AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
                 true, true, null, extendedFileSource,
-                null, null, null, null, null, false, "testUser",
-                false, true);
+                null, null, null, null, null, null, false,
+                "testUser", false, true);
         Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
         ObjectId resultId = result.getId();
 
@@ -278,7 +278,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(r.storedTask.getId(), r2.storedTask.getId());
 
         // 4. Delete package by name - everything should be removed
-        manager.removeAutomationPackage(r2.storedPackage.getId(), "testUser", null);
+        manager.removeAutomationPackage(r2.storedPackage.getId(), "testUser", null, null);
 
         Assert.assertEquals(0, automationPackageAccessor.stream().count());
 
@@ -298,14 +298,14 @@ public class AutomationPackageManagerOSTest {
             SampleUploadingResult r = uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is, SAMPLE1_FILE_NAME), true, false, false);
 
             // 2. Update package metadata - change version
-            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver1", null, null);
+            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver1", null, null, null);
 
             AutomationPackage actualAp = automationPackageAccessor.get(r.storedPackage.getId());
             Assert.assertEquals("ver1", actualAp.getVersion());
             Assert.assertEquals("My package.ver1", actualAp.getAttribute(AbstractOrganizableObject.NAME));
 
             // 3. Update version again and add some activation expression
-            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver2", "true == true", null);
+            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver2", "true == true", null, null);
             actualAp = automationPackageAccessor.get(r.storedPackage.getId());
             Assert.assertEquals("ver2", actualAp.getVersion());
             Assert.assertEquals("My package.ver2", actualAp.getAttribute(AbstractOrganizableObject.NAME));
@@ -325,7 +325,7 @@ public class AutomationPackageManagerOSTest {
             }
 
             // 4. remove version and activation expression
-            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), null, null, null);
+            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), null, null, null, null);
 
             actualAp = automationPackageAccessor.get(r.storedPackage.getId());
             Assert.assertEquals("My package", actualAp.getAttribute(AbstractOrganizableObject.NAME));
@@ -505,9 +505,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(echoSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, null, false, "testUser",
-                false, true
-        );
+                null, null, null, null, null, false,
+                "testUser", false,
+                true);
 
         AutomationPackageUpdateResult ap1Result;
         try {
@@ -516,9 +516,9 @@ public class AutomationPackageManagerOSTest {
                     true, true, null,
                     AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                     AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                    null, null, null, null, false, "testUser",
-                    false, true
-            );
+                    null, null, null, null, null, false,
+                    "testUser", false,
+                    true);
             Assert.fail("Exception hasn't been thrown");
         } catch (AutomationPackageCollisionException ex){
             log.info("{}", ex.getMessage());
@@ -531,9 +531,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, null, false, "testUser",
-                true, true
-        );
+                null, null, null, null, null, false,
+                "testUser", true,
+                true);
         Assert.assertEquals(List.of(echoApResult.getId()), ap1Result.getConflictingAutomationPackages().getApWithSameKeywordLib());
         Assert.assertTrue(ap1Result.getConflictingAutomationPackages().getApWithSameOrigin().isEmpty());
 
@@ -576,9 +576,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, null, false, "testUser",
-                false, true
-        );
+                null, null, null, null, null, false,
+                "testUser", false,
+                true);
 
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
@@ -592,9 +592,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(echoRelease),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibRelease),
-                null, null, null, null, false, "testUser",
-                false, true
-        );
+                null, null, null, null, null, false,
+                "testUser", false,
+                true);
 
         AutomationPackage apEcho = automationPackageAccessor.get(result.getId());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
@@ -612,9 +612,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(echoRelease),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibRelease),
-                null, null, null, null, false, "testUser",
-                false, true
-        );
+                null, null, null, null, null, false,
+                "testUser", false,
+                true);
         apEcho = automationPackageAccessor.get(result.getId());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
@@ -629,9 +629,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(extSampleRelease),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibRelease),
-                null, null, null, null, false, "testUser",
-                false, true
-        );
+                null, null, null, null, null, false,
+                "testUser", false,
+                true);
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
 
@@ -665,9 +665,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(echoRelease),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, null, false, "testUser",
-                false, true
-        );
+                null, null, null, null, null, false,
+                "testUser", false,
+                true);
         log.info("Echo AP: {}", resultEcho.getId());
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1 (WITHOUT CHECK FOR DUPLICATES)
@@ -675,9 +675,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, null, false, "testUser",
-                false, false
-        );
+                "v1", null, null, null, null, false,
+                "testUser", false,
+                false);
         log.info("AP v1: {}", resultV1.getId());
 
         // imitate the snapshot update
@@ -689,9 +689,9 @@ public class AutomationPackageManagerOSTest {
                     true, true, null,
                     AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                     AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                    "v2", null, null, null, false, "testUser",
-                    false, true
-            );
+                    "v2", null, null, null, null, false,
+                    "testUser", false,
+                    true);
             fail();
         } catch (AutomationPackageCollisionException ex){
             // both packages reuse the same keyword lib
@@ -706,9 +706,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v2", null, null, null, false, "testUser",
-                true, true
-        );
+                "v2", null, null, null, null, false,
+                "testUser", true,
+                true);
 
         // there is no exception, but we generate warning messages about APs sharing the same resources
         // both packages reuse the same keyword lib
@@ -761,9 +761,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, null, false, "testUser",
-                true, true
-        );
+                "v1", null, null, null, null, false,
+                "testUser", true,
+                true);
 
         // check used AP resource
         AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
@@ -778,9 +778,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, null, false, "testUser",
-                true, true
-        );
+                "v1", null, null, null, null, false,
+                "testUser", true,
+                true);
         AutomationPackage ap2 = automationPackageAccessor.get(result2.getId());
 
         // the automation package should use updated snapshot content
@@ -817,9 +817,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, null, false, "testUser",
-                true, true
-        );
+                null, null, null, null, null, false,
+                "testUser", true,
+                true);
 
         // deploy should not fail
         Assert.assertEquals(AutomationPackageUpdateStatus.CREATED, result.getStatus());
@@ -842,9 +842,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, null, false, "testUser",
-                true, true
-        );
+                "v1", null, null, null, null, false,
+                "testUser", true,
+                true);
 
         // check used AP resource
         AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
@@ -861,9 +861,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withResourceId(ap1Resource.getId().toHexString()),
                 AutomationPackageFileSource.withResourceId(kwLibResource.getId().toHexString()),
-                "v2", null, null, null, false, "testUser",
-                true, true
-        );
+                "v2", null, null, null, null, false,
+                "testUser", true,
+                true);
 
         // AP reuses old resource, but have new ID
         AutomationPackage ap2 = automationPackageAccessor.get(result2.getId());
@@ -897,9 +897,9 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withResourceId(savedApResource.getId().toHexString()),
                 AutomationPackageFileSource.withResourceId(savedkwResource.getId().toHexString()),
-                "v1", null, null, null, false, "testUser",
-                true, true
-        );
+                "v1", null, null, null, null, false,
+                "testUser", true,
+                true);
 
         AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
 
@@ -961,8 +961,8 @@ public class AutomationPackageManagerOSTest {
         } else {
             AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null,
                     sample1FileSource,
-                    null, null, null, null, null, async, "testUser",
-                    false, true);
+                    null, null, null, null, null, null, async,
+                    "testUser", false, true);
             if (async && expectedDelay) {
                 Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
             } else {

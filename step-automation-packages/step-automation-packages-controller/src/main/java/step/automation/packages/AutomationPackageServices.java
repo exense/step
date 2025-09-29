@@ -27,6 +27,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.http.HttpStatus;
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
@@ -97,7 +98,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
             assertEntityIsAcceptableInContext(automationPackage);
-            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),getObjectPredicate());
+            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),getObjectPredicate(), createAccessChecker());
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -247,9 +250,10 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public void updateAutomationPackageMetadata(@PathParam("id") String id,
                                                 @QueryParam("activationExpr") String activationExpression,
                                                 @QueryParam("version") String apVersion) {
-        checkAutomationPackageAcceptable(id);
         try {
-            automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate());
+            automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate(), createAccessChecker());
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -273,7 +277,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet,
                                                                  @FormDataParam("apResourceId") String apResourceId,
                                                                  @FormDataParam("keywordLibraryResourceId") String keywordLibraryResourceId) {
-        checkAutomationPackageAcceptable(id);
         try {
             AutomationPackageFileSource apFileSource = getFileSource(
                     uploadedInputStream, fileDetail,
@@ -290,8 +293,10 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     true, false, new ObjectId(id),
                     apFileSource, keywordLibrarySource,
                     apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), async != null && async, getUser(),
-                    allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
+                    getObjectEnricher(), getObjectPredicate(), createAccessChecker(), async != null && async,
+                    getUser(), allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
+        } catch (AutomationPackageAccessException ex) {
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageCollisionException e) {
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
         } catch (AutomationPackageManagerException e) {
@@ -316,18 +321,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             throw new ControllerServiceException(invalidSnippetErrorText + e.getMessage());
         }
         return automationPackageFileSource;
-    }
-
-    private void checkAutomationPackageAcceptable(String id) {
-        AutomationPackage automationPackage = null;
-        try {
-            automationPackage = getAutomationPackage(id);
-        } catch (Exception e) {
-            //getAutomationPackage throws exception if the package doesn't exist, whether this is an errors is managed in below createOrUpdateAutomationPackage
-        }
-        if (automationPackage != null) {
-            assertEntityIsAcceptableInContext(automationPackage);
-        }
     }
 
     @PUT
@@ -363,8 +356,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     apFileSource,
                     keywordLibrarySource,
                     apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), async != null && async, getUser(),
-                    allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
+                    getObjectEnricher(), getObjectPredicate(), createAccessChecker(), async != null && async,
+                    getUser(), allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(Response.Status.CREATED);
@@ -372,6 +365,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 responseBuilder = Response.status(Response.Status.OK);
             }
             return responseBuilder.entity(result).build();
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageCollisionException e){
             ControllerServiceException ex = new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
             // to avoid stack trace in ErrorFilter
@@ -408,6 +403,14 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         Consumer<String> consumer = this::deleteSingleAutomationPackage;
         return scheduleAsyncTaskWithinSessionContext(h ->
                 tableService.performBulkOperation(AutomationPackageEntity.entityName, request, consumer, getSession()));
+    }
+
+    protected AutomationPackageAccessChecker createAccessChecker() {
+        return automationPackage -> {
+            if(!isEntityAcceptableInContext(automationPackage)){
+                throw new AutomationPackageAccessException(automationPackage, getPermissionDeniedMessage());
+            }
+        };
     }
 
 }

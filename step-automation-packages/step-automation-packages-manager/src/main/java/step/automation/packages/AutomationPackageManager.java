@@ -278,8 +278,12 @@ public class AutomationPackageManager {
         return stream;
     }
 
-    public void removeAutomationPackage(ObjectId id, String actorUser, ObjectPredicate objectPredicate) {
+    /**
+     * @throws AutomationPackageAccessException if the automation package is not acceptable in current context
+     */
+    public void removeAutomationPackage(ObjectId id, String actorUser, ObjectPredicate objectPredicate, AutomationPackageAccessChecker accessChecker) throws AutomationPackageManagerException, AutomationPackageAccessException {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
+        checkAccess(automationPackage, accessChecker);
         String automationPackageId = automationPackage.getId().toHexString();
         if (automationPackageLocks.tryWriteLock(automationPackageId)) {
             try {
@@ -320,17 +324,18 @@ public class AutomationPackageManager {
                                             ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
         return createOrUpdateAutomationPackage(false, true, null,
                 apSource, keywordLibrarySource,
-                apVersion, activationExpr, enricher, objectPredicate, false, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin).getId();
+                apVersion, activationExpr, enricher, objectPredicate, null,false, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin).getId();
     }
 
     /**
      * Creates new or updates the existing automation package
      *
-     * @param allowUpdate     whether update existing package is allowed
-     * @param allowCreate     whether create new package is allowed
-     * @param explicitOldId   the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
-     * @param enricher        the enricher used to fill all stored objects (for instance, with product id for multitenant application)
-     * @param objectPredicate the filter for automation package
+     * @param allowUpdate                whether update existing package is allowed
+     * @param allowCreate                whether create new package is allowed
+     * @param explicitOldId              the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
+     * @param enricher                   the enricher used to fill all stored objects (for instance, with product id for multitenant application)
+     * @param objectPredicate            the filter for automation package
+     * @param accessChecker
      * @param actorUser
      * @param allowUpdateOfOtherPackages
      * @return the id of created/updated package
@@ -341,19 +346,23 @@ public class AutomationPackageManager {
                                                                          AutomationPackageFileSource keywordLibrarySource,
                                                                          String apVersion, String activationExpr,
                                                                          ObjectEnricher enricher, ObjectPredicate objectPredicate,
-                                                                         boolean async, String actorUser, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) throws AutomationPackageManagerException {
+                                                                         AutomationPackageAccessChecker accessChecker,
+                                                                         boolean async, String actorUser,
+                                                                         boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) throws AutomationPackageManagerException, AutomationPackageAccessException {
         try {
             try (AutomationPackageKeywordLibraryProvider kwLibProvider = getKeywordLibraryProvider(keywordLibrarySource, objectPredicate);
                  AutomationPackageArchiveProvider provider = getAutomationPackageArchiveProvider(apSource, objectPredicate, kwLibProvider)) {
-                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, async, kwLibProvider, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin);
+                return createOrUpdateAutomationPackage(allowUpdate, allowCreate, explicitOldId, provider, apVersion, activationExpr, false, enricher, objectPredicate, accessChecker, async, kwLibProvider, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin);
             }
         } catch (IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
         }
     }
 
-    public void updateAutomationPackageMetadata(ObjectId id, String apVersion, String activationExpr, ObjectPredicate objectPredicate) {
+    public void updateAutomationPackageMetadata(ObjectId id, String apVersion, String activationExpr, ObjectPredicate objectPredicate, AutomationPackageAccessChecker accessChecker) {
         AutomationPackage ap = getAutomationPackageById(id, objectPredicate);
+        checkAccess(ap, accessChecker);
+
         String newApName;
 
         String oldApVersion = ap.getVersion();
@@ -391,12 +400,13 @@ public class AutomationPackageManager {
     /**
      * Creates new or updates the existing automation package
      *
-     * @param allowUpdate               whether update existing package is allowed
-     * @param allowCreate               whether create new package is allowed
-     * @param explicitOldId             the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
-     * @param automationPackageProvider the automation package content provider
-     * @param enricher                  the enricher used to fill all stored objects (for instance, with product id for multitenant application)
-     * @param objectPredicate           the filter for automation package
+     * @param allowUpdate                whether update existing package is allowed
+     * @param allowCreate                whether create new package is allowed
+     * @param explicitOldId              the explicit package id to be updated (if null, the id will be automatically resolved by package name from packageStream)
+     * @param automationPackageProvider  the automation package content provider
+     * @param enricher                   the enricher used to fill all stored objects (for instance, with product id for multitenant application)
+     * @param objectPredicate            the filter for automation package
+     * @param accessChecker
      * @param keywordLibraryProvider
      * @param allowUpdateOfOtherPackages
      * @param checkForSameOrigin
@@ -407,11 +417,13 @@ public class AutomationPackageManager {
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                          AutomationPackageArchiveProvider automationPackageProvider,
                                                                          String apVersion, String activationExpr,
-                                                                         boolean isLocalPackage, ObjectEnricher enricher,
-                                                                         ObjectPredicate objectPredicate, boolean async,
+                                                                         boolean isLocalPackage,
+                                                                         ObjectEnricher enricher, ObjectPredicate objectPredicate,
+                                                                         AutomationPackageAccessChecker accessChecker,
+                                                                         boolean async,
                                                                          AutomationPackageKeywordLibraryProvider keywordLibraryProvider,
                                                                          String actorUser,
-                                                                         boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) throws AutomationPackageManagerException, AutomationPackageCollisionException {
+                                                                         boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin) throws AutomationPackageManagerException, AutomationPackageCollisionException, AutomationPackageAccessException {
 
         try (AutomationPackageArchive automationPackageArchive = automationPackageProvider.getAutomationPackageArchive()) {
             AutomationPackage newPackage;
@@ -440,6 +452,10 @@ public class AutomationPackageManager {
             }
             if (!allowCreate && oldPackage == null) {
                 throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
+            }
+
+            if (oldPackage != null) {
+                checkAccess(oldPackage, accessChecker);
             }
 
             // validate if we have the APs with same origin
@@ -495,7 +511,7 @@ public class AutomationPackageManager {
                     ObjectId result = updateAutomationPackage(oldPackage, newPackage,
                             packageContent, staging, enricherForIncludedEntities,
                             immediateWriteLock, automationPackageArchive, keywordLibraryResourceString, actorUser,
-                            conflictingAutomationPackages.getApWithSameOrigin(), automationPackageProvider, keywordLibraryProvider, enricher, objectPredicate);
+                            conflictingAutomationPackages.getApWithSameOrigin(), accessChecker, automationPackageProvider, keywordLibraryProvider, enricher, objectPredicate);
                     return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result, conflictingAutomationPackages);
                 } else {
                     // async update
@@ -510,7 +526,7 @@ public class AutomationPackageManager {
                             updateAutomationPackage(
                                     oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities,
                                     false, automationPackageArchive, keywordLibraryResourceString, actorUser,
-                                    conflictingAutomationPackages.getApWithSameOrigin(), automationPackageProvider,
+                                    conflictingAutomationPackages.getApWithSameOrigin(), accessChecker, automationPackageProvider,
                                     keywordLibraryProvider, enricher, objectPredicate
                             );
                         } catch (Exception e) {
@@ -583,6 +599,7 @@ public class AutomationPackageManager {
                                                   AutomationPackageKeywordLibraryProvider kwLibProvider,
                                                   ObjectEnricher objectEnricher,
                                                   ObjectPredicate objectPredicate,
+                                                  AutomationPackageAccessChecker accessChecker,
                                                   String actorUser) {
         if (automationPackagesForRedeploy == null) {
             return;
@@ -596,7 +613,7 @@ public class AutomationPackageManager {
                 // here we call the `createOrUpdateAutomationPackage` method with checkForSameOrigin=false to avoid infinite recursive loop
                 createOrUpdateAutomationPackage(true, false, objectId, packageArchiveProvider, oldPackage.getVersion(),
                         oldPackage.getActivationExpression() == null ? null : oldPackage.getActivationExpression().getScript(),
-                        false, objectEnricher, objectPredicate, false, kwLibProvider, actorUser, true, false);
+                        false, objectEnricher, objectPredicate, accessChecker, false, kwLibProvider, actorUser, true, false);
             } catch (Exception e) {
                 log.error("Failed to redeploy the automation package {}: {}", objectId.toHexString(), e.getMessage());
                 failedAps.add(objectId);
@@ -755,6 +772,7 @@ public class AutomationPackageManager {
                                              boolean alreadyLocked, AutomationPackageArchive automationPackageArchive,
                                              String keywordLibraryResource, String actorUser,
                                              List<ObjectId> additionalPackagesForRedeploy,
+                                             AutomationPackageAccessChecker accessCheckerForRedeployment,
                                              AutomationPackageArchiveProvider apArchiveProvider, AutomationPackageKeywordLibraryProvider kwLibProvider,
                                              ObjectEnricher baseObjectEnricher, ObjectPredicate objectPredicate) {
         ObjectId mainUpdatedAp = null;
@@ -783,7 +801,7 @@ public class AutomationPackageManager {
             automationPackageAccessor.save(newPackage);
         }
 
-        redeployRelatedAutomationPackages(additionalPackagesForRedeploy, apArchiveProvider, kwLibProvider, baseObjectEnricher, objectPredicate, actorUser);
+        redeployRelatedAutomationPackages(additionalPackagesForRedeploy, apArchiveProvider, kwLibProvider, baseObjectEnricher, objectPredicate, accessCheckerForRedeployment, actorUser);
         return mainUpdatedAp;
     }
 
@@ -1053,7 +1071,7 @@ public class AutomationPackageManager {
 
     private void deleteMainApResourceIfPossible(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, String apResourceToCheck) {
         try {
-            if (apResourceToCheck != null && FileResolver.isResource(apResourceToCheck)) {
+            if (FileResolver.isResource(apResourceToCheck)) {
                 boolean canBeDeleted = true;
                 if (newAutomationPackage != null && (Objects.equals(newAutomationPackage.getAutomationPackageResource(), apResourceToCheck) || Objects.equals(newAutomationPackage.getKeywordLibraryResource(), apResourceToCheck))) {
                     log.info("Resource {} cannot be deleted, because it is reused in new automation package: {}", apResourceToCheck, newAutomationPackage.getAttribute(AbstractOrganizableObject.NAME));
@@ -1107,6 +1125,12 @@ public class AutomationPackageManager {
 
     public List<Plan> getPackagePlans(ObjectId automationPackageId) {
         return planAccessor.findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
+    }
+
+    protected void checkAccess(AutomationPackage automationPackage, AutomationPackageAccessChecker accessChecker) throws AutomationPackageAccessException {
+        if (accessChecker != null) {
+            accessChecker.accept(automationPackage);
+        }
     }
 
     public AutomationPackageReader getPackageReader() {
