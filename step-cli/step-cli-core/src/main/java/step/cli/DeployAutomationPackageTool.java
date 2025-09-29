@@ -65,10 +65,10 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
                 if (updateResult != null && updateResult.getId() != null) {
                     logInfo("Automation package successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId(), null);
                 } else {
-                    throw logAndThrow("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
+                    throw new StepCliExecutionException("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
                 }
             } catch (AutomationPackageClientException e){
-                throw logAndThrow("Error while uploading automation package to Step: " + e.getMessage());
+               throw new StepCliExecutionException("Error while uploading automation package to Step: " + e.getMessage());
             }
         } catch (StepCliExecutionException e) {
             throw e;

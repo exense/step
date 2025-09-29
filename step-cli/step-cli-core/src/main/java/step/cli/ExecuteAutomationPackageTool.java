@@ -114,7 +114,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
                         executionParameters,
                         createSource(params.getKeywordLibraryFile(), createMavenArtifactXml(params.getKeywordLibraryMavenArtifact())));
             } catch (AutomationPackageClientException e) {
-                throw logAndThrow("Error while executing automation package: " + e.getMessage());
+                throw new StepCliExecutionException("Error while executing automation package: " + e.getMessage());
             }
             if (executionIds != null) {
                 Map<String, Execution> executionInfos = new HashMap<>();
