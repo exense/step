@@ -1,0 +1,16 @@
+---
+gridHost: "http://localhost:8081"
+registrationPeriod: 1000
+gridReadTimeout: 20000
+workingDir: "src/test/work"
+
+tokenGroups:
+  - capacity: 10
+    tokenConf:
+      attributes:
+        key: "val"
+      properties: {}
+
+properties:
+  plugins.jmeter.home: "/path/to/jmeter"
+  step.reporting.url: "http://localhost:8080"

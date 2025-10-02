@@ -18,11 +18,6 @@
  ******************************************************************************/
 package step.functions.handler;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.agent.tokenpool.TokenReservationSession;
@@ -33,10 +28,17 @@ import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
+import step.reporting.LiveReporting;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 public abstract class AbstractFunctionHandler<IN, OUT> {
 
 	private FileManagerClient fileManagerClient;
+	private LiveReporting liveReporting;
 	private ApplicationContextBuilder applicationContextBuilder;
 	private FunctionHandlerFactory functionHandlerFactory;
 	
@@ -64,6 +66,14 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 
 	protected void setFileManagerClient(FileManagerClient fileManagerClient) {
 		this.fileManagerClient = fileManagerClient;
+	}
+
+	void setLiveReporting(LiveReporting liveReporting) {
+		this.liveReporting = liveReporting;
+	}
+
+	protected LiveReporting getLiveReporting() {
+		return liveReporting;
 	}
 
 	protected void setProperties(Map<String, String> properties) {
@@ -237,6 +247,8 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		return applicationContextBuilder.runInContext(branchName, ()->{
 			@SuppressWarnings("unchecked")
 			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext(branchName).getClassLoader(), functionHandlerClassname, tokenSession, tokenReservationSession, properties);
+			// TODO: I'm not perfectly happy with this. Ideally the streamingUploads/livereporting and all other "services" should be passed at creation to FunctionHandlerFactory.create
+			functionHandler.setLiveReporting(liveReporting);
 			return functionHandler.handle(input);
 		});
 	}
