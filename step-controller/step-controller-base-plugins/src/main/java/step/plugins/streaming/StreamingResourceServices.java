@@ -35,36 +35,6 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
     }
 
     @GET
-    @Path("/demo")
-    @Produces(MediaType.TEXT_HTML)
-    // This is (probably) temporary, but I actually like it :-D
-    public Response demo() {
-        boolean devMode = false; // Set this to false in production
-
-        try {
-            String html;
-            if (devMode) {
-                // Load from file (absolute path or relative to project)
-                java.nio.file.Path path = Paths.get("/home/cl/IdeaProjects/step-aio/step/step-controller/step-controller-base-plugins/src/main/resources/step/plugins/streaming/StreamingDemo.html");
-                html = Files.readString(path);
-            } else {
-                // Load from resource (packaged in JAR / classpath)
-                try (InputStream in = getClass().getResourceAsStream("StreamingDemo.html")) {
-                    if (in == null) {
-                        return Response.status(Response.Status.NOT_FOUND).entity("HTML resource not found.").build();
-                    }
-                    html = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-                }
-            }
-
-            return Response.ok(html, MediaType.TEXT_HTML).build();
-
-        } catch (IOException e) {
-            return Response.serverError().entity("Failed to load HTML: " + e.getMessage()).build();
-        }
-    }
-
-    @GET
     @Path("/{id}/download")
     @Secured(right = "resource-read")
     public Response download(@PathParam("id") String resourceId, @QueryParam("start") Long start, @QueryParam("end") Long end, @QueryParam("inline") boolean inline) throws IOException {
