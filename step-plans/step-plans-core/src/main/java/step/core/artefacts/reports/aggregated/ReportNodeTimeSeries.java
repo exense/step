@@ -84,6 +84,14 @@ public class ReportNodeTimeSeries implements AutoCloseable {
     public static class Range {
         public long from;
         public long to;
+
+        public Range() {
+        }
+
+        public Range(long from, long to) {
+            this.from = from;
+            this.to = to;
+        }
     }
 
 
