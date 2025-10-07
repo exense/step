@@ -197,7 +197,7 @@ public class AutomationPackageManagerOSTest {
         // 2. Update the package - some entities are updated, some entities are added
         AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
                 true, true, null, extendedFileSource,
-                null, null, null, null, null, null, false,
+                null, null, null, null, o -> true, o -> true, false,
                 "testUser", false, true);
         Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
         ObjectId resultId = result.getId();
@@ -505,7 +505,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(echoSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, null, null, false,
+                null, null, null, o -> true, o -> true, false,
                 "testUser", false,
                 true);
 
@@ -516,7 +516,7 @@ public class AutomationPackageManagerOSTest {
                     true, true, null,
                     AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                     AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                    null, null, null, null, null, false,
+                    null, null, null, o -> true, o -> true, false,
                     "testUser", false,
                     true);
             Assert.fail("Exception hasn't been thrown");
@@ -531,7 +531,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, null, null, false,
+                null, null, null, o -> true, o -> true, false,
                 "testUser", true,
                 true);
         Assert.assertEquals(List.of(echoApResult.getId()), ap1Result.getConflictingAutomationPackages().getApWithSameKeywordLib());
@@ -576,7 +576,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, null, null, false,
+                null, null, null, o -> true, o -> true, false,
                 "testUser", false,
                 true);
 
@@ -592,7 +592,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(echoRelease),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibRelease),
-                null, null, null, null, null, false,
+                null, null, null, o -> true, o -> true, false,
                 "testUser", false,
                 true);
 
@@ -612,7 +612,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(echoRelease),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibRelease),
-                null, null, null, null, null, false,
+                null, null, null, o -> true, o -> true, false,
                 "testUser", false,
                 true);
         apEcho = automationPackageAccessor.get(result.getId());
@@ -629,7 +629,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(extSampleRelease),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibRelease),
-                null, null, null, null, null, false,
+                null, null, null, o -> true, o -> true, false,
                 "testUser", false,
                 true);
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
@@ -665,7 +665,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(echoRelease),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, null, null, false,
+                null, null, null, o -> true, o -> true, false,
                 "testUser", false,
                 true);
         log.info("Echo AP: {}", resultEcho.getId());
@@ -675,7 +675,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, null, null, false,
+                "v1", null, null, o -> true, o -> true, false,
                 "testUser", false,
                 false);
         log.info("AP v1: {}", resultV1.getId());
@@ -689,7 +689,7 @@ public class AutomationPackageManagerOSTest {
                     true, true, null,
                     AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                     AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                    "v2", null, null, null, null, false,
+                    "v2", null, null, o -> true, o -> true, false,
                     "testUser", false,
                     true);
             fail();
@@ -706,7 +706,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v2", null, null, null, null, false,
+                "v2", null, null, o -> true, o -> true, false,
                 "testUser", true,
                 true);
 
@@ -761,7 +761,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, null, null, false,
+                "v1", null, null, o -> true, o -> true, false,
                 "testUser", true,
                 true);
 
@@ -778,7 +778,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, null, null, false,
+                "v1", null, null, o -> true, o -> true, false,
                 "testUser", true,
                 true);
         AutomationPackage ap2 = automationPackageAccessor.get(result2.getId());
@@ -817,7 +817,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, null, null, false,
+                null, null, null, o -> true, o -> true, false,
                 "testUser", true,
                 true);
 
@@ -842,7 +842,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
                 AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, null, null, false,
+                "v1", null, null, o -> true, o -> true, false,
                 "testUser", true,
                 true);
 
@@ -861,7 +861,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withResourceId(ap1Resource.getId().toHexString()),
                 AutomationPackageFileSource.withResourceId(kwLibResource.getId().toHexString()),
-                "v2", null, null, null, null, false,
+                "v2", null, null, o -> true, o -> true, false,
                 "testUser", true,
                 true);
 
@@ -897,7 +897,7 @@ public class AutomationPackageManagerOSTest {
                 true, true, null,
                 AutomationPackageFileSource.withResourceId(savedApResource.getId().toHexString()),
                 AutomationPackageFileSource.withResourceId(savedkwResource.getId().toHexString()),
-                "v1", null, null, null, null, false,
+                "v1", null, null, o -> true, o -> true, false,
                 "testUser", true,
                 true);
 
@@ -961,7 +961,7 @@ public class AutomationPackageManagerOSTest {
         } else {
             AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null,
                     sample1FileSource,
-                    null, null, null, null, null, null, async,
+                    null, null, null, null, o -> true, o -> true, async,
                     "testUser", false, true);
             if (async && expectedDelay) {
                 Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
