@@ -957,7 +957,7 @@ public class AutomationPackageManagerOSTest {
 
         ObjectId result;
         if (createNew) {
-            result = manager.createAutomationPackage(sample1FileSource, null, null, null, "testUser", false, true, null, null);
+            result = manager.createAutomationPackage(sample1FileSource, null, null, null, "testUser", false, true, null, o -> true);
         } else {
             AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null,
                     sample1FileSource,
