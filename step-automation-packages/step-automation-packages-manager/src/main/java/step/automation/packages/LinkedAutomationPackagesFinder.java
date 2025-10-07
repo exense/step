@@ -30,7 +30,6 @@ import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceOrigin;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -47,7 +46,8 @@ public class LinkedAutomationPackagesFinder {
         this.automationPackageAccessor = automationPackageAccessor;
     }
 
-    public ConflictingAutomationPackages findConflictingPackagesAndCheckAccess(AutomationPackageArchiveProvider automationPackageProvider, ObjectPredicate objectPredicate, AutomationPackageAccessChecker accessChecker, AutomationPackageKeywordLibraryProvider keywordLibraryProvider, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin, AutomationPackage oldPackage, AutomationPackageManager automationPackageManager) {
+    public ConflictingAutomationPackages findConflictingPackagesAndCheckAccess(AutomationPackageArchiveProvider automationPackageProvider, ObjectPredicate objectPredicate,
+                                                                               ObjectPredicate writeAccessPredicated, AutomationPackageKeywordLibraryProvider keywordLibraryProvider, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin, AutomationPackage oldPackage, AutomationPackageManager automationPackageManager) {
         ConflictingAutomationPackages conflictingAutomationPackages;
         if (checkForSameOrigin) {
             conflictingAutomationPackages = findConflictingAutomationPackages(keywordLibraryProvider, automationPackageProvider, oldPackage, objectPredicate);
@@ -65,7 +65,7 @@ public class LinkedAutomationPackagesFinder {
             if (apsForReupload != null) {
                 for (ObjectId apId : apsForReupload) {
                     AutomationPackage apForReupload = automationPackageManager.automationPackageAccessor.get(apId);
-                    automationPackageManager.checkAccess(apForReupload, accessChecker);
+                    automationPackageManager.checkAccess(apForReupload, writeAccessPredicated);
                 }
             }
         }
@@ -87,7 +87,7 @@ public class LinkedAutomationPackagesFinder {
         if (apOrigin != null && automationPackageProvider.canLookupResources() && automationPackageProvider.isModifiableResource()) {
             List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate);
             for (Resource resource : resourcesByOrigin) {
-              automationPackagesWithSameOrigin.addAll(findAutomationPackagesByMainResource(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
+              automationPackagesWithSameOrigin.addAll(findAutomationPackagesByResourceId(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
             }
             conflictingAutomationPackages.setApWithSameOrigin(automationPackagesWithSameOrigin);
         }
@@ -97,14 +97,14 @@ public class LinkedAutomationPackagesFinder {
         if (keywordLibOrigin != null && kwLibProvider.canLookupResources() && kwLibProvider.isModifiableResource()) {
             List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(keywordLibOrigin.toStringRepresentation(), objectPredicate);
             for (Resource resource : resourcesByOrigin) {
-                apWithSameKeywordLib.addAll(findAutomationPackagesByMainResource(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
+                apWithSameKeywordLib.addAll(findAutomationPackagesByResourceId(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
             }
             conflictingAutomationPackages.setApWithSameKeywordLib(new ArrayList<>(apWithSameKeywordLib));
         }
         return conflictingAutomationPackages;
     }
 
-    public Set<ObjectId> findAutomationPackagesByMainResource(String resourceId, List<ObjectId> ignoredApIds){
+    public Set<ObjectId> findAutomationPackagesByResourceId(String resourceId, List<ObjectId> ignoredApIds){
         Set<ObjectId> result = new HashSet<>();
         result.addAll(automationPackageAccessor.findByAutomationPackageResource(FileResolver.RESOURCE_PREFIX + resourceId).stream()
                 .map(AbstractIdentifiableObject::getId)

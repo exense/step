@@ -178,8 +178,8 @@ public class MavenArtifactClient {
             XPathFactory xPathFactory = XPathFactory.newInstance();
             XPath xpath = xPathFactory.newXPath();
 
-            // Extract snapshot timestamp
-            String timestamp = getTextContent(xpath, doc, "//versioning/snapshot/timestamp");
+            // Extract lastUpdated - keeping as reference but lastUpdated is usually inaccurate, it better to use the Snapshot timestamp
+            String timestamp = getTextContent(xpath, doc, "//versioning/lastUpdated");
 
             // Extract build number
             String buildNumberStr = getTextContent(xpath, doc, "//versioning/snapshot/buildNumber");
@@ -192,8 +192,7 @@ public class MavenArtifactClient {
                 }
             }
 
-            // Extract lastUpdated - keeping as reference but lastUpdated is usually inaccurate, it better to use the Snapshot timestamp
-            //String lastUpdatedStr = getTextContent(xpath, doc, "//versioning/lastUpdated");
+
 
             long snapshotRemoteTimestamp = timestampToEpochMillis(timestamp);
             return new SnapshotMetadata(timestamp, snapshotRemoteTimestamp, buildNumber, isNewSnapshot(existingSnapshotTimestamp, snapshotRemoteTimestamp));
@@ -208,32 +207,21 @@ public class MavenArtifactClient {
      * Converts Maven timestamp format (yyyyMMdd.HHmmss) to epoch milliseconds
      */
     public static long timestampToEpochMillis(String mavenTimestamp) {
-        if (mavenTimestamp == null || mavenTimestamp.trim().isEmpty()) {
+        if (mavenTimestamp == null || mavenTimestamp.trim().isEmpty() || mavenTimestamp.length() != 14) {
             return -1;
         }
 
         try {
-            // Parse format: yyyyMMdd.HHmmss -> yyyy-MM-dd HH:mm:ss
-            String[] parts = mavenTimestamp.split("\\.");
-            if (parts.length != 2) {
-                return -1;
-            }
-
-            String datePart = parts[0]; // yyyyMMdd
-            String timePart = parts[1]; // HHmmss
-
-            if (datePart.length() != 8 || timePart.length() != 6) {
-                return -1;
-            }
+            // Parse format: yyyyMMddHHmmss -> yyyy-MM-dd HH:mm:ss
 
             // Extract components
-            int year = Integer.parseInt(datePart.substring(0, 4));
-            int month = Integer.parseInt(datePart.substring(4, 6));
-            int day = Integer.parseInt(datePart.substring(6, 8));
+            int year = Integer.parseInt(mavenTimestamp.substring(0, 4));
+            int month = Integer.parseInt(mavenTimestamp.substring(4, 6));
+            int day = Integer.parseInt(mavenTimestamp.substring(6, 8));
 
-            int hour = Integer.parseInt(timePart.substring(0, 2));
-            int minute = Integer.parseInt(timePart.substring(2, 4));
-            int second = Integer.parseInt(timePart.substring(4, 6));
+            int hour = Integer.parseInt(mavenTimestamp.substring(8, 10));
+            int minute = Integer.parseInt(mavenTimestamp.substring(10, 12));
+            int second = Integer.parseInt(mavenTimestamp.substring(12, 14));
 
             // Create LocalDateTime and convert to epoch
             java.time.LocalDateTime dateTime = java.time.LocalDateTime.of(year, month, day, hour, minute, second);

@@ -63,8 +63,8 @@ public class AbstractAutomationPackageFromResourceIdProviderTest {
         }
 
         AutomationPackageArchive archive;
-        try (KeywordLibraryFromResourceIdProvider kwLibProvider = new KeywordLibraryFromResourceIdProvider(resourceManager, savedkwResource.getId().toHexString());
-             AutomationPackageFromResourceIdProvider provider = new AutomationPackageFromResourceIdProvider(resourceManager, savedApResource.getId().toHexString(), kwLibProvider)) {
+        try (KeywordLibraryFromResourceIdProvider kwLibProvider = new KeywordLibraryFromResourceIdProvider(resourceManager, savedkwResource.getId().toHexString(), o -> true);
+             AutomationPackageFromResourceIdProvider provider = new AutomationPackageFromResourceIdProvider(resourceManager, savedApResource.getId().toHexString(), kwLibProvider, o -> true)) {
             archive = provider.getAutomationPackageArchive();
         } catch (IOException | AutomationPackageReadingException e) {
             throw new RuntimeException("Unexpected exception", e);

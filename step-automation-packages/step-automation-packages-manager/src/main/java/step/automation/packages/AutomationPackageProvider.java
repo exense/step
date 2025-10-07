@@ -25,6 +25,7 @@ import step.resources.ResourceOrigin;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface AutomationPackageProvider extends Closeable {
 
@@ -41,7 +42,7 @@ public interface AutomationPackageProvider extends Closeable {
     default List<Resource> lookupExistingResources(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
         // by default, we look up resources by resource origin
         if (canLookupResources() && getOrigin() != null) {
-            return resourceManager.getResourcesByOrigin(getOrigin().toStringRepresentation(), objectPredicate);
+            return resourceManager.getResourcesByOrigin(getOrigin().toStringRepresentation(), objectPredicate).stream().filter(objectPredicate).collect(Collectors.toList());
         } else {
             throw new UnsupportedOperationException("Resources cannot be looked up for provider " + this.getClass().getSimpleName());
         }

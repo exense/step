@@ -32,13 +32,20 @@ import java.util.List;
 public class AbstractAutomationPackageFromResourceIdProvider implements AutomationPackageProvider {
 
     protected final String resourceId;
-    protected final ResourceRevisionFileHandle resource;
+    protected final ResourceRevisionFileHandle resourceFile;
 
-    public AbstractAutomationPackageFromResourceIdProvider(ResourceManager resourceManager, String resourceId) {
+    public AbstractAutomationPackageFromResourceIdProvider(ResourceManager resourceManager, String resourceId, ObjectPredicate objectPredicate) {
         this.resourceId = resourceId;
-        this.resource = resourceManager.getResourceFile(resourceId);
+        Resource resource = resourceManager.getResource(resourceId);
         if (resource == null) {
-            throw new AutomationPackageManagerException("Automation package archive hasn't been found by ID: " + resourceId);
+            throw new AutomationPackageManagerException("Automation package resource hasn't been found by ID: " + resourceId);
+        } else {
+            this.resourceFile = resourceManager.getResourceFile(resourceId);
+            if (resourceFile == null) {
+                throw new AutomationPackageManagerException("Automation package resource file hasn't been found by ID: " + resourceId);
+            } else if (!objectPredicate.test(resource)) {
+                throw new AutomationPackageManagerException("The referenced automation package resource is not accessible in current context");
+            }
         }
     }
 
@@ -49,8 +56,8 @@ public class AbstractAutomationPackageFromResourceIdProvider implements Automati
 
     @Override
     public void close() throws IOException {
-        if (resource != null) {
-            resource.close();
+        if (resourceFile != null) {
+            resourceFile.close();
         }
     }
 
@@ -67,6 +74,6 @@ public class AbstractAutomationPackageFromResourceIdProvider implements Automati
     @Override
     public List<Resource> lookupExistingResources(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
         Resource r = resourceManager.getResource(resourceId);
-        return r == null ? List.of() : List.of(r);
+        return r == null || !objectPredicate.test(r) ? List.of() : List.of(r);
     }
 }

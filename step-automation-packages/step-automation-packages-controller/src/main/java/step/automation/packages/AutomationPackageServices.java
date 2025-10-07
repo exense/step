@@ -42,6 +42,7 @@ import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
+import step.core.objectenricher.ObjectPredicate;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
@@ -98,7 +99,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
             assertEntityIsAcceptableInContext(automationPackage);
-            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),getObjectPredicate(), createAccessChecker());
+            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),getObjectPredicate(), getWriteAccessPredicate());
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (Exception e) {
@@ -251,7 +252,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                 @QueryParam("activationExpr") String activationExpression,
                                                 @QueryParam("version") String apVersion) {
         try {
-            automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate(), createAccessChecker());
+            automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate(), getWriteAccessPredicate());
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {
@@ -293,7 +294,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     true, false, new ObjectId(id),
                     apFileSource, keywordLibrarySource,
                     apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), createAccessChecker(), async != null && async,
+                    getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate(), async != null && async,
                     getUser(), allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
@@ -356,7 +357,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     apFileSource,
                     keywordLibrarySource,
                     apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), createAccessChecker(), async != null && async,
+                    getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate(), async != null && async,
                     getUser(), allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
@@ -405,12 +406,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 tableService.performBulkOperation(AutomationPackageEntity.entityName, request, consumer, getSession()));
     }
 
-    protected AutomationPackageAccessChecker createAccessChecker() {
-        return automationPackage -> {
-            if(!isEntityAcceptableInContext(automationPackage)){
-                throw new AutomationPackageAccessException(automationPackage, getPermissionDeniedMessage());
-            }
-        };
-    }
+
 
 }

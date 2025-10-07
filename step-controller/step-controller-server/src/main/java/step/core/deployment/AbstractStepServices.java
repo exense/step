@@ -116,7 +116,7 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 	 * @param entity the entity to be asserted
 	 */
 	protected void assertEntityIsAcceptableInContext(AbstractIdentifiableObject entity) {
-		if (!isEntityAcceptableInContext(entity)) {
+		if (entity instanceof EnricheableObject && !isEntityAcceptableInContext( (EnricheableObject) entity)) {
 			throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "Authorization error", getPermissionDeniedMessage());
 		}
 	}
@@ -125,14 +125,15 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 		return "You're not allowed to edit this object from within this context";
 	}
 
-	protected boolean isEntityAcceptableInContext(AbstractIdentifiableObject entity) {
-		if (entity instanceof EnricheableObject) {
-			EnricheableObject enricheableObject = (EnricheableObject) entity;
-			Session session = getSession();
-			if (!objectHookRegistry.isObjectAcceptableInContext(session, enricheableObject)) {
-				return false;
-			}
+	protected boolean isEntityAcceptableInContext(EnricheableObject enricheableObject) {
+		Session<User> session = getSession();
+		if (!objectHookRegistry.isObjectAcceptableInContext(session, enricheableObject)) {
+			return false;
 		}
 		return true;
+	}
+
+	protected ObjectPredicate getWriteAccessPredicate() {
+		return this::isEntityAcceptableInContext;
 	}
 }

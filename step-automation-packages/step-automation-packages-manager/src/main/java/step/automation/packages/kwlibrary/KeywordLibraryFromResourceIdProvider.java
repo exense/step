@@ -22,18 +22,19 @@ package step.automation.packages.kwlibrary;
 
 import step.automation.packages.AbstractAutomationPackageFromResourceIdProvider;
 import step.automation.packages.AutomationPackageReadingException;
+import step.core.objectenricher.ObjectPredicate;
 import step.resources.ResourceManager;
 
 import java.io.File;
 
 public class KeywordLibraryFromResourceIdProvider extends AbstractAutomationPackageFromResourceIdProvider implements AutomationPackageKeywordLibraryProvider {
 
-    public KeywordLibraryFromResourceIdProvider(ResourceManager resourceManager, String resourceId) {
-        super(resourceManager, resourceId);
+    public KeywordLibraryFromResourceIdProvider(ResourceManager resourceManager, String resourceId, ObjectPredicate objectPredicate) {
+        super(resourceManager, resourceId, objectPredicate);
     }
 
     @Override
     public File getKeywordLibrary() throws AutomationPackageReadingException {
-       return resource.getResourceFile();
+       return resourceFile.getResourceFile();
     }
 }

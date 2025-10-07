@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectPredicate;
 import step.repositories.artifact.ResolvedMavenArtifact;
@@ -31,6 +33,7 @@ import java.util.List;
 
 public class AbstractAutomationPackageFromMavenProvider implements AutomationPackageProvider {
 
+    private static final Logger logger = LoggerFactory.getLogger(AbstractAutomationPackageFromMavenProvider.class);
     protected final MavenArtifactIdentifier mavenArtifactIdentifier;
     protected final AutomationPackageMavenConfig mavenConfig;
     protected final ResourceManager resourceManager;
@@ -64,17 +67,21 @@ public class AbstractAutomationPackageFromMavenProvider implements AutomationPac
             if (isModifiableResource()) {
                 SnapshotMetadata snapshotMetadata = MavenArtifactDownloader.fetchSnapshotMetadata(mavenConfig, mavenArtifactIdentifier, resource.getOriginTimestamp());
                 if (snapshotMetadata.newSnapshotVersion) {
+                    logger.debug("New snapshot version found for {}, downloading it", mavenArtifactIdentifier.toStringRepresentation());
                     return MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier, resource.getOriginTimestamp());
                 } else {
                     //reuse resource
+                    logger.debug("Latest snapshot version already downloaded for {}, reusing it", mavenArtifactIdentifier.toStringRepresentation());
                     return new ResolvedMavenArtifact(resourceManager.getResourceFile(resource.getId().toHexString()).getResourceFile(), null);
                 }
             } else {
                 //reuse resource
+                logger.debug("Release maven artefact already downloaded for {}, reusing it", mavenArtifactIdentifier.toStringRepresentation());
                 return new ResolvedMavenArtifact(resourceManager.getResourceFile(resource.getId().toHexString()).getResourceFile(), null);
             }
         } else {
             //this is a new resource we fetch it
+            logger.debug("New maven artefact requested for {}, downloading it", mavenArtifactIdentifier.toStringRepresentation());
             return MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier, null);
         }
     }
