@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -23,6 +23,7 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
 import jakarta.json.JsonValue.ValueType;
 import jakarta.json.stream.JsonParsingException;
+import org.bson.types.ObjectId;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.handlers.functions.FunctionGroupSession;
@@ -30,15 +31,16 @@ import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
 import step.attachments.SkippedAttachmentMeta;
-import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.attachments.StreamingAttachmentMeta;
 import step.common.managedoperations.OperationManager;
+import step.constants.StreamingConstants;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
-import step.core.artefacts.handlers.ArtefactPathHelper;
 import step.core.artefacts.handlers.SequentialArtefactScheduler;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
@@ -49,7 +51,7 @@ import step.core.execution.ExecutionContextWrapper;
 import step.core.execution.OperationMode;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
-import step.core.miscellaneous.ReportNodeAttachmentManager.AttachmentQuotaException;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.reports.Error;
@@ -71,9 +73,12 @@ import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.tokenpool.Interest;
 import step.plugins.functions.types.CompositeFunction;
+import step.streaming.common.*;
 
 import java.io.StringReader;
+import java.net.URI;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
@@ -85,6 +90,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	protected FunctionExecutionService functionExecutionService;
 	protected FunctionAccessor functionAccessor;
+	protected ReportNodeAccessor reportNodeAccessor;
 
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
@@ -93,12 +99,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	protected FunctionLocator functionLocator;
 
 	protected boolean useLegacyOutput;
-	
+
 	@Override
 	public void init(ExecutionContext context) {
 		super.init(context);
 		FunctionTypeRegistry functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 		functionAccessor = context.require(FunctionAccessor.class);
+		reportNodeAccessor = context.getReportNodeAccessor();
 		functionExecutionService = context.require(FunctionExecutionService.class);
 		reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
 		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
@@ -174,12 +181,12 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) throws Exception {
 		String argumentStr = testArtefact.getArgument().get();
 		node.setInput(argumentStr);
-		
+
 		Function function = getFunction(testArtefact);
-		
+
 		ExecutionCallbacks executionCallbacks = context.getExecutionCallbacks();
 		executionCallbacks.beforeFunctionExecution(context, node, function);
-		
+
 		node.setFunctionId(function.getId().toString());
 		node.setFunctionAttributes(function.getAttributes());
 
@@ -189,13 +196,15 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		if(name.equals(CallFunction.ARTEFACT_NAME) && functionName != null) {
 			node.setName(functionName);
 		}
-		
+
 		FunctionInput<JsonObject> input = buildInput(argumentStr);
 		node.setInput(input.getPayload().toString());
-		
+
 		validateInput(input, function);
 
 		Output<JsonObject> output;
+		Map<String, StreamingAttachmentMeta> streamingAttachments = new ConcurrentHashMap<>();
+
 		if(!context.isSimulation()) {
 			FunctionGroupContext functionGroupContext = getFunctionGroupContext();
 			boolean closeFunctionGroupSessionAfterExecution = (functionGroupContext == null);
@@ -205,12 +214,73 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			boolean forceLocalToken =  context.getOperationMode() == OperationMode.LOCAL;
 			TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
+			StreamingResourceUploadContext uploadContext = null;
+
 			try {
 				String agentUrl = token.getAgent().getAgentUrl();
 				node.setAgentUrl(agentUrl);
 				node.setTokenId(token.getID());
 
 				Token gridToken = token.getToken();
+				/* Support for streaming uploads produced during this call. We create and register a new context,
+				provide the necessary information for the upload provider, and set up a listener for the context,
+				so we can populate the attachment metadata in realtime and attach it to the report node.
+				*/
+
+				// FIXME: SED-4192 (Step 30+) This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
+                StreamingResourceUploadContexts uploadContexts = context.get(StreamingResourceUploadContexts.class);
+				if (uploadContexts != null) {
+					uploadContext = new StreamingResourceUploadContext();
+					uploadContexts.registerContext(uploadContext);
+					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID, context.getExecutionId());
+					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.VARIABLES_MANAGER, context.getVariablesManager());
+					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.REPORT_NODE, node);
+					ObjectEnricher enricher = context.getObjectEnricher();
+					if (enricher != null) {
+						uploadContext.getAttributes().put(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER, enricher);
+					}
+
+					input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL));
+					input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH));
+					input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, uploadContext.contextId);
+
+
+					uploadContexts.registerListener(uploadContext.contextId, new StreamingResourceUploadContextListener() {
+
+						@Override
+						public void onResourceCreationRefused(StreamingResourceMetadata metadata, String reasonPhrase) {
+							node.getAttachments().add(new SkippedAttachmentMeta(metadata.getFilename(), metadata.getMimeType(), reasonPhrase));
+							reportNodeAccessor.save(node);
+						}
+
+						@Override
+						public void onResourceCreated(String resourceId, StreamingResourceMetadata metadata) {
+							// This will create an attachment with its immutable properties, but it will not yet "publish" it to the reportNode or set its status etc.
+							streamingAttachments.put(resourceId, new StreamingAttachmentMeta(new ObjectId(resourceId), metadata.getFilename(), metadata.getMimeType()));
+						}
+
+						@Override
+						public void onResourceStatusChanged(String resourceId, StreamingResourceStatus status) {
+							// Here's where we update the attachment status etc.
+							StreamingAttachmentMeta attachment = streamingAttachments.get(resourceId);
+							if (attachment != null) {
+								// initially, there is no status set (see above)
+								boolean isFirstUpdate = attachment.getStatus() == null;
+								attachment.setCurrentSize(status.getCurrentSize());
+								attachment.setCurrentNumberOfLines(status.getNumberOfLines());
+								attachment.setStatus(StreamingAttachmentMeta.Status.valueOf(status.getTransferStatus().name()));
+								if (isFirstUpdate) {
+									// this ensures that attachments are added to the node exactly once, and with meaningful initial data
+									node.getAttachments().add(attachment);
+								}
+								reportNodeAccessor.save(node);
+							} else {
+								logger.warn("Unexpected: Unable to find attachment for resource '{}'", resourceId);
+							}
+						}
+					});
+				}
+
 				if(gridToken.isLocal()) {
 					TokenReservationSession session = (TokenReservationSession) gridToken.getAttachedObject(TokenWrapper.TOKEN_RESERVATION_SESSION);
 					session.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, new ExecutionContextWrapper(context));
@@ -229,7 +299,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					OperationManager.getInstance().exit();
 				}
 				executionCallbacks.afterFunctionExecution(context, node, function, output);
-				
+
 				Error error = output.getError();
 				if(error!=null) {
 					node.setError(error);
@@ -237,7 +307,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				} else {
 					node.setStatus(ReportNodeStatus.PASSED);
 				}
-	
+
 				if(output.getPayload() != null) {
 					Object outputPayload = (useLegacyOutput) ? output.getPayload() : new UserFriendlyJsonObject(output.getPayload());
 					context.getVariablesManager().putVariable(node, "output", outputPayload);
@@ -248,24 +318,26 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 						context.getVariablesManager().putVariable(parentNode, "previous", outputPayload);
 					}
 				}
-				
+
 				if(output.getAttachments()!=null) {
 					for(Attachment a:output.getAttachments()) {
-						AttachmentMeta attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName());
+						AttachmentMeta attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName(), a.getMimeType());
 						node.addAttachment(attachmentMeta);
 					}
 				}
 				if(output.getMeasures()!=null) {
 					node.setMeasures(output.getMeasures());
 				}
-				
+
 				String drainOutputValue = testArtefact.getResultMap().get();
 				drainOutput(drainOutputValue, output);
 			} finally {
 				if(closeFunctionGroupSessionAfterExecution) {
 					functionGroupSession.releaseTokens(true);
 				}
-	
+				if (uploadContext != null) {
+					context.require(StreamingResourceUploadContexts.class).unregisterContext(uploadContext);
+				}
 				callChildrenArtefacts(node, testArtefact);
 			}
 		} else {
@@ -327,7 +399,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	@SuppressWarnings("unchecked")
 	private void drainOutput(String drainOutputValue, Output<JsonObject> output) {
-		if(drainOutputValue!=null&&drainOutputValue.trim().length()>0) {
+		if (drainOutputValue != null && drainOutputValue.trim().length() > 0) {
 			JsonObject resultJson = output.getPayload();
 			if(resultJson!=null) {
 				Object var = context.getVariablesManager().getVariable(drainOutputValue);
@@ -350,11 +422,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 						}
 					}
 					if(!resultMap.isEmpty()) {
-						dataSetHandle.addRow(resultMap);						
+						dataSetHandle.addRow(resultMap);
 					}
 				} else {
 					throw new RuntimeException("The variable '"+drainOutputValue+"' is neither a Map nor a DataSet handle");
-				}					
+				}
 			}
 		}
 	}
@@ -373,26 +445,26 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	}
 
 	protected void callChildrenArtefacts(CallFunctionReportNode node, CallFunction testArtefact) {
-		if(testArtefact.getChildren()!=null&&testArtefact.getChildren().size()>0) {
+		if (testArtefact.getChildren() != null && testArtefact.getChildren().size() > 0) {
 			VariablesManager variableManager = context.getVariablesManager();
 			variableManager.putVariable(node, "callReport", node);
-			
+
 //			node.getOutputObject().forEach((k,v)->{
 //				variableManager.putVariable(node, k, v.toString());
 //			});
-			
+
 			SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-			scheduler.execute_(node, testArtefact, true);				
+			scheduler.execute_(node, testArtefact, true);
 		}
 	}
-	
+
 	private FunctionInput<JsonObject> buildInput(String argumentStr) {
 		JsonObject argument = parseAndResolveJson(argumentStr);
-		
+
 		Map<String, String> properties = new HashMap<>();
 		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
 		properties.put(AbstractFunctionHandler.PARENTREPORTID_KEY, context.getCurrentReportNode().getId().toString());
-		
+
 		FunctionInput<JsonObject> input = new FunctionInput<>();
 		input.setPayload(argument);
 		input.setProperties(properties);
@@ -402,7 +474,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 	private JsonObject parseAndResolveJson(String functionStr) {
 		JsonObject query;
 		try {
-			if(functionStr!=null&&functionStr.trim().length()>0) {
+			if (functionStr != null && functionStr.trim().length() > 0) {
 				query = JsonProviderCache.createReader(new StringReader(functionStr)).readObject();
 			} else {
 				query = JsonProviderCache.createObjectBuilder().build();

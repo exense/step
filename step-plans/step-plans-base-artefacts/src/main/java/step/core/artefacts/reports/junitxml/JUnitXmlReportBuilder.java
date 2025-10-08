@@ -25,6 +25,8 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.AttachmentMeta;
+import step.attachments.SkippedAttachmentMeta;
+import step.attachments.StreamingAttachmentMeta;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.execution.ExecutionEngineContext;
 import step.reporting.Junit4ReportConfig;
@@ -33,6 +35,7 @@ import step.reporting.JUnitReport;
 import step.reporting.ReportMetadata;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionContent;
+import step.resources.StreamingResourceContentProvider;
 
 import java.io.*;
 import java.util.List;
@@ -46,11 +49,13 @@ public class JUnitXmlReportBuilder {
 
     private final ReportNodeAccessor reportNodeAccessor;
     private final ResourceManager attachmentsResourceManager;
+    private final StreamingResourceContentProvider streamingResourceContentProvider;
     private final Configuration configuration;
 
     public JUnitXmlReportBuilder(ExecutionEngineContext executionEngineContext) {
         this.reportNodeAccessor = executionEngineContext.getReportNodeAccessor();
         this.attachmentsResourceManager = executionEngineContext.getResourceManager();
+        this.streamingResourceContentProvider = executionEngineContext.get(StreamingResourceContentProvider.class);
         this.configuration = executionEngineContext.getConfiguration();
     }
 
@@ -120,11 +125,28 @@ public class JUnitXmlReportBuilder {
                         }
 
                         for (AttachmentMeta attachment : attachmentMetas.getValue()) {
+                            if (attachment instanceof SkippedAttachmentMeta) {
+                                // warning was already logged before, just silently skip here
+                                continue;
+                            }
                             ObjectId attachmentId = attachment.getId();
-                            ResourceRevisionContent attachmentResource = attachmentsResourceManager.getResourceContent(attachmentId.toString());
-                            File attachmentOutFile = new File(testCaseSubdir, attachmentResource.getResourceName());
-                            try (FileOutputStream attachmentOutStream = new FileOutputStream(attachmentOutFile)) {
-                                FileHelper.copy(attachmentResource.getResourceStream(), attachmentOutStream);
+                            InputStream resourceStream;
+                            try {
+                                if (attachment instanceof StreamingAttachmentMeta) {
+                                    // streaming attachment
+                                    resourceStream = streamingResourceContentProvider.getResourceContentStream(attachmentId.toString());
+                                } else {
+                                    // "regular" attachment
+                                    resourceStream = attachmentsResourceManager.getResourceContent(attachmentId.toString()).getResourceStream();
+                                }
+                            } catch (Exception e) {
+                                log.warn("Unable to obtain attachment content for attachment '{}' (id={}), not adding to report", attachment.getName(), attachmentId);
+                                continue;
+                            }
+                            File attachmentOutFile = new File(testCaseSubdir, attachment.getName());
+                            log.debug("Copying attachment {} to {}", attachmentId, attachmentOutFile);
+                            try (FileOutputStream attachmentOutStream = new FileOutputStream(attachmentOutFile); resourceStream) {
+                                FileHelper.copy(resourceStream, attachmentOutStream);
                             }
                         }
                     }
