@@ -42,6 +42,24 @@
 			<artifactId>step-api-function</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-constants</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-functions-handler-initializer</artifactId>
+			<version>${project.version}</version>
+			<classifier>jar-with-dependencies</classifier>
+			<!-- We actually don't need this dependency but simply want to ensure that the module is built before this one,
+			so we can copy the resulting file to our resources/ directory. To force this we declare the module as provided -->
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.exense.streaming</groupId>
+			<artifactId>step-streaming-api-client-upload</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
 		</dependency>
@@ -81,6 +99,35 @@
 						</excludes>
 					</artifactSet>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>ch.exense.step</groupId>
+									<artifactId>step-functions-handler-initializer</artifactId>
+									<version>${project.version}</version>
+									<classifier>jar-with-dependencies</classifier>
+									<type>jar</type>
+									<overWrite>false</overWrite>
+									<outputDirectory>${project.basedir}/src/main/resources</outputDirectory>
+									<destFileName>step-functions-handler-initializer.jar</destFileName>
+								</artifactItem>
+							</artifactItems>
+							<overWriteReleases>true</overWriteReleases>
+							<overWriteSnapshots>true</overWriteSnapshots>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

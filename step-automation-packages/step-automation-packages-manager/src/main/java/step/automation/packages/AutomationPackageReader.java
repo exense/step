@@ -33,6 +33,7 @@ import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.functions.Function;
+import step.functions.manager.FunctionManagerImpl;
 import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
@@ -208,6 +209,8 @@ public class AutomationPackageReader {
                         }
 
                         function.getCallTimeout().setValue(annotation.timeout());
+                        FunctionManagerImpl.applyRoutingFromAnnotation(function, annotation);
+
                         function.setScriptLanguage(new DynamicValue<>("java"));
                         f = function;
                     } else {

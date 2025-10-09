@@ -75,7 +75,7 @@ public class AutomationPackageReaderTest {
 
         // 6 keywords: 4 from descriptor and two from java class with @Keyword annotation
         List<AutomationPackageKeyword> keywords = automationPackageContent.getKeywords();
-        assertEquals(6, keywords.size());
+        assertEquals(8, keywords.size());
 
         YamlJMeterFunction jmeterKeyword = (YamlJMeterFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlJMeterFunction.class, J_METER_KEYWORD_1);
         assertEquals(
@@ -112,6 +112,13 @@ public class AutomationPackageReaderTest {
         GeneralScriptFunction myKeyword2 = (GeneralScriptFunction) findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
         // check the plan-text schema specified in keyword annotation
         assertEquals(JsonProvider.provider().createReader(new StringReader(KEYWORD_SCHEMA_FROM_SAMPLE)).readObject(), myKeyword2.getSchema());
+
+        GeneralScriptFunction kwRouteToController = (GeneralScriptFunction) findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD_ROUTING_TO_CTRL);
+        assertTrue(kwRouteToController.isExecuteLocally());
+
+        GeneralScriptFunction kwRoutingCriteria = (GeneralScriptFunction) findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD_ROUTING_CRITERIA);
+        Map<String, String> expectedRoutingCriteria = Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT");
+        assertEquals(expectedRoutingCriteria, kwRoutingCriteria.getTokenSelectionCriteria());
 
         AutomationPackageTestUtils.findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, INLINE_PLAN);
 
