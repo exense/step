@@ -33,14 +33,14 @@ public class DynamicJsonValueResolver {
 		this.expressionHandler = expressionHandler;
 	}
 
-	public Object evaluate(JsonObject dynamicValueAsJson, Map<String, Object> bindings) {
+	public Object evaluate(JsonObject dynamicValueAsJson, Map<String, Object> bindings, boolean canAccessProtectedValue) {
 		boolean isDynamic = dynamicValueAsJson.getBoolean("dynamic");
 		
 		if(isDynamic) {
 			String exprType = dynamicValueAsJson.containsKey("expressionType")?dynamicValueAsJson.getString("expressionType"):null;
 			String expression = dynamicValueAsJson.getString("expression");
 			try {
-				return expressionHandler.evaluateGroovyExpression(expression, bindings);
+				return expressionHandler.evaluateGroovyExpression(expression, bindings, canAccessProtectedValue);
 			} catch (Exception e) {
 				Throwable cause = e.getCause();
 				String errorMsg = e.getMessage();

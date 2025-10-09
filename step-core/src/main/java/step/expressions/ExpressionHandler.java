@@ -18,22 +18,19 @@
  ******************************************************************************/
 package step.expressions;
 
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
+import groovy.lang.*;
 import org.codehaus.groovy.control.CompilationFailedException;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.codehaus.groovy.control.messages.SyntaxErrorMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import groovy.lang.Binding;
-import groovy.lang.MissingPropertyException;
-import groovy.lang.Script;
-
 public class ExpressionHandler implements AutoCloseable {
 		
-	private static Logger logger = LoggerFactory.getLogger(ExpressionHandler.class);
+	private static final Logger logger = LoggerFactory.getLogger(ExpressionHandler.class);
 	
 	private final GroovyPool groovyPool;
 	
@@ -50,37 +47,63 @@ public class ExpressionHandler implements AutoCloseable {
 	}
 	
 	public ExpressionHandler(String scriptBaseClass, Integer executionTimeWarningTreshold, int poolMaxTotal,  int poolMaxTotalPerKey, int poolMaxIdlePerKey, Integer monitoringIntervalSeconds) {
-		super();
-		this.scriptBaseClass = scriptBaseClass;
-		this.groovyPool = new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
-		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
+		this(scriptBaseClass, null, executionTimeWarningTreshold, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
 	}
 
+	// Only used directly to pass a custom groovyPoolFactory in Junit test
 	protected ExpressionHandler(String scriptBaseClass, GroovyPoolFactory groovyPoolFactory, Integer executionTimeWarningTreshold, int poolMaxTotal,  int poolMaxTotalPerKey, int poolMaxIdlePerKey, Integer monitoringIntervalSeconds) {
 		super();
 		this.scriptBaseClass = scriptBaseClass;
-		this.groovyPool = new GroovyPool(groovyPoolFactory, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
+		this.groovyPool = (groovyPoolFactory != null) ? new GroovyPool(groovyPoolFactory, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds) :
+				new GroovyPool(scriptBaseClass, poolMaxTotal, poolMaxTotalPerKey, poolMaxIdlePerKey, monitoringIntervalSeconds);
 		this.executionTimeWarningTreshold = executionTimeWarningTreshold;
 	}
 
 	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings) {
+		return evaluateGroovyExpression(expression, bindings, false);
+	}
+
+	/**
+	 * Evaluate a groovy expression using provided binding. Not that special binding of type ProtectedVariable will be handled depending on the granted access right:
+	 * <ul>
+	 *     <li>access granted: expression are allowed to use protected bindings. If the expression uses any protected binding, then the result is returned as a ProtectedVariable containing both the clear and obfuscated values.</li>
+	 *     <li>access denied: if the expression uses any protected binding, an exception is thrown.</li>
+	 * </ul>
+	 * @param expression the groovy expression to be evaluated
+	 * @param bindings the map of bindings (variables) available for the evaluation
+	 * @param canAccessProtectedValue whether protected values provided as ProtectedVariable can be accessed.
+	 * @return the result of the groovy evaluation. For expressions using protected bindings (when access is granted), the result is a ProtectedVariable containing both the clear and obfuscated values
+	 */
+	public Object evaluateGroovyExpression(String expression, Map<String, Object> bindings, boolean canAccessProtectedValue) {
 		try {
 			Object result;
-			try {			
+			Set<String> excludedProtectedBindingKeys = new HashSet<>();
+			try {
 				if(logger.isDebugEnabled()) {
 					logger.debug("Groovy evaluation:\n" + expression);
 				}
+
+				// Set the protection context
+				ProtectionContext.set(canAccessProtectedValue);
 				
-				Binding binding = new Binding(); 
-				
+				Binding binding = new Binding();
 				if(bindings!=null) {
 					for(Entry<String, Object> varEntry : bindings.entrySet()) {
+						String key = varEntry.getKey();
 						Object value =  varEntry.getValue();
-						binding.setVariable(varEntry.getKey(), value);
-					}				
+						if (value instanceof ProtectedVariable) {
+							if (canAccessProtectedValue) {
+								binding.setVariable(key, new GroovyProtectedBinding((ProtectedVariable) value));
+							} else {
+								excludedProtectedBindingKeys.add(key);
+							}
+						} else {
+							binding.setVariable(key, value);
+						}
+					}
 				}
 				
-				long t1 = System.currentTimeMillis();	
+				long t1 = System.currentTimeMillis();
 				try {
 					GroovyPoolEntry entry = groovyPool.borrowShell(expression);
 					try {
@@ -105,8 +128,6 @@ public class ExpressionHandler implements AutoCloseable {
 						}
 					}
 					throw e;
-				} catch (Exception e) {
-					throw e;
 				}
 				long duration = System.currentTimeMillis()-t1;
 				
@@ -118,18 +139,37 @@ public class ExpressionHandler implements AutoCloseable {
 						logger.debug("Groovy-Evaluation of following expression took " + duration + ".ms: "+ expression);
 					}
 				}
-				
+
+				// If canAccessProtectedValue is true, the evaluation results of type String and GString may contain tokenized
+				// protected bindings. As post-processing, we transform any such tokenized string back into a Protected Variable containing both the clear and obfuscated values
+				Tokenizer tokenizer = ProtectionContext.get().tokenizer();
+				if (canAccessProtectedValue && isStringValue(result)) {
+					result = tokenizer.renderBoth(result.toString());
+				}
+				//GroovyProtectedBinding can also be returned when canAccessProtectedValue is false, (ex dataRow.next())
+				if (result instanceof GroovyProtectedBinding) {
+					GroovyProtectedBinding resultAsPB = (GroovyProtectedBinding) result;
+					//GroovyProtectedBinding values of type String can also be tokenized and need post-processing.
+					Object clearValue = isStringValue(resultAsPB.value) ?
+							tokenizer.render(resultAsPB.value.toString(), true) : resultAsPB.value;
+					result = new ProtectedVariable(resultAsPB.key, clearValue, tokenizer.render(resultAsPB.obfuscatedValue, false));
+				}
 				if(logger.isDebugEnabled()) {
 					logger.debug("Groovy result:\n" + result);
 				}
-				
 				return result;
 			} catch (CompilationFailedException cfe) {
 				throw new RuntimeException(
 						"Error while compiling groovy expression: '" + expression + "'", cfe);
 			} catch (MissingPropertyException mpe) {
-				throw new RuntimeException(
-						"Error while resolving groovy properties in expression: '" + expression + "'. The property '" + mpe.getProperty() + "' could not be found (or accessed). Make sure that the property is defined as variable or parameter and accesible in current scope.", mpe);
+				String property = mpe.getProperty();
+				String baseMessage = "Error while resolving groovy properties in expression: '" + expression + "'. ";
+				if (excludedProtectedBindingKeys.contains(property)) {
+					throw new RuntimeException(baseMessage + "The property '" + property + "' is protected and can only be used as a Keyword input or property.");
+				} else {
+					throw new RuntimeException(
+							baseMessage + "The property '" + property + "' could not be found (or accessed). Make sure that the property is defined as variable or parameter and is accessible in the current scope.");
+				}
 			} catch (Exception e){
 				throw new RuntimeException(
 						"Error while running groovy expression: '" + expression + "'", e);
@@ -139,8 +179,23 @@ public class ExpressionHandler implements AutoCloseable {
 				logger.error("An error occurred while evaluation groovy expression " + expression, e);
 			}
 			throw e;
+		} finally {
+			// Always clear the context
+			ProtectionContext.clear();
 		}
 	}
+
+	private static boolean isStringValue(Object value) {
+		return value instanceof GString || value instanceof String;
+	}
+
+	public static Object checkProtectionAndWrapIfRequired(boolean isParentProtected, Object value, String key) {
+		if (isParentProtected) {
+			return new GroovyProtectedBinding(key, value);
+		}
+		return value;
+	}
+
 
 	@Override
 	public void close() {

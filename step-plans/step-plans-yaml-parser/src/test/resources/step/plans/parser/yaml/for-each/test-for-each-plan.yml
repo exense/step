@@ -24,6 +24,16 @@ root:
               headers: true
               worksheet: "myWorksheet"
       - forEach:
+          description: "test excel protected"
+          dataSource:
+            excel:
+              file:
+                id: "644fbe4e38a61e07cc3a4df9"
+              headers: true
+              worksheet: "myWorksheet"
+              protect: true
+              password: "123456"
+      - forEach:
           description: "test csv"
           dataSource:
             csv:

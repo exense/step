@@ -39,10 +39,12 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static step.expressions.ExpressionHandler.checkProtectionAndWrapIfRequired;
+
 public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode> {
 		
 	@Override
-	public void createReportSkeleton_(ReportNode node, DataSetArtefact testArtefact) {		
+	public void createReportSkeleton_(ReportNode node, DataSetArtefact testArtefact) {
 		initDataSetAndAddItToContext(node, testArtefact);
 	}
 
@@ -69,16 +71,17 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 				if(row==null) {
 					//TODO replace the following logic by a pluggable iteration startegie (Random, etc)
 					if(artefact.getResetAtEnd().get()) {
-						dataSet.reset();						
+						dataSet.reset();
 						row = dataSet.next();
 					}
-				}				
-				return row!=null?row.getValue():null;
+				}
+				return row != null ? checkProtectionAndWrapIfRequired(artefact.getDataSource().getProtect().get(), row.getValue(), "next()") : null;
 			}
 		}
 
-		public synchronized DataPoolChunk nextChunk(int size) {
-			return new DataPoolChunk(IntStream.range(0, size).mapToObj(i -> next()).filter(Objects::nonNull).collect(Collectors.toList()));
+		public synchronized Object nextChunk(int size) {
+			return checkProtectionAndWrapIfRequired(artefact.getDataSource().getProtect().get(),
+					new DataPoolChunk(IntStream.range(0, size).mapToObj(i -> next()).filter(Objects::nonNull).collect(Collectors.toList())), "nextChunk()");
 		}
 
 		public static class DataPoolChunk extends ArrayList<Object> {
