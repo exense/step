@@ -241,9 +241,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 						uploadContext.getAttributes().put(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER, enricher);
 					}
 
-					input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL));
-					input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH));
-					input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, uploadContext.contextId);
+                    buildInputResults.input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL));
+                    buildInputResults.input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH));
+                    buildInputResults.input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, uploadContext.contextId);
 
 
 					uploadContexts.registerListener(uploadContext.contextId, new StreamingResourceUploadContextListener() {
