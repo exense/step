@@ -44,6 +44,9 @@ root:
         forWrite:
           dynamic: false
           value: true
+        protect:
+          dynamic: false
+          value: false
         file:
           dynamic: false
           value: "resource:644fbe4e38a61e07cc3a4df9"
@@ -53,6 +56,8 @@ root:
         headers:
           dynamic: false
           value: true
+        password:
+          dynamic: false
       maxFailedLoops:
         dynamic: false
       threads:

@@ -58,6 +58,7 @@ import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.variables.VariablesManager;
 import step.datapool.DataSetHandle;
+import step.expressions.ProtectedVariable;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
@@ -197,11 +198,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		if(name.equals(CallFunction.ARTEFACT_NAME) && functionName != null) {
 			node.setName(functionName);
 		}
-
-		FunctionInput<JsonObject> input = buildInput(argumentStr);
-		node.setInput(input.getPayload().toString());
-
-		validateInput(input, function);
+		
+		BuildInputResults buildInputResults = buildInput(argumentStr);
+		node.setInput(buildInputResults.inputArgumentsObfuscated);
+		
+		validateInput(buildInputResults.input, function);
 
 		Output<JsonObject> output;
 		Map<String, StreamingAttachmentMeta> streamingAttachments = new ConcurrentHashMap<>();
@@ -246,9 +247,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 						streamingUploadContext.getAttributes().put(LiveReportingConstants.ACCESSCONTROL_ENRICHER, enricher);
 					}
 
-					input.getProperties().put(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL, (String) context.get(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL));
-					input.getProperties().put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, (String) context.get(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH));
-					input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, streamingUploadContext.contextId);
+					buildInputResults.input.getProperties().put(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL, (String) context.get(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL));
+					buildInputResults.input.getProperties().put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, (String) context.get(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH));
+					buildInputResults.input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, streamingUploadContext.contextId);
 
 					streamingUploadContexts.registerListener(streamingUploadContext.contextId, new StreamingResourceUploadContextListener() {
 
@@ -290,7 +291,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				if (liveReportingContext != null) {
 					// set up the plumbing to let the handler know where to forward measures
 					String url = liveReportingContext.getReportingUrl();
-					input.getProperties().put(LiveReportingConstants.LIVEREPORTING_CONTEXT_URL, url);
+					buildInputResults.input.getProperties().put(LiveReportingConstants.LIVEREPORTING_CONTEXT_URL, url);
 				}
 
 				if(gridToken.isLocal()) {
@@ -306,7 +307,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 						node.getId().toString(), node.getArtefactHash());
 
 				try {
-					output = functionExecutionService.callFunction(token.getID(), function, input, JsonObject.class, context);
+					output = functionExecutionService.callFunction(token.getID(), function, buildInputResults.input, JsonObject.class, context);
 				} finally {
 					OperationManager.getInstance().exit();
 				}
@@ -470,20 +471,38 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		}
 	}
 
-	private FunctionInput<JsonObject> buildInput(String argumentStr) {
-		JsonObject argument = parseAndResolveJson(argumentStr);
+	private static class BuildInputResults {
+		public final FunctionInput<JsonObject> input;
+		public final String inputArgumentsObfuscated;
+
+		public BuildInputResults(FunctionInput<JsonObject> input, String inputArgumentsObfuscated) {
+			this.input = input;
+			this.inputArgumentsObfuscated = inputArgumentsObfuscated;
+		}
+	}
+
+	private BuildInputResults buildInput(String argumentStr) {
+		JsonObject argumentObject = parseJson(argumentStr);
+		DynamicJsonObjectResolver.DualJsonResult dualJsonResult = dynamicJsonObjectResolver.evaluateWithDualResults(argumentObject, getBindings(), true);
 
 		Map<String, String> properties = new HashMap<>();
-		context.getVariablesManager().getAllVariables().forEach((key,value)->properties.put(key, value!=null?value.toString():""));
+		context.getVariablesManager().getAllVariables().forEach((key,value)->{
+			Object actualValue = value;
+			//Properties are allowed to include protected values
+			if (value instanceof ProtectedVariable) {
+				actualValue = ((ProtectedVariable) value).value;
+			}
+			properties.put(key, actualValue != null ? actualValue.toString() : "");
+		});
 		properties.put(AbstractFunctionHandler.PARENTREPORTID_KEY, context.getCurrentReportNode().getId().toString());
 
 		FunctionInput<JsonObject> input = new FunctionInput<>();
-		input.setPayload(argument);
+		input.setPayload(dualJsonResult.getNormalResult());
 		input.setProperties(properties);
-		return input;
+		return new BuildInputResults(input, dualJsonResult.getObfuscatedResult().toString());
 	}
 
-	private JsonObject parseAndResolveJson(String functionStr) {
+	private JsonObject parseJson(String functionStr) {
 		JsonObject query;
 		try {
 			if (functionStr != null && functionStr.trim().length() > 0) {
@@ -494,7 +513,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		} catch(JsonParsingException e) {
 			throw new RuntimeException("Error while parsing argument (input): string was '"+functionStr+"'",e);
 		}
-		return dynamicJsonObjectResolver.evaluate(query, getBindings());
+		return query;
 	}
 
 
