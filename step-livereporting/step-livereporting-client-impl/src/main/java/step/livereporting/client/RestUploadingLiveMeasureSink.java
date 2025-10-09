@@ -49,7 +49,7 @@ public class RestUploadingLiveMeasureSink implements LiveMeasureSink {
     public RestUploadingLiveMeasureSink(String reportingContextUrl, int batchSize, long flushIntervalMs) {
         this.reportingContextUrl = reportingContextUrl;
         this.client = ClientBuilder.newClient().register(JacksonFeature.class);
-        this.batchProcessor = new BatchProcessor<>(batchSize, flushIntervalMs, this::sendMeasures, "measure-sink");
+        this.batchProcessor = new BatchProcessor<>(batchSize, flushIntervalMs, this::sendMeasures, "livereporting-measures-rest");
     }
 
     @Override
@@ -58,12 +58,19 @@ public class RestUploadingLiveMeasureSink implements LiveMeasureSink {
     }
 
     private void sendMeasures(List<Measure> measures) {
+        if (measures == null || measures.isEmpty()) {
+            logger.debug("measures is null or empty, skipping upload");
+            return;
+        }
+        // the final URL corresponds to the one defined in LiveReportingServices (step-controller-base-plugins)
         try (Response post = client.target(reportingContextUrl + "/measures")
                 .request()
                 .post(Entity.entity(measures, MediaType.APPLICATION_JSON_TYPE))) {
             int status = post.getStatus();
             if (status != 204) {
-                // TODO improve error handling
+                String msg = "Error while reporting measures. The live reporting service returned " + status;
+                logger.error(msg);
+                // FIXME: Do we really want to throw an exception here?
                 throw new RuntimeException("Error while reporting measures. The live reporting service returned " + status);
             }
         }

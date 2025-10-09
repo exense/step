@@ -12,8 +12,8 @@ import step.livereporting.LiveReportingContexts;
 
 import java.util.List;
 
-@Path("/reporting")
-@Tag(name = "Reporting")
+@Path("/live-reporting")
+@Tag(name = "Live Reporting")
 public class LiveReportingServices extends AbstractStepServices {
 
     private LiveReportingContexts liveReportingContexts;

@@ -51,7 +51,7 @@ public class LiveReportingPlugin extends AbstractExecutionEnginePlugin {
     @Override
     public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
         if(node instanceof CallFunctionReportNode) {
-            LiveReportingContext reportingContext = liveReportingContexts.createReportingContext();
+            LiveReportingContext reportingContext = liveReportingContexts.createNewContext();
             context.getVariablesManager().putVariable(node, LIVE_REPORTING_CONTEXT, reportingContext);
         }
     }
@@ -60,7 +60,7 @@ public class LiveReportingPlugin extends AbstractExecutionEnginePlugin {
     public void afterReportNodeExecution(ExecutionContext context, ReportNode node) {
         if(node instanceof CallFunctionReportNode) {
             LiveReportingContext liveReportingContext = LiveReportingPlugin.getLiveReportingContext(context);
-            liveReportingContexts.unregister(liveReportingContext.id);
+            liveReportingContexts.removeContext(liveReportingContext.id);
         }
     }
 

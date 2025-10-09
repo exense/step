@@ -61,10 +61,6 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>ch.exense.streaming</groupId>
-			<artifactId>step-streaming-api-client-upload</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
 		</dependency>

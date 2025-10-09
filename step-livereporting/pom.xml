@@ -30,7 +30,7 @@
 	</parent>
 	
 	<modules>
-		<module>step-livereporting-client</module>
+		<module>step-livereporting-client-impl</module>
 		<module>step-livereporting-client-api</module>
 	</modules>
 

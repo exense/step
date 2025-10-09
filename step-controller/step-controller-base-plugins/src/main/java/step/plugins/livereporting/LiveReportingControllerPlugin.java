@@ -14,7 +14,7 @@ public class LiveReportingControllerPlugin extends AbstractControllerPlugin {
         super.serverStart(context);
 
         String controllerUrl = StepControllerPlugin.getControllerUrl(context.getConfiguration(), true, true);
-        LiveReportingContexts liveReportingContexts = new LiveReportingContexts(controllerUrl + "/rest/reporting");
+        LiveReportingContexts liveReportingContexts = new LiveReportingContexts(controllerUrl + "/rest/live-reporting");
         context.put(LiveReportingContexts.class, liveReportingContexts);
 
         context.getServiceRegistrationCallback().registerService(LiveReportingServices.class);

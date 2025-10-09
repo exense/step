@@ -32,17 +32,17 @@ public class LiveReportingContext {
      */
     public final String id = UUID.randomUUID().toString();
     private final List<LiveReportingContextListener> listeners = new ArrayList<>();
-    private final String injectionContextUrl;
+    private final String reportingUrl;
 
-    public LiveReportingContext(String injectionContextUrl) {
-        this.injectionContextUrl = injectionContextUrl + "/" + id;
+    public LiveReportingContext(String baseUrl) {
+        this.reportingUrl = baseUrl + "/" + id;
     }
 
     /**
      * @return the base URL of the reporting endpoint for this specific context
      */
     public String getReportingUrl() {
-        return injectionContextUrl;
+        return reportingUrl;
     }
 
     public void registerListener(LiveReportingContextListener contextListener) {

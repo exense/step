@@ -33,10 +33,10 @@ public class LiveReportingContexts {
     private static final Logger logger = LoggerFactory.getLogger(LiveReportingContexts.class);
     private final Map<String, LiveReportingContext> contexts = new ConcurrentHashMap<>();
 
-    private final String injectionUrlTemplate;
+    private final String baseUrl;
 
-    public LiveReportingContexts(String injectionUrlTemplate) {
-        this.injectionUrlTemplate = injectionUrlTemplate;
+    public LiveReportingContexts(String baseUrl) {
+        this.baseUrl = baseUrl;
     }
 
     public void onMeasuresReceived(String contextHandle, List<Measure> measures) {
@@ -52,13 +52,15 @@ public class LiveReportingContexts {
         return Objects.requireNonNull(contexts.get(contextHandle), "Context with id " + contextHandle + " not found");
     }
 
-    public void unregister(String liveMeasureContextHandle) {
-        contexts.remove(liveMeasureContextHandle);
-    }
-
-    public LiveReportingContext createReportingContext() {
-        LiveReportingContext context = new LiveReportingContext(injectionUrlTemplate);
+    public LiveReportingContext createNewContext() {
+        LiveReportingContext context = new LiveReportingContext(baseUrl);
         contexts.put(context.id, context);
         return context;
     }
+
+    public void removeContext(String liveMeasureContextHandle) {
+        contexts.remove(liveMeasureContextHandle);
+    }
+
+
 }

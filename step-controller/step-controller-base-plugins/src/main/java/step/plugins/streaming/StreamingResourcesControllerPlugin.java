@@ -8,7 +8,7 @@ import jakarta.websocket.server.HandshakeRequest;
 import jakarta.websocket.server.ServerEndpointConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.constants.StreamingConstants;
+import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;
 import step.core.controller.StepControllerPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
@@ -26,7 +26,6 @@ import step.streaming.common.StreamingResourceUploadContexts;
 import step.streaming.server.FilesystemStreamingResourcesStorageBackend;
 import step.streaming.server.StreamingResourceManager;
 import step.streaming.server.URITemplateBasedReferenceProducer;
-import step.streaming.util.ThreadPools;
 import step.streaming.websocket.server.DefaultWebsocketServerEndpointSessionsHandler;
 import step.streaming.websocket.server.WebsocketDownloadEndpoint;
 import step.streaming.websocket.server.WebsocketServerEndpointSessionsHandler;
@@ -143,8 +142,8 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
             public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
                 // Makes streaming available to the execution
                 executionContext.put(StreamingResourceUploadContexts.class, uploadContexts);
-                executionContext.put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, websocketBaseUrl);
-                executionContext.put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, UPLOAD_PATH);
+                executionContext.put(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL, websocketBaseUrl);
+                executionContext.put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, UPLOAD_PATH);
             }
 
 

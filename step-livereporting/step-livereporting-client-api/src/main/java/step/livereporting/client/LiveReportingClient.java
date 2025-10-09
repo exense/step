@@ -20,10 +20,13 @@
 package step.livereporting.client;
 
 import step.reporting.impl.LiveMeasureSink;
+import step.streaming.client.upload.StreamingUploadProvider;
 
 import java.io.Closeable;
 
-public interface LiveReportingClient extends Closeable {
+public interface LiveReportingClient {
 
     LiveMeasureSink getLiveMeasureSink();
+
+    StreamingUploadProvider getStreamingUploadProvider();
 }

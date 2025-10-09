@@ -314,8 +314,25 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		measurement.setExecId(node.getExecutionID());
 		measurement.addCustomField(RN_ID, node.getId().toString());
 		ReportNodeStatus nodeStatus = node.getStatus();
-		// For live measures, the status is still RUNNING. In this case, we don't persist it at all
+		// For live measures, the status is still RUNNING.
+		// In this case, we don't want to persist it at all (but: see the (temporary?) else branch)
 		if(nodeStatus != ReportNodeStatus.RUNNING) {
+			measurement.setStatus(nodeStatus.toString());
+		} else {
+			/* FIXME: we need to add a status, otherwise the PrometheusHandler is unhappy:
+			java.lang.IllegalArgumentException: Label cannot be null.
+				at io.prometheus.client.SimpleCollector.labels(SimpleCollector.java:69)
+				at step.plugins.measurements.prometheus.PrometheusHandler.updateHistogram(PrometheusHandler.java:118)
+				at step.plugins.measurements.prometheus.PrometheusHandler.processMeasurements(PrometheusHandler.java:108)
+				at step.plugins.measurements.MeasurementPlugin.processMeasurements(MeasurementPlugin.java:302)
+				at step.plugins.measurements.MeasurementPlugin.lambda$beforeFunctionExecution$1(MeasurementPlugin.java:152)
+				at step.livereporting.LiveReportingContext.onMeasuresReceived(LiveReportingContext.java:54)
+				at step.livereporting.LiveReportingContexts.onMeasuresReceived(LiveReportingContexts.java:45)
+				at step.plugins.livereporting.LiveReportingServices.injectMeasures(LiveReportingServices.java:33)
+
+			So either we have to make the PrometheusHandler accept null status values, or invent an appropriate Status here.
+			For now, just putting the actual RUNNING status, but I don't know exactly what implications this has.
+			 */
 			measurement.setStatus(nodeStatus.toString());
 		}
 	}
