@@ -91,7 +91,7 @@ public class AutomationPackageResourceUploader {
 
                 return resourceManager.createResource(
                         resourceType,
-                        false,
+                        isDirectory,
                         resourceStream,
                         fileName,
                         context.getEnricher(),
