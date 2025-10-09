@@ -21,9 +21,6 @@ package step.functions.handler;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import step.constants.StreamingConstants;
 import step.core.reports.Measure;
 import step.core.reports.MeasurementsBuilder;
 import step.functions.io.Input;
@@ -39,18 +36,20 @@ import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
 import step.grid.threads.NamedThreadFactory;
+import step.livereporting.client.LiveReportingClient;
 import step.reporting.LiveReporting;
-import step.streaming.client.upload.StreamingUploadProvider;
-import step.streaming.common.StreamingResourceUploadContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
@@ -61,14 +60,12 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	public static final String FUNCTION_TYPE_KEY = "$functionType";
 	public static final String BRANCH_HANDLER_INITIALIZER = "handler-initializer";
 
-	private static final Logger logger = LoggerFactory.getLogger(FunctionMessageHandler.class);
-
 	// Cached object mapper for message payload serialization
 	private final ObjectMapper mapper;
 
 	private ThreadPoolExecutor liveReportingExecutor;
-	// This is actually a Jakarta WebSocketContainer, but instantiated dynamically using a separate class loader
-	private volatile Object webSocketContainer;
+	// This is actually a Jakarta WebSocketContainer, but instantiated dynamically in a separate class loader
+	private final AtomicReference<Object> webSocketContainerRef = new AtomicReference<>();
 	private ApplicationContextBuilder applicationContextBuilder;
 
 	public FunctionHandlerFactory functionHandlerFactory;
@@ -186,71 +183,27 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			// the only place where the Input properties are guaranteed to be available is in the (abstract)
 			// handle() method (which would then have to be implemented in all subclasses). So we do it here.
 
-			// We currently only support Websocket uploads; if this changes in the future, here is the place to modify the logic.
-			String uploadContextId = properties.get(StreamingResourceUploadContext.PARAMETER_NAME);
-			if (uploadContextId != null) {
-				URI websocketUploadUri = getWebsocketUploadUri(properties, uploadContextId);
-				@SuppressWarnings("unchecked") Class<StreamingUploadProvider> providerClass = (Class<StreamingUploadProvider>) Thread.currentThread().getContextClassLoader().loadClass("step.streaming.websocket.client.upload.WebsocketUploadProvider");
-				if (webSocketContainer == null) {
-					synchronized(FunctionMessageHandler.this) {
-						if (webSocketContainer == null) {
-							webSocketContainer = providerClass.getDeclaredMethod("instantiateWebSocketContainer").invoke(null);
+			// Implementation class along with its dependencies is explicitly loaded in a separate classloader
+			Class<?> liveReportingClientClass = Thread.currentThread().getContextClassLoader().loadClass("step.livereporting.client.RemoteLiveReportingClient");
+
+			// This method invocation will also populate the websocketContainer reference if it isn't set yet
+			Object liveReportingClient = liveReportingClientClass.getDeclaredConstructor(Map.class, Map.class, ExecutorService.class, AtomicReference.class)
+					.newInstance(properties, agentTokenServices.getAgentProperties(), liveReportingExecutor, webSocketContainerRef);
+
+			// WHY do we actually need an additional proxy here? Isn't creating it in a separate classloader enough?
+			LiveReportingClient liveReportingClientProxy = (LiveReportingClient) Proxy.newProxyInstance(
+					liveReportingClientClass.getClassLoader(), new Class[]{LiveReportingClient.class},
+					(proxy, method, args) -> {
+						try {
+							return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> method.invoke(liveReportingClient, args));
+						} catch (InvocationTargetException ite) {
+							// rethrow the original exception instead of InvocationTargetException, (usually) conforming to the method's throws signature unless it's a RuntimeException or similar
+							throw ite.getCause();
 						}
 					}
-				}
-				StreamingUploadProvider streamingUploadProvider = providerClass.getDeclaredConstructor(Object.class, ExecutorService.class, URI.class).newInstance(webSocketContainer, liveReportingExecutor, websocketUploadUri);
-
-				StreamingUploadProvider proxiedProvider = (StreamingUploadProvider) Proxy.newProxyInstance(
-						providerClass.getClassLoader(), new Class[]{StreamingUploadProvider.class},
-						(proxy, method, args) -> {
-							try {
-								return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> method.invoke(streamingUploadProvider, args));
-							} catch (InvocationTargetException ite) {
-								// rethrow the original exception instead of InvocationTargetException, (usually) conforming to the method's throws signature unless it's a RuntimeException or similar
-								throw ite.getCause();
-							}
-						}
-				);
-				return new LiveReporting(proxiedProvider);
-			} else {
-				// This will now fall back to auto-determining a streaming provider, usually one that discards all uploads. See the API implementation for details.
-				return new LiveReporting(null);
-			}
+			);
+			return new LiveReporting(liveReportingClientProxy.getStreamingUploadProvider(), liveReportingClientProxy.getLiveMeasureSink());
 		});
-	}
-
-	private URI getWebsocketUploadUri(Map<String, String> properties, String uploadContextId) {
-		String host; // actually contains scheme, hostname, and potentially port.
-		// If present, agent-side configuration overrides the default value, but both agentProperties or the value might be undefined.
-		String agentConfUrl = Optional.ofNullable(agentTokenServices.getAgentProperties())
-				.map(m -> m.get("step.reporting.url"))
-				.orElse(null);
-		if (agentConfUrl != null) {
-			// just a sanity check really
-			if (!agentConfUrl.matches("^https?://.+")) {
-				throw new IllegalArgumentException("Invalid URL in 'step.reporting.url' (agent-side configuration): " + agentConfUrl);
-			}
-			host = agentConfUrl.replaceAll("^http", "ws");
-		} else {
-			// The controller defines a default URL, derived from controller.url in step.properties.
-			// This is always defined, and already has the correct Websocket prefix.
-			host = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL);
-		}
-		// Strip trailing slashes, just in case there are any (normally not expected)
-		while (host.endsWith("/")) {
-			host = host.substring(0, host.length() - 1);
-		}
-		String path = properties.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH);
-		// Strip leading slashes, just in case
-		while (path.startsWith("/")) {
-			path = path.substring(1);
-		}
-		URI uri = URI.create(String.format("%s/%s?%s=%s", host, path, StreamingResourceUploadContext.PARAMETER_NAME, uploadContextId));
-		if (logger.isDebugEnabled()) {
-			// Don't log context id, it's "semi-secret"
-			logger.debug("Effective URL for Websocket uploads: {}", String.format("%s/%s", host, path));
-		}
-		return uri;
 	}
 
 	protected void addCustomTypeToOutputMeasures(List<Measure> outputMeasures) {
@@ -302,9 +255,9 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		if (liveReportingExecutor != null) {
 			liveReportingExecutor.shutdownNow();
 		}
+		Object webSocketContainer = webSocketContainerRef.getAndSet(null);
 		if (webSocketContainer != null) {
 			webSocketContainer.getClass().getMethod("stop").invoke(webSocketContainer);
-			webSocketContainer = null;
 		}
 	}
 }

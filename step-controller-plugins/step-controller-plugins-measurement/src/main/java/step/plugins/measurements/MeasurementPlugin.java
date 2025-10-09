@@ -2,6 +2,7 @@ package step.plugins.measurements;
 
 import groovy.transform.Synchronized;
 import io.prometheus.client.Collector;
+import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.reports.CallFunctionReportNode;
@@ -10,6 +11,7 @@ import step.artefacts.reports.ThreadReportNode;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
@@ -19,17 +21,21 @@ import step.core.plugins.Plugin;
 import step.core.reports.Measure;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-
+import step.functions.Function;
+import step.functions.handler.MeasureTypes;
+import step.functions.io.Output;
+import step.livereporting.LiveReportingPlugin;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static step.plugins.measurements.MeasurementControllerPlugin.ThreadgroupGaugeName;
 
-@Plugin
+@Plugin(dependencies = LiveReportingPlugin.class)
 @IgnoreDuringAutoDiscovery
 public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
@@ -139,6 +145,19 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		}
 	}
 
+	@Override
+	public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {
+		LiveReportingPlugin.getLiveReportingContext(context).registerListener(measures -> {
+			List<Measurement> measurements = measures.stream().map(m -> createMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
+			processMeasurements(measurements);
+		});
+	}
+
+	@Override
+	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {
+
+	}
+
 	@Synchronized
 	private GaugeCollector getOrInitThreadGauge(Map<String, String> additionalAttributes) {
 		gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(ThreadgroupGaugeName);
@@ -221,18 +240,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
 				if (functionReport.getMeasures() != null) {
 					for (Measure measure : functionReport.getMeasures()) {
-						Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
-						Measurement measurement = initMeasurement(executionContext);
-						measurement.addCustomFields(functionAttributes);
-						measurement.setName(measure.getName());
-						measurement.setType(measure.getData().get(TYPE).toString());
-						measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
-						measurement.setValue(measure.getDuration());
-						measurement.setBegin(measure.getBegin());
-						measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
-						enrichWithNodeAttributes(measurement, node);
-						enrichWithCustomData(measurement, measure.getData());
-						enrichWithAdditionalAttributes(measurement, executionContext);
+						Measurement measurement = createMeasurement(executionContext, measure, functionReport);
 						measurements.add(measurement);
 					}
 				}
@@ -247,6 +255,34 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		if (node instanceof ThreadReportNode) {
 			processThreadReportNode(executionContext, (ThreadReportNode) node, false);
 		}
+	}
+
+	private Measurement createMeasurement(ExecutionContext executionContext, Measure measure, CallFunctionReportNode functionReport) {
+		Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
+		Measurement measurement = initMeasurement(executionContext);
+		measurement.addCustomFields(functionAttributes);
+		measurement.setName(measure.getName());
+		measurement.setType(getMeasureTypeOrDefault(measure));
+		measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
+		measurement.setValue(measure.getDuration());
+		measurement.setBegin(measure.getBegin());
+		measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
+		enrichWithNodeAttributes(measurement, functionReport);
+		enrichWithCustomData(measurement, measure.getData());
+		enrichWithAdditionalAttributes(measurement, executionContext);
+		return measurement;
+	}
+
+	private static String getMeasureTypeOrDefault(Measure measure) {
+		String type = null;
+		Map<String, Object> data = measure.getData();
+		if (data != null) {
+			type = (String) measure.getData().get(MeasureTypes.ATTRIBUTE_TYPE);
+		}
+		if(type == null) {
+			type = MeasureTypes.TYPE_CUSTOM;
+		}
+		return type;
 	}
 
 	protected Measurement initMeasurement(ExecutionContext executionContext) {
@@ -277,7 +313,28 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	private void enrichWithNodeAttributes(Measurement measurement, ReportNode node) {
 		measurement.setExecId(node.getExecutionID());
 		measurement.addCustomField(RN_ID, node.getId().toString());
-		measurement.setStatus(node.getStatus().toString());
+		ReportNodeStatus nodeStatus = node.getStatus();
+		// For live measures, the status is still RUNNING.
+		// In this case, we don't want to persist it at all (but: see the (temporary?) else branch)
+		if(nodeStatus != ReportNodeStatus.RUNNING) {
+			measurement.setStatus(nodeStatus.toString());
+		} else {
+			/* FIXME: we need to add a status, otherwise the PrometheusHandler is unhappy:
+			java.lang.IllegalArgumentException: Label cannot be null.
+				at io.prometheus.client.SimpleCollector.labels(SimpleCollector.java:69)
+				at step.plugins.measurements.prometheus.PrometheusHandler.updateHistogram(PrometheusHandler.java:118)
+				at step.plugins.measurements.prometheus.PrometheusHandler.processMeasurements(PrometheusHandler.java:108)
+				at step.plugins.measurements.MeasurementPlugin.processMeasurements(MeasurementPlugin.java:302)
+				at step.plugins.measurements.MeasurementPlugin.lambda$beforeFunctionExecution$1(MeasurementPlugin.java:152)
+				at step.livereporting.LiveReportingContext.onMeasuresReceived(LiveReportingContext.java:54)
+				at step.livereporting.LiveReportingContexts.onMeasuresReceived(LiveReportingContexts.java:45)
+				at step.plugins.livereporting.LiveReportingServices.injectMeasures(LiveReportingServices.java:33)
+
+			So either we have to make the PrometheusHandler accept null status values, or invent an appropriate Status here.
+			For now, just putting the actual RUNNING status, but I don't know exactly what implications this has.
+			 */
+			measurement.setStatus(nodeStatus.toString());
+		}
 	}
 
 	private void enrichWithCustomData(Measurement measurement, Map<String, Object> data) {

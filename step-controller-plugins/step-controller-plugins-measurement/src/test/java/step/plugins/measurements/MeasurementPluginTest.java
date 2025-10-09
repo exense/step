@@ -31,10 +31,12 @@ import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
+import step.livereporting.LiveReportingPlugin;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 import step.threadpool.ThreadPoolPlugin;
@@ -63,6 +65,7 @@ public class MeasurementPluginTest extends AbstractKeyword {
 				.withPlugin(new ThreadPoolPlugin())
 				.withPlugin(new LocalFunctionPlugin())
 				.withPlugin(new BaseArtefactPlugin())
+				.withPlugin(new LiveReportingPlugin())
 				.build();
 	}
 

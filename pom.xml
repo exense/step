@@ -107,6 +107,7 @@
 		<module>step-libs-maven-client</module>
 		<module>step-json-schema</module>
 		<module>step-cli</module>
+		<module>step-livereporting</module>
 	</modules>
 
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
