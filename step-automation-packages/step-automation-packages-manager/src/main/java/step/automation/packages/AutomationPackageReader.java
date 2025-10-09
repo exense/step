@@ -49,10 +49,7 @@ import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 import step.repositories.parser.StepsParser;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -388,13 +385,18 @@ public class AutomationPackageReader {
             if (plans != null) {
                 for (String file : plans.value()) {
                     StepClassParserResult parserResult = null;
+                    ClassLoader classLoader = archive.getClassLoaderForMainApFile();
+                    boolean createdClassloader = false;
                     try {
-                        ClassLoader classLoader = null;
                         File originalFile = archive.getOriginalFile();
-                        if (originalFile != null) {
-                            classLoader = new URLClassLoader(new URL[]{originalFile.toURI().toURL()});
-                        } else {
-                            classLoader = archive.getClassLoaderForMainApFile();
+                        if (classLoader == null) {
+                            //Fall back to creating a new class loader from original file
+                            if (originalFile != null) {
+                                createdClassloader = true;
+                                classLoader = new URLClassLoader(new URL[]{originalFile.toURI().toURL()});
+                            } else {
+                                throw new RuntimeException("Neither the archive classloader or archive file are set");
+                            }
                         }
                         try (InputStream stream = classLoader.getResourceAsStream(file)) {
                             if (stream != null) {
@@ -409,6 +411,14 @@ public class AutomationPackageReader {
                         }
                     } catch (Exception e) {
                         parserResult = new StepClassParserResult(file, null, e);
+                    } finally {
+                        if (createdClassloader && classLoader instanceof AutoCloseable) {
+                            try {
+                                ((AutoCloseable) classLoader).close();
+                            } catch (Exception e) {
+                                log.error("Unable to close the classloader created from provided package file '{}' after reading its content.", archive.getOriginalFile().getName());
+                            }
+                        }
                     }
                     result.add(parserResult);
                 }

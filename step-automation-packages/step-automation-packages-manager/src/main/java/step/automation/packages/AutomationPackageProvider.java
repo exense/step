@@ -42,7 +42,7 @@ public interface AutomationPackageProvider extends Closeable {
     default List<Resource> lookupExistingResources(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
         // by default, we look up resources by resource origin
         if (canLookupResources() && getOrigin() != null) {
-            return resourceManager.getResourcesByOrigin(getOrigin().toStringRepresentation(), objectPredicate).stream().filter(objectPredicate).collect(Collectors.toList());
+            return resourceManager.getResourcesByOrigin(getOrigin().toStringRepresentation(), objectPredicate);
         } else {
             throw new UnsupportedOperationException("Resources cannot be looked up for provider " + this.getClass().getSimpleName());
         }

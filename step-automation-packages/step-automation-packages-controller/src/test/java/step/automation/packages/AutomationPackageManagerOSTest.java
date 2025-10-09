@@ -826,7 +826,7 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
-    public void testReuseApByResourceId() throws IOException {
+    public void testReuseApByResourceId() throws IOException, InterruptedException {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
 
@@ -873,8 +873,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(ap1.getAutomationPackageResource(), ap2.getAutomationPackageResource());
         Assert.assertEquals(ap1.getKeywordLibraryResource(), ap2.getKeywordLibraryResource());
 
-        // TODO: fix cleanup
-//        checkResourceCleanup(ap1Resource.getId().toHexString(), ap1File, kwLibResource.getId().toHexString(), kwLibFile);
+        checkResourceCleanup(ap1Resource.getId().toHexString(), ap1File, kwLibResource.getId().toHexString(), kwLibFile);
     }
 
     @Test
@@ -910,8 +909,7 @@ public class AutomationPackageManagerOSTest {
         ResourceRevisionFileHandle apFile = resourceManager.getResourceFile(savedApResource.getId().toHexString());
         ResourceRevisionFileHandle kwLibFile = resourceManager.getResourceFile(savedkwResource.getId().toHexString());
 
-        // TODO: fix cleanup
-//        checkResourceCleanup(savedApResource.getId().toHexString(), apFile, savedkwResource.getId().toHexString(), kwLibFile);
+        checkResourceCleanup(savedApResource.getId().toHexString(), apFile, savedkwResource.getId().toHexString(), kwLibFile);
     }
 
     private void checkResourceCleanup(String apResourceId, ResourceRevisionFileHandle ap1File,

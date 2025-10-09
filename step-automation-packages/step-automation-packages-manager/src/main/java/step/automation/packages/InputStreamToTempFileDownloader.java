@@ -52,14 +52,17 @@ public class InputStreamToTempFileDownloader {
         try {
             if (temp != null && temp.getTempFile() != null && temp.getTempFile().exists()) {
                 //noinspection ResultOfMethodCallIgnored
-                temp.getTempFile().delete();
+                if(!temp.getTempFile().delete()) {
+                    log.warn("Cannot cleanup temp file {}", temp.getTempFile().getName());
+                }
             }
             if (temp != null && temp.getTempFolder() != null && temp.getTempFolder().exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                temp.getTempFolder().delete();
+                if (!temp.getTempFolder().delete()){
+                    log.warn("Cannot cleanup temp folder  {}", temp.getTempFolder().getName());
+                }
             }
         } catch (Exception e) {
-            log.warn("Cannot cleanup temp file {}", (temp == null || temp.getTempFile() == null) ? "" : temp.getTempFile().getName(), e);
+            log.warn("Cannot cleanup temp file {}", temp.getTempFile().getName(), e);
         }
     }
 
