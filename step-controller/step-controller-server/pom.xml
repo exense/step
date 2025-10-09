@@ -89,7 +89,6 @@
 			<groupId>ch.exense.step</groupId>
 			<artifactId>step-framework-server-plugins</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>

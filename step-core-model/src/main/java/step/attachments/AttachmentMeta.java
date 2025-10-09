@@ -28,7 +28,8 @@ import org.bson.types.ObjectId;
 		defaultImpl = AttachmentMeta.class  // Fallback type if "type" is missing
 )
 @JsonSubTypes({
-		@JsonSubTypes.Type(value = SkippedAttachmentMeta.class)
+		@JsonSubTypes.Type(value = SkippedAttachmentMeta.class),
+		@JsonSubTypes.Type(value = StreamingAttachmentMeta.class),
 })
 public class AttachmentMeta {
 	
