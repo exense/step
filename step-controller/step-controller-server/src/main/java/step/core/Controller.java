@@ -216,10 +216,10 @@ public class Controller {
 	}
 
 	public void destroy() {
-		serviceRegistrationCallback.stop();
 		if (reportNodeTimeSeries != null) {
 			reportNodeTimeSeries.close();
 		}
+		serviceRegistrationCallback.stop();
 	}
 
 	public void postShutdownHook() throws IOException {

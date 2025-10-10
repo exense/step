@@ -603,13 +603,13 @@ public class AutomationPackageManager {
             resource = existingResource.get(0);
 
             // we just reuse the existing resource of unmodifiable origin (i.e non-SNAPSHOT)
-            // and for SNAPSHOT we keep the same resource id, but update the content
+            // and for SNAPSHOT we keep the same resource id, but update the content if a new version was found
             if (apProvider.isModifiableResource()) {
                 try (FileInputStream is = new FileInputStream(originalFile)) {
                     resource = updateExistingMainResourceContent(
                             originalFile.getName(),
                             newPackage.getAttribute(AbstractOrganizableObject.NAME), newPackage.getId(),
-                            is, apProvider.getSnapshotTimestamp(), resource.getId().toHexString(),
+                            is, apProvider.getSnapshotTimestamp(), resource,
                             actorUser, writeAccessPredicate
                     );
                 } catch (IOException | InvalidResourceFormatException e) {
@@ -661,10 +661,10 @@ public class AutomationPackageManager {
                             log.info("Existing keyword library {} with resource id {} has been detected and will be reused in AP {}", keywordLibrary.getName(), oldResource.getId().toHexString(), apName);
                             uploadedResource = oldResource;
                         } else {
-                            // for modifiable resources (i.e. SNAPSHOTS) we can reuse the old resource id and metadata, but we need to reupload the content
+                            // for modifiable resources (i.e. SNAPSHOTS) we can reuse the old resource id and metadata, but we need to update the content if a new version was downloaded
                             uploadedResource = updateExistingMainResourceContent(keywordLibrary.getName(),
                                     apName, newPackage.getId(),
-                                    fis, kwLibProvider.getSnapshotTimestamp(), oldResource.getId().toHexString(),
+                                    fis, kwLibProvider.getSnapshotTimestamp(), oldResource,
                                     actorUser, accessChecker
                             );
                         }
@@ -695,22 +695,24 @@ public class AutomationPackageManager {
     private Resource updateExistingMainResourceContent(String resourceFileName,
                                                        String apName, ObjectId currentApId,
                                                        FileInputStream fis, Long newOriginTimestamp,
-                                                       String resourceId, String actorUser,
+                                                       Resource oldResource, String actorUser,
                                                        ObjectPredicate writeAccessPredicate) throws IOException, InvalidResourceFormatException, AutomationPackageAccessException {
-        // we cannot reupload the resources if they are linked with another package, which is not accessible
-        for (ObjectId apId : linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, List.of(currentApId))) {
-            checkAccess(automationPackageAccessor.get(apId), writeAccessPredicate);
-        }
+        Resource uploadedResource = oldResource;
+        boolean resourceContentRequireUpdate = (oldResource.getOriginTimestamp() == null || newOriginTimestamp == null || oldResource.getOriginTimestamp() < newOriginTimestamp);
+        if (resourceContentRequireUpdate) {
+            // we cannot reupload the resources if they are linked with another package, which is not accessible
+            String resourceId = oldResource.getId().toHexString();
+            for (ObjectId apId : linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, List.of(currentApId))) {
+                checkAccess(automationPackageAccessor.get(apId), writeAccessPredicate);
+            }
 
-        Resource uploadedResource;
-        log.info("Existing resource {} for file {} will be actualized and reused in AP {}", resourceId, resourceFileName, apName);
-        resourceManager.deleteResourceRevisionContent(resourceId);
-        uploadedResource = resourceManager.saveResourceContent(resourceId, fis, resourceFileName, actorUser);
-
-        //update snapshot timestamp if a new version was downloaded
-        if (newOriginTimestamp != null) {
-            uploadedResource.setOriginTimestamp(newOriginTimestamp);
-            resourceManager.saveResource(uploadedResource);
+            log.info("Existing resource {} for file {} will be actualized and reused in AP {}", resourceId, resourceFileName, apName);
+            uploadedResource = resourceManager.saveResourceContent(resourceId, fis, resourceFileName, actorUser);
+            //update snapshot timestamp if a new version was downloaded
+            if (newOriginTimestamp != null) {
+                uploadedResource.setOriginTimestamp(newOriginTimestamp);
+                resourceManager.saveResource(uploadedResource);
+            }
         }
         return uploadedResource;
     }

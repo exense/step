@@ -48,7 +48,6 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
                 context.require(FunctionTypeRegistry.class),
                 context.require(FunctionAccessor.class),
                 configuration, controllerSettingAccessor,
-                context.require(ParameterManager.class),
                 context.getResourceManager());
         ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(
                 context.getResourceManager(),

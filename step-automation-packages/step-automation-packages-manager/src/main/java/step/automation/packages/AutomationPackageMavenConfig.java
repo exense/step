@@ -21,15 +21,20 @@ package step.automation.packages;
 import step.core.objectenricher.ObjectPredicate;
 
 import java.io.File;
+import java.time.Duration;
 
 public class AutomationPackageMavenConfig {
 
     private String mavenSettingsXml;
     private File localFileRepository;
+    private Duration maxAge;
+    private Duration cleanupFrequency;
 
-    public AutomationPackageMavenConfig(String mavenSettingsXml, File localFileRepository) {
+    public AutomationPackageMavenConfig(String mavenSettingsXml, File localFileRepository, Duration maxAge, Duration cleanupFrequency) {
         this.mavenSettingsXml = mavenSettingsXml;
         this.localFileRepository = localFileRepository;
+        this.maxAge = maxAge;
+        this.cleanupFrequency = cleanupFrequency;
     }
 
     public String getMavenSettingsXml() {
@@ -46,6 +51,22 @@ public class AutomationPackageMavenConfig {
 
     public void setLocalFileRepository(File localFileRepository) {
         this.localFileRepository = localFileRepository;
+    }
+
+    public Duration getMaxAge() {
+        return maxAge;
+    }
+
+    public void setMaxAge(Duration maxAge) {
+        this.maxAge = maxAge;
+    }
+
+    public Duration getCleanupFrequency() {
+        return cleanupFrequency;
+    }
+
+    public void setCleanupFrequency(Duration cleanupFrequency) {
+        this.cleanupFrequency = cleanupFrequency;
     }
 
     public interface ConfigProvider {

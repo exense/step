@@ -28,44 +28,39 @@ import step.core.controller.ControllerSettingAccessor;
 import step.core.objectenricher.ObjectPredicate;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
-import step.parameter.ParameterManager;
 import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManager;
 
 import java.io.File;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
+
+import static step.automation.packages.AutomationPackagePlugin.*;
 
 public class MavenArtifactRepository extends AbstractArtifactRepository {
 
     public static final String MAVEN_SETTINGS_PREFIX = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX;
 
     private final ControllerSettingAccessor controllerSettingAccessor;
-    private final ParameterManager parameterManager;
     private final File localRepository;
+    private final Duration maxAge;
+    private final Duration cleanupFrequency;
 
     public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, Configuration configuration,
-                                   ControllerSettingAccessor controllerSettingAccessor, ParameterManager parameterManager, ResourceManager resourceManager) {
+                                   ControllerSettingAccessor controllerSettingAccessor, ResourceManager resourceManager) {
         super(Set.of(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION), manager, functionTypeRegistry, functionAccessor, resourceManager);
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.controllerSettingAccessor = controllerSettingAccessor;
-        this.parameterManager = parameterManager;
+        maxAge = Duration.ofMinutes(configuration.getPropertyAsLong(CONFIGURATION_MAVEN_MAX_AGE, DEFAULT_MAVEN_MAX_AGE));
+        cleanupFrequency = Duration.ofMinutes(configuration.getPropertyAsLong(CONFIGURATION_MAVEN_CLEANUP_FREQUENCY, DEFAULT_MAVEN_CLEANUP_FREQUENCY));
     }
 
     private String getMavenSettingsXml(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
         // Priority 1: the explicit parameter in repository params
         String mavenSettingsPostfix = repositoryParameters.get(ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS);
         if (mavenSettingsPostfix == null) {
-            // TODO: here we indented to apply the user-defined multitenant parameter, but old Step Parameters are only designed for executions, so it will be replaced with special user settings (SED-3921)
-            // Priority 2: Step parameter (the whole settings.xml defined in UI)
-//            Parameter mavenSettingsParam = parameterManager == null ? null : parameterManager.getAllParameters(new HashMap<>(), objectPredicate).get(PARAM_MAVEN_SETTINGS);
-//            if (mavenSettingsParam != null && mavenSettingsParam.getValue() != null && !mavenSettingsParam.getValue().getValue().isEmpty()) {
-                // in mavenSettingParam we keep the settings.xml explicitly
-//                return mavenSettingsParam.getValue().getValue();
-//            } else {
-                // Priority 3: default location
                 mavenSettingsPostfix = ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
-//            }
         }
 
         String mavenSettingsId = MAVEN_SETTINGS_PREFIX + mavenSettingsPostfix;
@@ -83,7 +78,7 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
     public File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
         String settingsXml = getMavenSettingsXml(repositoryParameters, objectPredicate);
         try {
-            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml, localRepository);
+            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(settingsXml, localRepository, maxAge, cleanupFrequency);
             String artifactId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID);
             String version = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION);
             String groupId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID);

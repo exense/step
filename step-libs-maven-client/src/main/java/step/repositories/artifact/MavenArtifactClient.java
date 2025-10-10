@@ -35,6 +35,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
+import java.time.Duration;
 import java.util.*;
 
 public class MavenArtifactClient {
@@ -43,10 +44,11 @@ public class MavenArtifactClient {
     private final Settings settings;
     private final RepositorySystem repositorySystem;
     private final File localRepository;
+    private volatile boolean cleanupEnabled = false;
 
     private static final Logger logger = LoggerFactory.getLogger(MavenArtifactClient.class);
 
-    public MavenArtifactClient(String settingsXml, File localRepository) throws SettingsBuildingException {
+    public MavenArtifactClient(String settingsXml, File localRepository, Duration maxAge, Duration cleanupFrequency) throws SettingsBuildingException {
         // SNAPSHOT jar files cannot be read without this property
         // let the user a chance to still override it
         if (System.getProperty(AETHER_SNAPSHOT_PROPERTY)==null) {
@@ -56,6 +58,9 @@ public class MavenArtifactClient {
         settings = createSettings(settingsXml);
         repositorySystem = getRepositorySystem();
         this.localRepository = localRepository;
+        if (maxAge != null && maxAge.toMillis() > 0L) {
+            enableAutomaticCleanup(maxAge, cleanupFrequency);
+        }
     }
 
     private static RepositorySystem getRepositorySystem() {
@@ -347,5 +352,38 @@ public class MavenArtifactClient {
             }
         }
         return mirrorSelector;
+    }
+
+    public void enableAutomaticCleanup(Duration maxAge, Duration cleanupFrequency) {
+        if (maxAge == null || cleanupFrequency == null) {
+            throw new IllegalArgumentException("maxAge and cleanupFrequency cannot be null");
+        }
+
+        if (maxAge.isNegative() || maxAge.isZero()) {
+            throw new IllegalArgumentException("maxAge must be positive");
+        }
+
+        if (cleanupFrequency.isNegative() || cleanupFrequency.isZero()) {
+            throw new IllegalArgumentException("cleanupFrequency must be positive");
+        }
+
+        MavenCacheCleanupScheduler.getInstance().registerRepository(localRepository, maxAge, cleanupFrequency);
+        this.cleanupEnabled = true;
+    }
+
+    public void disableAutomaticCleanup() {
+        if (cleanupEnabled) {
+            MavenCacheCleanupScheduler.getInstance().unregisterRepository(localRepository);
+            this.cleanupEnabled = false;
+            logger.info("Disabled automatic cleanup for repository: {}", localRepository.getAbsolutePath());
+        }
+    }
+
+    public boolean isCleanupEnabled() {
+        return cleanupEnabled;
+    }
+
+    public File getLocalRepository() {
+        return localRepository;
     }
 }

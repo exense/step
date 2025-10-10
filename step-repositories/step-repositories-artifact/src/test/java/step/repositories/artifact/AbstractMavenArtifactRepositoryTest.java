@@ -85,7 +85,7 @@ public abstract class AbstractMavenArtifactRepositoryTest {
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         LocalResourceManagerImpl resourceManager = new LocalResourceManagerImpl();
         this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), resourceManager, apReader, hookRegistry);
-        artifactRepository = new MavenArtifactRepository(apManager, functionTypeRegistry, functionAccessor, configuration, controllerSettingAccessor, null, resourceManager);
+        artifactRepository = new MavenArtifactRepository(apManager, functionTypeRegistry, functionAccessor, configuration, controllerSettingAccessor, resourceManager);
 
         // mock the context, which is normally prepared via FunctionPlugin
         executionContext = ExecutionEngine.builder().build().newExecutionContext();

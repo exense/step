@@ -56,8 +56,8 @@ public class MavenArtifactDownloader {
         if (mavenConfig.getLocalFileRepository() == null) {
             throw new AutomationPackageManagerException("Maven local file repository is not resolved");
         }
-        MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(mavenConfig.getMavenSettingsXml(), mavenConfig.getLocalFileRepository());
-        return mavenArtifactClient;
+        return new MavenArtifactClient(mavenConfig.getMavenSettingsXml(), mavenConfig.getLocalFileRepository(),
+                mavenConfig.getMaxAge(), mavenConfig.getCleanupFrequency());
     }
 
     public static SnapshotMetadata fetchSnapshotMetadata(AutomationPackageMavenConfig mavenConfig, MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) throws AutomationPackageReadingException {
