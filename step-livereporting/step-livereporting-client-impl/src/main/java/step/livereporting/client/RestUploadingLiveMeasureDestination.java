@@ -28,13 +28,13 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.reports.Measure;
-import step.reporting.impl.LiveMeasureSink;
+import step.reporting.impl.LiveMeasureDestination;
 
 import java.util.List;
 
-public class RestUploadingLiveMeasureSink implements LiveMeasureSink {
+public class RestUploadingLiveMeasureDestination implements LiveMeasureDestination {
 
-    private static final Logger logger = LoggerFactory.getLogger(RestUploadingLiveMeasureSink.class);
+    private static final Logger logger = LoggerFactory.getLogger(RestUploadingLiveMeasureDestination.class);
     private static final int DEFAULT_BATCH_SIZE = 50;
     private static final long DEFAULT_FLUSH_INTERVAL_MS = 1000;
 
@@ -42,11 +42,11 @@ public class RestUploadingLiveMeasureSink implements LiveMeasureSink {
     private final Client client;
     private final BatchProcessor<Measure> batchProcessor;
 
-    public RestUploadingLiveMeasureSink(String reportingContextUrl) {
+    public RestUploadingLiveMeasureDestination(String reportingContextUrl) {
         this(reportingContextUrl, DEFAULT_BATCH_SIZE, DEFAULT_FLUSH_INTERVAL_MS);
     }
 
-    public RestUploadingLiveMeasureSink(String reportingContextUrl, int batchSize, long flushIntervalMs) {
+    public RestUploadingLiveMeasureDestination(String reportingContextUrl, int batchSize, long flushIntervalMs) {
         this.reportingContextUrl = reportingContextUrl;
         this.client = ClientBuilder.newClient().register(JacksonFeature.class);
         this.batchProcessor = new BatchProcessor<>(batchSize, flushIntervalMs, this::sendMeasures, "livereporting-measures-rest");

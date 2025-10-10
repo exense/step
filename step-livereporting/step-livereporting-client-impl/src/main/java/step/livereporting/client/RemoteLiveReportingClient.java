@@ -23,7 +23,7 @@ package step.livereporting.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.constants.LiveReportingConstants;
-import step.reporting.impl.LiveMeasureSink;
+import step.reporting.impl.LiveMeasureDestination;
 import step.streaming.client.upload.StreamingUploadProvider;
 import step.streaming.common.StreamingResourceUploadContext;
 import step.streaming.websocket.client.upload.WebsocketUploadProvider;
@@ -38,7 +38,7 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
 
     private static final Logger logger = LoggerFactory.getLogger(RemoteLiveReportingClient.class);
 
-    private final RestUploadingLiveMeasureSink liveMeasureSink;
+    private final RestUploadingLiveMeasureDestination liveMeasureSink;
     private final StreamingUploadProvider streamingUploadProvider;
 
     public RemoteLiveReportingClient(Map<String, String> contextProperties, Map<String, String> agentProperties, ExecutorService executorService, AtomicReference<Object> websocketContainer) {
@@ -63,7 +63,7 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
         }
         String liveReportingUrl = contextProperties.get(LiveReportingConstants.LIVEREPORTING_CONTEXT_URL);
         if (liveReportingUrl != null) {
-            liveMeasureSink = new RestUploadingLiveMeasureSink(liveReportingUrl);
+            liveMeasureSink = new RestUploadingLiveMeasureDestination(liveReportingUrl);
         } else {
             // API liveReporting knows how to handle null values
             liveMeasureSink = null;
@@ -71,7 +71,7 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
     }
 
     @Override
-    public LiveMeasureSink getLiveMeasureSink() {
+    public LiveMeasureDestination getLiveMeasureSink() {
         return liveMeasureSink;
     }
 

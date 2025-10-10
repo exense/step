@@ -17,21 +17,20 @@
  * along with Step.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.junit.Ignore;
 import org.junit.Test;
 import step.core.reports.Measure;
-import step.livereporting.client.RestUploadingLiveMeasureSink;
+import step.livereporting.client.RestUploadingLiveMeasureDestination;
 
 import java.util.Map;
 
-public class RestUploadingLiveMeasureSinkTest {
+public class RestUploadingLiveMeasureDestinationTest {
 
     @Ignore
     @Test
     public void accept() {
         // TODO finalize or remove this test
-        RestUploadingLiveMeasureSink client = new RestUploadingLiveMeasureSink("http://localhost:8080/reporting/");
+        RestUploadingLiveMeasureDestination client = new RestUploadingLiveMeasureDestination("http://localhost:8080/reporting/");
         client.accept(new Measure("test", 10, System.currentTimeMillis(), Map.of()));
     }
 }

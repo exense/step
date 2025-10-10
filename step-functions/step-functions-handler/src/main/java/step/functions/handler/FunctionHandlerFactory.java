@@ -24,6 +24,7 @@ import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.agent.tokenpool.TokenSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.filemanager.FileManagerClient;
+import step.reporting.LiveReporting;
 
 public class FunctionHandlerFactory {
 	
@@ -53,6 +54,9 @@ public class FunctionHandlerFactory {
 	public AbstractFunctionHandler create(ClassLoader classloader, String class_, TokenSession tokenSession, TokenReservationSession tokenReservationSession, Map<String, String> properties) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 		AbstractFunctionHandler functionHandler = (AbstractFunctionHandler) classloader.loadClass(class_).newInstance();
 		initialize(functionHandler, tokenSession, tokenReservationSession, properties);
+		// This initializes live reporting with a basic version (discarding data); it will normally be set to a more
+		// functional one later on, but some Unit Tests skip this and test handlers directly
+		functionHandler.setLiveReporting(new LiveReporting(null, null));
 		return functionHandler;
 	}
 	
