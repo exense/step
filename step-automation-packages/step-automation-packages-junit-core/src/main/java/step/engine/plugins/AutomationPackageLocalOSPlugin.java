@@ -18,9 +18,7 @@
  ******************************************************************************/
 package step.engine.plugins;
 
-import step.automation.packages.AutomationPackageHookRegistry;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.*;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.execution.AbstractExecutionEngineContext;
@@ -50,7 +48,11 @@ public class AutomationPackageLocalOSPlugin extends AbstractExecutionEnginePlugi
 
             AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serRegistry, context.require(ParameterManager.class));
 
-            AutomationPackageReader reader = context.computeIfAbsent(AutomationPackageReader.class, automationPackageReaderClass -> new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration()));
+            AutomationPackageReaderRegistry automationPackageReaderRegistry = context.computeIfAbsent(AutomationPackageReaderRegistry.class, automationPackageReaderClass -> {
+                AutomationPackageReaderRegistry automationPackageReaderRegistryInner = new AutomationPackageReaderRegistry();
+                automationPackageReaderRegistryInner.register(new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration()));
+                return automationPackageReaderRegistryInner;
+            });
 
             context.computeIfAbsent(
                     AutomationPackageManager.class,
@@ -59,7 +61,7 @@ public class AutomationPackageLocalOSPlugin extends AbstractExecutionEnginePlugi
                             functionAccessor,
                             context.getPlanAccessor(),
                             resourceManager,
-                            reader,
+                            automationPackageReaderRegistry,
                             hookRegistry
                     )
             );

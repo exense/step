@@ -7,9 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageHookRegistry;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.*;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.execution.ExecutionContext;
@@ -42,10 +40,12 @@ public class ResourceArtifactRepositoryTest {
         this.resourceManager = new ResourceManagerImpl(FileHelper.createTempFolder(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
 
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
-        AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, new AutomationPackageSerializationRegistry(), new Configuration());
+        AutomationPackageReader apReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, new AutomationPackageSerializationRegistry(), new Configuration());
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry();
+        automationPackageReaderRegistry.register(apReader);
         this.functionTypeRegistry = MavenArtifactRepositoryTest.prepareTestFunctionTypeRegistry();
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
-        this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), new LocalResourceManagerImpl(), apReader, hookRegistry);
+        this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), new LocalResourceManagerImpl(), automationPackageReaderRegistry, hookRegistry);
         this.repo = new ResourceArtifactRepository(resourceManager, apManager, functionTypeRegistry, functionAccessor);
     }
 

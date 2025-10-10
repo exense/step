@@ -124,6 +124,10 @@ public class AutomationPackageManagerOSTest {
         AutomationPackageSchedulerPlugin.registerSchedulerHooks(automationPackageHookRegistry, serializationRegistry, executionScheduler);
         AutomationPackageParametersRegistration.registerParametersHooks(automationPackageHookRegistry, serializationRegistry, parameterManager);
 
+        JavaAutomationPackageReader apReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration);
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry();
+        automationPackageReaderRegistry.register(apReader);
+
         this.manager = AutomationPackageManager.createMainAutomationPackageManager(
                 automationPackageAccessor,
                 functionManager,
@@ -131,7 +135,7 @@ public class AutomationPackageManagerOSTest {
                 planAccessor,
                 resourceManager,
                 automationPackageHookRegistry,
-                new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration),
+                automationPackageReaderRegistry,
                 automationPackageLocks,
                 null
         );

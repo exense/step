@@ -93,7 +93,10 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         AutomationPackageSerializationRegistry serRegistry = new AutomationPackageSerializationRegistry();
         context.put(AutomationPackageSerializationRegistry.class, serRegistry);
 
-        context.put(AutomationPackageReader.class, new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration()));
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry();
+        JavaAutomationPackageReader javaAutomationPackageReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration());
+        automationPackageReaderRegistry.register(javaAutomationPackageReader);
+        context.put(AutomationPackageReaderRegistry.class, automationPackageReaderRegistry);
     }
 
     @Override
@@ -121,7 +124,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                     context.getPlanAccessor(),
                     context.getResourceManager(),
                     context.require(AutomationPackageHookRegistry.class),
-                    context.require(AutomationPackageReader.class),
+                    context.require(AutomationPackageReaderRegistry.class),
                     automationPackageLocks,
                     mavenConfigProvider
             );

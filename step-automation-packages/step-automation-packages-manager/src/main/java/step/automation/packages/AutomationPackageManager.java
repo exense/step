@@ -62,6 +62,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
+import static step.automation.packages.AutomationPackageArchiveType.JAVA;
 import static step.plans.parser.yaml.YamlPlan.PLANS_ENTITY_NAME;
 
 public class AutomationPackageManager {
@@ -75,7 +76,7 @@ public class AutomationPackageManager {
     protected final FunctionAccessor functionAccessor;
     private final AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider;
     protected final PlanAccessor planAccessor;
-    protected final AutomationPackageReader packageReader;
+    protected final AutomationPackageReaderRegistry automationPackageReaderRegistry;
 
     protected final ResourceManager resourceManager;
     protected final AutomationPackageHookRegistry automationPackageHookRegistry;
@@ -103,7 +104,7 @@ public class AutomationPackageManager {
                                      ResourceManager resourceManager,
                                      Map<String, Object> extensions,
                                      AutomationPackageHookRegistry automationPackageHookRegistry,
-                                     AutomationPackageReader packageReader,
+                                     AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                      AutomationPackageLocks automationPackageLocks,
                                      AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
         this.automationPackageAccessor = automationPackageAccessor;
@@ -120,7 +121,7 @@ public class AutomationPackageManager {
         this.extensions = extensions;
 
         this.automationPackageHookRegistry = automationPackageHookRegistry;
-        this.packageReader = packageReader;
+        this.automationPackageReaderRegistry = automationPackageReaderRegistry;
         this.resourceManager = resourceManager;
         this.automationPackageLocks = automationPackageLocks;
         this.operationMode = Objects.requireNonNull(operationMode);
@@ -144,7 +145,7 @@ public class AutomationPackageManager {
                                                                                FunctionAccessor mainFunctionAccessor,
                                                                                PlanAccessor planAccessor,
                                                                                ResourceManager resourceManager,
-                                                                               AutomationPackageReader reader,
+                                                                               AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                                AutomationPackageHookRegistry hookRegistry) {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onLocalAutomationPackageManagerCreate(extensions);
@@ -157,7 +158,7 @@ public class AutomationPackageManager {
                 planAccessor,
                 resourceManager,
                 extensions,
-                hookRegistry, reader,
+                hookRegistry, automationPackageReaderRegistry,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
                 null
         );
@@ -179,7 +180,7 @@ public class AutomationPackageManager {
     public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId,
                                                                                   FunctionTypeRegistry functionTypeRegistry,
                                                                                   FunctionAccessor mainFunctionAccessor,
-                                                                                  AutomationPackageReader reader,
+                                                                                  AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                                   AutomationPackageHookRegistry hookRegistry,
                                                                                   AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
 
@@ -196,7 +197,7 @@ public class AutomationPackageManager {
                 new InMemoryPlanAccessor(),
                 resourceManager,
                 extensions,
-                hookRegistry, reader,
+                hookRegistry, automationPackageReaderRegistry,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
                 mavenConfigProvider
         );
@@ -210,7 +211,7 @@ public class AutomationPackageManager {
                                                                               PlanAccessor planAccessor,
                                                                               ResourceManager resourceManager,
                                                                               AutomationPackageHookRegistry hookRegistry,
-                                                                              AutomationPackageReader reader,
+                                                                              AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                               AutomationPackageLocks locks,
                                                                               AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
         Map<String, Object> extensions = new HashMap<>();
@@ -223,7 +224,7 @@ public class AutomationPackageManager {
                 resourceManager,
                 extensions,
                 hookRegistry,
-                reader,
+                automationPackageReaderRegistry,
                 locks,
                 mavenConfigProvider
         );
@@ -241,7 +242,7 @@ public class AutomationPackageManager {
      * @return the automation manager with in-memory accessors for plans and keywords
      */
     public AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor){
-        return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getPackageReader(), automationPackageHookRegistry, mavenConfigProvider);
+        return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getAutomationPackageReaderRegistry(), automationPackageHookRegistry, mavenConfigProvider);
     }
 
     public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
@@ -992,7 +993,7 @@ public class AutomationPackageManager {
 
     protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
-        packageContent = packageReader.readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
+        packageContent = automationPackageReaderRegistry.getReader(automationPackageArchive).readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
         if (packageContent == null) {
             throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);
         } else if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
@@ -1127,8 +1128,8 @@ public class AutomationPackageManager {
         }
     }
 
-    public AutomationPackageReader getPackageReader() {
-        return packageReader;
+    public AutomationPackageReaderRegistry getAutomationPackageReaderRegistry() {
+        return automationPackageReaderRegistry;
     }
 
     public boolean isIsolated() {
@@ -1176,7 +1177,7 @@ public class AutomationPackageManager {
     }
 
     public String getDescriptorJsonSchema() {
-        return packageReader.getDescriptorJsonSchema();
+        return automationPackageReaderRegistry.getReaderByType(JAVA).getDescriptorJsonSchema();
     }
 
     private static class HookEntry {
