@@ -48,7 +48,7 @@
 		<dependencies.version>2025.6.25</dependencies.version>
 		<step-grid.version>2025.10.2-68de29d78e322422c137688a</step-grid.version>
 		<step-framework.version>2025.10.2-68de32758e322422c13a072e</step-framework.version>
-		<step-api-temp-override.version>2025.10.10-68e8d8e5f11e4e179034cd67</step-api-temp-override.version>
+		<step-api-temp-override.version>2025.10.10-68e8db10f11e4e179035ebfa</step-api-temp-override.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
