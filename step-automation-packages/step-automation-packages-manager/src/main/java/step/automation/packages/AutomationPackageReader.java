@@ -168,6 +168,8 @@ public class AutomationPackageReader {
             res.getPlans().addAll(annotatedPlans);
         } catch (JsonSchemaPreparationException e) {
             throw new AutomationPackageReadingException("Cannot read the json schema from annotated keyword", e);
+        } catch (Throwable e) {
+            throw new AutomationPackageReadingException("Unexpected error while extracting annotated keyword: " + e, e);
         }
     }
 
