@@ -24,9 +24,8 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.CallPlan;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
-import step.attachments.FileResolver;
 import step.automation.packages.*;
-import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
@@ -347,8 +346,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         if (maven_source != null && !maven_source.isBlank()) {
             AutomationPackageFileSource keywordLibraryFileSource = AutomationPackageFileSource.withMavenIdentifier(MavenArtifactIdentifier.fromShortString(maven_source));
             try {
-                AutomationPackageKeywordLibraryProvider keywordLibraryProvider = manager.getKeywordLibraryProvider(keywordLibraryFileSource, objectPredicate);
-                return new AutomationPackageFile(keywordLibraryProvider.getKeywordLibrary(), null);
+                AutomationPackageLibraryProvider keywordLibraryProvider = manager.getAutomationPackageLibraryProvider(keywordLibraryFileSource, objectPredicate);
+                return new AutomationPackageFile(keywordLibraryProvider.getAutomationPackageLibrary(), null);
             } catch (AutomationPackageReadingException e) {
                 throw new AutomationPackageManagerException("Unable to resolve keyword library with maven source " + maven_source, e);
             }

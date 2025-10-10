@@ -18,20 +18,17 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
-import step.resources.ResourceOrigin;
-import step.resources.UploadedResourceOrigin;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 public class AutomationPackageFromInputStreamProvider extends AbstractAutomationPackageFromInputStreamProvider implements AutomationPackageArchiveProvider {
 
     private final AutomationPackageArchive archive;
 
-    public AutomationPackageFromInputStreamProvider(InputStream packageStream, String fileName, AutomationPackageKeywordLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException {
+    public AutomationPackageFromInputStreamProvider(InputStream packageStream, String fileName, AutomationPackageLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException {
         super(packageStream, fileName);
-        this.archive = new AutomationPackageArchive(tempFile.getTempFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
+        this.archive = new AutomationPackageArchive(tempFile.getTempFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary());
     }
 
     @Override

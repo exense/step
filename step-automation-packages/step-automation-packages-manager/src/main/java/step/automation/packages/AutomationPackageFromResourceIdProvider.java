@@ -20,15 +20,15 @@
  */
 package step.automation.packages;
 
-import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
 import step.core.objectenricher.ObjectPredicate;
 import step.resources.ResourceManager;
 
 public class AutomationPackageFromResourceIdProvider extends AbstractAutomationPackageFromResourceIdProvider implements AutomationPackageArchiveProvider {
 
-    private final AutomationPackageKeywordLibraryProvider keywordLibraryProvider;
+    private final AutomationPackageLibraryProvider keywordLibraryProvider;
 
-    public AutomationPackageFromResourceIdProvider(ResourceManager resourceManager, String resourceId, AutomationPackageKeywordLibraryProvider keywordLibraryProvider,
+    public AutomationPackageFromResourceIdProvider(ResourceManager resourceManager, String resourceId, AutomationPackageLibraryProvider keywordLibraryProvider,
                                                    ObjectPredicate objectPredicate) {
         super(resourceManager, resourceId, objectPredicate);
         this.keywordLibraryProvider = keywordLibraryProvider;
@@ -37,7 +37,7 @@ public class AutomationPackageFromResourceIdProvider extends AbstractAutomationP
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
         try {
-            return new AutomationPackageArchive(resourceFile.getResourceFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
+            return new AutomationPackageArchive(resourceFile.getResourceFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary());
         } catch (AutomationPackageReadingException e) {
             throw new AutomationPackageManagerException("Unable to load automation package by resource id: " + resourceId);
         }

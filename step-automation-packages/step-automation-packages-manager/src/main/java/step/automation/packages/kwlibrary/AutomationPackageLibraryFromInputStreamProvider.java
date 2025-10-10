@@ -26,14 +26,14 @@ import step.automation.packages.AutomationPackageReadingException;
 import java.io.File;
 import java.io.InputStream;
 
-public class KeywordLibraryFromInputStreamProvider extends AbstractAutomationPackageFromInputStreamProvider implements AutomationPackageKeywordLibraryProvider {
+public class AutomationPackageLibraryFromInputStreamProvider extends AbstractAutomationPackageFromInputStreamProvider implements AutomationPackageLibraryProvider {
 
-    public KeywordLibraryFromInputStreamProvider(InputStream packageStream, String fileName) throws AutomationPackageReadingException {
+    public AutomationPackageLibraryFromInputStreamProvider(InputStream packageStream, String fileName) throws AutomationPackageReadingException {
         super(packageStream, fileName);
     }
 
     @Override
-    public File getKeywordLibrary() throws AutomationPackageReadingException {
+    public File getAutomationPackageLibrary() throws AutomationPackageReadingException {
         return tempFile == null ? null : tempFile.getTempFile();
     }
 

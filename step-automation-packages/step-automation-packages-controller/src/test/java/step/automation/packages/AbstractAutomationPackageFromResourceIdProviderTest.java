@@ -27,7 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.kwlibrary.KeywordLibraryFromResourceIdProvider;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryFromResourceIdProvider;
 import step.resources.*;
 
 import java.io.*;
@@ -63,7 +63,7 @@ public class AbstractAutomationPackageFromResourceIdProviderTest {
         }
 
         AutomationPackageArchive archive;
-        try (KeywordLibraryFromResourceIdProvider kwLibProvider = new KeywordLibraryFromResourceIdProvider(resourceManager, savedkwResource.getId().toHexString(), o -> true);
+        try (AutomationPackageLibraryFromResourceIdProvider kwLibProvider = new AutomationPackageLibraryFromResourceIdProvider(resourceManager, savedkwResource.getId().toHexString(), o -> true);
              AutomationPackageFromResourceIdProvider provider = new AutomationPackageFromResourceIdProvider(resourceManager, savedApResource.getId().toHexString(), kwLibProvider, o -> true)) {
             archive = provider.getAutomationPackageArchive();
         } catch (IOException | AutomationPackageReadingException e) {

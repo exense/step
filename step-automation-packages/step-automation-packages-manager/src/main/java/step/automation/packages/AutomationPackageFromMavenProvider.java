@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectPredicate;
 import step.resources.ResourceManager;
@@ -29,10 +29,10 @@ public class AutomationPackageFromMavenProvider extends AbstractAutomationPackag
 
     public AutomationPackageFromMavenProvider(AutomationPackageMavenConfig mavenConfig,
                                               MavenArtifactIdentifier mavenArtifactIdentifier,
-                                              AutomationPackageKeywordLibraryProvider keywordLibraryProvider,
+                                              AutomationPackageLibraryProvider keywordLibraryProvider,
                                               ResourceManager resourceManager, ObjectPredicate objectPredicate) throws AutomationPackageReadingException {
         super(mavenConfig, mavenArtifactIdentifier, resourceManager, objectPredicate);
-        this.archive = new AutomationPackageArchive(resolvedMavenArtefact.artifactFile, keywordLibraryProvider == null ? null : keywordLibraryProvider.getKeywordLibrary());
+        this.archive = new AutomationPackageArchive(resolvedMavenArtefact.artifactFile, keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary());
     }
 
     @Override

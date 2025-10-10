@@ -549,7 +549,7 @@ public class AutomationPackageManagerOSTest {
         checkResources(echoAp, SAMPLE_ECHO_FILE_NAME, KW_LIB_FILE_NAME, echoSnapshot.toStringRepresentation(), kwLibSnapshot.toStringRepresentation());
 
         // both automation packages now reference the same keyword lib resource
-        assertEquals(ap1.getKeywordLibraryResource(), echoAp.getKeywordLibraryResource());
+        assertEquals(ap1.getAutomationPackageLibraryResource(), echoAp.getAutomationPackageLibraryResource());
     }
 
     @Test
@@ -609,7 +609,7 @@ public class AutomationPackageManagerOSTest {
         );
 
         Resource echoReleaseResource = resourceManager.getResource(FileResolver.resolveResourceId(apEcho.getAutomationPackageResource()));
-        Resource kwLibReleaseResource = resourceManager.getResource(FileResolver.resolveResourceId(apEcho.getKeywordLibraryResource()));
+        Resource kwLibReleaseResource = resourceManager.getResource(FileResolver.resolveResourceId(apEcho.getAutomationPackageLibraryResource()));
 
         // reupload the same AP - existing RELEASE RESOURCES SHOULD BE REUSED
         result = manager.createOrUpdateAutomationPackage(
@@ -624,7 +624,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
 
         Resource echoReleaseResourceAfterUpdate = resourceManager.getResource(FileResolver.resolveResourceId(apEcho.getAutomationPackageResource()));
-        Resource kwLibReleaseResourceAfterUpdate = resourceManager.getResource(FileResolver.resolveResourceId(apEcho.getKeywordLibraryResource()));
+        Resource kwLibReleaseResourceAfterUpdate = resourceManager.getResource(FileResolver.resolveResourceId(apEcho.getAutomationPackageLibraryResource()));
         Assert.assertEquals(echoReleaseResource.getId(), echoReleaseResourceAfterUpdate.getId());
         Assert.assertEquals(kwLibReleaseResource.getId(), kwLibReleaseResourceAfterUpdate.getId());
 
@@ -643,7 +643,7 @@ public class AutomationPackageManagerOSTest {
         checkResources(ap1, SAMPLE1_EXTENDED_FILE_NAME, KW_LIB_FILE_NAME,
                 extSampleRelease.toStringRepresentation(), kwLibRelease.toStringRepresentation()
         );
-        Resource newKwLibResourceForAp = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getKeywordLibraryResource()));
+        Resource newKwLibResourceForAp = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getAutomationPackageLibraryResource()));
         Assert.assertEquals(kwLibReleaseResource.getId(), newKwLibResourceForAp.getId());
     }
 
@@ -726,11 +726,11 @@ public class AutomationPackageManagerOSTest {
         AutomationPackage apVer2 = automationPackageAccessor.get(resultV2.getId());
         AutomationPackage apEcho = automationPackageAccessor.get(resultEcho.getId());
 
-        Resource apV2KeywordResource = resourceManager.getResource(FileResolver.resolveResourceId(apVer2.getKeywordLibraryResource()));
+        Resource apV2KeywordResource = resourceManager.getResource(FileResolver.resolveResourceId(apVer2.getAutomationPackageLibraryResource()));
         Assert.assertEquals(kwLibSnapshot.toStringRepresentation(), apV2KeywordResource.getOrigin());
-        Assert.assertEquals(apVer1.getKeywordLibraryResource(), apVer2.getKeywordLibraryResource());
-        Assert.assertEquals(apVer1.getKeywordLibraryResource(), apEcho.getKeywordLibraryResource());
-        ResourceRevisionFileHandle kwLibRevision = resourceManager.getResourceFile(FileResolver.resolveResourceId(apVer2.getKeywordLibraryResource()));
+        Assert.assertEquals(apVer1.getAutomationPackageLibraryResource(), apVer2.getAutomationPackageLibraryResource());
+        Assert.assertEquals(apVer1.getAutomationPackageLibraryResource(), apEcho.getAutomationPackageLibraryResource());
+        ResourceRevisionFileHandle kwLibRevision = resourceManager.getResourceFile(FileResolver.resolveResourceId(apVer2.getAutomationPackageLibraryResource()));
         Assert.assertEquals(KW_LIB_FILE_UPDATED_NAME, kwLibRevision.getResourceFile().getName());
 
         Resource apV2Resource = resourceManager.getResource(FileResolver.resolveResourceId(apVer2.getAutomationPackageResource()));
@@ -743,7 +743,7 @@ public class AutomationPackageManagerOSTest {
         ResourceRevisionFileHandle echoResourceRevision = resourceManager.getResourceFile(FileResolver.resolveResourceId(apEcho.getAutomationPackageResource()));
         Assert.assertEquals(SAMPLE_ECHO_FILE_NAME, echoResourceRevision.getResourceFile().getName());
         //Check the echo KW lib point to the new SNAPSHOT
-        ResourceRevisionFileHandle kwLibRevisionEcho = resourceManager.getResourceFile(FileResolver.resolveResourceId(apEcho.getKeywordLibraryResource()));
+        ResourceRevisionFileHandle kwLibRevisionEcho = resourceManager.getResourceFile(FileResolver.resolveResourceId(apEcho.getAutomationPackageLibraryResource()));
         Assert.assertEquals(KW_LIB_FILE_UPDATED_NAME, kwLibRevisionEcho.getResourceFile().getName());
     }
 
@@ -856,7 +856,7 @@ public class AutomationPackageManagerOSTest {
         ResourceRevisionFileHandle ap1File = resourceManager.getResourceFile(ap1Resource.getId().toHexString());
         Assert.assertNotNull(ap1File);
 
-        Resource kwLibResource = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getKeywordLibraryResource()));
+        Resource kwLibResource = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getAutomationPackageLibraryResource()));
         ResourceRevisionFileHandle kwLibFile = resourceManager.getResourceFile(kwLibResource.getId().toHexString());
         Assert.assertNotNull(kwLibFile);
 
@@ -875,7 +875,7 @@ public class AutomationPackageManagerOSTest {
 
         // the resources have been reused
         Assert.assertEquals(ap1.getAutomationPackageResource(), ap2.getAutomationPackageResource());
-        Assert.assertEquals(ap1.getKeywordLibraryResource(), ap2.getKeywordLibraryResource());
+        Assert.assertEquals(ap1.getAutomationPackageLibraryResource(), ap2.getAutomationPackageLibraryResource());
 
         checkResourceCleanup(ap1Resource.getId().toHexString(), ap1File, kwLibResource.getId().toHexString(), kwLibFile);
     }
@@ -908,7 +908,7 @@ public class AutomationPackageManagerOSTest {
 
         // the resources have been reused
         Assert.assertEquals(savedApResource.getId().toHexString(), FileResolver.resolveResourceId(ap1.getAutomationPackageResource()));
-        Assert.assertEquals(savedkwResource.getId().toHexString(), FileResolver.resolveResourceId(ap1.getKeywordLibraryResource()));
+        Assert.assertEquals(savedkwResource.getId().toHexString(), FileResolver.resolveResourceId(ap1.getAutomationPackageLibraryResource()));
 
         ResourceRevisionFileHandle apFile = resourceManager.getResourceFile(savedApResource.getId().toHexString());
         ResourceRevisionFileHandle kwLibFile = resourceManager.getResourceFile(savedkwResource.getId().toHexString());
@@ -933,7 +933,7 @@ public class AutomationPackageManagerOSTest {
     private void checkResources(AutomationPackage ap1, String expectedApFileName, String expectedKwFileName,
                                 String expectedApOrigin, String expectedKwOrigin) {
         Resource ap1Resource = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getAutomationPackageResource()));
-        Resource kwLibResource = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getKeywordLibraryResource()));
+        Resource kwLibResource = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getAutomationPackageLibraryResource()));
         Assert.assertEquals(expectedApFileName, resourceManager.getResourceFile(ap1Resource.getId().toHexString()).getResourceFile().getName());
         Assert.assertEquals(expectedKwFileName, resourceManager.getResourceFile(kwLibResource.getId().toHexString()).getResourceFile().getName());
 
@@ -993,7 +993,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertNull(r.storedPackage.getId().toString(), resourceByAutomationPackage.getCustomField("automationPackageId"));
 
         // upload package without keyword library
-        Assert.assertNull(r.storedPackage.getKeywordLibraryResource());
+        Assert.assertNull(r.storedPackage.getAutomationPackageLibraryResource());
 
         List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
         Assert.assertEquals(PLANS_COUNT, storedPlans.size());

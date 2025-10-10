@@ -20,26 +20,21 @@
  */
 package step.automation.packages.kwlibrary;
 
+import step.automation.packages.AbstractAutomationPackageFromResourceIdProvider;
 import step.automation.packages.AutomationPackageReadingException;
-import step.resources.ResourceOrigin;
+import step.core.objectenricher.ObjectPredicate;
+import step.resources.ResourceManager;
 
 import java.io.File;
-import java.io.IOException;
 
-public class NoKeywordLibraryProvider implements AutomationPackageKeywordLibraryProvider {
+public class AutomationPackageLibraryFromResourceIdProvider extends AbstractAutomationPackageFromResourceIdProvider implements AutomationPackageLibraryProvider {
 
-    @Override
-    public File getKeywordLibrary() throws AutomationPackageReadingException {
-        return null;
+    public AutomationPackageLibraryFromResourceIdProvider(ResourceManager resourceManager, String resourceId, ObjectPredicate objectPredicate) {
+        super(resourceManager, resourceId, objectPredicate);
     }
 
     @Override
-    public ResourceOrigin getOrigin() {
-        return null;
-    }
-
-    @Override
-    public void close() throws IOException {
-
+    public File getAutomationPackageLibrary() throws AutomationPackageReadingException {
+       return resourceFile.getResourceFile();
     }
 }

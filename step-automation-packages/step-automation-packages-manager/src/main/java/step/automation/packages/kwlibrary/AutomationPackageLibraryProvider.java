@@ -26,9 +26,9 @@ import step.resources.ResourceManager;
 import java.io.File;
 
 
-public interface AutomationPackageKeywordLibraryProvider extends AutomationPackageProvider {
+public interface AutomationPackageLibraryProvider extends AutomationPackageProvider {
 
-    File getKeywordLibrary() throws AutomationPackageReadingException;
+    File getAutomationPackageLibrary() throws AutomationPackageReadingException;
 
     default String getResourceType() {
         return ResourceManager.RESOURCE_TYPE_AP_LIBRARY;

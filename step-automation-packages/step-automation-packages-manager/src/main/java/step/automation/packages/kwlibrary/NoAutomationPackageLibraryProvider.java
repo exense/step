@@ -20,27 +20,26 @@
  */
 package step.automation.packages.kwlibrary;
 
-import step.automation.packages.AbstractAutomationPackageFromMavenProvider;
-import step.automation.packages.AutomationPackageMavenConfig;
 import step.automation.packages.AutomationPackageReadingException;
-import step.core.maven.MavenArtifactIdentifier;
-import step.core.objectenricher.ObjectPredicate;
-import step.resources.ResourceManager;
+import step.resources.ResourceOrigin;
 
 import java.io.File;
+import java.io.IOException;
 
-public class KeywordLibraryFromMavenProvider extends AbstractAutomationPackageFromMavenProvider implements AutomationPackageKeywordLibraryProvider {
+public class NoAutomationPackageLibraryProvider implements AutomationPackageLibraryProvider {
 
-    public KeywordLibraryFromMavenProvider(AutomationPackageMavenConfig mavenConfig,
-                                           MavenArtifactIdentifier mavenArtifactIdentifier,
-                                           ResourceManager resourceManager, ObjectPredicate objectPredicate) throws AutomationPackageReadingException {
-        super(mavenConfig, mavenArtifactIdentifier, resourceManager, objectPredicate);
+    @Override
+    public File getAutomationPackageLibrary() throws AutomationPackageReadingException {
+        return null;
     }
 
     @Override
-    public File getKeywordLibrary() throws AutomationPackageReadingException {
-        return resolvedMavenArtefact.artifactFile;
+    public ResourceOrigin getOrigin() {
+        return null;
     }
 
+    @Override
+    public void close() throws IOException {
 
+    }
 }
