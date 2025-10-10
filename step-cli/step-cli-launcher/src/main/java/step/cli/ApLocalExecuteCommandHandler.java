@@ -25,9 +25,9 @@ import step.automation.packages.AutomationPackageFromInputStreamProvider;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.junit.AbstractLocalPlanRunner;
-import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
-import step.automation.packages.kwlibrary.AutomationPackageLibraryFromInputStreamProvider;
-import step.automation.packages.kwlibrary.NoAutomationPackageLibraryProvider;
+import step.automation.packages.library.AutomationPackageLibraryProvider;
+import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
+import step.automation.packages.library.NoAutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.ExecutionContext;
@@ -70,7 +70,7 @@ public class ApLocalExecuteCommandHandler {
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName(), kwFromInputStreamProvider);
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         false, true, null, automationPackageProvider, null, null,
-                        true, null, null, null, false, kwFromInputStreamProvider, null,
+                        true, null, o -> true, o -> true, false, kwFromInputStreamProvider, null,
                         false, true).getId();
 
                 PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);

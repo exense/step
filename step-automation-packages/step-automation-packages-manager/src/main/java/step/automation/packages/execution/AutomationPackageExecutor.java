@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestSet;
 import step.automation.packages.*;
-import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
+import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.model.*;
@@ -133,7 +133,7 @@ public class AutomationPackageExecutor {
                         RepositoryWithAutomationPackageSupport kwLibraryRepository = (RepositoryWithAutomationPackageSupport) repositoryObjectManager.getRepository(ISOLATED_AUTOMATION_PACKAGE);
                         kwLibraryAutomationPackageFile = kwLibraryRepository.getApFileForExecution(
                                 fis, kwLibProvider.getAutomationPackageLibrary().getName(),
-                                parameters, contextId, objectPredicate, actorUser, ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_KW_LIB
+                                parameters, contextId, objectPredicate, actorUser, ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP_LIB
                         );
                     }
                 }

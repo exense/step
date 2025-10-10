@@ -112,7 +112,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
                 executionIds = automationPackageClient.executeAutomationPackage(
                         createSource(params.getAutomationPackageFile(), createMavenArtifactXml(params.getAutomationPackageMavenArtifact())),
                         executionParameters,
-                        createSource(params.getKeywordLibraryFile(), createMavenArtifactXml(params.getKeywordLibraryMavenArtifact())));
+                        createSource(params.getAutomationPackageLibraryFile(), createMavenArtifactXml(params.getAutomationPackageLibraryMavenArtifact())));
             } catch (AutomationPackageClientException e) {
                 throw new StepCliExecutionException("Error while executing automation package: " + e.getMessage());
             }
@@ -294,8 +294,8 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
     public static class Params {
         private File automationPackageFile;
         private MavenArtifactIdentifier automationPackageMavenArtifact;
-        private File keywordLibraryFile;
-        private MavenArtifactIdentifier keywordLibraryMavenArtifact;
+        private File automationPackageLibraryFile;
+        private MavenArtifactIdentifier automationPackageLibraryMavenArtifact;
 
         private String stepProjectName;
         private String userId;
@@ -462,21 +462,21 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
             return this;
         }
 
-        public File getKeywordLibraryFile() {
-            return keywordLibraryFile;
+        public File getAutomationPackageLibraryFile() {
+            return automationPackageLibraryFile;
         }
 
-        public Params setKeywordLibraryFile(File keywordLibraryFile) {
-            this.keywordLibraryFile = keywordLibraryFile;
+        public Params setPackageLibraryFile(File packageLibraryFile) {
+            this.automationPackageLibraryFile = packageLibraryFile;
             return this;
         }
 
-        public MavenArtifactIdentifier getKeywordLibraryMavenArtifact() {
-            return keywordLibraryMavenArtifact;
+        public MavenArtifactIdentifier getAutomationPackageLibraryMavenArtifact() {
+            return automationPackageLibraryMavenArtifact;
         }
 
-        public Params setKeywordLibraryMavenArtifact(MavenArtifactIdentifier keywordLibraryMavenArtifact) {
-            this.keywordLibraryMavenArtifact = keywordLibraryMavenArtifact;
+        public Params setPackageLibraryMavenArtifact(MavenArtifactIdentifier packageLibraryMavenArtifact) {
+            this.automationPackageLibraryMavenArtifact = packageLibraryMavenArtifact;
             return this;
         }
 
@@ -493,8 +493,8 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
             if (getAutomationPackageFile() != null && getAutomationPackageMavenArtifact() != null) {
                 throw new StepCliExecutionException("Invalid parameters detected. The automation package should be referenced either as local file or as maven snipped");
             }
-            if (getKeywordLibraryFile() != null && getKeywordLibraryMavenArtifact() != null) {
-                throw new StepCliExecutionException("Invalid parameters detected. The keyword library should be referenced either as local file or as maven snipped");
+            if (getAutomationPackageLibraryFile() != null && getAutomationPackageLibraryMavenArtifact() != null) {
+                throw new StepCliExecutionException("Invalid parameters detected. The automation package library should be referenced either as local file or as maven snipped");
             }
         }
     }

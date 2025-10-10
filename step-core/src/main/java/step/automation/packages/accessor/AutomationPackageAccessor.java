@@ -25,5 +25,5 @@ import java.util.List;
 
 public interface AutomationPackageAccessor extends Accessor<AutomationPackage> {
     List<AutomationPackage> findByAutomationPackageResource(String resourceString);
-    List<AutomationPackage> findByKeywordLibResource(String resourceString);
+    List<AutomationPackage> findByLibraryResource(String resourceString);
 }

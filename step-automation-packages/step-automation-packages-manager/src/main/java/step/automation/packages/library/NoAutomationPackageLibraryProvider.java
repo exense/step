@@ -18,20 +18,28 @@
  *  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *  *****************************************************************************
  */
-package step.automation.packages.kwlibrary;
+package step.automation.packages.library;
 
-import step.automation.packages.AutomationPackageProvider;
 import step.automation.packages.AutomationPackageReadingException;
-import step.resources.ResourceManager;
+import step.resources.ResourceOrigin;
+
 import java.io.File;
+import java.io.IOException;
 
+public class NoAutomationPackageLibraryProvider implements AutomationPackageLibraryProvider {
 
-public interface AutomationPackageLibraryProvider extends AutomationPackageProvider {
-
-    File getAutomationPackageLibrary() throws AutomationPackageReadingException;
-
-    default String getResourceType() {
-        return ResourceManager.RESOURCE_TYPE_AP_LIBRARY;
+    @Override
+    public File getAutomationPackageLibrary() throws AutomationPackageReadingException {
+        return null;
     }
 
+    @Override
+    public ResourceOrigin getOrigin() {
+        return null;
+    }
+
+    @Override
+    public void close() throws IOException {
+
+    }
 }

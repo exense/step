@@ -178,8 +178,8 @@ public class StepConsole implements Callable<Integer> {
             @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The path to the automation-package.yaml file or to the folder or the archive containing it. Maven coordinate are supported.")
             protected String apFile;
 
-            @Option(names = {"--keywordLib"}, paramLabel = "<KeywordLibrary>", description = "The path or maven coordinate to the archive file containing the keyword library for the automation package")
-            protected String keywordLib;
+            @Option(names = {"--packageLibrary"}, paramLabel = "<PackageLibrary>", description = "The path or maven coordinate to the archive file containing the Package library for the automation package. This Library is used a keyword library when applicable.")
+            protected String packageLibrary;
 
             /**
              * If the param points to the folder, prepares the zipped AP file with .stz extension.
@@ -230,12 +230,12 @@ public class StepConsole implements Callable<Integer> {
                 return prepareFile(param, "automation package", true);
             }
 
-            protected File prepareKeywordLibFile(String param) {
-                return prepareFile(param, "keyword library", false);
+            protected File prepareKPackageLibraryFile(String param) {
+                return prepareFile(param, "package library", false);
             }
 
             private void checkApFolder(File param) throws IOException {
-                // keyword library is not required here, because we only need to check the automation package descriptor
+                // package library is not required here, because we only need to check the automation package descriptor
                 try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param, null);
                      AutomationPackageArchive apArchive = apProvider.getAutomationPackageArchive()) {
                     if (!apArchive.hasAutomationPackageDescriptor()) {
@@ -316,7 +316,7 @@ public class StepConsole implements Callable<Integer> {
                 checkEeOptionsConsistency(spec);
                 checkStepControllerVersion();
                 MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);
-                MavenArtifactIdentifier keywordLibMavenArtifact = getMavenArtifact(keywordLib);
+                MavenArtifactIdentifier packageLibraryMavenArtifact = getMavenArtifact(packageLibrary);
 
                 DeployAutomationPackageTool.Params params = new DeployAutomationPackageTool.Params()
                         .setAutomationPackageMavenArtifact(apMavenArtifact)
@@ -327,8 +327,8 @@ public class StepConsole implements Callable<Integer> {
                         .setallowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
                         .setApVersion(apVersion)
                         .setActivationExpression(activationExpr)
-                        .setKeywordLibraryMavenArtifact(keywordLibMavenArtifact)
-                        .setKeywordLibraryFile(keywordLibMavenArtifact != null || keywordLib == null || keywordLib.isEmpty() ? null : prepareKeywordLibFile(keywordLib));
+                        .setPackageLibraryMavenArtifact(packageLibraryMavenArtifact)
+                        .setPackageLibraryFile(packageLibraryMavenArtifact != null || packageLibrary == null || packageLibrary.isEmpty() ? null : prepareKPackageLibraryFile(packageLibrary));
                 executeTool(stepUrl, params);
             }
 
@@ -439,8 +439,8 @@ public class StepConsole implements Callable<Integer> {
                 }
 
                 File kwLibFile = null;
-                if (keywordLib != null && !keywordLib.isEmpty()) {
-                    kwLibFile = prepareKeywordLibFile(keywordLib);
+                if (packageLibrary != null && !packageLibrary.isEmpty()) {
+                    kwLibFile = prepareKPackageLibraryFile(packageLibrary);
                 }
 
                 executeLocally(file, kwLibFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
@@ -463,14 +463,14 @@ public class StepConsole implements Callable<Integer> {
 
                 List<ExecuteAutomationPackageTool.Report> reports = parseReportsParams();
                 MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);
-                MavenArtifactIdentifier keywordLibMavenArtifact = getMavenArtifact(keywordLib);
+                MavenArtifactIdentifier packageLibMavenArtifact = getMavenArtifact(packageLibrary);
 
                 executeRemotely(stepUrl,
                         new ExecuteAutomationPackageTool.Params()
                                 .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
                                 .setAutomationPackageMavenArtifact(apMavenArtifact)
-                                .setKeywordLibraryFile(keywordLibMavenArtifact != null || keywordLib == null || keywordLib.isEmpty() ? null : prepareKeywordLibFile(keywordLib))
-                                .setKeywordLibraryMavenArtifact(keywordLibMavenArtifact)
+                                .setPackageLibraryFile(packageLibMavenArtifact != null || packageLibrary == null || packageLibrary.isEmpty() ? null : prepareKPackageLibraryFile(packageLibrary))
+                                .setPackageLibraryMavenArtifact(packageLibMavenArtifact)
                                 .setStepProjectName(getStepProjectName())
                                 .setUserId(stepUser)
                                 .setAuthToken(getAuthToken())

@@ -40,7 +40,7 @@ public class AbstractAutomationPackageAccessor extends AbstractAccessor<Automati
     }
 
     @Override
-    public List<AutomationPackage> findByKeywordLibResource(String resourceString) {
-        return collectionDriver.find(Filters.equals("keywordLibraryResource", resourceString), null, null, null, 0).collect(Collectors.toList());
+    public List<AutomationPackage> findByLibraryResource(String resourceString) {
+        return collectionDriver.find(Filters.equals("automationPackageLibraryResource", resourceString), null, null, null, 0).collect(Collectors.toList());
     }
 }

@@ -18,23 +18,29 @@
  *  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *  *****************************************************************************
  */
-package step.automation.packages.kwlibrary;
+package step.automation.packages.library;
 
-import step.automation.packages.AbstractAutomationPackageFromInputStreamProvider;
+import step.automation.packages.AbstractAutomationPackageFromMavenProvider;
+import step.automation.packages.AutomationPackageMavenConfig;
 import step.automation.packages.AutomationPackageReadingException;
+import step.core.maven.MavenArtifactIdentifier;
+import step.core.objectenricher.ObjectPredicate;
+import step.resources.ResourceManager;
 
 import java.io.File;
-import java.io.InputStream;
 
-public class AutomationPackageLibraryFromInputStreamProvider extends AbstractAutomationPackageFromInputStreamProvider implements AutomationPackageLibraryProvider {
+public class AutomationPackageLibraryFromMavenProvider extends AbstractAutomationPackageFromMavenProvider implements AutomationPackageLibraryProvider {
 
-    public AutomationPackageLibraryFromInputStreamProvider(InputStream packageStream, String fileName) throws AutomationPackageReadingException {
-        super(packageStream, fileName);
+    public AutomationPackageLibraryFromMavenProvider(AutomationPackageMavenConfig mavenConfig,
+                                                     MavenArtifactIdentifier mavenArtifactIdentifier,
+                                                     ResourceManager resourceManager, ObjectPredicate objectPredicate) throws AutomationPackageReadingException {
+        super(mavenConfig, mavenArtifactIdentifier, resourceManager, objectPredicate);
     }
 
     @Override
     public File getAutomationPackageLibrary() throws AutomationPackageReadingException {
-        return tempFile == null ? null : tempFile.getTempFile();
+        return resolvedMavenArtefact.artifactFile;
     }
+
 
 }

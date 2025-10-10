@@ -121,9 +121,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      *     <scope>test</scope>
      *     <classifier>tests</scope>
      * </dependency>
-     * @param keywordLibraryInputStream
-     * @param keywordLibraryFileDetail
-     * @param keywordLibraryMavenSnippet
+     * @param apLibraryInputStream
+     * @param apLibraryFileDetail
+     * @param apLibraryMavenSnippet
      * @return
      */
     @POST
@@ -136,19 +136,19 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                           @FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @FormDataParam("apMavenSnippet") String apMavenSnippet,
-                                          @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
-                                          @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail,
-                                          @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet,
+                                          @FormDataParam("apLibrary") InputStream apLibraryInputStream,
+                                          @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
+                                          @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                           @FormDataParam("apResourceId") String apResourceId,
-                                          @FormDataParam("keywordLibraryResourceId") String keywordLibraryResourceId) {
+                                          @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
         try {
             AutomationPackageFileSource apFileSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for automation package: ", apResourceId);
-            AutomationPackageFileSource keywordLibrarySource = getFileSource(keywordLibraryInputStream, keywordLibraryFileDetail, keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ", keywordLibraryResourceId);
+            AutomationPackageFileSource apLibrarySource = getFileSource(apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ", apLibraryResourceId);
 
             ObjectId id = automationPackageManager.createAutomationPackage(
                     apFileSource,
                     apVersion, activationExpression,
-                    keywordLibrarySource, getUser(),
+                    apLibrarySource, getUser(),
                     allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true,
                     getObjectEnricher(), getObjectPredicate());
             return id == null ? null : id.toString();
@@ -171,12 +171,12 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                  @FormDataParam("apMavenSnippet") String apMavenSnippet,
-                                                 @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
-                                                 @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail,
+                                                 @FormDataParam("apLibrary") InputStream apLibraryInputStream,
+                                                 @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
                                                  @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart,
-                                                 @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet,
+                                                 @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                                  @FormDataParam("apResourceId") String apResourceId,
-                                                 @FormDataParam("keywordLibraryResourceId") String keywordLibraryResourceId) {
+                                                 @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
         IsolatedAutomationPackageExecutionParameters executionParameters;
         if (executionParamsBodyPart != null) {
             // The workaround to parse execution parameters as application/json even if the Content-Type for this part is not explicitly set in request
@@ -197,13 +197,13 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
 
         try {
-            AutomationPackageFileSource keywordLibrarySource = getFileSource(keywordLibraryInputStream, keywordLibraryFileDetail, keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ", keywordLibraryResourceId);
+            AutomationPackageFileSource apLibrarySource = getFileSource(apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ", apLibraryResourceId);
             AutomationPackageFileSource apSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for ap: ", apResourceId);
-            // TODO: support resource id for AP and keyword lib
+
             return automationPackageExecutor.runInIsolation(
                     apSource,
                     executionParameters,
-                    keywordLibrarySource, getUser(),
+                    apLibrarySource, getUser(),
                     getObjectEnricher(),
                     getObjectPredicate());
         } catch (AutomationPackageManagerException e) {
@@ -273,26 +273,26 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @FormDataParam("file") InputStream uploadedInputStream,
                                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                                  @FormDataParam("apMavenSnippet") String apMavenSnippet,
-                                                                 @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
-                                                                 @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail,
-                                                                 @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet,
+                                                                 @FormDataParam("apLibrary") InputStream apLibraryInputStream,
+                                                                 @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
+                                                                 @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                                                  @FormDataParam("apResourceId") String apResourceId,
-                                                                 @FormDataParam("keywordLibraryResourceId") String keywordLibraryResourceId) {
+                                                                 @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
         try {
             AutomationPackageFileSource apFileSource = getFileSource(
                     uploadedInputStream, fileDetail,
                     apMavenSnippet, "Invalid maven snippet for automation package: ",
                     apResourceId
             );
-            AutomationPackageFileSource keywordLibrarySource = getFileSource(
-                    keywordLibraryInputStream, keywordLibraryFileDetail,
-                    keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ",
-                    keywordLibraryResourceId
+            AutomationPackageFileSource apLibrarySource = getFileSource(
+                    apLibraryInputStream, apLibraryFileDetail,
+                    apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ",
+                    apLibraryResourceId
             );
 
             return automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
-                    apFileSource, keywordLibrarySource,
+                    apFileSource, apLibrarySource,
                     apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate(), async != null && async,
                     getUser(), allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
@@ -335,27 +335,27 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam("file") InputStream uploadedInputStream,
                                                     @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                     @FormDataParam("apMavenSnippet") String apMavenSnippet,
-                                                    @FormDataParam("keywordLibrary") InputStream keywordLibraryInputStream,
-                                                    @FormDataParam("keywordLibrary") FormDataContentDisposition keywordLibraryFileDetail,
-                                                    @FormDataParam("keywordLibraryMavenSnippet") String keywordLibraryMavenSnippet,
+                                                    @FormDataParam("apLibrary") InputStream apLibraryInputStream,
+                                                    @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
+                                                    @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                                     @FormDataParam("apResourceId") String apResourceId,
-                                                    @FormDataParam("keywordLibraryResourceId") String keywordLibraryResourceId) {
+                                                    @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
         try {
             AutomationPackageFileSource apFileSource = getFileSource(
                     uploadedInputStream, fileDetail,
                     apMavenSnippet, "Invalid maven snippet for automation package: ",
                     apResourceId
             );
-            AutomationPackageFileSource keywordLibrarySource = getFileSource(
-                    keywordLibraryInputStream, keywordLibraryFileDetail,
-                    keywordLibraryMavenSnippet, "Invalid maven snippet for keyword library: ",
-                    keywordLibraryResourceId
+            AutomationPackageFileSource apLibrarySource = getFileSource(
+                    apLibraryInputStream, apLibraryFileDetail,
+                    apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ",
+                    apLibraryResourceId
             );
 
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
                     true, true, null,
                     apFileSource,
-                    keywordLibrarySource,
+                    apLibrarySource,
                     apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate(), async != null && async,
                     getUser(), allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);

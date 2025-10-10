@@ -20,8 +20,8 @@
  */
 package step.automation.packages;
 
-import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
-import step.automation.packages.kwlibrary.AutomationPackageLibraryFromMavenProvider;
+import step.automation.packages.library.AutomationPackageLibraryProvider;
+import step.automation.packages.library.AutomationPackageLibraryFromMavenProvider;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectPredicate;
 import step.repositories.artifact.ResolvedMavenArtifact;
@@ -42,12 +42,12 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
     protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource,
                                                                                           ObjectPredicate predicate,
                                                                                           AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
-                                                                                          AutomationPackageLibraryProvider keywordLibraryProvider,
+                                                                                          AutomationPackageLibraryProvider apLibraryProvider,
                                                                                           ResourceManager resourceManager) throws AutomationPackageReadingException {
         return new MockedAutomationPackageFromMavenProvider(
                 mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(predicate),
                 apFileSource.getMavenArtifactIdentifier(),
-                keywordLibraryProvider
+                apLibraryProvider
         );
     }
 

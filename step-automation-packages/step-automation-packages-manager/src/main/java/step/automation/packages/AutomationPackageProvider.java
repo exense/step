@@ -25,7 +25,6 @@ import step.resources.ResourceOrigin;
 
 import java.io.Closeable;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public interface AutomationPackageProvider extends Closeable {
 
@@ -50,5 +49,9 @@ public interface AutomationPackageProvider extends Closeable {
 
     default Long getSnapshotTimestamp() {
         return null;
+    }
+
+    default boolean hasNewContent() {
+        return false;
     }
 }

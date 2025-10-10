@@ -54,6 +54,7 @@ import step.plugins.jmeter.JMeterFunctionType;
 import step.plugins.node.NodeFunction;
 import step.plugins.node.NodeFunctionType;
 import step.repositories.artifact.ResolvedMavenArtifact;
+import step.repositories.artifact.SnapshotMetadata;
 import step.resources.*;
 
 import java.io.*;
@@ -492,13 +493,15 @@ public class AutomationPackageManagerOSTest {
         MavenArtifactIdentifier kwLibRelease = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-RELEASE", null, null);
 
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, null));
+        long now = System.currentTimeMillis();
+        SnapshotMetadata snapshotMetadata = new SnapshotMetadata("some timestamp", now, 1, true);
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, snapshotMetadata));
         providersResolver.getMavenArtifactMocks().put(extSampleRelease, new ResolvedMavenArtifact(extendedAutomationPackageJar, null));
         providersResolver.getMavenArtifactMocks().put(echoRelease, new ResolvedMavenArtifact(echoAutomationPackageJar, null));
-        providersResolver.getMavenArtifactMocks().put(echoSnapshot, new ResolvedMavenArtifact(echoAutomationPackageJar, null));
+        providersResolver.getMavenArtifactMocks().put(echoSnapshot, new ResolvedMavenArtifact(echoAutomationPackageJar, snapshotMetadata));
 
         providersResolver.getMavenArtifactMocks().put(kwLibRelease, new ResolvedMavenArtifact(kwLibReleaseJar, null));
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, null));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, snapshotMetadata));
 
         // upload SNAPSHOT AP (echo) + SNAPSHOT LIB (echo)
         AutomationPackageUpdateResult echoApResult = manager.createOrUpdateAutomationPackage(
@@ -534,7 +537,7 @@ public class AutomationPackageManagerOSTest {
                 null, null, null, o -> true, o -> true, false,
                 "testUser", true,
                 true);
-        Assert.assertEquals(List.of(echoApResult.getId()), ap1Result.getConflictingAutomationPackages().getApWithSameKeywordLib());
+        Assert.assertEquals(List.of(echoApResult.getId()), ap1Result.getConflictingAutomationPackages().getApWithSameLibrary());
         Assert.assertTrue(ap1Result.getConflictingAutomationPackages().getApWithSameOrigin().isEmpty());
 
         // the keyword lib for 'echo' package should be automatically re-uploaded
@@ -580,7 +583,7 @@ public class AutomationPackageManagerOSTest {
                 "testUser", false,
                 true);
 
-        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameLibraryExists());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
         AutomationPackage ap1 = automationPackageAccessor.get(result.getId());
         checkResources(ap1, SAMPLE1_FILE_NAME, KW_LIB_FILE_NAME,
@@ -597,7 +600,7 @@ public class AutomationPackageManagerOSTest {
                 true);
 
         AutomationPackage apEcho = automationPackageAccessor.get(result.getId());
-        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameLibraryExists());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
 
         checkResources(apEcho, SAMPLE_ECHO_FILE_NAME, KW_LIB_FILE_NAME,
@@ -616,7 +619,7 @@ public class AutomationPackageManagerOSTest {
                 "testUser", false,
                 true);
         apEcho = automationPackageAccessor.get(result.getId());
-        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameLibraryExists());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
 
         Resource echoReleaseResourceAfterUpdate = resourceManager.getResource(FileResolver.resolveResourceId(apEcho.getAutomationPackageResource()));
@@ -632,7 +635,7 @@ public class AutomationPackageManagerOSTest {
                 null, null, null, o -> true, o -> true, false,
                 "testUser", false,
                 true);
-        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameKeywordLibExists());
+        Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameLibraryExists());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
 
         ap1 = automationPackageAccessor.get(result.getId());
@@ -655,10 +658,11 @@ public class AutomationPackageManagerOSTest {
         MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
 
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, null));
-        providersResolver.getMavenArtifactMocks().put(echoRelease, new ResolvedMavenArtifact(echoAutomationPackageJar, null));
+        long now = System.currentTimeMillis();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
+        providersResolver.getMavenArtifactMocks().put(echoRelease, new ResolvedMavenArtifact(echoAutomationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, null));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // upload echo AP (echo RELEASE) + SNAPSHOT LIB
         AutomationPackageUpdateResult resultEcho = manager.createOrUpdateAutomationPackage(
@@ -681,7 +685,11 @@ public class AutomationPackageManagerOSTest {
         log.info("AP v1: {}", resultV1.getId());
 
         // imitate the snapshot update
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibUpdatedSnapshotJar, null));
+        long now2 = System.currentTimeMillis();
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibUpdatedSnapshotJar, new SnapshotMetadata("some timestamp", now2, 1, true)));
+
+        //imitate the new fetch of metadata for the AP sample (no new version available)
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, new SnapshotMetadata("some timestamp", now2, 1, true)));
 
         // upload main AP (sample SNAPSHOT) + UPDATED SNAPSHOT LIB - VERSION 2 (WITH CHECK FOR DUPLICATES)
         try {
@@ -697,7 +705,7 @@ public class AutomationPackageManagerOSTest {
             // both packages reuse the same keyword lib
             Assert.assertEquals(Set.of(resultV1.getId(), resultEcho.getId()), new HashSet<>(ex.getAutomationPackagesWithSameKeywordLib()));
 
-            // v1 reuses the same AP artifact (SNAPSHOT)
+            // v1 reuses the same AP artifact (SNAPSHOT) which was not modified
             Assert.assertEquals(Set.of(resultV1.getId()), new HashSet<>(ex.getAutomationPackagesWithSameOrigin()));
         }
 
@@ -712,7 +720,7 @@ public class AutomationPackageManagerOSTest {
 
         // there is no exception, but we generate warning messages about APs sharing the same resources
         // both packages reuse the same keyword lib
-        Assert.assertEquals(Set.of(resultV1.getId(), resultEcho.getId()), new HashSet<>(resultV2.getConflictingAutomationPackages().getApWithSameKeywordLib()));
+        Assert.assertEquals(Set.of(resultV1.getId(), resultEcho.getId()), new HashSet<>(resultV2.getConflictingAutomationPackages().getApWithSameLibrary()));
 
         // v1 reuses the same AP artifact (SNAPSHOT)
         Assert.assertEquals(Set.of(resultV1.getId()), new HashSet<>(resultV2.getConflictingAutomationPackages().getApWithSameOrigin()));
@@ -753,8 +761,9 @@ public class AutomationPackageManagerOSTest {
         MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
 
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, null));
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, null));
+        long now = System.currentTimeMillis();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
         AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(
@@ -771,7 +780,8 @@ public class AutomationPackageManagerOSTest {
         Assert.assertArrayEquals(Files.readAllBytes(automationPackageJar.toPath()), Files.readAllBytes(ap1Revision.getResourceFile().toPath()));
 
         // UPDATE THE SNAPSHOT CONTENT IN MAVEN !!!
-        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(updatedAutomationPackageJar, null));
+        now = System.currentTimeMillis();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(updatedAutomationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
         AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(

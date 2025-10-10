@@ -126,7 +126,7 @@ public class StepConsoleTest {
 
         // deploy from artifactory
         deployExecHistory.clear();
-        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--apVersion=1.0.0", "--keywordLib=mvn:ch.exense.step:some-step-keyword-lib:1.0.0:tests");
+        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--apVersion=1.0.0", "--packageLibrary=mvn:ch.exense.step:some-step-keyword-lib:1.0.0:tests");
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
@@ -137,10 +137,10 @@ public class StepConsoleTest {
         Assert.assertEquals("0.0.0", usedParams.params.getAutomationPackageMavenArtifact().getVersion());
         Assert.assertEquals("tests", usedParams.params.getAutomationPackageMavenArtifact().getClassifier());
 
-        Assert.assertEquals("ch.exense.step", usedParams.params.getKeywordLibraryMavenArtifact().getGroupId());
-        Assert.assertEquals("some-step-keyword-lib", usedParams.params.getKeywordLibraryMavenArtifact().getArtifactId());
-        Assert.assertEquals("1.0.0", usedParams.params.getKeywordLibraryMavenArtifact().getVersion());
-        Assert.assertEquals("tests", usedParams.params.getKeywordLibraryMavenArtifact().getClassifier());
+        Assert.assertEquals("ch.exense.step", usedParams.params.getAutomationPackageLibraryMavenArtifact().getGroupId());
+        Assert.assertEquals("some-step-keyword-lib", usedParams.params.getAutomationPackageLibraryMavenArtifact().getArtifactId());
+        Assert.assertEquals("1.0.0", usedParams.params.getAutomationPackageLibraryMavenArtifact().getVersion());
+        Assert.assertEquals("tests", usedParams.params.getAutomationPackageLibraryMavenArtifact().getClassifier());
     }
 
     @Test

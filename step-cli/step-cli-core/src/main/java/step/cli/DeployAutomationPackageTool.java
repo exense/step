@@ -50,16 +50,16 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
             if (params.getAutomationPackageMavenArtifact() != null) {
                 mavenAutomationPackageXml = createMavenArtifactXml(params.getAutomationPackageMavenArtifact());
             }
-            String mavenKeywordLibraryXml = null;
-            if (params.getKeywordLibraryMavenArtifact() != null) {
-                mavenKeywordLibraryXml = createMavenArtifactXml(params.getKeywordLibraryMavenArtifact());
+            String mavenPackageLibraryXml = null;
+            if (params.getAutomationPackageLibraryMavenArtifact() != null) {
+                mavenPackageLibraryXml = createMavenArtifactXml(params.getAutomationPackageLibraryMavenArtifact());
             }
 
             try {
                 updateResult = automationPackageClient.createOrUpdateAutomationPackage(
                         createSource(params.getAutomationPackageFile(), mavenAutomationPackageXml),
                         params.getAsync(), params.getApVersion(), params.getActivationExpression(), params.getallowUpdateOfOtherPackages(),
-                        createSource(params.getKeywordLibraryFile(), mavenKeywordLibraryXml)
+                        createSource(params.getAutomationPackageLibraryFile(), mavenPackageLibraryXml)
                 );
 
                 if (updateResult != null && updateResult.getId() != null) {
@@ -95,8 +95,8 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
         private File automationPackageFile;
         private MavenArtifactIdentifier automationPackageMavenArtifact;
 
-        private MavenArtifactIdentifier keywordLibraryMavenArtifact;
-        private File keywordLibraryFile;
+        private MavenArtifactIdentifier automationPackageLibraryMavenArtifact;
+        private File automationPackageLibraryFile;
 
         /**
          * @return the maven snippet of automation package to be uploaded or null to use the local file instead.
@@ -110,21 +110,21 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
             return this;
         }
 
-        public MavenArtifactIdentifier getKeywordLibraryMavenArtifact() {
-            return keywordLibraryMavenArtifact;
+        public MavenArtifactIdentifier getAutomationPackageLibraryMavenArtifact() {
+            return automationPackageLibraryMavenArtifact;
         }
 
-        public Params setKeywordLibraryMavenArtifact(MavenArtifactIdentifier keywordLibraryMavenArtifact) {
-            this.keywordLibraryMavenArtifact = keywordLibraryMavenArtifact;
+        public Params setPackageLibraryMavenArtifact(MavenArtifactIdentifier packageLibraryMavenArtifact) {
+            this.automationPackageLibraryMavenArtifact = packageLibraryMavenArtifact;
             return this;
         }
 
-        public File getKeywordLibraryFile() {
-            return keywordLibraryFile;
+        public File getAutomationPackageLibraryFile() {
+            return automationPackageLibraryFile;
         }
 
-        public Params setKeywordLibraryFile(File keywordLibraryFile) {
-            this.keywordLibraryFile = keywordLibraryFile;
+        public Params setPackageLibraryFile(File packageLibraryFile) {
+            this.automationPackageLibraryFile = packageLibraryFile;
             return this;
         }
 
@@ -195,8 +195,8 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
             if (getAutomationPackageFile() != null && getAutomationPackageMavenArtifact() != null) {
                 throw new StepCliExecutionException("Invalid parameters detected. The automation package should be referenced either as local file or as maven snipped");
             }
-            if (getKeywordLibraryFile() != null && getKeywordLibraryMavenArtifact() != null) {
-                throw new StepCliExecutionException("Invalid parameters detected. The keyword library should be referenced either as local file or as maven snipped");
+            if (getAutomationPackageLibraryFile() != null && getAutomationPackageLibraryMavenArtifact() != null) {
+                throw new StepCliExecutionException("Invalid parameters detected. The automation package library should be referenced either as local file or as maven snipped");
             }
         }
 
