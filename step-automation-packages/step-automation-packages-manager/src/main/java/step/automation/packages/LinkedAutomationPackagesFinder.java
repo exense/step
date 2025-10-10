@@ -23,7 +23,7 @@ package step.automation.packages;
 import org.bson.types.ObjectId;
 import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessor;
-import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.objectenricher.ObjectPredicate;
 import step.resources.Resource;
@@ -47,7 +47,7 @@ public class LinkedAutomationPackagesFinder {
     }
 
     public ConflictingAutomationPackages findConflictingPackagesAndCheckAccess(AutomationPackageArchiveProvider automationPackageProvider, ObjectPredicate objectPredicate,
-                                                                               ObjectPredicate writeAccessPredicated, AutomationPackageKeywordLibraryProvider keywordLibraryProvider, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin, AutomationPackage oldPackage, AutomationPackageManager automationPackageManager) {
+                                                                               ObjectPredicate writeAccessPredicated, AutomationPackageLibraryProvider keywordLibraryProvider, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin, AutomationPackage oldPackage, AutomationPackageManager automationPackageManager) {
         ConflictingAutomationPackages conflictingAutomationPackages;
         if (checkForSameOrigin) {
             conflictingAutomationPackages = findConflictingAutomationPackages(keywordLibraryProvider, automationPackageProvider, oldPackage, objectPredicate);
@@ -72,7 +72,7 @@ public class LinkedAutomationPackagesFinder {
         return conflictingAutomationPackages;
     }
 
-    private ConflictingAutomationPackages findConflictingAutomationPackages(AutomationPackageKeywordLibraryProvider kwLibProvider,
+    private ConflictingAutomationPackages findConflictingAutomationPackages(AutomationPackageLibraryProvider kwLibProvider,
                                                                             AutomationPackageArchiveProvider automationPackageProvider,
                                                                             AutomationPackage oldPackage,
                                                                             ObjectPredicate objectPredicate) {

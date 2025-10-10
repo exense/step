@@ -24,7 +24,7 @@ import step.resources.Resource;
 
 public class AutomationPackageTableRecord extends AutomationPackage {
     private Resource automationPackageResourceObj;
-    private Resource keywordLibraryResourceObj;
+    private Resource automationPackageLibraryResourceObj;
 
     public AutomationPackageTableRecord() {
     }
@@ -37,11 +37,11 @@ public class AutomationPackageTableRecord extends AutomationPackage {
         this.automationPackageResourceObj = automationPackageResourceObj;
     }
 
-    public Resource getKeywordLibraryResourceObj() {
-        return keywordLibraryResourceObj;
+    public Resource getAutomationPackageLibraryResourceObj() {
+        return automationPackageLibraryResourceObj;
     }
 
-    public void setKeywordLibraryResourceObj(Resource keywordLibraryResourceObj) {
-        this.keywordLibraryResourceObj = keywordLibraryResourceObj;
+    public void setAutomationPackageLibraryResourceObj(Resource automationPackageLibraryResourceObj) {
+        this.automationPackageLibraryResourceObj = automationPackageLibraryResourceObj;
     }
 }

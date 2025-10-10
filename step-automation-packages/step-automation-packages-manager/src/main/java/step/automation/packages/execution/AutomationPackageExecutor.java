@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestSet;
 import step.automation.packages.*;
-import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.model.*;
@@ -121,18 +121,18 @@ public class AutomationPackageExecutor {
         // we therefore also must store the source in the repository parameters
         IsolatedAutomationPackageRepository.AutomationPackageFile kwLibraryAutomationPackageFile = null;
         Map<String, String> additionalRepositoryParameters = new HashMap<>();
-        try (AutomationPackageKeywordLibraryProvider kwLibProvider = mainAutomationPackageManager.getKeywordLibraryProvider(keywordLibrarySource, objectPredicate)) {
-            File keywordLibraryFile = kwLibProvider.getKeywordLibrary();
+        try (AutomationPackageLibraryProvider kwLibProvider = mainAutomationPackageManager.getAutomationPackageLibraryProvider(keywordLibrarySource, objectPredicate)) {
+            File keywordLibraryFile = kwLibProvider.getAutomationPackageLibrary();
             //For maven we actually don't store the file as resource it will be re-downloaded for re-execution, so we only store the source in the repo parameters
             if (keywordLibraryFile != null) {
                 if (keywordLibrarySource.getMode() == AutomationPackageFileSource.Mode.MAVEN) {
                     additionalRepositoryParameters.put(KEYWORD_LIBRARY_MAVEN_SOURCE, keywordLibrarySource.getMavenArtifactIdentifier().toStringRepresentation());
                     kwLibraryAutomationPackageFile = new IsolatedAutomationPackageRepository.AutomationPackageFile(keywordLibraryFile, null);
                 } else {
-                    try (InputStream fis = new FileInputStream(kwLibProvider.getKeywordLibrary())) {
+                    try (InputStream fis = new FileInputStream(kwLibProvider.getAutomationPackageLibrary())) {
                         RepositoryWithAutomationPackageSupport kwLibraryRepository = (RepositoryWithAutomationPackageSupport) repositoryObjectManager.getRepository(ISOLATED_AUTOMATION_PACKAGE);
                         kwLibraryAutomationPackageFile = kwLibraryRepository.getApFileForExecution(
-                                fis, kwLibProvider.getKeywordLibrary().getName(),
+                                fis, kwLibProvider.getAutomationPackageLibrary().getName(),
                                 parameters, contextId, objectPredicate, actorUser, ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_KW_LIB
                         );
                     }

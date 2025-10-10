@@ -25,9 +25,9 @@ import step.automation.packages.AutomationPackageFromInputStreamProvider;
 import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.junit.AbstractLocalPlanRunner;
-import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
-import step.automation.packages.kwlibrary.KeywordLibraryFromInputStreamProvider;
-import step.automation.packages.kwlibrary.NoKeywordLibraryProvider;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryFromInputStreamProvider;
+import step.automation.packages.kwlibrary.NoAutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.ExecutionContext;
@@ -66,7 +66,7 @@ public class ApLocalExecuteCommandHandler {
                 if (kwLibFile != null) {
                     kwFileInputStream = new FileInputStream(kwLibFile);
                 }
-                AutomationPackageKeywordLibraryProvider kwFromInputStreamProvider = kwFileInputStream == null ? new NoKeywordLibraryProvider() : new KeywordLibraryFromInputStreamProvider(kwFileInputStream, kwLibFile.getName());
+                AutomationPackageLibraryProvider kwFromInputStreamProvider = kwFileInputStream == null ? new NoAutomationPackageLibraryProvider() : new AutomationPackageLibraryFromInputStreamProvider(kwFileInputStream, kwLibFile.getName());
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName(), kwFromInputStreamProvider);
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         false, true, null, automationPackageProvider, null, null,

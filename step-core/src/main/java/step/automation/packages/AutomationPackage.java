@@ -31,14 +31,14 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
     private Expression activationExpression;
 
     private String automationPackageResource;
-    private String keywordLibraryResource;
+    private String automationPackageLibraryResource;
 
-    public AutomationPackage(AutomationPackageStatus status, String version, Expression activationExpression, String automationPackageResource, String keywordLibraryResource) {
+    public AutomationPackage(AutomationPackageStatus status, String version, Expression activationExpression, String automationPackageResource, String automationPackageLibraryResource) {
         this.status = status;
         this.version = version;
         this.activationExpression = activationExpression;
         this.automationPackageResource = automationPackageResource;
-        this.keywordLibraryResource = keywordLibraryResource;
+        this.automationPackageLibraryResource = automationPackageLibraryResource;
     }
 
     public AutomationPackage() {
@@ -72,12 +72,12 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
      * @return the resource path to the package libraries. Package libraries are either a folder of jar or DLLs
      */
     @EntityReference(type= EntityManager.resources)
-    public String getKeywordLibraryResource() {
-        return keywordLibraryResource;
+    public String getAutomationPackageLibraryResource() {
+        return automationPackageLibraryResource;
     }
 
-    public void setKeywordLibraryResource(String keywordLibraryResource) {
-        this.keywordLibraryResource = keywordLibraryResource;
+    public void setAutomationPackageLibraryResource(String automationPackageLibraryResource) {
+        this.automationPackageLibraryResource = automationPackageLibraryResource;
     }
 
     @EntityReference(type= EntityManager.resources)

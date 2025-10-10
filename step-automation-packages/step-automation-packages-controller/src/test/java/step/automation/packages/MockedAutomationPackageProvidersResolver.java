@@ -20,14 +20,13 @@
  */
 package step.automation.packages;
 
-import step.automation.packages.kwlibrary.AutomationPackageKeywordLibraryProvider;
-import step.automation.packages.kwlibrary.KeywordLibraryFromMavenProvider;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
+import step.automation.packages.kwlibrary.AutomationPackageLibraryFromMavenProvider;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectPredicate;
 import step.repositories.artifact.ResolvedMavenArtifact;
 import step.resources.ResourceManager;
 
-import java.io.File;
 import java.util.Map;
 
 public class MockedAutomationPackageProvidersResolver extends AutomationPackageManager.DefaultProvidersResolver {
@@ -43,7 +42,7 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
     protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource,
                                                                                           ObjectPredicate predicate,
                                                                                           AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
-                                                                                          AutomationPackageKeywordLibraryProvider keywordLibraryProvider,
+                                                                                          AutomationPackageLibraryProvider keywordLibraryProvider,
                                                                                           ResourceManager resourceManager) throws AutomationPackageReadingException {
         return new MockedAutomationPackageFromMavenProvider(
                 mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(predicate),
@@ -53,9 +52,9 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
     }
 
     @Override
-    protected KeywordLibraryFromMavenProvider createKeywordLibraryFromMavenProvider(AutomationPackageFileSource keywordLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider, ResourceManager resourceManager) throws AutomationPackageReadingException {
-        return new MockedKeywordLibraryFromMavenProvider(mavenConfigProvider == null ? null :
-                mavenConfigProvider.getConfig(predicate), keywordLibrarySource.getMavenArtifactIdentifier(),
+    protected AutomationPackageLibraryFromMavenProvider createAutomationPackageLibraryFromMavenProvider(AutomationPackageFileSource apLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider, ResourceManager resourceManager) throws AutomationPackageReadingException {
+        return new MockedAutomationPackageLibraryFromMavenProvider(mavenConfigProvider == null ? null :
+                mavenConfigProvider.getConfig(predicate), apLibrarySource.getMavenArtifactIdentifier(),
                 resourceManager, predicate);
     }
 
@@ -68,7 +67,7 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
         public MockedAutomationPackageFromMavenProvider(
                 AutomationPackageMavenConfig mavenConfig,
                 MavenArtifactIdentifier mavenArtifactIdentifier,
-                AutomationPackageKeywordLibraryProvider keywordLibraryProvider
+                AutomationPackageLibraryProvider keywordLibraryProvider
         ) throws AutomationPackageReadingException {
             super(mavenConfig, mavenArtifactIdentifier, keywordLibraryProvider, null, null);
         }
@@ -80,9 +79,9 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
         }
     }
 
-    private class MockedKeywordLibraryFromMavenProvider extends KeywordLibraryFromMavenProvider {
+    private class MockedAutomationPackageLibraryFromMavenProvider extends AutomationPackageLibraryFromMavenProvider {
 
-        public MockedKeywordLibraryFromMavenProvider(AutomationPackageMavenConfig mavenConfig, MavenArtifactIdentifier mavenArtifactIdentifier, ResourceManager resourceManager, ObjectPredicate objectPredicate) throws AutomationPackageReadingException {
+        public MockedAutomationPackageLibraryFromMavenProvider(AutomationPackageMavenConfig mavenConfig, MavenArtifactIdentifier mavenArtifactIdentifier, ResourceManager resourceManager, ObjectPredicate objectPredicate) throws AutomationPackageReadingException {
             super(mavenConfig, mavenArtifactIdentifier, resourceManager, objectPredicate);
         }
 
