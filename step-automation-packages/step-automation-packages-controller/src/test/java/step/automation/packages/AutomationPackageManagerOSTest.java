@@ -126,7 +126,7 @@ public class AutomationPackageManagerOSTest {
         AutomationPackageParametersRegistration.registerParametersHooks(automationPackageHookRegistry, serializationRegistry, parameterManager);
 
         JavaAutomationPackageReader apReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration);
-        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry();
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry);
         automationPackageReaderRegistry.register(apReader);
 
         this.manager = AutomationPackageManager.createMainAutomationPackageManager(
@@ -141,7 +141,7 @@ public class AutomationPackageManagerOSTest {
                 null
         );
 
-        this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>(), resourceManager));
+        this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>(), resourceManager, automationPackageReaderRegistry));
 
     }
 
@@ -385,6 +385,7 @@ public class AutomationPackageManagerOSTest {
             Assert.fail("The exception should be thrown in case of invalid automation package file");
         } catch (AutomationPackageManagerException ex) {
             // ok - invalid file should cause the exception
+            assertEquals("No Automation Package reader found for file picture.png. Supported types are: ZIP archive, JAR file, Directory", ex.getMessage());
         }
     }
 

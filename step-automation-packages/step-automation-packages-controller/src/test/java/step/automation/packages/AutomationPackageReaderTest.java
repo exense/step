@@ -50,7 +50,7 @@ public class AutomationPackageReaderTest {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageReaderTest.class);
 
-    private final AutomationPackageReader reader;
+    private final JavaAutomationPackageReader reader;
 
     public AutomationPackageReaderTest() {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();

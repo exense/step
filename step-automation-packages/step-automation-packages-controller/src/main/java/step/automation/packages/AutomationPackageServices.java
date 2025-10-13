@@ -155,7 +155,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         } catch (AutomationPackageCollisionException e){
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
         } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
+            throw new ControllerServiceException(e.getMessage(), e);
         }
     }
 

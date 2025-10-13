@@ -63,8 +63,10 @@ public class AbstractAutomationPackageFromResourceIdProviderTest {
         }
 
         AutomationPackageArchive archive;
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(null, null, null);
+        automationPackageReaderRegistry.register(new JavaAutomationPackageReader(null, null, null, null));
         try (AutomationPackageLibraryFromResourceIdProvider kwLibProvider = new AutomationPackageLibraryFromResourceIdProvider(resourceManager, savedkwResource.getId().toHexString(), o -> true);
-             AutomationPackageFromResourceIdProvider provider = new AutomationPackageFromResourceIdProvider(resourceManager, savedApResource.getId().toHexString(), kwLibProvider, o -> true)) {
+             AutomationPackageFromResourceIdProvider provider = new AutomationPackageFromResourceIdProvider(automationPackageReaderRegistry, resourceManager, savedApResource.getId().toHexString(), kwLibProvider, o -> true)) {
             archive = provider.getAutomationPackageArchive();
         } catch (IOException | AutomationPackageReadingException e) {
             throw new RuntimeException("Unexpected exception", e);

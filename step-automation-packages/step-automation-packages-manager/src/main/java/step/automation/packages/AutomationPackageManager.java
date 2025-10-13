@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import jakarta.validation.constraints.NotNull;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +62,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static step.automation.packages.AutomationPackageArchive.METADATA_FILES;
-import static step.automation.packages.AutomationPackageArchiveType.JAVA;
 import static step.plans.parser.yaml.YamlPlan.PLANS_ENTITY_NAME;
 
 public class AutomationPackageManager {
@@ -127,7 +125,7 @@ public class AutomationPackageManager {
         this.automationPackageLocks = automationPackageLocks;
         this.operationMode = Objects.requireNonNull(operationMode);
 
-        this.providersResolver = new DefaultProvidersResolver(resourceManager);
+        this.providersResolver = new DefaultProvidersResolver(automationPackageReaderRegistry, resourceManager);
 
         this.linkedAutomationPackagesFinder = new LinkedAutomationPackagesFinder(this.resourceManager, this.automationPackageAccessor);
 
@@ -1009,9 +1007,11 @@ public class AutomationPackageManager {
         return newPackage;
     }
 
-    protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
+    protected <A extends AutomationPackageArchive> AutomationPackageContent readAutomationPackage(A automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
-        packageContent = automationPackageReaderRegistry.getReader(automationPackageArchive).readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
+        @SuppressWarnings("unchecked")
+        AutomationPackageReader<A> reader = (AutomationPackageReader<A>) automationPackageReaderRegistry.getReader(automationPackageArchive);
+        packageContent = reader.readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
         if (packageContent == null) {
             throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);
         } else if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
@@ -1195,7 +1195,7 @@ public class AutomationPackageManager {
     }
 
     public String getDescriptorJsonSchema() {
-        return automationPackageReaderRegistry.getReaderByType(JAVA).getDescriptorJsonSchema();
+        return automationPackageReaderRegistry.getReaderByType(JavaAutomationPackageArchive.TYPE).getDescriptorJsonSchema();
     }
 
     private static class HookEntry {
@@ -1222,9 +1222,11 @@ public class AutomationPackageManager {
 
     public static class DefaultProvidersResolver implements AutomationPackageProvidersResolver {
 
+        private final AutomationPackageReaderRegistry apReaderRegistry;
         private final ResourceManager resourceManager;
 
-        public DefaultProvidersResolver(ResourceManager resourceManager) {
+        public DefaultProvidersResolver(AutomationPackageReaderRegistry apReaderRegistry, ResourceManager resourceManager) {
+            this.apReaderRegistry = apReaderRegistry;
             this.resourceManager = resourceManager;
         }
 
@@ -1235,11 +1237,11 @@ public class AutomationPackageManager {
                                                                                     AutomationPackageLibraryProvider apLibraryProvider) throws AutomationPackageReadingException {
             if (apFileSource != null) {
                 if (apFileSource.getMode() == AutomationPackageFileSource.Mode.MAVEN) {
-                    return createAutomationPackageFromMavenProvider(apFileSource, predicate, mavenConfigProvider, apLibraryProvider, resourceManager);
+                    return createAutomationPackageFromMavenProvider(apReaderRegistry, apFileSource, predicate, mavenConfigProvider, apLibraryProvider, resourceManager);
                 } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.INPUT_STREAM) {
-                    return new AutomationPackageFromInputStreamProvider(apFileSource.getInputStream(), apFileSource.getFileName(), apLibraryProvider);
+                    return new AutomationPackageFromInputStreamProvider(apReaderRegistry, apFileSource.getInputStream(), apFileSource.getFileName(), apLibraryProvider);
                 } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.RESOURCE_ID) {
-                    return new AutomationPackageFromResourceIdProvider(resourceManager, apFileSource.getResourceId(), apLibraryProvider, predicate);
+                    return new AutomationPackageFromResourceIdProvider(apReaderRegistry, resourceManager, apFileSource.getResourceId(), apLibraryProvider, predicate);
                 } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.EMPTY) {
                     // automation package archive is mandatory
                     throw new AutomationPackageManagerException("The automation package is not provided");
@@ -1248,12 +1250,13 @@ public class AutomationPackageManager {
             throw new AutomationPackageManagerException("The automation package is not provided");
         }
 
-        protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource,
+        protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageReaderRegistry apReaderRegistry, AutomationPackageFileSource apFileSource,
                                                                                               ObjectPredicate predicate,
                                                                                               AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
                                                                                               AutomationPackageLibraryProvider apLibraryProvider,
                                                                                               ResourceManager resourceManager) throws AutomationPackageReadingException {
-            return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier(), apLibraryProvider, resourceManager, predicate);
+            return new AutomationPackageFromMavenProvider(apReaderRegistry, mavenConfigProvider.getConfig(predicate),
+                    apFileSource.getMavenArtifactIdentifier(), apLibraryProvider, resourceManager, predicate);
         }
 
         @Override

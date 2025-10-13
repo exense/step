@@ -78,8 +78,9 @@ public abstract class AbstractMavenArtifactRepositoryTest {
 
         Configuration configuration = new Configuration();
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
-        AutomationPackageReader apReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, new AutomationPackageSerializationRegistry(), configuration);
-        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry();
+        AutomationPackageSerializationRegistry automationPackageSerializationRegistry = new AutomationPackageSerializationRegistry();
+        AutomationPackageReader apReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, automationPackageSerializationRegistry, configuration);
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, automationPackageSerializationRegistry);
         automationPackageReaderRegistry.register(apReader);
         FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry();
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();

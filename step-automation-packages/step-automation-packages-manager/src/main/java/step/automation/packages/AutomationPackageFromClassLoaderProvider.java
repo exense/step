@@ -32,8 +32,8 @@ public class AutomationPackageFromClassLoaderProvider implements AutomationPacka
     }
 
     @Override
-    public AutomationPackageArchive getAutomationPackageArchive() {
-        return new AutomationPackageArchive(classLoader);
+    public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
+        return new JavaAutomationPackageArchive(classLoader);
     }
 
     @Override
