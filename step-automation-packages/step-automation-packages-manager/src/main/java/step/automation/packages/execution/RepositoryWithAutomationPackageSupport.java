@@ -406,7 +406,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                     AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()),
                     null, null,
                     (kwLibFis != null) ? AutomationPackageFileSource.withInputStream(kwLibFis, keywordLibraryFile.getFile().getName()): null,
-                    actorUser, false, true, enricher, predicate
+                    actorUser, false, true, enricher, predicate, o -> true //this is read only and inMemory anyway
             );
         } catch (IOException e) {
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
