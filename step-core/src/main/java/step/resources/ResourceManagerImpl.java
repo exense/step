@@ -59,7 +59,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceTypes.put(RESOURCE_TYPE_ISOLATED_AP, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_AP, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_AP_LIBRARY, new CustomResourceType(false));
-		resourceTypes.put(RESOURCE_TYPE_ISOLATED_KW_LIB, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_ISOLATED_AP_LIB, new CustomResourceType(false));
 	}
 
 	public void registerResourceType(String name, ResourceType resourceType) {

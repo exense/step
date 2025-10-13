@@ -25,7 +25,7 @@ import step.artefacts.CallPlan;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.automation.packages.*;
-import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
+import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.accessors.LayeredAccessor;
@@ -353,7 +353,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             }
         } else {
             List<Resource> foundResources = resourceManager.findManyByCriteria(
-                    Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_KW_LIB,
+                    Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB,
                             "customFields." + CONTEXT_ID_CUSTOM_FIELD, contextId)
             );
             Resource resource = null;

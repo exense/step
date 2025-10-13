@@ -52,8 +52,8 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     @Override
     public String createAutomationPackage(AutomationPackageSource automationPackageSource,
                                           String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
-                                          AutomationPackageSource keywordLibrarySource) throws AutomationPackageClientException {
-        return uploadPackage(automationPackageSource, keywordLibrarySource, multiPartEntity -> {
+                                          AutomationPackageSource apLibrarySource) throws AutomationPackageClientException {
+        return uploadPackage(automationPackageSource, apLibrarySource, multiPartEntity -> {
             Map<String, String> queryParams = new HashMap<>();
             if (allowUpdateOfOtherPackages != null) {
                 queryParams.put("allowUpdateOfOtherPackages", String.valueOf(allowUpdateOfOtherPackages));
@@ -76,8 +76,8 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     @Override
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(AutomationPackageSource automationPackageSource,
                                                                          Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
-                                                                         AutomationPackageSource keywordLibrarySource) throws AutomationPackageClientException {
-        return uploadPackage(automationPackageSource, keywordLibrarySource,
+                                                                         AutomationPackageSource apLibrarySource) throws AutomationPackageClientException {
+        return uploadPackage(automationPackageSource, apLibrarySource,
                 multiPartEntity -> {
                     Map<String, String> queryParams = new HashMap<>();
 
@@ -97,8 +97,8 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     @Override
     public List<String> executeAutomationPackage(AutomationPackageSource automationPackageSource,
                                                  IsolatedAutomationPackageExecutionParameters params,
-                                                 AutomationPackageSource keywordLibrarySource) throws AutomationPackageClientException {
-        MultiPart multiPart = prepareFileDataMultiPart(automationPackageSource, keywordLibrarySource);
+                                                 AutomationPackageSource apLibrarySource) throws AutomationPackageClientException {
+        MultiPart multiPart = prepareFileDataMultiPart(automationPackageSource, apLibrarySource);
         FormDataBodyPart paramsBodyPart = new FormDataBodyPart("executionParams", params, MediaType.APPLICATION_JSON_TYPE);
         multiPart.bodyPart(paramsBodyPart);
 
@@ -123,9 +123,9 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     protected <T> T uploadPackage(AutomationPackageSource automationPackageSource,
-                                  AutomationPackageSource keywordLibrarySource,
+                                  AutomationPackageSource apLibrarySource,
                                   Function<Entity<MultiPart>, T> executeRequest) throws AutomationPackageClientException {
-        MultiPart multiPart = prepareFileDataMultiPart(automationPackageSource, keywordLibrarySource);
+        MultiPart multiPart = prepareFileDataMultiPart(automationPackageSource, apLibrarySource);
         Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
         try {
             return executeRequest.apply(entity);
@@ -135,7 +135,7 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     private MultiPart prepareFileDataMultiPart(AutomationPackageSource automationPackageSource,
-                                               AutomationPackageSource keywordLibrarySource) {
+                                               AutomationPackageSource apLibrarySource) {
 
         MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
@@ -148,12 +148,12 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
             multiPart.bodyPart(new FormDataBodyPart("apMavenSnippet", automationPackageSource.getMavenSnippet()));
         }
 
-        if (keywordLibrarySource != null && keywordLibrarySource.getFile() != null) {
-            multiPart.bodyPart(new FileDataBodyPart("keywordLibrary", keywordLibrarySource.getFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        if (apLibrarySource != null && apLibrarySource.getFile() != null) {
+            multiPart.bodyPart(new FileDataBodyPart("apLibrary", apLibrarySource.getFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
         }
 
-        if (keywordLibrarySource != null && keywordLibrarySource.getMavenSnippet() != null) {
-            multiPart.bodyPart(new FormDataBodyPart("keywordLibraryMavenSnippet", keywordLibrarySource.getMavenSnippet()));
+        if (apLibrarySource != null && apLibrarySource.getMavenSnippet() != null) {
+            multiPart.bodyPart(new FormDataBodyPart("apLibraryMavenSnippet", apLibrarySource.getMavenSnippet()));
         }
         return multiPart;
     }

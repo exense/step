@@ -5,7 +5,6 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.AutomationPackageUpdateStatus;
@@ -69,7 +68,7 @@ public class DeployAutomationPackageToolTest {
         private RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
         public DeployAutomationPackageToolTestable(String url, File apFile, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpr,
-                                                   MavenArtifactIdentifier keywordLibraryMavenIdentifier, File keywordLibraryFile,
+                                                   MavenArtifactIdentifier apLibraryMavenIdentifier, File apLibraryFile,
                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
             super(url, new Params()
                     .setAutomationPackageFile(apFile)
@@ -78,8 +77,8 @@ public class DeployAutomationPackageToolTest {
                     .setAsync(async)
                     .setApVersion(apVersion)
                     .setActivationExpression(activationExpr)
-                    .setKeywordLibraryMavenArtifact(keywordLibraryMavenIdentifier)
-                    .setKeywordLibraryFile(keywordLibraryFile));
+                    .setPackageLibraryMavenArtifact(apLibraryMavenIdentifier)
+                    .setPackageLibraryFile(apLibraryFile));
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }
 

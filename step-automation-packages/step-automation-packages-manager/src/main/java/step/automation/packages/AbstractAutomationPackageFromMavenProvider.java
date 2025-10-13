@@ -92,6 +92,11 @@ public class AbstractAutomationPackageFromMavenProvider implements AutomationPac
     }
 
     @Override
+    public boolean hasNewContent() {
+        return (resolvedMavenArtefact.snapshotMetadata) != null && resolvedMavenArtefact.snapshotMetadata.newSnapshotVersion;
+    }
+
+    @Override
     public ResourceOrigin getOrigin() {
         return mavenArtifactIdentifier;
     }

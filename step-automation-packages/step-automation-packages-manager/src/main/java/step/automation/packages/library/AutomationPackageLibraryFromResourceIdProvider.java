@@ -18,7 +18,7 @@
  *  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  *  *****************************************************************************
  */
-package step.automation.packages.kwlibrary;
+package step.automation.packages.library;
 
 import step.automation.packages.AbstractAutomationPackageFromResourceIdProvider;
 import step.automation.packages.AutomationPackageReadingException;

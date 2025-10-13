@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.automation.packages.kwlibrary.AutomationPackageLibraryProvider;
+import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectPredicate;
 import step.resources.ResourceManager;

@@ -163,7 +163,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
                 Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP)
         );
         List<Resource> foundKeywordLibs = resourceManager.findManyByCriteria(
-                Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_KW_LIB)
+                Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB)
         );
         List<Resource> foundResources = new ArrayList<>();
         foundResources.addAll(foundAps);

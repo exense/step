@@ -26,7 +26,7 @@ import java.util.List;
 
 public class ConflictingAutomationPackages {
     private List<ObjectId> apWithSameOrigin = null;
-    private List<ObjectId> apWithSameKeywordLib = null;
+    private List<ObjectId> apWithSameLibrary = null;
 
     public ConflictingAutomationPackages() {
     }
@@ -39,20 +39,20 @@ public class ConflictingAutomationPackages {
         this.apWithSameOrigin = apWithSameOrigin;
     }
 
-    public List<ObjectId> getApWithSameKeywordLib() {
-        return apWithSameKeywordLib;
+    public List<ObjectId> getApWithSameLibrary() {
+        return apWithSameLibrary;
     }
 
-    public void setApWithSameKeywordLib(List<ObjectId> apWithSameKeywordLib) {
-        this.apWithSameKeywordLib = apWithSameKeywordLib;
+    public void setApWithSameLibrary(List<ObjectId> apWithSameLibrary) {
+        this.apWithSameLibrary = apWithSameLibrary;
     }
 
     public boolean apWithSameOriginExists(){
         return apWithSameOrigin != null && !apWithSameOrigin.isEmpty();
     }
 
-    public boolean apWithSameKeywordLibExists(){
-        return apWithSameKeywordLib != null && !apWithSameKeywordLib.isEmpty();
+    public boolean apWithSameLibraryExists(){
+        return apWithSameLibrary != null && !apWithSameLibrary.isEmpty();
     }
 
 }
