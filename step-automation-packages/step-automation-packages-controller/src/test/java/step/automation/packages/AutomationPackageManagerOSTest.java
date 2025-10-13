@@ -356,7 +356,7 @@ public class AutomationPackageManagerOSTest {
 
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
-            result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, fileName), null, null, null, "testUser", false, true, null, null);
+            result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, fileName), null, null, null, "testUser", false, true, null, o -> true, o -> true);
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(1, storedPlans.size());
@@ -377,7 +377,7 @@ public class AutomationPackageManagerOSTest {
     @Test
     public void testInvalidFile() throws IOException {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/picture.png")) {
-            manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, "picture.png"), null, null, null, "testUser", false, true, null, null);
+            manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, "picture.png"), null, null, null, "testUser", false, true, null, o -> true, o -> true);
             Assert.fail("The exception should be thrown in case of invalid automation package file");
         } catch (AutomationPackageManagerException ex) {
             // ok - invalid file should cause the exception
@@ -388,7 +388,7 @@ public class AutomationPackageManagerOSTest {
     public void testZipArchive() throws IOException {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/step-automation-packages.zip")) {
             ObjectId result;
-            result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, "step-automation-packages.zip"), null, null, null, "testUser", false, true, null, null);
+            result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, "step-automation-packages.zip"), null, null, null, "testUser", false, true, null, o -> true, o -> true);
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(4, storedPlans.size());
@@ -965,7 +965,7 @@ public class AutomationPackageManagerOSTest {
 
         ObjectId result;
         if (createNew) {
-            result = manager.createAutomationPackage(sample1FileSource, null, null, null, "testUser", false, true, null, o -> true);
+            result = manager.createAutomationPackage(sample1FileSource, null, null, null, "testUser", false, true, null, o -> true, o -> true);
         } else {
             AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null,
                     sample1FileSource,

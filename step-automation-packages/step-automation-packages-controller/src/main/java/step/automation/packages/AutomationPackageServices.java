@@ -150,7 +150,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     apVersion, activationExpression,
                     apLibrarySource, getUser(),
                     allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true,
-                    getObjectEnricher(), getObjectPredicate());
+                    getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate());
             return id == null ? null : id.toString();
         } catch (AutomationPackageCollisionException e){
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());

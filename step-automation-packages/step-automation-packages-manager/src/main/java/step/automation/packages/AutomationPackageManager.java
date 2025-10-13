@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import jakarta.validation.constraints.NotNull;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -325,10 +324,10 @@ public class AutomationPackageManager {
     public ObjectId createAutomationPackage(AutomationPackageFileSource apSource, String apVersion, String activationExpr,
                                             AutomationPackageFileSource automationPackageLibrarySource, String actorUser, boolean allowUpdateOfOtherPackages,
                                             boolean checkForSameOrigin, ObjectEnricher enricher,
-                                            ObjectPredicate objectPredicate) throws AutomationPackageManagerException {
+                                            ObjectPredicate objectPredicate, ObjectPredicate writeAccessPredicate) throws AutomationPackageManagerException {
         return createOrUpdateAutomationPackage(false, true, null,
                 apSource, automationPackageLibrarySource,
-                apVersion, activationExpr, enricher, objectPredicate, null,false, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin).getId();
+                apVersion, activationExpr, enricher, objectPredicate, writeAccessPredicate,false, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin).getId();
     }
 
     /**
