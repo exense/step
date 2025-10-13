@@ -741,7 +741,11 @@ public class AutomationPackageManager {
      */
     protected Function setAutomationPackageFile(AutomationPackageArchive automationPackageArchive, Function function) {
         File originalFile = automationPackageArchive.getOriginalFile();
-        function.setAutomationPackageFile(new DynamicValue<>(originalFile.getAbsolutePath()));
+        if(originalFile != null) {
+            function.setAutomationPackageFile(new DynamicValue<>(originalFile.getAbsolutePath()));
+        }
+        // For local executions of automation packages via JUnit runner, the originalFile is null and
+        // the automation package file cannot be set.
         return function;
     }
 
