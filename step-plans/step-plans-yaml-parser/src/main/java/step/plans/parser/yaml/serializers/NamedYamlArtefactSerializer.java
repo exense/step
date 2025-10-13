@@ -96,20 +96,4 @@ public class NamedYamlArtefactSerializer extends StepYamlSerializer<NamedYamlArt
         ser.serialize(value.getYamlArtefact(), gen, serializers);
     }
 
-    protected void removeDefaultValues(ObjectNode actualJson, ObjectNode defaultJson) {
-        Set<String> specialFields = Set.of(AbstractYamlArtefact.CHILDREN_FIELD_NAME);
-        List<String> fieldsForRemoval = new ArrayList<>();
-        actualJson.fieldNames().forEachRemaining(s -> {
-            if (!specialFields.contains(s)) {
-                JsonNode defaultValue = defaultJson.get(s);
-                if (Objects.equals(defaultValue, actualJson.get(s))) {
-                    fieldsForRemoval.add(s);
-                }
-            }
-        });
-        for (String s : fieldsForRemoval) {
-            actualJson.remove(s);
-        }
-    }
-
 }

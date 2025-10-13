@@ -18,18 +18,18 @@
  ******************************************************************************/
 package step.plugins.java.handler;
 
-import javax.json.JsonObject;
-
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.handlers.javahandler.KeywordExecutor;
 
+import javax.json.JsonObject;
+
 public class KeywordHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		KeywordExecutor executor = new KeywordExecutor(false);
+		KeywordExecutor executor = new KeywordExecutor(false, getLiveReporting());
 		return executor.handle(input, getTokenSession(), getTokenReservationSession(), mergeAllProperties(input));
 	}
 }

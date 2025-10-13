@@ -18,22 +18,31 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
+import ch.exense.commons.app.Configuration;
+import jakarta.json.stream.JsonParsingException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
+import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.dynamicbeans.DynamicValue;
+import step.core.collections.inmemory.InMemoryCollection;
+import step.core.dynamicbeans.*;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineContext;
+import step.core.execution.OperationMode;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
+import step.core.json.JsonProviderCache;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
@@ -42,15 +51,21 @@ import step.core.reports.ErrorType;
 import step.core.reports.Measure;
 import step.datapool.DataSetHandle;
 import step.engine.plugins.FunctionPlugin;
+import step.expressions.ExpressionHandler;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
 import step.grid.io.Attachment;
+import step.parameter.Parameter;
+import step.parameter.ParameterManager;
+import step.parameter.ParameterScope;
 import step.planbuilder.FunctionArtefacts;
+import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -59,16 +74,37 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static step.planbuilder.BaseArtefacts.*;
+import static step.plugins.parametermanager.ParameterManagerPlugin.CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS;
 
 public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 
 	private ExecutionEngine executionEngine;
+	private AbstractAccessor<Parameter> parameterAccessor;
+	private ParameterManager parameterManager;
+
+	@Rule
+	public TestName testName = new TestName();
 
 	@Before
 	public void before() {
-		executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
-				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build();
+		DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
+		String currentTestName = testName.getMethodName();
+		parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
+		parameterManager = new ParameterManager(parameterAccessor, null, new Configuration(), resolver);
+		ExecutionEngine.Builder builder = ExecutionEngine.builder();
+		if (currentTestName.equals("testInputsByPassProtection")) {
+			ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+			Configuration configuration = new Configuration();
+			configuration.putProperty(CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS, "true");
+			parentContext.setConfiguration(configuration);
+			builder.withParentContext(parentContext);
+		}
+
+		executionEngine = builder.withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
+				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()
+						).withPlugin(new ParameterManagerPlugin(parameterManager)).build();
 	}
 
 	@After
@@ -227,8 +263,101 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 		assertEquals(1L, ((Map) output.get("nested")).get("nestedInt")); //Some how return a Long
 	}
 
+	private jakarta.json.JsonObject parseAndResolveJson(String functionStr) {
+		jakarta.json.JsonObject query;
+		try {
+			if(functionStr!=null&&functionStr.trim().length()>0) {
+				query = JsonProviderCache.createReader(new StringReader(functionStr)).readObject();
+			} else {
+				query = JsonProviderCache.createObjectBuilder().build();
+			}
+		} catch(JsonParsingException e) {
+			throw new RuntimeException("Error while parsing argument (input): string was '"+functionStr+"'",e);
+		}
+		return query;
+	}
+
+	@Test
+	public void testInputs() {
+		Parameter protectedParam = new Parameter(null, "protectedParam", "protectedParamValue", "");
+		protectedParam.setProtectedValue(true);
+		parameterManager.save(protectedParam, null, "tester");
+		Parameter simpleParam = new Parameter(null, "simpleParam", "simpleParamValue", "");
+		parameterManager.save(simpleParam, null, "tester");
+		Parameter keywordParameter1 = new Parameter(null, "keywordParam1", "keywordParam1Value", "");
+		keywordParameter1.setScope(ParameterScope.FUNCTION);
+		keywordParameter1.setScopeEntity("MyFunction");
+		keywordParameter1.setProtectedValue(true);
+		parameterAccessor.save(keywordParameter1);
+		Parameter keywordParameter2 = new Parameter(null, "keywordParam2", "keywordParam2Value", "");
+		keywordParameter2.setScope(ParameterScope.FUNCTION);
+		keywordParameter2.setScopeEntity("MyFunction2");
+		keywordParameter2.setProtectedValue(true);
+		parameterAccessor.save(keywordParameter2);
+
+		String argumentStr = "{\"protectedParam\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"protectedParam\"}," +
+				"\"simpleValue\":{\"value\":\"simpleValue\",\"dynamic\":false,\"expression\":\"\"}," +
+				"\"simpleParam\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"simpleParam\"}," +
+				"\"concat\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"simpleParam + protectedParam\"}}";
+		MyFunction function = newPassingFunctionWithInput();
+		CallFunction callFunction = new CallFunction();
+		callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
+		callFunction.setArgument(new DynamicValue<>(argumentStr));
+		Plan plan = newPlan(function, callFunction);
+
+		PlanRunnerResult result = executionEngine.execute(plan);
+		CallFunctionReportNode node = getCallFunctionReportNode(result);
+
+		assertNull(node.getError());
+		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		assertEquals("{\"protectedParamInput\":\"protectedParamValue\",\"simpleParamInput\":\"simpleParamValue\",\"simpleValueInput\":\"simpleValue\",\"concatInput\":\"simpleParamValueprotectedParamValue\",\"protectedParamProperty\":\"protectedParamValue\",\"simpleParamProperty\":\"simpleParamValue\",\"keywordParam1Property\":\"keywordParam1Value\",\"keywordParam2PropertyIsNull\":true}", node.getOutput());
+		assertEquals("{\"protectedParam\":\"***protectedParam***\",\"simpleValue\":\"simpleValue\",\"simpleParam\":\"simpleParamValue\",\"concat\":\"simpleParamValue***protectedParam***\"}", node.getInput());
+	}
+
+	@Test
+	public void testInputsByPassProtection() {
+		Parameter protectedParam = new Parameter(null, "protectedParam", "protectedParamValue", "");
+		protectedParam.setProtectedValue(true);
+		parameterManager.save(protectedParam, null, "tester");
+		Parameter simpleParam = new Parameter(null, "simpleParam", "simpleParamValue", "");
+		parameterManager.save(simpleParam, null, "tester");
+		Parameter keywordParameter1 = new Parameter(null, "keywordParam1", "keywordParam1Value", "");
+		keywordParameter1.setScope(ParameterScope.FUNCTION);
+		keywordParameter1.setScopeEntity("MyFunction");
+		keywordParameter1.setProtectedValue(true);
+		parameterAccessor.save(keywordParameter1);
+		Parameter keywordParameter2 = new Parameter(null, "keywordParam2", "keywordParam2Value", "");
+		keywordParameter2.setScope(ParameterScope.FUNCTION);
+		keywordParameter2.setScopeEntity("MyFunction2");
+		keywordParameter2.setProtectedValue(true);
+		parameterAccessor.save(keywordParameter2);
+
+		String argumentStr = "{\"protectedParam\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"protectedParam\"}," +
+				"\"simpleValue\":{\"value\":\"simpleValue\",\"dynamic\":false,\"expression\":\"\"}," +
+				"\"simpleParam\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"simpleParam\"}," +
+				"\"concat\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"simpleParam + protectedParam\"}}";
+		MyFunction function = newPassingFunctionWithInput();
+		CallFunction callFunction = new CallFunction();
+		callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
+		callFunction.setArgument(new DynamicValue<>(argumentStr));
+		Plan plan = newPlan(function, callFunction);
+
+		PlanRunnerResult result = executionEngine.execute(plan);
+		CallFunctionReportNode node = getCallFunctionReportNode(result);
+
+		assertNull(node.getError());
+		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+		assertEquals("{\"protectedParamInput\":\"protectedParamValue\",\"simpleParamInput\":\"simpleParamValue\",\"simpleValueInput\":\"simpleValue\",\"concatInput\":\"simpleParamValueprotectedParamValue\",\"protectedParamProperty\":\"protectedParamValue\",\"simpleParamProperty\":\"simpleParamValue\",\"keywordParam1Property\":\"keywordParam1Value\",\"keywordParam2PropertyIsNull\":true}", node.getOutput());
+		assertEquals("{\"protectedParam\":\"protectedParamValue\",\"simpleValue\":\"simpleValue\",\"simpleParam\":\"simpleParamValue\",\"concat\":\"simpleParamValueprotectedParamValue\"}", node.getInput());
+	}
+
 	private static Plan newCallFunctionPlan(MyFunction function) {
+		return newCallFunctionPlan(function, "{}");
+	}
+
+	private static Plan newCallFunctionPlan(MyFunction function, String arguments) {
 		CallFunction callFunction = FunctionArtefacts.keyword(function.getAttribute(AbstractOrganizableObject.NAME));
+		callFunction.setArgument(new DynamicValue<>(arguments));
 		return newPlan(function, callFunction);
 	}
 
@@ -254,6 +383,25 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 			output.setMeasures(measures);
 
 			output.setPayload(Json.createObjectBuilder().add("Output1", "Value1").build());
+			return output;
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
+		return function;
+	}
+
+	public static MyFunction newPassingFunctionWithInput() {
+		MyFunction function = new MyFunction(input -> {
+			Output<JsonObject> output = new Output<>();
+
+			output.setPayload(Json.createObjectBuilder().add("protectedParamInput", input.getPayload().getString("protectedParam"))
+					.add("simpleParamInput", input.getPayload().getString("simpleParam"))
+					.add("simpleValueInput", input.getPayload().getString("simpleValue"))
+					.add("concatInput", input.getPayload().getString("concat"))
+					.add("protectedParamProperty", input.getProperties().get("protectedParam"))
+					.add("simpleParamProperty", input.getProperties().get("simpleParam"))
+					.add("keywordParam1Property", input.getProperties().get("keywordParam1"))
+					.add("keywordParam2PropertyIsNull", input.getProperties().get("keywordParam2") == null)
+					.build());
 			return output;
 		});
 		function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");

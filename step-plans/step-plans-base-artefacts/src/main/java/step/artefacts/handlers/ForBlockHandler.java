@@ -30,13 +30,13 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.datapool.DataPoolFactory;
 import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
+import step.expressions.ProtectedVariable;
 import step.threadpool.ThreadPool;
 import step.threadpool.ThreadPool.WorkerController;
 import step.threadpool.WorkerItemConsumerFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.OptionalInt;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -66,11 +66,8 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 					}
 					
 					rowCount++;
-					
-					HashMap<String, Object> newVariable = new HashMap<>();
-					newVariable.put(testArtefact.getItem().get(), nextValue.getValue());
-					newVariable.put(testArtefact.getGlobalCounter().get(), rowCount);
-					newVariable.put(testArtefact.getUserItem().get(), 1);
+
+					HashMap<String, Object> newVariable = getForBlockHandlerVariable(testArtefact, dataSet.isProtectedDataSource(), nextValue, rowCount, 1);
 
 					if (numberOfThreads > 1) {
 						createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode) -> {
@@ -136,10 +133,7 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 						try {
 							int i = loopsCounter.incrementAndGet();
 
-							HashMap<String, Object> newVariable = new HashMap<>();
-							newVariable.put(testArtefact.getItem().get(), workItem.getValue());
-							newVariable.put(testArtefact.getGlobalCounter().get(), i);
-							newVariable.put(testArtefact.getUserItem().get(), control.getWorkerId());
+							HashMap<String, Object> newVariable = getForBlockHandlerVariable(testArtefact, dataSet.isProtectedDataSource(), workItem, i, control.getWorkerId());
 
 							ReportNode iterationReportNode;
 							if(control.isParallel()) {
@@ -187,7 +181,17 @@ public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForB
 			}
 		}
 	}
-	
+
+	private static HashMap<String, Object> getForBlockHandlerVariable(AbstractForBlock testArtefact, boolean dataSetIsProtected, DataPoolRow dataPoolRow, int globalCounter, int workerId) {
+		HashMap<String, Object> newVariable = new HashMap<>();
+		String key = testArtefact.getItem().get();
+		Object value = dataSetIsProtected ? new ProtectedVariable(key, dataPoolRow.getValue()) : dataPoolRow.getValue();
+		newVariable.put(key, value);
+		newVariable.put(testArtefact.getGlobalCounter().get(), globalCounter);
+		newVariable.put(testArtefact.getUserItem().get(), workerId);
+		return newVariable;
+	}
+
 	@Override
 	public ForBlockReportNode createReportNode_(ReportNode parentNode, AbstractForBlock testArtefact) {
 		return new ForBlockReportNode();

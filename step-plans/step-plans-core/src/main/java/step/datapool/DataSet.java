@@ -127,6 +127,10 @@ public abstract class DataSet<T extends DataPoolConfiguration> {
 	protected boolean isWriteQueueSupportEnabled() {
 		return false;
 	}
+
+	public boolean isProtectedDataSource(){
+		return (configuration.getProtect() != null) ? configuration.getProtect().get() : false;
+	}
 	
 	public final synchronized DataPoolRow next() {
 		Object nextValue = next_();

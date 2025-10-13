@@ -21,6 +21,8 @@ package step.core.dynamicbeans;
 public class EvaluationResult {
 
 	Object resultValue;
+
+	Object protectedValue;
 	
 	Exception evaluationException;
 
@@ -39,6 +41,14 @@ public class EvaluationResult {
 
 	public void setResultValue(Object resultValue) {
 		this.resultValue = resultValue;
+	}
+
+	public Object getProtectedValue() {
+		return protectedValue;
+	}
+
+	public void setProtectedValue(Object protectedValue) {
+		this.protectedValue = protectedValue;
 	}
 
 	public Exception getEvaluationException() {

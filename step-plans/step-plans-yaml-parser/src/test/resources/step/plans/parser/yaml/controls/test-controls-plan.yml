@@ -28,7 +28,6 @@ root:
       - dataSet:
           dataSource:
             sequence:
-              forWrite: false
               start: 1
               end: 2
               inc: 1

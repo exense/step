@@ -187,7 +187,7 @@ public class AbstractExecuteAutomationPackageToolTest {
         Mockito.when((remoteExecutionManagerMock.getFuture(Mockito.anyString()))).thenReturn(futureMock);
         EchoReportNode echoReportNode = new EchoReportNode();
         echoReportNode.setEcho("Hello");
-        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED",1L), List.of(), false, ParentSource.MAIN, echoReportNode, Map.of("PASSED",new Bucket(), "ALL" , new Bucket()), null));
+        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED",1L), Map.of(), Map.of(), List.of(), false, ParentSource.MAIN, echoReportNode, Map.of("PASSED",new Bucket(), "ALL" , new Bucket()), null));
         return remoteExecutionManagerMock;
     }
 
