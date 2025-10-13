@@ -668,6 +668,8 @@ public class AutomationPackageManager {
                                     fis, apLibProvider.getSnapshotTimestamp(), oldResource,
                                     actorUser, accessChecker
                             );
+                        } else {
+                            uploadedResource = oldResource;
                         }
                     } else {
                         ResourceOrigin origin = apLibProvider.getOrigin();
