@@ -21,6 +21,8 @@ package step.plugins.java.handler;
 import java.io.File;
 import java.net.URLClassLoader;
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
@@ -70,7 +72,7 @@ public class MyKeywordLibrary extends AbstractKeyword {
 	@Keyword
 	public void MyKeywordUsingAutomationPackageFile() {
 		File automationPackageFile = retrieveAndExtractAutomationPackage();
-		output.add("AutomationPackageFile", automationPackageFile.getName());
+		output.add("AutomationPackageContent", String.join("", Objects.requireNonNull(automationPackageFile.list())));
 	}
 	
 	@Keyword

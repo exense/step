@@ -98,12 +98,21 @@ public class JavaJarHandlerTest {
 	@Test
 	public void testAutomationPackageFile() throws IOException {
 		File tempFolder = FileHelper.createTempFolder();
+		String testFile = "test.file";
+		new File(tempFolder.getAbsolutePath() + "/" + testFile).createNewFile();
+		File tempFile = FileHelper.createTempFile();
+		FileHelper.zip(tempFolder, tempFile);
 
-		GeneralScriptFunction f = buildTestFunction("MyKeywordUsingAutomationPackageFile", "java-plugin-handler-test.jar");
-		f.setAutomationPackageFile(new DynamicValue<>(tempFolder.getAbsolutePath()));
+		try {
+			GeneralScriptFunction f = buildTestFunction("MyKeywordUsingAutomationPackageFile", "java-plugin-handler-test.jar");
+			f.setAutomationPackageFile(new DynamicValue<>(tempFile.getAbsolutePath()));
 
-		Output<JsonObject> output = run(f, "{}");
-		Assert.assertEquals(tempFolder.getName(), output.getPayload().getString("AutomationPackageFile"));
+			Output<JsonObject> output = run(f, "{}");
+			Assert.assertEquals(testFile, output.getPayload().getString("AutomationPackageContent"));
+		} finally {
+			tempFile.delete();
+			tempFolder.delete();
+		}
 	}
 	
 	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson) {
