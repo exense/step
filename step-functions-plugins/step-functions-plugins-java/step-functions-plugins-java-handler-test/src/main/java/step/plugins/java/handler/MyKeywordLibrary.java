@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.java.handler;
 
+import java.io.File;
 import java.net.URLClassLoader;
 import java.util.Arrays;
 
@@ -64,6 +65,12 @@ public class MyKeywordLibrary extends AbstractKeyword {
 				output.add(key, value);
 			});
 		}
+	}
+
+	@Keyword
+	public void MyKeywordUsingAutomationPackageFile() {
+		File automationPackageFile = retrieveAndExtractAutomationPackage();
+		output.add("AutomationPackageFile", automationPackageFile.getName());
 	}
 	
 	@Keyword

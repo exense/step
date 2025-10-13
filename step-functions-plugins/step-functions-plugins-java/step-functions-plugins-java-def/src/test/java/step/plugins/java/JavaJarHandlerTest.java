@@ -18,26 +18,23 @@
  ******************************************************************************/
 package step.plugins.java;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
+import ch.exense.commons.app.Configuration;
+import ch.exense.commons.io.FileHelper;
 import jakarta.json.JsonObject;
-
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
-
-import ch.exense.commons.app.Configuration;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.io.Output;
 import step.functions.runner.FunctionRunner;
 import step.functions.runner.FunctionRunner.Context;
 import step.grid.bootstrap.ResourceExtractor;
-import step.plugins.java.GeneralScriptFunction;
-import step.plugins.java.GeneralScriptFunctionType;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JavaJarHandlerTest {
 
@@ -96,6 +93,17 @@ public class JavaJarHandlerTest {
 		GeneralScriptFunction f = buildTestFunction("TestClassloader","java-plugin-handler-test.jar");
 		Output<JsonObject> output = run(f, "{}");
 		Assert.assertTrue(output.getPayload().getString("clURLs").contains("java-plugin-handler-test.jar"));
+	}
+
+	@Test
+	public void testAutomationPackageFile() throws IOException {
+		File tempFolder = FileHelper.createTempFolder();
+
+		GeneralScriptFunction f = buildTestFunction("MyKeywordUsingAutomationPackageFile", "java-plugin-handler-test.jar");
+		f.setAutomationPackageFile(new DynamicValue<>(tempFolder.getAbsolutePath()));
+
+		Output<JsonObject> output = run(f, "{}");
+		Assert.assertEquals(tempFolder.getName(), output.getPayload().getString("AutomationPackageFile"));
 	}
 	
 	private Output<JsonObject> run(GeneralScriptFunction f, String inputJson) {

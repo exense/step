@@ -18,18 +18,9 @@
  ******************************************************************************/
 package step.functions.type;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
@@ -48,11 +39,25 @@ import step.grid.tokenpool.Interest;
 import step.resources.LayeredResourceManager;
 import step.resources.ResourceManager;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
+
 public abstract class AbstractFunctionType<T extends Function> {
 
 	protected static final Logger logger = LoggerFactory.getLogger(AbstractFunctionType.class);
 
 	public static final String MISSING_ENV_VARIABLE_MESSAGE = "The '%s' environment variable is not set.";
+	// This constant duplicates step.functions.handler.AbstractFunctionHandler.AUTOMATION_PACKAGE_FILE
+	// Unfortunately there's currently no common project between AbstractFunctionType and AbstractFunctionHandler
+	public static final String AUTOMATION_PACKAGE_FILE = "$automationPackageFile";
 
 	protected FileResolver fileResolver;
 	protected LoadingCache<String, File> fileResolverCache;
@@ -110,20 +115,35 @@ public abstract class AbstractFunctionType<T extends Function> {
 	}
 
 	public static class HandlerProperties implements AutoCloseable {
-		public final Map<String, String> properties;
-		private final List<AutoCloseable> registeredCloseable;
+		public final Map<String, String> properties = new HashMap<>();
+		private final List<AutoCloseable> registeredCloseable = new ArrayList<>();
 
 		public HandlerProperties(Map<String, String> properties) {
-			this(properties, new ArrayList<>());
+			merge(properties);
 		}
 
         public HandlerProperties(Map<String, String> properties, List<AutoCloseable> registeredCloseable) {
-            this.properties = properties;
-			this.registeredCloseable = registeredCloseable;
+            merge(properties, registeredCloseable);
         }
 
+		public HandlerProperties merge(Map<String, String> properties) {
+			this.properties.putAll(properties);
+			return this;
+		}
+
+		public HandlerProperties merge(List<AutoCloseable> registeredCloseable) {
+			this.registeredCloseable.addAll(registeredCloseable);
+			return this;
+		}
+
+		public HandlerProperties merge(Map<String, String> properties, List<AutoCloseable> registeredCloseable) {
+			merge(properties);
+			merge(registeredCloseable);
+			return this;
+		}
+
 		@Override
-		public void close() throws Exception {
+		public void close() {
 			closeRegisteredCloseable(registeredCloseable);
 		}
 	}
@@ -140,7 +160,16 @@ public abstract class AbstractFunctionType<T extends Function> {
 		});
 	}
 
-	public abstract HandlerProperties getHandlerProperties(T function, AbstractStepContext executionContext);
+	public HandlerProperties getHandlerProperties(T function, AbstractStepContext executionContext) {
+		HashMap<String, String> props = new HashMap<>();
+		ArrayList<AutoCloseable> autoCloseables = new ArrayList<>();
+		DynamicValue<String> automationPackageFile = function.getAutomationPackageFile();
+		if(automationPackageFile != null) {
+			autoCloseables.add(registerFile(automationPackageFile, AUTOMATION_PACKAGE_FILE, props, true,
+					executionContext));
+		}
+		return new HandlerProperties(props, autoCloseables);
+	}
 
 	public void beforeFunctionCall(T function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
 		

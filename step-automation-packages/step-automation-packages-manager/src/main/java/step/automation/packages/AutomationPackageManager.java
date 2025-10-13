@@ -28,6 +28,7 @@ import step.commons.activation.Expression;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.Entity;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.EnricheableObject;
@@ -720,7 +721,8 @@ public class AutomationPackageManager {
     protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
                                                      AutomationPackage oldPackage, ResourceManager stagingResourceManager, String evaluationExpression) {
         AutomationPackageContext apContext = new AutomationPackageContext(operationMode, stagingResourceManager, automationPackageArchive, packageContent, enricher, extensions);
-        List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
+        List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext))
+                .map(keyword -> setAutomationPackageFile(automationPackageArchive, keyword)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
@@ -732,6 +734,15 @@ public class AutomationPackageManager {
             }
         }
         return completeFunctions;
+    }
+
+    /**
+     * Set the path to the automation package file in the provided function
+     */
+    protected Function setAutomationPackageFile(AutomationPackageArchive automationPackageArchive, Function function) {
+        File originalFile = automationPackageArchive.getOriginalFile();
+        function.setAutomationPackageFile(new DynamicValue<>(originalFile.getAbsolutePath()));
+        return function;
     }
 
     protected AutomationPackage createNewInstance(String fileName, AutomationPackageContent packageContent, String apVersion, String activationExpr, AutomationPackage oldPackage, ObjectEnricher enricher) {

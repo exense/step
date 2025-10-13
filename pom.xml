@@ -46,6 +46,7 @@
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
 		<dependencies.version>2025.6.25</dependencies.version>
+		<step-api.version>2025.10.13-68ecfe122c8af165041b5679</step-api.version>
 		<step-grid.version>2025.9.18-68cbbbfbc07d327dfe051e69</step-grid.version>
 		<step-framework.version>2025.9.3-68b816b30ad99e784e52df65</step-framework.version>
 
@@ -111,6 +112,14 @@
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>ch.exense.step</groupId>
+				<artifactId>step-api</artifactId>
+				<version>${step-api.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+
 			<dependency>
 				<groupId>ch.exense.step</groupId>
 				<artifactId>step-framework</artifactId>
