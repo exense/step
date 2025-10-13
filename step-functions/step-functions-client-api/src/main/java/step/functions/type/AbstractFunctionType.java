@@ -127,12 +127,16 @@ public abstract class AbstractFunctionType<T extends Function> {
         }
 
 		public HandlerProperties merge(Map<String, String> properties) {
-			this.properties.putAll(properties);
+			if(properties != null) {
+				this.properties.putAll(properties);
+			}
 			return this;
 		}
 
 		public HandlerProperties merge(List<AutoCloseable> registeredCloseable) {
-			this.registeredCloseable.addAll(registeredCloseable);
+			if(registeredCloseable != null) {
+				this.registeredCloseable.addAll(registeredCloseable);
+			}
 			return this;
 		}
 
