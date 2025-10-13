@@ -475,7 +475,7 @@ public class AutomationPackageManager {
 
             // upload automation package library if provided
             // NOTE: for ap lib we don't need to enrich the resource with automation package id (because the same lib can be shared between several automation packages) - so we use simple enricher
-            String apLibraryResourceString = uploadAutomationPackageLibrary(apLibraryProvider, newPackage, packageContent.getName(), enricher, objectPredicate, actorUser, writeAccessPredicate);
+            String apLibraryResourceString = uploadOrReuseAutomationPackageLibrary(apLibraryProvider, newPackage, enricher, objectPredicate, actorUser, writeAccessPredicate, true);
 
             fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, apLibraryResourceString, actorUser, objectPredicate);
 
@@ -637,9 +637,30 @@ public class AutomationPackageManager {
         return resourceString;
     }
 
-    protected String uploadAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider, AutomationPackage newPackage,
-                                                    String apName, ObjectEnricher enricher, ObjectPredicate objectPredicate,
-                                                    String actorUser, ObjectPredicate accessChecker) {
+    public String createAutomationPackageResource(String resourceType, AutomationPackageFileSource fileSource, ObjectPredicate predicate, String actorUser, ObjectPredicate accessChecker) throws AutomationPackageManagerException {
+        try {
+            switch (resourceType) {
+                case ResourceManager.RESOURCE_TYPE_AP_LIBRARY:
+                    // We upload the new resource for keyword library. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
+                    return uploadOrReuseAutomationPackageLibrary(
+                            getAutomationPackageLibraryProvider(fileSource, predicate),
+                            null, null, predicate, actorUser, accessChecker, false
+                    );
+                case ResourceManager.RESOURCE_TYPE_AP:
+                    // TODO: implement if required
+                    throw new AutomationPackageManagerException("Unsupported resource type: " + resourceType);
+                default:
+                    throw new AutomationPackageManagerException("Unsupported resource type: " + resourceType);
+            }
+        } catch (AutomationPackageReadingException ex){
+            throw new AutomationPackageManagerException("Cannot create new resource: " + resourceType, ex);
+        }
+    }
+
+    protected String uploadOrReuseAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider, AutomationPackage newPackage,
+                                                           ObjectEnricher enricher, ObjectPredicate objectPredicate,
+                                                           String actorUser, ObjectPredicate accessChecker, boolean allowToReuseOldResource) {
+        String apName = newPackage == null ? "" : newPackage.getAttribute(AbstractOrganizableObject.NAME);
         String apLibraryResourceString = null;
         try {
             File apLibrary = apLibProvider.getAutomationPackageLibrary();
@@ -657,6 +678,11 @@ public class AutomationPackageManager {
 
                     if (oldResources != null && !oldResources.isEmpty()) {
                         Resource oldResource = oldResources.get(0);
+
+                        if(!allowToReuseOldResource){
+                            throw new AutomationPackageManagerException("Old resource " + oldResource.getResourceName() + " ( " + oldResource.getId() + " ) has been detected and cannot be reused");
+                        }
+
                         if (!apLibProvider.isModifiableResource()) {
                             // for unmodifiable origins we just reused the previously uploaded resource
                             log.info("Existing automation package library {} with resource id {} has been detected and will be reused in AP {}", apLibrary.getName(), oldResource.getId().toHexString(), apName);
@@ -664,7 +690,8 @@ public class AutomationPackageManager {
                         } else if (apLibProvider.hasNewContent()){
                             // for modifiable resources (i.e. SNAPSHOTS) we can reuse the old resource id and metadata, but we need to update the content if a new version was downloaded
                             uploadedResource = updateExistingResourceContentAndPropagate(apLibrary.getName(),
-                                    apName, newPackage.getId(),
+                                    apName,
+                                    newPackage.getId(),
                                     fis, apLibProvider.getSnapshotTimestamp(), oldResource,
                                     actorUser, accessChecker
                             );

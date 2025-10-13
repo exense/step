@@ -406,6 +406,25 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 tableService.performBulkOperation(AutomationPackageEntity.entityName, request, consumer, getSession()));
     }
 
-
-
+    //TODO: change permission
+    @POST
+    @Path("/resources")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Secured(right = "automation-package-write")
+    public String createNewAutomationPackageResource(String resourceType,
+                                                     @FormDataParam("file") InputStream uploadedInputStream,
+                                                     @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                     @FormDataParam("mavenSnippet") String mavenSnippet){
+        try {
+            return automationPackageManager.createAutomationPackageResource(
+                    resourceType,
+                    getFileSource(uploadedInputStream, fileDetail, mavenSnippet, "Invalid maven snippet", null),
+                    getObjectPredicate(), getUser(), getWriteAccessPredicate()
+            );
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
 }

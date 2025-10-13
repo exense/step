@@ -85,7 +85,7 @@ public class LinkedAutomationPackagesFinder {
         List<ObjectId> automationPackagesWithSameOrigin = new ArrayList<>();
         ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
         if (apOrigin != null && automationPackageProvider.canLookupResources() && automationPackageProvider.isModifiableResource() && automationPackageProvider.hasNewContent()) {
-            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate);
+            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate, ResourceManager.RESOURCE_TYPE_AP);
             for (Resource resource : resourcesByOrigin) {
               automationPackagesWithSameOrigin.addAll(findAutomationPackagesByResourceId(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
             }
@@ -95,7 +95,7 @@ public class LinkedAutomationPackagesFinder {
         Set<ObjectId> apWithSameLibrary = new HashSet<>();
         ResourceOrigin apLibOrigin = apLibProvider == null ? null : apLibProvider.getOrigin();
         if (apLibOrigin != null && apLibProvider.canLookupResources() && apLibProvider.isModifiableResource() && apLibProvider.hasNewContent()) {
-            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apLibOrigin.toStringRepresentation(), objectPredicate);
+            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apLibOrigin.toStringRepresentation(), objectPredicate, ResourceManager.RESOURCE_TYPE_AP_LIBRARY);
             for (Resource resource : resourcesByOrigin) {
                 apWithSameLibrary.addAll(findAutomationPackagesByResourceId(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
             }

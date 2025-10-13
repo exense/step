@@ -23,6 +23,7 @@ import step.core.objectenricher.ObjectPredicate;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -76,10 +77,15 @@ public interface ResourceManager {
 
 	Resource getResource(String resourceId);
 
-	default List<Resource> getResourcesByOrigin(String origin, ObjectPredicate objectPredicate){
+	default List<Resource> getResourcesByOrigin(String origin, ObjectPredicate objectPredicate, String resourceType) {
 		// TODO: we have to use ObjectFilter instead of objectPredicate, but it is harder to use it in implementations like RemoteResourceManager
-		List<Resource> res = findManyByCriteria(Map.of("origin", origin));
-		if(objectPredicate !=null){
+		Map<String, String> criteria = new HashMap<>();
+		criteria.put("origin", origin);
+		if (resourceType != null) {
+			criteria.put("resourceType", resourceType);
+		}
+		List<Resource> res = findManyByCriteria(criteria);
+		if (objectPredicate != null) {
 			res = res.stream().filter(objectPredicate).collect(Collectors.toList());
 		}
 		return res;

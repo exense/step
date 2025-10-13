@@ -31,7 +31,7 @@ import step.resources.ResourceOrigin;
 import java.io.IOException;
 import java.util.List;
 
-public class AbstractAutomationPackageFromMavenProvider implements AutomationPackageProvider {
+public abstract class AbstractAutomationPackageFromMavenProvider implements AutomationPackageProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractAutomationPackageFromMavenProvider.class);
     protected final MavenArtifactIdentifier mavenArtifactIdentifier;
