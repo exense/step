@@ -147,7 +147,7 @@ public class ExportManagerTest {
 				.register(new Entity<>(Parameter.ENTITY_NAME, parameterAccessor, Parameter.class))
 				.register(new PlanEntity(planAccessor, new PlanLocator(planAccessor, selectorHelper), entityManager))
 				.register(new FunctionEntity(functionAccessor, functionLocator, entityManager))
-				.register(new ResourceEntity(resourceAccessor, resourceManager, fileResolver, entityManager))
+				.register(new ResourceEntity(resourceAccessor, entityManager))
 				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
 		entityManager.registerExportHook(new ParameterManagerControllerPlugin.ParameterExportBiConsumer());
@@ -770,7 +770,7 @@ public class ExportManagerTest {
 	
 	public void testExportPlansWithResourceFct(boolean overwrite) throws Exception {
 		// Create a resource
-		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_DATASOURCE, this.getClass().getResourceAsStream("dummyExcel.xls"), "TestResource.txt", false, null);
+		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_DATASOURCE, this.getClass().getResourceAsStream("dummyExcel.xls"), "TestResource.txt", null, "testUser");
 		assertNotNull(resource);
 			
 		ForEachBlock f = new ForEachBlock();

@@ -45,25 +45,27 @@ public class AutomationPackagePlansAttributesApplier {
     private static final String STEP_PACKAGE = "step";
 
     private final ResourceManager resourceManager;
-    private final FileResolver fileResolver;
 
     public AutomationPackagePlansAttributesApplier(ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
-        this.fileResolver = new FileResolver(resourceManager);
     }
 
-    public void applySpecialAttributesToPlans(List<Plan> plans,
+    public void applySpecialAttributesToPlans(AutomationPackage newPackage,
+                                              List<Plan> plans,
                                               AutomationPackageArchive automationPackageArchive,
                                               AutomationPackageContent packageContent,
-                                              ObjectEnricher objectEnricher, Map<String, Object> extensions, AutomationPackageOperationMode operationMode) {
-        AutomationPackageContext apContext = prepareContext(operationMode, automationPackageArchive, packageContent, objectEnricher, extensions);
+                                              String actorUser,
+                                              ObjectEnricher objectEnricher, Map<String, Object> extensions,
+                                              AutomationPackageOperationMode operationMode) {
+        AutomationPackageContext apContext = prepareContext(newPackage, operationMode, automationPackageArchive, packageContent, actorUser, objectEnricher, extensions);
         for (Plan plan : plans) {
             applySpecialValuesForArtifact(plan.getRoot(), apContext);
         }
     }
 
-    protected AutomationPackageContext prepareContext(AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, Map<String, Object> extensions) {
-        return new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, enricher, extensions);
+    protected AutomationPackageContext prepareContext(AutomationPackage automationPackage, AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
+                                                      String actorUser, ObjectEnricher enricher, Map<String, Object> extensions) {
+        return new AutomationPackageContext(automationPackage, operationMode, resourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
     }
 
     private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageContext apContext) {
@@ -110,13 +112,13 @@ public class AutomationPackagePlansAttributesApplier {
                 Object value = pd.getReadMethod().invoke(object);
                 if (value instanceof String) {
                     String stringValue = (String) value;
-                    if (!fileResolver.isResource(stringValue)) {
+                    if (!FileResolver.isResource(stringValue)) {
                         String uploadedResource = uploadAutomationPackageResource(stringValue, apContext);
                         setter.invoke(object, uploadedResource);
                     }
                 } else if (value instanceof DynamicValue) {
                     DynamicValue<String> dynamicValue = (DynamicValue<String>) value;
-                    if (dynamicValue.getValue() != null && !fileResolver.isResource(dynamicValue.getValue())) {
+                    if (dynamicValue.getValue() != null && !FileResolver.isResource(dynamicValue.getValue())) {
                         String uploadedResource = uploadAutomationPackageResource(dynamicValue.getValue(), apContext);
                         setter.invoke(object, new DynamicValue<>(uploadedResource));
                     }
@@ -147,7 +149,7 @@ public class AutomationPackagePlansAttributesApplier {
 
     private String uploadAutomationPackageResource(String yamlResourceRef, AutomationPackageContext apContext) {
         AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
-        Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_FUNCTIONS, apContext);
+        Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_DATASOURCE, apContext);
         String result = null;
         if (resource != null) {
             result = FileResolver.RESOURCE_PREFIX + resource.getId().toString();

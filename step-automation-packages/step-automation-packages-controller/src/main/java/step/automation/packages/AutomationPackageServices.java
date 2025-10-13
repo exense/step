@@ -18,37 +18,36 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import com.google.api.client.http.HttpStatusCodes;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.http.HttpStatus;
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.xml.sax.SAXException;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.deployment.AbstractStepServices;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
+import step.core.objectenricher.ObjectPredicate;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.function.Consumer;
@@ -62,6 +61,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     protected AutomationPackageExecutor automationPackageExecutor;
     protected TableService tableService;
     protected XmlMapper xmlMapper;
+
+    private static String COLLISION_ERROR_NAME = "Automation Package Conflict";
 
     @PostConstruct
     public void init() throws Exception {
@@ -98,34 +99,20 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
             assertEntityIsAcceptableInContext(automationPackage);
-            automationPackageManager.removeAutomationPackage(new ObjectId(id), getObjectPredicate());
+            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),getObjectPredicate(), getWriteAccessPredicate());
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
     }
 
-    @POST
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.TEXT_PLAIN)
-    @Secured(right = "automation-package-write")
-    public String createAutomationPackage(@QueryParam("version") String apVersion,
-                                          @QueryParam("activationExpr") String activationExpression,
-                                          @FormDataParam("file") InputStream automationPackageInputStream,
-                                          @FormDataParam("file") FormDataContentDisposition fileDetail) {
-        try {
-            ObjectId id = automationPackageManager.createAutomationPackage(
-                    automationPackageInputStream, fileDetail.getFileName(),
-                    apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate()
-            );
-            return id == null ? null : id.toString();
-        } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
-        }
-    }
-
     /**
-     * @param mavenArtifactXml
+     * @param apVersion
+     * @param activationExpression
+     * @param automationPackageInputStream
+     * @param fileDetail
+     * @param apMavenSnippet
      * Example:
      * <dependency>
      *     <groupId>junit</groupId>
@@ -134,28 +121,45 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      *     <scope>test</scope>
      *     <classifier>tests</scope>
      * </dependency>
+     * @param apLibraryInputStream
+     * @param apLibraryFileDetail
+     * @param apLibraryMavenSnippet
+     * @return
      */
     @POST
-    @Path("/mvn")
-    @Consumes(MediaType.TEXT_PLAIN)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public String createAutomationPackageFromMaven(@QueryParam("version") String apVersion,
-                                                   @QueryParam("activationExpr") String activationExpression,
-                                                   @RequestBody() String mavenArtifactXml) {
+    public String createAutomationPackage(@QueryParam("version") String apVersion,
+                                          @QueryParam("activationExpr") String activationExpression,
+                                          @QueryParam("allowUpdateOfOtherPackages") Boolean allowUpdateOfOtherPackages,
+                                          @FormDataParam("file") InputStream automationPackageInputStream,
+                                          @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                          @FormDataParam("apMavenSnippet") String apMavenSnippet,
+                                          @FormDataParam("apLibrary") InputStream apLibraryInputStream,
+                                          @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
+                                          @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
+                                          @FormDataParam("apResourceId") String apResourceId,
+                                          @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
         try {
-            MavenArtifactIdentifier mavenArtifactIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
-            return automationPackageManager.createAutomationPackageFromMaven(
-                    mavenArtifactIdentifier, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate()
-            ).toString();
+            AutomationPackageFileSource apFileSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for automation package: ", apResourceId);
+            AutomationPackageFileSource apLibrarySource = getFileSource(apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ", apLibraryResourceId);
+
+            ObjectId id = automationPackageManager.createAutomationPackage(
+                    apFileSource,
+                    apVersion, activationExpression,
+                    apLibrarySource, getUser(),
+                    allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true,
+                    getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate());
+            return id == null ? null : id.toString();
+        } catch (AutomationPackageCollisionException e){
+            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new RuntimeException("Cannot parse the maven artifact xml", e);
         }
     }
 
-    protected MavenArtifactIdentifier getMavenArtifactIdentifierFromXml(String mavenArtifactXml) throws ParserConfigurationException, IOException, SAXException {
+    protected MavenArtifactIdentifier getMavenArtifactIdentifierFromXml(String mavenArtifactXml) throws JsonProcessingException {
         return new MavenArtifactIdentifierFromXmlParser(xmlMapper).parse(mavenArtifactXml);
     }
 
@@ -166,7 +170,13 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-execute")
     public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                                 @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart) {
+                                                 @FormDataParam("apMavenSnippet") String apMavenSnippet,
+                                                 @FormDataParam("apLibrary") InputStream apLibraryInputStream,
+                                                 @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
+                                                 @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart,
+                                                 @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
+                                                 @FormDataParam("apResourceId") String apResourceId,
+                                                 @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
         IsolatedAutomationPackageExecutionParameters executionParameters;
         if (executionParamsBodyPart != null) {
             // The workaround to parse execution parameters as application/json even if the Content-Type for this part is not explicitly set in request
@@ -187,16 +197,22 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
 
         try {
+            AutomationPackageFileSource apLibrarySource = getFileSource(apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ", apLibraryResourceId);
+            AutomationPackageFileSource apSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for ap: ", apResourceId);
+
             return automationPackageExecutor.runInIsolation(
-                    automationPackageInputStream,
-                    fileDetail == null ? null : fileDetail.getFileName(),
+                    apSource,
                     executionParameters,
+                    apLibrarySource, getUser(),
                     getObjectEnricher(),
-                    getObjectPredicate()
-            );
+                    getObjectPredicate());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
+    }
+
+    private String getUser() {
+        return getSession().getUser().getUsername();
     }
 
     @POST
@@ -235,9 +251,10 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public void updateAutomationPackageMetadata(@PathParam("id") String id,
                                                 @QueryParam("activationExpr") String activationExpression,
                                                 @QueryParam("version") String apVersion) {
-        checkAutomationPackageAcceptable(id);
         try {
-            automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate());
+            automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate(), getWriteAccessPredicate());
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -252,30 +269,59 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @QueryParam("async") Boolean async,
                                                                  @QueryParam("version") String apVersion,
                                                                  @QueryParam("activationExpr") String activationExpression,
+                                                                 @QueryParam("allowUpdateOfOtherPackages") Boolean allowUpdateOfOtherPackages,
                                                                  @FormDataParam("file") InputStream uploadedInputStream,
-                                                                 @FormDataParam("file") FormDataContentDisposition fileDetail) {
-        checkAutomationPackageAcceptable(id);
+                                                                 @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                                 @FormDataParam("apMavenSnippet") String apMavenSnippet,
+                                                                 @FormDataParam("apLibrary") InputStream apLibraryInputStream,
+                                                                 @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
+                                                                 @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
+                                                                 @FormDataParam("apResourceId") String apResourceId,
+                                                                 @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
         try {
+            AutomationPackageFileSource apFileSource = getFileSource(
+                    uploadedInputStream, fileDetail,
+                    apMavenSnippet, "Invalid maven snippet for automation package: ",
+                    apResourceId
+            );
+            AutomationPackageFileSource apLibrarySource = getFileSource(
+                    apLibraryInputStream, apLibraryFileDetail,
+                    apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ",
+                    apLibraryResourceId
+            );
+
             return automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
-                    uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), async != null && async
-            );
+                    apFileSource, apLibrarySource,
+                    apVersion, activationExpression,
+                    getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate(), async != null && async,
+                    getUser(), allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
+        } catch (AutomationPackageAccessException ex) {
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageCollisionException e) {
+            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
     }
 
-    private void checkAutomationPackageAcceptable(String id) {
-        AutomationPackage automationPackage = null;
+    private AutomationPackageFileSource getFileSource(InputStream uploadedInputStream, FormDataContentDisposition fileDetail, String apMavenSnippet, String invalidSnippetErrorText, String resourceId) {
+        AutomationPackageFileSource automationPackageFileSource = null;
         try {
-            automationPackage = getAutomationPackage(id);
-        } catch (Exception e) {
-            //getAutomationPackage throws exception if the package doesn't exist, whether this is an errors is managed in below createOrUpdateAutomationPackage
+            automationPackageFileSource = AutomationPackageFileSource.empty();
+            if (uploadedInputStream != null) {
+                automationPackageFileSource.addInputStream(uploadedInputStream, fileDetail == null ? null : fileDetail.getFileName());
+            }
+            if (apMavenSnippet != null) {
+                automationPackageFileSource.addMavenIdentifier(getMavenArtifactIdentifierFromXml(apMavenSnippet));
+            }
+            if(resourceId != null){
+                automationPackageFileSource.addResourceId(resourceId);
+            }
+        } catch (JsonProcessingException e) {
+            throw new ControllerServiceException(invalidSnippetErrorText + e.getMessage());
         }
-        if (automationPackage != null) {
-            assertEntityIsAcceptableInContext(automationPackage);
-        }
+        return automationPackageFileSource;
     }
 
     @PUT
@@ -284,14 +330,35 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-write")
     public Response createOrUpdateAutomationPackage(@QueryParam("async") Boolean async,
                                                     @QueryParam("version") String apVersion,
+                                                    @QueryParam("allowUpdateOfOtherPackages") Boolean allowUpdateOfOtherPackages,
                                                     @QueryParam("activationExpr") String activationExpression,
                                                     @FormDataParam("file") InputStream uploadedInputStream,
-                                                    @FormDataParam("file") FormDataContentDisposition fileDetail) {
+                                                    @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                    @FormDataParam("apMavenSnippet") String apMavenSnippet,
+                                                    @FormDataParam("apLibrary") InputStream apLibraryInputStream,
+                                                    @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
+                                                    @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
+                                                    @FormDataParam("apResourceId") String apResourceId,
+                                                    @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
         try {
-            AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
-                    true, true, null, uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), async != null && async
+            AutomationPackageFileSource apFileSource = getFileSource(
+                    uploadedInputStream, fileDetail,
+                    apMavenSnippet, "Invalid maven snippet for automation package: ",
+                    apResourceId
             );
+            AutomationPackageFileSource apLibrarySource = getFileSource(
+                    apLibraryInputStream, apLibraryFileDetail,
+                    apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ",
+                    apLibraryResourceId
+            );
+
+            AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
+                    true, true, null,
+                    apFileSource,
+                    apLibrarySource,
+                    apVersion, activationExpression,
+                    getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate(), async != null && async,
+                    getUser(), allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(Response.Status.CREATED);
@@ -299,71 +366,15 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 responseBuilder = Response.status(Response.Status.OK);
             }
             return responseBuilder.entity(result).build();
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageCollisionException e){
+            ControllerServiceException ex = new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
+            // to avoid stack trace in ErrorFilter
+            ex.setTechnicalError(false);
+            throw ex;
         } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
-        }
-    }
-
-    /**
-     * @param mavenArtifactXml
-     * Example:
-     * <dependency>
-     *     <groupId>junit</groupId>
-     *     <artifactId>junit</artifactId>
-     *     <version>4.13.2</version>
-     *     <scope>test</scope>
-     * </dependency>
-     */
-    @PUT
-    @Path("/mvn")
-    @Consumes(MediaType.TEXT_PLAIN)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "automation-package-write")
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackageFromMaven(@QueryParam("async") Boolean async,
-                                                                                  @QueryParam("version") String apVersion,
-                                                                                  @QueryParam("activationExpr") String activationExpression,
-                                                                                  @RequestBody() String mavenArtifactXml) {
-        try {
-            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
-            return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
-                    mvnIdentifier, true, true, null, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
-            );
-        } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new RuntimeException("Cannot parse the maven artifact xml", e);
-        }
-    }
-
-    /**
-     * @param mavenArtifactXml Example:
-     *                         <dependency>
-     *                         <groupId>junit</groupId>
-     *                         <artifactId>junit</artifactId>
-     *                         <version>4.13.2</version>
-     *                         <scope>test</scope>
-     *                         </dependency>
-     */
-    @PUT
-    @Path("/{id}/mvn")
-    @Consumes(MediaType.TEXT_PLAIN)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "automation-package-write")
-    public AutomationPackageUpdateResult updateAutomationPackageFromMaven(@PathParam("id") String id,
-                                                                          @QueryParam("async") Boolean async,
-                                                                          @QueryParam("version") String apVersion,
-                                                                          @QueryParam("activationExpr") String activationExpression,
-                                                                          @RequestBody() String mavenArtifactXml) {
-        try {
-            MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
-            return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
-                    mvnIdentifier, true, false, new ObjectId(id), apVersion,
-                    activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
-            );
-        } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw new RuntimeException("Cannot parse the maven artifact xml", e);
+            throw new ControllerServiceException(e.getMessage(), e);
         }
     }
 
@@ -394,5 +405,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         return scheduleAsyncTaskWithinSessionContext(h ->
                 tableService.performBulkOperation(AutomationPackageEntity.entityName, request, consumer, getSession()));
     }
+
+
 
 }

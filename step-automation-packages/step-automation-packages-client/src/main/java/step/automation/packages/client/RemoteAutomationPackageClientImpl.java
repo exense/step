@@ -26,6 +26,7 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.MultiPart;
 import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import step.automation.packages.AutomationPackageUpdateResult;
+import step.automation.packages.client.model.AutomationPackageSource;
 import step.client.ControllerClientException;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.client.AbstractRemoteClient;
@@ -49,9 +50,14 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public String createAutomationPackage(File automationPackageFile, String apVersion, String activationExpr) throws AutomationPackageClientException {
-        return uploadPackage(automationPackageFile, multiPartEntity -> {
+    public String createAutomationPackage(AutomationPackageSource automationPackageSource,
+                                          String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
+                                          AutomationPackageSource apLibrarySource) throws AutomationPackageClientException {
+        return uploadPackage(automationPackageSource, apLibrarySource, multiPartEntity -> {
             Map<String, String> queryParams = new HashMap<>();
+            if (allowUpdateOfOtherPackages != null) {
+                queryParams.put("allowUpdateOfOtherPackages", String.valueOf(allowUpdateOfOtherPackages));
+            }
             addQueryParams(apVersion, activationExpr, queryParams);
             Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
             return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.post(multiPartEntity, String.class));
@@ -68,47 +74,38 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, Boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException {
-        return uploadPackage(automationPackageFile, multiPartEntity -> {
-            Map<String, String> queryParams = new HashMap<>();
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackage(AutomationPackageSource automationPackageSource,
+                                                                         Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
+                                                                         AutomationPackageSource apLibrarySource) throws AutomationPackageClientException {
+        return uploadPackage(automationPackageSource, apLibrarySource,
+                multiPartEntity -> {
+                    Map<String, String> queryParams = new HashMap<>();
 
-            // if 'async' is not defined on client it will be resolved on the server ('false' by default)
-            if (async != null) {
-                queryParams.put("async", String.valueOf(async));
-            }
-            addQueryParams(apVersion, activationExpr, queryParams);
-            Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
-            return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
-        });
+                    // if 'async' is not defined on client it will be resolved on the server ('false' by default)
+                    if (async != null) {
+                        queryParams.put("async", String.valueOf(async));
+                    }
+                    if (allowUpdateOfOtherPackages != null) {
+                        queryParams.put("allowUpdateOfOtherPackages", String.valueOf(allowUpdateOfOtherPackages));
+                    }
+                    addQueryParams(apVersion, activationExpr, queryParams);
+                    Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
+                    return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
+                });
     }
 
     @Override
-    public AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException {
-        Map<String, String> queryParams = new HashMap<>();
-
-        // if 'async' is not defined on client it will be resolved on the server ('false' by default)
-        if (async != null) {
-            queryParams.put("async", String.valueOf(async));
-        }
-        if (activationExpr != null && !activationExpr.isEmpty()) {
-            queryParams.put("activationExpr", activationExpr);
-        }
-        if (apVersion != null && !apVersion.isEmpty()) {
-            queryParams.put("version", apVersion);
-        }
-        Invocation.Builder builder = requestBuilder("/rest/automation-packages/mvn", queryParams);
-        return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(Entity.entity(mavenArtifactXml, MediaType.TEXT_PLAIN) , AutomationPackageUpdateResult.class));
-    }
-
-    @Override
-    public List<String> executeAutomationPackage(File automationPackageFile, IsolatedAutomationPackageExecutionParameters params) throws AutomationPackageClientException {
-        MultiPart multiPart = prepareFileDataMultiPart(automationPackageFile);
+    public List<String> executeAutomationPackage(AutomationPackageSource automationPackageSource,
+                                                 IsolatedAutomationPackageExecutionParameters params,
+                                                 AutomationPackageSource apLibrarySource) throws AutomationPackageClientException {
+        MultiPart multiPart = prepareFileDataMultiPart(automationPackageSource, apLibrarySource);
         FormDataBodyPart paramsBodyPart = new FormDataBodyPart("executionParams", params, MediaType.APPLICATION_JSON_TYPE);
         multiPart.bodyPart(paramsBodyPart);
 
         Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
         Invocation.Builder builder = requestBuilder("/rest/automation-packages/execute");
-        return this.executeAutomationPackageClientRequest(() -> builder.post(entity, new GenericType<List<String>>() {}));
+        return this.executeAutomationPackageClientRequest(() -> builder.post(entity, new GenericType<List<String>>() {
+        }));
     }
 
     @Override
@@ -125,8 +122,10 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
         }
     }
 
-    protected <T> T uploadPackage(File automationPackageFile, Function<Entity<MultiPart>, T> executeRequest) throws AutomationPackageClientException {
-        MultiPart multiPart = prepareFileDataMultiPart(automationPackageFile);
+    protected <T> T uploadPackage(AutomationPackageSource automationPackageSource,
+                                  AutomationPackageSource apLibrarySource,
+                                  Function<Entity<MultiPart>, T> executeRequest) throws AutomationPackageClientException {
+        MultiPart multiPart = prepareFileDataMultiPart(automationPackageSource, apLibrarySource);
         Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
         try {
             return executeRequest.apply(entity);
@@ -135,13 +134,26 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
         }
     }
 
-    private MultiPart prepareFileDataMultiPart(File automationPackageFile) {
+    private MultiPart prepareFileDataMultiPart(AutomationPackageSource automationPackageSource,
+                                               AutomationPackageSource apLibrarySource) {
 
         MultiPart multiPart = new MultiPart();
         multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        if (automationPackageFile != null) {
-            FileDataBodyPart fileDataBodyPart = new FileDataBodyPart("file", automationPackageFile, MediaType.APPLICATION_OCTET_STREAM_TYPE);
-            multiPart.bodyPart(fileDataBodyPart);
+
+        if (automationPackageSource != null && automationPackageSource.getFile() != null) {
+            multiPart.bodyPart(new FileDataBodyPart("file", automationPackageSource.getFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        }
+
+        if (automationPackageSource != null && automationPackageSource.getMavenSnippet() != null) {
+            multiPart.bodyPart(new FormDataBodyPart("apMavenSnippet", automationPackageSource.getMavenSnippet()));
+        }
+
+        if (apLibrarySource != null && apLibrarySource.getFile() != null) {
+            multiPart.bodyPart(new FileDataBodyPart("apLibrary", apLibrarySource.getFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        }
+
+        if (apLibrarySource != null && apLibrarySource.getMavenSnippet() != null) {
+            multiPart.bodyPart(new FormDataBodyPart("apLibraryMavenSnippet", apLibrarySource.getMavenSnippet()));
         }
         return multiPart;
     }

@@ -19,6 +19,7 @@
 package step.automation.packages;
 
 import ch.exense.commons.app.Configuration;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,11 +49,9 @@ import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 import step.repositories.parser.StepsParser;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -153,14 +152,11 @@ public class AutomationPackageReader {
 
     private void fillAutomationPackageWithAnnotatedKeywordsAndPlans(AutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException {
 
-        // for file-based packages we create class loader for file, otherwise we just use class loader from archive
-        File originalFile = archive.getOriginalFile();
-        try (AnnotationScanner annotationScanner = originalFile != null ? AnnotationScanner.forSpecificJar(originalFile) : AnnotationScanner.forAllClassesFromClassLoader(archive.getClassLoader())) {
-
+        try (AnnotationScanner annotationScanner = archive.createAnnotationScanner()) {
             // this code duplicates the StepJarParser, but here we don't set the scriptFile and librariesFile to GeneralScriptFunctions
             // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
             List<JavaAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, isLocalPackage, null, null);
-            if(!scannedKeywords.isEmpty()){
+            if (!scannedKeywords.isEmpty()) {
                 log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getOriginalFileName()));
             }
             res.getKeywords().addAll(scannedKeywords);
@@ -172,6 +168,8 @@ public class AutomationPackageReader {
             res.getPlans().addAll(annotatedPlans);
         } catch (JsonSchemaPreparationException e) {
             throw new AutomationPackageReadingException("Cannot read the json schema from annotated keyword", e);
+        } catch (Throwable e) {
+            throw new AutomationPackageReadingException("Unexpected error while extracting annotated keyword: " + e, e);
         }
     }
 
@@ -203,7 +201,6 @@ public class AutomationPackageReader {
                             function.setScriptFile(new DynamicValue<>(scriptFile));
                         }
 
-                        // libraries file is not used is automation package (only required for compatibility with StepJarParser)
                         if (librariesFile != null) {
                             function.setLibrariesFile(new DynamicValue<>(librariesFile));
                         }
@@ -290,7 +287,7 @@ public class AutomationPackageReader {
                 boolean wildcard = false;
                 if (ResourcePathMatchingResolver.containsWildcard(plainTextPlan.getFile())) {
                     wildcard = true;
-                    ResourcePathMatchingResolver resourceResolver = new ResourcePathMatchingResolver(archive.getClassLoader());
+                    ResourcePathMatchingResolver resourceResolver = new ResourcePathMatchingResolver(archive.getClassLoaderForMainApFile());
                     urls = resourceResolver.getResourcesByPattern(plainTextPlan.getFile());
                 } else {
                     urls = List.of(archive.getResource(plainTextPlan.getFile()));
@@ -337,8 +334,8 @@ public class AutomationPackageReader {
         }
     }
 
-    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion) throws AutomationPackageReadingException {
-        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackage)) {
+    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {
+        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackage, keywordLib)) {
             return readAutomationPackage(automationPackageArchive, apVersion, false);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
@@ -390,13 +387,18 @@ public class AutomationPackageReader {
             if (plans != null) {
                 for (String file : plans.value()) {
                     StepClassParserResult parserResult = null;
+                    ClassLoader classLoader = archive.getClassLoaderForMainApFile();
+                    boolean createdClassloader = false;
                     try {
-                        ClassLoader classLoader = null;
                         File originalFile = archive.getOriginalFile();
-                        if (originalFile != null) {
-                            classLoader = new URLClassLoader(new URL[]{originalFile.toURI().toURL()});
-                        } else {
-                            classLoader = archive.getClassLoader();
+                        if (classLoader == null) {
+                            //Fall back to creating a new class loader from original file
+                            if (originalFile != null) {
+                                createdClassloader = true;
+                                classLoader = new URLClassLoader(new URL[]{originalFile.toURI().toURL()});
+                            } else {
+                                throw new RuntimeException("Neither the archive classloader or archive file are set");
+                            }
                         }
                         try (InputStream stream = classLoader.getResourceAsStream(file)) {
                             if (stream != null) {
@@ -411,6 +413,14 @@ public class AutomationPackageReader {
                         }
                     } catch (Exception e) {
                         parserResult = new StepClassParserResult(file, null, e);
+                    } finally {
+                        if (createdClassloader && classLoader instanceof AutoCloseable) {
+                            try {
+                                ((AutoCloseable) classLoader).close();
+                            } catch (Exception e) {
+                                log.error("Unable to close the classloader created from provided package file '{}' after reading its content.", archive.getOriginalFile().getName());
+                            }
+                        }
                     }
                     result.add(parserResult);
                 }

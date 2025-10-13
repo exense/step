@@ -18,8 +18,16 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import java.io.Closeable;
+import step.core.objectenricher.ObjectPredicate;
+import step.resources.Resource;
+import step.resources.ResourceManager;
+import step.resources.ResourceOrigin;
 
-public interface AutomationPackageArchiveProvider extends Closeable {
+import java.io.Closeable;
+import java.util.List;
+
+public interface AutomationPackageArchiveProvider extends AutomationPackageProvider {
+
     AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException;
+
 }

@@ -18,10 +18,9 @@
  ******************************************************************************/
 package step.resources;
 
-import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 
-public class ResourceAccessorImpl extends AbstractAccessor<Resource> implements ResourceAccessor {
+public class ResourceAccessorImpl extends AbstractResourceAccessor implements ResourceAccessor {
 
 	public ResourceAccessorImpl(Collection<Resource> collectionDriver) {
 		super(collectionDriver);

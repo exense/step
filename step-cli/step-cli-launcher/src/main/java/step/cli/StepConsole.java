@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageFromFolderProvider;
 import step.automation.packages.AutomationPackageReadingException;
 import step.cli.apignore.ApIgnoreFileFilter;
@@ -76,6 +77,7 @@ public class StepConsole implements Callable<Integer> {
         public static final String CONFIG = "-c";
         public static final String LOCAL = "--local";
         public static final String FORCE = "--force";
+        public static final String ALLOW_UPDATE_OF_OTHER_PACKAGES = "--allowUpdateOfOtherPackages";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
@@ -100,6 +102,10 @@ public class StepConsole implements Callable<Integer> {
 
         @Option(names = {FORCE}, defaultValue = "false", description = "To force execution in case of uncritical errors")
         protected boolean force;
+
+        @Option(names = {ALLOW_UPDATE_OF_OTHER_PACKAGES}, defaultValue = "false",
+                description = "To force update of another automation packages in case they reference the same maven artifact")
+        protected boolean allowUpdateOfOtherPackages;
 
         protected String getStepProjectName() {
             return stepProjectName;
@@ -144,8 +150,7 @@ public class StepConsole implements Callable<Integer> {
 
         protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
             if (apFile != null && apFile.startsWith("mvn:")) {
-                String[] split = apFile.split(":");
-                return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null, split.length >= 6 ? split[5] : null);
+                return MavenArtifactIdentifier.fromShortString(apFile);
             } else {
                 return null;
             }
@@ -170,8 +175,11 @@ public class StepConsole implements Callable<Integer> {
 
         public static abstract class AbstractApCommand extends AbstractStepCommand {
 
-            @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The automation-package.yaml file or the folder containing it")
+            @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The path to the automation-package.yaml file or to the folder or the archive containing it. Maven coordinate are supported.")
             protected String apFile;
+
+            @Option(names = {"--packageLibrary"}, paramLabel = "<PackageLibrary>", description = "The path or maven coordinate to the archive file containing the Package library for the automation package. This Library is used a keyword library when applicable.")
+            protected String packageLibrary;
 
             /**
              * If the param points to the folder, prepares the zipped AP file with .stz extension.
@@ -179,7 +187,7 @@ public class StepConsole implements Callable<Integer> {
              *
              * @param param the source of AP
              */
-            protected File prepareApFile(String param) {
+            protected File prepareFile(String param, String entityNameForLog, boolean checkApFolder) {
                 try {
                     File file = null;
                     if (param == null) {
@@ -188,11 +196,13 @@ public class StepConsole implements Callable<Integer> {
                     } else {
                         file = new File(param);
                     }
-                    log.info("The automation package source is {}", file.getAbsolutePath());
+                    log.info("The {} is {}", entityNameForLog, file.getAbsolutePath());
 
                     if (file.isDirectory()) {
                         // check if the folder is AP (contains the yaml descriptor)
-                        checkApFolder(file);
+                        if(checkApFolder) {
+                            checkApFolder(file);
+                        }
 
                         Function<File, Boolean> fileFilter = null;
                         File apIgnoreFile = new File(file, AP_IGNORE_NAME);
@@ -216,15 +226,24 @@ public class StepConsole implements Callable<Integer> {
                 }
             }
 
+            protected File prepareApFile(String param) {
+                return prepareFile(param, "automation package", true);
+            }
+
+            protected File prepareKPackageLibraryFile(String param) {
+                return prepareFile(param, "package library", false);
+            }
+
             private void checkApFolder(File param) throws IOException {
-                try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param)) {
-                    try {
-                        if (!apProvider.getAutomationPackageArchive().hasAutomationPackageDescriptor()) {
-                            throw new StepCliExecutionException("The AP folder " + param.getAbsolutePath() + " doesn't contain the AP descriptor file");
-                        }
-                    } catch (AutomationPackageReadingException e) {
-                        throw new StepCliExecutionException("Unable to read automation package from folder " + param.getAbsolutePath(), e);
+                // package library is not required here, because we only need to check the automation package descriptor
+                try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param, null);
+                     AutomationPackageArchive apArchive = apProvider.getAutomationPackageArchive()) {
+                    if (!apArchive.hasAutomationPackageDescriptor()) {
+                        throw new StepCliExecutionException("The AP folder " + param.getAbsolutePath() + " doesn't contain the AP descriptor file");
                     }
+                } catch (AutomationPackageReadingException e) {
+                    throw new StepCliExecutionException("Unable to read automation package from folder " + param.getAbsolutePath(), e);
+
                 }
             }
 
@@ -296,24 +315,26 @@ public class StepConsole implements Callable<Integer> {
                 checkStepUrlRequired();
                 checkEeOptionsConsistency(spec);
                 checkStepControllerVersion();
-                executeTool(stepUrl, getStepProjectName(), getAuthToken(), async, apVersion, activationExpr, getMavenArtifact(apFile));
+                MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);
+                MavenArtifactIdentifier packageLibraryMavenArtifact = getMavenArtifact(packageLibrary);
+
+                DeployAutomationPackageTool.Params params = new DeployAutomationPackageTool.Params()
+                        .setAutomationPackageMavenArtifact(apMavenArtifact)
+                        .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
+                        .setStepProjectName(getStepProjectName())
+                        .setAuthToken(getAuthToken())
+                        .setAsync(async)
+                        .setallowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
+                        .setApVersion(apVersion)
+                        .setActivationExpression(activationExpr)
+                        .setPackageLibraryMavenArtifact(packageLibraryMavenArtifact)
+                        .setPackageLibraryFile(packageLibraryMavenArtifact != null || packageLibrary == null || packageLibrary.isEmpty() ? null : prepareKPackageLibraryFile(packageLibrary));
+                executeTool(stepUrl, params);
             }
 
             // for tests
-            protected void executeTool(final String stepUrl1, final String projectName, final String authToken, final boolean async, String apVersion, String activationExpr, final MavenArtifactIdentifier mavenArtifact) {
-                new AbstractDeployAutomationPackageTool(stepUrl1, projectName, authToken, async, apVersion, activationExpr) {
-
-                    @Override
-                    protected MavenArtifactIdentifier getMavenArtifactIdentifierToUpload() {
-                        return getMavenArtifact(apFile);
-                    }
-
-                    @Override
-                    protected File getLocalFileToUpload() throws StepCliExecutionException {
-                        return prepareApFile(apFile);
-                    }
-
-                }.execute();
+            protected void executeTool(final String stepUrl, DeployAutomationPackageTool.Params params) {
+                new DeployAutomationPackageTool(stepUrl, params).execute();
             }
         }
 
@@ -417,12 +438,17 @@ public class StepConsole implements Callable<Integer> {
                     throw new StepCliExecutionException("The report generation is not supported for local execution");
                 }
 
-                executeLocally(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
+                File kwLibFile = null;
+                if (packageLibrary != null && !packageLibrary.isEmpty()) {
+                    kwLibFile = prepareKPackageLibraryFile(packageLibrary);
+                }
+
+                executeLocally(file, kwLibFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
-            protected void executeLocally(File file, String includePlans, String excludePlans, String includeCategories,
+            protected void executeLocally(File file, File kwLibFile, String includePlans, String excludePlans, String includeCategories,
                                           String excludeCategories, Map<String, String> executionParameters) {
-                new ApLocalExecuteCommandHandler().execute(file, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
+                new ApLocalExecuteCommandHandler().execute(file, kwLibFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
             public void checkStepUrlRequired() {
@@ -435,9 +461,16 @@ public class StepConsole implements Callable<Integer> {
 
                 checkStepControllerVersion();
 
-                List<AbstractExecuteAutomationPackageTool.Report> reports = parseReportsParams();
+                List<ExecuteAutomationPackageTool.Report> reports = parseReportsParams();
+                MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);
+                MavenArtifactIdentifier packageLibMavenArtifact = getMavenArtifact(packageLibrary);
+
                 executeRemotely(stepUrl,
-                        new AbstractExecuteAutomationPackageTool.Params()
+                        new ExecuteAutomationPackageTool.Params()
+                                .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
+                                .setAutomationPackageMavenArtifact(apMavenArtifact)
+                                .setPackageLibraryFile(packageLibMavenArtifact != null || packageLibrary == null || packageLibrary.isEmpty() ? null : prepareKPackageLibraryFile(packageLibrary))
+                                .setPackageLibraryMavenArtifact(packageLibMavenArtifact)
                                 .setStepProjectName(getStepProjectName())
                                 .setUserId(stepUser)
                                 .setAuthToken(getAuthToken())
@@ -453,37 +486,36 @@ public class StepConsole implements Callable<Integer> {
                                 .setNumberOfThreads(numberOfThreads)
                                 .setReports(reports)
                                 .setReportOutputDir(reportDir)
-                                .setMavenArtifactIdentifier(getMavenArtifact(apFile))
                 );
             }
 
-            protected List<AbstractExecuteAutomationPackageTool.Report> parseReportsParams() {
-                List<AbstractExecuteAutomationPackageTool.Report> reports = null;
+            protected List<ExecuteAutomationPackageTool.Report> parseReportsParams() {
+                List<ExecuteAutomationPackageTool.Report> reports = null;
                 if (reportType != null && !reportType.isEmpty()) {
                     reports = new ArrayList<>();
                     for (String reportOption : reportType) {
                         String[] params = reportOption.split(";");
-                        AbstractExecuteAutomationPackageTool.ReportType reportTypeValue = null;
-                        List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes = null;
+                        ExecuteAutomationPackageTool.ReportType reportTypeValue = null;
+                        List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes = null;
                         for (String param : params) {
                             String[] paramAndValue = param.split("=");
                             if (paramAndValue.length < 1) {
                                 throw new StepCliExecutionException("Missing CLI param value: " + Arrays.toString(paramAndValue));
                             } else if (paramAndValue.length == 1) {
                                 // unnamed parameter means the 'reportType'
-                                reportTypeValue = AbstractExecuteAutomationPackageTool.ReportType.valueOf(paramAndValue[0]);
+                                reportTypeValue = ExecuteAutomationPackageTool.ReportType.valueOf(paramAndValue[0]);
                             } else if (paramAndValue[0].equalsIgnoreCase("output")) {
                                 outputModes = Arrays.stream(paramAndValue[1].split(","))
-                                        .map(AbstractExecuteAutomationPackageTool.ReportOutputMode::valueOf)
+                                        .map(ExecuteAutomationPackageTool.ReportOutputMode::valueOf)
                                         .collect(Collectors.toList());
                             }
                         }
                         if (reportTypeValue == null) {
                             throw new StepCliExecutionException("Unrecognized report type: " + reportOption);
                         } else if (outputModes == null) {
-                            reports.add(new AbstractExecuteAutomationPackageTool.Report(reportTypeValue));
+                            reports.add(new ExecuteAutomationPackageTool.Report(reportTypeValue));
                         } else {
-                            reports.add(new AbstractExecuteAutomationPackageTool.Report(reportTypeValue, outputModes));
+                            reports.add(new ExecuteAutomationPackageTool.Report(reportTypeValue, outputModes));
                         }
                     }
                 }
@@ -492,13 +524,8 @@ public class StepConsole implements Callable<Integer> {
 
             // for tests
             protected void executeRemotely(final String stepUrl,
-                                           AbstractExecuteAutomationPackageTool.Params params) {
-                new AbstractExecuteAutomationPackageTool(stepUrl, params) {
-                    @Override
-                    protected File getAutomationPackageFile() throws StepCliExecutionException {
-                        return prepareApFile(apFile);
-                    }
-                }.execute();
+                                           ExecuteAutomationPackageTool.Params params) {
+                new ExecuteAutomationPackageTool(stepUrl, params).execute();
             }
 
         }

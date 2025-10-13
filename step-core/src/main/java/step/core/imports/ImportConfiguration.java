@@ -29,14 +29,21 @@ public class ImportConfiguration {
 	private final ObjectEnricher objectEnricher;
 	private final List<String> entitiesFilter;
 	private final boolean overwrite;
+	private final String username;
 
 	public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
 							   boolean overwrite) {
+		this(file, objectEnricher, entitiesFilter, overwrite, null);
+	}
+
+	public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
+							   boolean overwrite, String username) {
 		super();
 		this.file = file;
 		this.objectEnricher = objectEnricher;
 		this.entitiesFilter = entitiesFilter;
 		this.overwrite = overwrite;
+		this.username = username;
 	}
 
 	public File getFile() {
@@ -53,5 +60,9 @@ public class ImportConfiguration {
 
 	public boolean isOverwrite() {
 		return overwrite;
+	}
+
+	public String getUsername() {
+		return username;
 	}
 }

@@ -19,8 +19,6 @@
 package step.resources;
 
 import ch.exense.commons.io.FileHelper;
-import com.google.common.hash.Hashing;
-import org.apache.commons.io.FileUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +57,9 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceTypes.put(RESOURCE_TYPE_SECRET, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_PDF_TEST_SCENARIO_FILE, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_ISOLATED_AP, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_AP, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_AP_LIBRARY, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_ISOLATED_AP_LIB, new CustomResourceType(false));
 	}
 
 	public void registerResourceType(String name, ResourceType resourceType) {
@@ -66,27 +67,29 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
-	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException {
-		return createResourceContainer(resourceType, resourceFileName, false, null);
+	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String actorUser) throws IOException {
+		return createResourceContainer(resourceType, resourceFileName, false, null, actorUser, null, null);
 	}
 
 	@Override
-	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-		return createResource(resourceType, false, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+	public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
+		return createResource(resourceType, false, resourceStream, resourceFileName, objectEnricher, actorUser);
 	}
 
 	@Override
-	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null);
+	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null, actorUser, null, null);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
-		resourceContainer.save(checkForDuplicates, objectEnricher);
+		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();
 	}
 
 	@Override
-	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+	public Resource copyResource(Resource resource, ResourceManager sourceResourceManager, String actorUser) throws IOException, InvalidResourceFormatException {
+		Resource resourceCopy = resource.copy(actorUser);
 		File resourceFile = sourceResourceManager.getResourceFile(resource.getId().toHexString()).getResourceFile();
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resource);
+
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceCopy);
 		if(resource.isDirectory()) {
 			FileHelper.zip(resourceFile.getParentFile(), resourceContainer.getOutputStream());
 		} else {
@@ -94,22 +97,22 @@ public class ResourceManagerImpl implements ResourceManager {
 				FileHelper.copy(is, resourceContainer.getOutputStream(), 2048);
 			}
 		}
-		resourceContainer.save(false, null);
+		resourceContainer.save(null);
 		return resourceContainer.getResource();
 	}
 
-
 	@Override
-	public Resource createResource(String resourceType,
-								   boolean isDirectory,
-								   InputStream resourceStream,
-								   String resourceFileName,
-								   boolean checkForDuplicates,
-								   ObjectEnricher objectEnricher,
-								   String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, trackingAttribute);
+	public Resource createTrackedResource(String resourceType,
+										  boolean isDirectory,
+										  InputStream resourceStream,
+										  String resourceFileName,
+                                          ObjectEnricher objectEnricher,
+										  String trackingAttribute,
+										  String actorUser,
+										  String origin, Long originTimestamp) throws IOException, InvalidResourceFormatException {
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser, origin, originTimestamp);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
-		resourceContainer.save(checkForDuplicates, objectEnricher);
+		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();
 	}
 
@@ -118,17 +121,14 @@ public class ResourceManagerImpl implements ResourceManager {
 		return new ResourceRevisionContainer(resource, revision, this);
 	}
 
-	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory, String trackingAttribute) throws IOException {
-		Resource resource = createResource(resourceType, resourceFileName, isDirectory, trackingAttribute);
+	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory, String trackingAttribute, String actorUser, String origin, Long originTimestamp) throws IOException {
+		Resource resource = createTrackedResource(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser, origin, originTimestamp);
 		ResourceRevision revision = createResourceRevisionContainer(resourceFileName, resource);
 		return new ResourceRevisionContainer(resource, revision, this);
 	}
 
-	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
+	protected void closeResourceContainer(Resource resource, ResourceRevision resourceRevision, ObjectEnricher objectEnricher) throws IOException, InvalidResourceFormatException {
 		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
-		String checksum = getMD5Checksum(resourceRevisionFile);
-		resourceRevision.setChecksum(checksum);
-
 		resource.setCurrentRevisionId(resourceRevision.getId());
 
 		if(objectEnricher != null) {
@@ -136,14 +136,9 @@ public class ResourceManagerImpl implements ResourceManager {
 		}
 
 		resourceRevisionAccessor.save(resourceRevision);
-		resourceAccessor.save(resource);
+		fillPredefinedFieldsAndSave(resource);
 
-		List<Resource> resourcesWithSameChecksum = null;
-		if(checkForDuplicates) {
-			resourcesWithSameChecksum = getSimilarResources(resource, resourceRevision);
-		}
-
-		if(resource.isDirectory()) {
+        if(resource.isDirectory()) {
 			boolean isArchive = FileHelper.isArchive(resourceRevisionFile);
 			if(isArchive) {
 				File revisionFileToUnzip = new File(resourceRevisionFile.getAbsolutePath() + "_beforeUnzip");
@@ -152,30 +147,34 @@ public class ResourceManagerImpl implements ResourceManager {
 				FileHelper.unzip(revisionFileToUnzip, resourceRevisionFile.toPath().getParent().toFile());
 				revisionFileToUnzip.delete();
 				resourceRevisionAccessor.save(resourceRevision);
-				resourceAccessor.save(resource);
+				fillPredefinedFieldsAndSave(resource);
 			} else {
 				throw new InvalidResourceFormatException();
 			}
 		}
-
-		if(checkForDuplicates && resourcesWithSameChecksum.size()>0) {
-			throw new SimilarResourceExistingException(resource, resourcesWithSameChecksum);
-		}
 	}
 
 	@Override
-	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName) throws IOException, InvalidResourceFormatException {
+	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String actorUser) throws IOException, InvalidResourceFormatException {
 		Resource resource = getResource(resourceId);
 		String resourceName = getResourceName(resourceFileName, resource.isDirectory());
 		// Keep resourceName and name attribute in sync
 		resource.setResourceName(resourceName);
 		resource.addAttribute(AbstractOrganizableObject.NAME, resourceName);
+		resource.setLastModificationUser(actorUser);
+		resource.setLastModificationDate(new Date());
 		createResourceRevisionAndSaveContent(resourceStream, resourceFileName, resource);
 		return resource;
 	}
 
 	@Override
 	public void deleteResource(String resourceId) {
+		deleteResourceRevisionContent(resourceId);
+		resourceAccessor.remove(new ObjectId(resourceId));
+	}
+
+	@Override
+	public void deleteResourceRevisionContent(String resourceId) {
 		Resource resource = getResource(resourceId);
 
 		resourceRevisionAccessor.getResourceRevisionsByResourceId(resourceId).forEachRemaining(
@@ -185,45 +184,11 @@ public class ResourceManagerImpl implements ResourceManager {
 		if(resourceContainer.exists()) {
 			FileHelper.deleteFolder(resourceContainer);
 		}
-
-		resourceAccessor.remove(resource.getId());
 	}
 
 	@Override
 	public List<Resource> findManyByCriteria(Map<String, String> attributes) {
 		return resourceAccessor.findManyByCriteria(attributes).collect(Collectors.toList());
-	}
-
-	private List<Resource> getSimilarResources(Resource actualResource, ResourceRevision actualResourceRevision) {
-		List<Resource> result = new ArrayList<>();
-		// Similar resources is only supported for file, not for directory
-		if (actualResource.isDirectory()) {
-			return result;
-		}
-		resourceRevisionAccessor.getResourceRevisionsByChecksum(actualResourceRevision.getChecksum()).forEachRemaining(revision->{
-			if(!revision.getId().equals(actualResourceRevision.getId())) {
-				Resource resource = resourceAccessor.get(new ObjectId(revision.getResourceId()));
-				if(resource!=null) {
-					 if (resource.getCurrentRevisionId() != null) {
-						// ensure it is an active revision i.e a revision that is the current revision of a resource
-						if(resource.getCurrentRevisionId().equals(revision.getId())) {
-							try {
-								if(FileUtils.contentEquals(getResourceRevisionFile(resource, revision), getResourceRevisionFile(actualResource, actualResourceRevision))) {
-									result.add(resource);
-								}
-							} catch (IOException e) {
-								logger.warn("Error while comparing resource revisions "+revision.getId()+" and "+actualResourceRevision.getId(), e);
-							}
-						}
-					} else {
-						logger.warn("Found resource without current revision: "+resource.getId());
-					}
-				} else {
-					logger.warn("Found orphan resource revision: "+revision.getId());
-				}
-			}
-		});
-		return result;
 	}
 
 	@Override
@@ -329,19 +294,12 @@ public class ResourceManagerImpl implements ResourceManager {
 			throws IOException, InvalidResourceFormatException {
 		ResourceRevision revision = createResourceRevisionContainer(contentFilename, resource);
 		saveResourceRevisionContent(resourceStream, resource, revision);
-		try {
-			closeResourceContainer(resource, revision, false, null);
-		} catch (SimilarResourceExistingException e) {
-			throw new RuntimeException("Should never occur", e);
-		}
+		closeResourceContainer(resource, revision, null);
+
 		return revision;
 	}
 
-	private String getMD5Checksum(File file) throws IOException {
-		return com.google.common.io.Files.hash(file, Hashing.md5()).toString();
-	}
-
-	private Resource createResource(String resourceTypeId, String name, boolean isDirectory, String trackingAttribute) {
+	private Resource createTrackedResource(String resourceTypeId, String name, boolean isDirectory, String trackingAttribute, String actorUser, String origin, Long originTimestamp) {
 		ResourceType resourceType = resourceTypes.get(resourceTypeId);
 		if(resourceType ==  null) {
 			throw new RuntimeException("Unknown resource type "+resourceTypeId);
@@ -350,13 +308,17 @@ public class ResourceManagerImpl implements ResourceManager {
 		String resourceName;
 		resourceName = getResourceName(name, isDirectory);
 
-		Resource resource = new Resource();
+		Resource resource = new Resource(actorUser);
 		resource.addAttribute(AbstractOrganizableObject.NAME, resourceName);
 		resource.setResourceName(resourceName);
 		resource.setResourceType(resourceTypeId);
 		resource.setEphemeral(resourceType.isEphemeral());
 		resource.setDirectory(isDirectory);
 
+		resource.setOrigin(origin);
+		resource.setOriginTimestamp(originTimestamp);
+
+		// this TRACKING_FIELD is used to track the keyword packages
 		if (trackingAttribute != null && !trackingAttribute.isEmpty()) {
 			Map<String, Object> customFields = resource.getCustomFields();
 			if (customFields == null) {
@@ -394,11 +356,24 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public Resource saveResource(Resource resource) throws IOException {
+		return fillPredefinedFieldsAndSave(resource);
+	}
+
+	private Resource fillPredefinedFieldsAndSave(Resource resource) {
 		// Ensure that the name remains in sync with resourceName
 		resource.addAttribute(AbstractOrganizableObject.NAME, resource.getResourceName());
+
+		// if we update the existing resource we must ensure that we don't change the creator and creation date
+		ObjectId sourceId = resource.getId();
+		Resource existing = (sourceId != null) ? resourceAccessor.get(sourceId) : null;
+		if (existing != null) {
+			resource.setCreationDate(existing.getCreationDate());
+			resource.setCreationUser(existing.getCreationUser());
+		}
+
 		return resourceAccessor.save(resource);
 	}
-	
+
 	@Override
 	public ResourceRevision saveResourceRevision(ResourceRevision resourceRevision) throws IOException {
 		return resourceRevisionAccessor.save(resourceRevision);

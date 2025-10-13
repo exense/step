@@ -50,7 +50,7 @@ public class ResourceArtifactRepositoryTest {
     }
 
     @Test
-    public void importArtefact() throws SimilarResourceExistingException {
+    public void importArtefact() {
         // In this test we have 2 plans and to keywords annotated with @Keyword
         // One of these plans also has the inner keyword declared in .plan file
         // We expect that the jar will be correctly parsed into the TestSet containing all @Keywords from the jar file (non-duplicated)
@@ -63,7 +63,7 @@ public class ResourceArtifactRepositoryTest {
                 executionContext.put(FunctionTypeRegistry.class, functionTypeRegistry);
 
                 // upload the jar
-                Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, "plans-with-keywords.jar", false, null);
+                Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, "plans-with-keywords.jar", null, "testUser");
                 log.info("Resource uploaded: {}", resource.getId().toString());
 
                 Map<String, String> repoParams = new HashMap<>();
