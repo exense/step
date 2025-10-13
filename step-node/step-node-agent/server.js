@@ -86,7 +86,7 @@ startWithAgentUrl = function(agentUrl) {
     };
 
     // Add bearer token if gridSecurity is configured
-    const token = jwtUtils.generateJwtToken(agentConf.gridSecurity, 300); // 5 minutes expiration
+    const token = jwtUtils.generateJwtToken(agentConf.gridSecurity, 3600); // 1 hour expiration
     if (token) {
       requestOptions.headers = {
         'Authorization': 'Bearer ' + token
