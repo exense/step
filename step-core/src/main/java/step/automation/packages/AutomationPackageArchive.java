@@ -36,23 +36,34 @@ public abstract class AutomationPackageArchive implements Closeable {
     private final File originalFile;
     private final File keywordLibFile;
     private final String type;
+    private final String archiveName;
 
     protected AutomationPackageArchive(String type) {
         this.originalFile = null;
         this.keywordLibFile = null;
         Objects.requireNonNull(type, NULL_TYPE_ERROR_MSG);
         this.type = type;
+        this.archiveName = null;
     }
 
-    public AutomationPackageArchive(File automationPackageFile, File keywordLibFile, String type) throws AutomationPackageReadingException {
+    public AutomationPackageArchive(File automationPackageFile, File keywordLibFile, String type, String archiveName) throws AutomationPackageReadingException {
         Objects.requireNonNull(automationPackageFile, "The automationPackageFile must not be null");
         Objects.requireNonNull(automationPackageFile, NULL_TYPE_ERROR_MSG);
+        this.archiveName = archiveName;
         if (!automationPackageFile.exists()) {
             throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " doesn't exist");
         }
         this.originalFile = automationPackageFile;
         this.keywordLibFile = keywordLibFile;
         this.type = type;
+    }
+
+    /**
+     * this method should be called in case the automation package does not contain any YAML descriptor with a name set in it
+     * @return the name of the automation package
+     */
+    public String getAutomationPackageName() {
+        return (archiveName == null) ? getOriginalFileName() : archiveName;
     }
 
     abstract public boolean hasAutomationPackageDescriptor();

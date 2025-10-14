@@ -61,6 +61,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     public static final String CONFIGURATION_MAVEN_CLEANUP_FREQUENCY = "repository.artifact.maven.cleanup.frequency.minutes";
     public static final Long DEFAULT_MAVEN_MAX_AGE = 1440L;
     public static final Long DEFAULT_MAVEN_CLEANUP_FREQUENCY = 60L;
+    private static final Integer DEFAULT_MAX_VERSIONS_PER_AP = 0; //quota disabled
+    private static final String CONFIGURATION_MAX_VERSIONS_PER_AP = "automation.packages.max.versions.per.package";
     protected AutomationPackageLocks automationPackageLocks;
 
     @Override
@@ -113,6 +115,9 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                     Duration.ofMinutes(context.getConfiguration().getPropertyAsLong(CONFIGURATION_MAVEN_CLEANUP_FREQUENCY, DEFAULT_MAVEN_CLEANUP_FREQUENCY))
             );
 
+            //Get parallel max version
+            Integer maxVersionPerPackage = context.getConfiguration().getPropertyAsInteger(CONFIGURATION_MAX_VERSIONS_PER_AP, DEFAULT_MAX_VERSIONS_PER_AP);
+
             // moved to 'afterInitializeData' to have the schedule accessor in context
             // here we pass the step.automation.packages.AutomationPackageMavenConfig.ConfigProvider to resolve maven settings dynamically
             // when we upload (deploy) the automation package from artifactory (the maven configuration can be changed either
@@ -126,7 +131,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                     context.require(AutomationPackageHookRegistry.class),
                     context.require(AutomationPackageReaderRegistry.class),
                     automationPackageLocks,
-                    mavenConfigProvider
+                    mavenConfigProvider,
+                    maxVersionPerPackage
             );
             context.put(AutomationPackageManager.class, packageManager);
         }

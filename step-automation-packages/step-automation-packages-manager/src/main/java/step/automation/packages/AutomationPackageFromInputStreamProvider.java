@@ -30,7 +30,9 @@ public class AutomationPackageFromInputStreamProvider extends AbstractAutomation
                                                     String fileName, AutomationPackageLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException {
         super(packageStream, fileName);
         AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(tempFile.getTempFile());
-        this.archive = reader.createAutomationPackageArchive(tempFile.getTempFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary());
+        this.archive = reader.createAutomationPackageArchive(tempFile.getTempFile(),
+                keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary(),
+                null);
     }
 
     @Override

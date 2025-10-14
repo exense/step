@@ -34,7 +34,9 @@ public class AutomationPackageFromResourceIdProvider extends AbstractAutomationP
         super(resourceManager, resourceId, objectPredicate);
         AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(resourceFile.getResourceFile());
         try {
-            this.archive = reader.createAutomationPackageArchive(resourceFile.getResourceFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary());
+            this.archive = reader.createAutomationPackageArchive(resourceFile.getResourceFile(),
+                    keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary(),
+                    null);
         } catch (AutomationPackageReadingException e) {
             throw new AutomationPackageManagerException("Unable to load automation package by resource id: " + resourceId);
         }
