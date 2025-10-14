@@ -127,7 +127,7 @@ public class AutomationPackageManager {
         this.providersResolver = new DefaultProvidersResolver(resourceManager);
 
         this.linkedAutomationPackagesFinder = new LinkedAutomationPackagesFinder(this.resourceManager, this.automationPackageAccessor);
-        this.automationPackageResourceManager = new AutomationPackageResourceManager(resourceManager, operationMode, automationPackageAccessor, linkedAutomationPackagesFinder);
+        this.automationPackageResourceManager = new AutomationPackageResourceManager(resourceManager, operationMode, automationPackageAccessor, linkedAutomationPackagesFinder, mavenConfigProvider.getConfig());
         addDefaultExtensions();
     }
 
@@ -627,6 +627,13 @@ public class AutomationPackageManager {
         }
     }
 
+    public RefreshResourceResult refreshResource(String resourceId, ObjectPredicate objectPredicate, ObjectEnricher objectEnricher, String user, ObjectPredicate writeAccessPredicate){
+        // TODO: check linked packages
+        Set<ObjectId> linkedAutomationPackagesIds = linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, new ArrayList<>());
+        // TODO: how to check and handle permissions?
+        return automationPackageResourceManager.refreshResource(resourceId, writeAccessPredicate);
+    }
+
     public AutomationPackageLibraryProvider getAutomationPackageLibraryProvider(AutomationPackageFileSource apLibrarySource,
                                                                                 ObjectPredicate predicate) throws AutomationPackageReadingException {
         return this.providersResolver.getAutomationPackageLibraryProvider(apLibrarySource, predicate, mavenConfigProvider);
@@ -1073,8 +1080,8 @@ public class AutomationPackageManager {
         this.providersResolver = providersResolver;
     }
 
-    public AutomationPackageMavenConfig getMavenConfig(ObjectPredicate objectPredicate) {
-        return mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(objectPredicate);
+    public AutomationPackageMavenConfig getMavenConfig() {
+        return mavenConfigProvider == null ? null : mavenConfigProvider.getConfig();
     }
 
     public void cleanup() {
@@ -1097,6 +1104,10 @@ public class AutomationPackageManager {
             this.fieldName = fieldName;
             this.values = values;
         }
+    }
+
+    public AutomationPackageResourceManager getAutomationPackageResourceManager() {
+        return automationPackageResourceManager;
     }
 
     public interface AutomationPackageProvidersResolver {
@@ -1144,7 +1155,7 @@ public class AutomationPackageManager {
                                                                                               AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
                                                                                               AutomationPackageLibraryProvider apLibraryProvider,
                                                                                               ResourceManager resourceManager) throws AutomationPackageReadingException {
-            return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier(), apLibraryProvider, resourceManager, predicate);
+            return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(), apFileSource.getMavenArtifactIdentifier(), apLibraryProvider, resourceManager, predicate);
         }
 
         @Override
@@ -1169,7 +1180,7 @@ public class AutomationPackageManager {
         }
 
         protected AutomationPackageLibraryFromMavenProvider createAutomationPackageLibraryFromMavenProvider(AutomationPackageFileSource apLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider, ResourceManager resourceManager) throws AutomationPackageReadingException {
-            return new AutomationPackageLibraryFromMavenProvider(mavenConfigProvider.getConfig(predicate), apLibrarySource.getMavenArtifactIdentifier(), resourceManager, predicate);
+            return new AutomationPackageLibraryFromMavenProvider(mavenConfigProvider.getConfig(), apLibrarySource.getMavenArtifactIdentifier(), resourceManager, predicate);
         }
     }
 

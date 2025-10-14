@@ -149,7 +149,7 @@ public class StepConsole implements Callable<Integer> {
         }
 
         protected MavenArtifactIdentifier getMavenArtifact(String apFile) {
-            if (apFile != null && apFile.startsWith("mvn:")) {
+            if (MavenArtifactIdentifier.isMvnIdentifierShortString(apFile)) {
                 return MavenArtifactIdentifier.fromShortString(apFile);
             } else {
                 return null;

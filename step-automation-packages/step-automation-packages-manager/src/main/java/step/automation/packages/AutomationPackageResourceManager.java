@@ -27,6 +27,7 @@ import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.resources.InvalidResourceFormatException;
@@ -39,6 +40,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 
 public class AutomationPackageResourceManager {
 
@@ -47,15 +49,18 @@ public class AutomationPackageResourceManager {
     private final AutomationPackageOperationMode operationMode;
     private final AutomationPackageAccessor automationPackageAccessor;
     private final LinkedAutomationPackagesFinder linkedAutomationPackagesFinder;
+    private final AutomationPackageMavenConfig mavenConfig;
 
     public AutomationPackageResourceManager(ResourceManager resourceManager,
                                             AutomationPackageOperationMode operationMode,
                                             AutomationPackageAccessor automationPackageAccessor,
-                                            LinkedAutomationPackagesFinder linkedAutomationPackagesFinder) {
+                                            LinkedAutomationPackagesFinder linkedAutomationPackagesFinder,
+                                            AutomationPackageMavenConfig mavenConfig) {
         this.resourceManager = resourceManager;
         this.operationMode = operationMode;
         this.automationPackageAccessor = automationPackageAccessor;
         this.linkedAutomationPackagesFinder = linkedAutomationPackagesFinder;
+        this.mavenConfig = mavenConfig;
     }
 
     public String uploadOrReuseAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider, AutomationPackage newPackage,
@@ -238,6 +243,55 @@ public class AutomationPackageResourceManager {
                 throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this automation package from within this context");
             }
         }
+    }
+
+    public RefreshResourceResult refreshResource(String resourceId, ObjectPredicate writeAccessPredicate) {
+        Resource resource = resourceManager.getResource(resourceId);
+        return refreshResource(resource, writeAccessPredicate);
+    }
+
+    public RefreshResourceResult refreshResource(Resource resource, ObjectPredicate writeAccessPredicate) {
+        RefreshResourceResult refreshResourceResult = new RefreshResourceResult();
+
+        if (!writeAccessPredicate.test(resource)) {
+            refreshResourceResult.addErrorMessage("You have no access to resource with id: " + resource.getId());
+            return refreshResourceResult;
+        }
+
+        Set<String> supportedResourceTypesForRefresh = Set.of(
+                ResourceManager.RESOURCE_TYPE_AP,
+                ResourceManager.RESOURCE_TYPE_AP_LIBRARY,
+                ResourceManager.RESOURCE_TYPE_ISOLATED_AP,
+                ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB
+        );
+        if (!supportedResourceTypesForRefresh.contains(resource.getResourceType())) {
+            refreshResourceResult.addErrorMessage("Unsupported resource type for refresh: " + resource.getResourceType());
+        }
+        if (!MavenArtifactIdentifier.isMvnIdentifierShortString(resource.getOrigin())) {
+            refreshResourceResult.addErrorMessage("Unsupported resource origin for refresh: " + resource.getOrigin());
+        }
+
+        if (refreshResourceResult.isOk()) {
+            return refreshResourceResult;
+        }
+
+        MavenArtifactIdentifier mavenArtifactIdentifier = MavenArtifactIdentifier.fromShortString(resource.getOrigin());
+        if (!mavenArtifactIdentifier.isSnapshot()) {
+            log.warn("The maven artifact {} cannot be reloaded, because it is SNAPSHOT", mavenArtifactIdentifier.toStringRepresentation());
+        } else {
+            try {
+                // restore the automation package file from maven
+                File file = MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier, null).artifactFile;
+                try (FileInputStream fis = new FileInputStream(file)) {
+                    resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
+                    return refreshResourceResult;
+                }
+            } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
+                throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", ex);
+            }
+        }
+
+        return refreshResourceResult;
     }
 
 }

@@ -42,7 +42,6 @@ import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
-import step.core.objectenricher.ObjectPredicate;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
@@ -421,6 +420,21 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     getFileSource(uploadedInputStream, fileDetail, mavenSnippet, "Invalid maven snippet", null),
                     getObjectPredicate(), getObjectEnricher(), getUser(), getWriteAccessPredicate()
             );
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
+
+    //TODO: change permission
+    @POST
+    @Path("/resources/{id}/refresh")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Secured(right = "automation-package-write")
+    public RefreshResourceResult refreshAutomationPackageResource(@PathParam("id") String resourceId){
+        try {
+           return automationPackageManager.refreshResource(resourceId, getObjectPredicate(), getObjectEnricher(), getUser(), getWriteAccessPredicate());
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {
