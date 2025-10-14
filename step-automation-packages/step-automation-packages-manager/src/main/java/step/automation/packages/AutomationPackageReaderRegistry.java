@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,9 @@ public class AutomationPackageReaderRegistry {
 
 
     public AutomationPackageReaderRegistry(String jsonSchemaPath, AutomationPackageHookRegistry hookRegistry, AutomationPackageSerializationRegistry automationPackageSerializationRegistry) {
+        Objects.requireNonNull(jsonSchemaPath, "The jsonSchemaPath must not be null");
+        Objects.requireNonNull(hookRegistry, "The hookRegistry must not be null");
+        Objects.requireNonNull(automationPackageSerializationRegistry, "The automationPackageSerializationRegistry must not be null");
         this.jsonSchemaPath = jsonSchemaPath;
         this.hookRegistry = hookRegistry;
         this.automationPackageSerializationRegistry = automationPackageSerializationRegistry;
@@ -27,20 +31,31 @@ public class AutomationPackageReaderRegistry {
         readers.put(reader.getAutomationPackageType(), reader);
     }
 
-    public <T extends AutomationPackageArchive> AutomationPackageReader<?> getReader(T archive) {
-        return readers.get(archive.getType());
+    public <T extends AutomationPackageArchive> AutomationPackageReader<T> getReader(T archive) {
+        AutomationPackageReader<? extends AutomationPackageArchive> automationPackageReader = readers.get(archive.getType());
+        if (automationPackageReader == null) {
+            throw new AutomationPackageManagerException("No Automation Package reader found for archive with type " + archive.getType() + ". Supported types are: " + getSupportedTypes());
+        }
+        //noinspection unchecked
+        return (AutomationPackageReader<T>) automationPackageReader;
     }
 
-    public AutomationPackageReader<? extends AutomationPackageArchive> getReaderByType(String type) {
-        return readers.get(type);
+    public <T extends AutomationPackageArchive> AutomationPackageReader<T> getReaderByType(String type) {
+        AutomationPackageReader<? extends AutomationPackageArchive> automationPackageReader = readers.get(type);
+        if (automationPackageReader == null) {
+            throw new AutomationPackageManagerException("No Automation Package reader found for archive type " + type + ". Supported types are: " + getSupportedTypes());
+        }
+        //noinspection unchecked
+        return (AutomationPackageReader<T>) automationPackageReader;
     }
 
     public void updateAllReaders(Consumer<AutomationPackageReader<?>> consumer) {
         readers.values().forEach(consumer);
     }
 
-    public AutomationPackageReader<?> getReaderForFile(File file) {
-        return readers.values().stream().filter(r -> r.isValidForFile(file)).findFirst().orElseThrow(() ->
+    public <T extends AutomationPackageArchive> AutomationPackageReader<T> getReaderForFile(File file) {
+        //noinspection unchecked
+        return (AutomationPackageReader<T>)  readers.values().stream().filter(r -> r.isValidForFile(file)).findFirst().orElseThrow(() ->
                 new AutomationPackageManagerException("No Automation Package reader found for file " + file.getName() + ". Supported types are: " + getSupportedTypes()));
     }
 

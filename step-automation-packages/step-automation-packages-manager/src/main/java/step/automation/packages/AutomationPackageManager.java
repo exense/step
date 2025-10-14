@@ -1011,8 +1011,7 @@ public class AutomationPackageManager {
 
     protected <A extends AutomationPackageArchive> AutomationPackageContent readAutomationPackage(A automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
-        @SuppressWarnings("unchecked")
-        AutomationPackageReader<A> reader = (AutomationPackageReader<A>) automationPackageReaderRegistry.getReader(automationPackageArchive);
+        AutomationPackageReader<A> reader = automationPackageReaderRegistry.getReader(automationPackageArchive);
         packageContent = reader.readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
         if (packageContent == null) {
             throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);

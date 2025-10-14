@@ -24,12 +24,14 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URL;
 import java.util.List;
+import java.util.Objects;
 
 
 public abstract class AutomationPackageArchive implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchive.class);
     public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
+    public static final String NULL_TYPE_ERROR_MSG = "The type of the AutomationPackageArchive must not be null";
 
     private final File originalFile;
     private final File keywordLibFile;
@@ -38,10 +40,13 @@ public abstract class AutomationPackageArchive implements Closeable {
     protected AutomationPackageArchive(String type) {
         this.originalFile = null;
         this.keywordLibFile = null;
+        Objects.requireNonNull(type, NULL_TYPE_ERROR_MSG);
         this.type = type;
     }
 
     public AutomationPackageArchive(File automationPackageFile, File keywordLibFile, String type) throws AutomationPackageReadingException {
+        Objects.requireNonNull(automationPackageFile, "The automationPackageFile must not be null");
+        Objects.requireNonNull(automationPackageFile, NULL_TYPE_ERROR_MSG);
         if (!automationPackageFile.exists()) {
             throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " doesn't exist");
         }
