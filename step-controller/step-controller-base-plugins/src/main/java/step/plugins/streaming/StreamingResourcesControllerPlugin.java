@@ -26,7 +26,6 @@ import step.streaming.common.StreamingResourceUploadContexts;
 import step.streaming.server.FilesystemStreamingResourcesStorageBackend;
 import step.streaming.server.StreamingResourceManager;
 import step.streaming.server.URITemplateBasedReferenceProducer;
-import step.streaming.util.ThreadPools;
 import step.streaming.websocket.server.DefaultWebsocketServerEndpointSessionsHandler;
 import step.streaming.websocket.server.WebsocketDownloadEndpoint;
 import step.streaming.websocket.server.WebsocketServerEndpointSessionsHandler;

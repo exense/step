@@ -46,7 +46,7 @@
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
 		<dependencies.version>2025.6.25</dependencies.version>
-		<step-grid.version>2025.10.2-68de29d78e322422c137688a</step-grid.version>
+		<step-grid.version>2025.10.14-68ee04692c8af16504497de0</step-grid.version>
 		<step-framework.version>2025.10.2-68de32758e322422c13a072e</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
