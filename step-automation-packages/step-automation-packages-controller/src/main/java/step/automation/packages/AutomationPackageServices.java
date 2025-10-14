@@ -419,7 +419,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             return automationPackageManager.createAutomationPackageResource(
                     resourceType,
                     getFileSource(uploadedInputStream, fileDetail, mavenSnippet, "Invalid maven snippet", null),
-                    getObjectPredicate(), getUser(), getWriteAccessPredicate()
+                    getObjectPredicate(), getObjectEnricher(), getUser(), getWriteAccessPredicate()
             );
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());

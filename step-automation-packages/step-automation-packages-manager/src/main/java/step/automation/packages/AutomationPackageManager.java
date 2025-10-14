@@ -51,9 +51,7 @@ import step.functions.type.SetupFunctionException;
 import step.resources.*;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -80,6 +78,7 @@ public class AutomationPackageManager {
     protected final ResourceManager resourceManager;
     protected final AutomationPackageHookRegistry automationPackageHookRegistry;
     private final LinkedAutomationPackagesFinder linkedAutomationPackagesFinder;
+    private final AutomationPackageResourceManager automationPackageResourceManager;
     protected DefaultProvidersResolver providersResolver;
     protected boolean isIsolated = false;
     protected final AutomationPackageLocks automationPackageLocks;
@@ -128,7 +127,7 @@ public class AutomationPackageManager {
         this.providersResolver = new DefaultProvidersResolver(resourceManager);
 
         this.linkedAutomationPackagesFinder = new LinkedAutomationPackagesFinder(this.resourceManager, this.automationPackageAccessor);
-
+        this.automationPackageResourceManager = new AutomationPackageResourceManager(resourceManager, operationMode, automationPackageAccessor, linkedAutomationPackagesFinder);
         addDefaultExtensions();
     }
 
@@ -471,13 +470,24 @@ public class AutomationPackageManager {
             // TODO: potential issue - in code below we use the accessChecker in uploadApResourceIfRequired and uploadKeywordLibrary and if the check blocks the uploadKeywordLibrary the uploaded ap resource will not be cleaned up
             // always upload the automation package file as resource
             // NOTE: for the main ap resource don't need to enrich the resource with automation package id (because the same resource can be shared between several automation packages) - so we use simple enricher
-            uploadApResourceIfRequired(automationPackageProvider, automationPackageArchive, newPackage, apOrigin, enricher, actorUser, objectPredicate, writeAccessPredicate);
+            automationPackageResourceManager.uploadApResourceIfRequired(
+                    automationPackageProvider, automationPackageArchive, newPackage,
+                    enricher, actorUser, objectPredicate, writeAccessPredicate,
+                    true
+            );
 
             // upload automation package library if provided
             // NOTE: for ap lib we don't need to enrich the resource with automation package id (because the same lib can be shared between several automation packages) - so we use simple enricher
-            String apLibraryResourceString = uploadOrReuseAutomationPackageLibrary(apLibraryProvider, newPackage, enricher, objectPredicate, actorUser, writeAccessPredicate, true);
+            String apLibraryResourceString = automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
+                    apLibraryProvider, newPackage,
+                    enricher, objectPredicate, actorUser, writeAccessPredicate,
+                    true
+            );
 
-            fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, apLibraryResourceString, actorUser, objectPredicate);
+            fillStaging(newPackage, staging, packageContent, oldPackage,
+                    enricherForIncludedEntities, automationPackageArchive, activationExpr, apLibraryResourceString,
+                    actorUser, objectPredicate
+            );
 
             // persist and activate automation package
             log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
@@ -581,186 +591,40 @@ public class AutomationPackageManager {
         }
     }
 
-    private String uploadApResourceIfRequired(AutomationPackageArchiveProvider apProvider,
-                                              AutomationPackageArchive automationPackageArchive,
-                                              AutomationPackage newPackage,
-                                              ResourceOrigin apOrigin,
-                                              ObjectEnricher enricher, String actorUser,
-                                              ObjectPredicate objectPredicate,
-                                              ObjectPredicate writeAccessPredicate) {
-        File originalFile = automationPackageArchive.getOriginalFile();
-        if (originalFile == null) {
-            return null;
-        }
-
-        Resource resource = null;
-
-        List<Resource> existingResource = null;
-        if (apProvider.canLookupResources()) {
-            existingResource = apProvider.lookupExistingResources(resourceManager, objectPredicate);
-        }
-
-        if (existingResource != null && !existingResource.isEmpty()) {
-            resource = existingResource.get(0);
-
-            // we just reuse the existing resource of unmodifiable origin (i.e non-SNAPSHOT)
-            // and for SNAPSHOT we keep the same resource id, but update the content if a new version was found
-            if (apProvider.isModifiableResource() && apProvider.hasNewContent()) {
-                try (FileInputStream is = new FileInputStream(originalFile)) {
-                    resource = updateExistingResourceContentAndPropagate(
-                            originalFile.getName(),
-                            newPackage.getAttribute(AbstractOrganizableObject.NAME), newPackage.getId(),
-                            is, apProvider.getSnapshotTimestamp(), resource,
-                            actorUser, writeAccessPredicate
-                    );
-                } catch (IOException | InvalidResourceFormatException e) {
-                    throw new RuntimeException("Unable to create the resource for automation package", e);
-                }
-            }
-        }
-
-        // create the new resource if the old one cannot be reused
-        if (resource == null) {
-            try (InputStream is = new FileInputStream(originalFile)) {
-                resource = resourceManager.createTrackedResource(
-                        ResourceManager.RESOURCE_TYPE_AP, false, is, originalFile.getName(), enricher, null, actorUser,
-                        apOrigin == null ? null : apOrigin.toStringRepresentation(), apProvider.getSnapshotTimestamp()
-                );
-            } catch (IOException | InvalidResourceFormatException e) {
-                throw new RuntimeException("Unable to create the resource for automation package", e);
-            }
-        }
-
-        String resourceString = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-        log.info("The resource has been been linked with AP '{}': {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), resourceString);
-        newPackage.setAutomationPackageResource(resourceString);
-        return resourceString;
-    }
-
-    public String createAutomationPackageResource(String resourceType, AutomationPackageFileSource fileSource, ObjectPredicate predicate, String actorUser, ObjectPredicate accessChecker) throws AutomationPackageManagerException {
+    public String createAutomationPackageResource(String resourceType, AutomationPackageFileSource fileSource,
+                                                  ObjectPredicate predicate, ObjectEnricher enricher,
+                                                  String actorUser,
+                                                  ObjectPredicate accessChecker) throws AutomationPackageManagerException {
         try {
             switch (resourceType) {
                 case ResourceManager.RESOURCE_TYPE_AP_LIBRARY:
                     // We upload the new resource for keyword library. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
-                    return uploadOrReuseAutomationPackageLibrary(
-                            getAutomationPackageLibraryProvider(fileSource, predicate),
-                            null, null, predicate, actorUser, accessChecker, false
-                    );
+                    try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(fileSource, predicate)) {
+                        return automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
+                                automationPackageLibraryProvider,
+                                null, enricher, predicate, actorUser, accessChecker, false
+                        );
+                    } catch (IOException e) {
+                        throw new AutomationPackageManagerException("Automation package library provider exception", e);
+                    }
                 case ResourceManager.RESOURCE_TYPE_AP:
-                    // TODO: implement if required
-                    throw new AutomationPackageManagerException("Unsupported resource type: " + resourceType);
+                    // We upload the new main resource for AP. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
+                    try (AutomationPackageArchiveProvider automationPackageArchiveProvider = getAutomationPackageArchiveProvider(fileSource, predicate, new NoAutomationPackageLibraryProvider())) {
+                        AutomationPackageArchive apArchive = automationPackageArchiveProvider.getAutomationPackageArchive();
+                        return automationPackageResourceManager.uploadApResourceIfRequired(
+                                automationPackageArchiveProvider, apArchive, null,
+                                enricher, actorUser, predicate, accessChecker,
+                                false
+                        );
+                    } catch (IOException e) {
+                        throw new AutomationPackageManagerException("Automation package library provider exception", e);
+                    }
                 default:
                     throw new AutomationPackageManagerException("Unsupported resource type: " + resourceType);
             }
-        } catch (AutomationPackageReadingException ex){
+        } catch (AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Cannot create new resource: " + resourceType, ex);
         }
-    }
-
-    protected String uploadOrReuseAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider, AutomationPackage newPackage,
-                                                           ObjectEnricher enricher, ObjectPredicate objectPredicate,
-                                                           String actorUser, ObjectPredicate accessChecker, boolean allowToReuseOldResource) {
-        String apName = newPackage == null ? "" : newPackage.getAttribute(AbstractOrganizableObject.NAME);
-        String apLibraryResourceString = null;
-        try {
-            File apLibrary = apLibProvider.getAutomationPackageLibrary();
-            Resource uploadedResource = null;
-            if (apLibrary != null) {
-                try (FileInputStream fis = new FileInputStream(apLibrary)) {
-                    // for isolated execution we always use the isolatedAp resource type to support auto cleanup after execution
-                    String resourceType = this.operationMode == AutomationPackageOperationMode.ISOLATED ? ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB : apLibProvider.getResourceType();
-
-                    // we can reuse the existing old resource in case it is identifiable (can be found by origin) and unmodifiable
-                    List<Resource> oldResources = null;
-                    if (apLibProvider.canLookupResources()) {
-                        oldResources = apLibProvider.lookupExistingResources(resourceManager, objectPredicate);
-                    }
-
-                    if (oldResources != null && !oldResources.isEmpty()) {
-                        Resource oldResource = oldResources.get(0);
-
-                        if(!allowToReuseOldResource){
-                            throw new AutomationPackageManagerException("Old resource " + oldResource.getResourceName() + " ( " + oldResource.getId() + " ) has been detected and cannot be reused");
-                        }
-
-                        if (!apLibProvider.isModifiableResource()) {
-                            // for unmodifiable origins we just reused the previously uploaded resource
-                            log.info("Existing automation package library {} with resource id {} has been detected and will be reused in AP {}", apLibrary.getName(), oldResource.getId().toHexString(), apName);
-                            uploadedResource = oldResource;
-                        } else if (apLibProvider.hasNewContent()){
-                            // for modifiable resources (i.e. SNAPSHOTS) we can reuse the old resource id and metadata, but we need to update the content if a new version was downloaded
-                            uploadedResource = updateExistingResourceContentAndPropagate(apLibrary.getName(),
-                                    apName,
-                                    newPackage.getId(),
-                                    fis, apLibProvider.getSnapshotTimestamp(), oldResource,
-                                    actorUser, accessChecker
-                            );
-                        } else {
-                            uploadedResource = oldResource;
-                        }
-                    } else {
-                        ResourceOrigin origin = apLibProvider.getOrigin();
-
-                        // old resource is not found - we create a new one
-                        uploadedResource = resourceManager.createTrackedResource(
-                                resourceType, false, fis, apLibrary.getName(), enricher, null,
-                                actorUser, origin == null ? null : origin.toStringRepresentation(),
-                                apLibProvider.getSnapshotTimestamp()
-                        );
-                        log.info("The new automation package library ({}) has been uploaded as ({})", apLibProvider, uploadedResource.getId().toHexString());
-                    }
-                    apLibraryResourceString = FileResolver.RESOURCE_PREFIX + uploadedResource.getId().toString();
-                    newPackage.setAutomationPackageLibraryResource(apLibraryResourceString);
-                }
-            }
-        } catch (IOException | InvalidResourceFormatException | AutomationPackageReadingException e) {
-            // all these exceptions are technical, so we log the whole stack trace here, but throw the AutomationPackageManagerException
-            // to provide the short error message without technical details to the client
-            log.error("Unable to upload the automation package library", e);
-            throw new AutomationPackageManagerException("Unable to upload the automation package library: " + apLibProvider, e);
-        }
-        return apLibraryResourceString;
-    }
-
-    /**
-     * This method is called for modifiable resource (currently only maven snapshot artefact) to update the existing Step
-     * resource with the new content and propagate the update to Automation Packages using this resource
-     *
-     * @param resourceFileName the resource file name
-     * @param apName the name of the automation pacakge
-     * @param currentApId the automation package Id
-     * @param fis the resource input stream
-     * @param newOriginTimestamp the artefact snapshot timestamp (null if no new snapshot was downloaded
-     * @param oldResource the resource to be updated if required
-     * @param actorUser the user triggering this update
-     * @param writeAccessPredicate predicate to check if this resource can be updated in this context
-     * @return the updated resource
-     * @throws IOException
-     * @throws InvalidResourceFormatException in case the new resource content is invalid
-     * @throws AutomationPackageAccessException in case the resource of linked AP cannot be updated in the current context
-     */
-    private Resource updateExistingResourceContentAndPropagate(String resourceFileName,
-                                                               String apName, ObjectId currentApId,
-                                                               FileInputStream fis, Long newOriginTimestamp,
-                                                               Resource oldResource, String actorUser,
-                                                               ObjectPredicate writeAccessPredicate) throws IOException, InvalidResourceFormatException, AutomationPackageAccessException {
-        String resourceId = oldResource.getId().toHexString();
-        //Check write access to the resource itself
-        if (!writeAccessPredicate.test(oldResource)) {
-            String errorMessage = "The existing resource " + resourceId + " for file " + resourceFileName + " referenced by the provided package cannot be modified in the current context.";
-            log.error(errorMessage);
-            throw new AutomationPackageAccessException(errorMessage);
-        }
-        // Check write access to other APs using this resource. We cannot reupload the resources if they are linked with another package, which is not accessible
-        for (ObjectId apId : linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, List.of(currentApId))) {
-            checkAccess(automationPackageAccessor.get(apId), writeAccessPredicate);
-        }
-
-        log.info("Existing resource {} for file {} will be actualized and reused in AP {}", resourceId, resourceFileName, apName);
-        Resource uploadedResource = resourceManager.saveResourceContent(resourceId, fis, resourceFileName, actorUser);
-        uploadedResource.setOriginTimestamp(newOriginTimestamp);
-        resourceManager.saveResource(uploadedResource);
-        return uploadedResource;
     }
 
     public AutomationPackageLibraryProvider getAutomationPackageLibraryProvider(AutomationPackageFileSource apLibrarySource,
