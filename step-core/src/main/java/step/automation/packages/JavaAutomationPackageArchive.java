@@ -103,6 +103,7 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
         return false;
     }
 
+    @Override
     public InputStream getDescriptorYaml() {
         for (String metadataFile : METADATA_FILES) {
             InputStream yamlDescriptor = classLoaderForMainApFile.getResourceAsStream(metadataFile);
