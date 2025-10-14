@@ -21,6 +21,7 @@ package step.automation.packages;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.automation.packages.model.AutomationPackageKeyword;
@@ -51,6 +52,7 @@ import step.functions.type.SetupFunctionException;
 import step.resources.*;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -721,8 +723,13 @@ public class AutomationPackageManager {
     protected List<Function> prepareFunctionsStaging(AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
                                                      AutomationPackage oldPackage, ResourceManager stagingResourceManager, String evaluationExpression) {
         AutomationPackageContext apContext = new AutomationPackageContext(operationMode, stagingResourceManager, automationPackageArchive, packageContent, enricher, extensions);
-        List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext))
-                .map(keyword -> setAutomationPackageFile(automationPackageArchive, keyword)).collect(Collectors.toList());
+
+        // Persist the automation package file as resource
+        String automationPackageResourceRef = createResourceForAutomationPackageFile(apContext);
+        apContext.setUploadedPackageFileResource(automationPackageResourceRef);
+
+        List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).
+                map(function -> setAutomationPackageFile(function, automationPackageResourceRef)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
@@ -736,13 +743,30 @@ public class AutomationPackageManager {
         return completeFunctions;
     }
 
+    private static String createResourceForAutomationPackageFile(AutomationPackageContext apContext) {
+        String resourceReference;
+        File originalFile = apContext.getAutomationPackageArchive().getOriginalFile();
+        if (originalFile != null) {
+            try (InputStream is = new FileInputStream(originalFile)) {
+                Resource resource = apContext.getResourceManager().createResource(
+                        ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), false, apContext.getEnricher()
+                );
+                resourceReference = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
+            } catch (IOException | SimilarResourceExistingException | InvalidResourceFormatException e) {
+                throw new RuntimeException("Error while creating resource for automation package file", e);
+            }
+        } else {
+            resourceReference = null;
+        }
+        return resourceReference;
+    }
+
     /**
      * Set the path to the automation package file in the provided function
      */
-    protected Function setAutomationPackageFile(AutomationPackageArchive automationPackageArchive, Function function) {
-        File originalFile = automationPackageArchive.getOriginalFile();
-        if(originalFile != null) {
-            function.setAutomationPackageFile(new DynamicValue<>(originalFile.getAbsolutePath()));
+    private Function setAutomationPackageFile(Function function, String automationPackageResourceRef) {
+        if (automationPackageResourceRef != null) {
+            function.setAutomationPackageFile(new DynamicValue<>(automationPackageResourceRef));
         }
         // For local executions of automation packages via JUnit runner, the originalFile is null and
         // the automation package file cannot be set.
