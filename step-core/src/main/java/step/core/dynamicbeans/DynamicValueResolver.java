@@ -22,6 +22,7 @@ import java.util.Map;
 
 import groovy.lang.GString;
 import step.expressions.ExpressionHandler;
+import step.expressions.ProtectedVariable;
 
 public class DynamicValueResolver {
 	
@@ -38,19 +39,42 @@ public class DynamicValueResolver {
 			String exprType = dynamicValue.expressionType;
 			EvaluationResult result = new EvaluationResult();
 			try {
-				Object evaluationResult = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings);
-				// When using placeholders in strings, groovy returns an object of type GString. 
-				// Curiously the class GSting doesn't extend String. For this reason we call the toString() method here
-				// to avoid later casting issues when DynamicValue.get() is called 
-				if(evaluationResult instanceof GString) {
-					evaluationResult = evaluationResult.toString();
+				Object evaluationResult;
+				Object protectedResult = null;
+
+				Object o = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings, dynamicValue.hasProtectedAccess());
+				//If the result is a ProtectedVariable and access is granted, the clear value is added as protectedResult of the evaluation result
+				if (dynamicValue.hasProtectedAccess() && o instanceof ProtectedVariable) {
+					ProtectedVariable pb = (ProtectedVariable) o;
+					protectedResult = pb.value;
+					evaluationResult = pb.obfuscatedValue;
+				} else {
+					//Otherwise the result is unchanged.
+					// This means that ProtectedVariable can be returned when calling DynamicValue.get() which must be handled
+					// carefully (but remain in a controlled and safe context). The only current use case is for the expression "dataSet.next" for protected dataset
+					// when used in a Set control, the ProtectedVariable is added to the variables and thus protected when accessed in following groovy expressions
+					evaluationResult = o;
 				}
-				result.setResultValue(evaluationResult);			
+
+				evaluationResult = convertResultIfRequired(evaluationResult);
+				protectedResult = (protectedResult == null) ? evaluationResult : convertResultIfRequired(protectedResult);
+				result.setResultValue(evaluationResult);
+				result.setProtectedValue(protectedResult);
 			} catch (Exception e) {
 				result.setEvaluationException(e);
 			}
 			dynamicValue.evalutationResult = result;
 		}
+	}
+
+	/**
+	 * When using placeholders in strings, groovy returns an object of type GString.
+	 * For this reason we call the toString() method here to avoid later casting issues when DynamicValue.get() is called
+	 * @param result the result object
+	 * @return converted result
+	 */
+	private static Object convertResultIfRequired(Object result) {
+		return (result instanceof GString) ? result.toString() : result;
 	}
 
 }

@@ -28,11 +28,21 @@ public abstract class DataPoolConfiguration {
 
 	private DynamicValue<Boolean> forWrite = new DynamicValue<Boolean>(false);
 
+	private DynamicValue<Boolean> protect = new DynamicValue<Boolean>(false);
+
 	public DynamicValue<Boolean> getForWrite() {
 		return forWrite;
 	}
 
 	public void setForWrite(DynamicValue<Boolean> forWrite) {
 		this.forWrite = forWrite;
+	}
+
+	public DynamicValue<Boolean> getProtect() {
+		return protect;
+	}
+
+	public void setProtect(DynamicValue<Boolean> protect) {
+		this.protect = protect;
 	}
 }

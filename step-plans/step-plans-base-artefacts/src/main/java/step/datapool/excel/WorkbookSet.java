@@ -46,18 +46,18 @@ public class WorkbookSet implements AutoCloseable{
 	
 	private static final Logger logger = LoggerFactory.getLogger(WorkbookSet.class);
 
-	public WorkbookSet(File mainWorkbookFile, Integer maxWorkbookSize, LinkedWorkbookFileResolver resolver, boolean createIfNotExists, boolean forUpdate) {
+	public WorkbookSet(File mainWorkbookFile, Integer maxWorkbookSize, LinkedWorkbookFileResolver resolver, boolean createIfNotExists, boolean forUpdate, String password) {
 		this.resolver = resolver;
 		
 		this.mainWorkbookFile = mainWorkbookFile;
 		
-		mainWorkbook = openWorkbook(mainWorkbookFile, maxWorkbookSize, createIfNotExists, forUpdate);
+		mainWorkbook = openWorkbook(mainWorkbookFile, maxWorkbookSize, createIfNotExists, forUpdate, password);
 		mainFormulaEvaluator = mainWorkbook.getWorkbook().getCreationHelper().createFormulaEvaluator();
 		
-		openReferencedWorkbooks(maxWorkbookSize, mainWorkbook.getWorkbook(), mainFormulaEvaluator);
+		openReferencedWorkbooks(maxWorkbookSize, mainWorkbook.getWorkbook(), mainFormulaEvaluator, password);
 	}	
 	
-	public WorkbookSet(File mainWorkbookFile, Integer maxWorkbookSize, boolean createIfNotExists, boolean forUpdate) {
+	public WorkbookSet(File mainWorkbookFile, Integer maxWorkbookSize, boolean createIfNotExists, boolean forUpdate, String password) {
 		this(mainWorkbookFile, maxWorkbookSize, new LinkedWorkbookFileResolver() {
 			@Override
 			public File resolve(String linkedFilename) {
@@ -67,7 +67,7 @@ public class WorkbookSet implements AutoCloseable{
 					return resolveRelativePath(mainWorkbookFile, linkedFilename);
 				}
 			}
-		}, createIfNotExists, forUpdate);
+		}, createIfNotExists, forUpdate, password);
 	}
 	
 	private static File resolveRelativePath(File mainWorkbookFile, String linkedFilename) {
@@ -107,7 +107,7 @@ public class WorkbookSet implements AutoCloseable{
 		return mainFormulaEvaluator;
 	}
 
-	private void openReferencedWorkbooks(Integer maxWorkbookSize, Workbook workbook, FormulaEvaluator evaluator) {
+	private void openReferencedWorkbooks(Integer maxWorkbookSize, Workbook workbook, FormulaEvaluator evaluator, String password) {
 		Map<String,FormulaEvaluator> workbooks = new HashMap<String, FormulaEvaluator>();
 		
 		if(workbook instanceof XSSFWorkbook) {
@@ -117,7 +117,7 @@ public class WorkbookSet implements AutoCloseable{
 					File f = resolver.resolve(file);
 					if(f!=null) {
 						try {
-							WorkbookFile book = openWorkbook(f, maxWorkbookSize, false, false);
+							WorkbookFile book = openWorkbook(f, maxWorkbookSize, false, false, password);
 							workbooks.put(file, book.getWorkbook().getCreationHelper().createFormulaEvaluator());
 						} catch(Exception e) {
 							logger.error("An error occured while opening referenced workbook '"+file+"'. Main workbook: '"+mainWorkbookFile+"'");
@@ -133,9 +133,9 @@ public class WorkbookSet implements AutoCloseable{
 		evaluator.setupReferencedWorkbooks(workbooks);
 	}
 	
-	private WorkbookFile openWorkbook(File mainWorkbook, Integer maxWorkbookSize, boolean createIfNotExists, boolean forUpdate) {
+	private WorkbookFile openWorkbook(File mainWorkbook, Integer maxWorkbookSize, boolean createIfNotExists, boolean forUpdate, String password) {
 		WorkbookFile openedOprkbook = new WorkbookFile();
-		openedOprkbook.open(mainWorkbook, maxWorkbookSize, createIfNotExists, forUpdate);
+		openedOprkbook.open(mainWorkbook, maxWorkbookSize, createIfNotExists, forUpdate, password);
 		
 		workbooks.add(openedOprkbook);
 		return openedOprkbook;

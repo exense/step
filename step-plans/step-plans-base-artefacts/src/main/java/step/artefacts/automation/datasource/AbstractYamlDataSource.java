@@ -42,6 +42,8 @@ public abstract class AbstractYamlDataSource<T extends DataPoolConfiguration> ex
     @YamlFieldCustomCopy
     protected DynamicValue<Boolean> forWrite = new DynamicValue<>(false);
 
+    protected DynamicValue<Boolean> protect = null;
+
     protected AbstractYamlDataSource(String dataSourceType) {
         this.dataSourceType = dataSourceType;
     }

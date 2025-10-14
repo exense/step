@@ -70,7 +70,7 @@ public class ExcelFunctions {
 		
 	public static String getCell(File workBookFile, String sheetName, String cellIndex) {
 		IOUtils.setByteArrayMaxOverride(getPoiByteArrayMaxOverride());
-		try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, getMaxExcelSize(), false, false)) {
+		try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, getMaxExcelSize(), false, false, null)) {
 			Sheet sheet = getSheet(workbookSet, sheetName, false); 
 			
 			Cell cell = getCell(sheet, cellIndex, false);
@@ -146,7 +146,7 @@ public class ExcelFunctions {
 	 */
     public static void putCell(String workbookPath, String sheetName, String cellIndex, String cellValue, String style) throws IOException {
     	File workBookFile = new File(workbookPath);
-    	try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, getMaxExcelSize(), true, true)) {
+    	try (WorkbookSet workbookSet = new WorkbookSet(workBookFile, getMaxExcelSize(), true, true, null)) {
 			Sheet sheet = getSheet(workbookSet, sheetName, true); 
 			
 			Cell cell = getCell(sheet, cellIndex, true);

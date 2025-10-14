@@ -43,7 +43,7 @@ public class WorkbookSetTest {
 			public File resolve(String linkedFilename) {
 				return getResourceFile(linkedFilename.substring(linkedFilename.lastIndexOf("/")+1));
 			}
-		}, false, false);
+		}, false, false, null);
 		
 		Sheet s = set.getMainWorkbook().getSheetAt(0);
 		
@@ -64,12 +64,12 @@ public class WorkbookSetTest {
 		
 		File file = getResourceFile("WriteTest2.xlsx");
 		
-		WorkbookSet workbookSet = new WorkbookSet(file, null, false, false);
+		WorkbookSet workbookSet = new WorkbookSet(file, null, false, false, null);
 		workbookSet.getMainWorkbook().getSheetAt(0).getRow(0).getCell(0).setCellValue(value);
 		workbookSet.save();
 		workbookSet.close();
 		
-		workbookSet = new WorkbookSet(file, null, false, false);
+		workbookSet = new WorkbookSet(file, null, false, false, null);
 		Assert.assertEquals(value, workbookSet.getMainWorkbook().getSheetAt(0).getRow(0).getCell(0).getStringCellValue());
 	}
 	
@@ -79,12 +79,12 @@ public class WorkbookSetTest {
 		
 		File file = getResourceFile("WriteTest2.xlsx");
 		
-		WorkbookSet workbookSet = new WorkbookSet(file, null, false, true);
+		WorkbookSet workbookSet = new WorkbookSet(file, null, false, true, null);
 		workbookSet.getMainWorkbook().getSheetAt(0).getRow(0).getCell(0).setCellValue(value);
 		workbookSet.save();
 		workbookSet.close();
 		
-		workbookSet = new WorkbookSet(file, null, false, false);
+		workbookSet = new WorkbookSet(file, null, false, false, null);
 		Assert.assertEquals(value, workbookSet.getMainWorkbook().getSheetAt(0).getRow(0).getCell(0).getStringCellValue());
 	}
 	
@@ -92,7 +92,7 @@ public class WorkbookSetTest {
 	public void testSizeLimit() {
 		Exception ex = null;
 		try {
-			new WorkbookSet(getResourceFile("Excel1.xlsx"), 1, false, false);
+			new WorkbookSet(getResourceFile("Excel1.xlsx"), 1, false, false, null);
 		} catch (Exception e) {
 			ex = e;
 		}

@@ -17,6 +17,8 @@ public abstract class AbstractAggregatedReportView {
     public final AbstractArtefact artefact;
     public final String artefactHash;
     public final Map<String, Long> countByStatus;
+    public final Map<String, Long> countByErrorMessage;
+    public final Map<String, Long> countByChildrenErrorMessage;
     public final ReportNode singleInstanceReportNode;
     public final Map<String, Bucket> bucketsByStatus;
     public final List<Operation> currentOperations;
@@ -24,12 +26,16 @@ public abstract class AbstractAggregatedReportView {
     @JsonCreator
     public AbstractAggregatedReportView(@JsonProperty("artefact") AbstractArtefact artefact, @JsonProperty("artefactHash") String artefactHash,
                                         @JsonProperty("countByStatus") Map<String, Long> countByStatus,
+                                        @JsonProperty("countByErrorMessage") Map<String, Long> countByErrorMessage,
+                                        @JsonProperty("countByContributingErrorMessage") Map<String, Long> countByChildrenErrorMessage,
                                         @JsonProperty("singleInstanceReportNode") ReportNode singleInstanceReportNode,
                                         @JsonProperty("bucketsByStatus") Map<String, Bucket> bucketsByStatus,
                                         @JsonProperty("currentOperations") List<Operation> currentOperations) {
         this.artefact = artefact;
         this.artefactHash = artefactHash;
         this.countByStatus = countByStatus;
+        this.countByErrorMessage = countByErrorMessage;
+        this.countByChildrenErrorMessage = countByChildrenErrorMessage;
         this.singleInstanceReportNode = singleInstanceReportNode;
         this.bucketsByStatus = bucketsByStatus;
         this.currentOperations = currentOperations;

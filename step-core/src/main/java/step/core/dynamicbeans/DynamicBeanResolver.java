@@ -76,7 +76,7 @@ public class DynamicBeanResolver {
 				for(PropertyDescriptor descriptor:beanInfo.getPropertyDescriptors()) {
 					Method method = descriptor.getReadMethod();
 					if(method!=null) {
-						if(method.getReturnType().equals(DynamicValue.class)) {
+						if(DynamicValue.class.isAssignableFrom(method.getReturnType())) {
 							Object value = method.invoke(o);
 							evaluateDynamicValue(bindings, (DynamicValue<?>) value);
 						} else if(method.isAnnotationPresent(ContainsDynamicValues.class)) {
