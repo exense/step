@@ -60,7 +60,7 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 	/**
 	 * If this function is part of an automation package, this field points to the automation package file
 	 */
-	private DynamicValue<String> automationPackageFile = new DynamicValue<>("");
+	private String automationPackageFile;
 
 	public static final String APPLICATION = "application";
 	
@@ -167,11 +167,11 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 		this.activationExpression = activationExpression;
 	}
 
-	public DynamicValue<String> getAutomationPackageFile() {
+	public String getAutomationPackageFile() {
 		return automationPackageFile;
 	}
 
-	public void setAutomationPackageFile(DynamicValue<String> automationPackageFile) {
+	public void setAutomationPackageFile(String automationPackageFile) {
 		this.automationPackageFile = automationPackageFile;
 	}
 }

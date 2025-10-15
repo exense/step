@@ -167,9 +167,9 @@ public abstract class AbstractFunctionType<T extends Function> {
 	public HandlerProperties getHandlerProperties(T function, AbstractStepContext executionContext) {
 		HashMap<String, String> props = new HashMap<>();
 		ArrayList<AutoCloseable> autoCloseables = new ArrayList<>();
-		DynamicValue<String> automationPackageFile = function.getAutomationPackageFile();
+		String automationPackageFile = function.getAutomationPackageFile();
 		if(automationPackageFile != null) {
-			autoCloseables.add(registerFile(automationPackageFile, AUTOMATION_PACKAGE_FILE, props, true,
+			autoCloseables.add(registerFile(new DynamicValue<>(automationPackageFile), AUTOMATION_PACKAGE_FILE, props, true,
 					executionContext));
 		}
 		return new HandlerProperties(props, autoCloseables);

@@ -105,7 +105,7 @@ public class JavaJarHandlerTest {
 
 		try {
 			GeneralScriptFunction f = buildTestFunction("MyKeywordUsingAutomationPackageFile", "java-plugin-handler-test.jar");
-			f.setAutomationPackageFile(new DynamicValue<>(tempFile.getAbsolutePath()));
+			f.setAutomationPackageFile(tempFile.getAbsolutePath());
 
 			Output<JsonObject> output = run(f, "{}");
 			Assert.assertEquals(testFile, output.getPayload().getString("AutomationPackageContent"));

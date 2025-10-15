@@ -766,7 +766,7 @@ public class AutomationPackageManager {
      */
     private Function setAutomationPackageFile(Function function, String automationPackageResourceRef) {
         if (automationPackageResourceRef != null) {
-            function.setAutomationPackageFile(new DynamicValue<>(automationPackageResourceRef));
+            function.setAutomationPackageFile(automationPackageResourceRef);
         }
         // For local executions of automation packages via JUnit runner, the originalFile is null and
         // the automation package file cannot be set.
