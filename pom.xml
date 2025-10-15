@@ -113,6 +113,7 @@
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
+			<!-- Force another version of the step-api during development. This should be removed before releasing. -->
 			<dependency>
 				<groupId>ch.exense.step</groupId>
 				<artifactId>step-api</artifactId>
