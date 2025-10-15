@@ -19,6 +19,7 @@
 package step.plugins.java;
 
 import step.attachments.FileResolver;
+import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.model.AutomationPackageContextual;
 import step.core.dynamicbeans.DynamicValue;
@@ -102,24 +103,11 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 	public GeneralScriptFunction applyAutomationPackageContext(AutomationPackageContext context) {
 		if (getScriptFile().get() == null || getScriptFile().get().isEmpty()) {
 			String uploadedPackageFileResource = context.getUploadedPackageFileResource();
-			if (uploadedPackageFileResource == null) {
-				File originalFile = context.getAutomationPackageArchive().getOriginalFile();
-				if (originalFile == null) {
-					throw new RuntimeException("General script functions can only be used within automation package archive");
-				}
-				try (InputStream is = new FileInputStream(originalFile)) {
-					Resource resource = context.getResourceManager().createResource(
-							ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), false, context.getEnricher()
-					);
-					uploadedPackageFileResource = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-
-					// fill context with just uploaded resource to upload it only once and reuse it in other general script functions
-					context.setUploadedPackageFileResource(uploadedPackageFileResource);
-				} catch (IOException | SimilarResourceExistingException | InvalidResourceFormatException e) {
-					throw new RuntimeException("General script function cannot be created", e);
-				}
+			if (uploadedPackageFileResource != null) {
+				setScriptFile(new DynamicValue<>(uploadedPackageFileResource));
+			} else {
+				throw new RuntimeException("General script functions can only be used within automation package archive");
 			}
-			setScriptFile(new DynamicValue<>(uploadedPackageFileResource));
 		}
 		return this;
 	}

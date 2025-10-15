@@ -18,18 +18,36 @@
  ******************************************************************************/
 package step.plugins.java.handler;
 
+import javax.json.JsonObject;
+
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
+import step.grid.filemanager.FileManagerException;
+import step.handlers.javahandler.AutomationPackageFileSupplier;
 import step.handlers.javahandler.KeywordExecutor;
 
-import javax.json.JsonObject;
+import java.io.File;
 
 public class KeywordHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		KeywordExecutor executor = new KeywordExecutor(false, getLiveReporting());
-		return executor.handle(input, getTokenSession(), getTokenReservationSession(), mergeAllProperties(input));
+        KeywordExecutor executor = new KeywordExecutor(false, getLiveReporting());
+        return executor.handle(input, getTokenSession(), getTokenReservationSession(), mergeAllProperties(input), new AutomationPackageFileSupplier() {
+            @Override
+            public File retrieveAndExtractAutomationPackage() {
+                try {
+                    return retrieveAndExtractAutomationPackageFile(input.getProperties());
+                } catch (FileManagerException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            @Override
+            public boolean hasAutomationPackageFile() {
+                return containsAutomationPackageFileReference(input.getProperties());
+            }
+        });
 	}
 }

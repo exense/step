@@ -73,7 +73,7 @@ public class EmbeddedFunctionPackageImporterTest {
 		assertEquals("Äöüßêï", functionPackage.getAttribute("attributeI18n"));
 
 		List<ObjectId> functionIDs = functionPackage.getFunctions();
-		Assert.assertEquals(5, functionIDs.size());
+		Assert.assertEquals(6, functionIDs.size());
 		functionIDs.forEach(f->{
 			GeneralScriptFunction function = (GeneralScriptFunction) functionAccessor.get(f);
 			//Routing to controller defined at keyword level as the priority
