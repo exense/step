@@ -69,6 +69,7 @@ public class AutomationPackageManager {
     public static final int DEFAULT_READLOCK_TIMEOUT_SECONDS = 60;
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManager.class);
+    private static final String AP_BASE_NAME_ATTR_KEY = "baseName";
 
     protected final AutomationPackageAccessor automationPackageAccessor;
     protected final FunctionManager functionManager;
@@ -85,10 +86,10 @@ public class AutomationPackageManager {
     protected final AutomationPackageLocks automationPackageLocks;
 
     private Map<String, Object> extensions;
-
     private final ExecutorService delayedUpdateExecutor = Executors.newCachedThreadPool();
-
     public final AutomationPackageOperationMode operationMode;
+    private final int maxParallelVersionsPerPackage;
+
 
     /**
      * The automation package manager used to store/delete automation packages. To run the automation package in isolated
@@ -105,7 +106,8 @@ public class AutomationPackageManager {
                                      AutomationPackageHookRegistry automationPackageHookRegistry,
                                      AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                      AutomationPackageLocks automationPackageLocks,
-                                     AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
+                                     AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
+                                     int maxParallelVersionsPerPackage) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
@@ -128,6 +130,7 @@ public class AutomationPackageManager {
         this.providersResolver = new DefaultProvidersResolver(automationPackageReaderRegistry, resourceManager);
 
         this.linkedAutomationPackagesFinder = new LinkedAutomationPackagesFinder(this.resourceManager, this.automationPackageAccessor);
+        this.maxParallelVersionsPerPackage = maxParallelVersionsPerPackage;
 
         addDefaultExtensions();
     }
@@ -159,7 +162,7 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry, automationPackageReaderRegistry,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
-                null
+                null, -1
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -198,7 +201,7 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry, automationPackageReaderRegistry,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
-                mavenConfigProvider
+                mavenConfigProvider, -1
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -212,7 +215,9 @@ public class AutomationPackageManager {
                                                                               AutomationPackageHookRegistry hookRegistry,
                                                                               AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                               AutomationPackageLocks locks,
-                                                                              AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
+                                                                              AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
+                                                                              int maxParallelVersionsPerPackage
+    ) {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onMainAutomationPackageManagerCreate(extensions);
         return new AutomationPackageManager(
@@ -225,7 +230,8 @@ public class AutomationPackageManager {
                 hookRegistry,
                 automationPackageReaderRegistry,
                 locks,
-                mavenConfigProvider
+                mavenConfigProvider,
+                maxParallelVersionsPerPackage
         );
     }
 
@@ -366,20 +372,18 @@ public class AutomationPackageManager {
         AutomationPackage ap = getAutomationPackageById(id, objectPredicate);
         checkAccess(ap, accessChecker);
 
-        String newApName;
-
         String oldApVersion = ap.getVersion();
         String oldApName = ap.getAttribute(AbstractOrganizableObject.NAME);
         int versionBeginIndex = oldApVersion == null ? - 1 : oldApName.lastIndexOf(ap.getVersion());
-        if (versionBeginIndex > 0) {
-            String oldNameWithoutVersion = oldApName.substring(0, versionBeginIndex - AutomationPackageReader.AP_VERSION_SEPARATOR.length());
-            newApName = apVersion == null ? oldNameWithoutVersion : oldNameWithoutVersion + AutomationPackageReader.AP_VERSION_SEPARATOR + apVersion;
-        } else {
-            newApName = apVersion == null ? oldApName : oldApName + AutomationPackageReader.AP_VERSION_SEPARATOR + apVersion;
-        }
+        String baseApName = (versionBeginIndex > 0) ?
+            oldApName.substring(0, versionBeginIndex - AutomationPackageReader.AP_VERSION_SEPARATOR.length()) :
+            oldApName;
+        String newApName = apVersion == null ? baseApName : baseApName + AutomationPackageReader.AP_VERSION_SEPARATOR + apVersion;
         ap.addAttribute(AbstractOrganizableObject.NAME, newApName);
-        ap.setActivationExpression(activationExpr == null ? null : new Expression(activationExpr));
+        ap.addAttribute(AP_BASE_NAME_ATTR_KEY, baseApName);
         ap.setVersion(apVersion);
+        Expression resolvedActivationExpression = getActivationExpression(apVersion, activationExpr, baseApName);
+        ap.setActivationExpression(resolvedActivationExpression);
 
         // save metadata
         automationPackageAccessor.save(ap);
@@ -387,7 +391,7 @@ public class AutomationPackageManager {
         // propagate new activation expression to linked keywords and plans
         List<Function> keywords = getPackageFunctions(id);
         for (Function keyword : keywords) {
-            keyword.setActivationExpression(activationExpr == null ? null : new Expression(activationExpr));
+            keyword.setActivationExpression(resolvedActivationExpression);
             try {
                 functionManager.saveFunction(keyword);
             } catch (SetupFunctionException | FunctionTypeException e) {
@@ -395,8 +399,21 @@ public class AutomationPackageManager {
             }
         }
         for (Plan plan : getPackagePlans(id)) {
-            plan.setActivationExpression(activationExpr == null ? null : new Expression(activationExpr));
+            plan.setActivationExpression(resolvedActivationExpression);
             planAccessor.save(plan);
+        }
+    }
+
+    private Expression getActivationExpression(String apVersion, String activationExpression, String baseApName) {
+        if (activationExpression == null || activationExpression.isEmpty()) {
+            if (apVersion == null) {
+                return null;
+            } else {
+                //getProperty is used to support binding keys with hyphens and dots
+                return new Expression("getProperty('" + baseApName + ".version') == \"" + apVersion + "\"");
+            }
+        } else {
+            return new Expression(activationExpression);
         }
     }
 
@@ -419,7 +436,7 @@ public class AutomationPackageManager {
      */
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                                                          AutomationPackageArchiveProvider automationPackageProvider,
-                                                                         String apVersion, String activationExpr,
+                                                                         String apVersion, String activationExpression,
                                                                          boolean isLocalPackage,
                                                                          ObjectEnricher enricher, ObjectPredicate objectPredicate,
                                                                          ObjectPredicate writeAccessPredicate,
@@ -441,6 +458,15 @@ public class AutomationPackageManager {
                 throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
             }
 
+            //Implement limit on parallel deployments of multiple version of the same AP (based on its base name, i.e. without AP version appened to it)
+            //Limit is only applied for a value greater than 0
+            if (maxParallelVersionsPerPackage > 0) {
+                List<AutomationPackage> otherVersions = findOtherVersionsOfPackage(explicitOldId, objectPredicate, packageContent);
+                if (otherVersions.size() >= maxParallelVersionsPerPackage) {
+                    throw new AutomationPackageManagerException("The maximum number of parallel versions (" + maxParallelVersionsPerPackage + ") is reached for the package '" + packageContent.getBaseName() + "'. You must clean up older versions of this package before deploying new ones, or contact your administrator to increase this limit.");
+                }
+            }
+
             if (oldPackage != null) {
                 checkAccess(oldPackage, writeAccessPredicate);
             }
@@ -453,7 +479,7 @@ public class AutomationPackageManager {
             // keep old package id
             newPackage = createNewInstance(
                     automationPackageArchive.getOriginalFileName(),
-                    packageContent, apVersion, activationExpr, oldPackage, enricher, actorUser
+                    packageContent, apVersion, activationExpression, oldPackage, enricher, actorUser
             );
 
             // prepare staging collections
@@ -477,7 +503,7 @@ public class AutomationPackageManager {
             // NOTE: for ap lib we don't need to enrich the resource with automation package id (because the same lib can be shared between several automation packages) - so we use simple enricher
             String apLibraryResourceString = uploadAutomationPackageLibrary(apLibraryProvider, newPackage, packageContent.getName(), enricher, objectPredicate, actorUser, writeAccessPredicate);
 
-            fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, activationExpr, apLibraryResourceString, actorUser, objectPredicate);
+            fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, apLibraryResourceString, actorUser, objectPredicate);
 
             // persist and activate automation package
             log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
@@ -525,6 +551,17 @@ public class AutomationPackageManager {
         } catch (AutomationPackageReadingException | IOException e) {
             throw new AutomationPackageManagerException("Unable to read automation package. Cause: " + e.getMessage(), e);
         }
+    }
+
+    private List<AutomationPackage> findOtherVersionsOfPackage(ObjectId explicitOldId, ObjectPredicate objectPredicate, AutomationPackageContent packageContent) {
+        Stream<AutomationPackage> stream = StreamSupport.stream(automationPackageAccessor.findManyByAttributes(Map.of(AP_BASE_NAME_ATTR_KEY, packageContent.getBaseName())), false);
+        if (objectPredicate != null) {
+            stream = stream.filter(objectPredicate);//filter package readable in context
+        }
+        if (explicitOldId != null) {
+            stream = stream.filter(a -> !a.getId().equals(explicitOldId)); //remove current package in case of update
+        }
+        return stream.collect(Collectors.toList());
     }
 
     private AutomationPackage findOldPackage(ObjectId explicitOldId, ObjectPredicate objectPredicate, AutomationPackageContent packageContent) {
@@ -842,9 +879,9 @@ public class AutomationPackageManager {
     }
 
     protected void fillStaging(AutomationPackage newPackage, AutomationPackageStaging staging, AutomationPackageContent packageContent, AutomationPackage oldPackage, ObjectEnricher enricherForIncludedEntities,
-                               AutomationPackageArchive automationPackageArchive, String evaluationExpression, String apLibraryResourceString, String actorUser, ObjectPredicate objectPredicate) {
-        staging.getPlans().addAll(preparePlansStaging(newPackage, packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager(), evaluationExpression, apLibraryResourceString));
-        staging.getFunctions().addAll(prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager(), evaluationExpression, apLibraryResourceString));
+                               AutomationPackageArchive automationPackageArchive, String apLibraryResourceString, String actorUser, ObjectPredicate objectPredicate) {
+        staging.getPlans().addAll(preparePlansStaging(newPackage, packageContent, automationPackageArchive, oldPackage, enricherForIncludedEntities, staging.getResourceManager(), apLibraryResourceString));
+        staging.getFunctions().addAll(prepareFunctionsStaging(newPackage, automationPackageArchive, packageContent, enricherForIncludedEntities, oldPackage, staging.getResourceManager(), apLibraryResourceString));
 
         List<HookEntry> hookEntries = new ArrayList<>();
         for (String additionalField : packageContent.getAdditionalFields()) {
@@ -942,22 +979,22 @@ public class AutomationPackageManager {
 
     protected List<Plan> preparePlansStaging(AutomationPackage newPackage, AutomationPackageContent packageContent, AutomationPackageArchive automationPackageArchive,
                                              AutomationPackage oldPackage, ObjectEnricher enricher, ResourceManager stagingResourceManager,
-                                             String evaluationExpression, String apLibraryResourceString) {
+                                             String apLibraryResourceString) {
         List<Plan> plans = packageContent.getPlans();
         AutomationPackagePlansAttributesApplier specialAttributesApplier = new AutomationPackagePlansAttributesApplier(stagingResourceManager);
         specialAttributesApplier.applySpecialAttributesToPlans(newPackage, plans, automationPackageArchive, packageContent, apLibraryResourceString, enricher, extensions, operationMode);
 
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
-        if (evaluationExpression != null && !evaluationExpression.isEmpty()){
+        if (newPackage.getActivationExpression() != null) {
             for (Plan plan : plans) {
-                plan.setActivationExpression(new Expression(evaluationExpression));
+                plan.setActivationExpression(newPackage.getActivationExpression());
             }
         }
         return plans;
     }
 
     protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
-                                                     AutomationPackage oldPackage, ResourceManager stagingResourceManager, String evaluationExpression, String apLibraryResourceString) {
+                                                     AutomationPackage oldPackage, ResourceManager stagingResourceManager, String apLibraryResourceString) {
         AutomationPackageContext apContext = new AutomationPackageContext(newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, apLibraryResourceString, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
@@ -965,9 +1002,9 @@ public class AutomationPackageManager {
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
         fillEntities(completeFunctions, oldFunctions, enricher);
 
-        if (evaluationExpression != null && !evaluationExpression.isEmpty()) {
+        if (newPackage.getActivationExpression() != null) {
             for (Function completeFunction : completeFunctions) {
-                completeFunction.setActivationExpression(new Expression(evaluationExpression));
+                completeFunction.setActivationExpression(newPackage.getActivationExpression());
             }
         }
         return completeFunctions;
@@ -984,13 +1021,12 @@ public class AutomationPackageManager {
             newPackage.setId(oldPackage.getId());
         }
         newPackage.addAttribute(AbstractOrganizableObject.NAME, packageContent.getName());
+        newPackage.addAttribute(AP_BASE_NAME_ATTR_KEY, packageContent.getBaseName());
         newPackage.addAttribute(AbstractOrganizableObject.VERSION, packageContent.getVersion());
 
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
         newPackage.setVersion(apVersion);
-        if (activationExpr != null && !activationExpr.isEmpty()) {
-            newPackage.setActivationExpression(new Expression(activationExpr));
-        }
+        newPackage.setActivationExpression(getActivationExpression(apVersion, activationExpr, packageContent.getBaseName()));
         if (enricher != null) {
             enricher.accept(newPackage);
         }

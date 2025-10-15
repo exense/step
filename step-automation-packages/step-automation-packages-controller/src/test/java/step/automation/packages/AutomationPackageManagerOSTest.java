@@ -138,7 +138,7 @@ public class AutomationPackageManagerOSTest {
                 automationPackageHookRegistry,
                 automationPackageReaderRegistry,
                 automationPackageLocks,
-                null
+                null, -1
         );
 
         this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>(), resourceManager, automationPackageReaderRegistry));

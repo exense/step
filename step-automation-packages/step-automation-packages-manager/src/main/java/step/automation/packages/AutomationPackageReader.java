@@ -70,10 +70,10 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         this.automationPackageArchiveClass = automationPackageArchiveClass;
     }
 
-    public AutomationPackageArchive createAutomationPackageArchive(File automationPackageFile, File keywordLibFile) {
+    public AutomationPackageArchive createAutomationPackageArchive(File automationPackageFile, File keywordLibFile, String defaultName) {
         try {
-            Constructor<? extends AutomationPackageArchive> declaredConstructor = automationPackageArchiveClass.getDeclaredConstructor(File.class, File.class);
-            return declaredConstructor.newInstance(automationPackageFile, keywordLibFile);
+            Constructor<? extends AutomationPackageArchive> declaredConstructor = automationPackageArchiveClass.getDeclaredConstructor(File.class, File.class, String.class);
+            return declaredConstructor.newInstance(automationPackageFile, keywordLibFile, defaultName);
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
             throw new IllegalArgumentException("The constructor for type " + getAutomationPackageType() + " is invalid", e);
         }
@@ -118,7 +118,9 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, T archive, String apVersion,
                                                               boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
         AutomationPackageContent res = newContentInstance();
-        res.setName(resolveName(descriptor, archive, apVersion));
+        String baseName = resolveName(descriptor, archive);
+        res.setBaseName(baseName);
+        res.setName(resolveUniqueName(baseName, apVersion));
 
         if (scanAnnotations) {
             fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, isLocalPackage, res);
@@ -131,14 +133,18 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         return res;
     }
 
-    private String resolveName(AutomationPackageDescriptorYaml descriptor, T archive, String apVersion) {
+    private String resolveName(AutomationPackageDescriptorYaml descriptor, T archive) {
         String finalName;
         if (descriptor != null) {
             finalName = descriptor.getName();
         } else {
-            finalName = Objects.requireNonNullElse(archive.getOriginalFileName(), "local-automation-package");
+            finalName = Objects.requireNonNullElse(archive.getAutomationPackageName(), "local-automation-package");
         }
+        return finalName;
+    }
 
+    private String resolveUniqueName(String baseName, String apVersion) {
+        String finalName = baseName;
         if (apVersion != null && !apVersion.isEmpty()) {
             finalName += AP_VERSION_SEPARATOR;
             finalName += apVersion;

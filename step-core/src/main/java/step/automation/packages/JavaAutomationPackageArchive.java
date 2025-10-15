@@ -47,11 +47,10 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
         this.classLoaderForMainApFile = classLoader;
         this.classLoaderForApAndLibraries = classLoader;
         this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
-
     }
 
-    public JavaAutomationPackageArchive(File automationPackageFile, File keywordLibFile) throws AutomationPackageReadingException {
-        super(automationPackageFile, keywordLibFile, TYPE);
+    public JavaAutomationPackageArchive(File automationPackageFile, File keywordLibFile, String defaultName) throws AutomationPackageReadingException {
+        super(automationPackageFile, keywordLibFile, TYPE, defaultName);
         this.internalClassLoader = true;
         if (!isValidForFile(automationPackageFile)) {
             throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " is neither zip archive nor jar file nor directory");
