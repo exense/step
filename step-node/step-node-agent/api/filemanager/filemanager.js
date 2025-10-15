@@ -2,7 +2,10 @@ module.exports = function FileManager (agentContext) {
   const fs = require('fs')
   const shell = require('shelljs')
   const http = require('http')
+  const https = require('https')
+  const url = require('url')
   const unzip = require('unzip-stream')
+  const jwtUtils = require('../../utils/jwtUtils')
 
   let exports = {}
   const filemanagerPath = agentContext.properties['filemanagerPath'] ? agentContext.properties['filemanagerPath'] : 'filemanager'
@@ -99,7 +102,25 @@ module.exports = function FileManager (agentContext) {
 
   function getKeywordFile (controllerFileUrl, targetDir) {
     return new Promise(function (resolve, reject) {
-      http.get(controllerFileUrl, (resp) => {
+      const parsedUrl = url.parse(controllerFileUrl)
+      const httpModule = parsedUrl.protocol === 'https:' ? https : http
+
+      const requestOptions = {
+        hostname: parsedUrl.hostname,
+        port: parsedUrl.port,
+        path: parsedUrl.path,
+        method: 'GET'
+      }
+
+      // Add bearer token if gridSecurity is configured
+      const token = jwtUtils.generateJwtToken(agentContext.gridSecurity, 300); // 5 minutes expiration
+      if (token) {
+        requestOptions.headers = {
+          'Authorization': 'Bearer ' + token
+        };
+      }
+
+      const req = httpModule.request(requestOptions, (resp) => {
         const filename = parseName(resp.headers)
         const filepath = targetDir + '/' + filename
         if (isDir(resp.headers) || filename.toUpperCase().endsWith('ZIP')) {
@@ -112,6 +133,8 @@ module.exports = function FileManager (agentContext) {
         console.log('Error: ' + err.message)
         reject(err)
       })
+
+      req.end()
     })
   }
 

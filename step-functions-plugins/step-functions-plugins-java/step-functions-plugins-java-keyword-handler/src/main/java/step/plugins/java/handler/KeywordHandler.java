@@ -33,8 +33,8 @@ public class KeywordHandler extends JsonBasedFunctionHandler {
 
 	@Override
 	public Output<JsonObject> handle(Input<JsonObject> input) throws Exception {
-		KeywordExecutor executor = new KeywordExecutor(false);
-		return executor.handle(input, getTokenSession(), getTokenReservationSession(), mergeAllProperties(input), new AutomationPackageFileSupplier() {
+        KeywordExecutor executor = new KeywordExecutor(false, getLiveReporting());
+        return executor.handle(input, getTokenSession(), getTokenReservationSession(), mergeAllProperties(input), new AutomationPackageFileSupplier() {
             @Override
             public File retrieveAndExtractAutomationPackage() {
                 try {

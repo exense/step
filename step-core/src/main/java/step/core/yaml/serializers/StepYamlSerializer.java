@@ -18,8 +18,16 @@
  ******************************************************************************/
 package step.core.yaml.serializers;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import step.core.yaml.model.AbstractYamlArtefact;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public abstract class StepYamlSerializer<T> extends JsonSerializer<T> {
 
@@ -32,5 +40,20 @@ public abstract class StepYamlSerializer<T> extends JsonSerializer<T> {
         this.yamlObjectMapper = yamlObjectMapper;
     }
 
+    protected static void removeDefaultValues(ObjectNode actualJson, ObjectNode defaultJson) {
+        Set<String> specialFields = Set.of(AbstractYamlArtefact.CHILDREN_FIELD_NAME);
+        List<String> fieldsForRemoval = new ArrayList<>();
+        actualJson.fieldNames().forEachRemaining(s -> {
+            if (!specialFields.contains(s)) {
+                JsonNode defaultValue = defaultJson.get(s);
+                if (Objects.equals(defaultValue, actualJson.get(s))) {
+                    fieldsForRemoval.add(s);
+                }
+            }
+        });
+        for (String s : fieldsForRemoval) {
+            actualJson.remove(s);
+        }
+    }
 
 }
