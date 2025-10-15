@@ -33,18 +33,18 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
 
     private final Map<MavenArtifactIdentifier, ResolvedMavenArtifact> mavenArtifactMocks;
 
-    public MockedAutomationPackageProvidersResolver(Map<MavenArtifactIdentifier, ResolvedMavenArtifact> mavenArtifactMocks, ResourceManager resourceManager){
-        super(resourceManager);
+    public MockedAutomationPackageProvidersResolver(Map<MavenArtifactIdentifier, ResolvedMavenArtifact> mavenArtifactMocks, ResourceManager resourceManager, AutomationPackageReaderRegistry apReaderRegistry){
+        super(apReaderRegistry, resourceManager);
         this.mavenArtifactMocks = mavenArtifactMocks;
     }
 
     @Override
-    protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource,
+    protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageReaderRegistry apReaderRegistry, AutomationPackageFileSource apFileSource,
                                                                                           ObjectPredicate predicate,
                                                                                           AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
                                                                                           AutomationPackageLibraryProvider apLibraryProvider,
                                                                                           ResourceManager resourceManager) throws AutomationPackageReadingException {
-        return new MockedAutomationPackageFromMavenProvider(
+        return new MockedAutomationPackageFromMavenProvider(apReaderRegistry,
                 mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(predicate),
                 apFileSource.getMavenArtifactIdentifier(),
                 apLibraryProvider
@@ -64,12 +64,12 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
 
     private class MockedAutomationPackageFromMavenProvider extends AutomationPackageFromMavenProvider {
 
-        public MockedAutomationPackageFromMavenProvider(
+        public MockedAutomationPackageFromMavenProvider(AutomationPackageReaderRegistry automationPackageReaderRegistry,
                 AutomationPackageMavenConfig mavenConfig,
                 MavenArtifactIdentifier mavenArtifactIdentifier,
                 AutomationPackageLibraryProvider keywordLibraryProvider
         ) throws AutomationPackageReadingException {
-            super(mavenConfig, mavenArtifactIdentifier, keywordLibraryProvider, null, null);
+            super(automationPackageReaderRegistry, mavenConfig, mavenArtifactIdentifier, keywordLibraryProvider, null, null);
         }
 
 

@@ -75,7 +75,7 @@ public class AutomationPackageManager {
     protected final FunctionAccessor functionAccessor;
     private final AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider;
     protected final PlanAccessor planAccessor;
-    protected final AutomationPackageReader packageReader;
+    protected final AutomationPackageReaderRegistry automationPackageReaderRegistry;
 
     protected final ResourceManager resourceManager;
     protected final AutomationPackageHookRegistry automationPackageHookRegistry;
@@ -103,7 +103,7 @@ public class AutomationPackageManager {
                                      ResourceManager resourceManager,
                                      Map<String, Object> extensions,
                                      AutomationPackageHookRegistry automationPackageHookRegistry,
-                                     AutomationPackageReader packageReader,
+                                     AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                      AutomationPackageLocks automationPackageLocks,
                                      AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
         this.automationPackageAccessor = automationPackageAccessor;
@@ -120,12 +120,12 @@ public class AutomationPackageManager {
         this.extensions = extensions;
 
         this.automationPackageHookRegistry = automationPackageHookRegistry;
-        this.packageReader = packageReader;
+        this.automationPackageReaderRegistry = automationPackageReaderRegistry;
         this.resourceManager = resourceManager;
         this.automationPackageLocks = automationPackageLocks;
         this.operationMode = Objects.requireNonNull(operationMode);
 
-        this.providersResolver = new DefaultProvidersResolver(resourceManager);
+        this.providersResolver = new DefaultProvidersResolver(automationPackageReaderRegistry, resourceManager);
 
         this.linkedAutomationPackagesFinder = new LinkedAutomationPackagesFinder(this.resourceManager, this.automationPackageAccessor);
 
@@ -144,7 +144,7 @@ public class AutomationPackageManager {
                                                                                FunctionAccessor mainFunctionAccessor,
                                                                                PlanAccessor planAccessor,
                                                                                ResourceManager resourceManager,
-                                                                               AutomationPackageReader reader,
+                                                                               AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                                AutomationPackageHookRegistry hookRegistry) {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onLocalAutomationPackageManagerCreate(extensions);
@@ -157,7 +157,7 @@ public class AutomationPackageManager {
                 planAccessor,
                 resourceManager,
                 extensions,
-                hookRegistry, reader,
+                hookRegistry, automationPackageReaderRegistry,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
                 null
         );
@@ -179,7 +179,7 @@ public class AutomationPackageManager {
     public static AutomationPackageManager createIsolatedAutomationPackageManager(ObjectId isolatedContextId,
                                                                                   FunctionTypeRegistry functionTypeRegistry,
                                                                                   FunctionAccessor mainFunctionAccessor,
-                                                                                  AutomationPackageReader reader,
+                                                                                  AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                                   AutomationPackageHookRegistry hookRegistry,
                                                                                   AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
 
@@ -196,7 +196,7 @@ public class AutomationPackageManager {
                 new InMemoryPlanAccessor(),
                 resourceManager,
                 extensions,
-                hookRegistry, reader,
+                hookRegistry, automationPackageReaderRegistry,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
                 mavenConfigProvider
         );
@@ -210,7 +210,7 @@ public class AutomationPackageManager {
                                                                               PlanAccessor planAccessor,
                                                                               ResourceManager resourceManager,
                                                                               AutomationPackageHookRegistry hookRegistry,
-                                                                              AutomationPackageReader reader,
+                                                                              AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                               AutomationPackageLocks locks,
                                                                               AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
         Map<String, Object> extensions = new HashMap<>();
@@ -223,7 +223,7 @@ public class AutomationPackageManager {
                 resourceManager,
                 extensions,
                 hookRegistry,
-                reader,
+                automationPackageReaderRegistry,
                 locks,
                 mavenConfigProvider
         );
@@ -241,7 +241,7 @@ public class AutomationPackageManager {
      * @return the automation manager with in-memory accessors for plans and keywords
      */
     public AutomationPackageManager createIsolated(ObjectId isolatedContextId, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor mainFunctionAccessor){
-        return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getPackageReader(), automationPackageHookRegistry, mavenConfigProvider);
+        return createIsolatedAutomationPackageManager(isolatedContextId, functionTypeRegistry, mainFunctionAccessor, getAutomationPackageReaderRegistry(), automationPackageHookRegistry, mavenConfigProvider);
     }
 
     public AutomationPackage getAutomationPackageById(ObjectId id, ObjectPredicate objectPredicate) {
@@ -1009,9 +1009,10 @@ public class AutomationPackageManager {
         return newPackage;
     }
 
-    protected AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
+    protected <A extends AutomationPackageArchive> AutomationPackageContent readAutomationPackage(A automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
-        packageContent = packageReader.readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
+        AutomationPackageReader<A> reader = automationPackageReaderRegistry.getReader(automationPackageArchive);
+        packageContent = reader.readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
         if (packageContent == null) {
             throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);
         } else if (packageContent.getName() == null || packageContent.getName().isEmpty()) {
@@ -1146,8 +1147,8 @@ public class AutomationPackageManager {
         }
     }
 
-    public AutomationPackageReader getPackageReader() {
-        return packageReader;
+    public AutomationPackageReaderRegistry getAutomationPackageReaderRegistry() {
+        return automationPackageReaderRegistry;
     }
 
     public boolean isIsolated() {
@@ -1195,7 +1196,7 @@ public class AutomationPackageManager {
     }
 
     public String getDescriptorJsonSchema() {
-        return packageReader.getDescriptorJsonSchema();
+        return automationPackageReaderRegistry.getReaderByType(JavaAutomationPackageArchive.TYPE).getDescriptorJsonSchema();
     }
 
     private static class HookEntry {
@@ -1222,9 +1223,11 @@ public class AutomationPackageManager {
 
     public static class DefaultProvidersResolver implements AutomationPackageProvidersResolver {
 
+        private final AutomationPackageReaderRegistry apReaderRegistry;
         private final ResourceManager resourceManager;
 
-        public DefaultProvidersResolver(ResourceManager resourceManager) {
+        public DefaultProvidersResolver(AutomationPackageReaderRegistry apReaderRegistry, ResourceManager resourceManager) {
+            this.apReaderRegistry = apReaderRegistry;
             this.resourceManager = resourceManager;
         }
 
@@ -1235,11 +1238,11 @@ public class AutomationPackageManager {
                                                                                     AutomationPackageLibraryProvider apLibraryProvider) throws AutomationPackageReadingException {
             if (apFileSource != null) {
                 if (apFileSource.getMode() == AutomationPackageFileSource.Mode.MAVEN) {
-                    return createAutomationPackageFromMavenProvider(apFileSource, predicate, mavenConfigProvider, apLibraryProvider, resourceManager);
+                    return createAutomationPackageFromMavenProvider(apReaderRegistry, apFileSource, predicate, mavenConfigProvider, apLibraryProvider, resourceManager);
                 } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.INPUT_STREAM) {
-                    return new AutomationPackageFromInputStreamProvider(apFileSource.getInputStream(), apFileSource.getFileName(), apLibraryProvider);
+                    return new AutomationPackageFromInputStreamProvider(apReaderRegistry, apFileSource.getInputStream(), apFileSource.getFileName(), apLibraryProvider);
                 } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.RESOURCE_ID) {
-                    return new AutomationPackageFromResourceIdProvider(resourceManager, apFileSource.getResourceId(), apLibraryProvider, predicate);
+                    return new AutomationPackageFromResourceIdProvider(apReaderRegistry, resourceManager, apFileSource.getResourceId(), apLibraryProvider, predicate);
                 } else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.EMPTY) {
                     // automation package archive is mandatory
                     throw new AutomationPackageManagerException("The automation package is not provided");
@@ -1248,12 +1251,13 @@ public class AutomationPackageManager {
             throw new AutomationPackageManagerException("The automation package is not provided");
         }
 
-        protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageFileSource apFileSource,
+        protected AutomationPackageFromMavenProvider createAutomationPackageFromMavenProvider(AutomationPackageReaderRegistry apReaderRegistry, AutomationPackageFileSource apFileSource,
                                                                                               ObjectPredicate predicate,
                                                                                               AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
                                                                                               AutomationPackageLibraryProvider apLibraryProvider,
                                                                                               ResourceManager resourceManager) throws AutomationPackageReadingException {
-            return new AutomationPackageFromMavenProvider(mavenConfigProvider.getConfig(predicate), apFileSource.getMavenArtifactIdentifier(), apLibraryProvider, resourceManager, predicate);
+            return new AutomationPackageFromMavenProvider(apReaderRegistry, mavenConfigProvider.getConfig(predicate),
+                    apFileSource.getMavenArtifactIdentifier(), apLibraryProvider, resourceManager, predicate);
         }
 
         @Override

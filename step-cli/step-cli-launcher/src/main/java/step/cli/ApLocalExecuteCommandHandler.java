@@ -66,8 +66,11 @@ public class ApLocalExecuteCommandHandler {
                 if (kwLibFile != null) {
                     kwFileInputStream = new FileInputStream(kwLibFile);
                 }
-                AutomationPackageLibraryProvider kwFromInputStreamProvider = kwFileInputStream == null ? new NoAutomationPackageLibraryProvider() : new AutomationPackageLibraryFromInputStreamProvider(kwFileInputStream, kwLibFile.getName());
-                AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName(), kwFromInputStreamProvider);
+                AutomationPackageLibraryProvider kwFromInputStreamProvider = kwFileInputStream == null ?
+                        new NoAutomationPackageLibraryProvider() :
+                        new AutomationPackageLibraryFromInputStreamProvider(kwFileInputStream, kwLibFile.getName());
+                AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(automationPackageManager.getAutomationPackageReaderRegistry(),
+                        is, apFile.getName(), kwFromInputStreamProvider);
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         false, true, null, automationPackageProvider, null, null,
                         true, null, o -> true, o -> true, false, kwFromInputStreamProvider, null,

@@ -18,13 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.core.objectenricher.ObjectPredicate;
-import step.resources.Resource;
-import step.resources.ResourceManager;
-import step.resources.ResourceOrigin;
-
-import java.io.Closeable;
-import java.util.List;
 
 public interface AutomationPackageArchiveProvider extends AutomationPackageProvider {
 

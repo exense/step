@@ -21,7 +21,7 @@ package step.automation.packages;
 import org.bson.types.ObjectId;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.model.JavaAutomationPackageKeyword;
+import step.automation.packages.model.ScriptAutomationPackageKeyword;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
@@ -57,8 +57,8 @@ public class AutomationPackageTestUtils {
 
     public static Function findJavaKeywordByClassAndName(List<AutomationPackageKeyword> keywords, Class<?> clazz, String name) throws AssertionError {
         for (AutomationPackageKeyword keyword : keywords) {
-            if (keyword instanceof JavaAutomationPackageKeyword) {
-                Function wrappedKeyword = ((JavaAutomationPackageKeyword) keyword).getKeyword();
+            if (keyword instanceof ScriptAutomationPackageKeyword) {
+                Function wrappedKeyword = ((ScriptAutomationPackageKeyword) keyword).getKeyword();
                 if (clazz.isAssignableFrom(wrappedKeyword.getClass())) {
                     if (wrappedKeyword.getAttribute(AbstractOrganizableObject.NAME).equals(name)) {
                         return wrappedKeyword;
