@@ -372,8 +372,6 @@ public class AutomationPackageManager {
         AutomationPackage ap = getAutomationPackageById(id, objectPredicate);
         checkAccess(ap, accessChecker);
 
-        ;
-
         String oldApVersion = ap.getVersion();
         String oldApName = ap.getAttribute(AbstractOrganizableObject.NAME);
         int versionBeginIndex = oldApVersion == null ? - 1 : oldApName.lastIndexOf(ap.getVersion());
@@ -460,7 +458,7 @@ public class AutomationPackageManager {
                 throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
             }
 
-            //Implement limit on parallel deployments of multiple version of the same AP (based on its base name, i.e. without AP version happened to it)
+            //Implement limit on parallel deployments of multiple version of the same AP (based on its base name, i.e. without AP version appened to it)
             //Limit is only applied for a value greater than 0
             if (maxParallelVersionsPerPackage > 0) {
                 List<AutomationPackage> otherVersions = findOtherVersionsOfPackage(explicitOldId, objectPredicate, packageContent);
