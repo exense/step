@@ -1,19 +1,19 @@
 package step.plugins.streaming;
 
+import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;
 import step.core.collections.CollectionFactory;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
+import step.reporting.CommonMimeTypes;
 import step.streaming.common.*;
 import step.streaming.server.FilesystemStreamingResourcesStorageBackend;
 import step.streaming.server.StreamingResourcesStorageBackend;
-import step.streaming.util.ThreadPools;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -24,13 +24,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
-@Ignore
 public class StepStreamingResourceManagerTests {
 
     private File storageDirectory;
@@ -55,6 +55,7 @@ public class StepStreamingResourceManagerTests {
         storageDirectory = Files.createTempDirectory("step-streaming-storage-").toFile();
         globalContext = new GlobalContext();
         globalContext.put(CollectionFactory.class, new InMemoryCollectionFactory(new Properties()));
+        globalContext.setConfiguration(new Configuration());
     }
 
     @After
@@ -68,14 +69,14 @@ public class StepStreamingResourceManagerTests {
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(globalContext);
         StreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageDirectory);
         Function<String, StreamingResourceReference> refProducer = resourceId -> new StreamingResourceReference(URI.create("http://dummy/" + resourceId));
-        StepStreamingResourceManager manager = new StepStreamingResourceManager(globalContext, catalog, storage, refProducer, uploadContexts, ThreadPools.createPoolExecutor("ws-upload-processor"));
+        StepStreamingResourceManager manager = new StepStreamingResourceManager(globalContext, catalog, storage, refProducer, uploadContexts, Executors.newCachedThreadPool());
 
         // Simulate an upload; we basically manually do the steps that the framework normally does
         StreamingResourceUploadContext uploadContext = new StreamingResourceUploadContext();
         uploadContexts.registerContext(uploadContext);
         String executionId = new ObjectId().toHexString();
         uploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_EXECUTION_ID, executionId);
-        String resourceId = manager.registerNewResource(new StreamingResourceMetadata("dummy.txt", StreamingResourceMetadata.CommonMimeTypes.TEXT_PLAIN, true), uploadContext.contextId);
+        String resourceId = manager.registerNewResource(new StreamingResourceMetadata("dummy.txt", CommonMimeTypes.TEXT_PLAIN, true), uploadContext.contextId);
 
         // Write data
         manager.writeChunk(resourceId, new ByteArrayInputStream("line1\nline2".getBytes()), true);
@@ -89,8 +90,11 @@ public class StepStreamingResourceManagerTests {
         // Expecting: data file + index file
         assertEquals(2, findMatchingFiles(storageDirectory, resourceId + "\\..*").size());
 
-        // Just for completeness, register another resource (contextId ist currently optional)
-        String otherResourceId = manager.registerNewResource(new StreamingResourceMetadata("dummy.txt", StreamingResourceMetadata.CommonMimeTypes.TEXT_PLAIN, false), null);
+        // Just for completeness, register another resource
+        StreamingResourceUploadContext uploadContext2 = new StreamingResourceUploadContext();
+        uploadContexts.registerContext(uploadContext2);
+        uploadContext2.getAttributes().put(LiveReportingConstants.CONTEXT_EXECUTION_ID, new ObjectId().toHexString());
+        String otherResourceId = manager.registerNewResource(new StreamingResourceMetadata("dummy.txt", CommonMimeTypes.TEXT_PLAIN, false), uploadContext2.contextId);
         assertEquals(2, manager.getCatalog().accessor.stream().count());
 
         // This is what housekeeping does

@@ -46,9 +46,8 @@
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
 		<dependencies.version>2025.6.25</dependencies.version>
-		<step-grid.version>2025.10.2-68de29d78e322422c137688a</step-grid.version>
-		<step-framework.version>2025.10.2-68de32758e322422c13a072e</step-framework.version>
-		<step-api-temp-override.version>2025.10.10-68e8db10f11e4e179035ebfa</step-api-temp-override.version>
+        <step-grid.version>2025.10.15-68ef71312c8af16504f90137</step-grid.version>
+        <step-framework.version>2025.10.2-68de32758e322422c13a072e</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
@@ -114,17 +113,6 @@
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
-
-			<!-- We're temporarily forcing the step-api version here (which also sets the streaming version).
-			TODO: remove block before merging to productive branch -->
-			<!--			 reenable when needed, otherwise delete-->
-			<dependency>
-				<groupId>ch.exense.step</groupId>
-				<artifactId>step-api</artifactId>
-				<version>${step-api-temp-override.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
 
 			<dependency>
 				<groupId>ch.exense.step</groupId>
