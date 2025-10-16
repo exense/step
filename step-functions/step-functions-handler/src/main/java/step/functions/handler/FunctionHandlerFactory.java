@@ -56,7 +56,7 @@ public class FunctionHandlerFactory {
 		initialize(functionHandler, tokenSession, tokenReservationSession, properties);
 		// This initializes live reporting with a basic version (discarding data); it will normally be set to a more
 		// functional one later on, but some Unit Tests skip this and test handlers directly
-		functionHandler.setLiveReporting(new LiveReporting(null));
+		functionHandler.setLiveReporting(new LiveReporting(null, null));
 		return functionHandler;
 	}
 	

@@ -33,7 +33,7 @@ import step.attachments.AttachmentMeta;
 import step.attachments.SkippedAttachmentMeta;
 import step.attachments.StreamingAttachmentMeta;
 import step.common.managedoperations.OperationManager;
-import step.constants.StreamingConstants;
+import step.constants.LiveReportingConstants;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
@@ -73,11 +73,12 @@ import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.grid.tokenpool.Interest;
+import step.livereporting.LiveReportingContext;
+import step.livereporting.LiveReportingPlugin;
 import step.plugins.functions.types.CompositeFunction;
 import step.streaming.common.*;
 
 import java.io.StringReader;
-import java.net.URI;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -215,7 +216,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			boolean forceLocalToken =  context.getOperationMode() == OperationMode.LOCAL;
 			TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
-			StreamingResourceUploadContext uploadContext = null;
+			StreamingResourceUploadContext streamingUploadContext = null;
 
 			try {
 				String agentUrl = token.getAgent().getAgentUrl();
@@ -223,30 +224,34 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				node.setTokenId(token.getID());
 
 				Token gridToken = token.getToken();
+
 				/* Support for streaming uploads produced during this call. We create and register a new context,
 				provide the necessary information for the upload provider, and set up a listener for the context,
 				so we can populate the attachment metadata in realtime and attach it to the report node.
-				*/
 
+				Note / potential TODO:
+				This could also be "outsourced" to different classes, similarly to how the LiveReportingPlugin
+				handles the non-websocket context through before/afterReportNodeExecution hooks, then MeasurementPlugin
+				using that information. For the streaming attachments, all of the logic is concentrated in the following block.
+				*/
 				// FIXME: SED-4192 (Step 30+) This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
-                StreamingResourceUploadContexts uploadContexts = context.get(StreamingResourceUploadContexts.class);
-				if (uploadContexts != null) {
-					uploadContext = new StreamingResourceUploadContext();
-					uploadContexts.registerContext(uploadContext);
-					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID, context.getExecutionId());
-					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.VARIABLES_MANAGER, context.getVariablesManager());
-					uploadContext.getAttributes().put(StreamingConstants.AttributeNames.REPORT_NODE, node);
+				StreamingResourceUploadContexts streamingUploadContexts = context.get(StreamingResourceUploadContexts.class);
+				if (streamingUploadContexts != null) {
+					streamingUploadContext = new StreamingResourceUploadContext();
+					streamingUploadContexts.registerContext(streamingUploadContext);
+					streamingUploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_EXECUTION_ID, context.getExecutionId());
+					streamingUploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_VARIABLES_MANAGER, context.getVariablesManager());
+					streamingUploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_REPORT_NODE, node);
 					ObjectEnricher enricher = context.getObjectEnricher();
 					if (enricher != null) {
-						uploadContext.getAttributes().put(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER, enricher);
+						streamingUploadContext.getAttributes().put(LiveReportingConstants.ACCESSCONTROL_ENRICHER, enricher);
 					}
 
-                    buildInputResults.input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_BASE_URL));
-                    buildInputResults.input.getProperties().put(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH, (String) context.get(StreamingConstants.AttributeNames.WEBSOCKET_UPLOAD_PATH));
-                    buildInputResults.input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, uploadContext.contextId);
+					buildInputResults.input.getProperties().put(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL, (String) context.get(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL));
+					buildInputResults.input.getProperties().put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, (String) context.get(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH));
+					buildInputResults.input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, streamingUploadContext.contextId);
 
-
-					uploadContexts.registerListener(uploadContext.contextId, new StreamingResourceUploadContextListener() {
+					streamingUploadContexts.registerListener(streamingUploadContext.contextId, new StreamingResourceUploadContextListener() {
 
 						@Override
 						public void onResourceCreationRefused(StreamingResourceMetadata metadata, String reasonPhrase) {
@@ -280,6 +285,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 							}
 						}
 					});
+				}
+
+				LiveReportingContext liveReportingContext = LiveReportingPlugin.getLiveReportingContext(context);
+				if (liveReportingContext != null) {
+					// set up the plumbing to let the handler know where to forward measures
+					String url = liveReportingContext.getReportingUrl();
+					buildInputResults.input.getProperties().put(LiveReportingConstants.LIVEREPORTING_CONTEXT_URL, url);
 				}
 
 				if(gridToken.isLocal()) {
@@ -336,8 +348,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				if(closeFunctionGroupSessionAfterExecution) {
 					functionGroupSession.releaseTokens(true);
 				}
-				if (uploadContext != null) {
-					context.require(StreamingResourceUploadContexts.class).unregisterContext(uploadContext);
+				if (streamingUploadContext != null) {
+					context.require(StreamingResourceUploadContexts.class).unregisterContext(streamingUploadContext);
 				}
 				callChildrenArtefacts(node, testArtefact);
 			}
