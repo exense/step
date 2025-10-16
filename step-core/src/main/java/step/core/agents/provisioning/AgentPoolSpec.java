@@ -23,14 +23,32 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This class represents a configured agent pool that can be referenced in {@link AgentPoolRequirementSpec}
+ * This class represents a configured agent pool template that can be referenced in {@link AgentPoolRequirementSpec}
  */
 public class AgentPoolSpec {
 
+    /**
+     * The local name within its factory
+     */
+    public String localName;
+    /**
+     * The global name across all factories
+     */
     public String name;
+    /**
+     * The name that will be displayed in the UI
+     */
     public String displayName;
     public Map<String, String> attributes;
     public int numberOfTokens;
+    /**
+     * The unique name of the agent pool factory corresponding to the factoryUrl
+     */
+    public String factoryName;
+    /**
+     * The base Url of the agent pool factory to be used to provision agent pools using this template
+     */
+    public String factoryUrl;
     public Set<AgentPoolProvisioningParameter> supportedProvisioningParameters;
 
     public AgentPoolSpec() {
@@ -46,6 +64,7 @@ public class AgentPoolSpec {
 
     public AgentPoolSpec(String name, String displayName, Map<String, String> attributes, int numberOfTokens, Set<AgentPoolProvisioningParameter> supportedProvisioningParameters) {
         this.name = name;
+        this.localName = name;
         this.displayName = displayName;
         this.attributes = attributes;
         this.numberOfTokens = numberOfTokens;
@@ -58,6 +77,7 @@ public class AgentPoolSpec {
                 "name='" + name + '\'' +
                 ", attributes=" + attributes +
                 ", numberOfTokens=" + numberOfTokens +
+                ", factoryUrl='" + factoryUrl + '\'' +
                 '}';
     }
 }

@@ -12,6 +12,7 @@ import org.junit.Test;
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import step.attachments.FileResolver;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -27,13 +28,15 @@ import step.resources.ResourceManager;
 
 public class EmbeddedFunctionPackageImporterTest {
 
+	private FunctionAccessor functionAccessor;
+
 	@Test
 	public void test() {
 		Configuration configuration = new Configuration();
 		ResourceManager resourceManager = new LocalResourceManagerImpl();
 		FileResolver fileResolver = new FileResolver(resourceManager);
 
-		FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
+		functionAccessor = new InMemoryFunctionAccessorImpl();
 		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, new MockedGridClientImpl(), new ObjectHookRegistry());
 		functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(configuration));
 		FunctionManagerImpl functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
@@ -47,25 +50,36 @@ public class EmbeddedFunctionPackageImporterTest {
 		EmbeddedFunctionPackageImporter embeddedFunctionPackageImporter = new EmbeddedFunctionPackageImporter(functionPackageAccessor, functionPackageManager);
 		File folder = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "");
 		List<String> ids = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());
-		assertEquals(1, ids.size());
-		String packageId = ids.get(0);
-		FunctionPackage functionPackage = functionPackageManager.getFunctionPackage(packageId);
-		
+		assertEquals(2, ids.size());
+
+		FunctionPackage functionPackage = functionPackageManager.getFunctionPackage(ids.get(0));
+		boolean isLocalPackage = functionPackage.getPackageLocation().contains("local");
+		assertPackage(functionPackage, isLocalPackage);
+
+		functionPackage = functionPackageManager.getFunctionPackage(ids.get(1));
+		isLocalPackage = functionPackage.getPackageLocation().contains("local");
+		assertPackage(functionPackage, isLocalPackage);
+
+
+		List<String> ids2 = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());
+		// assert that the function package has been updated and thus the id kept
+		assertEquals(ids, ids2);
+	}
+
+	private void assertPackage(FunctionPackage functionPackage, boolean isLocal) {
 		// Assert that the function package contains the attributes defined in the meta file
 		assertEquals("value1", functionPackage.getAttribute("attribute1"));
 		assertEquals("value2", functionPackage.getAttribute("attribute2"));
 		assertEquals("Äöüßêï", functionPackage.getAttribute("attributeI18n"));
-		
+
 		List<ObjectId> functionIDs = functionPackage.getFunctions();
-		Assert.assertEquals(3, functionIDs.size());
+		Assert.assertEquals(6, functionIDs.size());
 		functionIDs.forEach(f->{
 			GeneralScriptFunction function = (GeneralScriptFunction) functionAccessor.get(f);
-			assertEquals(true, function.isExecuteLocally());
+			//Routing to controller defined at keyword level as the priority
+			boolean localExpected = (isLocal || "MyKeywordWithRoutingToController".equals(function.getAttribute(AbstractOrganizableObject.NAME)));
+			assertEquals(localExpected, function.isExecuteLocally());
 		});
-		
-		List<String> ids2 = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());
-		// assert that the function package has been updated and thus the id kept
-		assertEquals(ids, ids2);
 	}
 
 }

@@ -19,10 +19,12 @@
 package step.functions.handler;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+import ch.exense.commons.io.FileHelper;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.agent.tokenpool.TokenReservationSession;
@@ -33,10 +35,13 @@ import step.grid.filemanager.FileManagerClient;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
+import step.reporting.LiveReporting;
 
 public abstract class AbstractFunctionHandler<IN, OUT> {
 
+	public static final String AUTOMATION_PACKAGE_FILE = "$automationPackageFile";
 	private FileManagerClient fileManagerClient;
+	private LiveReporting liveReporting;
 	private ApplicationContextBuilder applicationContextBuilder;
 	private FunctionHandlerFactory functionHandlerFactory;
 	
@@ -64,6 +69,14 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 
 	protected void setFileManagerClient(FileManagerClient fileManagerClient) {
 		this.fileManagerClient = fileManagerClient;
+	}
+
+	void setLiveReporting(LiveReporting liveReporting) {
+		this.liveReporting = liveReporting;
+	}
+
+	protected LiveReporting getLiveReporting() {
+		return liveReporting;
 	}
 
 	protected void setProperties(Map<String, String> properties) {
@@ -237,6 +250,8 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		return applicationContextBuilder.runInContext(branchName, ()->{
 			@SuppressWarnings("unchecked")
 			AbstractFunctionHandler<IN, OUT> functionHandler = functionHandlerFactory.create(applicationContextBuilder.getCurrentContext(branchName).getClassLoader(), functionHandlerClassname, tokenSession, tokenReservationSession, properties);
+			// TODO: I'm not perfectly happy with this. Ideally the streamingUploads/livereporting and all other "services" should be passed at creation to FunctionHandlerFactory.create
+			functionHandler.setLiveReporting(liveReporting);
 			return functionHandler.handle(input);
 		});
 	}
@@ -320,4 +335,59 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	public abstract Class<IN> getInputPayloadClass();
 	
 	public abstract Class<OUT> getOutputPayloadClass();
+
+	/**
+	 * Retrieves the automation package file and extracts it to a temporary directory.
+	 * The result of this method is stored to the tokenReservationSession and returns the same value if called multiple
+	 * times for the same automation package file within a session.
+	 *
+	 * @param properties the input properties containing the reference to the file version of the automation package file
+	 * @return the path of the temporary directory containing the extracted automation package or null if the properties
+	 * contain no reference to an automation package
+	 * @throws FileManagerException if the package file cannot be retrieved
+	 */
+	public File retrieveAndExtractAutomationPackageFile(Map<String, String> properties) throws FileManagerException {
+		File automationPackageFile = retrieveFileVersion(AUTOMATION_PACKAGE_FILE, properties);
+		if (automationPackageFile != null) {
+			if (FileHelper.isArchive(automationPackageFile)) {
+				// Store the extracted automation package in the session. This will be deleted when the session is closed
+				TemporaryDirectory workingDirectoryFolder = tokenReservationSession.getOrDefault(automationPackageFile.getAbsolutePath(), u -> {
+					try {
+						File tempFolder = FileHelper.createTempFolder();
+						FileHelper.unzip(automationPackageFile, tempFolder);
+						return new TemporaryDirectory(tempFolder);
+					} catch (IOException e) {
+						throw new RuntimeException("Error while extracting automation package file " + automationPackageFile.getAbsolutePath(), e);
+					}
+				}, null);
+				return workingDirectoryFolder.temporaryDirectory;
+			} else {
+				throw new RuntimeException("The downloaded automation package file " + automationPackageFile + " is not an archive. This should never happen.");
+			}
+		} else {
+			return null;
+		}
+	}
+
+	private static class TemporaryDirectory implements AutoCloseable {
+
+		private final File temporaryDirectory;
+
+		public TemporaryDirectory(File temporaryDirectory) {
+			this.temporaryDirectory = temporaryDirectory;
+		}
+
+		@Override
+		public void close() {
+			FileHelper.deleteFolder(temporaryDirectory);
+		}
+	}
+
+	/**
+	 * @param properties the input properties.
+	 * @return true if the properties contain a reference to an automation package file.
+	 */
+	public boolean containsAutomationPackageFileReference(Map<String, String> properties) {
+		return properties.containsKey(AUTOMATION_PACKAGE_FILE);
+	}
 }

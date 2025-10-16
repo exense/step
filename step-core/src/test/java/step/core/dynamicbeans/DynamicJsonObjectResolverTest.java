@@ -45,7 +45,7 @@ public class DynamicJsonObjectResolverTest {
 		
 		JsonObject output = resolver.evaluate(o, null);
 		Assert.assertEquals("test", output.getString("testString"));
-		Assert.assertEquals(true, output.getBoolean("testBoolean"));
+        Assert.assertTrue(output.getBoolean("testBoolean"));
 		Assert.assertEquals(10, output.getInt("testInteger"));
 		Assert.assertEquals("test", ((JsonObject)output.getJsonArray("testArray").get(0)).getString("testString"));
 		Assert.assertEquals("test", output.getJsonObject("testRecursive2").getString("testString"));

@@ -38,6 +38,7 @@ import step.core.variables.VariablesManager;
 import step.engine.execution.ExecutionManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.BasePlugin;
+import step.expressions.ProtectedVariable;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -55,6 +56,8 @@ import java.util.stream.Collectors;
 @Plugin(dependencies = {BasePlugin.class})
 @IgnoreDuringAutoDiscovery
 public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
+
+	public static String CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS = "plugins.parameters.protected.always.allow.access";
 	
 	private static final String RESOLVER_PREFIX_PARAMETER = "parameter:";
 	private static final String PARAMETER_SCOPE_VALUE_DEFAULT = "default";
@@ -63,8 +66,8 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 	public static Logger logger = LoggerFactory.getLogger(ParameterManagerPlugin.class);
 		
 	protected ParameterManager parameterManager;
-	private boolean grantAccessToProtectedParametersWithinPlans;
 	private boolean isConfigured = false;
+	private boolean byPassProtectedParameters;
 
 	protected ParameterManagerPlugin(){
 	}
@@ -76,7 +79,6 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 
 	protected void configure(ParameterManager parameterManager) {
 		this.parameterManager = parameterManager;
-		grantAccessToProtectedParametersWithinPlans = parameterManager.getEncryptionManager() == null;
 		isConfigured = true;
 	}
 
@@ -86,7 +88,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 			return;
 		}
 		super.initializeExecutionContext(executionEngineContext, context);
-
+		byPassProtectedParameters = context.getConfiguration().getPropertyAsBoolean(CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS, false);
 		context.put(ParameterManager.class,
 				ParameterManager.copy(parameterManager, new LayeredAccessor<>(List.of(new InMemoryAccessor<>(), parameterManager.getParameterAccessor())))
 		);
@@ -114,8 +116,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		context.put(PARAMETERS_BY_SCOPE, parametersByScope);
 		
 		// Declare the global parameters including protected parameters if no encryption manager is available
-		addScopeParametersToContext(context, rootNode, parametersByScope, ParameterScope.GLOBAL,
-				PARAMETER_SCOPE_VALUE_DEFAULT, grantAccessToProtectedParametersWithinPlans, true);
+		addScopeParametersToContext(context, rootNode, parametersByScope, ParameterScope.GLOBAL, PARAMETER_SCOPE_VALUE_DEFAULT);
 	}
 	
 	@Override
@@ -127,21 +128,15 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		@SuppressWarnings("unchecked")
 		Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope = (Map<ParameterScope, Map<String, List<Parameter>>>) context.get(PARAMETERS_BY_SCOPE);
 		
-		// Declare the global protected parameters that haven't been added to the
-		// context in executionStart
-		addScopeParametersToContext(context, node, parametersByScope, ParameterScope.GLOBAL,
-				PARAMETER_SCOPE_VALUE_DEFAULT, !grantAccessToProtectedParametersWithinPlans, false);
-		
 		Map<String, String> attributes = function.getAttributes();
 		if(attributes != null) {
 			addScopeParametersToContext(context, node, parametersByScope, ParameterScope.FUNCTION,
-					attributes.get(AbstractOrganizableObject.NAME), true, true);
+					attributes.get(AbstractOrganizableObject.NAME));
 			if(attributes.containsKey(Function.APPLICATION)) {
 				addScopeParametersToContext(context, node, parametersByScope, ParameterScope.FUNCTION,
-						attributes.get(Function.APPLICATION) + "." + attributes.get(AbstractOrganizableObject.NAME),
-						true, true);
+						attributes.get(Function.APPLICATION) + "." + attributes.get(AbstractOrganizableObject.NAME));
 				addScopeParametersToContext(context, node, parametersByScope, ParameterScope.APPLICATION,
-						attributes.get(Function.APPLICATION), true, true);
+						attributes.get(Function.APPLICATION));
 			}
 		}
 	}
@@ -181,22 +176,21 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 		return parametersByScope;
 	}
 
-	private void addScopeParametersToContext(ExecutionContext context, ReportNode node, Map<ParameterScope, Map<String, List<Parameter>>> parametersByScope, 
-			ParameterScope scope, String scopeValue, boolean includeProtectedParameters, boolean includeNonProtectedParameters) {
+	private void addScopeParametersToContext(ExecutionContext context, ReportNode node, Map<ParameterScope, Map<String,
+			List<Parameter>>> parametersByScope, ParameterScope scope, String scopeValue) {
 		final VariablesManager varMan = context.getVariablesManager();
 		Map<String, List<Parameter>> scopeSpecificParameters = parametersByScope.get(scope);
 		if(scopeSpecificParameters != null) {
 			List<Parameter> scopeValueSpecificParameters = scopeSpecificParameters.get(scopeValue);
 			if(scopeValueSpecificParameters != null) {
 				scopeValueSpecificParameters.forEach(p->{
-					if((isProtected(p) && includeProtectedParameters) || (!isProtected(p) && includeNonProtectedParameters)) {
-						varMan.putVariable(node, VariableType.IMMUTABLE, p.getKey(), getParameterValue(p, getParameterManagerFromContext(context)));
-					}
+					varMan.putVariable(node, VariableType.IMMUTABLE, p.getKey(), getParameterAsBindingValue(p, getParameterManagerFromContext(context), p.getKey()));
 				});
 			}
 		}
 	}
-	
+
+	//Used internally by the SQLTableDataPool to get the password, it's fine to have decrypted values here
 	private void initializeParameterResolver(ExecutionContext context, Map<String, Parameter> parameters) {
 		final ConcurrentMap<String, String> parameterValues = parameters.values().stream().map(p -> {
 			return new SimpleEntry<String, String>(p.getKey(), getParameterValue(p, getParameterManagerFromContext(context)));
@@ -207,21 +201,17 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 				// this method from custom scripts is forbidden
 				SecurityManager.assertNotInExpressionHandler();
 				String key = e.replace(RESOLVER_PREFIX_PARAMETER, "");
-				String value = parameterValues.get(key);
-				if (value != null) {
-					return value;
-				} else {
-					return null;
-				}
+                return parameterValues.get(key);
 			} else {
 				return null;
 			}
 		});
 	}
 
-	private boolean isProtected(Parameter p) {
-		Boolean isProtectedValue = p.getProtectedValue();
-		return isProtectedValue != null && isProtectedValue;
+	private Object getParameterAsBindingValue(Parameter p, ParameterManager parameterManager, String key) {
+		String value = getParameterValue(p, parameterManager);
+		boolean isProtected = p.getProtectedValue();
+		return byPassProtectedParameters ? value : (isProtected) ? new ProtectedVariable(key, value) : value;
 	}
 
 	private String getParameterValue(Parameter p, ParameterManager parameterManager) {

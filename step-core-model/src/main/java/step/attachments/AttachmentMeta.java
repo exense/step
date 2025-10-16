@@ -28,13 +28,16 @@ import org.bson.types.ObjectId;
 		defaultImpl = AttachmentMeta.class  // Fallback type if "type" is missing
 )
 @JsonSubTypes({
-		@JsonSubTypes.Type(value = SkippedAttachmentMeta.class)
+		@JsonSubTypes.Type(value = SkippedAttachmentMeta.class),
+		@JsonSubTypes.Type(value = StreamingAttachmentMeta.class),
 })
 public class AttachmentMeta {
 	
 	ObjectId _id;
 	
 	String name;
+
+	String mimeType;
 
 	public AttachmentMeta(ObjectId id) {
 		super();
@@ -62,4 +65,11 @@ public class AttachmentMeta {
 		this.name = name;
 	}
 
+	public String getMimeType() {
+		return mimeType;
+	}
+
+	public void setMimeType(String mimeType) {
+		this.mimeType = mimeType;
+	}
 }

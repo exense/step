@@ -49,7 +49,7 @@ public class FailureHandler extends ArtefactHandler<Failure, FailureReportNode> 
         reportNode.setError(testArtefact.getMessage(), 0, true);
         String stackTrace = testArtefact.getStackTrace();
         if (stackTrace != null) {
-            reportNodeAttachmentManager.attach(stackTrace.getBytes(StandardCharsets.UTF_8), "exception.log", reportNode);
+            reportNodeAttachmentManager.attach(stackTrace.getBytes(StandardCharsets.UTF_8), "exception.log", "text/plain", reportNode);
         }
     }
 

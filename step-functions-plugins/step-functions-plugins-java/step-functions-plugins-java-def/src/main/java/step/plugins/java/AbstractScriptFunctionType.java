@@ -67,6 +67,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 
 	@Override
 	public HandlerProperties getHandlerProperties(T function, AbstractStepContext executionContext) {
+		HandlerProperties handlerProperties = super.getHandlerProperties(function, executionContext);
 		Map<String, String> props = new HashMap<>();
 		List<AutoCloseable> createdCloseables = new ArrayList<>();
 		try {
@@ -80,8 +81,9 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 				props.put(KeywordExecutor.VALIDATE_PROPERTIES, Boolean.TRUE.toString());
 			}
 
-			return new HandlerProperties(props, createdCloseables);
+			return handlerProperties.merge(props, createdCloseables);
 		} catch (Throwable e) {
+			handlerProperties.close();
 			closeRegisteredCloseable(createdCloseables);
 			throw e;
 		}
