@@ -983,7 +983,7 @@ public class AutomationPackageManager {
 
                 if (canBeDeleted) {
                     String resourceId = FileResolver.resolveResourceId(apResourceToCheck);
-                    Set<ObjectId> otherApsWithSameResource = linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, List.of(currentAutomationPackage.getId()));
+                    Set<ObjectId> otherApsWithSameResource = linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resourceId, List.of(currentAutomationPackage.getId()));
                     if (!otherApsWithSameResource.isEmpty()) {
                         log.info("Resource {} cannot be deleted, because it is reused in other automation packages: {}", apResourceToCheck, otherApsWithSameResource);
                         canBeDeleted = false;

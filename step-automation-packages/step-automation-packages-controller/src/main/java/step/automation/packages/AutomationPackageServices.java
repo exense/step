@@ -405,7 +405,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 tableService.performBulkOperation(AutomationPackageEntity.entityName, request, consumer, getSession()));
     }
 
-    //TODO: change permission
     @POST
     @Path("/resources")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -427,10 +426,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
-    //TODO: change permission
     @POST
     @Path("/resources/{id}/refresh")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Secured(right = "automation-package-write")
     public RefreshResourceResult refreshAutomationPackageResource(@PathParam("id") String resourceId){
         try {
@@ -442,14 +439,26 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
-    //TODO: change permission
     @DELETE
     @Path("/resources/{id}")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Secured(right = "automation-package-write")
     public void deleteAutomationPackageResource(@PathParam("id") String resourceId) {
         try {
             automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessPredicate());
+        } catch (AutomationPackageAccessException ex) {
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
+
+    @GET
+    @Path("/resources/{id}/automation-packages")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-read")
+    public List<AutomationPackage> getLinkedAutomationPackagesForResource(@PathParam("id") String resourceId) {
+        try {
+            return automationPackageManager.getAutomationPackageResourceManager().findAutomationPackagesByResourceId(resourceId, List.of());
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {

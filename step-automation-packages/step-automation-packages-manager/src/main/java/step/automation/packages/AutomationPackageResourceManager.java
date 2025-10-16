@@ -228,7 +228,7 @@ public class AutomationPackageResourceManager {
         }
         // Check write access to other APs using this resource. We cannot reupload the resources if they are linked with another package, which is not accessible
         List<ObjectId> ignoredApsToLookup = currentApId == null ? List.of() : List.of(currentApId);
-        for (ObjectId apId : linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, ignoredApsToLookup)) {
+        for (ObjectId apId : linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resourceId, ignoredApsToLookup)) {
             checkAccess(automationPackageAccessor.get(apId), writeAccessPredicate);
         }
 
@@ -318,7 +318,7 @@ public class AutomationPackageResourceManager {
 
         // check access for linked automation packages
         Set<AutomationPackage> linkedAutomationPackages
-                = linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resource.getId().toHexString(), new ArrayList<>())
+                = linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resource.getId().toHexString(), new ArrayList<>())
                 .stream()
                 .map(automationPackageAccessor::get)
                 .collect(Collectors.toSet());
@@ -366,7 +366,7 @@ public class AutomationPackageResourceManager {
         }
         checkAccess(resource, writeAccessPredicate);
 
-        Set<ObjectId> linkedAps = linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, List.of());
+        Set<ObjectId> linkedAps = linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resourceId, List.of());
 
         if (!linkedAps.isEmpty()) {
             throw new AutomationPackageAccessException("Resource " + getLogRepresentation(resource) +
@@ -374,6 +374,10 @@ public class AutomationPackageResourceManager {
                     linkedAps.stream().map(p -> getLogRepresentation(automationPackageAccessor.get(p))).collect(Collectors.toList())
             );
         }
+    }
+
+    public List<AutomationPackage> findAutomationPackagesByResourceId(String resourceId, List<ObjectId> ignoredApIds) {
+        return linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, ignoredApIds);
     }
 
     private static String getLogRepresentation(AutomationPackage p) {
