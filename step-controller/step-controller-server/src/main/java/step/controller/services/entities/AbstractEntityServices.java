@@ -14,6 +14,7 @@ import step.core.accessors.Accessor;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
+import step.framework.server.audit.AuditLogger;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
@@ -101,7 +102,9 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("/{id}")
     @Secured(right = "{entity}-delete")
     public void delete(@PathParam("id") String id) {
-        assertEntityIsAcceptableInContext(getEntity(id));
+        T entity = getEntity(id);
+        assertEntityIsAcceptableInContext(entity);
+        auditLog("delete", entity);
         accessor.remove(new ObjectId(id));
     }
 
@@ -123,7 +126,24 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     public T save(T entity) {
         trackEntityIfApplicable(entity);
         entity = beforeSave(entity);
-        return accessor.save(entity);
+        T result = accessor.save(entity);
+        auditLog("save", result);
+        return result;
+    }
+
+    protected void auditLog(String operation, T entity) {
+        if (entity == null) {
+            return; // any better implementation?
+        }
+        String entityName = null;
+        String projectId = null;
+        if (entity instanceof AbstractOrganizableObject) {
+            AbstractOrganizableObject a = (AbstractOrganizableObject) entity;
+            entityName = a.getAttribute(AbstractOrganizableObject.NAME);
+            projectId = a.getAttribute("project");
+        }
+        AuditLogger.modify(getHttpSession(), operation, this.entityName, entity.getId().toHexString(), entityName, projectId);
+
     }
 
     private void trackEntityIfApplicable(T entity) {
