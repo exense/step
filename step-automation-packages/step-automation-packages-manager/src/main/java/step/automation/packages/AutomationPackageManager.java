@@ -635,11 +635,6 @@ public class AutomationPackageManager {
         }
     }
 
-    public RefreshResourceResult refreshResource(String resourceId, ObjectPredicate objectPredicate, ObjectEnricher objectEnricher, String user, ObjectPredicate writeAccessPredicate){
-        // TODO: how to check and handle permissions?
-        return automationPackageResourceManager.refreshResourceAndLinkedPackages(resourceId, objectEnricher, objectPredicate, writeAccessPredicate, user, this);
-    }
-
     public AutomationPackageLibraryProvider getAutomationPackageLibraryProvider(AutomationPackageFileSource apLibrarySource,
                                                                                 ObjectPredicate predicate) throws AutomationPackageReadingException {
         return this.providersResolver.getAutomationPackageLibraryProvider(apLibrarySource, predicate, mavenConfigProvider);

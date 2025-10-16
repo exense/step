@@ -434,8 +434,23 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-write")
     public RefreshResourceResult refreshAutomationPackageResource(@PathParam("id") String resourceId){
         try {
-           return automationPackageManager.refreshResource(resourceId, getObjectPredicate(), getObjectEnricher(), getUser(), getWriteAccessPredicate());
+           return automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, getObjectEnricher(), getObjectPredicate(),  getWriteAccessPredicate(), getUser(), automationPackageManager);
         } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
+
+    //TODO: change permission
+    @DELETE
+    @Path("/resources/{id}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Secured(right = "automation-package-write")
+    public void deleteAutomationPackageResource(@PathParam("id") String resourceId) {
+        try {
+            automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessPredicate());
+        } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);

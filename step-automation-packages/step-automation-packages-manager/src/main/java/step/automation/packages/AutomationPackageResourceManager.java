@@ -250,6 +250,16 @@ public class AutomationPackageResourceManager {
         }
     }
 
+    protected void checkAccess(Resource resource, ObjectPredicate writeAccessPredicate) throws AutomationPackageAccessException {
+        if (writeAccessPredicate != null) {
+            if (!writeAccessPredicate.test(resource)) {
+                throw new AutomationPackageAccessException(
+                        "You're not allowed to edit the linked automation package " + getLogRepresentation(resource) + " from within this context"
+                );
+            }
+        }
+    }
+
     public RefreshResourceResult refreshResourceAndLinkedPackages(String resourceId,
                                                                   ObjectEnricher objectEnricher,
                                                                   ObjectPredicate objectPredicate,
@@ -349,8 +359,29 @@ public class AutomationPackageResourceManager {
         return refreshResourceResult;
     }
 
+    public void deleteResource(String resourceId, ObjectPredicate writeAccessPredicate) throws AutomationPackageAccessException {
+        Resource resource = resourceManager.getResource(resourceId);
+        if (resource == null) {
+            throw new AutomationPackageManagerException("Resource is not found by id: " + resourceId);
+        }
+        checkAccess(resource, writeAccessPredicate);
+
+        Set<ObjectId> linkedAps = linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, List.of());
+
+        if (!linkedAps.isEmpty()) {
+            throw new AutomationPackageAccessException("Resource " + getLogRepresentation(resource) +
+                    " cannot be deleted, because there are automation packages using this resource: " +
+                    linkedAps.stream().map(p -> getLogRepresentation(automationPackageAccessor.get(p))).collect(Collectors.toList())
+            );
+        }
+    }
+
     private static String getLogRepresentation(AutomationPackage p) {
         return "'" + p.getAttribute(AbstractOrganizableObject.NAME) + "'(" + p.getId() + ")";
+    }
+
+    private static String getLogRepresentation(Resource r) {
+        return "'" + r.getResourceName() + "'(" + r.getId() + ")";
     }
 
     public interface LinkedPackagesReuploader {
