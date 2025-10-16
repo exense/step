@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import groovy.lang.MissingPropertyException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -67,15 +68,16 @@ public class ExcelDataPoolImpl extends DataSet<ExcelDataPool> {
 		
 		String bookName = configuration.getFile().get();
 		String sheetName = configuration.getWorksheet().get();
-		
-		
+		String password = configuration.getPassword().get();
+
+
 		logger.debug("book: " + bookName + " sheet: " + sheetName);
 		
 		ExcelFileLookup excelFileLookup = new ExcelFileLookup(context);
 		File workBookFile = excelFileLookup.lookup(bookName);
 		
 		forWrite = configuration.getForWrite().get();
-		workbookSet = new WorkbookSet(workBookFile, ExcelFunctions.getMaxExcelSize(), forWrite, true);
+		workbookSet = new WorkbookSet(workBookFile, ExcelFunctions.getMaxExcelSize(), forWrite, true, password);
 
 		Workbook workbook = workbookSet.getMainWorkbook();
 		

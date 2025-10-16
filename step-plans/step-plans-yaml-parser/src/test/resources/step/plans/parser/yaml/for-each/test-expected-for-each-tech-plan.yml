@@ -44,6 +44,9 @@ root:
         forWrite:
           dynamic: false
           value: false
+        protect:
+          dynamic: false
+          value: false
         start:
           dynamic: false
           value: 10
@@ -95,6 +98,9 @@ root:
         forWrite:
           dynamic: false
           value: false
+        protect:
+          dynamic: false
+          value: false
         file:
           dynamic: false
           value: "resource:644fbe4e38a61e07cc3a4df9"
@@ -104,6 +110,64 @@ root:
         headers:
           dynamic: false
           value: true
+        password:
+          dynamic: false
+      maxFailedLoops:
+        dynamic: false
+      threads:
+        dynamic: false
+        value: 1
+      globalCounter:
+        dynamic: false
+        value: "gcounter"
+      userItem:
+        dynamic: false
+        value: "userId"
+      id: "644fbe4e38a61e07cc3a4df8"
+    - _class: "ForEach"
+      attributes:
+        name: "ForEach"
+      dynamicName:
+        dynamic: false
+        value: ""
+        expression: ""
+      useDynamicName: false
+      workArtefact: false
+      description: "test excel protected"
+      children: [ ]
+      skipNode:
+        dynamic: false
+        value: false
+      instrumentNode:
+        dynamic: false
+        value: false
+      continueParentNodeExecutionOnError:
+        dynamic: false
+        value: false
+      item:
+        dynamic: false
+        value: "row"
+      dataSourceType: "excel"
+      dataSource:
+        _class: "step.datapool.excel.ExcelDataPool"
+        forWrite:
+          dynamic: false
+          value: false
+        protect:
+          dynamic: false
+          value: true
+        file:
+          dynamic: false
+          value: "resource:644fbe4e38a61e07cc3a4df9"
+        worksheet:
+          dynamic: false
+          value: "myWorksheet"
+        headers:
+          dynamic: false
+          value: true
+        password:
+          dynamic: false
+          value: "123456"
       maxFailedLoops:
         dynamic: false
       threads:
@@ -143,6 +207,9 @@ root:
       dataSource:
         _class: "step.datapool.file.CSVDataPool"
         forWrite:
+          dynamic: false
+          value: false
+        protect:
           dynamic: false
           value: false
         file:
@@ -192,6 +259,9 @@ root:
         forWrite:
           dynamic: false
           value: false
+        protect:
+          dynamic: false
+          value: false
         folder:
           dynamic: false
           value: "myFolder"
@@ -234,6 +304,9 @@ root:
       dataSource:
         _class: "step.datapool.gsheet.GoogleSheetv4DataPoolConfiguration"
         forWrite:
+          dynamic: false
+          value: false
+        protect:
           dynamic: false
           value: false
         fileId:
@@ -286,6 +359,9 @@ root:
         forWrite:
           dynamic: false
           value: false
+        protect:
+          dynamic: false
+          value: false
         json:
           dynamic: false
           value: "{}"
@@ -330,6 +406,9 @@ root:
         forWrite:
           dynamic: false
           value: false
+        protect:
+          dynamic: false
+          value: false
         json:
           dynamic: false
           value: "[{},{}]"
@@ -372,6 +451,9 @@ root:
       dataSource:
         _class: "step.datapool.jdbc.SQLTableDataPoolConfiguration"
         forWrite:
+          dynamic: false
+          value: false
+        protect:
           dynamic: false
           value: false
         connectionString:
@@ -431,6 +513,9 @@ root:
       dataSource:
         _class: "step.datapool.file.FileDataPool"
         forWrite:
+          dynamic: false
+          value: false
+        protect:
           dynamic: false
           value: false
         file:

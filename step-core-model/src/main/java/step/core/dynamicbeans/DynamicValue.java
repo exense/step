@@ -64,7 +64,7 @@ public class DynamicValue<T> {
 					}
 					throw new RuntimeException(errorMsg, evalutationResult.evaluationException);
 				} else {
-					Object result = evalutationResult.getResultValue();
+					Object result = hasProtectedAccess() ? evalutationResult.getProtectedValue() : evalutationResult.getResultValue();
 					return (T) result;					
 				}
 			} else {
@@ -90,12 +90,7 @@ public class DynamicValue<T> {
 	
 	public DynamicValue<T> cloneValue() {
 		DynamicValue<T> clone = new DynamicValue<>();
-		clone.dynamic = dynamic;
-		clone.evalutationResult = null;
-		clone.expression = expression;
-		clone.expressionType = expressionType;
-		clone.value = value;
-		return clone;
+		return _cloneValue(clone);
 	}
 
 	public boolean isDynamic() {
@@ -132,5 +127,18 @@ public class DynamicValue<T> {
 	
 	public String toString() {
 		return get().toString();
+	}
+
+	protected DynamicValue<T> _cloneValue(DynamicValue<T> clone) {
+		clone.dynamic = dynamic;
+		clone.evalutationResult = null;
+		clone.expression = expression;
+		clone.expressionType = expressionType;
+		clone.value = value;
+		return clone;
+	}
+
+	protected boolean hasProtectedAccess() {
+		return false;
 	}
 }

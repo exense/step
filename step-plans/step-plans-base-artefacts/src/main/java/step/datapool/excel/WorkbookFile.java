@@ -33,7 +33,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.poi.EncryptedDocumentException;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -57,12 +56,12 @@ class WorkbookFile implements AutoCloseable {
 	}
 	
 	public WorkbookFile(File mainWorkbook, Integer maxWorkbookSize, boolean createIfNotExists) {
-		open(mainWorkbook, maxWorkbookSize, createIfNotExists, false);
+		open(mainWorkbook, maxWorkbookSize, createIfNotExists, false, null);
 	}
 	
-	public WorkbookFile(File mainWorkbook, Integer maxWorkbookSize, boolean createIfNotExists, boolean forUpdate) {
+	public WorkbookFile(File mainWorkbook, Integer maxWorkbookSize, boolean createIfNotExists, boolean forUpdate, String password) {
 		try {
-			open(mainWorkbook, maxWorkbookSize, createIfNotExists, forUpdate);
+			open(mainWorkbook, maxWorkbookSize, createIfNotExists, forUpdate, password);
 		} catch(Exception e) {
 			close();
 			throw e;
@@ -74,7 +73,7 @@ class WorkbookFile implements AutoCloseable {
 		workbook = new XSSFWorkbook();
 	}
 	
-	void open(File mainWorkbook, Integer maxWorkbookSize, boolean createIfNotExists, boolean forUpdate) {		
+	void open(File mainWorkbook, Integer maxWorkbookSize, boolean createIfNotExists, boolean forUpdate, String password) {
 		file = mainWorkbook;
 		
 		if(mainWorkbook.exists()) {
@@ -87,9 +86,13 @@ class WorkbookFile implements AutoCloseable {
 								
 				try {
 					inputStream = new BufferedInputStream(new FileInputStream(mainWorkbook));
-					workbook = WorkbookFactory.create(inputStream);
+					if (password == null || password.isBlank()) {
+						workbook = WorkbookFactory.create(inputStream);
+					} else {
+						workbook = WorkbookFactory.create(inputStream, password);
+					}
 				} catch (EncryptedDocumentException | IOException e) {
-					throw new RuntimeException("Error while opening workbook '" + mainWorkbook.getName() + "'", e);
+					throw new RuntimeException("Error while opening workbook '" + mainWorkbook.getName() + "': " + e.getMessage(), e);
 				}	
 					
 			} else {
