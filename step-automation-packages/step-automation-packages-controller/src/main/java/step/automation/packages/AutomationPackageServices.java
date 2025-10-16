@@ -428,6 +428,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
 
     @POST
     @Path("/resources/{id}/refresh")
+    @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     public RefreshResourceResult refreshAutomationPackageResource(@PathParam("id") String resourceId){
         try {
