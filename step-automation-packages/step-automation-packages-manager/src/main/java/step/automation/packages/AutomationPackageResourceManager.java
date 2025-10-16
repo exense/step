@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectEnricher;
@@ -39,8 +40,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AutomationPackageResourceManager {
 
@@ -208,7 +211,6 @@ public class AutomationPackageResourceManager {
      * @param actorUser the user triggering this update
      * @param writeAccessPredicate predicate to check if this resource can be updated in this context
      * @return the updated resource
-     * @throws IOException
      * @throws InvalidResourceFormatException in case the new resource content is invalid
      * @throws AutomationPackageAccessException in case the resource of linked AP cannot be updated in the current context
      */
@@ -240,21 +242,54 @@ public class AutomationPackageResourceManager {
     protected void checkAccess(AutomationPackage automationPackage, ObjectPredicate writeAccessPredicate) throws AutomationPackageAccessException {
         if (writeAccessPredicate != null) {
             if (!writeAccessPredicate.test(automationPackage)) {
-                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this automation package from within this context");
+                throw new AutomationPackageAccessException(
+                        automationPackage,
+                        "You're not allowed to edit the linked automation package " + getLogRepresentation(automationPackage) + " from within this context"
+                );
             }
         }
     }
 
-    public RefreshResourceResult refreshResource(String resourceId, ObjectPredicate writeAccessPredicate) {
+    public RefreshResourceResult refreshResourceAndLinkedPackages(String resourceId,
+                                                                  ObjectEnricher objectEnricher,
+                                                                  ObjectPredicate objectPredicate,
+                                                                  ObjectPredicate writeAccessPredicate,
+                                                                  String actorUser,
+                                                                  AutomationPackageManager apManager) {
         Resource resource = resourceManager.getResource(resourceId);
-        return refreshResource(resource, writeAccessPredicate);
+        return refreshResourceAndLinkedPackages(resource, writeAccessPredicate, (linkedAutomationPackages, refreshResourceResult) -> {
+            List<AutomationPackage> reuploadedPackages = new ArrayList<>(linkedAutomationPackages);
+            List<AutomationPackage> failedPackages = new ArrayList<>();
+            try {
+                apManager.redeployRelatedAutomationPackages(
+                        linkedAutomationPackages.stream().map(AbstractIdentifiableObject::getId).collect(Collectors.toList()),
+                        objectEnricher, objectPredicate, writeAccessPredicate, actorUser
+                );
+            } catch (AutomationPackageRedeployException ex) {
+                for (ObjectId failedId : ex.getFailedApsId()) {
+                    AutomationPackage failedPackage = linkedAutomationPackages.stream().filter(ap -> ap.getId().equals(failedId)).findFirst().orElse(null);
+                    if (failedPackage != null) {
+                        reuploadedPackages.remove(failedPackage);
+                        failedPackages.add(failedPackage);
+                    }
+                }
+            }
+            if (!reuploadedPackages.isEmpty()) {
+                refreshResourceResult.addInfo("The following automation packages have been reuploaded: " + reuploadedPackages.stream().map(AutomationPackageResourceManager::getLogRepresentation));
+            }
+            if (!failedPackages.isEmpty()) {
+                refreshResourceResult.addInfo("Failed to reupload the following automation packages: " + failedPackages.stream().map(AutomationPackageResourceManager::getLogRepresentation));
+            }
+        });
     }
 
-    public RefreshResourceResult refreshResource(Resource resource, ObjectPredicate writeAccessPredicate) {
+    public RefreshResourceResult refreshResourceAndLinkedPackages(Resource resource,
+                                                                  ObjectPredicate writeAccessPredicate,
+                                                                  LinkedPackagesReuploader linkedPackagesReuploader) {
         RefreshResourceResult refreshResourceResult = new RefreshResourceResult();
 
         if (!writeAccessPredicate.test(resource)) {
-            refreshResourceResult.addErrorMessage("You have no access to resource with id: " + resource.getId());
+            refreshResourceResult.addError("You have no access to resource with id: " + resource.getId());
             return refreshResourceResult;
         }
 
@@ -265,13 +300,28 @@ public class AutomationPackageResourceManager {
                 ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB
         );
         if (!supportedResourceTypesForRefresh.contains(resource.getResourceType())) {
-            refreshResourceResult.addErrorMessage("Unsupported resource type for refresh: " + resource.getResourceType());
+            refreshResourceResult.addError("Unsupported resource type for refresh: " + resource.getResourceType());
         }
         if (!MavenArtifactIdentifier.isMvnIdentifierShortString(resource.getOrigin())) {
-            refreshResourceResult.addErrorMessage("Unsupported resource origin for refresh: " + resource.getOrigin());
+            refreshResourceResult.addError("Unsupported resource origin for refresh: " + resource.getOrigin());
         }
 
-        if (refreshResourceResult.isOk()) {
+        // check access for linked automation packages
+        Set<AutomationPackage> linkedAutomationPackages
+                = linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resource.getId().toHexString(), new ArrayList<>())
+                .stream()
+                .map(automationPackageAccessor::get)
+                .collect(Collectors.toSet());
+
+        for (AutomationPackage linkedAutomationPackage : linkedAutomationPackages) {
+            try {
+                checkAccess(linkedAutomationPackage, writeAccessPredicate);
+            } catch (AutomationPackageAccessException ex){
+                refreshResourceResult.addError(ex.getMessage());
+            }
+        }
+
+        if (!refreshResourceResult.isOk()) {
             return refreshResourceResult;
         }
 
@@ -279,19 +329,34 @@ public class AutomationPackageResourceManager {
         if (!mavenArtifactIdentifier.isSnapshot()) {
             log.warn("The maven artifact {} cannot be reloaded, because it is SNAPSHOT", mavenArtifactIdentifier.toStringRepresentation());
         } else {
+            // REUPLOAD THE RESOURCE
             try {
                 // restore the automation package file from maven
                 File file = MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier, null).artifactFile;
                 try (FileInputStream fis = new FileInputStream(file)) {
                     resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
-                    return refreshResourceResult;
                 }
             } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
                 throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", ex);
             }
+
+            // REFRESH LINKED PACKAGES
+            if (linkedPackagesReuploader != null) {
+                linkedPackagesReuploader.reupload(linkedAutomationPackages, refreshResourceResult);
+            }
         }
 
         return refreshResourceResult;
+    }
+
+    private static String getLogRepresentation(AutomationPackage p) {
+        return "'" + p.getAttribute(AbstractOrganizableObject.NAME) + "'(" + p.getId() + ")";
+    }
+
+    public interface LinkedPackagesReuploader {
+        void reupload(Set<AutomationPackage> linkedAutomationPackages,
+                      RefreshResourceResult refreshResourceResult
+        );
     }
 
 }

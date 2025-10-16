@@ -27,7 +27,6 @@ public class AutomationPackageAccessException extends AutomationPackageManagerEx
         this(automationPackage, null);
     }
 
-
     public AutomationPackageAccessException(String errorMessage){
         super(errorMessage);
     }

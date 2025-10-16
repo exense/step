@@ -367,7 +367,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     }
 
     protected boolean tryToReloadResourceFromMaven(Resource resource) {
-        RefreshResourceResult refreshResourceResult = manager.getAutomationPackageResourceManager().refreshResource(resource, object -> true);
+        RefreshResourceResult refreshResourceResult = manager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resource,  object -> true, null);
         if(!refreshResourceResult.isOk()){
             log.warn("The resource {} cannot be reloaded: {}", resource.getId(), refreshResourceResult.getErrorMessages());
         }

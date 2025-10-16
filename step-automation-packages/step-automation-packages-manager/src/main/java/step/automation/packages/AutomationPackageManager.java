@@ -127,7 +127,7 @@ public class AutomationPackageManager {
         this.providersResolver = new DefaultProvidersResolver(resourceManager);
 
         this.linkedAutomationPackagesFinder = new LinkedAutomationPackagesFinder(this.resourceManager, this.automationPackageAccessor);
-        this.automationPackageResourceManager = new AutomationPackageResourceManager(resourceManager, operationMode, automationPackageAccessor, linkedAutomationPackagesFinder, mavenConfigProvider.getConfig());
+        this.automationPackageResourceManager = new AutomationPackageResourceManager(resourceManager, operationMode, automationPackageAccessor, linkedAutomationPackagesFinder, mavenConfigProvider == null ? null : mavenConfigProvider.getConfig());
         addDefaultExtensions();
     }
 
@@ -447,8 +447,6 @@ public class AutomationPackageManager {
             // validate if we have the APs with same origin
             ConflictingAutomationPackages conflictingAutomationPackages = linkedAutomationPackagesFinder.findConflictingPackagesAndCheckAccess(automationPackageProvider, objectPredicate, writeAccessPredicate, apLibraryProvider, allowUpdateOfOtherPackages, checkForSameOrigin, oldPackage, this);
 
-            List<ObjectId> apsForReupload = conflictingAutomationPackages.getApWithSameOrigin();
-            ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
             // keep old package id
             newPackage = createNewInstance(
                     automationPackageArchive.getOriginalFileName(),
@@ -489,6 +487,9 @@ public class AutomationPackageManager {
                     actorUser, objectPredicate
             );
 
+            // collect automation packages for reupload
+            List<ObjectId> apsForReupload = conflictingAutomationPackages.getApWithSameOrigin();
+
             // persist and activate automation package
             log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + async));
             boolean immediateWriteLock = tryObtainImmediateWriteLock(newPackage);
@@ -499,7 +500,7 @@ public class AutomationPackageManager {
                     ObjectId result = updateAutomationPackage(oldPackage, newPackage,
                             packageContent, staging, enricherForIncludedEntities,
                             immediateWriteLock, automationPackageArchive, apLibraryResourceString, actorUser,
-                            apsForReupload, automationPackageProvider, apLibraryProvider, enricher, objectPredicate, writeAccessPredicate);
+                            apsForReupload, enricher, objectPredicate, writeAccessPredicate);
                     return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result, conflictingAutomationPackages);
                 } else {
                     // async update
@@ -514,8 +515,8 @@ public class AutomationPackageManager {
                             updateAutomationPackage(
                                     oldPackage, finalNewPackage, packageContent, staging, enricherForIncludedEntities,
                                     false, automationPackageArchive, apLibraryResourceString, actorUser,
-                                    apsForReupload, automationPackageProvider,
-                                    apLibraryProvider, enricher, objectPredicate, writeAccessPredicate
+                                    apsForReupload,
+                                    enricher, objectPredicate, writeAccessPredicate
                             );
                         } catch (Exception e) {
                             log.error("Exception on delayed AP update", e);
@@ -561,12 +562,10 @@ public class AutomationPackageManager {
 
 
     public void redeployRelatedAutomationPackages(List<ObjectId> automationPackagesForRedeploy,
-                                                  AutomationPackageArchiveProvider packageArchiveProvider,
-                                                  AutomationPackageLibraryProvider apLibProvider,
                                                   ObjectEnricher objectEnricher,
                                                   ObjectPredicate objectPredicate,
                                                   ObjectPredicate writeAccessPredicate,
-                                                  String actorUser) {
+                                                  String actorUser) throws AutomationPackageRedeployException {
         if (automationPackagesForRedeploy == null) {
             return;
         }
@@ -576,20 +575,29 @@ public class AutomationPackageManager {
                 log.info("Redeploying the AP {}", objectId.toHexString());
                 AutomationPackage oldPackage = automationPackageAccessor.get(objectId);
 
-                // here we call the `createOrUpdateAutomationPackage` method with checkForSameOrigin=false to avoid infinite recursive loop
-                // access checker is null here, because we have checked the permissions before
-                createOrUpdateAutomationPackage(true, false, objectId, packageArchiveProvider, oldPackage.getVersion(),
-                        oldPackage.getActivationExpression() == null ? null : oldPackage.getActivationExpression().getScript(),
-                        false, objectEnricher, objectPredicate, writeAccessPredicate, false, apLibProvider, actorUser, true, false);
+                if (!FileResolver.isResource(oldPackage.getAutomationPackageResource())) {
+                    throw new AutomationPackageManagerException("Automation package " + oldPackage.getId() + " has no linked resource and cannot be redeployed");
+                }
+
+                try (AutomationPackageLibraryProvider oldPackageLibProvider = getAutomationPackageLibraryProvider(AutomationPackageFileSource.withResourceId(FileResolver.resolveResourceId(oldPackage.getAutomationPackageLibraryResource())), objectPredicate);
+                     AutomationPackageArchiveProvider oldPackageArchiveProvider = getAutomationPackageArchiveProvider(AutomationPackageFileSource.withResourceId(FileResolver.resolveResourceId(oldPackage.getAutomationPackageResource())), objectPredicate, oldPackageLibProvider)) {
+
+                    // here we call the `createOrUpdateAutomationPackage` method with checkForSameOrigin=false to avoid infinite recursive loop
+                    createOrUpdateAutomationPackage(true, false, objectId, oldPackageArchiveProvider, oldPackage.getVersion(),
+                            oldPackage.getActivationExpression() == null ? null : oldPackage.getActivationExpression().getScript(),
+                            false, objectEnricher, objectPredicate, writeAccessPredicate, false, oldPackageLibProvider,
+                            actorUser, true, false);
+                }
             } catch (Exception e) {
-                log.error("Failed to redeploy the automation package {}: {}", objectId.toHexString(), e.getMessage());
+                log.error("Failed to redeploy the automation package {}: {}", objectId, e.getMessage(), e);
                 failedAps.add(objectId);
             }
         }
         if (!failedAps.isEmpty()) {
-            throw new AutomationPackageManagerException("Unable to reupload the old automation packages: " + failedAps.stream().map(ap -> ap.toHexString()).collect(Collectors.toList()));
+            throw new AutomationPackageRedeployException(failedAps);
         }
     }
+
 
     public String createAutomationPackageResource(String resourceType, AutomationPackageFileSource fileSource,
                                                   ObjectPredicate predicate, ObjectEnricher enricher,
@@ -628,10 +636,8 @@ public class AutomationPackageManager {
     }
 
     public RefreshResourceResult refreshResource(String resourceId, ObjectPredicate objectPredicate, ObjectEnricher objectEnricher, String user, ObjectPredicate writeAccessPredicate){
-        // TODO: check linked packages
-        Set<ObjectId> linkedAutomationPackagesIds = linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, new ArrayList<>());
         // TODO: how to check and handle permissions?
-        return automationPackageResourceManager.refreshResource(resourceId, writeAccessPredicate);
+        return automationPackageResourceManager.refreshResourceAndLinkedPackages(resourceId, objectEnricher, objectPredicate, writeAccessPredicate, user, this);
     }
 
     public AutomationPackageLibraryProvider getAutomationPackageLibraryProvider(AutomationPackageFileSource apLibrarySource,
@@ -672,7 +678,6 @@ public class AutomationPackageManager {
                                              boolean alreadyLocked, AutomationPackageArchive automationPackageArchive,
                                              String apLibraryResource, String actorUser,
                                              List<ObjectId> additionalPackagesForRedeploy,
-                                             AutomationPackageArchiveProvider apArchiveProvider, AutomationPackageLibraryProvider apLibProvider,
                                              ObjectEnricher baseObjectEnricher, ObjectPredicate objectPredicate,
                                              ObjectPredicate writeAccessPredicate) {
         ObjectId mainUpdatedAp = null;
@@ -701,7 +706,9 @@ public class AutomationPackageManager {
             automationPackageAccessor.save(newPackage);
         }
 
-        redeployRelatedAutomationPackages(additionalPackagesForRedeploy, apArchiveProvider, apLibProvider, baseObjectEnricher, objectPredicate, writeAccessPredicate, actorUser);
+        // TODO: IMPORTANT - check in the main branch: why we use the apArchiveProvider and apLibProvider from the main AP here?
+        redeployRelatedAutomationPackages(additionalPackagesForRedeploy, baseObjectEnricher, objectPredicate, writeAccessPredicate, actorUser);
+
         return mainUpdatedAp;
     }
 

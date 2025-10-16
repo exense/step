@@ -20,32 +20,25 @@
  */
 package step.automation.packages;
 
-import java.util.ArrayList;
+import org.bson.types.ObjectId;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class RefreshResourceResult {
-    private boolean ok = true;
-    private final List<String> errorMessages = new ArrayList<>();
-    private final List<String> infoMessages = new ArrayList<>();
+public class AutomationPackageRedeployException extends AutomationPackageManagerException {
 
-    public void addError(String errorMessage) {
-        ok = false;
-        errorMessages.add(errorMessage);
+    private final List<ObjectId> failedApsId;
+
+    public AutomationPackageRedeployException(List<ObjectId> failedApsIds) {
+        super(createErrorMessage(failedApsIds));
+        this.failedApsId = failedApsIds;
     }
 
-    public void addInfo(String infoMessage){
-        infoMessages.add(infoMessage);
+    private static String createErrorMessage(List<ObjectId> failedApsIds){
+        return "Unable to reupload the automation packages: " + failedApsIds.stream().map(ObjectId::toHexString).collect(Collectors.toList());
     }
 
-    public boolean isOk() {
-        return ok;
-    }
-
-    public List<String> getErrorMessages() {
-        return errorMessages;
-    }
-
-    public List<String> getInfoMessages() {
-        return infoMessages;
+    public List<ObjectId> getFailedApsId() {
+        return failedApsId;
     }
 }
