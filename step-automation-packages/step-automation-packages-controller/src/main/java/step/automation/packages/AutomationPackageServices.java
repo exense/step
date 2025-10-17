@@ -47,6 +47,7 @@ import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
+import step.resources.Resource;
 
 import java.io.InputStream;
 import java.util.List;
@@ -415,11 +416,12 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                      @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                      @FormDataParam("mavenSnippet") String mavenSnippet){
         try {
-            return automationPackageManager.createAutomationPackageResource(
+            Resource resource = automationPackageManager.createAutomationPackageResource(
                     resourceType,
                     getFileSource(uploadedInputStream, fileDetail, mavenSnippet, "Invalid maven snippet", null),
                     getObjectPredicate(), getObjectEnricher(), getUser(), getWriteAccessPredicate()
             );
+            return resource == null ? null : resource.getId().toHexString();
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {

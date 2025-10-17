@@ -420,7 +420,8 @@ public class AutomationPackageManager {
                                                                          AutomationPackageArchiveProvider automationPackageProvider,
                                                                          String apVersion, String activationExpr,
                                                                          boolean isLocalPackage,
-                                                                         ObjectEnricher enricher, ObjectPredicate objectPredicate,
+                                                                         ObjectEnricher enricher,
+                                                                         ObjectPredicate objectPredicate,
                                                                          ObjectPredicate writeAccessPredicate,
                                                                          boolean async,
                                                                          AutomationPackageLibraryProvider apLibraryProvider,
@@ -468,7 +469,7 @@ public class AutomationPackageManager {
             // TODO: potential issue - in code below we use the accessChecker in uploadApResourceIfRequired and uploadKeywordLibrary and if the check blocks the uploadKeywordLibrary the uploaded ap resource will not be cleaned up
             // always upload the automation package file as resource
             // NOTE: for the main ap resource don't need to enrich the resource with automation package id (because the same resource can be shared between several automation packages) - so we use simple enricher
-            automationPackageResourceManager.uploadApResourceIfRequired(
+            automationPackageResourceManager.uploadOrReuseApResource(
                     automationPackageProvider, automationPackageArchive, newPackage,
                     enricher, actorUser, objectPredicate, writeAccessPredicate,
                     true
@@ -476,11 +477,12 @@ public class AutomationPackageManager {
 
             // upload automation package library if provided
             // NOTE: for ap lib we don't need to enrich the resource with automation package id (because the same lib can be shared between several automation packages) - so we use simple enricher
-            String apLibraryResourceString = automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
+            Resource apLibResource = automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
                     apLibraryProvider, newPackage,
                     enricher, objectPredicate, actorUser, writeAccessPredicate,
                     true
             );
+            String apLibraryResourceString = apLibResource == null ? null : FileResolver.RESOURCE_PREFIX + apLibResource.getId().toHexString();
 
             fillStaging(newPackage, staging, packageContent, oldPackage,
                     enricherForIncludedEntities, automationPackageArchive, activationExpr, apLibraryResourceString,
@@ -599,7 +601,7 @@ public class AutomationPackageManager {
     }
 
 
-    public String createAutomationPackageResource(String resourceType, AutomationPackageFileSource fileSource,
+    public Resource createAutomationPackageResource(String resourceType, AutomationPackageFileSource fileSource,
                                                   ObjectPredicate predicate, ObjectEnricher enricher,
                                                   String actorUser,
                                                   ObjectPredicate accessChecker) throws AutomationPackageManagerException {
@@ -619,7 +621,7 @@ public class AutomationPackageManager {
                     // We upload the new main resource for AP. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
                     try (AutomationPackageArchiveProvider automationPackageArchiveProvider = getAutomationPackageArchiveProvider(fileSource, predicate, new NoAutomationPackageLibraryProvider())) {
                         AutomationPackageArchive apArchive = automationPackageArchiveProvider.getAutomationPackageArchive();
-                        return automationPackageResourceManager.uploadApResourceIfRequired(
+                        return automationPackageResourceManager.uploadOrReuseApResource(
                                 automationPackageArchiveProvider, apArchive, null,
                                 enricher, actorUser, predicate, accessChecker,
                                 false

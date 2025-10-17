@@ -66,14 +66,16 @@ public class AutomationPackageResourceManager {
         this.mavenConfig = mavenConfig;
     }
 
-    public String uploadOrReuseAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider, AutomationPackage newPackage,
-                                                        ObjectEnricher enricher, ObjectPredicate objectPredicate,
+    public Resource uploadOrReuseAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider,
+                                                        AutomationPackage automationPackageToBeLinkedWithLib,
+                                                        ObjectEnricher enricher,
+                                                        ObjectPredicate objectPredicate,
                                                         String actorUser, ObjectPredicate accessChecker, boolean allowToReuseOldResource) {
-        String apName = newPackage == null ? "" : newPackage.getAttribute(AbstractOrganizableObject.NAME);
+        String apName = automationPackageToBeLinkedWithLib == null ? "" : automationPackageToBeLinkedWithLib.getAttribute(AbstractOrganizableObject.NAME);
         String apLibraryResourceString = null;
+        Resource uploadedResource = null;
         try {
             File apLibrary = apLibProvider.getAutomationPackageLibrary();
-            Resource uploadedResource = null;
             if (apLibrary != null) {
                 try (FileInputStream fis = new FileInputStream(apLibrary)) {
                     // for isolated execution we always use the isolatedAp resource type to support auto cleanup after execution
@@ -100,7 +102,7 @@ public class AutomationPackageResourceManager {
                             // for modifiable resources (i.e. SNAPSHOTS) we can reuse the old resource id and metadata, but we need to update the content if a new version was downloaded
                             uploadedResource = updateExistingResourceContentAndPropagate(apLibrary.getName(),
                                     apName,
-                                    newPackage.getId(),
+                                    automationPackageToBeLinkedWithLib == null ? null : automationPackageToBeLinkedWithLib.getId(),
                                     fis, apLibProvider.getSnapshotTimestamp(), oldResource,
                                     actorUser, accessChecker
                             );
@@ -118,9 +120,9 @@ public class AutomationPackageResourceManager {
                         );
                         log.info("The new automation package library ({}) has been uploaded as ({})", apLibProvider, uploadedResource.getId().toHexString());
                     }
-                    apLibraryResourceString = FileResolver.RESOURCE_PREFIX + uploadedResource.getId().toString();
-                    if(newPackage != null) {
-                        newPackage.setAutomationPackageLibraryResource(apLibraryResourceString);
+                    if(automationPackageToBeLinkedWithLib != null) {
+                        apLibraryResourceString = FileResolver.RESOURCE_PREFIX + uploadedResource.getId().toString();
+                        automationPackageToBeLinkedWithLib.setAutomationPackageLibraryResource(apLibraryResourceString);
                     }
                 }
             }
@@ -130,16 +132,16 @@ public class AutomationPackageResourceManager {
             log.error("Unable to upload the automation package library", e);
             throw new AutomationPackageManagerException("Unable to upload the automation package library: " + apLibProvider, e);
         }
-        return apLibraryResourceString;
+        return uploadedResource;
     }
 
-    public String uploadApResourceIfRequired(AutomationPackageArchiveProvider apProvider,
-                                             AutomationPackageArchive automationPackageArchive,
-                                             AutomationPackage newPackage,
-                                             ObjectEnricher enricher, String actorUser,
-                                             ObjectPredicate objectPredicate,
-                                             ObjectPredicate writeAccessPredicate,
-                                             boolean allowToReuseOldResource) {
+    public Resource uploadOrReuseApResource(AutomationPackageArchiveProvider apProvider,
+                                            AutomationPackageArchive automationPackageArchive,
+                                            AutomationPackage automationPackageToBeLinkedWithResource,
+                                            ObjectEnricher enricher, String actorUser,
+                                            ObjectPredicate objectPredicate,
+                                            ObjectPredicate writeAccessPredicate,
+                                            boolean allowToReuseOldResource) {
         ResourceOrigin apOrigin = apProvider.getOrigin();
         File originalFile = automationPackageArchive.getOriginalFile();
         if (originalFile == null) {
@@ -153,7 +155,7 @@ public class AutomationPackageResourceManager {
             existingResource = apProvider.lookupExistingResources(resourceManager, objectPredicate);
         }
 
-        String apName = newPackage == null ? "" : newPackage.getAttribute(AbstractOrganizableObject.NAME);
+        String apName = automationPackageToBeLinkedWithResource == null ? "" : automationPackageToBeLinkedWithResource.getAttribute(AbstractOrganizableObject.NAME);
         if (existingResource != null && !existingResource.isEmpty()) {
             resource = existingResource.get(0);
 
@@ -167,7 +169,7 @@ public class AutomationPackageResourceManager {
                 try (FileInputStream is = new FileInputStream(originalFile)) {
                     resource = updateExistingResourceContentAndPropagate(
                             originalFile.getName(),
-                            apName, newPackage == null ? null : newPackage.getId(),
+                            apName, automationPackageToBeLinkedWithResource == null ? null : automationPackageToBeLinkedWithResource.getId(),
                             is, apProvider.getSnapshotTimestamp(), resource,
                             actorUser, writeAccessPredicate
                     );
@@ -189,13 +191,12 @@ public class AutomationPackageResourceManager {
             }
         }
 
-        String resourceString = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-        log.info("The resource has been been linked with AP '{}': {}", apName, resourceString);
-
-        if (newPackage != null) {
-            newPackage.setAutomationPackageResource(resourceString);
+        if (automationPackageToBeLinkedWithResource != null) {
+            String resourceString = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
+            log.info("The resource has been been linked with AP '{}': {}", apName, resourceString);
+            automationPackageToBeLinkedWithResource.setAutomationPackageResource(resourceString);
         }
-        return resourceString;
+        return resource;
     }
 
     /**
