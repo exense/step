@@ -35,7 +35,7 @@ public class RemoteAutomationPackageClientImplTest {
 
 
         AutomationPackageUpdateResult ver1 = automationPackageClient.createOrUpdateAutomationPackage(fileSource, null, "v1", "env == DEV",
-                Map.of("PlanAttr1", "PlanAttr1Value"), Map.of("FunctionAttr1", "FunctionAttr1Value"), Map.of("OS", "LINUX"),null, true, false);
+                null, Map.of("FunctionAttr1", "FunctionAttr1Value"), Map.of("OS", "LINUX"),null, true, false);
 
 
     }

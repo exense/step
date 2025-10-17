@@ -350,7 +350,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam("tokenSelectionCriteria") String tokenSelectionCriteriaAsString,
                                                     @FormDataParam("executeFunctionsLocally") boolean executeFunctionsLocally) {
         try {
-            ParsedRequestParamteres parsedRequestParamteres = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
+            ParsedRequestParamteres parsedRequestParamteres = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
+                    apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
             AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
                     .withApSource(parsedRequestParamteres.apFileSource).withApLibrarySource(parsedRequestParamteres.apLibrarySource)
@@ -414,12 +415,16 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     private Map<String, String> deserializeFormDataParamToMapOfStrings(String stringValue, String fieldName) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            return objectMapper.readValue(stringValue, new TypeReference<Map<String, String>>() {});
-        } catch (JsonProcessingException e) {
-            throw new AutomationPackageManagerException("Cannot deserialize " + fieldName + ". Reason: " + e.getMessage());
+        if (stringValue != null) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            try {
+                return objectMapper.readValue(stringValue, new TypeReference<Map<String, String>>() {
+                });
+            } catch (JsonProcessingException e) {
+                throw new AutomationPackageManagerException("Cannot deserialize " + fieldName + ". Reason: " + e.getMessage());
+            }
         }
+        return null;
     }
 
     @GET
