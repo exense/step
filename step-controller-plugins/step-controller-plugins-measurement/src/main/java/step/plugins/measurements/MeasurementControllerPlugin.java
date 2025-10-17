@@ -5,9 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.controller.grid.GridPlugin;
 import step.core.GlobalContext;
+import step.core.collections.Collection;
+import step.core.entities.EntityManager;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
+import step.framework.server.tables.Table;
+import step.framework.server.tables.TableRegistry;
 import step.grid.Grid;
 import step.grid.GridReportBuilder;
 import step.grid.TokenWrapperState;
@@ -18,6 +22,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static step.plugins.measurements.MeasurementPlugin.*;
+
 @Plugin(dependencies = {GridPlugin.class})
 public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
@@ -25,12 +31,50 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
 	public static String GridGaugeName = "step_grid_tokens";
 	public static String ThreadgroupGaugeName = "step_threadgroup";
+	public static String ReportMeasurementsTableName = "reportMeasurements";
 	private GaugeCollectorRegistry gaugeCollectorRegistry;
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 		super.serverStart(context);
+
+		Collection<Measurement> collection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
+		context.get(TableRegistry.class).register(ReportMeasurementsTableName,
+				new Table<>(collection, null, false)
+						.withResultItemTransformer((m, session) -> convertToPseudoMeasure(m))
+		);
+
 		initGaugeCollectorRegistry(context);
+	}
+
+	// FIXME: maybe these should be moved to the MeasurementPlugin so they are consolidated in a single place (reason: if new stuff gets added there, it may be easy to forget to add it to the exclusions here)
+	private static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE);
+	private static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", "project", "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID, ORIGIN, RN_STATUS, STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
+	/*
+	 This will convert a "full", flattened, measurement back
+	 to a format that's structurally identical to a measure.
+	 IOW, the (JSON) serialized result should be deserializable back to a Measure.
+	 */
+	private Measurement convertToPseudoMeasure(Measurement in) {
+		Measurement out = new Measurement();
+		Map<String, Object> data = new HashMap<>();
+		for (Map.Entry<String, Object> entry : in.entrySet()) {
+			String key = entry.getKey();
+			if (MEASURE_FIELDS.contains(key)) {
+				if (key.equals(VALUE)) {
+					// special case: map "value" back to "duration"
+					out.put("duration", entry.getValue());
+				} else {
+					out.put(key, entry.getValue());
+				}
+			} else if (!MEASURE_NOT_DATA_KEYS.contains(key)) {
+				data.put(key, entry.getValue());
+			}
+		}
+		if (!data.isEmpty()) {
+			out.put("data", data);
+		}
+		return out;
 	}
 
 	protected void initGaugeCollectorRegistry(GlobalContext context) {
