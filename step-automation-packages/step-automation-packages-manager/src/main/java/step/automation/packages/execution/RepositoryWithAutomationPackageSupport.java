@@ -402,12 +402,16 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 FileInputStream kwLibFis = (keywordLibraryFile != null && keywordLibraryFile.getFile() != null) ?
                      new FileInputStream(keywordLibraryFile.getFile()) : null) {
             // the apVersion is null (we always use the actual version), because we only create the isolated in-memory AP here
-            inMemoryPackageManager.createAutomationPackage(
-                    AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()),
-                    null, null,
-                    (kwLibFis != null) ? AutomationPackageFileSource.withInputStream(kwLibFis, keywordLibraryFile.getFile().getName()): null,
-                    actorUser, false, true, enricher, predicate, o -> true //this is read only and inMemory anyway
-            );
+            AutomationPackageUpdateParameterBuilder paramBuilder = new AutomationPackageUpdateParameterBuilder()
+                    .withAllowUpdate(false)
+                    .withApSource(AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()))
+                    .withEnricher(enricher).withObjectPredicate(predicate).withWriteAccessPredicate(o -> true) //this is read only and inMemory anyway
+                    .withActorUser(actorUser);
+
+            if (kwLibFis != null) {
+                paramBuilder.withApLibrarySource(AutomationPackageFileSource.withInputStream(kwLibFis, keywordLibraryFile.getFile().getName()));
+            }
+            inMemoryPackageManager.createOrUpdateAutomationPackage(paramBuilder.build());
         } catch (IOException e) {
             throw new AutomationPackageManagerException("Cannot read the AP file: " + apFile.getFile().getName());
         }

@@ -19,7 +19,9 @@
 package step.automation.packages;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.api.client.http.HttpStatusCodes;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,7 +44,6 @@ import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
-import step.core.objectenricher.ObjectPredicate;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
@@ -62,7 +63,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     protected TableService tableService;
     protected XmlMapper xmlMapper;
 
-    private static String COLLISION_ERROR_NAME = "Automation Package Conflict";
+    private static final String COLLISION_ERROR_NAME = "Automation Package Conflict";
 
     @PostConstruct
     public void init() throws Exception {
@@ -108,31 +109,40 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     /**
-     * @param apVersion
-     * @param activationExpression
-     * @param automationPackageInputStream
-     * @param fileDetail
-     * @param apMavenSnippet
-     * Example:
-     * <dependency>
-     *     <groupId>junit</groupId>
-     *     <artifactId>junit</artifactId>
-     *     <version>4.13.2</version>
-     *     <scope>test</scope>
-     *     <classifier>tests</scope>
-     * </dependency>
-     * @param apLibraryInputStream
-     * @param apLibraryFileDetail
-     * @param apLibraryMavenSnippet
-     * @return
+     * Convening service to only allow creation of a new package
+     * @param apVersion the version to be set for this AP
+     * @param activationExpression activation expression to selected entities of this AP during executions
+     * @param allowUpdateOfOtherPackages if other AP would be modified (because they use the same snapshot artefacts that has a new version) this flag must be true to allow the update
+     * @param automationPackageInputStream AP package file as input stream
+     * @param fileDetail FormDataContentDisposition of the file when provided as inputstream
+     * @param apMavenSnippet maven snippet of the package when deploying from a maven repository
+     *       Example:
+     *      <dependency>
+     *           <groupId>junit</groupId>
+     *          <artifactId>junit</artifactId>
+     *           <version>4.13.2</version>
+     *           <scope>test</scope>
+     *           <classifier>tests</scope>
+     *       </dependency>
+
+     * @param apLibraryInputStream AP library file as input stream
+     * @param apLibraryFileDetail FormDataContentDisposition of the library file when provided as input stream
+     * @param apLibraryMavenSnippet maven snippet of the library when deploying from a maven repository
+     * @param apResourceId id of the package resource when deploying with an existing resource
+     * @param apLibraryResourceId id of the library resource when deploying with an existing resource
+     * @param plansAttributesAsString Serialized Map of plan attributes
+     * @param functionsAttributesAsString     Serialized Map of function attributes
+     * @param tokenSelectionCriteriaAsString Serialized Map of functions token selection criteria
+     * @param executeFunctionsLocally whether functions should be executed locally
+     * @return the ID of the created AP
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public String createAutomationPackage(@QueryParam("version") String apVersion,
-                                          @QueryParam("activationExpr") String activationExpression,
-                                          @QueryParam("allowUpdateOfOtherPackages") Boolean allowUpdateOfOtherPackages,
+    public String createAutomationPackage(@FormDataParam("version") String apVersion,
+                                          @FormDataParam("activationExpr") String activationExpression,
+                                          @FormDataParam("allowUpdateOfOtherPackages") boolean allowUpdateOfOtherPackages,
                                           @FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @FormDataParam("apMavenSnippet") String apMavenSnippet,
@@ -140,23 +150,37 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                           @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
                                           @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                           @FormDataParam("apResourceId") String apResourceId,
-                                          @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
+                                          @FormDataParam("apLibraryResourceId") String apLibraryResourceId,
+                                          @FormDataParam("plansAttributes") String plansAttributesAsString,
+                                          @FormDataParam("functionsAttributes") String functionsAttributesAsString,
+                                          @FormDataParam("tokenSelectionCriteria") String tokenSelectionCriteriaAsString,
+                                          @FormDataParam("executeFunctionsLocally") boolean executeFunctionsLocally) {
         try {
-            AutomationPackageFileSource apFileSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for automation package: ", apResourceId);
-            AutomationPackageFileSource apLibrarySource = getFileSource(apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ", apLibraryResourceId);
+            ParsedRequestParamteres parsedRequestParamteres = getParsedRequestParamteres(automationPackageInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
-            ObjectId id = automationPackageManager.createAutomationPackage(
-                    apFileSource,
-                    apVersion, activationExpression,
-                    apLibrarySource, getUser(),
-                    allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true,
-                    getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate());
+            AutomationPackageUpdateParameter parameters = getAutomationPackageUpdateParameterBuilder()
+                    .withAllowCreate(true).withAllowUpdate(false).withAsync(false)
+                    .withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages).withCheckForSameOrigin(true)
+                    .withApSource(parsedRequestParamteres.apFileSource).withApLibrarySource(parsedRequestParamteres.apLibrarySource)
+                    .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
+                    .withPlansAttributes(parsedRequestParamteres.plansAttributes).withFunctionsAttributes(parsedRequestParamteres.functionsAttributes)
+                    .withTokenSelectionCriteria(parsedRequestParamteres.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
+                    .build();
+            ObjectId id = automationPackageManager.createOrUpdateAutomationPackage(parameters).getId();
             return id == null ? null : id.toString();
         } catch (AutomationPackageCollisionException e){
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);
         }
+    }
+
+    private AutomationPackageUpdateParameterBuilder getAutomationPackageUpdateParameterBuilder() {
+        return new AutomationPackageUpdateParameterBuilder()
+                .withEnricher(getObjectEnricher())
+                .withObjectPredicate(getObjectPredicate())
+                .withWriteAccessPredicate(getWriteAccessPredicate())
+                .withActorUser(getUser());
     }
 
     protected MavenArtifactIdentifier getMavenArtifactIdentifierFromXml(String mavenArtifactXml) throws JsonProcessingException {
@@ -245,31 +269,15 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     @PUT
-    @Path("/{id}/metadata")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right = "automation-package-write")
-    public void updateAutomationPackageMetadata(@PathParam("id") String id,
-                                                @QueryParam("activationExpr") String activationExpression,
-                                                @QueryParam("version") String apVersion) {
-        try {
-            automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate(), getWriteAccessPredicate());
-        } catch (AutomationPackageAccessException ex){
-            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
-        } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
-        }
-    }
-
-    @PUT
     @Path("/{id}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     public AutomationPackageUpdateResult updateAutomationPackage(@PathParam("id") String id,
-                                                                 @QueryParam("async") Boolean async,
-                                                                 @QueryParam("version") String apVersion,
-                                                                 @QueryParam("activationExpr") String activationExpression,
-                                                                 @QueryParam("allowUpdateOfOtherPackages") Boolean allowUpdateOfOtherPackages,
+                                                                 @FormDataParam("async") boolean async,
+                                                                 @FormDataParam("version") String apVersion,
+                                                                 @FormDataParam("activationExpr") String activationExpression,
+                                                                 @FormDataParam("allowUpdateOfOtherPackages") boolean allowUpdateOfOtherPackages,
                                                                  @FormDataParam("file") InputStream uploadedInputStream,
                                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                                  @FormDataParam("apMavenSnippet") String apMavenSnippet,
@@ -277,25 +285,22 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
                                                                  @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                                                  @FormDataParam("apResourceId") String apResourceId,
-                                                                 @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
+                                                                 @FormDataParam("apLibraryResourceId") String apLibraryResourceId,
+                                                                 @FormDataParam("plansAttributes") String plansAttributesAsString,
+                                                                 @FormDataParam("functionsAttributes") String functionsAttributesAsString,
+                                                                 @FormDataParam("tokenSelectionCriteria") String tokenSelectionCriteriaAsString,
+                                                                 @FormDataParam("executeFunctionsLocally") boolean executeFunctionsLocally) {
         try {
-            AutomationPackageFileSource apFileSource = getFileSource(
-                    uploadedInputStream, fileDetail,
-                    apMavenSnippet, "Invalid maven snippet for automation package: ",
-                    apResourceId
-            );
-            AutomationPackageFileSource apLibrarySource = getFileSource(
-                    apLibraryInputStream, apLibraryFileDetail,
-                    apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ",
-                    apLibraryResourceId
-            );
+            ParsedRequestParamteres parsedRequestParamteres = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
-            return automationPackageManager.createOrUpdateAutomationPackage(
-                    true, false, new ObjectId(id),
-                    apFileSource, apLibrarySource,
-                    apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate(), async != null && async,
-                    getUser(), allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
+            AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder().withAllowCreate(false).withExplicitOldId(new ObjectId(id))
+                    .withApSource(parsedRequestParamteres.apFileSource).withApLibrarySource(parsedRequestParamteres.apLibrarySource)
+                    .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
+                    .withAsync(async).withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
+                    .withPlansAttributes(parsedRequestParamteres.plansAttributes).withFunctionsAttributes(parsedRequestParamteres.functionsAttributes)
+                    .withTokenSelectionCriteria(parsedRequestParamteres.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
+                    .build();
+            return automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageCollisionException e) {
@@ -328,10 +333,10 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
-    public Response createOrUpdateAutomationPackage(@QueryParam("async") Boolean async,
-                                                    @QueryParam("version") String apVersion,
-                                                    @QueryParam("allowUpdateOfOtherPackages") Boolean allowUpdateOfOtherPackages,
-                                                    @QueryParam("activationExpr") String activationExpression,
+    public Response createOrUpdateAutomationPackage(@FormDataParam("async") boolean async,
+                                                    @FormDataParam("version") String apVersion,
+                                                    @FormDataParam("allowUpdateOfOtherPackages") boolean allowUpdateOfOtherPackages,
+                                                    @FormDataParam("activationExpr") String activationExpression,
                                                     @FormDataParam("file") InputStream uploadedInputStream,
                                                     @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                     @FormDataParam("apMavenSnippet") String apMavenSnippet,
@@ -339,26 +344,22 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
                                                     @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                                     @FormDataParam("apResourceId") String apResourceId,
-                                                    @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
+                                                    @FormDataParam("apLibraryResourceId") String apLibraryResourceId,
+                                                    @FormDataParam("plansAttributes") String plansAttributesAsString,
+                                                    @FormDataParam("functionsAttributes") String functionsAttributesAsString,
+                                                    @FormDataParam("tokenSelectionCriteria") String tokenSelectionCriteriaAsString,
+                                                    @FormDataParam("executeFunctionsLocally") boolean executeFunctionsLocally) {
         try {
-            AutomationPackageFileSource apFileSource = getFileSource(
-                    uploadedInputStream, fileDetail,
-                    apMavenSnippet, "Invalid maven snippet for automation package: ",
-                    apResourceId
-            );
-            AutomationPackageFileSource apLibrarySource = getFileSource(
-                    apLibraryInputStream, apLibraryFileDetail,
-                    apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ",
-                    apLibraryResourceId
-            );
+            ParsedRequestParamteres parsedRequestParamteres = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
-            AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(
-                    true, true, null,
-                    apFileSource,
-                    apLibrarySource,
-                    apVersion, activationExpression,
-                    getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate(), async != null && async,
-                    getUser(), allowUpdateOfOtherPackages == null ? false : allowUpdateOfOtherPackages, true);
+            AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
+                    .withApSource(parsedRequestParamteres.apFileSource).withApLibrarySource(parsedRequestParamteres.apLibrarySource)
+                    .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
+                    .withAsync(async).withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
+                    .withPlansAttributes(parsedRequestParamteres.plansAttributes).withFunctionsAttributes(parsedRequestParamteres.functionsAttributes)
+                    .withTokenSelectionCriteria(parsedRequestParamteres.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
+                    .build();
+            AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(Response.Status.CREATED);
@@ -375,6 +376,49 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             throw ex;
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
+
+    private ParsedRequestParamteres getParsedRequestParamteres(InputStream uploadedInputStream, FormDataContentDisposition fileDetail, String apMavenSnippet, InputStream apLibraryInputStream, FormDataContentDisposition apLibraryFileDetail, String apLibraryMavenSnippet, String apResourceId, String apLibraryResourceId, String plansAttributesAsString, String functionsAttributesAsString, String tokenSelectionCriteriaAsString) {
+        AutomationPackageFileSource apFileSource = getFileSource(
+                uploadedInputStream, fileDetail,
+                apMavenSnippet, "Invalid maven snippet for automation package: ",
+                apResourceId
+        );
+        AutomationPackageFileSource apLibrarySource = getFileSource(
+                apLibraryInputStream, apLibraryFileDetail,
+                apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ",
+                apLibraryResourceId
+        );
+
+        Map<String, String> plansAttributes = deserializeFormDataParamToMapOfStrings(plansAttributesAsString, "plansAttributes");
+        Map<String, String> functionsAttributes = deserializeFormDataParamToMapOfStrings(functionsAttributesAsString, "functionsAttributes");
+        Map<String, String> tokenSelectionCriteria = deserializeFormDataParamToMapOfStrings(tokenSelectionCriteriaAsString, "tokenSelectionCriteria");
+        return new ParsedRequestParamteres(apFileSource, apLibrarySource, plansAttributes, functionsAttributes, tokenSelectionCriteria);
+    }
+
+    private static class ParsedRequestParamteres {
+        public final AutomationPackageFileSource apFileSource;
+        public final AutomationPackageFileSource apLibrarySource;
+        public final Map<String, String> plansAttributes;
+        public final Map<String, String> functionsAttributes;
+        public final Map<String, String> tokenSelectionCriteria;
+
+        public ParsedRequestParamteres(AutomationPackageFileSource apFileSource, AutomationPackageFileSource apLibrarySource, Map<String, String> plansAttributes, Map<String, String> functionsAttributes, Map<String, String> tokenSelectionCriteria) {
+            this.apFileSource = apFileSource;
+            this.apLibrarySource = apLibrarySource;
+            this.plansAttributes = plansAttributes;
+            this.functionsAttributes = functionsAttributes;
+            this.tokenSelectionCriteria = tokenSelectionCriteria;
+        }
+    }
+
+    private Map<String, String> deserializeFormDataParamToMapOfStrings(String stringValue, String fieldName) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readValue(stringValue, new TypeReference<Map<String, String>>() {});
+        } catch (JsonProcessingException e) {
+            throw new AutomationPackageManagerException("Cannot deserialize " + fieldName + ". Reason: " + e.getMessage());
         }
     }
 

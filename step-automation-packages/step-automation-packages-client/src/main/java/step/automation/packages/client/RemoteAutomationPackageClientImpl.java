@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation;
 import jakarta.ws.rs.core.GenericType;
@@ -32,8 +34,6 @@ import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 
-import java.io.File;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -50,46 +50,16 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     }
 
     @Override
-    public String createAutomationPackage(AutomationPackageSource automationPackageSource,
-                                          String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
-                                          AutomationPackageSource apLibrarySource) throws AutomationPackageClientException {
-        return uploadPackage(automationPackageSource, apLibrarySource, multiPartEntity -> {
-            Map<String, String> queryParams = new HashMap<>();
-            if (allowUpdateOfOtherPackages != null) {
-                queryParams.put("allowUpdateOfOtherPackages", String.valueOf(allowUpdateOfOtherPackages));
-            }
-            addQueryParams(apVersion, activationExpr, queryParams);
-            Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
-            return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.post(multiPartEntity, String.class));
-        });
-    }
-
-    private void addQueryParams(String apVersion, String activationExpr, Map<String, String> queryParams) {
-        if (apVersion != null && !apVersion.isEmpty()) {
-            queryParams.put("version", apVersion);
-        }
-        if (activationExpr != null && !activationExpr.isEmpty()) {
-            queryParams.put("activationExpr", activationExpr);
-        }
-    }
-
-    @Override
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(AutomationPackageSource automationPackageSource,
-                                                                         Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
-                                                                         AutomationPackageSource apLibrarySource) throws AutomationPackageClientException {
-        return uploadPackage(automationPackageSource, apLibrarySource,
+                                                                         AutomationPackageSource apLibrarySource,
+                                                                         String apVersion, String activationExpr,
+                                                                         Map<String, String> plansAttributes, Map<String, String> functionsAttributes,
+                                                                         Map<String, String> tokenSelectionCriteria, Boolean executeFunctionsLocally,
+                                                                         Boolean async, Boolean allowUpdateOfOtherPackages) throws AutomationPackageClientException {
+        return uploadPackage(automationPackageSource, apLibrarySource, apVersion, activationExpr,
+                plansAttributes, functionsAttributes, tokenSelectionCriteria, executeFunctionsLocally, async, allowUpdateOfOtherPackages,
                 multiPartEntity -> {
-                    Map<String, String> queryParams = new HashMap<>();
-
-                    // if 'async' is not defined on client it will be resolved on the server ('false' by default)
-                    if (async != null) {
-                        queryParams.put("async", String.valueOf(async));
-                    }
-                    if (allowUpdateOfOtherPackages != null) {
-                        queryParams.put("allowUpdateOfOtherPackages", String.valueOf(allowUpdateOfOtherPackages));
-                    }
-                    addQueryParams(apVersion, activationExpr, queryParams);
-                    Invocation.Builder builder = requestBuilder("/rest/automation-packages", queryParams);
+                    Invocation.Builder builder = requestBuilder("/rest/automation-packages");
                     return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
                 });
     }
@@ -124,8 +94,21 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
 
     protected <T> T uploadPackage(AutomationPackageSource automationPackageSource,
                                   AutomationPackageSource apLibrarySource,
+                                  String apVersion, String activationExpr,
+                                  Map<String, String> plansAttributes, Map<String, String> functionsAttributes,
+                                  Map<String, String> tokenSelectionCriteria, Boolean executeFunctionsLocally, Boolean async, Boolean allowUpdateOfOtherPackages,
                                   Function<Entity<MultiPart>, T> executeRequest) throws AutomationPackageClientException {
         MultiPart multiPart = prepareFileDataMultiPart(automationPackageSource, apLibrarySource);
+
+        addStringBodyPart("version", apVersion, multiPart);
+        addStringBodyPart("activationExpr", activationExpr, multiPart);
+        addBooleanBodyPart("async", async, multiPart);
+        addBooleanBodyPart("allowUpdateOfOtherPackages", allowUpdateOfOtherPackages, multiPart);
+        addMapBodyPart("plansAttributes", plansAttributes, multiPart);
+        addMapBodyPart("functionsAttributes", functionsAttributes, multiPart);
+        addMapBodyPart("tokenSelectionCriteria", tokenSelectionCriteria, multiPart);
+        addBooleanBodyPart("executeFunctionsLocally", executeFunctionsLocally, multiPart);
+
         Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
         try {
             return executeRequest.apply(entity);
@@ -133,6 +116,30 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
             throw new AutomationPackageClientException(e.getMessage());
         }
     }
+
+    private static void addStringBodyPart(String fieldName, String value, MultiPart multiPart) {
+        if (value != null) {
+            multiPart.bodyPart(new FormDataBodyPart(fieldName, value));
+        }
+    }
+
+    private static void addBooleanBodyPart(String fieldName, Boolean value, MultiPart multiPart) {
+        if (value != null) {
+            multiPart.bodyPart(new FormDataBodyPart(fieldName, String.valueOf(value)));
+        }
+    }
+
+    private static void addMapBodyPart(String fieldName, Map<String, String> value, MultiPart multiPart) throws AutomationPackageClientException {
+        if (value != null) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            try {
+                multiPart.bodyPart(new FormDataBodyPart(fieldName, objectMapper.writeValueAsString(value)));
+            } catch (JsonProcessingException e) {
+                throw new AutomationPackageClientException("Unable to serialize the plans attributes. Reason: " + e.getMessage());
+            }
+        }
+    }
+
 
     private MultiPart prepareFileDataMultiPart(AutomationPackageSource automationPackageSource,
                                                AutomationPackageSource apLibrarySource) {
