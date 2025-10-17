@@ -30,6 +30,4 @@ public interface AutomationPackageSource {
     default File getFile() {
         return null;
     }
-
-    ;
 }

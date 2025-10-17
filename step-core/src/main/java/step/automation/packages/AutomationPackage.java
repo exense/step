@@ -24,6 +24,8 @@ import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
 
+import java.util.Map;
+
 public class AutomationPackage extends AbstractTrackedObject implements EnricheableObject {
 
     private AutomationPackageStatus status;
@@ -33,12 +35,36 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
     private String automationPackageResource;
     private String automationPackageLibraryResource;
 
-    public AutomationPackage(AutomationPackageStatus status, String version, Expression activationExpression, String automationPackageResource, String automationPackageLibraryResource) {
+    /**
+     * function attributes to be applied to all functions (aka keywords)
+     */
+    private Map<String, String> functionsAttributes;
+    /**
+     * function attributes to be applied to all plans
+     */
+    private Map<String, String> plansAttributes;
+    /**
+     * token selection criteria to be applied to all functions (aka keywords) of this package
+     */
+    private Map<String, String> tokenSelectionCriteria;
+    /**
+     * whether the keywords from this package should all be executed locally (i.e. on controller)
+     */
+    private boolean executeFunctionLocally;
+
+    public AutomationPackage(AutomationPackageStatus status, String version, Expression activationExpression,
+                             String automationPackageResource, String automationPackageLibraryResource,
+                             Map<String, String> functionsAttributes, Map<String, String> plansAttributes,
+                             Map<String, String> tokenSelectionCriteria, boolean executeFunctionLocally) {
         this.status = status;
         this.version = version;
         this.activationExpression = activationExpression;
         this.automationPackageResource = automationPackageResource;
         this.automationPackageLibraryResource = automationPackageLibraryResource;
+        this.functionsAttributes = functionsAttributes;
+        this.plansAttributes = plansAttributes;
+        this.tokenSelectionCriteria = tokenSelectionCriteria;
+        this.executeFunctionLocally = executeFunctionLocally;
     }
 
     public AutomationPackage() {
@@ -66,6 +92,38 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public Map<String, String> getFunctionsAttributes() {
+        return functionsAttributes;
+    }
+
+    public void setFunctionsAttributes(Map<String, String> functionsAttributes) {
+        this.functionsAttributes = functionsAttributes;
+    }
+
+    public Map<String, String> getPlansAttributes() {
+        return plansAttributes;
+    }
+
+    public void setPlansAttributes(Map<String, String> plansAttributes) {
+        this.plansAttributes = plansAttributes;
+    }
+
+    public Map<String, String> getTokenSelectionCriteria() {
+        return tokenSelectionCriteria;
+    }
+
+    public void setTokenSelectionCriteria(Map<String, String> tokenSelectionCriteria) {
+        this.tokenSelectionCriteria = tokenSelectionCriteria;
+    }
+
+    public boolean getExecuteFunctionLocally() {
+        return executeFunctionLocally;
+    }
+
+    public void setExecuteFunctionLocally(boolean executeFunctionLocally) {
+        this.executeFunctionLocally = executeFunctionLocally;
     }
 
     /**
