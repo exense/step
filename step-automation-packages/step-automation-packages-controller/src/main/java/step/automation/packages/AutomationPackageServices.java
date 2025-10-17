@@ -38,6 +38,7 @@ import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
+import step.core.entities.EntityManager;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
@@ -432,7 +433,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-write")
     public RefreshResourceResult refreshAutomationPackageResource(@PathParam("id") String resourceId){
         try {
-           return automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, getObjectEnricher(), getObjectPredicate(),  getWriteAccessPredicate(), getUser(), automationPackageManager);
+           return refreshResourceAndLinkedPackages(resourceId);
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {
@@ -440,9 +441,35 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
+    private RefreshResourceResult refreshResourceAndLinkedPackages(String resourceId) {
+        return automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate(), getUser(), automationPackageManager);
+    }
+
+    @POST
+    @Path("/resources/bulk/delete")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-delete")
+    public AsyncTaskStatus<TableBulkOperationReport> bulkDeleteAutomationPackageResource(TableBulkOperationRequest request) {
+        Consumer<String> consumer = resourceId -> automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessPredicate());
+        return scheduleAsyncTaskWithinSessionContext(h ->
+                tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
+    }
+
+    @POST
+    @Path("/resources/bulk/refresh")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-write")
+    public AsyncTaskStatus<TableBulkOperationReport> bulkRefreshAutomationPackageResource(TableBulkOperationRequest request) {
+        Consumer<String> consumer = this::refreshResourceAndLinkedPackages;
+        return scheduleAsyncTaskWithinSessionContext(h ->
+                tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
+    }
+
     @DELETE
     @Path("/resources/{id}")
-    @Secured(right = "automation-package-write")
+    @Secured(right = "automation-package-delete")
     public void deleteAutomationPackageResource(@PathParam("id") String resourceId) {
         try {
             automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessPredicate());
