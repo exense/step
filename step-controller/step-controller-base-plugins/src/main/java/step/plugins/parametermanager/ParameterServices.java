@@ -29,7 +29,6 @@ import step.core.GlobalContext;
 import step.core.accessors.Accessor;
 import step.core.deployment.ControllerServiceException;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.encryption.EncryptionManagerException;
 import step.framework.server.access.AuthorizationManager;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
@@ -38,7 +37,6 @@ import step.parameter.ParameterManager;
 import step.parameter.ParameterManagerException;
 import step.parameter.ParameterScope;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -131,7 +129,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Override
 	public Parameter clone(String id) {
 		Parameter sourceParameter = parameterAccessor.get(new ObjectId(id));
-		assertEntityIsAcceptableInContext(sourceParameter);
+		assertEntityIsEditableInContext(sourceParameter);
 		// Create a clone of the source parameter
 		Parameter newParameter = parameterAccessor.get(new ObjectId(id));
 		newParameter.setId(new ObjectId());
@@ -141,7 +139,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Override
 	public void delete(String id) {
 		Parameter parameter = get(id);
-		assertEntityIsAcceptableInContext(parameter);
+		assertEntityIsEditableInContext(parameter);
 		assertRights(parameter);
 
 		parameterAccessor.remove(new ObjectId(id));
@@ -196,7 +194,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Override
 	public Parameter restoreVersion(String id, String versionId) {
 		Parameter parameter = parameterAccessor.get(id);
-		assertEntityIsAcceptableInContext(parameter);
+		assertEntityIsEditableInContext(parameter);
 		assertRights(parameter);
 		return super.restoreVersion(id, versionId);
 	}

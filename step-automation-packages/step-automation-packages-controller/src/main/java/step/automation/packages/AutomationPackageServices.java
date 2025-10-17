@@ -35,7 +35,6 @@ import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.deployment.AbstractStepServices;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
@@ -97,7 +96,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     private void deleteSingleAutomationPackage(String id) {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
-            assertEntityIsAcceptableInContext(automationPackage);
+            assertEntityIsEditableInContext(automationPackage);
             automationPackageManager.removeAutomationPackage(new ObjectId(id), getObjectPredicate());
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
@@ -274,7 +273,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             //getAutomationPackage throws exception if the package doesn't exist, whether this is an errors is managed in below createOrUpdateAutomationPackage
         }
         if (automationPackage != null) {
-            assertEntityIsAcceptableInContext(automationPackage);
+            assertEntityIsEditableInContext(automationPackage);
         }
     }
 
