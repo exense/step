@@ -5,6 +5,8 @@ import step.attachments.FileResolver;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 
 public class AutomationPackageUpdateParameterBuilder {
@@ -129,8 +131,14 @@ public class AutomationPackageUpdateParameterBuilder {
         this.allowCreate = false;
         this.explicitOldId = oldPackage.getId();
         this.isLocalPackage = parentParameters.isLocalPackage;
-        this.apSource = AutomationPackageFileSource.withResourceId(FileResolver.resolveResourceId(oldPackage.getAutomationPackageResource()));
-        this.apLibrarySource = AutomationPackageFileSource.withResourceId(FileResolver.resolveResourceId(oldPackage.getAutomationPackageLibraryResource()));
+        String automationPackageResource = oldPackage.getAutomationPackageResource();
+        if (FileResolver.isResource(automationPackageResource)) {
+            this.apSource = AutomationPackageFileSource.withResourceId(FileResolver.resolveResourceId(automationPackageResource));
+        }
+        String automationPackageLibraryResource = oldPackage.getAutomationPackageLibraryResource();
+        if (FileResolver.isResource(automationPackageLibraryResource)) {
+            this.apLibrarySource = AutomationPackageFileSource.withResourceId(FileResolver.resolveResourceId(automationPackageLibraryResource));
+        }
         this.automationPackageVersion = oldPackage.getVersion();
         this.activationExpression = oldPackage.getActivationExpression() != null ? oldPackage.getActivationExpression().getScript() : null;
         this.enricher = parentParameters.enricher;
