@@ -231,7 +231,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     getObjectEnricher(),
                     getObjectPredicate());
         } catch (AutomationPackageManagerException e) {
-            throw new ControllerServiceException(e.getMessage());
+            throw new ControllerServiceException(e.getMessage(), e);
         }
     }
 

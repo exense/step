@@ -72,7 +72,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     public static final String CONFIGURATION_MAVEN_FOLDER = "repository.artifact.maven.folder";
     public static final String DEFAULT_MAVEN_FOLDER = "maven";
 
-    public static final String KEYWORD_LIBRARY_MAVEN_SOURCE = "keyword-library-maven-source";
+    public static final String PACKAGE_LIBRARY_MAVEN_SOURCE = "package-library-maven-source";
 
     // context id -> automation package manager (cache)
     protected final ConcurrentHashMap<String, PackageExecutionContext> sharedPackageExecutionContexts = new ConcurrentHashMap<>();
@@ -298,7 +298,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
 
     public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName,
                                                        IsolatedAutomationPackageExecutionParameters parameters,
-                                                       ObjectId contextId, ObjectPredicate objectPredicate,
+                                                       ObjectId contextId, ObjectEnricher enricher, ObjectPredicate objectPredicate,
                                                        String actorUser, String resourceType) {
         // for files provided by artifact repository we don't store the file as resource, but just load the file from this repository
         RepositoryObjectReference repositoryObject = parameters.getOriginalRepositoryObject();
@@ -342,7 +342,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     }
 
     protected AutomationPackageFile restoreKwFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate){
-        String maven_source = repositoryParameters.get(KEYWORD_LIBRARY_MAVEN_SOURCE);
+        String maven_source = repositoryParameters.get(PACKAGE_LIBRARY_MAVEN_SOURCE);
         if (maven_source != null && !maven_source.isBlank()) {
             AutomationPackageFileSource keywordLibraryFileSource = AutomationPackageFileSource.withMavenIdentifier(MavenArtifactIdentifier.fromShortString(maven_source));
             try {
