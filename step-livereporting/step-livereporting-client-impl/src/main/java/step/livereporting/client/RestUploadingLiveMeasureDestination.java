@@ -70,8 +70,6 @@ public class RestUploadingLiveMeasureDestination implements LiveMeasureDestinati
             if (status != 204) {
                 String msg = "Error while reporting measures. The live reporting service returned " + status;
                 logger.error(msg);
-                // FIXME: Do we really want to throw an exception here?
-                throw new RuntimeException("Error while reporting measures. The live reporting service returned " + status);
             }
         }
     }

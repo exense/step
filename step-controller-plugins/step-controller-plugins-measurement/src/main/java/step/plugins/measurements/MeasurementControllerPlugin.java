@@ -47,9 +47,6 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 		initGaugeCollectorRegistry(context);
 	}
 
-	// FIXME: maybe these should be moved to the MeasurementPlugin so they are consolidated in a single place (reason: if new stuff gets added there, it may be easy to forget to add it to the exclusions here)
-	private static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE);
-	private static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", "project", "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID, ORIGIN, RN_STATUS, STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
 	/*
 	 This will convert a "full", flattened, measurement back
 	 to a format that's structurally identical to a measure.

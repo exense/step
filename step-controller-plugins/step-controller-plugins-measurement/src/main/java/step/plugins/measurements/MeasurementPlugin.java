@@ -64,6 +64,13 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	public static final String CTX_GENERATE_EXECUTION_METRICS = "$generateExecutionMetrics";
 	public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
 
+	// These are used by the MeasurementControllerPlugin to "reconstruct" measures from measurements, and indicate the
+	// "internal" fields which should NOT be added to the measure data field. Keep this in sync with the fields defined above.
+	static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", "project", "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
+			ORIGIN, RN_STATUS, STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
+	// Same use, but for defining which fields SHOULD be directly copied to the top-level fields of a measure.
+	static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE);
+
 	private final Map<String, Set<String[]>> labelsByExec = new ConcurrentHashMap<>();
 	private final GaugeCollectorRegistry gaugeCollectorRegistry;
 	private GaugeCollector gaugeCollector;
@@ -262,6 +269,11 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		Measurement measurement = initMeasurement(executionContext);
 		measurement.addCustomFields(functionAttributes);
 		measurement.setName(measure.getName());
+		if (measure.getStatus() != null) {
+			// Note: status SHOULD always be non-null, but better safe than sorry.
+			// The final value will always be set in enrichWithNodeAttributes (called below), even in case it was missing.
+			measurement.setStatus(measure.getStatus().name());
+		}
 		measurement.setType(getMeasureTypeOrDefault(measure));
 		measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
 		measurement.setValue(measure.getDuration());
@@ -314,26 +326,18 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		measurement.setExecId(node.getExecutionID());
 		measurement.addCustomField(RN_ID, node.getId().toString());
 		ReportNodeStatus nodeStatus = node.getStatus();
-		// For live measures, the status is still RUNNING.
-		// In this case, we don't want to persist it at all (but: see the (temporary?) else branch)
-		if(nodeStatus != ReportNodeStatus.RUNNING) {
-			measurement.setStatus(nodeStatus.toString());
+		if(nodeStatus == ReportNodeStatus.RUNNING) {
+			// For live measures, the node status is still RUNNING, so we rely on the measure status
+			if (measurement.getStatus() == null) {
+				// this should never be the case, as all measures should now have a status (PASSED by default), but better safe than sorry
+				measurement.setStatus(nodeStatus.name());
+			}
 		} else {
-			/* FIXME: we need to add a status, otherwise the PrometheusHandler is unhappy:
-			java.lang.IllegalArgumentException: Label cannot be null.
-				at io.prometheus.client.SimpleCollector.labels(SimpleCollector.java:69)
-				at step.plugins.measurements.prometheus.PrometheusHandler.updateHistogram(PrometheusHandler.java:118)
-				at step.plugins.measurements.prometheus.PrometheusHandler.processMeasurements(PrometheusHandler.java:108)
-				at step.plugins.measurements.MeasurementPlugin.processMeasurements(MeasurementPlugin.java:302)
-				at step.plugins.measurements.MeasurementPlugin.lambda$beforeFunctionExecution$1(MeasurementPlugin.java:152)
-				at step.livereporting.LiveReportingContext.onMeasuresReceived(LiveReportingContext.java:54)
-				at step.livereporting.LiveReportingContexts.onMeasuresReceived(LiveReportingContexts.java:45)
-				at step.plugins.livereporting.LiveReportingServices.injectMeasures(LiveReportingServices.java:33)
-
-			So either we have to make the PrometheusHandler accept null status values, or invent an appropriate Status here.
-			For now, just putting the actual RUNNING status, but I don't know exactly what implications this has.
-			 */
-			measurement.setStatus(nodeStatus.toString());
+			// "old-style" measures (attached to output) take the node status, EXCEPT if the measure itself indicates a non-default status, i.e. a failure
+			String mStatus = measurement.getStatus();
+			if (mStatus == null || mStatus.equals(Measure.Status.PASSED.name())) {
+				measurement.setStatus(nodeStatus.name());
+			}
 		}
 	}
 
