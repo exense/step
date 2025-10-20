@@ -127,6 +127,7 @@ public class ExecutionSchedulerTest {
 		ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters();
 		executiontTaskParameters.setExecutionsParameters(new ExecutionParameters());
 		String executionTaskId = executiontTaskParameters.getId().toString();
+        executiontTaskParameters.setActive(true);
 		
 		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters));
 		
@@ -162,6 +163,7 @@ public class ExecutionSchedulerTest {
 		
 		ExecutiontTaskParameters executiontTaskParameters2 = new ExecutiontTaskParameters();
 		executiontTaskParameters2.setExecutionsParameters(new ExecutionParameters());
+        executiontTaskParameters2.setActive(true);
 		String executionTaskId2 = executiontTaskParameters2.getId().toString();
 		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters2));
 		
@@ -188,6 +190,7 @@ public class ExecutionSchedulerTest {
 
 		ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters();
 		executiontTaskParameters.setExecutionsParameters(new ExecutionParameters());
+        executiontTaskParameters.setActive(true);
 		String executionTaskId = executiontTaskParameters.getId().toString();
 
 		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters));

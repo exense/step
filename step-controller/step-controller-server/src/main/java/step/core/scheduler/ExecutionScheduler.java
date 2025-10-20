@@ -114,14 +114,7 @@ public class ExecutionScheduler implements ExecutionLauncher {
 	}
 
 	public boolean addOrUpdateExecutionTask(ExecutiontTaskParameters task) {
-		return addOrUpdateExecutionTask(task, true);
-	}
-
-	public boolean addOrUpdateExecutionTask(ExecutiontTaskParameters task, boolean autoActivateNewTask) {
 		executor.validate(task);
-		if (autoActivateNewTask && !taskAlreadyExists(task)) {
-			task.setActive(true);
-		}
 		boolean triggerMayFireAgain = true;
 		//Activate the tasks if scheduler is enabled and active flag is ON
 		if (isSchedulerEnabled() && task.isActive()) {
