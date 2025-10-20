@@ -58,6 +58,10 @@ import java.util.Map;
 @Tag(name = "Automation packages")
 public class AutomationPackageServices extends AbstractStepAsyncServices {
 
+    public static final String PLANS_ATTRIBUTES = "plansAttributes";
+    public static final String FUNCTIONS_ATTRIBUTES = "functionsAttributes";
+    public static final String TOKEN_SELECTION_CRITERIA = "tokenSelectionCriteria";
+    public static final String EXECUTE_FUNCTIONS_LOCALLY = "executeFunctionsLocally";
     protected AutomationPackageManager automationPackageManager;
     protected AutomationPackageExecutor automationPackageExecutor;
     protected TableService tableService;
@@ -109,7 +113,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     /**
-     * Convening service to only allow creation of a new package
+     * Convenience service to only allow creation of a new package
      * @param apVersion the version to be set for this AP
      * @param activationExpression activation expression to selected entities of this AP during executions
      * @param allowUpdateOfOtherPackages if other AP would be modified (because they use the same snapshot artefacts that has a new version) this flag must be true to allow the update
@@ -151,20 +155,20 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                           @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                           @FormDataParam("apResourceId") String apResourceId,
                                           @FormDataParam("apLibraryResourceId") String apLibraryResourceId,
-                                          @FormDataParam("plansAttributes") String plansAttributesAsString,
-                                          @FormDataParam("functionsAttributes") String functionsAttributesAsString,
-                                          @FormDataParam("tokenSelectionCriteria") String tokenSelectionCriteriaAsString,
-                                          @FormDataParam("executeFunctionsLocally") boolean executeFunctionsLocally) {
+                                          @FormDataParam(PLANS_ATTRIBUTES) String plansAttributesAsString,
+                                          @FormDataParam(FUNCTIONS_ATTRIBUTES) String functionsAttributesAsString,
+                                          @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
+                                          @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
         try {
-            ParsedRequestParamteres parsedRequestParamteres = getParsedRequestParamteres(automationPackageInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
+            ParsedRequestParameters parsedRequestParameters = getParsedRequestParamteres(automationPackageInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
             AutomationPackageUpdateParameter parameters = getAutomationPackageUpdateParameterBuilder()
                     .withAllowCreate(true).withAllowUpdate(false).withAsync(false)
                     .withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages).withCheckForSameOrigin(true)
-                    .withApSource(parsedRequestParamteres.apFileSource).withApLibrarySource(parsedRequestParamteres.apLibrarySource)
+                    .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
                     .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
-                    .withPlansAttributes(parsedRequestParamteres.plansAttributes).withFunctionsAttributes(parsedRequestParamteres.functionsAttributes)
-                    .withTokenSelectionCriteria(parsedRequestParamteres.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
+                    .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
+                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
                     .build();
             ObjectId id = automationPackageManager.createOrUpdateAutomationPackage(parameters).getId();
             return id == null ? null : id.toString();
@@ -286,19 +290,19 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                                                  @FormDataParam("apResourceId") String apResourceId,
                                                                  @FormDataParam("apLibraryResourceId") String apLibraryResourceId,
-                                                                 @FormDataParam("plansAttributes") String plansAttributesAsString,
-                                                                 @FormDataParam("functionsAttributes") String functionsAttributesAsString,
-                                                                 @FormDataParam("tokenSelectionCriteria") String tokenSelectionCriteriaAsString,
-                                                                 @FormDataParam("executeFunctionsLocally") boolean executeFunctionsLocally) {
+                                                                 @FormDataParam(PLANS_ATTRIBUTES) String plansAttributesAsString,
+                                                                 @FormDataParam(FUNCTIONS_ATTRIBUTES) String functionsAttributesAsString,
+                                                                 @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
+                                                                 @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
         try {
-            ParsedRequestParamteres parsedRequestParamteres = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
+            ParsedRequestParameters parsedRequestParameters = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
             AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder().withAllowCreate(false).withExplicitOldId(new ObjectId(id))
-                    .withApSource(parsedRequestParamteres.apFileSource).withApLibrarySource(parsedRequestParamteres.apLibrarySource)
+                    .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
                     .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
                     .withAsync(async).withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
-                    .withPlansAttributes(parsedRequestParamteres.plansAttributes).withFunctionsAttributes(parsedRequestParamteres.functionsAttributes)
-                    .withTokenSelectionCriteria(parsedRequestParamteres.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
+                    .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
+                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
                     .build();
             return automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
         } catch (AutomationPackageAccessException ex) {
@@ -345,20 +349,20 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                                     @FormDataParam("apResourceId") String apResourceId,
                                                     @FormDataParam("apLibraryResourceId") String apLibraryResourceId,
-                                                    @FormDataParam("plansAttributes") String plansAttributesAsString,
-                                                    @FormDataParam("functionsAttributes") String functionsAttributesAsString,
-                                                    @FormDataParam("tokenSelectionCriteria") String tokenSelectionCriteriaAsString,
-                                                    @FormDataParam("executeFunctionsLocally") boolean executeFunctionsLocally) {
+                                                    @FormDataParam(PLANS_ATTRIBUTES) String plansAttributesAsString,
+                                                    @FormDataParam(FUNCTIONS_ATTRIBUTES) String functionsAttributesAsString,
+                                                    @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
+                                                    @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
         try {
-            ParsedRequestParamteres parsedRequestParamteres = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
+            ParsedRequestParameters parsedRequestParameters = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
                     apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
             AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
-                    .withApSource(parsedRequestParamteres.apFileSource).withApLibrarySource(parsedRequestParamteres.apLibrarySource)
+                    .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
                     .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
                     .withAsync(async).withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
-                    .withPlansAttributes(parsedRequestParamteres.plansAttributes).withFunctionsAttributes(parsedRequestParamteres.functionsAttributes)
-                    .withTokenSelectionCriteria(parsedRequestParamteres.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
+                    .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
+                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
                     .build();
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
             Response.ResponseBuilder responseBuilder;
@@ -380,7 +384,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
-    private ParsedRequestParamteres getParsedRequestParamteres(InputStream uploadedInputStream, FormDataContentDisposition fileDetail, String apMavenSnippet, InputStream apLibraryInputStream, FormDataContentDisposition apLibraryFileDetail, String apLibraryMavenSnippet, String apResourceId, String apLibraryResourceId, String plansAttributesAsString, String functionsAttributesAsString, String tokenSelectionCriteriaAsString) {
+    private ParsedRequestParameters getParsedRequestParamteres(InputStream uploadedInputStream, FormDataContentDisposition fileDetail, String apMavenSnippet, InputStream apLibraryInputStream, FormDataContentDisposition apLibraryFileDetail, String apLibraryMavenSnippet, String apResourceId, String apLibraryResourceId, String plansAttributesAsString, String functionsAttributesAsString, String tokenSelectionCriteriaAsString) {
         AutomationPackageFileSource apFileSource = getFileSource(
                 uploadedInputStream, fileDetail,
                 apMavenSnippet, "Invalid maven snippet for automation package: ",
@@ -392,20 +396,20 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 apLibraryResourceId
         );
 
-        Map<String, String> plansAttributes = deserializeFormDataParamToMapOfStrings(plansAttributesAsString, "plansAttributes");
-        Map<String, String> functionsAttributes = deserializeFormDataParamToMapOfStrings(functionsAttributesAsString, "functionsAttributes");
-        Map<String, String> tokenSelectionCriteria = deserializeFormDataParamToMapOfStrings(tokenSelectionCriteriaAsString, "tokenSelectionCriteria");
-        return new ParsedRequestParamteres(apFileSource, apLibrarySource, plansAttributes, functionsAttributes, tokenSelectionCriteria);
+        Map<String, String> plansAttributes = deserializeFormDataParamToMapOfStrings(plansAttributesAsString, PLANS_ATTRIBUTES);
+        Map<String, String> functionsAttributes = deserializeFormDataParamToMapOfStrings(functionsAttributesAsString, FUNCTIONS_ATTRIBUTES);
+        Map<String, String> tokenSelectionCriteria = deserializeFormDataParamToMapOfStrings(tokenSelectionCriteriaAsString, TOKEN_SELECTION_CRITERIA);
+        return new ParsedRequestParameters(apFileSource, apLibrarySource, plansAttributes, functionsAttributes, tokenSelectionCriteria);
     }
 
-    private static class ParsedRequestParamteres {
+    private static class ParsedRequestParameters {
         public final AutomationPackageFileSource apFileSource;
         public final AutomationPackageFileSource apLibrarySource;
         public final Map<String, String> plansAttributes;
         public final Map<String, String> functionsAttributes;
         public final Map<String, String> tokenSelectionCriteria;
 
-        public ParsedRequestParamteres(AutomationPackageFileSource apFileSource, AutomationPackageFileSource apLibrarySource, Map<String, String> plansAttributes, Map<String, String> functionsAttributes, Map<String, String> tokenSelectionCriteria) {
+        public ParsedRequestParameters(AutomationPackageFileSource apFileSource, AutomationPackageFileSource apLibrarySource, Map<String, String> plansAttributes, Map<String, String> functionsAttributes, Map<String, String> tokenSelectionCriteria) {
             this.apFileSource = apFileSource;
             this.apLibrarySource = apLibrarySource;
             this.plansAttributes = plansAttributes;

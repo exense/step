@@ -202,7 +202,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(r.storedPackage.getCreationUser(), "testUser");
 
         // 2. Update the package - some entities are updated, some entities are added
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withAutomationPackageVersion("v1")
                 .withApSource(extendedFileSource).build();
 
@@ -370,7 +370,7 @@ public class AutomationPackageManagerOSTest {
 
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
-            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                     .withAllowUpdate(false).withApSource(AutomationPackageFileSource.withInputStream(is, fileName)).build();
             result = manager.createOrUpdateAutomationPackage(parameters).getId();
 
@@ -393,7 +393,7 @@ public class AutomationPackageManagerOSTest {
     @Test
     public void testInvalidFile() throws IOException {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/picture.png")) {
-            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly().withAllowUpdate(false)
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit().withAllowUpdate(false)
                     .withApSource(AutomationPackageFileSource.withInputStream(is, "picture.png")).build();
             manager.createOrUpdateAutomationPackage(parameters);
             Assert.fail("The exception should be thrown in case of invalid automation package file");
@@ -407,7 +407,7 @@ public class AutomationPackageManagerOSTest {
     public void testZipArchive() throws IOException {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/step-automation-packages.zip")) {
             ObjectId result;
-            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                     .withAllowUpdate(false).withApSource(AutomationPackageFileSource.withInputStream(is, "step-automation-packages.zip")).build();
             result = manager.createOrUpdateAutomationPackage(parameters).getId();
 
@@ -533,7 +533,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, snapshotMetadata));
 
         // upload SNAPSHOT AP (echo) + SNAPSHOT LIB (echo)
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(echoSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot)).build();
         AutomationPackageUpdateResult echoApResult = manager.createOrUpdateAutomationPackage(updateParameters);
@@ -541,7 +541,7 @@ public class AutomationPackageManagerOSTest {
         AutomationPackageUpdateResult ap1Result;
         try {
             // try to upload another AP with same snapshot lib - collision should be detected
-            updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+            updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                     .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                     .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot)).build();
             manager.createOrUpdateAutomationPackage(updateParameters);
@@ -553,7 +553,7 @@ public class AutomationPackageManagerOSTest {
         }
 
         // try again with 'allowUpdateOfOtherPackages' flag
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAllowUpdateOfOtherPackages(true).build();
@@ -596,7 +596,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibJar, null));
 
         // upload SNAPSHOT AP + SNAPSHOT LIB
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot)).build();
         AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(updateParameters);
@@ -609,7 +609,7 @@ public class AutomationPackageManagerOSTest {
         );
 
         // upload another AP (echo RELEASE) + RELEASE LIB
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(echoRelease))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibRelease)).build();
         result = manager.createOrUpdateAutomationPackage(updateParameters);
@@ -626,7 +626,7 @@ public class AutomationPackageManagerOSTest {
         Resource kwLibReleaseResource = resourceManager.getResource(FileResolver.resolveResourceId(apEcho.getAutomationPackageLibraryResource()));
 
         // reupload the same AP - existing RELEASE RESOURCES SHOULD BE REUSED
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(echoRelease))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibRelease)).build();
         result = manager.createOrUpdateAutomationPackage(updateParameters);
@@ -641,7 +641,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(kwLibReleaseResource.getId(), kwLibReleaseResourceAfterUpdate.getId());
 
         // now we update the first AP - the RELEASE kw lib should be reused without collision
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(extSampleRelease))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibRelease)).build();
         result = manager.createOrUpdateAutomationPackage(updateParameters);
@@ -676,7 +676,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // upload echo AP (echo RELEASE) + SNAPSHOT LIB
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(echoRelease))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1").build();
@@ -684,7 +684,7 @@ public class AutomationPackageManagerOSTest {
         log.info("Echo AP: {}", resultEcho.getId());
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1 (WITHOUT CHECK FOR DUPLICATES)
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1")
@@ -701,7 +701,7 @@ public class AutomationPackageManagerOSTest {
 
         // upload main AP (sample SNAPSHOT) + UPDATED SNAPSHOT LIB - VERSION 2 (WITH CHECK FOR DUPLICATES)
         try {
-            updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+            updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                     .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                     .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                     .withAutomationPackageVersion("v2")
@@ -717,7 +717,7 @@ public class AutomationPackageManagerOSTest {
 
         long tsBeforeUpdate = System.currentTimeMillis();
         // upload main AP (sample SNAPSHOT) + UPDATED SNAPSHOT LIB - VERSION 2 (allow update of other packages)
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAllowUpdateOfOtherPackages(true)
@@ -774,7 +774,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1")
@@ -792,7 +792,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(updatedAutomationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1")
@@ -832,7 +832,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB 1 - VERSION 1
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1")
@@ -841,7 +841,7 @@ public class AutomationPackageManagerOSTest {
         AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(updateParameters);
 
         // upload second AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 2
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v2")
@@ -862,7 +862,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(updatedAutomationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
         // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1")
@@ -899,7 +899,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB 1 - VERSION 1
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1")
@@ -908,7 +908,7 @@ public class AutomationPackageManagerOSTest {
         AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(updateParameters);
 
         // upload second AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 2
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v2")
@@ -929,7 +929,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(updatedAutomationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1")
@@ -971,7 +971,7 @@ public class AutomationPackageManagerOSTest {
         Map<String, String> selectionAttributes = Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT");
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB 1 - VERSION 1
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1")
@@ -992,7 +992,7 @@ public class AutomationPackageManagerOSTest {
         Map<String, String> functionAttributes2 = Map.of("targetEnv", "myEnv2");
         Map<String, String> selectionAttributes2 = Map.of("OS", "LINUX", "TYPE", "SELENIUM");
         // upload second AP (sample SNAPSHOT) + Different SNAPSHOT LIB - VERSION 2
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot2))
                 .withAutomationPackageVersion("v2")
@@ -1028,7 +1028,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", udpatedSnapshotTimestamp, 1, true)));
 
         // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1")
@@ -1078,7 +1078,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, null));
 
         // upload main AP (sample SNAPSHOT using classes from LIB) + SNAPSHOT LIB
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAllowUpdateOfOtherPackages(true)
@@ -1102,7 +1102,7 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, null));
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withAutomationPackageVersion("v1")
@@ -1121,7 +1121,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertNotNull(kwLibFile);
 
         // upload main AP (by resource id) + SNAPSHOT LIB (by resource id) - VERSION 2
-        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withResourceId(ap1Resource.getId().toHexString()))
                 .withApLibrarySource(AutomationPackageFileSource.withResourceId(kwLibResource.getId().toHexString()))
                 .withAutomationPackageVersion("v2")
@@ -1156,7 +1156,7 @@ public class AutomationPackageManagerOSTest {
         }
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
-        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withResourceId(savedApResource.getId().toHexString()))
                 .withApLibrarySource(AutomationPackageFileSource.withResourceId(savedkwResource.getId().toHexString()))
                 .withAutomationPackageVersion("v1")
@@ -1229,7 +1229,7 @@ public class AutomationPackageManagerOSTest {
 
         ObjectId result;
         if (createNew) {
-            AutomationPackageUpdateParameter createParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+            AutomationPackageUpdateParameter createParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                     .withAllowUpdate(false)
                     .withApSource(sample1FileSource).withAsync(async)
                     .withApLibrarySource(automationPackageFileSource)
@@ -1239,7 +1239,7 @@ public class AutomationPackageManagerOSTest {
                     .build();
             result = manager.createOrUpdateAutomationPackage(createParameters).getId();
         } else {
-            AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunitOnly()
+            AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                     .withAllowCreate(false)
                     .withExplicitOldId(explicitOldId)
                     .withApSource(sample1FileSource).withAsync(async)

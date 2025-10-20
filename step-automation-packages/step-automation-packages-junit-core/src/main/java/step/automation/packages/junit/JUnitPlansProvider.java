@@ -49,7 +49,7 @@ public class JUnitPlansProvider {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
             AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(testClass.getClassLoader());
             AutomationPackageUpdateParameter localCreateParameters = new AutomationPackageUpdateParameterBuilder().withCreateOnly()
-                    .withLocalOnly().build();
+                    .forLocalExecution().build();
             ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                    automationPackageProvider, new NoAutomationPackageLibraryProvider(), localCreateParameters).getId();
 

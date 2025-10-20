@@ -236,4 +236,22 @@ public class AutomationPackageReaderTest {
         plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 4")).findFirst().get();
     }
 
+    @Test
+    public void testInvalidAPNames() {
+        File automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages-invalidNameBackSlash.zip");
+        try {
+            reader.readAutomationPackageFromJarFile(automationPackage, null, null);
+            fail();
+        } catch (AutomationPackageReadingException e) {
+            assertEquals("Package name contains unsafe characters: My package\\. Simple quote and backslash characters are not allowed.", e.getMessage());
+        }
+        automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages-invalidNameSimpleQuote.zip");
+        try {
+            reader.readAutomationPackageFromJarFile(automationPackage, null, null);
+            fail();
+        } catch (AutomationPackageReadingException e) {
+            assertEquals("Package name contains unsafe characters: My package';. Simple quote and backslash characters are not allowed.", e.getMessage());
+        }
+    }
+
 }
