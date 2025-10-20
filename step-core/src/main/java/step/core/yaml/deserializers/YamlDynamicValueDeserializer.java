@@ -20,6 +20,7 @@ package step.core.yaml.deserializers;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import step.core.dynamicbeans.DynamicValue;
@@ -30,7 +31,7 @@ import java.io.IOException;
 @StepYamlDeserializerAddOn(targetClasses = {DynamicValue.class})
 public class YamlDynamicValueDeserializer extends StepYamlDeserializer<DynamicValue<?>> implements ContextualDeserializer {
 
-	private JavaType type;
+	protected JavaType type;
 
 	public YamlDynamicValueDeserializer() {
 	}
@@ -57,15 +58,23 @@ public class YamlDynamicValueDeserializer extends StepYamlDeserializer<DynamicVa
 
 			if (expression != null) {
 				// dynamic value
-				return new DynamicValue<>(expression, "");
+				return getDynamicValueWithExpresion(expression);
 			} else {
 				throw new IllegalStateException("Expression should be defined for dynamic value " + node.toPrettyString());
 			}
 		} else {
 			// 'smart' mode - we can use the value explicitly without nested 'value' node
-			return new DynamicValue<>(jp.getCodec().treeToValue(node, type.getRawClass()));
+			return getDynamicValue(jp.getCodec().treeToValue(node, type.getRawClass()));
 		}
 
+	}
+
+	protected DynamicValue<?> getDynamicValue(Object o) {
+		return new DynamicValue<>(o);
+	}
+
+	protected DynamicValue<Object> getDynamicValueWithExpresion(String expression) {
+		return new DynamicValue<>(expression, "");
 	}
 
 }

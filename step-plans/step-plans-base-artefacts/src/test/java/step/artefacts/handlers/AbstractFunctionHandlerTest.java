@@ -63,7 +63,7 @@ public class AbstractFunctionHandlerTest {
         return result.getReportTreeAccessor().getChildren(result.getRootReportNode().getId().toString()).next();
     }
 
-    protected static AbstractExecutionEnginePlugin newMyFunctionTypePlugin() {
+    public static AbstractExecutionEnginePlugin newMyFunctionTypePlugin() {
         return new AbstractExecutionEnginePlugin() {
             @Override
             public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {

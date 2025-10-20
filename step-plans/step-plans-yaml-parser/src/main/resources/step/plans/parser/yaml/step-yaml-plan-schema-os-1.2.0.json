@@ -2,6 +2,19 @@
   "$schema" : "http://json-schema.org/draft-07/schema#",
   "title" : "Plan",
   "$defs" : {
+    "resourceReference" : {
+      "oneOf" : [ {
+        "type" : "string"
+      }, {
+        "type" : "object",
+        "additionalProperties" : false,
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          }
+        }
+      } ]
+    },
     "SmartDynamicValueBooleanDef" : {
       "oneOf" : [ {
         "type" : "boolean"
@@ -57,19 +70,6 @@
         },
         "additionalProperties" : false
       }
-    },
-    "resourceReference" : {
-      "oneOf" : [ {
-        "type" : "string"
-      }, {
-        "type" : "object",
-        "additionalProperties" : false,
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          }
-        }
-      } ]
     },
     "AssertDef" : {
       "type" : "object",
@@ -472,6 +472,9 @@
                   "csv" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
@@ -492,8 +495,14 @@
                   "excel" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "password" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       },
                       "headers" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
@@ -515,6 +524,9 @@
                   "file" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
@@ -532,6 +544,9 @@
                   "folder" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
@@ -549,6 +564,9 @@
                   "gsheet" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
@@ -572,6 +590,9 @@
                   "json-array" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
@@ -589,6 +610,9 @@
                   "json" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
@@ -606,6 +630,9 @@
                   "sequence" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
@@ -629,6 +656,9 @@
                   "sql" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "forWrite" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
@@ -988,6 +1018,9 @@
                   "csv" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "file" : {
                         "$ref" : "#/$defs/resourceReference"
                       },
@@ -1005,6 +1038,12 @@
                   "excel" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
+                      "password" : {
+                        "$ref" : "#/$defs/SmartDynamicValueStringDef"
+                      },
                       "headers" : {
                         "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
                       },
@@ -1025,6 +1064,9 @@
                   "file" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "file" : {
                         "$ref" : "#/$defs/resourceReference"
                       }
@@ -1039,6 +1081,9 @@
                   "folder" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "folder" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
@@ -1053,6 +1098,9 @@
                   "gsheet" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "tabName" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       },
@@ -1073,6 +1121,9 @@
                   "json-array" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "json" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
@@ -1087,6 +1138,9 @@
                   "json" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "json" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       }
@@ -1101,6 +1155,9 @@
                   "sequence" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "inc" : {
                         "$ref" : "#/$defs/SmartDynamicValueNumDef"
                       },
@@ -1121,6 +1178,9 @@
                   "sql" : {
                     "type" : "object",
                     "properties" : {
+                      "protect" : {
+                        "$ref" : "#/$defs/SmartDynamicValueBooleanDef"
+                      },
                       "driverClass" : {
                         "$ref" : "#/$defs/SmartDynamicValueStringDef"
                       },
@@ -2351,7 +2411,7 @@
           "type" : "string"
         },
         "version" : {
-          "const" : "1.1.1"
+          "const" : "1.2.0"
         },
         "categories" : {
           "type" : "array",
@@ -2375,7 +2435,7 @@
           "type" : "string"
         },
         "version" : {
-          "const" : "1.1.1"
+          "const" : "1.2.0"
         },
         "root" : {
           "$ref" : "#/$defs/RootArtefactDef"

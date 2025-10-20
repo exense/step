@@ -932,6 +932,7 @@ public class AutomationPackageManager {
 
     private static void propagatePackageMetadataToFunctions(AutomationPackage newPackage, List<Function> completeFunctions) {
         for (Function completeFunction : completeFunctions) {
+            completeFunction.setAutomationPackageFile(newPackage.getAutomationPackageResource());
             completeFunction.setActivationExpression(newPackage.getActivationExpression());
             if (newPackage.getFunctionsAttributes() != null) {
                 completeFunction.getAttributes().putAll(newPackage.getFunctionsAttributes());

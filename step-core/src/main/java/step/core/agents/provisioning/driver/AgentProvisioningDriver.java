@@ -19,7 +19,12 @@
 
 package step.core.agents.provisioning.driver;
 
-public interface AgentProvisioningDriver {
+import step.core.agents.provisioning.AgentPoolSpec;
+
+import java.io.Closeable;
+import java.util.Set;
+
+public interface AgentProvisioningDriver extends Closeable {
 
     /**
      * @return the agent provisioning configuration
@@ -57,4 +62,15 @@ public interface AgentProvisioningDriver {
      * @param provisioningRequestId the unique id of the provisioning request
      */
     void deprovisionTokens(String provisioningRequestId) throws Exception;
+
+    /**
+     * Register or keep alive a remote agent pool template. Registered templates are evicted after a configurable TTL
+     * This method has to be called periodically to keep them alive
+     * @param agentPoolSpecs the specification of the remote agent pool to be registered
+     */
+    void registerRemoteAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs);
+
+    default void close() {
+        // Default implementation does nothing
+    }
 }
