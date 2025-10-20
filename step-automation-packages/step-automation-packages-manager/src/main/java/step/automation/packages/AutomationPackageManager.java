@@ -400,7 +400,6 @@ public class AutomationPackageManager {
                 conflictingAutomationPackages = new ConflictingAutomationPackages();
             }
 
-            ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
             // keep old package id
             newPackage = createNewInstance(
                     automationPackageArchive.getOriginalFileName(),
@@ -516,10 +515,9 @@ public class AutomationPackageManager {
     }
 
 
-    private void updateRelatedAutomationPackages(List<ObjectId> automationPackagesForRedeploy,
-                                                AutomationPackageArchiveProvider packageArchiveProvider,
+    public void updateRelatedAutomationPackages(List<ObjectId> automationPackagesForRedeploy,
                                                 AutomationPackageUpdateParameter parameters) throws AutomationPackageRedeployException {
-        if (automationPackagesForRedeploy == null || automationPackagesForRedeploy.isEmpty() || !packageArchiveProvider.hasNewContent()) {
+        if (automationPackagesForRedeploy == null || automationPackagesForRedeploy.isEmpty()) {
             return;
         }
         List<ObjectId> failedAps = new ArrayList<>();
@@ -548,28 +546,26 @@ public class AutomationPackageManager {
 
 
     public Resource createAutomationPackageResource(String resourceType, AutomationPackageFileSource fileSource,
-                                                    ObjectPredicate predicate, ObjectEnricher enricher,
-                                                    String actorUser,
-                                                    ObjectPredicate accessChecker) throws AutomationPackageManagerException {
+                                                    AutomationPackageUpdateParameter parameters) throws AutomationPackageManagerException {
         try {
             switch (resourceType) {
                 case ResourceManager.RESOURCE_TYPE_AP_LIBRARY:
                     // We upload the new resource for keyword library. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
-                    try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(fileSource, predicate)) {
+                    try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(fileSource, parameters.objectPredicate)) {
                         return automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
                                 automationPackageLibraryProvider,
-                                null, enricher, predicate, actorUser, accessChecker, false
+                                null, parameters, false
                         );
                     } catch (IOException e) {
                         throw new AutomationPackageManagerException("Automation package library provider exception", e);
                     }
                 case ResourceManager.RESOURCE_TYPE_AP:
                     // We upload the new main resource for AP. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
-                    try (AutomationPackageArchiveProvider automationPackageArchiveProvider = getAutomationPackageArchiveProvider(fileSource, predicate, new NoAutomationPackageLibraryProvider())) {
+                    try (AutomationPackageArchiveProvider automationPackageArchiveProvider = getAutomationPackageArchiveProvider(fileSource, parameters.objectPredicate, new NoAutomationPackageLibraryProvider())) {
                         AutomationPackageArchive apArchive = automationPackageArchiveProvider.getAutomationPackageArchive();
                         return automationPackageResourceManager.uploadOrReuseApResource(
                                 automationPackageArchiveProvider, apArchive, null,
-                                enricher, actorUser, predicate, accessChecker,
+                                parameters,
                                 false
                         );
                     } catch (IOException e) {
@@ -650,7 +646,7 @@ public class AutomationPackageManager {
         }
 
         //Only redeploy APs using the same package if a new snapshot versions was downloaded
-        updateRelatedAutomationPackages(additionalPackagesForRedeploy, apArchiveProvider, parameters);
+        updateRelatedAutomationPackages(additionalPackagesForRedeploy, parameters);
         return mainUpdatedAp;
     }
 

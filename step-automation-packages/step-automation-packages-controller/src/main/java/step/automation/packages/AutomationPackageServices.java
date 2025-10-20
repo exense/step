@@ -470,10 +470,11 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                      @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                      @FormDataParam("mavenSnippet") String mavenSnippet){
         try {
+            AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter();
             Resource resource = automationPackageManager.createAutomationPackageResource(
                     resourceType,
                     getFileSource(uploadedInputStream, fileDetail, mavenSnippet, "Invalid maven snippet", null),
-                    getObjectPredicate(), getObjectEnricher(), getUser(), getWriteAccessPredicate()
+                    automationPackageUpdateParameter
             );
             return resource == null ? null : resource.getId().toHexString();
         } catch (AutomationPackageAccessException ex){
@@ -498,7 +499,16 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     private RefreshResourceResult refreshResourceAndLinkedPackages(String resourceId) {
-        return automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, getObjectEnricher(), getObjectPredicate(), getWriteAccessPredicate(), getUser(), automationPackageManager);
+        AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter();
+        return automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, automationPackageUpdateParameter, automationPackageManager);
+    }
+
+    private AutomationPackageUpdateParameter getAutomationPackageUpdateParameter() {
+        return new AutomationPackageUpdateParameterBuilder()
+                .withEnricher(getObjectEnricher())
+                .withObjectPredicate(getObjectPredicate())
+                .withWriteAccessPredicate(getWriteAccessPredicate())
+                .withActorUser(getUser()).build();
     }
 
     @POST

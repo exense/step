@@ -1153,13 +1153,14 @@ public class AutomationPackageManagerOSTest {
         try (InputStream is = new FileInputStream(automationPackageJar);
              InputStream kwIs = new FileInputStream(kwLibSnapshotJar);
              AutomationPackageLibraryProvider apLibProvider = new AutomationPackageLibraryFromInputStreamProvider(kwIs, KW_LIB_FILE_NAME);
-             AutomationPackageArchiveProvider apProvider = new AutomationPackageFromInputStreamProvider(is, SAMPLE1_FILE_NAME, apLibProvider)) {
+             AutomationPackageArchiveProvider apProvider = new AutomationPackageFromInputStreamProvider(manager.getAutomationPackageReaderRegistry(), is, SAMPLE1_FILE_NAME, apLibProvider)) {
 
-            savedApResource = manager.getAutomationPackageResourceManager().uploadOrReuseApResource(apProvider, apProvider.getAutomationPackageArchive(), null, null, "testUser", o -> true, o -> true, false);
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit().build();
+            savedApResource = manager.getAutomationPackageResourceManager().uploadOrReuseApResource(apProvider, apProvider.getAutomationPackageArchive(), null, parameters, false);
             Assert.assertNotNull(savedApResource);
             Assert.assertEquals(ResourceManager.RESOURCE_TYPE_AP, savedApResource.getResourceType());
 
-            savedkwResource = manager.getAutomationPackageResourceManager().uploadOrReuseAutomationPackageLibrary(apLibProvider, null, null, o -> true, "testUser", o -> true, false);
+            savedkwResource = manager.getAutomationPackageResourceManager().uploadOrReuseAutomationPackageLibrary(apLibProvider, null, parameters, false);
             Assert.assertNotNull(savedkwResource);
             Assert.assertEquals(ResourceManager.RESOURCE_TYPE_AP_LIBRARY, savedkwResource.getResourceType());
         } catch (IOException | AutomationPackageReadingException e) {
