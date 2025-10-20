@@ -67,9 +67,9 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	// These are used by the MeasurementControllerPlugin to "reconstruct" measures from measurements, and indicate the
 	// "internal" fields which should NOT be added to the measure data field. Keep this in sync with the fields defined above.
 	static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", "project", "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
-			ORIGIN, RN_STATUS, STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
+			ORIGIN, RN_STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
 	// Same use, but for defining which fields SHOULD be directly copied to the top-level fields of a measure.
-	static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE);
+	static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE, STATUS);
 
 	private final Map<String, Set<String[]>> labelsByExec = new ConcurrentHashMap<>();
 	private final GaugeCollectorRegistry gaugeCollectorRegistry;
