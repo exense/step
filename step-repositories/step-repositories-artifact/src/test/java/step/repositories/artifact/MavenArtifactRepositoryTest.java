@@ -43,7 +43,7 @@ public class MavenArtifactRepositoryTest extends AbstractMavenArtifactRepository
         assertEquals("TestSet", artefactInfo.getType());
 
         // getTestSetStatusOverview
-        TestSetStatusOverview testSetStatusOverview = artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, null, "testUser");
+        TestSetStatusOverview testSetStatusOverview = artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, o -> true, "testUser");
         List<String> expected = Stream.of(
                 "plans/composite-simple-plan.yml", "plans/plan2.plan", "My custom keyword name",
                 "explicitPlanWithExecutionParameter", "planWithAssert", "testAutomation.plan", "plans/plan3.plan",
