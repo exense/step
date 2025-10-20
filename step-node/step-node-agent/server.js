@@ -4,7 +4,7 @@ const YAML = require('yaml')
 
 let args = minimist(process.argv.slice(2), {
   default: {
-    f: path.join(__dirname, 'AgentConf.json')
+    f: path.join(__dirname, 'AgentConf.yaml')
   }
 })
 console.log('[Agent] Using arguments ' + JSON.stringify(args))
@@ -26,9 +26,10 @@ if(agentConfFileExt === '.yaml') {
 console.log('[Agent] Creating agent context and tokens')
 const uuid = require('uuid/v4')
 const _ = require('underscore')
+const jwtUtils = require('./utils/jwtUtils')
 const agentType = 'node'
 const agent = {id: uuid()}
-let agentContext = { tokens: [], tokenSessions: [], tokenProperties: [], properties: agentConf.properties, controllerUrl: agentConf.gridHost }
+let agentContext = { tokens: [], tokenSessions: [], tokenProperties: [], properties: agentConf.properties, controllerUrl: agentConf.gridHost, gridSecurity: agentConf.gridSecurity }
 _.each(agentConf.tokenGroups, function (tokenGroup) {
   const tokenConf = tokenGroup.tokenConf
   let attributes = tokenConf.attributes
@@ -60,6 +61,11 @@ const bodyParser = require('body-parser')
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
 
+// Apply JWT authentication middleware
+const createJwtAuthMiddleware = require('./middleware/jwtAuth')
+const jwtAuthMiddleware = createJwtAuthMiddleware(agentConf.gridSecurity)
+app.use(jwtAuthMiddleware)
+
 const routes = require('./api/routes/routes')
 routes(app, agentContext)
 
@@ -72,19 +78,32 @@ startWithAgentUrl = function(agentUrl) {
   const registrationPeriod = agentConf.registrationPeriod || 5000
   const request = require('request')
   setInterval(function () {
-    request({
+    const requestOptions = {
       uri: agentConf.gridHost + '/grid/register',
       method: 'POST',
       json: true,
       body: { agentRef: { agentId: agent.id, agentUrl: agentUrl, agentType: agentType }, tokens: agentContext.tokens }
-    }, function (err, res, body) {
+    };
+
+    // Add bearer token if gridSecurity is configured
+    const token = jwtUtils.generateJwtToken(agentConf.gridSecurity, 3600); // 1 hour expiration
+    if (token) {
+      requestOptions.headers = {
+        'Authorization': 'Bearer ' + token
+      };
+    }
+
+    request(requestOptions, function (err, res, body) {
       if (err) {
+        console.log("[Agent] Error while registering agent to grid")
         console.log(err)
+      } else if (res.statusCode !== 204) {
+        console.log("[Agent] Failed to register agent: grid responded with status " + res.statusCode + (body != null ? ". Response body: " + JSON.stringify(body) : ""))
       }
     })
   }, registrationPeriod)
-  
-  console.log('[Agent] Successfully started on: ' + port)  
+
+  console.log('[Agent] Successfully started on: ' + port)
 }
 
 if(agentConf.agentUrl) {
@@ -92,7 +111,7 @@ if(agentConf.agentUrl) {
 } else {
   const getFQDN = require('get-fqdn');
   getFQDN().then(FQDN => {
-    startWithAgentUrl('http://' + FQDN + ':' + port) 
+    startWithAgentUrl('http://' + FQDN + ':' + port)
   }).catch(e => {
     console.log('[Agent] Error while getting FQDN ' + e)
   })

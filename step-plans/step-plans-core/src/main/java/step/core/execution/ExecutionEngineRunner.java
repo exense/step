@@ -239,7 +239,11 @@ public class ExecutionEngineRunner {
 		// Provision the resources required for the execution before starting the execution phase
 		provisionRequiredResources();
 		try {
-			updateStatus(ExecutionStatus.RUNNING);
+			ExecutionStatus status = executionContext.getStatus();
+			if(!status.equals(ExecutionStatus.ABORTING) && !status.equals(ExecutionStatus.FORCING_ABORT)) {
+				// Do not update the status if the execution was aborted
+				updateStatus(ExecutionStatus.RUNNING);
+			}
 			return artefactHandlerManager.execute(root, rootReportNode, ParentSource.MAIN);
 		} finally {
 			try {

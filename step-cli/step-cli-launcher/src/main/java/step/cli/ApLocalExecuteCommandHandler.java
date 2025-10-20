@@ -21,9 +21,7 @@ package step.cli;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageFromInputStreamProvider;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.*;
 import step.automation.packages.junit.AbstractLocalPlanRunner;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
@@ -66,12 +64,15 @@ public class ApLocalExecuteCommandHandler {
                 if (kwLibFile != null) {
                     kwFileInputStream = new FileInputStream(kwLibFile);
                 }
-                AutomationPackageLibraryProvider kwFromInputStreamProvider = kwFileInputStream == null ? new NoAutomationPackageLibraryProvider() : new AutomationPackageLibraryFromInputStreamProvider(kwFileInputStream, kwLibFile.getName());
-                AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName(), kwFromInputStreamProvider);
+                AutomationPackageLibraryProvider kwFromInputStreamProvider = kwFileInputStream == null ?
+                        new NoAutomationPackageLibraryProvider() :
+                        new AutomationPackageLibraryFromInputStreamProvider(kwFileInputStream, kwLibFile.getName());
+                AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(automationPackageManager.getAutomationPackageReaderRegistry(),
+                        is, apFile.getName(), kwFromInputStreamProvider);
+                AutomationPackageUpdateParameter localCreateParameters = new AutomationPackageUpdateParameterBuilder().withCreateOnly()
+                        .forLocalExecution().build();
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-                        false, true, null, automationPackageProvider, null, null,
-                        true, null, o -> true, o -> true, false, kwFromInputStreamProvider, null,
-                        false, true).getId();
+                        automationPackageProvider, kwFromInputStreamProvider, localCreateParameters).getId();
 
                 PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);
                 List<StepClassParserResult> listPlans = automationPackageManager.getPackagePlans(automationPackageId)

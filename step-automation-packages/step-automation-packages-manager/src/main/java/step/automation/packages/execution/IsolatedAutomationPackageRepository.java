@@ -28,6 +28,7 @@ import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackageManagerException;
 import step.core.execution.ExecutionContext;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.ArtefactInfo;
 import step.functions.accessor.FunctionAccessor;
@@ -113,9 +114,9 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     @Override
     public AutomationPackageFile getApFileForExecution(InputStream apInputStream, String inputStreamFileName,
                                                        IsolatedAutomationPackageExecutionParameters parameters, ObjectId contextId,
-                                                       ObjectPredicate objectPredicate, String actorUser, String resourceType) {
+                                                       ObjectEnricher enricher, ObjectPredicate objectPredicate, String actorUser, String resourceType) {
         // for files from input stream we save persists the resource to support re-execution
-        Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName, actorUser, resourceType);
+        Resource apResource = saveApResource(contextId.toString(), apInputStream, inputStreamFileName, actorUser, resourceType, enricher);
         File file = getApFileByResource(apResource);
         return new AutomationPackageFile(file, apResource);
     }
@@ -252,7 +253,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
     }
 
-    public Resource saveApResource(String contextId, InputStream apStream, String fileName, String actorUser, String resourceType) {
+    private Resource saveApResource(String contextId, InputStream apStream, String fileName, String actorUser, String resourceType, ObjectEnricher enricher) {
         // store file in temporary storage to support rerun
         try {
             // find by resource type and contextId (or apName and override)
@@ -261,6 +262,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
             Resource resource = resourceContainer.getResource();
             resource.addCustomField(CONTEXT_ID_CUSTOM_FIELD, contextId);
             resource.addCustomField(LAST_EXECUTION_TIME_CUSTOM_FIELD, OffsetDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+            enricher.accept(resource);
             resourceManager.saveResource(resource);
 
             resource = resourceManager.saveResourceContent(resource.getId().toString(), apStream, fileName, actorUser);

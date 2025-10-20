@@ -44,7 +44,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.KEYWORD_LIBRARY_MAVEN_SOURCE;
+import static step.automation.packages.execution.RepositoryWithAutomationPackageSupport.PACKAGE_LIBRARY_MAVEN_SOURCE;
 import static step.repositories.ArtifactRepositoryConstants.MAVEN_REPO_ID;
 
 public class AutomationPackageExecutor {
@@ -113,39 +113,39 @@ public class AutomationPackageExecutor {
         // and if the automation package is provided as maven snippet, inputStream and fileName will be empty, but it is OK, because they are not required in MavenArtifactRepository
         IsolatedAutomationPackageRepository.AutomationPackageFile apFile = repository.getApFileForExecution(
                 automationPackageFileSource.getInputStream(), automationPackageFileSource.getFileName(),
-                parameters, contextId, objectPredicate, actorUser, ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP
+                parameters, contextId, objectEnricher, objectPredicate, actorUser, ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP
         );
 
         //For the KW library we also need to get it from the corresponding provider. We cannot reuse the package repository (isolated, maven...)
         // because the source maybe different. Also for maven we should have the same behaviour and re-download from maven for re-execution
         // we therefore also must store the source in the repository parameters
-        IsolatedAutomationPackageRepository.AutomationPackageFile kwLibraryAutomationPackageFile = null;
+        IsolatedAutomationPackageRepository.AutomationPackageFile libraryAutomationPackageFile = null;
         Map<String, String> additionalRepositoryParameters = new HashMap<>();
-        try (AutomationPackageLibraryProvider kwLibProvider = mainAutomationPackageManager.getAutomationPackageLibraryProvider(keywordLibrarySource, objectPredicate)) {
-            File keywordLibraryFile = kwLibProvider.getAutomationPackageLibrary();
+        try (AutomationPackageLibraryProvider packageLibraryProvider = mainAutomationPackageManager.getAutomationPackageLibraryProvider(keywordLibrarySource, objectPredicate)) {
+            File packageLibraryFile = packageLibraryProvider.getAutomationPackageLibrary();
             //For maven we actually don't store the file as resource it will be re-downloaded for re-execution, so we only store the source in the repo parameters
-            if (keywordLibraryFile != null) {
+            if (packageLibraryFile != null) {
                 if (keywordLibrarySource.getMode() == AutomationPackageFileSource.Mode.MAVEN) {
-                    additionalRepositoryParameters.put(KEYWORD_LIBRARY_MAVEN_SOURCE, keywordLibrarySource.getMavenArtifactIdentifier().toStringRepresentation());
-                    kwLibraryAutomationPackageFile = new IsolatedAutomationPackageRepository.AutomationPackageFile(keywordLibraryFile, null);
+                    additionalRepositoryParameters.put(PACKAGE_LIBRARY_MAVEN_SOURCE, keywordLibrarySource.getMavenArtifactIdentifier().toStringRepresentation());
+                    libraryAutomationPackageFile = new IsolatedAutomationPackageRepository.AutomationPackageFile(packageLibraryFile, null);
                 } else {
-                    try (InputStream fis = new FileInputStream(kwLibProvider.getAutomationPackageLibrary())) {
-                        RepositoryWithAutomationPackageSupport kwLibraryRepository = (RepositoryWithAutomationPackageSupport) repositoryObjectManager.getRepository(ISOLATED_AUTOMATION_PACKAGE);
-                        kwLibraryAutomationPackageFile = kwLibraryRepository.getApFileForExecution(
-                                fis, kwLibProvider.getAutomationPackageLibrary().getName(),
-                                parameters, contextId, objectPredicate, actorUser, ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP_LIB
+                    try (InputStream fis = new FileInputStream(packageLibraryProvider.getAutomationPackageLibrary())) {
+                        RepositoryWithAutomationPackageSupport libraryRepository = (RepositoryWithAutomationPackageSupport) repositoryObjectManager.getRepository(ISOLATED_AUTOMATION_PACKAGE);
+                        libraryAutomationPackageFile = libraryRepository.getApFileForExecution(
+                                fis, packageLibraryProvider.getAutomationPackageLibrary().getName(),
+                                parameters, contextId, objectEnricher, objectPredicate, actorUser, ResourceManagerImpl.RESOURCE_TYPE_ISOLATED_AP_LIB
                         );
                     }
                 }
             }
         } catch (IOException | AutomationPackageReadingException e) {
-            throw new AutomationPackageManagerException("Unable to read the provided keyword library", e);
+            throw new AutomationPackageManagerException("Unable to read the provided package library. Reason: " + e.getMessage(), e);
         }
 
         // and then we read the ap from just stored file
         // create single execution context for the whole AP to execute all plans on the same ap manager (for performance reason)
         IsolatedAutomationPackageRepository.PackageExecutionContext executionContext = repository.createIsolatedPackageExecutionContext(
-                objectEnricher, objectPredicate, contextId.toString(), apFile, true, kwLibraryAutomationPackageFile, actorUser
+                objectEnricher, objectPredicate, contextId.toString(), apFile, true, libraryAutomationPackageFile, actorUser
         );
 
         try {

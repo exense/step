@@ -50,7 +50,7 @@ public class AutomationPackageReaderTest {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageReaderTest.class);
 
-    private final AutomationPackageReader reader;
+    private final JavaAutomationPackageReader reader;
 
     public AutomationPackageReaderTest() {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
@@ -63,7 +63,7 @@ public class AutomationPackageReaderTest {
         // accessor is not required in this test - we only read the yaml and don't store the result anywhere
         AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, Mockito.mock(ParameterManager.class));
 
-        this.reader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, new Configuration());
+        this.reader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, new Configuration());
     }
 
     @Test
@@ -234,6 +234,24 @@ public class AutomationPackageReaderTest {
         plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 2")).findFirst().get();
         plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 3")).findFirst().get();
         plans.stream().filter(p -> p.getAttribute(AbstractOrganizableObject.NAME).equals("Test Plan 4")).findFirst().get();
+    }
+
+    @Test
+    public void testInvalidAPNames() {
+        File automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages-invalidNameBackSlash.zip");
+        try {
+            reader.readAutomationPackageFromJarFile(automationPackage, null, null);
+            fail();
+        } catch (AutomationPackageReadingException e) {
+            assertEquals("Package name contains unsafe characters: My package\\. Simple quote and backslash characters are not allowed.", e.getMessage());
+        }
+        automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages-invalidNameSimpleQuote.zip");
+        try {
+            reader.readAutomationPackageFromJarFile(automationPackage, null, null);
+            fail();
+        } catch (AutomationPackageReadingException e) {
+            assertEquals("Package name contains unsafe characters: My package';. Simple quote and backslash characters are not allowed.", e.getMessage());
+        }
     }
 
 }

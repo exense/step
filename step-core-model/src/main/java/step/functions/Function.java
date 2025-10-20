@@ -56,7 +56,12 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 	protected String htmlTemplate="";
 	
 	protected String description;
-	
+
+	/**
+	 * If this function is part of an automation package, this field points to the automation package file
+	 */
+	private String automationPackageFile;
+
 	public static final String APPLICATION = "application";
 	
 	public Map<String, String> getTokenSelectionCriteria() {
@@ -160,5 +165,13 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 
 	public void setActivationExpression(Expression activationExpression) {
 		this.activationExpression = activationExpression;
+	}
+
+	public String getAutomationPackageFile() {
+		return automationPackageFile;
+	}
+
+	public void setAutomationPackageFile(String automationPackageFile) {
+		this.automationPackageFile = automationPackageFile;
 	}
 }

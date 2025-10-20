@@ -23,18 +23,18 @@ import step.automation.packages.client.model.AutomationPackageSource;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 
 import java.io.Closeable;
-import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 public interface AutomationPackageClient extends Closeable {
 
-    String createAutomationPackage(AutomationPackageSource automationPackageSource,
-                                   String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
-                                   AutomationPackageSource keywordLibrarySource) throws AutomationPackageClientException;
-
     AutomationPackageUpdateResult createOrUpdateAutomationPackage(AutomationPackageSource automationPackageSource,
-                                                                  Boolean async, String apVersion, String activationExpr, Boolean allowUpdateOfOtherPackages,
-                                                                  AutomationPackageSource keywordLibrarySource) throws AutomationPackageClientException;
+                                                                  AutomationPackageSource apLibrarySource,
+                                                                  String apVersion, String activationExpr,
+                                                                  Map<String, String> plansAttributes, Map<String, String> functionsAttributes,
+                                                                  Map<String, String> tokenSelectionCriteria,
+                                                                  Boolean executeFunctionsLocally,
+                                                                  Boolean async, Boolean allowUpdateOfOtherPackages) throws AutomationPackageClientException;
 
     List<String> executeAutomationPackage(AutomationPackageSource automationPackageSource,
                                           IsolatedAutomationPackageExecutionParameters params,

@@ -26,20 +26,24 @@ import step.resources.ResourceManager;
 
 public class AutomationPackageFromResourceIdProvider extends AbstractAutomationPackageFromResourceIdProvider implements AutomationPackageArchiveProvider {
 
-    private final AutomationPackageLibraryProvider keywordLibraryProvider;
+    private final AutomationPackageArchive archive;
 
-    public AutomationPackageFromResourceIdProvider(ResourceManager resourceManager, String resourceId, AutomationPackageLibraryProvider keywordLibraryProvider,
+    public AutomationPackageFromResourceIdProvider(AutomationPackageReaderRegistry apReaderRegistry, ResourceManager resourceManager,
+                                                   String resourceId, AutomationPackageLibraryProvider keywordLibraryProvider,
                                                    ObjectPredicate objectPredicate) {
         super(resourceManager, resourceId, objectPredicate);
-        this.keywordLibraryProvider = keywordLibraryProvider;
+        AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(resourceFile.getResourceFile());
+        try {
+            this.archive = reader.createAutomationPackageArchive(resourceFile.getResourceFile(),
+                    keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary(),
+                    null);
+        } catch (AutomationPackageReadingException e) {
+            throw new AutomationPackageManagerException("Unable to load automation package by resource id: " + resourceId);
+        }
     }
 
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-        try {
-            return new AutomationPackageArchive(resourceFile.getResourceFile(), keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary());
-        } catch (AutomationPackageReadingException e) {
-            throw new AutomationPackageManagerException("Unable to load automation package by resource id: " + resourceId);
-        }
+       return archive;
     }
 }

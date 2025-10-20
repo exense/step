@@ -95,7 +95,9 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 			AutomationPackage ap = context.getAutomationPackage();
 			if (ap != null && ap.getAutomationPackageResource() != null && !ap.getAutomationPackageResource().isEmpty()) {
 				setScriptFile(new DynamicValue<>(ap.getAutomationPackageResource()));
-			}
+			} else {
+                throw new RuntimeException("General script functions can only be used within automation package archive");
+            }
 			if (ap != null && ap.getAutomationPackageLibraryResource() != null && !ap.getAutomationPackageLibraryResource().isEmpty()) {
 				setLibrariesFile(new DynamicValue<>(ap.getAutomationPackageLibraryResource()));
 			}

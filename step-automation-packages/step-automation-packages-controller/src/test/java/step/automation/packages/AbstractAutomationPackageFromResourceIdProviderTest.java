@@ -27,7 +27,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.library.AutomationPackageLibraryFromResourceIdProvider;
+import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.resources.*;
 
 import java.io.*;
@@ -63,8 +65,12 @@ public class AbstractAutomationPackageFromResourceIdProviderTest {
         }
 
         AutomationPackageArchive archive;
+        AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
+        AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry);
+        automationPackageReaderRegistry.register(new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, null));
         try (AutomationPackageLibraryFromResourceIdProvider kwLibProvider = new AutomationPackageLibraryFromResourceIdProvider(resourceManager, savedkwResource.getId().toHexString(), o -> true);
-             AutomationPackageFromResourceIdProvider provider = new AutomationPackageFromResourceIdProvider(resourceManager, savedApResource.getId().toHexString(), kwLibProvider, o -> true)) {
+             AutomationPackageFromResourceIdProvider provider = new AutomationPackageFromResourceIdProvider(automationPackageReaderRegistry, resourceManager, savedApResource.getId().toHexString(), kwLibProvider, o -> true)) {
             archive = provider.getAutomationPackageArchive();
         } catch (IOException | AutomationPackageReadingException e) {
             throw new RuntimeException("Unexpected exception", e);

@@ -35,6 +35,7 @@ import ch.exense.commons.app.Configuration;
 import step.artefacts.CallFunction;
 import step.artefacts.Sequence;
 import step.artefacts.Set;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
@@ -197,6 +198,7 @@ public class CustomDescriptionStepParser implements StepParser<DescriptionStep> 
 			}
 			keywordSelector += "}";
 
+			result.addAttribute(AbstractOrganizableObject.NAME, keywordFullName);
 			result.getFunction().setValue(keywordSelector);
 			result.setArgument(new DynamicValue<String>(builder.build().toString()));
 

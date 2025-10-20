@@ -127,6 +127,10 @@ public class AutomationPackageManagerOSTest {
         AutomationPackageSchedulerPlugin.registerSchedulerHooks(automationPackageHookRegistry, serializationRegistry, executionScheduler);
         AutomationPackageParametersRegistration.registerParametersHooks(automationPackageHookRegistry, serializationRegistry, parameterManager);
 
+        JavaAutomationPackageReader apReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration);
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry);
+        automationPackageReaderRegistry.register(apReader);
+
         this.manager = AutomationPackageManager.createMainAutomationPackageManager(
                 automationPackageAccessor,
                 functionManager,
@@ -134,12 +138,12 @@ public class AutomationPackageManagerOSTest {
                 planAccessor,
                 resourceManager,
                 automationPackageHookRegistry,
-                new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration),
+                automationPackageReaderRegistry,
                 automationPackageLocks,
-                null
+                null, -1
         );
 
-        this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>(), resourceManager));
+        this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>(), resourceManager, automationPackageReaderRegistry));
 
     }
 
@@ -187,7 +191,9 @@ public class AutomationPackageManagerOSTest {
         Date testStartDate = new Date();
 
         // upload sample
-        SampleUploadingResult r = uploadSample1WithAsserts(sample1FileSource, true, false, false);
+        SampleUploadingResult r = uploadSample1WithAsserts(sample1FileSource, true, false, false, "v1",
+                "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
+                , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
 
         // creation date and user are set
         Date apCreationDate = r.storedPackage.getCreationDate();
@@ -198,10 +204,11 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(r.storedPackage.getCreationUser(), "testUser");
 
         // 2. Update the package - some entities are updated, some entities are added
-        AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
-                true, true, null, extendedFileSource,
-                null, null, null, null, o -> true, o -> true, false,
-                "testUser", false, true);
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withAutomationPackageVersion("v1")
+                .withApSource(extendedFileSource).build();
+
+        AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(updateParameters);
         Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, result.getStatus());
         ObjectId resultId = result.getId();
 
@@ -217,7 +224,7 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(updatedPackage.getLastModificationUser(), "testUser");
 
         r.storedPackage = automationPackageAccessor.get(resultId);
-        Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
+        Assert.assertEquals("My package.v1", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
 
         // 5 plans have been updated, 1 plan has been added
         List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(resultId)).collect(Collectors.toList());
@@ -274,7 +281,9 @@ public class AutomationPackageManagerOSTest {
         assertEquals("some description 2", parameter.getDescription());
 
         // 3. Upload the original sample again - added plans/functions/tasks from step 2 should be removed
-        SampleUploadingResult r2 = uploadSample1WithAsserts(sample1FileSourceDuplicate, false, false, false);
+        SampleUploadingResult r2 = uploadSample1WithAsserts(sample1FileSourceDuplicate, false, false, false, "v1",
+                "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
+                , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
         Assert.assertEquals(r.storedPackage.getId(), r2.storedPackage.getId());
         Assert.assertEquals(findPlanByName(r.storedPlans, PLAN_NAME_FROM_DESCRIPTOR), findPlanByName(r2.storedPlans, PLAN_NAME_FROM_DESCRIPTOR));
         Assert.assertEquals(toIds(r.storedFunctions), toIds(r2.storedFunctions));
@@ -293,61 +302,66 @@ public class AutomationPackageManagerOSTest {
     }
 
     @Test
-    public void testUpdateMetadata() throws IOException {
+    public void testUpdateAllTypesOfMetadata() throws IOException {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
-        try (InputStream is = new FileInputStream(automationPackageJar)) {
+        File libraryJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
 
-            // 1. Upload new package
-            SampleUploadingResult r = uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is, SAMPLE1_FILE_NAME), true, false, false);
+        //Prepare maven artefact, use release artefact to test update of package without actual change of the package
+        MavenArtifactIdentifier automationPackageJarMvn = new MavenArtifactIdentifier("test-group", "ap1", "1.0.0", null, null);
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        providersResolver.getMavenArtifactMocks().put(automationPackageJarMvn, new ResolvedMavenArtifact(automationPackageJar, null));
+        AutomationPackageFileSource sampleSource = AutomationPackageFileSource.withMavenIdentifier(automationPackageJarMvn);
+        //AutomationPackageFileSource extSampleSource = A;
+        SampleUploadingResult r;
 
-            // 2. Update package metadata - change version
-            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver1", null, null, null);
+        // 1. Upload new package
+        r = uploadSample1WithAsserts(sampleSource, true, false, false, "v1",
+                "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
+                , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
 
-            AutomationPackage actualAp = automationPackageAccessor.get(r.storedPackage.getId());
-            Assert.assertEquals("ver1", actualAp.getVersion());
-            Assert.assertEquals("My package.ver1", actualAp.getAttribute(AbstractOrganizableObject.NAME));
+        assertNotNull(r);
 
-            // 3. Update version again and add some activation expression
-            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), "ver2", "true == true", null, null);
-            actualAp = automationPackageAccessor.get(r.storedPackage.getId());
-            Assert.assertEquals("ver2", actualAp.getVersion());
-            Assert.assertEquals("My package.ver2", actualAp.getAttribute(AbstractOrganizableObject.NAME));
-            Assert.assertEquals("true == true", actualAp.getActivationExpression().getScript());
+        ObjectId explicitOldId = r.storedPackage.getId();
+        // 2. Update package metadata - change version
+        r = uploadSample1WithAsserts(explicitOldId, sampleSource, false, false, false, "ver1",
+                "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
+                , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"), false, null);
 
-            // check that the new activation expression is propagated to all plans and keywords
-            List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-            Assert.assertEquals(PLANS_COUNT, storedPlans.size());
-            for (Plan storedPlan : storedPlans) {
-                Assert.assertEquals("true == true", storedPlan.getActivationExpression().getScript());
-            }
 
-            List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-            Assert.assertEquals(KEYWORDS_COUNT, storedFunctions.size());
-            for (Function storedFunction : storedFunctions) {
-                Assert.assertEquals("true == true", storedFunction.getActivationExpression().getScript());
-            }
 
-            // 4. remove version and activation expression
-            manager.updateAutomationPackageMetadata(r.storedPackage.getId(), null, null, null, null);
+        // 3. Update version again, as well as  activation expression, attributes
+        r = uploadSample1WithAsserts(explicitOldId, sampleSource, false, false, false, "ver1",
+                "env == TEST", Map.of("planAttr2", "planAttrValue2"), Map.of("functionAttr2", "functionAttrValue2")
+                , Map.of("OS", "Linux"), false, null);
 
-            actualAp = automationPackageAccessor.get(r.storedPackage.getId());
-            Assert.assertEquals("My package", actualAp.getAttribute(AbstractOrganizableObject.NAME));
-            Assert.assertNull(actualAp.getActivationExpression());
-            Assert.assertNull(actualAp.getVersion());
 
-            // check that the new activation expression is propagated to all plans and keywords
-            storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-            Assert.assertEquals(PLANS_COUNT, storedPlans.size());
-            for (Plan storedPlan : storedPlans) {
-                Assert.assertNull(storedPlan.getActivationExpression());
-            }
+        // 4. remove version and activation expression, attributes
+        r = uploadSample1WithAsserts(explicitOldId, sampleSource, false, false, false, null,
+                null, null, null, null, false, null);
 
-            storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(actualAp.getId())).collect(Collectors.toList());
-            Assert.assertEquals(KEYWORDS_COUNT, storedFunctions.size());
-            for (Function storedFunction : storedFunctions) {
-                Assert.assertNull(storedFunction.getActivationExpression());
-            }
+        //Test with execute functions locally
+        r = uploadSample1WithAsserts(explicitOldId, sampleSource, false, false, false, null,
+                null, null, null, null, true, null);
+
+        // 5. add a KW lib
+        try (InputStream is = new FileInputStream(libraryJar)) {
+            AutomationPackageFileSource automationPackageFileSource = AutomationPackageFileSource.withInputStream(is, libraryJar.getName());
+            r = uploadSample1WithAsserts(explicitOldId, sampleSource, false, false, false, null,
+                    null, null, null, null, false, automationPackageFileSource);
         }
+        String automationPackageLibraryResource = r.storedPackage.getAutomationPackageLibraryResource();
+
+        // 6. Change KW lib
+        try (InputStream is = new FileInputStream(libraryJar)) {
+            AutomationPackageFileSource automationPackageFileSource = AutomationPackageFileSource.withInputStream(is, libraryJar.getName());
+            r = uploadSample1WithAsserts(explicitOldId, sampleSource, false, false, false, null,
+                    null, null, null, null, false, automationPackageFileSource);
+        }
+        assertNotEquals(automationPackageLibraryResource, r.storedPackage.getAutomationPackageLibraryResource());
+
+        // 7. remove KW lib
+        r = uploadSample1WithAsserts(explicitOldId, sampleSource, false, false, false, null,
+                null, null, null, null, false, null);
 
     }
 
@@ -358,7 +372,9 @@ public class AutomationPackageManagerOSTest {
 
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             ObjectId result;
-            result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, fileName), null, null, null, "testUser", false, true, null, o -> true, o -> true);
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                    .withAllowUpdate(false).withApSource(AutomationPackageFileSource.withInputStream(is, fileName)).build();
+            result = manager.createOrUpdateAutomationPackage(parameters).getId();
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(1, storedPlans.size());
@@ -379,10 +395,13 @@ public class AutomationPackageManagerOSTest {
     @Test
     public void testInvalidFile() throws IOException {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/picture.png")) {
-            manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, "picture.png"), null, null, null, "testUser", false, true, null, o -> true, o -> true);
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit().withAllowUpdate(false)
+                    .withApSource(AutomationPackageFileSource.withInputStream(is, "picture.png")).build();
+            manager.createOrUpdateAutomationPackage(parameters);
             Assert.fail("The exception should be thrown in case of invalid automation package file");
         } catch (AutomationPackageManagerException ex) {
             // ok - invalid file should cause the exception
+            assertEquals("No Automation Package reader found for file picture.png. Supported types are: ZIP archive, JAR file, Directory", ex.getMessage());
         }
     }
 
@@ -390,7 +409,9 @@ public class AutomationPackageManagerOSTest {
     public void testZipArchive() throws IOException {
         try (InputStream is = new FileInputStream("src/test/resources/step/automation/packages/step-automation-packages.zip")) {
             ObjectId result;
-            result = manager.createAutomationPackage(AutomationPackageFileSource.withInputStream(is, "step-automation-packages.zip"), null, null, null, "testUser", false, true, null, o -> true, o -> true);
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                    .withAllowUpdate(false).withApSource(AutomationPackageFileSource.withInputStream(is, "step-automation-packages.zip")).build();
+            result = manager.createOrUpdateAutomationPackage(parameters).getId();
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(4, storedPlans.size());
@@ -405,8 +426,12 @@ public class AutomationPackageManagerOSTest {
             InputStream is2 = new FileInputStream(automationPackageJar);
             InputStream is3 = new FileInputStream(automationPackageJar)) {
             // 1. Upload new package
-            SampleUploadingResult r = uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is1, SAMPLE1_FILE_NAME), true, true, false);
-            uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is2, SAMPLE1_FILE_NAME), false, true, false);
+            SampleUploadingResult r = uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is1, SAMPLE1_FILE_NAME), true, true, false, "v1",
+                    "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
+                    , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
+            uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is2, SAMPLE1_FILE_NAME), false, true, false, "v1",
+                    "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
+                    , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
             ExecutorService executor = Executors.newFixedThreadPool(1);
             executor.submit(() -> {
                 PlanRunnerResult execute = newExecutionEngineBuilder().build().execute(r.storedPlans.get(0));
@@ -414,7 +439,9 @@ public class AutomationPackageManagerOSTest {
 
             //Give some time to let the execution start
             Thread.sleep(500);
-            uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is3, SAMPLE1_FILE_NAME), false, true, true);
+            uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is3, SAMPLE1_FILE_NAME), false, true, true, "v1",
+                    "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
+                    , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
         }
     }
 
@@ -424,7 +451,9 @@ public class AutomationPackageManagerOSTest {
 
         try(InputStream is1 = new FileInputStream(automationPackageJar)) {
             // 1. Upload new package
-            SampleUploadingResult r = uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is1, SAMPLE1_FILE_NAME), true, false, false);
+            SampleUploadingResult r = uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is1, SAMPLE1_FILE_NAME), true, false, false, "v1",
+                    "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
+                    , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
 
             // 2. Get all stored entities
             Map<String, List<? extends AbstractOrganizableObject>> allEntities = manager.getAllEntities(r.storedPackage.getId());
@@ -506,24 +535,18 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, snapshotMetadata));
 
         // upload SNAPSHOT AP (echo) + SNAPSHOT LIB (echo)
-        AutomationPackageUpdateResult echoApResult = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(echoSnapshot),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, o -> true, o -> true, false,
-                "testUser", false,
-                true);
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(echoSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot)).build();
+        AutomationPackageUpdateResult echoApResult = manager.createOrUpdateAutomationPackage(updateParameters);
 
         AutomationPackageUpdateResult ap1Result;
         try {
             // try to upload another AP with same snapshot lib - collision should be detected
-            manager.createOrUpdateAutomationPackage(
-                    true, true, null,
-                    AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
-                    AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                    null, null, null, o -> true, o -> true, false,
-                    "testUser", false,
-                    true);
+            updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                    .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                    .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot)).build();
+            manager.createOrUpdateAutomationPackage(updateParameters);
             Assert.fail("Exception hasn't been thrown");
         } catch (AutomationPackageCollisionException ex){
             log.info("{}", ex.getMessage());
@@ -532,13 +555,11 @@ public class AutomationPackageManagerOSTest {
         }
 
         // try again with 'allowUpdateOfOtherPackages' flag
-        ap1Result = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, o -> true, o -> true, false,
-                "testUser", true,
-                true);
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAllowUpdateOfOtherPackages(true).build();
+        ap1Result = manager.createOrUpdateAutomationPackage(updateParameters);
         Assert.assertEquals(List.of(echoApResult.getId()), ap1Result.getConflictingAutomationPackages().getApWithSameLibrary());
         Assert.assertTrue(ap1Result.getConflictingAutomationPackages().getApWithSameOrigin().isEmpty());
 
@@ -577,13 +598,10 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibJar, null));
 
         // upload SNAPSHOT AP + SNAPSHOT LIB
-        AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, o -> true, o -> true, false,
-                "testUser", false,
-                true);
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot)).build();
+        AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(updateParameters);
 
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameLibraryExists());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
@@ -593,13 +611,10 @@ public class AutomationPackageManagerOSTest {
         );
 
         // upload another AP (echo RELEASE) + RELEASE LIB
-        result = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(echoRelease),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibRelease),
-                null, null, null, o -> true, o -> true, false,
-                "testUser", false,
-                true);
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(echoRelease))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibRelease)).build();
+        result = manager.createOrUpdateAutomationPackage(updateParameters);
 
         AutomationPackage apEcho = automationPackageAccessor.get(result.getId());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameLibraryExists());
@@ -613,13 +628,11 @@ public class AutomationPackageManagerOSTest {
         Resource kwLibReleaseResource = resourceManager.getResource(FileResolver.resolveResourceId(apEcho.getAutomationPackageLibraryResource()));
 
         // reupload the same AP - existing RELEASE RESOURCES SHOULD BE REUSED
-        result = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(echoRelease),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibRelease),
-                null, null, null, o -> true, o -> true, false,
-                "testUser", false,
-                true);
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(echoRelease))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibRelease)).build();
+        result = manager.createOrUpdateAutomationPackage(updateParameters);
+
         apEcho = automationPackageAccessor.get(result.getId());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameLibraryExists());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
@@ -630,13 +643,11 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(kwLibReleaseResource.getId(), kwLibReleaseResourceAfterUpdate.getId());
 
         // now we update the first AP - the RELEASE kw lib should be reused without collision
-        result = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(extSampleRelease),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibRelease),
-                null, null, null, o -> true, o -> true, false,
-                "testUser", false,
-                true);
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(extSampleRelease))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibRelease)).build();
+        result = manager.createOrUpdateAutomationPackage(updateParameters);
+
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameLibraryExists());
         Assert.assertFalse(result.getConflictingAutomationPackages().apWithSameOriginExists());
 
@@ -667,79 +678,76 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // upload echo AP (echo RELEASE) + SNAPSHOT LIB
-        AutomationPackageUpdateResult resultEcho = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(echoRelease),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, o -> true, o -> true, false,
-                "testUser", false,
-                true);
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(echoRelease))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1").build();
+        AutomationPackageUpdateResult resultEcho = manager.createOrUpdateAutomationPackage(updateParameters);
         log.info("Echo AP: {}", resultEcho.getId());
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1 (WITHOUT CHECK FOR DUPLICATES)
-        AutomationPackageUpdateResult resultV1 = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, o -> true, o -> true, false,
-                "testUser", false,
-                false);
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1")
+                .withCheckForSameOrigin(false).build();
+        AutomationPackageUpdateResult resultV1 = manager.createOrUpdateAutomationPackage(updateParameters);
+
         log.info("AP v1: {}", resultV1.getId());
 
         // imitate the snapshot update
         long now2 = System.currentTimeMillis();
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibUpdatedSnapshotJar, new SnapshotMetadata("some timestamp", now2, 1, true)));
-
         //imitate the new fetch of metadata for the AP sample (no new version available)
         providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, new SnapshotMetadata("some timestamp", now2, 1, true)));
 
         // upload main AP (sample SNAPSHOT) + UPDATED SNAPSHOT LIB - VERSION 2 (WITH CHECK FOR DUPLICATES)
         try {
-            manager.createOrUpdateAutomationPackage(
-                    true, true, null,
-                    AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
-                    AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                    "v2", null, null, o -> true, o -> true, false,
-                    "testUser", false,
-                    true);
+            updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                    .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                    .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                    .withAutomationPackageVersion("v2")
+                    .build();
+            manager.createOrUpdateAutomationPackage(updateParameters);
             fail();
         } catch (AutomationPackageCollisionException ex){
-            // both packages reuse the same keyword lib
+            //Update is defined because both packages use the same keyword lib that would get updated
             Assert.assertEquals(Set.of(resultV1.getId(), resultEcho.getId()), new HashSet<>(ex.getAutomationPackagesWithSameKeywordLib()));
-
             // v1 reuses the same AP artifact (SNAPSHOT) which was not modified
             Assert.assertEquals(Set.of(resultV1.getId()), new HashSet<>(ex.getAutomationPackagesWithSameOrigin()));
         }
 
+        long tsBeforeUpdate = System.currentTimeMillis();
         // upload main AP (sample SNAPSHOT) + UPDATED SNAPSHOT LIB - VERSION 2 (allow update of other packages)
-        AutomationPackageUpdateResult resultV2 = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v2", null, null, o -> true, o -> true, false,
-                "testUser", true,
-                true);
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult resultV2 = manager.createOrUpdateAutomationPackage(updateParameters);
 
-        // there is no exception, but we generate warning messages about APs sharing the same resources
+        // there is no exception, but we generate warning messages about APs sharing the same resources echo V1 and main V1
         // both packages reuse the same keyword lib
         Assert.assertEquals(Set.of(resultV1.getId(), resultEcho.getId()), new HashSet<>(resultV2.getConflictingAutomationPackages().getApWithSameLibrary()));
-
-        // v1 reuses the same AP artifact (SNAPSHOT)
+        // main v1 reuses the same AP artifact (SNAPSHOT)
         Assert.assertEquals(Set.of(resultV1.getId()), new HashSet<>(resultV2.getConflictingAutomationPackages().getApWithSameOrigin()));
 
         // v1 and v2 reuse the actual (updated) snapshot lib and the sampleSnapshot (main ap file)
         AutomationPackage apVer1 = automationPackageAccessor.get(resultV1.getId());
         AutomationPackage apVer2 = automationPackageAccessor.get(resultV2.getId());
         AutomationPackage apEcho = automationPackageAccessor.get(resultEcho.getId());
-
+        //Verify the update of the library
         Resource apV2KeywordResource = resourceManager.getResource(FileResolver.resolveResourceId(apVer2.getAutomationPackageLibraryResource()));
         Assert.assertEquals(kwLibSnapshot.toStringRepresentation(), apV2KeywordResource.getOrigin());
+        assertEquals(now2, apV2KeywordResource.getOriginTimestamp().longValue());
+        assertTrue(tsBeforeUpdate < apV2KeywordResource.getLastModificationDate().getTime()); //resource was actually updated
         Assert.assertEquals(apVer1.getAutomationPackageLibraryResource(), apVer2.getAutomationPackageLibraryResource());
         Assert.assertEquals(apVer1.getAutomationPackageLibraryResource(), apEcho.getAutomationPackageLibraryResource());
         ResourceRevisionFileHandle kwLibRevision = resourceManager.getResourceFile(FileResolver.resolveResourceId(apVer2.getAutomationPackageLibraryResource()));
         Assert.assertEquals(KW_LIB_FILE_UPDATED_NAME, kwLibRevision.getResourceFile().getName());
-
+        //AP package resource should not have changed
         Resource apV2Resource = resourceManager.getResource(FileResolver.resolveResourceId(apVer2.getAutomationPackageResource()));
+        assertTrue(tsBeforeUpdate > apV2Resource.getOriginTimestamp());
         ResourceRevisionFileHandle apV2Revision = resourceManager.getResourceFile(FileResolver.resolveResourceId(apVer2.getAutomationPackageResource()));
         Assert.assertEquals(apV2Resource.getOrigin(), sampleSnapshot.toStringRepresentation());
         Assert.assertEquals(apVer1.getAutomationPackageResource(), apVer2.getAutomationPackageResource());
@@ -768,13 +776,13 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
-        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, o -> true, o -> true, false,
-                "testUser", true,
-                true);
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(updateParameters);
 
         // check used AP resource
         AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
@@ -786,30 +794,277 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(updatedAutomationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
 
         // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
-        AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, o -> true, o -> true, false,
-                "testUser", true,
-                true);
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(updateParameters);
         AutomationPackage ap2 = automationPackageAccessor.get(result2.getId());
 
+        //AP was updated, no new one created
+        assertEquals(ap1.getId(), ap2.getId());
+        assertEquals(1, automationPackageAccessor.stream().count());
         // the automation package should use updated snapshot content
         ResourceRevisionFileHandle ap2Revision = resourceManager.getResourceFile(FileResolver.resolveResourceId(ap2.getAutomationPackageResource()));
         Assert.assertArrayEquals(Files.readAllBytes(updatedAutomationPackageJar.toPath()), Files.readAllBytes(ap2Revision.getResourceFile().toPath()));
-
         // the resource id should NOT be changed, because we reuploaded the snapshot with same resource id
         Assert.assertEquals(ap1.getAutomationPackageResource(), ap2.getAutomationPackageResource());
-
         // automation packages entities should be taken from updated snapshot
         List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(ap2.getId())).collect(Collectors.toList());
         Assert.assertEquals(KEYWORDS_COUNT + 1, storedFunctions.size());
-
         Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
         Assert.assertNotNull(updatedFunction);
-
         checkResourceCleanup(FileResolver.resolveResourceId(ap2.getAutomationPackageResource()), ap2Revision, null, null);
+    }
+
+    @Test
+    public void testMultipleApWithNewPackageSnapshotAndNewLibnapshot() throws IOException, InterruptedException {
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File updatedAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_EXTENDED_FILE_NAME);
+        File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+
+        //Prepare maven artefacts
+        MavenArtifactIdentifier sampleSnapshot = new MavenArtifactIdentifier("test-group", "ap1", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        long now = System.currentTimeMillis();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
+
+        // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB 1 - VERSION 1
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(updateParameters);
+
+        // upload second AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 2
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v2")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(updateParameters);
+
+        // check used AP resource
+        AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
+        AutomationPackage ap2 = automationPackageAccessor.get(result2.getId());
+        assertNotEquals(ap1.getId(), ap2.getId());
+        assertEquals(ap1.getAutomationPackageResource(), ap2.getAutomationPackageResource());
+        assertEquals(ap1.getAutomationPackageLibraryResource(), ap2.getAutomationPackageLibraryResource());
+
+
+        // UPDATE THE SNAPSHOT CONTENT IN MAVEN for Both!!!
+        now = System.currentTimeMillis();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(updatedAutomationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
+        // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result3 = manager.createOrUpdateAutomationPackage(updateParameters);
+        AutomationPackage ap3 = automationPackageAccessor.get(result3.getId());
+        assertEquals(ap1.getId(), ap3.getId());
+        assertEquals(2, automationPackageAccessor.stream().count());
+        assertEquals(1, result3.getConflictingAutomationPackages().getApWithSameOrigin().size());
+        assertEquals(1, result3.getConflictingAutomationPackages().getApWithSameLibrary().size());
+        assertNotEquals(ap3.getId(), ap2.getId());
+        assertEquals(ap3.getAutomationPackageResource(), ap2.getAutomationPackageResource());
+        assertEquals(ap3.getAutomationPackageLibraryResource(), ap2.getAutomationPackageLibraryResource());
+        Resource resourcePackage = resourceManager.getResource(FileResolver.resolveResourceId(ap3.getAutomationPackageResource()));
+        Resource resourceLibrary = resourceManager.getResource(FileResolver.resolveResourceId(ap3.getAutomationPackageLibraryResource()));
+        assertEquals(now, resourcePackage.getOriginTimestamp().longValue());
+        assertEquals(now, resourceLibrary.getOriginTimestamp().longValue());
+    }
+
+
+    @Test
+    public void testMultipleApWithNewPackageSnapshotAndSameLibSnapshot() throws IOException, InterruptedException {
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File updatedAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_EXTENDED_FILE_NAME);
+        File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+
+        //Prepare maven artefacts
+        MavenArtifactIdentifier sampleSnapshot = new MavenArtifactIdentifier("test-group", "ap1", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        long now = System.currentTimeMillis();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", now, 1, true)));
+
+        // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB 1 - VERSION 1
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(updateParameters);
+
+        // upload second AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 2
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v2")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(updateParameters);
+
+        // check used AP resource
+        AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
+        AutomationPackage ap2 = automationPackageAccessor.get(result2.getId());
+        assertNotEquals(ap1.getId(), ap2.getId());
+        assertEquals(ap1.getAutomationPackageResource(), ap2.getAutomationPackageResource());
+        assertEquals(ap1.getAutomationPackageLibraryResource(), ap2.getAutomationPackageLibraryResource());
+
+
+        // UPDATE THE SNAPSHOT CONTENT IN MAVEN for Both!!!
+        now = System.currentTimeMillis();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(updatedAutomationPackageJar, new SnapshotMetadata("some timestamp", now, 1, true)));
+
+        // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result3 = manager.createOrUpdateAutomationPackage(updateParameters);
+        AutomationPackage ap3 = automationPackageAccessor.get(result3.getId());
+        assertEquals(ap1.getId(), ap3.getId());
+        assertEquals(2, automationPackageAccessor.stream().count());
+        assertEquals(1, result3.getConflictingAutomationPackages().getApWithSameOrigin().size());
+        assertEquals(1, result3.getConflictingAutomationPackages().getApWithSameLibrary().size());
+        assertNotEquals(ap3.getId(), ap2.getId());
+        assertEquals(ap3.getAutomationPackageResource(), ap2.getAutomationPackageResource());
+        assertEquals(ap3.getAutomationPackageLibraryResource(), ap2.getAutomationPackageLibraryResource());
+        Resource resourcePackage = resourceManager.getResource(FileResolver.resolveResourceId(ap3.getAutomationPackageResource()));
+        Resource resourceLibrary = resourceManager.getResource(FileResolver.resolveResourceId(ap3.getAutomationPackageLibraryResource()));
+        assertEquals(now, resourcePackage.getOriginTimestamp().longValue());
+        assertNotEquals(now, resourceLibrary.getOriginTimestamp().longValue());
+    }
+
+    @Test
+    public void testMultipleApWithNewPackageSnapshotAndDifferentLibSnapshot() throws IOException, InterruptedException {
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File updatedAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_EXTENDED_FILE_NAME);
+        File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+
+        //Prepare maven artefacts
+        MavenArtifactIdentifier sampleSnapshot = new MavenArtifactIdentifier("test-group", "ap1", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier kwLibSnapshot = new MavenArtifactIdentifier("test-group", "test-kw-lib", "1.0.0-SNAPSHOT", null, null);
+        MavenArtifactIdentifier kwLibSnapshot2 = new MavenArtifactIdentifier("test-group", "test-kw-lib", "2.0.0-SNAPSHOT", null, null);
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        long initialSnapshotTimestamp = System.currentTimeMillis();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, new SnapshotMetadata("some timestamp", initialSnapshotTimestamp, 1, true)));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", initialSnapshotTimestamp, 1, true)));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot2, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", initialSnapshotTimestamp, 1, true)));
+
+        Map<String, String> planAttributes = Map.of("application", "MyApplication");
+        Map<String, String> functionAttributes = Map.of("targetEnv", "myEnv");
+        Map<String, String> selectionAttributes = Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT");
+
+        // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB 1 - VERSION 1
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1")
+                .withActivationExpression("env == TEST")
+                .withPlansAttributes(planAttributes)
+                .withFunctionsAttributes(functionAttributes)
+                .withTokenSelectionCriteria(selectionAttributes)
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(updateParameters);
+
+        //No new snapshot content -> set "newSnapshotVersion" to false
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, new SnapshotMetadata("some timestamp", initialSnapshotTimestamp, 1, false)));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", initialSnapshotTimestamp, 1, false)));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot2, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", initialSnapshotTimestamp, 1, false)));
+
+        Map<String, String> planAttributes2 = Map.of("application", "MyApplication2");
+        Map<String, String> functionAttributes2 = Map.of("targetEnv", "myEnv2");
+        Map<String, String> selectionAttributes2 = Map.of("OS", "LINUX", "TYPE", "SELENIUM");
+        // upload second AP (sample SNAPSHOT) + Different SNAPSHOT LIB - VERSION 2
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot2))
+                .withAutomationPackageVersion("v2")
+                .withActivationExpression("env == PROD")
+                .withPlansAttributes(planAttributes2)
+                .withFunctionsAttributes(functionAttributes2)
+                .withTokenSelectionCriteria(selectionAttributes2)
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(updateParameters);
+
+        // check used AP resource
+        AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
+        AutomationPackage ap2 = automationPackageAccessor.get(result2.getId());
+        assertNotEquals(ap1.getId(), ap2.getId());
+        assertEquals(ap1.getAutomationPackageResource(), ap2.getAutomationPackageResource());
+        assertNotEquals(ap1.getAutomationPackageLibraryResource(), ap2.getAutomationPackageLibraryResource());
+        assertEquals("v1", ap1.getVersion());
+        assertEquals("env == TEST", ap1.getActivationExpression().getScript());
+        assertEquals(planAttributes,  ap1.getPlansAttributes());
+        assertEquals(functionAttributes, ap1.getFunctionsAttributes());
+        assertEquals(selectionAttributes, ap1.getTokenSelectionCriteria());
+        assertEquals("v2", ap2.getVersion());
+        assertEquals("env == PROD", ap2.getActivationExpression().getScript());
+        assertEquals(planAttributes2, ap2.getPlansAttributes());
+        assertEquals(functionAttributes2, ap2.getFunctionsAttributes());
+        assertEquals(selectionAttributes2, ap2.getTokenSelectionCriteria());
+
+
+        // UPDATE THE SNAPSHOT CONTENT IN MAVEN for Both!!!
+        long udpatedSnapshotTimestamp = System.currentTimeMillis();
+        providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(updatedAutomationPackageJar, new SnapshotMetadata("some timestamp", udpatedSnapshotTimestamp, 1, true)));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", udpatedSnapshotTimestamp, 1, true)));
+
+        // reupload main AP (sample SNAPSHOT) + SNAPSHOT LIB - with the same VERSION 1
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1")
+                .withActivationExpression("env == TEST")
+                .withPlansAttributes(planAttributes)
+                .withFunctionsAttributes(functionAttributes)
+                .withTokenSelectionCriteria(selectionAttributes)
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result3 = manager.createOrUpdateAutomationPackage(updateParameters);
+        AutomationPackage ap3 = automationPackageAccessor.get(result3.getId());
+        assertEquals(ap1.getId(), ap3.getId()); // AP 1 was updated
+        assertEquals(2, automationPackageAccessor.stream().count()); // we still have only 2 APs deployed
+        assertEquals(1, result3.getConflictingAutomationPackages().getApWithSameOrigin().size()); //on other AP (AP2) is using the same pacakge
+        assertEquals(0, result3.getConflictingAutomationPackages().getApWithSameLibrary().size());//no other AP is using the same lib
+        assertNotEquals(ap1.getId(), ap2.getId());
+        assertEquals(ap3.getAutomationPackageResource(), ap2.getAutomationPackageResource()); //same resource for package
+        assertNotEquals(ap3.getAutomationPackageLibraryResource(), ap2.getAutomationPackageLibraryResource()); //different resource for lib
+        Resource resourcePackage = resourceManager.getResource(FileResolver.resolveResourceId(ap3.getAutomationPackageResource()));
+        Resource resourceLibrary = resourceManager.getResource(FileResolver.resolveResourceId(ap3.getAutomationPackageLibraryResource()));
+        Resource resourceLibrary2 = resourceManager.getResource(FileResolver.resolveResourceId(ap2.getAutomationPackageLibraryResource()));
+        assertEquals(udpatedSnapshotTimestamp, resourcePackage.getOriginTimestamp().longValue());
+        assertEquals(udpatedSnapshotTimestamp, resourceLibrary.getOriginTimestamp().longValue());
+        assertEquals(initialSnapshotTimestamp, resourceLibrary2.getOriginTimestamp().longValue());
+        assertEquals("v1", ap1.getVersion());
+        assertEquals("env == TEST", ap1.getActivationExpression().getScript());
+        assertEquals(planAttributes,  ap1.getPlansAttributes());
+        assertEquals(functionAttributes, ap1.getFunctionsAttributes());
+        assertEquals(selectionAttributes, ap1.getTokenSelectionCriteria());
+        assertEquals("v2", ap2.getVersion());
+        assertEquals("env == PROD", ap2.getActivationExpression().getScript());
+        assertEquals(planAttributes2, ap2.getPlansAttributes());
+        assertEquals(functionAttributes2, ap2.getFunctionsAttributes());
+        assertEquals(selectionAttributes2, ap2.getTokenSelectionCriteria());
     }
 
     @Test
@@ -825,13 +1080,12 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, null));
 
         // upload main AP (sample SNAPSHOT using classes from LIB) + SNAPSHOT LIB
-        AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                null, null, null, o -> true, o -> true, false,
-                "testUser", true,
-                true);
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(updateParameters);
 
         // deploy should not fail
         Assert.assertEquals(AutomationPackageUpdateStatus.CREATED, result.getStatus());
@@ -850,13 +1104,13 @@ public class AutomationPackageManagerOSTest {
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, null));
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
-        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot),
-                AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot),
-                "v1", null, null, o -> true, o -> true, false,
-                "testUser", true,
-                true);
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
+                .withAutomationPackageVersion("v1")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(updateParameters);
 
         // check used AP resource
         AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
@@ -869,13 +1123,13 @@ public class AutomationPackageManagerOSTest {
         Assert.assertNotNull(kwLibFile);
 
         // upload main AP (by resource id) + SNAPSHOT LIB (by resource id) - VERSION 2
-        AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withResourceId(ap1Resource.getId().toHexString()),
-                AutomationPackageFileSource.withResourceId(kwLibResource.getId().toHexString()),
-                "v2", null, null, o -> true, o -> true, false,
-                "testUser", true,
-                true);
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withResourceId(ap1Resource.getId().toHexString()))
+                .withApLibrarySource(AutomationPackageFileSource.withResourceId(kwLibResource.getId().toHexString()))
+                .withAutomationPackageVersion("v2")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result2 = manager.createOrUpdateAutomationPackage(updateParameters);
 
         // AP reuses old resource, but have new ID
         AutomationPackage ap2 = automationPackageAccessor.get(result2.getId());
@@ -913,13 +1167,13 @@ public class AutomationPackageManagerOSTest {
         }
 
         // upload main AP (sample SNAPSHOT) + SNAPSHOT LIB - VERSION 1
-        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(
-                true, true, null,
-                AutomationPackageFileSource.withResourceId(savedApResource.getId().toHexString()),
-                AutomationPackageFileSource.withResourceId(savedkwResource.getId().toHexString()),
-                "v1", null, null, o -> true, o -> true, false,
-                "testUser", true,
-                true);
+        AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withResourceId(savedApResource.getId().toHexString()))
+                .withApLibrarySource(AutomationPackageFileSource.withResourceId(savedkwResource.getId().toHexString()))
+                .withAutomationPackageVersion("v1")
+                .withAllowUpdateOfOtherPackages(true)
+                .build();
+        AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(updateParameters);
 
         AutomationPackage ap1 = automationPackageAccessor.get(result1.getId());
 
@@ -977,19 +1231,43 @@ public class AutomationPackageManagerOSTest {
         Assert.assertEquals(expectedFileName, resource.getResourceName());
     }
 
-    private SampleUploadingResult uploadSample1WithAsserts(AutomationPackageFileSource sample1FileSource, boolean createNew, boolean async, boolean expectedDelay) throws IOException {
+    private SampleUploadingResult uploadSample1WithAsserts(AutomationPackageFileSource sample1FileSource, boolean createNew, boolean async, boolean expectedDelay,
+                                                           String version, String activationExpression, Map<String, String> plansAttributes,
+                                                           Map<String, String> functionAttributes, Map<String, String> tokenSelectionAttributes) throws IOException {
+        return uploadSample1WithAsserts(null, sample1FileSource, createNew, async, expectedDelay, version, activationExpression,
+                plansAttributes, functionAttributes, tokenSelectionAttributes, false, null);
+    }
+
+    private SampleUploadingResult uploadSample1WithAsserts(ObjectId explicitOldId, AutomationPackageFileSource sample1FileSource, boolean createNew, boolean async, boolean expectedDelay,
+                                                           String version, String activationExpression, Map<String, String> plansAttributes,
+                                                           Map<String, String> functionAttributes, Map<String, String> tokenSelectionAttributes, boolean executeFunctionsLocally,
+                                                           AutomationPackageFileSource automationPackageFileSource) throws IOException {
         FileResolver fileResolver = new FileResolver(resourceManager);
 
         SampleUploadingResult r = new SampleUploadingResult();
 
         ObjectId result;
         if (createNew) {
-            result = manager.createAutomationPackage(sample1FileSource, null, null, null, "testUser", false, true, null, o -> true, o -> true);
+            AutomationPackageUpdateParameter createParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                    .withAllowUpdate(false)
+                    .withApSource(sample1FileSource).withAsync(async)
+                    .withApLibrarySource(automationPackageFileSource)
+                    .withAutomationPackageVersion(version).withActivationExpression(activationExpression)
+                    .withPlansAttributes(plansAttributes).withFunctionsAttributes(functionAttributes).withTokenSelectionCriteria(tokenSelectionAttributes)
+                    .withExecuteFunctionLocally(executeFunctionsLocally)
+                    .build();
+            result = manager.createOrUpdateAutomationPackage(createParameters).getId();
         } else {
-            AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(true, true, null,
-                    sample1FileSource,
-                    null, null, null, null, o -> true, o -> true, async,
-                    "testUser", false, true);
+            AutomationPackageUpdateParameter updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                    .withAllowCreate(false)
+                    .withExplicitOldId(explicitOldId)
+                    .withApSource(sample1FileSource).withAsync(async)
+                    .withApLibrarySource(automationPackageFileSource)
+                    .withAutomationPackageVersion(version).withActivationExpression(activationExpression)
+                    .withPlansAttributes(plansAttributes).withFunctionsAttributes(functionAttributes).withTokenSelectionCriteria(tokenSelectionAttributes)
+                    .withExecuteFunctionLocally(executeFunctionsLocally)
+                    .build();
+            AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(updateParameters);
             if (async && expectedDelay) {
                 Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
             } else {
@@ -999,10 +1277,20 @@ public class AutomationPackageManagerOSTest {
         }
 
         r.storedPackage = automationPackageAccessor.get(result);
-        Assert.assertEquals("My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
+        Assert.assertEquals((version != null ) ? "My package."+version : "My package", r.storedPackage.getAttribute(AbstractOrganizableObject.NAME));
+        assertEquals(version, r.storedPackage.getVersion());
+        assertEquals(activationExpression, (activationExpression!=null) ? r.storedPackage.getActivationExpression().getScript() : null);
+        assertEquals(plansAttributes, r.storedPackage.getPlansAttributes());
+        assertEquals(functionAttributes, r.storedPackage.getFunctionsAttributes());
+        assertEquals(tokenSelectionAttributes, r.storedPackage.getTokenSelectionCriteria());
 
         log.info("AP resource: {}", r.storedPackage.getAutomationPackageResource());
         Assert.assertNotNull(r.storedPackage.getAutomationPackageResource());
+        if (automationPackageFileSource != null) {
+            assertNotNull(r.storedPackage.getAutomationPackageLibraryResource());
+        } else {
+            assertNull(r.storedPackage.getAutomationPackageLibraryResource());
+        }
 
         Resource resourceByAutomationPackage = resourceManager.getResource(fileResolver.resolveResourceId(r.storedPackage.getAutomationPackageResource()));
         if(sample1FileSource.getMode() == AutomationPackageFileSource.Mode.MAVEN){
@@ -1017,9 +1305,6 @@ public class AutomationPackageManagerOSTest {
         // we don't add the link from resource to the automation package, because we need to support one-to-many relationship between resource and AP
         Assert.assertNull(r.storedPackage.getId().toString(), resourceByAutomationPackage.getCustomField("automationPackageId"));
 
-        // upload package without keyword library
-        Assert.assertNull(r.storedPackage.getAutomationPackageLibraryResource());
-
         List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
         Assert.assertEquals(PLANS_COUNT, storedPlans.size());
 
@@ -1029,16 +1314,83 @@ public class AutomationPackageManagerOSTest {
         Assert.assertNotNull(findPlanByName(storedPlans, PLAN_FROM_PLANS_ANNOTATION));
         Assert.assertNotNull(findPlanByName(storedPlans, INLINE_PLAN));
         Assert.assertNotNull(findPlanByName(storedPlans, PLAN_NAME_WITH_COMPOSITE));
+        for  (Plan plan : storedPlans) {
+            if (activationExpression != null) {
+                assertEquals(activationExpression, plan.getActivationExpression().getScript());
+            }
+            if (plansAttributes != null) {
+                Map<String, String> attributes = plan.getAttributes();
+                assertNotNull(attributes);
+                for (Map.Entry<String, String> entry : plansAttributes.entrySet()) {
+                    assertTrue(attributes.containsKey(entry.getKey()));
+                    assertEquals(entry.getValue(), attributes.get(entry.getKey()));
+                }
+            }
+        }
 
         r.storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
         Assert.assertEquals(KEYWORDS_COUNT, r.storedFunctions.size());
+        for  (Function function : r.storedFunctions) {
+            //assert activation expression propagation
+            if (activationExpression != null) {
+                assertEquals(activationExpression, function.getActivationExpression().getScript());
+            }
+            //assert screen inputs (attributes) propagation
+            if (functionAttributes != null) {
+                Map<String, String> attributes = function.getAttributes();
+                assertNotNull(attributes);
+                for (Map.Entry<String, String> entry : functionAttributes.entrySet()) {
+                    assertTrue(attributes.containsKey(entry.getKey()));
+                    assertEquals(entry.getValue(), attributes.get(entry.getKey()));
+                }
+            }
+            //Assert routing to controller, should be true if set a KW or package level, false otherwise
+            if (function.getAttribute(AbstractOrganizableObject.NAME).equals(ANNOTATED_KEYWORD_ROUTING_TO_CTRL)
+                || function instanceof CompositeFunction) {
+                assertTrue(function.isExecuteLocally());
+            } else {
+                assertEquals(executeFunctionsLocally, function.isExecuteLocally());
+            }
+            //assert routing criteria propagation
+            Map<String, String> expectedRouting = null;
+            if (function.getAttribute(AbstractOrganizableObject.NAME).equals(ANNOTATED_KEYWORD_ROUTING_CRITERIA)) {
+                // this keyword declare touring with annotation
+                expectedRouting = new HashMap<>(Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
+                if (tokenSelectionAttributes != null) {
+                    expectedRouting.putAll(tokenSelectionAttributes);
+                }
+            } else if (tokenSelectionAttributes != null) {
+                expectedRouting = tokenSelectionAttributes;
+            }
+            Map<String, String> functionTokenSelectionCriteria = function.getTokenSelectionCriteria();
+            if (expectedRouting != null) {
+                assertNotNull(functionTokenSelectionCriteria);
+                for (Map.Entry<String, String> entry : expectedRouting.entrySet()) {
+                    assertTrue(functionTokenSelectionCriteria.containsKey(entry.getKey()));
+                    assertEquals(entry.getValue(), functionTokenSelectionCriteria.get(entry.getKey()));
+                }
+            } else {
+                assertTrue(functionTokenSelectionCriteria == null || functionTokenSelectionCriteria.isEmpty());
+            }
+            if (function instanceof GeneralScriptFunction) {
+                GeneralScriptFunction generalScriptFunction = (GeneralScriptFunction) function;
+                String kwName = generalScriptFunction.getAttribute(AbstractOrganizableObject.NAME);
+                if ("GeneralScript keyword from AP".equals(kwName)) {
+                    //this is a KW defined in YAML directly with explicit lib
+                    assertFalse(generalScriptFunction.getLibrariesFile().get().isEmpty());
+                    assertNotEquals(generalScriptFunction.getScriptFile().get(), r.storedPackage.getAutomationPackageLibraryResource());
+                } else if (automationPackageFileSource == null) {
+                    assertEquals("", generalScriptFunction.getLibrariesFile().get());
+                } else {
+                    assertEquals(r.storedPackage.getAutomationPackageLibraryResource(), generalScriptFunction.getLibrariesFile().get());
+                }
+            }
+        }
         findFunctionByClassAndName(r.storedFunctions, JMeterFunction.class, J_METER_KEYWORD_1);
         findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
         Function kwRouteToController = findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD_ROUTING_TO_CTRL);
-            assertTrue(kwRouteToController.isExecuteLocally());
-            Function kwRoutingCriteria = findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, ANNOTATED_KEYWORD_ROUTING_CRITERIA);
-            Map<String, String> expectedRoutingCriteria = Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT");
-            assertEquals(expectedRoutingCriteria, kwRoutingCriteria.getTokenSelectionCriteria());findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, INLINE_PLAN);
+        assertTrue(kwRouteToController.isExecuteLocally());
+        findFunctionByClassAndName(r.storedFunctions, GeneralScriptFunction.class, INLINE_PLAN);
         findFunctionByClassAndName(r.storedFunctions, NodeFunction.class, NODE_KEYWORD);
         CompositeFunction compositeKeyword = (CompositeFunction) findFunctionByClassAndName(r.storedFunctions, CompositeFunction.class, COMPOSITE_KEYWORD);
         // by default, the 'executeLocally' flag for composite is 'true'

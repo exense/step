@@ -19,52 +19,37 @@
 package step.automation.packages;
 
 import ch.exense.commons.app.Configuration;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.model.JavaAutomationPackageKeyword;
+import step.automation.packages.model.ScriptAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
-import step.core.scanner.AnnotationScanner;
-import step.engine.plugins.LocalFunctionPlugin;
 import step.functions.Function;
-import step.functions.manager.FunctionManagerImpl;
-import step.handlers.javahandler.Keyword;
-import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
-import step.handlers.javahandler.jsonschema.KeywordJsonSchemaCreator;
-import step.junit.runner.StepClassParser;
-import step.junit.runner.StepClassParserResult;
-import step.junit.runners.annotations.Plans;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlanReader;
-import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 import step.repositories.parser.StepsParser;
 
 import java.io.*;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Designed to read the automation package content from some source (for instance, from jar archive).
  * It is important that the {@link AutomationPackageReader} doesn't affect the global context, i.e. it doesn't persist any plan, keyword or resource.
- * Instead of this, it prepares the {@link AutomationPackageContent} with {@link JavaAutomationPackageKeyword}
+ * Instead of this, it prepares the {@link AutomationPackageContent} with for instance {@link ScriptAutomationPackageKeyword}
  * containing the draft instances of {@link Function}, without any references to uploaded resources (because
  * these resources are not stored yet).
  */
-public class AutomationPackageReader {
+public abstract class AutomationPackageReader<T extends AutomationPackageArchive> {
 
     public static final String AP_VERSION_SEPARATOR = ".";
     protected static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
@@ -72,24 +57,39 @@ public class AutomationPackageReader {
     protected String jsonSchemaPath;
     protected final AutomationPackageHookRegistry hookRegistry;
     private final AutomationPackageSerializationRegistry serializationRegistry;
-    protected final StepClassParser stepClassParser;
     protected AutomationPackageDescriptorReader descriptorReader;
+    protected final Class<? extends AutomationPackageArchive> automationPackageArchiveClass;
 
     public AutomationPackageReader(String jsonSchemaPath, AutomationPackageHookRegistry hookRegistry,
                                    AutomationPackageSerializationRegistry serializationRegistry,
-                                   Configuration configuration) {
+                                   Configuration configuration, Class<? extends AutomationPackageArchive> automationPackageArchiveClass) {
         this.jsonSchemaPath = jsonSchemaPath;
         this.hookRegistry = hookRegistry;
         this.serializationRegistry = serializationRegistry;
         this.planTextPlanParser = new PlanParser(configuration);
-        this.stepClassParser = new StepClassParser(false);
+        this.automationPackageArchiveClass = automationPackageArchiveClass;
     }
+
+    public AutomationPackageArchive createAutomationPackageArchive(File automationPackageFile, File keywordLibFile, String defaultName) {
+        try {
+            Constructor<? extends AutomationPackageArchive> declaredConstructor = automationPackageArchiveClass.getDeclaredConstructor(File.class, File.class, String.class);
+            return declaredConstructor.newInstance(automationPackageFile, keywordLibFile, defaultName);
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalArgumentException("The constructor for type " + getAutomationPackageType() + " is invalid", e);
+        }
+    }
+
+    abstract public boolean isValidForFile(File file);
+
+    abstract public String getAutomationPackageType();
+
+    abstract public List<String> getSupportedFileTypes();
 
     /**
      * @param isLocalPackage true if the automation package is located in current classloader (i.e. all annotated keywords
      *                       can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      */
-    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
         return this.readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage, true);
     }
 
@@ -98,14 +98,14 @@ public class AutomationPackageReader {
      *                        can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      * @param scanAnnotations true if it is required to include annotated java keywords and plans as well as located in yaml descriptor
      */
-    public AutomationPackageContent readAutomationPackage(AutomationPackageArchive automationPackageArchive, String apVersion, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
         try {
             if (automationPackageArchive.hasAutomationPackageDescriptor()) {
                 try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
                     AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getOriginalFileName());
                     return buildAutomationPackage(descriptorYaml, automationPackageArchive, apVersion, isLocalPackage, scanAnnotations);
                 }
-            } else if (automationPackageArchive.getType().equals(AutomationPackageArchiveType.JAVA) && scanAnnotations) {
+            } else if (scanAnnotations) {
                 return buildAutomationPackage(null, automationPackageArchive, apVersion, isLocalPackage, scanAnnotations);
             } else {
                 return null;
@@ -115,10 +115,12 @@ public class AutomationPackageReader {
         }
     }
 
-    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, String apVersion,
+    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, T archive, String apVersion,
                                                               boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
         AutomationPackageContent res = newContentInstance();
-        res.setName(resolveName(descriptor, archive, apVersion));
+        String baseName = resolveName(descriptor, archive);
+        res.setBaseName(baseName);
+        res.setName(resolveUniqueName(baseName, apVersion));
 
         if (scanAnnotations) {
             fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, isLocalPackage, res);
@@ -131,14 +133,39 @@ public class AutomationPackageReader {
         return res;
     }
 
-    private String resolveName(AutomationPackageDescriptorYaml descriptor, AutomationPackageArchive archive, String apVersion) {
+    private String resolveName(AutomationPackageDescriptorYaml descriptor, T archive) throws AutomationPackageReadingException {
         String finalName;
         if (descriptor != null) {
             finalName = descriptor.getName();
         } else {
-            finalName = Objects.requireNonNullElse(archive.getOriginalFileName(), "local-automation-package");
+            finalName = Objects.requireNonNullElse(archive.getAutomationPackageName(), "local-automation-package");
         }
+        return validatePackageName(finalName);
+    }
 
+    /**
+     * Validates and normalizes package name to ensure it's safe for use in Groovy expressions.
+     *
+     * @param name The package name to validate
+     * @return A normalized, safe package name
+     * @throws IllegalArgumentException if the name cannot be normalized safely
+     */
+    private String validatePackageName(String name) throws AutomationPackageReadingException {
+        if (name == null || name.trim().isEmpty()) {
+            throw new AutomationPackageReadingException("Package name cannot be null or empty");
+        }
+        // Check for characters that could break Groovy expressions
+        if (name.contains("'") || name.contains("\\")) {
+            throw new AutomationPackageReadingException(
+                    "Package name contains unsafe characters: " + name +
+                            ". Simple quote and backslash characters are not allowed."
+            );
+        }
+        return name;
+    }
+
+    private String resolveUniqueName(String baseName, String apVersion) {
+        String finalName = baseName;
         if (apVersion != null && !apVersion.isEmpty()) {
             finalName += AP_VERSION_SEPARATOR;
             finalName += apVersion;
@@ -150,104 +177,9 @@ public class AutomationPackageReader {
         return new AutomationPackageContent();
     }
 
-    private void fillAutomationPackageWithAnnotatedKeywordsAndPlans(AutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException {
+    abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException;
 
-        try (AnnotationScanner annotationScanner = archive.createAnnotationScanner()) {
-            // this code duplicates the StepJarParser, but here we don't set the scriptFile and librariesFile to GeneralScriptFunctions
-            // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
-            List<JavaAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, isLocalPackage, null, null);
-            if (!scannedKeywords.isEmpty()) {
-                log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getOriginalFileName()));
-            }
-            res.getKeywords().addAll(scannedKeywords);
-
-            List<Plan> annotatedPlans = extractAnnotatedPlans(archive, annotationScanner, stepClassParser);
-            if (!annotatedPlans.isEmpty()) {
-                log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
-            }
-            res.getPlans().addAll(annotatedPlans);
-        } catch (JsonSchemaPreparationException e) {
-            throw new AutomationPackageReadingException("Cannot read the json schema from annotated keyword", e);
-        } catch (Throwable e) {
-            throw new AutomationPackageReadingException("Unexpected error while extracting annotated keyword: " + e, e);
-        }
-    }
-
-    public static List<JavaAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
-        List<JavaAutomationPackageKeyword> scannedKeywords = new ArrayList<>();
-        Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
-        if(!methods.isEmpty()) {
-            KeywordJsonSchemaCreator annotatedKeywordJsonSchemaCreator = new KeywordJsonSchemaCreator();
-            for (Method m : methods) {
-                Keyword annotation = m.getAnnotation(Keyword.class);
-                if (annotation == null) {
-                    log.warn("Keyword annotation is not found for method " + m.getName());
-                    continue;
-                }
-
-                Function f;
-                if (isCompositeFunction(annotation)) {
-                    f = createCompositeFunction(m, annotation);
-                } else {
-                    if (!isLocalPackage) {
-                        String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
-
-                        GeneralScriptFunction function = new GeneralScriptFunction();
-                        function.setAttributes(new HashMap<>());
-                        function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-
-                        // to be filled by AutomationPackageKeywordsAttributesApplier
-                        if (scriptFile != null) {
-                            function.setScriptFile(new DynamicValue<>(scriptFile));
-                        }
-
-                        if (librariesFile != null) {
-                            function.setLibrariesFile(new DynamicValue<>(librariesFile));
-                        }
-
-                        function.getCallTimeout().setValue(annotation.timeout());
-                        FunctionManagerImpl.applyRoutingFromAnnotation(function, annotation);
-
-                        function.setScriptLanguage(new DynamicValue<>("java"));
-                        f = function;
-                    } else {
-                        f = LocalFunctionPlugin.createLocalFunction(m, annotation);
-                    }
-                }
-
-                f.setDescription(annotation.description());
-                f.setSchema(annotatedKeywordJsonSchemaCreator.createJsonSchemaForKeyword(m));
-
-                String htmlTemplate = f.getAttributes().remove("htmlTemplate");
-                if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
-                    f.setHtmlTemplate(htmlTemplate);
-                    f.setUseCustomTemplate(true);
-                }
-
-                scannedKeywords.add(new JavaAutomationPackageKeyword(f));
-            }
-        }
-        return scannedKeywords;
-    }
-
-    private static Function createCompositeFunction(Method m, Keyword annotation) {
-        Function f;
-        try {
-            f = CompositeFunctionUtils.createCompositeFunction(
-                    annotation, m,
-                    new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
-            );
-        } catch (Exception ex) {
-            throw new RuntimeException("Unable to parse plan from reference", ex);
-        }
-        return f;
-    }
-
-    private static boolean isCompositeFunction(Keyword annotation) {
-        return annotation.planReference() != null && !annotation.planReference().isBlank();
-    }
-
-    public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
+    public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
         if (!fragment.getFragments().isEmpty()) {
@@ -265,7 +197,7 @@ public class AutomationPackageReader {
         }
     }
 
-    protected void fillContentSections(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
+    protected void fillContentSections(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
         targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
 
@@ -279,7 +211,7 @@ public class AutomationPackageReader {
         }
     }
 
-    private void readPlainTextPlans(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, AutomationPackageArchive archive) throws AutomationPackageReadingException {
+    private void readPlainTextPlans(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
         // parse plain - text plans
         for (YamlPlainTextPlan plainTextPlan : fragment.getPlansPlainText()) {
             try {
@@ -287,7 +219,7 @@ public class AutomationPackageReader {
                 boolean wildcard = false;
                 if (ResourcePathMatchingResolver.containsWildcard(plainTextPlan.getFile())) {
                     wildcard = true;
-                    ResourcePathMatchingResolver resourceResolver = new ResourcePathMatchingResolver(archive.getClassLoaderForMainApFile());
+                    ResourcePathMatchingResolver resourceResolver = archive.getResourcePathMatchingResolver();
                     urls = resourceResolver.getResourcesByPattern(plainTextPlan.getFile());
                 } else {
                     urls = List.of(archive.getResource(plainTextPlan.getFile()));
@@ -332,101 +264,6 @@ public class AutomationPackageReader {
                 throw new AutomationPackageReadingException("Unable to read plain text plan: " + plainTextPlan.getFile(), e);
             }
         }
-    }
-
-    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {
-        try (AutomationPackageArchive automationPackageArchive = new AutomationPackageArchive(automationPackage, keywordLib)) {
-            return readAutomationPackage(automationPackageArchive, apVersion, false);
-        } catch (IOException e) {
-            throw new AutomationPackageReadingException("IO Exception", e);
-        }
-    }
-
-    public static List<Plan> extractAnnotatedPlans(AutomationPackageArchive archive, AnnotationScanner annotationScanner, StepClassParser stepClassParser) {
-        List<Plan> result = getPlans(annotationScanner, archive, stepClassParser);
-        // replace null with empty collections to avoid NPEs
-        result.forEach(plan -> {
-            if(plan.getFunctions() == null){
-                plan.setFunctions(new ArrayList<>());
-            }
-        });
-
-        return result;
-    }
-
-    protected static List<Plan> getPlans(AnnotationScanner annotationScanner, AutomationPackageArchive archive, StepClassParser stepClassParser) {
-
-        List<Plan> result = new ArrayList<>();
-        List<StepClassParserResult> plans;
-        try {
-            plans = stepClassParser.getPlanFromAnnotatedMethods(annotationScanner);
-            plans.addAll(getPlanFromPlansAnnotation(annotationScanner, archive, stepClassParser));
-        } catch (Exception e) {
-            throw new RuntimeException(
-                    "Unhandled exception when searching for plans", e);
-        }
-        plans.forEach(p -> {
-            Exception e = p.getInitializingException();
-            if (e != null) {
-                throw new RuntimeException("Exception when trying to create the plans", e);
-            }
-            Plan plan = p.getPlan();
-            if (plan != null) {
-                result.add(plan);
-            } else {
-                throw new RuntimeException("No exception but also no plans", e);
-            }
-        });
-        return result;
-    }
-
-    private static List<StepClassParserResult> getPlanFromPlansAnnotation(AnnotationScanner annotationScanner, AutomationPackageArchive archive, StepClassParser stepClassParser) {
-        final List<StepClassParserResult> result = new ArrayList<>();
-        for (Class<?> klass : annotationScanner.getClassesWithAnnotation(Plans.class)) {
-            Plans plans = klass.getAnnotation(Plans.class);
-            if (plans != null) {
-                for (String file : plans.value()) {
-                    StepClassParserResult parserResult = null;
-                    ClassLoader classLoader = archive.getClassLoaderForMainApFile();
-                    boolean createdClassloader = false;
-                    try {
-                        File originalFile = archive.getOriginalFile();
-                        if (classLoader == null) {
-                            //Fall back to creating a new class loader from original file
-                            if (originalFile != null) {
-                                createdClassloader = true;
-                                classLoader = new URLClassLoader(new URL[]{originalFile.toURI().toURL()});
-                            } else {
-                                throw new RuntimeException("Neither the archive classloader or archive file are set");
-                            }
-                        }
-                        try (InputStream stream = classLoader.getResourceAsStream(file)) {
-                            if (stream != null) {
-                                // create plan from plain-text or from yaml
-                                parserResult = stepClassParser.createPlan(klass, file, stream);
-                            } else {
-                                throw new FileNotFoundException(file);
-                            }
-                            if (parserResult.getPlan() != null) {
-                                YamlPlanReader.setPlanName(parserResult.getPlan(), file);
-                            }
-                        }
-                    } catch (Exception e) {
-                        parserResult = new StepClassParserResult(file, null, e);
-                    } finally {
-                        if (createdClassloader && classLoader instanceof AutoCloseable) {
-                            try {
-                                ((AutoCloseable) classLoader).close();
-                            } catch (Exception e) {
-                                log.error("Unable to close the classloader created from provided package file '{}' after reading its content.", archive.getOriginalFile().getName());
-                            }
-                        }
-                    }
-                    result.add(parserResult);
-                }
-            }
-        }
-        return result;
     }
 
     protected synchronized AutomationPackageDescriptorReader getOrCreateDescriptorReader() {

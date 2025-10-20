@@ -28,7 +28,7 @@ public class AutomationPackageArchiveTest {
     public void isAutomationPackage() throws AutomationPackageReadingException, IOException {
         File automationPackageJar = new File("src/test/resources/samples/step-automation-packages-sample2.jar");
 
-        try (AutomationPackageArchive validPackage = new AutomationPackageArchive(automationPackageJar, null)) {
+        try (AutomationPackageArchive validPackage = new JavaAutomationPackageArchive(automationPackageJar, null, null)) {
             Assert.assertTrue(validPackage.hasAutomationPackageDescriptor());
 
             try (InputStream yaml = validPackage.getDescriptorYaml()) {
@@ -48,7 +48,7 @@ public class AutomationPackageArchiveTest {
         }
 
         File malformedPackageJar = new File("src/test/resources/samples/step-automation-packages-malformed.jar");
-        try (AutomationPackageArchive malformed = new AutomationPackageArchive(malformedPackageJar, null)) {
+        try (AutomationPackageArchive malformed = new JavaAutomationPackageArchive(malformedPackageJar, null, null)) {
             boolean isAutomationPackage = malformed.hasAutomationPackageDescriptor();
             if (isAutomationPackage) {
                 try (InputStream yaml = malformed.getDescriptorYaml()) {
