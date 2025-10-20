@@ -133,14 +133,35 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         return res;
     }
 
-    private String resolveName(AutomationPackageDescriptorYaml descriptor, T archive) {
+    private String resolveName(AutomationPackageDescriptorYaml descriptor, T archive) throws AutomationPackageReadingException {
         String finalName;
         if (descriptor != null) {
             finalName = descriptor.getName();
         } else {
             finalName = Objects.requireNonNullElse(archive.getAutomationPackageName(), "local-automation-package");
         }
-        return finalName;
+        return validatePackageName(finalName);
+    }
+
+    /**
+     * Validates and normalizes package name to ensure it's safe for use in Groovy expressions.
+     *
+     * @param name The package name to validate
+     * @return A normalized, safe package name
+     * @throws IllegalArgumentException if the name cannot be normalized safely
+     */
+    private String validatePackageName(String name) throws AutomationPackageReadingException {
+        if (name == null || name.trim().isEmpty()) {
+            throw new AutomationPackageReadingException("Package name cannot be null or empty");
+        }
+        // Check for characters that could break Groovy expressions
+        if (name.contains("'") || name.contains("\\")) {
+            throw new AutomationPackageReadingException(
+                    "Package name contains unsafe characters: " + name +
+                            ". Simple quote and backslash characters are not allowed."
+            );
+        }
+        return name;
     }
 
     private String resolveUniqueName(String baseName, String apVersion) {

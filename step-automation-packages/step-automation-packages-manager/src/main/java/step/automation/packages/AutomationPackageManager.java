@@ -510,7 +510,7 @@ public class AutomationPackageManager {
     }
 
 
-    public void updateRelatedAutomationPackages(List<ObjectId> automationPackagesForRedeploy,
+    private void updateRelatedAutomationPackages(List<ObjectId> automationPackagesForRedeploy,
                                                 AutomationPackageArchiveProvider packageArchiveProvider,
                                                 AutomationPackageUpdateParameter parameters) {
         if (automationPackagesForRedeploy == null || automationPackagesForRedeploy.isEmpty() || !packageArchiveProvider.hasNewContent()) {
@@ -899,7 +899,7 @@ public class AutomationPackageManager {
         specialAttributesApplier.applySpecialAttributesToPlans(newPackage, plans, automationPackageArchive, packageContent, apLibraryResourceString, enricher, extensions, operationMode);
 
         fillEntities(plans, oldPackage != null ? getPackagePlans(oldPackage.getId()) : new ArrayList<>(), enricher);
-        //Only browser the plans if any of the metadata is not null
+        //Only propagate metadata to all the plans if any of the metadata impacting the plans is set
         if (newPackage.getActivationExpression() != null || newPackage.getPlansAttributes() != null) {
             propagatePackageMetadataToPlans(newPackage, plans);
         }
@@ -923,7 +923,7 @@ public class AutomationPackageManager {
         // get old functions with same name and reuse their ids
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
         fillEntities(completeFunctions, oldFunctions, enricher);
-        //Only browser the plans if any of the metadata is not null
+        //Only propagate metadata to all the functions if any of the metadata impacting the functions is set
         if (newPackage.getActivationExpression() != null || newPackage.getFunctionsAttributes() != null || newPackage.getTokenSelectionCriteria() != null || newPackage.getExecuteFunctionLocally()) {
             propagatePackageMetadataToFunctions(newPackage, completeFunctions);
         }

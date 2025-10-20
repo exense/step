@@ -161,7 +161,7 @@ public class AutomationPackageUpdateParameterBuilder {
      * helper method for junit test, use dummy predicate and enricher
      * @return the builder
      */
-    public AutomationPackageUpdateParameterBuilder forJunitOnly() {
+    public AutomationPackageUpdateParameterBuilder forJunit() {
         this.objectPredicate = o -> true;
         this.writeAccessPredicate =o -> true;
         this.actorUser = "testUser";
@@ -171,7 +171,7 @@ public class AutomationPackageUpdateParameterBuilder {
     /**
      * helper setting automatically the properties to match local use cases
      */
-    public AutomationPackageUpdateParameterBuilder withLocalOnly() {
+    public AutomationPackageUpdateParameterBuilder forLocalExecution() {
         this.isLocalPackage = true;
         this.objectPredicate = o -> true;
         this.writeAccessPredicate =o -> true;

@@ -21,6 +21,7 @@ package step.automation.packages;
 import org.bson.types.ObjectId;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
+import step.parameter.ParameterManagerException;
 
 import java.util.Map;
 
@@ -112,6 +113,12 @@ public class AutomationPackageUpdateParameter {
                                             String actorUser, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin,
                                             Map<String, String> functionsAttributes, Map<String, String> plansAttributes,
                                             Map<String, String> tokenSelectionCriteria, boolean executionFunctionsLocally) {
+        if (objectPredicate == null) {
+            throw new AutomationPackageManagerException("The objectPredicate cannot be null");
+        }
+        if (writeAccessPredicate == null) {
+            throw new AutomationPackageManagerException("The writeAccessPredicate cannot be null");
+        }
         this.allowUpdate = allowUpdate;
         this.allowCreate = allowCreate;
         this.isLocalPackage = isLocalPackage;
