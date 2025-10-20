@@ -185,14 +185,18 @@ public class PlanParserTest {
 		Sequence wrappingSequence = (Sequence) forBlock.getChildren().get(0);
 		Assert.assertEquals("Sequence", wrappingSequence.getAttributes().get("name"));
 
-		Assert.assertEquals(3, wrappingSequence.getChildren().size());
+		Assert.assertEquals(4, wrappingSequence.getChildren().size());
 
 		CallFunction callFunction = (CallFunction) wrappingSequence.getChildren().get(0);
 		Assert.assertEquals("Call a keyword", callFunction.getAttributes().get("name"));
-		Assert.assertEquals(1,callFunction.getChildren().size());
+		Assert.assertEquals(1, callFunction.getChildren().size());
 
-		Assert.assertEquals("some echo in iteration", wrappingSequence.getChildren().get(1).getAttributes().get("name"));
-		Assert.assertEquals("some other echo in iteration", wrappingSequence.getChildren().get(2).getAttributes().get("name"));
+		CallFunction callFunction2 = (CallFunction) wrappingSequence.getChildren().get(1);
+		Assert.assertEquals("MyOtherKeyword", callFunction2.getAttributes().get("name"));
+		Assert.assertEquals(1, callFunction.getChildren().size());
+
+		Assert.assertEquals("some echo in iteration", wrappingSequence.getChildren().get(2).getAttributes().get("name"));
+		Assert.assertEquals("some other echo in iteration", wrappingSequence.getChildren().get(3).getAttributes().get("name"));
 
 		Echo echo = (Echo) wrappingSequence.getAfter().getSteps().get(0);
 		Assert.assertEquals("some echo in afterSequence", echo.getAttributes().get("name"));

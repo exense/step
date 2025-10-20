@@ -4,6 +4,7 @@ For 1 to 2
     CallFunction
         //Assert - City equals Basel
         Assert City = "Basel"
+    MyOtherKeyword Input1 = "MyInput 1"
     //BeforeSequence
     BeforeSequence
         //some echo in before sequence
