@@ -118,7 +118,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     private void deleteSingleAutomationPackage(String id) {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
-            assertEntityIsAcceptableInContext(automationPackage);
+            assertEntityIsEditableInContext(automationPackage);
             automationPackageManager.removeAutomationPackage(new ObjectId(id), getObjectPredicate());
             auditLog("delete",  automationPackage);
         } catch (Exception e) {
@@ -302,7 +302,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             //getAutomationPackage throws exception if the package doesn't exist, whether this is an errors is managed in below createOrUpdateAutomationPackage
         }
         if (automationPackage != null) {
-            assertEntityIsAcceptableInContext(automationPackage);
+            assertEntityIsEditableInContext(automationPackage);
         }
     }
 

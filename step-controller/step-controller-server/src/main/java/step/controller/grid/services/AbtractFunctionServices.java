@@ -156,7 +156,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	@Override
 	public Function clone(String id) {
 		try {
-			assertEntityIsAcceptableInContext(getEntity(id));
+			assertEntityIsEditableInContext(getEntity(id));
 			var result = functionManager.copyFunction(id);
 			auditLog("clone", result);
 			return result;
@@ -169,7 +169,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	public void delete(String functionId) {
 		try {
 			Function f = getEntity(functionId);
-			assertEntityIsAcceptableInContext(f);
+			assertEntityIsEditableInContext(f);
 			functionManager.deleteFunction(functionId);
 			auditLog("delete", f);
 		} catch (FunctionTypeException e) {

@@ -103,7 +103,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-delete")
     public void delete(@PathParam("id") String id) {
         T entity = getEntity(id);
-        assertEntityIsAcceptableInContext(entity);
+        assertEntityIsEditableInContext(entity);
         auditLog("delete", entity);
         accessor.remove(new ObjectId(id));
     }
@@ -183,7 +183,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             }
         }
         // Save the cloned entity
-        assertEntityIsAcceptableInContext(clonedEntity);
+        assertEntityIsEditableInContext(clonedEntity);
         save(clonedEntity);
         return clonedEntity;
     }
@@ -252,7 +252,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-write")
     @Path("{id}/restore/{versionId}")
     public T restoreVersion(@PathParam("id") String id, @PathParam("versionId") String versionId) {
-        assertEntityIsAcceptableInContext(getEntity(id));
+        assertEntityIsEditableInContext(getEntity(id));
         return accessor.restoreVersion(new ObjectId(id), new ObjectId(versionId));
     }
 
@@ -281,7 +281,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         if (!locked) {
             t.addCustomField(CUSTOM_FIELD_LOCKED, locked);
         }
-        assertEntityIsAcceptableInContext(t);
+        assertEntityIsEditableInContext(t);
         t.addCustomField(CUSTOM_FIELD_LOCKED, locked);
         accessor.save(t);
     }
