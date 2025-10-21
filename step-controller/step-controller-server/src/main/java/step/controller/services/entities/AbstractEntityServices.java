@@ -132,8 +132,8 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     }
 
     protected void auditLog(String operation, T entity) {
-        if (entity == null) {
-            return; // any better implementation?
+        if (entity == null || !AuditLogger.isEntityModificationsLoggingEnabled()) {
+            return;
         }
         String entityName = null;
         String projectId = null;
@@ -142,8 +142,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             entityName = a.getAttribute(AbstractOrganizableObject.NAME);
             projectId = a.getAttribute("project");
         }
-        AuditLogger.modify(getHttpSession(), operation, this.entityName, entity.getId().toHexString(), entityName, projectId);
-
+        AuditLogger.logEntityModification(getHttpSession(), operation, this.entityName, entity.getId().toHexString(), entityName, projectId);
     }
 
     private void trackEntityIfApplicable(T entity) {

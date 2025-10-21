@@ -145,7 +145,9 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	@Override
 	public Function save(Function function) {
 		try {
-			return functionManager.saveFunction(function);
+			var result = functionManager.saveFunction(function);
+			auditLog("save", result);
+			return result;
 		} catch (SetupFunctionException | FunctionTypeException e) {
 			throw new ControllerServiceException(e.getMessage());
 		}
@@ -155,7 +157,9 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	public Function clone(String id) {
 		try {
 			assertEntityIsAcceptableInContext(getEntity(id));
-			return functionManager.copyFunction(id);
+			var result = functionManager.copyFunction(id);
+			auditLog("clone", result);
+			return result;
 		} catch (FunctionTypeException e) {
 			throw new ControllerServiceException(e.getMessage());
 		}
@@ -164,8 +168,10 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	@Override
 	public void delete(String functionId) {
 		try {
-			assertEntityIsAcceptableInContext(getEntity(functionId));
+			Function f = getEntity(functionId);
+			assertEntityIsAcceptableInContext(f);
 			functionManager.deleteFunction(functionId);
+			auditLog("delete", f);
 		} catch (FunctionTypeException e) {
 			throw new ControllerServiceException(e.getMessage());
 		}

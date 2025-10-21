@@ -35,13 +35,13 @@ import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.deployment.AbstractStepServices;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
+import step.framework.server.audit.AuditLogger;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
@@ -83,7 +83,28 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
+    }
 
+    private void auditLog(String operation, ObjectId apId) {
+        if (apId != null) {
+            auditLog(operation, apId.toString());
+        }
+    }
+
+    private void auditLog(String operation, String apId) {
+        if (apId != null && AuditLogger.isEntityModificationsLoggingEnabled()) {
+            try {
+                auditLog(operation, getAutomationPackage(apId));
+            } catch (Exception ignored) {
+                // not expected to fail, but let's not crash in case it does
+            }
+        }
+    }
+
+    private void auditLog(String operation, AutomationPackage ap) {
+        if (ap != null) {
+            AuditLogger.logEntityModification(getHttpSession(), operation, "automation-packages", ap);
+        }
     }
 
     @DELETE
@@ -99,6 +120,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             AutomationPackage automationPackage = getAutomationPackage(id);
             assertEntityIsAcceptableInContext(automationPackage);
             automationPackageManager.removeAutomationPackage(new ObjectId(id), getObjectPredicate());
+            auditLog("delete",  automationPackage);
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -118,6 +140,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate()
             );
+            auditLog("create",  id);
             return id == null ? null : id.toString();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
@@ -145,9 +168,11 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                    @RequestBody() String mavenArtifactXml) {
         try {
             MavenArtifactIdentifier mavenArtifactIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
-            return automationPackageManager.createAutomationPackageFromMaven(
+            ObjectId id = automationPackageManager.createAutomationPackageFromMaven(
                     mavenArtifactIdentifier, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate()
-            ).toString();
+            );
+            auditLog("create-from-maven",  id);
+            return id == null ? null : id.toString();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         } catch (ParserConfigurationException | IOException | SAXException e) {
@@ -238,6 +263,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         checkAutomationPackageAcceptable(id);
         try {
             automationPackageManager.updateAutomationPackageMetadata(new ObjectId(id), apVersion, activationExpression, getObjectPredicate());
+            auditLog("update-metadata", id);
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -256,11 +282,13 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @FormDataParam("file") FormDataContentDisposition fileDetail) {
         checkAutomationPackageAcceptable(id);
         try {
-            return automationPackageManager.createOrUpdateAutomationPackage(
+            var result = automationPackageManager.createOrUpdateAutomationPackage(
                     true, false, new ObjectId(id),
                     uploadedInputStream, fileDetail.getFileName(), apVersion, activationExpression,
                     getObjectEnricher(), getObjectPredicate(), async != null && async
             );
+            auditLog("update", result.getId());
+            return result;
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -293,6 +321,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     getObjectEnricher(), getObjectPredicate(), async != null && async
             );
             Response.ResponseBuilder responseBuilder;
+            auditLog("create-or-update", result.getId());
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(Response.Status.CREATED);
             } else {
@@ -325,9 +354,11 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                                   @RequestBody() String mavenArtifactXml) {
         try {
             MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
-            return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
+            var result = automationPackageManager.createOrUpdateAutomationPackageFromMaven(
                     mvnIdentifier, true, true, null, apVersion, activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
             );
+            auditLog("create-or-update-maven", result.getId());
+            return result;
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         } catch (ParserConfigurationException | IOException | SAXException e) {
@@ -356,10 +387,12 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                           @RequestBody() String mavenArtifactXml) {
         try {
             MavenArtifactIdentifier mvnIdentifier = getMavenArtifactIdentifierFromXml(mavenArtifactXml);
-            return automationPackageManager.createOrUpdateAutomationPackageFromMaven(
+            var result = automationPackageManager.createOrUpdateAutomationPackageFromMaven(
                     mvnIdentifier, true, false, new ObjectId(id), apVersion,
                     activationExpression, getObjectEnricher(), getObjectPredicate(), async == null ? false : async
             );
+            auditLog("update-maven", result.getId());
+            return result;
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         } catch (ParserConfigurationException | IOException | SAXException e) {
