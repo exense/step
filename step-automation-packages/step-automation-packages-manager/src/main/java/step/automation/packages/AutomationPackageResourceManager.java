@@ -305,10 +305,10 @@ public class AutomationPackageResourceManager {
                 ResourceManager.RESOURCE_TYPE_AP_LIBRARY
         );
         if (!supportedResourceTypesForRefresh.contains(resource.getResourceType())) {
-            refreshResourceResult.addError("Unsupported resource type for refresh: " + resource.getResourceType());
+            refreshResourceResult.addError("Unsupported resource type for refresh: " + resource.getResourceType() + ". Supported types: " + supportedResourceTypesForRefresh);
         }
         if (!MavenArtifactIdentifier.isMvnIdentifierShortString(resource.getOrigin())) {
-            refreshResourceResult.addError("Unsupported resource origin for refresh: " + resource.getOrigin());
+            refreshResourceResult.addError("Unsupported resource origin for refresh: " + resource.getOrigin() + ". Only maven artefact resources are supported");
         }
 
         // check access for linked automation packages
@@ -415,6 +415,8 @@ public class AutomationPackageResourceManager {
                     linkedAps.stream().map(p -> getLogRepresentation(automationPackageAccessor.get(p))).collect(Collectors.toList())
             );
         }
+
+        resourceManager.deleteResource(resourceId);
     }
 
     public List<AutomationPackage> findAutomationPackagesByResourceId(String resourceId, List<ObjectId> ignoredApIds) {
