@@ -58,7 +58,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
                 // make sure the execution parameter of the schedule are enriched too (required to execute in same project
                 // as the schedule and populate event bindings
                 context.getEnricher().accept(entity.getExecutionsParameters());
-                executionScheduler.addOrUpdateExecutionTask(entity, false);
+                executionScheduler.addOrUpdateExecutionTask(entity);
             }
         }
     }

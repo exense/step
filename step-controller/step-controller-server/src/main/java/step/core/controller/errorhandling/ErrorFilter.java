@@ -40,14 +40,15 @@ public class ErrorFilter extends AbstractStepServices implements ExceptionMapper
 	@Override
 	public Response toResponse(Exception exception) {
 		if(exception instanceof ControllerServiceException) {
-			if (((ControllerServiceException) exception).isTechnicalError()) {
-				logger.warn("A controller service exception occurred", exception);
-			}
-			ControllerServiceException portalException = (ControllerServiceException) exception;
-			ControllerServiceError portalServiceError = new ControllerServiceError();
-			portalServiceError.setErrorName(portalException.getErrorName());
-			portalServiceError.setErrorMessage(portalException.getErrorMessage());
-			return Response.status(portalException.getHttpErrorCode()).entity(portalServiceError)
+            if (((ControllerServiceException) exception).isTechnicalError()) {
+			    logger.warn("A controller service exception occurred: {}", exception.toString());
+            }
+			ControllerServiceException controllerServiceException = (ControllerServiceException) exception;
+			ControllerServiceError controllerServiceError = new ControllerServiceError();
+			controllerServiceError.setErrorName(controllerServiceException.getErrorName());
+			controllerServiceError.setErrorMessage(controllerServiceException.getErrorMessage());
+			controllerServiceError.setErrorDetails(controllerServiceException.getErrorDetails());
+			return Response.status(controllerServiceException.getHttpErrorCode()).entity(controllerServiceError)
 					.type(MediaType.APPLICATION_JSON).build();
 		} else {
 			logger.error("Unexpected error while processing request", exception);

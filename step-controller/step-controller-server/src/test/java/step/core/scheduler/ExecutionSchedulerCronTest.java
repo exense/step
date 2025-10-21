@@ -65,21 +65,17 @@ public class ExecutionSchedulerCronTest {
 	@Test
 	public void testValidCases() {
 		ExecutionScheduler executionScheduler = new ExecutionScheduler(controllerSettingAccessor, executionTaskAccessor, executor);
-		
+
 		executionScheduler.start();
 
 		//Test simple CRON without exclutions
-		final ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters();
+		final ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters(new ExecutionParameters(), "0 0/1 * * * ?");
 		executiontTaskParameters.addAttribute(AbstractOrganizableObject.NAME, "task1");
-		executiontTaskParameters.setExecutionsParameters(new ExecutionParameters());
-		executiontTaskParameters.setCronExpression("0 0/1 * * * ?");
 		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters));
 
 		//Test with 1 exclusion
-		final ExecutiontTaskParameters executiontTaskParameters3 = new ExecutiontTaskParameters();
+		final ExecutiontTaskParameters executiontTaskParameters3 = new ExecutiontTaskParameters(new ExecutionParameters(), "0 0/1 * * * ?");
 		executiontTaskParameters3.addAttribute(AbstractOrganizableObject.NAME, "task2");
-		executiontTaskParameters3.setExecutionsParameters(new ExecutionParameters());
-		executiontTaskParameters3.setCronExpression("0 0/1 * * * ?");
 		CronExclusion cronExclusion = new CronExclusion();
 		cronExclusion.setCronExpression("* * * ? * FRI");//Exclude Fridays
 		cronExclusion.setDescription("test");
@@ -87,10 +83,8 @@ public class ExecutionSchedulerCronTest {
 		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters3));
 
 		//Test with 2 exclusion
-		final ExecutiontTaskParameters executiontTaskParameters4 = new ExecutiontTaskParameters();
+		final ExecutiontTaskParameters executiontTaskParameters4 = new ExecutiontTaskParameters(new ExecutionParameters(), "0 0/1 * * * ?");
 		executiontTaskParameters4.addAttribute(AbstractOrganizableObject.NAME, "task2");
-		executiontTaskParameters4.setExecutionsParameters(new ExecutionParameters());
-		executiontTaskParameters4.setCronExpression("0 0/1 * * * ?");
 		CronExclusion cronExclusion1 = new CronExclusion();
 		cronExclusion1.setCronExpression("* * * ? * FRI");//Exclude Fridays
 		cronExclusion1.setDescription("test");
@@ -116,10 +110,8 @@ public class ExecutionSchedulerCronTest {
 		executionScheduler.start();
 
 		//Test simple CRON without exclutions
-		final ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters();
+		final ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters(new ExecutionParameters(), "0 0/1 * * * FRIDAY");
 		executiontTaskParameters.addAttribute(AbstractOrganizableObject.NAME, "task1");
-		executiontTaskParameters.setExecutionsParameters(new ExecutionParameters());
-		executiontTaskParameters.setCronExpression("0 0/1 * * * FRIDAY");
 		assertThrows("CronExpression '0 0/1 * * * FRIDAY' is invalid. Details: Support for specifying both a day-of-week AND a day-of-month parameter is not implemented.",
 				RuntimeException.class, () -> executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters));
 
@@ -127,10 +119,8 @@ public class ExecutionSchedulerCronTest {
 		/*Note This normally raise a specific error, but kind of take a lot of time, removed for now*/
 
 		//Test with 1 exclusion
-		final ExecutiontTaskParameters executiontTaskParameters3 = new ExecutiontTaskParameters();
+		final ExecutiontTaskParameters executiontTaskParameters3 = new ExecutiontTaskParameters(new ExecutionParameters(), "0 0/1 * * * ?");
 		executiontTaskParameters3.addAttribute(AbstractOrganizableObject.NAME, "task2");
-		executiontTaskParameters3.setExecutionsParameters(new ExecutionParameters());
-		executiontTaskParameters3.setCronExpression("0 0/1 * * * ?");
 		CronExclusion cronExclusion = new CronExclusion();
 		cronExclusion.setCronExpression("* * * * * FRI");//Exclude Fridays
 		cronExclusion.setDescription("test");
@@ -140,10 +130,8 @@ public class ExecutionSchedulerCronTest {
 
 		executionScheduler.shutdown();
 		//Test with 2 exclusion
-		final ExecutiontTaskParameters executiontTaskParameters4 = new ExecutiontTaskParameters();
+		final ExecutiontTaskParameters executiontTaskParameters4 = new ExecutiontTaskParameters(new ExecutionParameters(), "0 0/1 * * * ?");
 		executiontTaskParameters4.addAttribute(AbstractOrganizableObject.NAME, "task2");
-		executiontTaskParameters4.setExecutionsParameters(new ExecutionParameters());
-		executiontTaskParameters4.setCronExpression("0 0/1 * * * ?");
 		CronExclusion cronExclusion1 = new CronExclusion();
 		cronExclusion1.setCronExpression("* * * ? * FRI");//Exclude Fridays
 		cronExclusion1.setDescription("test");
