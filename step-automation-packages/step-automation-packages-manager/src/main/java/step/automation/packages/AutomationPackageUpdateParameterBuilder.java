@@ -2,12 +2,11 @@ package step.automation.packages;
 
 import org.bson.types.ObjectId;
 import step.attachments.FileResolver;
-import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.*;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 public class AutomationPackageUpdateParameterBuilder {
     private boolean allowUpdate = true;
@@ -20,7 +19,7 @@ public class AutomationPackageUpdateParameterBuilder {
     private String activationExpression = null;
     private ObjectEnricher enricher;
     private ObjectPredicate objectPredicate;
-    private ObjectPredicate writeAccessPredicate;
+    private WriteAccessValidator writeAccessValidator;
     private boolean async = false;
     private String actorUser;
     private boolean allowUpdateOfOtherPackages = false;
@@ -81,8 +80,8 @@ public class AutomationPackageUpdateParameterBuilder {
         return this;
     }
 
-    public AutomationPackageUpdateParameterBuilder withWriteAccessPredicate(ObjectPredicate writeAccessPredicate) {
-        this.writeAccessPredicate = writeAccessPredicate;
+    public AutomationPackageUpdateParameterBuilder withWriteAccessValidator(WriteAccessValidator writeAccessValidator) {
+        this.writeAccessValidator = writeAccessValidator;
         return this;
     }
 
@@ -143,7 +142,7 @@ public class AutomationPackageUpdateParameterBuilder {
         this.activationExpression = oldPackage.getActivationExpression() != null ? oldPackage.getActivationExpression().getScript() : null;
         this.enricher = parentParameters.enricher;
         this.objectPredicate = parentParameters.objectPredicate;
-        this.writeAccessPredicate = parentParameters.writeAccessPredicate;
+        this.writeAccessValidator = parentParameters.writeAccessValidator;
         this.async = false;
         this.actorUser = parentParameters.actorUser;
         this.allowUpdateOfOtherPackages = false;
@@ -171,9 +170,19 @@ public class AutomationPackageUpdateParameterBuilder {
      */
     public AutomationPackageUpdateParameterBuilder forJunit() {
         this.objectPredicate = o -> true;
-        this.writeAccessPredicate =o -> true;
+        this.writeAccessValidator = getNoWriteAccessValidator();
         this.actorUser = "testUser";
         return this;
+    }
+
+    public static WriteAccessValidator getNoWriteAccessValidator() {
+        return new WriteAccessValidator(null, null) {
+
+            @Override
+            public Optional<ObjectAccessException> validate(EnricheableObject entity) {
+                return Optional.empty();
+            }
+        };
     }
 
     /**
@@ -182,7 +191,7 @@ public class AutomationPackageUpdateParameterBuilder {
     public AutomationPackageUpdateParameterBuilder forLocalExecution() {
         this.isLocalPackage = true;
         this.objectPredicate = o -> true;
-        this.writeAccessPredicate =o -> true;
+        this.writeAccessValidator = getNoWriteAccessValidator();
         this.explicitOldId = null;
         this.async = false;
         this.actorUser = null;
@@ -194,7 +203,7 @@ public class AutomationPackageUpdateParameterBuilder {
     }
 
     public AutomationPackageUpdateParameter build() {
-        return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource, apLibrarySource, automationPackageVersion, activationExpression, enricher, objectPredicate, writeAccessPredicate, async, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin, functionsAttributes, plansAttributes, tokenSelectionCriteria, executeFunctionLocally);
+        return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource, apLibrarySource, automationPackageVersion, activationExpression, enricher, objectPredicate, writeAccessValidator, async, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin, functionsAttributes, plansAttributes, tokenSelectionCriteria, executeFunctionLocally);
     }
 
 

@@ -119,7 +119,7 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 	 * @param entity the entity to be asserted
 	 */
 	protected void assertEntityIsEditableInContext(AbstractIdentifiableObject entity) {
-		if(entity instanceof EnricheableObject) {
+		if (entity instanceof EnricheableObject) {
 			EnricheableObject enricheableObject = (EnricheableObject) entity;
 			Session session = getSession();
 			Optional<ObjectAccessException> optionalViolations = objectHookRegistry.isObjectEditableInContext(session, enricheableObject);
@@ -131,9 +131,9 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 				);
 			}
 		}
-    }
+	}
 
-	protected ObjectPredicate getWriteAccessPredicate() {
-		return this::isEntityAcceptableInContext;
+	protected WriteAccessValidator getWriteAccessValidator() {
+		return new WriteAccessValidator(objectHookRegistry, getSession());
 	}
 }

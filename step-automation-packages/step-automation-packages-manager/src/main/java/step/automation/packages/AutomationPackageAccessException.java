@@ -21,6 +21,7 @@
 package step.automation.packages;
 
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.objectenricher.ObjectAccessException;
 
 public class AutomationPackageAccessException extends AutomationPackageManagerException {
     public AutomationPackageAccessException(AutomationPackage automationPackage) {
@@ -33,18 +34,29 @@ public class AutomationPackageAccessException extends AutomationPackageManagerEx
     }
 
     public AutomationPackageAccessException(AutomationPackage automationPackage, String errorMessage){
-        super(getErrorMessage(automationPackage, errorMessage));
+        super(getErrorMessage(automationPackage, errorMessage, null));
+    }
+
+    public AutomationPackageAccessException(String errorMessage, ObjectAccessException e) {
+        super(errorMessage + ". Access violation reason: " + e.getMessage());
+    }
+
+    public AutomationPackageAccessException(AutomationPackage automationPackage, String errorMessage, ObjectAccessException e) {
+        super(getErrorMessage(automationPackage, errorMessage, e));
     }
 
     private static String getCommonErrorMessage(AutomationPackage automationPackage) {
         return "Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " is not acceptable";
     }
 
-    private static String getErrorMessage(AutomationPackage automationPackage, String additionalMessage){
-        if(additionalMessage == null){
-            return getCommonErrorMessage(automationPackage);
-        } else {
-            return getCommonErrorMessage(automationPackage) + ". " + additionalMessage;
+    private static String getErrorMessage(AutomationPackage automationPackage, String additionalMessage, ObjectAccessException e){
+        String finalMessage = getCommonErrorMessage(automationPackage);
+        if(additionalMessage != null){
+            finalMessage += ". " + additionalMessage;
         }
+        if (e != null) {
+            finalMessage += ". Access violation reason: " + e.getMessage();
+        }
+        return finalMessage;
     }
 }

@@ -104,7 +104,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
             assertEntityIsEditableInContext(automationPackage);
-            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),getObjectPredicate(), getWriteAccessPredicate());
+            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),
+                    getObjectPredicate(), getWriteAccessValidator());
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (Exception e) {
@@ -183,7 +184,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         return new AutomationPackageUpdateParameterBuilder()
                 .withEnricher(getObjectEnricher())
                 .withObjectPredicate(getObjectPredicate())
-                .withWriteAccessPredicate(getWriteAccessPredicate())
+                .withWriteAccessValidator(getWriteAccessValidator())
                 .withActorUser(getUser());
     }
 
