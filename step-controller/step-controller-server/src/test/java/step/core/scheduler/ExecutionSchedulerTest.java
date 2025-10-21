@@ -124,10 +124,8 @@ public class ExecutionSchedulerTest {
 		executionScheduler.start();
 		assertTrue(getExecutor().isStartMethodCalled);
 		
-		ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters();
-		executiontTaskParameters.setExecutionsParameters(new ExecutionParameters());
+		ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters(new ExecutionParameters(), null);
 		String executionTaskId = executiontTaskParameters.getId().toString();
-        executiontTaskParameters.setActive(true);
 		
 		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters));
 		
@@ -161,9 +159,7 @@ public class ExecutionSchedulerTest {
 		getExecutor().isScheduleMethodCalled = false;
 		assertFalse(controllerSettingAccessor.getSettingAsBoolean(ExecutionScheduler.SETTING_SCHEDULER_ENABLED));
 		
-		ExecutiontTaskParameters executiontTaskParameters2 = new ExecutiontTaskParameters();
-		executiontTaskParameters2.setExecutionsParameters(new ExecutionParameters());
-        executiontTaskParameters2.setActive(true);
+		ExecutiontTaskParameters executiontTaskParameters2 = new ExecutiontTaskParameters(new ExecutionParameters(), null);
 		String executionTaskId2 = executiontTaskParameters2.getId().toString();
 		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters2));
 		
@@ -188,9 +184,7 @@ public class ExecutionSchedulerTest {
 		executionScheduler.start();
 		assertTrue(getExecutor().isStartMethodCalled);
 
-		ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters();
-		executiontTaskParameters.setExecutionsParameters(new ExecutionParameters());
-        executiontTaskParameters.setActive(true);
+		ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters(new ExecutionParameters(), null);
 		String executionTaskId = executiontTaskParameters.getId().toString();
 
 		assertTrue(executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters));
