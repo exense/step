@@ -29,7 +29,8 @@ import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.maven.MavenArtifactIdentifier;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.ObjectAccessException;
+import step.core.objectenricher.WriteAccessValidator;
 import step.repositories.artifact.SnapshotMetadata;
 import step.resources.*;
 
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -99,7 +101,7 @@ public class AutomationPackageResourceManager {
                                     apName,
                                     automationPackageToBeLinkedWithLib == null ? null : automationPackageToBeLinkedWithLib.getId(),
                                     fis, apLibProvider.getSnapshotTimestamp(), oldResource,
-                                    parameters.actorUser, parameters.writeAccessPredicate
+                                    parameters.actorUser, parameters.writeAccessValidator
                             );
                         } else {
                             uploadedResource = oldResource;
@@ -164,7 +166,7 @@ public class AutomationPackageResourceManager {
                             originalFile.getName(),
                             apName, automationPackageToBeLinkedWithResource == null ? null : automationPackageToBeLinkedWithResource.getId(),
                             is, apProvider.getSnapshotTimestamp(), resource,
-                            parameters.actorUser, parameters.writeAccessPredicate
+                            parameters.actorUser, parameters.writeAccessValidator
                     );
                 } catch (IOException | InvalidResourceFormatException e) {
                     throw new RuntimeException("Unable to create the resource for automation package", e);
@@ -203,7 +205,7 @@ public class AutomationPackageResourceManager {
      * @param newOriginTimestamp the artefact snapshot timestamp (null if no new snapshot was downloaded
      * @param oldResource the resource to be updated if required
      * @param actorUser the user triggering this update
-     * @param writeAccessPredicate predicate to check if this resource can be updated in this context
+     * @param writeAccessValidator validator to check if this resource can be updated in this context
      * @return the updated resource
      * @throws InvalidResourceFormatException in case the new resource content is invalid
      * @throws AutomationPackageAccessException in case the resource of linked AP cannot be updated in the current context
@@ -212,18 +214,19 @@ public class AutomationPackageResourceManager {
                                                                String apName, ObjectId currentApId,
                                                                FileInputStream fis, Long newOriginTimestamp,
                                                                Resource oldResource, String actorUser,
-                                                               ObjectPredicate writeAccessPredicate) throws IOException, InvalidResourceFormatException, AutomationPackageAccessException {
+                                                               WriteAccessValidator writeAccessValidator) throws IOException, InvalidResourceFormatException, AutomationPackageAccessException {
         String resourceId = oldResource.getId().toHexString();
         //Check write access to the resource itself
-        if (!writeAccessPredicate.test(oldResource)) {
+        Optional<ObjectAccessException> violations = writeAccessValidator.validate(oldResource);
+        if (violations.isPresent()) {
             String errorMessage = "The existing resource " + resourceId + " for file " + resourceFileName + " referenced by the provided package cannot be modified in the current context.";
             log.error(errorMessage);
-            throw new AutomationPackageAccessException(errorMessage);
+            throw new AutomationPackageAccessException(errorMessage, violations.get());
         }
         // Check write access to other APs using this resource. We cannot reupload the resources if they are linked with another package, which is not accessible
         List<ObjectId> ignoredApsToLookup = currentApId == null ? List.of() : List.of(currentApId);
         for (ObjectId apId : linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resourceId, ignoredApsToLookup)) {
-            checkAccess(automationPackageAccessor.get(apId), writeAccessPredicate);
+            checkAccess(automationPackageAccessor.get(apId), writeAccessValidator);
         }
 
         log.info("Existing resource {} for file {} will be actualized and reused in AP {}", resourceId, resourceFileName, apName);
@@ -233,23 +236,20 @@ public class AutomationPackageResourceManager {
         return uploadedResource;
     }
 
-    protected void checkAccess(AutomationPackage automationPackage, ObjectPredicate writeAccessPredicate) throws AutomationPackageAccessException {
-        if (writeAccessPredicate != null) {
-            if (!writeAccessPredicate.test(automationPackage)) {
-                throw new AutomationPackageAccessException(
-                        automationPackage,
-                        "You're not allowed to edit the linked automation package " + getLogRepresentation(automationPackage) + " from within this context"
-                );
+    protected void checkAccess(AutomationPackage automationPackage, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
+        if (writeAccessValidator != null) {
+            Optional<ObjectAccessException> violations = writeAccessValidator.validate(automationPackage);
+            if (violations.isPresent()) {
+                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit the linked automation package " + getLogRepresentation(automationPackage), violations.get());
             }
         }
     }
 
-    protected void checkAccess(Resource resource, ObjectPredicate writeAccessPredicate) throws AutomationPackageAccessException {
-        if (writeAccessPredicate != null) {
-            if (!writeAccessPredicate.test(resource)) {
-                throw new AutomationPackageAccessException(
-                        "You're not allowed to edit the linked automation package " + getLogRepresentation(resource) + " from within this context"
-                );
+    protected void checkAccess(Resource resource, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
+        if (writeAccessValidator != null) {
+            Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
+            if (violations.isPresent()) {
+                throw new AutomationPackageAccessException("You're not allowed to edit the linked automation package  " + getLogRepresentation(resource), violations.get());
             }
         }
     }
@@ -263,7 +263,7 @@ public class AutomationPackageResourceManager {
             result.addError("Resource not found by id: " + resourceId);
             return result;
         }
-        return refreshResourceAndLinkedPackages(resource, parameters.writeAccessPredicate, (linkedAutomationPackages, refreshResourceResult) -> {
+        return refreshResourceAndLinkedPackages(resource, parameters.writeAccessValidator, (linkedAutomationPackages, refreshResourceResult) -> {
             List<AutomationPackage> reuploadedPackages = new ArrayList<>(linkedAutomationPackages);
             List<AutomationPackage> failedPackages = new ArrayList<>();
             try {
@@ -290,11 +290,12 @@ public class AutomationPackageResourceManager {
     }
 
     public RefreshResourceResult refreshResourceAndLinkedPackages(Resource resource,
-                                                                  ObjectPredicate writeAccessPredicate,
+                                                                  WriteAccessValidator writeAccessValidator,
                                                                   LinkedPackagesReuploader linkedPackagesReuploader) {
         RefreshResourceResult refreshResourceResult = new RefreshResourceResult();
 
-        if (!writeAccessPredicate.test(resource)) {
+        Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
+        if (violations.isPresent()) {
             refreshResourceResult.addError("You have no access to resource with id: " + resource.getId());
             return refreshResourceResult;
         }
@@ -319,7 +320,7 @@ public class AutomationPackageResourceManager {
 
         for (AutomationPackage linkedAutomationPackage : linkedAutomationPackages) {
             try {
-                checkAccess(linkedAutomationPackage, writeAccessPredicate);
+                checkAccess(linkedAutomationPackage, writeAccessValidator);
             } catch (AutomationPackageAccessException ex) {
                 refreshResourceResult.addError(ex.getMessage());
             }
@@ -387,12 +388,12 @@ public class AutomationPackageResourceManager {
         }
     }
 
-    public void deleteResource(String resourceId, ObjectPredicate writeAccessPredicate) throws AutomationPackageAccessException {
+    public void deleteResource(String resourceId, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
         Resource resource = resourceManager.getResource(resourceId);
         if (resource == null) {
             throw new AutomationPackageManagerException("Resource is not found by id: " + resourceId);
         }
-        checkAccess(resource, writeAccessPredicate);
+        checkAccess(resource, writeAccessValidator);
 
         Set<ObjectId> linkedAps = linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resourceId, List.of());
 

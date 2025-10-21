@@ -521,7 +521,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         return new AutomationPackageUpdateParameterBuilder()
                 .withEnricher(getObjectEnricher())
                 .withObjectPredicate(getObjectPredicate())
-                .withWriteAccessPredicate(getWriteAccessPredicate())
+                .withWriteAccessValidator(getWriteAccessValidator())
                 .withActorUser(getUser()).build();
     }
 
@@ -531,7 +531,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-delete")
     public AsyncTaskStatus<TableBulkOperationReport> bulkDeleteAutomationPackageResource(TableBulkOperationRequest request) {
-        Consumer<String> consumer = resourceId -> automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessPredicate());
+        Consumer<String> consumer = resourceId -> automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
         return scheduleAsyncTaskWithinSessionContext(h ->
                 tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
     }
@@ -552,7 +552,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-delete")
     public void deleteAutomationPackageResource(@PathParam("id") String resourceId) {
         try {
-            automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessPredicate());
+            automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {
