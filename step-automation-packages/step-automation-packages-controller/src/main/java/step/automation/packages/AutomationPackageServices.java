@@ -465,7 +465,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Path("/resources")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Secured(right = "automation-package-write")
-    public String createNewAutomationPackageResource(String resourceType,
+    public String createNewAutomationPackageResource(@FormDataParam("resourceType") String resourceType,
                                                      @FormDataParam("file") InputStream uploadedInputStream,
                                                      @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                      @FormDataParam("mavenSnippet") String mavenSnippet){
