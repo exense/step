@@ -3,11 +3,9 @@ package step.plugins.streaming;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.constants.StreamingConstants;
+import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;
-import step.core.access.User;
 import step.core.objectenricher.ObjectEnricher;
-import step.framework.server.Session;
 import step.streaming.common.StreamingResourceMetadata;
 import step.streaming.common.StreamingResourceStatus;
 import step.streaming.common.StreamingResourceTransferStatus;
@@ -40,9 +38,9 @@ public class StreamingResourceCollectionCatalogBackend implements StreamingResou
 
         // FIXME: Currently an upload context is not strictly *required* (nor is the enricher) - do we want to enforce it?
         Optional<StreamingResourceUploadContext> maybeContext = Optional.ofNullable(context);
-        maybeContext.map(c -> (ObjectEnricher) c.getAttributes().get(StreamingConstants.AttributeNames.ACCESS_CONTROL_ENRICHER))
+        maybeContext.map(c -> (ObjectEnricher) c.getAttributes().get(LiveReportingConstants.ACCESSCONTROL_ENRICHER))
                 .ifPresent(enricher -> enricher.accept(entity));
-        maybeContext.map(c -> (String) c.getAttributes().get(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID))
+        maybeContext.map(c -> (String) c.getAttributes().get(LiveReportingConstants.CONTEXT_EXECUTION_ID))
                 .ifPresent(id -> entity.addAttribute(StreamingResource.ATTRIBUTE_EXECUTION_ID, id));
 
         return accessor.save(entity).getId().toHexString();

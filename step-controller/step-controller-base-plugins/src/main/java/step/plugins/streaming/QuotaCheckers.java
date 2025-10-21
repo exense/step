@@ -2,7 +2,7 @@ package step.plugins.streaming;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.constants.StreamingConstants;
+import step.constants.LiveReportingConstants;
 import step.core.artefacts.reports.ReportNode;
 import step.core.variables.VariablesManager;
 import step.streaming.common.QuotaExceededException;
@@ -30,13 +30,13 @@ public class QuotaCheckers {
             return globalLimits;
         }
         try {
-            VariablesManager variables = (VariablesManager) uploadContext.getAttributes().get(StreamingConstants.AttributeNames.VARIABLES_MANAGER);
+            VariablesManager variables = (VariablesManager) uploadContext.getAttributes().get(LiveReportingConstants.CONTEXT_VARIABLES_MANAGER);
             if (variables == null) {
                 // Note that this should not normally happen, it would indicate some kind of serious bug
                 logger.warn("No variables manager found while calculating quotas for execution id {}, this should not happen; returning global limits", executionId);
                 throw new QuotaExceededException("UNEXPECTED: No variables manager found, quota check impossible");
             }
-            ReportNode reportNode = (ReportNode) uploadContext.getAttributes().get(StreamingConstants.AttributeNames.REPORT_NODE);
+            ReportNode reportNode = (ReportNode) uploadContext.getAttributes().get(LiveReportingConstants.CONTEXT_REPORT_NODE);
             QuotaLimits overridden = QuotaLimits.fromVariables(variables, reportNode, globalLimits);
             if (logger.isDebugEnabled()) {
                 if (!QuotaLimits.areSame(overridden, globalLimits)) {

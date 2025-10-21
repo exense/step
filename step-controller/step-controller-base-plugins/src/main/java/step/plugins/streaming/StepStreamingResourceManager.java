@@ -2,7 +2,7 @@ package step.plugins.streaming;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.constants.StreamingConstants;
+import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.deployment.AuthorizationException;
@@ -59,7 +59,7 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
     public String registerNewResource(StreamingResourceMetadata metadata, String uploadContextId) throws QuotaExceededException, IOException {
         // guaranteed to exist because we require upload context
         StreamingResourceUploadContext uploadContext = uploadContexts.getContext(uploadContextId);
-        String executionId = (String) uploadContext.getAttributes().get(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID);
+        String executionId = (String) uploadContext.getAttributes().get(LiveReportingConstants.CONTEXT_EXECUTION_ID);
         QuotaChecker quotaChecker = quotaCheckers.getForExecution(executionId, uploadContext);
         if (quotaChecker != null) {
             // This will throw a QuotaExceededException if quota would be exceeded. We want to avoid even creating an actual resource in this case.

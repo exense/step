@@ -68,10 +68,12 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 		IndexField typeIndex = new IndexField(MeasurementPlugin.TYPE, Order.ASC, String.class);
 		IndexField planIndex = new IndexField(MeasurementPlugin.PLAN_ID, Order.ASC, String.class);
 		IndexField taskIndex = new IndexField(MeasurementPlugin.TASK_ID, Order.ASC, String.class);
+		IndexField rnIdIndex = new IndexField(MeasurementPlugin.RN_ID, Order.ASC, String.class);
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, beginIndex)));
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, typeIndex, beginIndex)));
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(planIndex, beginIndex)));
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(taskIndex, beginIndex)));
 		collection.createOrUpdateIndex(beginIndex);
+		collection.createOrUpdateIndex(rnIdIndex);
 	}
 }
