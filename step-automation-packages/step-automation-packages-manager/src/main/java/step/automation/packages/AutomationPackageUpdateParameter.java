@@ -19,11 +19,13 @@
 package step.automation.packages;
 
 import org.bson.types.ObjectId;
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
-import step.parameter.ParameterManagerException;
+import step.core.objectenricher.WriteAccessValidator;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class AutomationPackageUpdateParameter {
     /**
@@ -69,7 +71,7 @@ public class AutomationPackageUpdateParameter {
     /**
      * the write predicate used during deployment, to ensure we can update existing entities (also used to make sure we can update other packages sharing the same artefact resources)
      */
-    public final ObjectPredicate writeAccessPredicate;
+    public final WriteAccessValidator writeAccessValidator;
     /**
      * Whether the deployment of the package is synchronous, i.e. we wait to acquire the lock and deploy/update all entities before returning
      */
@@ -109,15 +111,15 @@ public class AutomationPackageUpdateParameter {
     public AutomationPackageUpdateParameter(boolean allowUpdate, boolean allowCreate, boolean isLocalPackage, ObjectId explicitOldId,
                                             AutomationPackageFileSource apSource, AutomationPackageFileSource apLibrarySource,
                                             String automationPackageVersion, String activationExpression, ObjectEnricher enricher,
-                                            ObjectPredicate objectPredicate, ObjectPredicate writeAccessPredicate, boolean async,
+                                            ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator, boolean async,
                                             String actorUser, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin,
                                             Map<String, String> functionsAttributes, Map<String, String> plansAttributes,
                                             Map<String, String> tokenSelectionCriteria, boolean executionFunctionsLocally) {
         if (objectPredicate == null) {
             throw new AutomationPackageManagerException("The objectPredicate cannot be null");
         }
-        if (writeAccessPredicate == null) {
-            throw new AutomationPackageManagerException("The writeAccessPredicate cannot be null");
+        if (writeAccessValidator == null) {
+            throw new AutomationPackageManagerException("The writeAccessValidator cannot be null");
         }
         this.allowUpdate = allowUpdate;
         this.allowCreate = allowCreate;
@@ -129,7 +131,7 @@ public class AutomationPackageUpdateParameter {
         this.activationExpression = activationExpression;
         this.enricher = enricher;
         this.objectPredicate = objectPredicate;
-        this.writeAccessPredicate = writeAccessPredicate;
+        this.writeAccessValidator = writeAccessValidator;
         this.async = async;
         this.actorUser = actorUser;
         this.allowUpdateOfOtherPackages = allowUpdateOfOtherPackages;

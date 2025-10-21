@@ -105,8 +105,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     private void deleteSingleAutomationPackage(String id) {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
-            assertEntityIsAcceptableInContext(automationPackage);
-            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),getObjectPredicate(), getWriteAccessPredicate());
+            assertEntityIsEditableInContext(automationPackage);
+            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),
+                    getObjectPredicate(), getWriteAccessValidator());
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (Exception e) {
@@ -185,7 +186,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         return new AutomationPackageUpdateParameterBuilder()
                 .withEnricher(getObjectEnricher())
                 .withObjectPredicate(getObjectPredicate())
-                .withWriteAccessPredicate(getWriteAccessPredicate())
+                .withWriteAccessValidator(getWriteAccessValidator())
                 .withActorUser(getUser());
     }
 
@@ -297,6 +298,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
                                                                  @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
         try {
+            checkAutomationPackageAcceptable(id);
             ParsedRequestParameters parsedRequestParameters = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
             AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder().withAllowCreate(false).withExplicitOldId(new ObjectId(id))
@@ -313,6 +315,18 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
+        }
+    }
+
+    private void checkAutomationPackageAcceptable(String id) {
+        AutomationPackage automationPackage = null;
+        try {
+            automationPackage = getAutomationPackage(id);
+        } catch (Exception e) {
+            //getAutomationPackage throws exception if the package doesn't exist, whether this is an errors is managed in below createOrUpdateAutomationPackage
+        }
+        if (automationPackage != null) {
+            assertEntityIsEditableInContext(automationPackage);
         }
     }
 

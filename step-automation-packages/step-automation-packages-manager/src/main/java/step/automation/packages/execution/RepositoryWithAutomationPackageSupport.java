@@ -56,6 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static step.automation.packages.AutomationPackageUpdateParameterBuilder.getNoWriteAccessValidator;
 import static step.automation.packages.execution.IsolatedAutomationPackageRepository.CONTEXT_ID_CUSTOM_FIELD;
 import static step.automation.packages.execution.IsolatedAutomationPackageRepository.LAST_EXECUTION_TIME_CUSTOM_FIELD;
 import static step.planbuilder.BaseArtefacts.callPlan;
@@ -391,7 +392,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             AutomationPackageUpdateParameterBuilder paramBuilder = new AutomationPackageUpdateParameterBuilder()
                     .withAllowUpdate(false)
                     .withApSource(AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()))
-                    .withEnricher(enricher).withObjectPredicate(predicate).withWriteAccessPredicate(o -> true) //this is read only and inMemory anyway
+                    .withEnricher(enricher).withObjectPredicate(predicate)
+                    .withWriteAccessValidator(getNoWriteAccessValidator()) //this is read only and inMemory anyway
                     .withActorUser(actorUser);
 
             if (kwLibFis != null) {

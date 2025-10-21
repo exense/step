@@ -27,6 +27,7 @@ import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.WriteAccessValidator;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceOrigin;
@@ -45,7 +46,7 @@ public class LinkedAutomationPackagesFinder {
     }
 
     public ConflictingAutomationPackages findConflictingPackagesAndCheckAccess(AutomationPackageArchiveProvider automationPackageProvider, ObjectPredicate objectPredicate,
-                                                                               ObjectPredicate writeAccessPredicate, AutomationPackageLibraryProvider apLibraryProvider, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin, AutomationPackage oldPackage, AutomationPackageManager automationPackageManager) {
+                                                                               WriteAccessValidator writeAccessValidator, AutomationPackageLibraryProvider apLibraryProvider, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin, AutomationPackage oldPackage, AutomationPackageManager automationPackageManager) {
         ConflictingAutomationPackages conflictingAutomationPackages;
         if (checkForSameOrigin) {
             conflictingAutomationPackages = findConflictingAutomationPackages(apLibraryProvider, automationPackageProvider, oldPackage, objectPredicate);
@@ -63,7 +64,7 @@ public class LinkedAutomationPackagesFinder {
             if (apsForReupload != null) {
                 for (ObjectId apId : apsForReupload) {
                     AutomationPackage apForReupload = automationPackageManager.automationPackageAccessor.get(apId);
-                    automationPackageManager.checkAccess(apForReupload, writeAccessPredicate);
+                    automationPackageManager.checkAccess(apForReupload, writeAccessValidator);
                 }
             }
         }

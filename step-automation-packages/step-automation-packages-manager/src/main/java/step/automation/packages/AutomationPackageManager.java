@@ -31,10 +31,7 @@ import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
 import step.core.entities.Entity;
-import step.core.objectenricher.EnricheableObject;
-import step.core.objectenricher.ObjectEnricher;
-import step.core.objectenricher.ObjectEnricherComposer;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.objectenricher.*;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
@@ -290,13 +287,13 @@ public class AutomationPackageManager {
     /**
      * @throws AutomationPackageAccessException if the automation package is not acceptable in current context
      */
-    public void removeAutomationPackage(ObjectId id, String actorUser, ObjectPredicate objectPredicate, ObjectPredicate writeAccessPredicate) throws AutomationPackageManagerException {
+    public void removeAutomationPackage(ObjectId id, String actorUser, ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator) throws AutomationPackageManagerException {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
-        checkAccess(automationPackage, writeAccessPredicate);
+        checkAccess(automationPackage, writeAccessValidator);
         String automationPackageId = automationPackage.getId().toHexString();
         if (automationPackageLocks.tryWriteLock(automationPackageId)) {
             try {
-                deleteAutomationPackageEntities(automationPackage, null, actorUser, writeAccessPredicate);
+                deleteAutomationPackageEntities(automationPackage, null, actorUser, writeAccessValidator);
                 automationPackageAccessor.remove(automationPackage.getId());
                 log.info("Automation package ({}) has been removed", id);
             } finally {
@@ -307,11 +304,11 @@ public class AutomationPackageManager {
         }
     }
 
-    protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, AutomationPackage newPackage, String actorUser, ObjectPredicate writeAccessPredicate) {
+    protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, AutomationPackage newPackage, String actorUser, WriteAccessValidator writeAccessValidator) {
         deleteFunctions(automationPackage);
         deletePlans(automationPackage);
         // schedules will be deleted in deleteAdditionalData via hooks
-        deleteResources(automationPackage, newPackage, writeAccessPredicate);
+        deleteResources(automationPackage, newPackage, writeAccessValidator);
         deleteAdditionalData(automationPackage, new AutomationPackageContext(automationPackage, operationMode, resourceManager,
                 null,  null, actorUser, null, extensions));
     }
@@ -383,7 +380,7 @@ public class AutomationPackageManager {
             }
 
             if (oldPackage != null) {
-                checkAccess(oldPackage, parameters.writeAccessPredicate);
+                checkAccess(oldPackage, parameters.writeAccessValidator);
             }
 
             List<ObjectId> apsForReupload;
@@ -392,7 +389,7 @@ public class AutomationPackageManager {
                     (apLibraryProvider.isModifiableResource() && apLibraryProvider.hasNewContent())) {
                 // validate if we have the APs with same origin
                 conflictingAutomationPackages = linkedAutomationPackagesFinder.findConflictingPackagesAndCheckAccess(automationPackageProvider,
-                        parameters.objectPredicate, parameters.writeAccessPredicate, apLibraryProvider, parameters.allowUpdateOfOtherPackages,
+                        parameters.objectPredicate, parameters.writeAccessValidator, apLibraryProvider, parameters.allowUpdateOfOtherPackages,
                         parameters.checkForSameOrigin, oldPackage, this);
                 apsForReupload = conflictingAutomationPackages.getApWithSameOrigin();
             } else {
@@ -629,7 +626,7 @@ public class AutomationPackageManager {
             }
             // delete old package entities
             if (oldPackage != null) {
-                deleteAutomationPackageEntities(oldPackage, newPackage, parameters.actorUser, parameters.writeAccessPredicate);
+                deleteAutomationPackageEntities(oldPackage, newPackage, parameters.actorUser, parameters.writeAccessValidator);
             }
             // persist all staged entities
             persistStagedEntities(newPackage, staging, enricherForIncludedEntities, automationPackageArchive, packageContent, apLibraryResource, parameters.actorUser);
@@ -932,9 +929,9 @@ public class AutomationPackageManager {
 
     /**
      * @param newAutomationPackage new (not persisted yet) automation package
-     * @param writeAccessPredicate predicate use to check write access on the resource to be deleted
+     * @param writeAccessValidator validator used to check write access on the resource to be deleted
      */
-    protected void deleteResources(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, ObjectPredicate writeAccessPredicate) {
+    protected void deleteResources(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, WriteAccessValidator writeAccessValidator) {
         // 1. included resources (files within automation package)
         List<Resource> resources = getPackageResources(currentAutomationPackage.getId());
         for (Resource resource : resources) {
@@ -950,11 +947,11 @@ public class AutomationPackageManager {
         }
 
         // 2. main resources (AP file and AP lib file)
-        deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageResource(), writeAccessPredicate);
-        deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageLibraryResource(), writeAccessPredicate);
+        deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageResource(), writeAccessValidator);
+        deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageLibraryResource(), writeAccessValidator);
     }
 
-    private void deleteMainApResourceIfPossible(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, String apResourceToCheck, ObjectPredicate writeAccessPredicate) {
+    private void deleteMainApResourceIfPossible(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, String apResourceToCheck, WriteAccessValidator writeAccessValidator) {
         try {
             if (FileResolver.isResource(apResourceToCheck)) {
                 boolean canBeDeleted = true;
@@ -974,7 +971,8 @@ public class AutomationPackageManager {
                     if (canBeDeleted) {
                         Resource resource = resourceManager.getResource(resourceId);
                         if (resource != null) {
-                            if (writeAccessPredicate.test(resource)) {
+                            Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
+                            if (violations.isEmpty()) {
                                 log.debug("Remove the resource linked with AP '{}':{}", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), apResourceToCheck);
                                 resourceManager.deleteResource(resourceId);
                             } else {
@@ -1020,10 +1018,11 @@ public class AutomationPackageManager {
         return planAccessor.findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
     }
 
-    protected void checkAccess(AutomationPackage automationPackage, ObjectPredicate writeAccessPredicate) throws AutomationPackageAccessException {
-        if (writeAccessPredicate != null) {
-            if (!writeAccessPredicate.test(automationPackage)) {
-                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this automation package from within this context");
+    protected void checkAccess(AutomationPackage automationPackage, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
+        if (writeAccessValidator != null) {
+            Optional<ObjectAccessException> violations = writeAccessValidator.validate(automationPackage);
+            if (violations.isPresent()) {
+                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this automation package", violations.get());
             }
         }
     }

@@ -169,11 +169,6 @@ public class RawMeasurementsHandlerTest {
             public void rebuildContext(AbstractContext abstractContext, EnricheableObject enricheableObject) throws Exception {
 
             }
-
-            @Override
-            public boolean isObjectAcceptableInContext(AbstractContext abstractContext, EnricheableObject enricheableObject) {
-                return true;
-            }
         });
         return objectHooks;
     }
