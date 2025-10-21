@@ -22,7 +22,7 @@ public class JavaFunctionPackageDaemonTest {
 		DiscovererParameters discovererParameters = new DiscovererParameters();
 		discovererParameters.setPackageLocation(testResource.getAbsolutePath());
 		FunctionList functions = daemon.getFunctions(discovererParameters);
-		assertEquals(5, functions.getFunctions().size());
+		assertEquals(6, functions.getFunctions().size());
 
 		Function timeout = functions.getFunctions().stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals("MyKeywordWithTimeout")).findFirst().get();
 		assertEquals(100L,(long) timeout.getCallTimeout().get());
