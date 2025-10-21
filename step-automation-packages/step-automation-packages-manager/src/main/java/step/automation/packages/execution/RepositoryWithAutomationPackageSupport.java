@@ -368,11 +368,25 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     }
 
     protected boolean tryToReloadResourceFromMaven(Resource resource) {
-        RefreshResourceResult refreshResourceResult = manager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resource,  object -> true, null);
-        if(!refreshResourceResult.isOk()){
-            log.warn("The resource {} cannot be reloaded: {}", resource.getId(), refreshResourceResult.getErrorMessages());
+        File file;
+        if (resource.getOrigin() != null && resource.getOrigin().startsWith(MavenArtifactIdentifier.MVN_PREFIX)) {
+            MavenArtifactIdentifier mavenArtifactIdentifier = MavenArtifactIdentifier.fromShortString(resource.getOrigin());
+            if (mavenArtifactIdentifier.isSnapshot()) {
+                log.warn("The maven artifact {} cannot be reloaded, because it is SNAPSHOT", mavenArtifactIdentifier.toStringRepresentation());
+            } else {
+                try {
+                    // restore the automation package file from maven
+                    file = MavenArtifactDownloader.getFile(manager.getMavenConfig(), mavenArtifactIdentifier, null).artifactFile;
+                    try (FileInputStream fis = new FileInputStream(file)) {
+                        resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
+                        return true;
+                    }
+                } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
+                    throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", ex);
+                }
+            }
         }
-        return refreshResourceResult.isOk();
+        return false;
     }
 
     public PackageExecutionContext createIsolatedPackageExecutionContext(ObjectEnricher enricher, ObjectPredicate predicate,

@@ -29,12 +29,9 @@ import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.maven.MavenArtifactIdentifier;
-import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
-import step.resources.InvalidResourceFormatException;
-import step.resources.Resource;
-import step.resources.ResourceManager;
-import step.resources.ResourceOrigin;
+import step.repositories.artifact.SnapshotMetadata;
+import step.resources.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -261,6 +258,11 @@ public class AutomationPackageResourceManager {
                                                                   AutomationPackageUpdateParameter parameters,
                                                                   AutomationPackageManager apManager) {
         Resource resource = resourceManager.getResource(resourceId);
+        if(resource == null){
+            RefreshResourceResult result = new RefreshResourceResult();
+            result.addError("Resource not found by id: " + resourceId);
+            return result;
+        }
         return refreshResourceAndLinkedPackages(resource, parameters.writeAccessPredicate, (linkedAutomationPackages, refreshResourceResult) -> {
             List<AutomationPackage> reuploadedPackages = new ArrayList<>(linkedAutomationPackages);
             List<AutomationPackage> failedPackages = new ArrayList<>();
@@ -299,9 +301,7 @@ public class AutomationPackageResourceManager {
 
         Set<String> supportedResourceTypesForRefresh = Set.of(
                 ResourceManager.RESOURCE_TYPE_AP,
-                ResourceManager.RESOURCE_TYPE_AP_LIBRARY,
-                ResourceManager.RESOURCE_TYPE_ISOLATED_AP,
-                ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB
+                ResourceManager.RESOURCE_TYPE_AP_LIBRARY
         );
         if (!supportedResourceTypesForRefresh.contains(resource.getResourceType())) {
             refreshResourceResult.addError("Unsupported resource type for refresh: " + resource.getResourceType());
@@ -320,30 +320,52 @@ public class AutomationPackageResourceManager {
         for (AutomationPackage linkedAutomationPackage : linkedAutomationPackages) {
             try {
                 checkAccess(linkedAutomationPackage, writeAccessPredicate);
-            } catch (AutomationPackageAccessException ex){
+            } catch (AutomationPackageAccessException ex) {
                 refreshResourceResult.addError(ex.getMessage());
             }
         }
 
-        if (!refreshResourceResult.isOk()) {
+        // DO NOTHING ON VALIDATION FAILURES
+        if (refreshResourceResult.isFailed()) {
             return refreshResourceResult;
         }
 
-        MavenArtifactIdentifier mavenArtifactIdentifier = MavenArtifactIdentifier.fromShortString(resource.getOrigin());
-        if (!mavenArtifactIdentifier.isSnapshot()) {
-            log.warn("The maven artifact {} cannot be reloaded, because it is SNAPSHOT", mavenArtifactIdentifier.toStringRepresentation());
-        } else {
-            // REUPLOAD THE RESOURCE
-            try {
-                // restore the automation package file from maven
-                File file = MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier, null).artifactFile;
-                try (FileInputStream fis = new FileInputStream(file)) {
-                    resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
-                }
-            } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
-                throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", ex);
-            }
+        ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(resource.getId().toString());
+        boolean resourceFileExists = fileHandle != null && fileHandle.getResourceFile() != null && fileHandle.getResourceFile().exists();
 
+        // REUPLOAD THE RESOURCE
+        MavenArtifactIdentifier mavenArtifactIdentifier = MavenArtifactIdentifier.fromShortString(resource.getOrigin());
+        if (!resourceFileExists) {
+            // if file is missing in resource manager, we always download the actual content
+            saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, null);
+            refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.REFRESHED);
+        } else {
+            // if file already exists, we don't need to download the actual content:
+            // * for release artifacts (non-modifiable)
+            // * for snapshots with the same remote metadata (not changed snapshots)
+            if (mavenArtifactIdentifier.isModifiable()) {
+                try {
+                    SnapshotMetadata snapshotMetadata = MavenArtifactDownloader.fetchSnapshotMetadata(mavenConfig, mavenArtifactIdentifier, resource.getOriginTimestamp());
+                    if (snapshotMetadata.newSnapshotVersion) {
+                        log.debug("New snapshot version found for {}, downloading it", mavenArtifactIdentifier.toStringRepresentation());
+                        saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, resource.getOriginTimestamp());
+                        refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.REFRESHED);
+                    } else {
+                        //reuse resource
+                        log.debug("Latest snapshot version already downloaded for {}, reusing it", mavenArtifactIdentifier.toStringRepresentation());
+                        refreshResourceResult.addInfo("Refresh is not required for resource " + mavenArtifactIdentifier.toStringRepresentation() + ". The content of this resource is already actual");
+                        refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.NOT_REQUIRED);
+                    }
+                } catch (AutomationPackageReadingException e) {
+                    throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", e);
+                }
+            } else {
+                refreshResourceResult.addInfo("Refresh is not required for resource " + mavenArtifactIdentifier.toStringRepresentation() + ". The content of this resource is already actual");
+                refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.NOT_REQUIRED);
+            }
+        }
+
+        if (refreshResourceResult.getResultStatus() == RefreshResourceResult.ResultStatus.REFRESHED) {
             // REFRESH LINKED PACKAGES
             if (linkedPackagesReuploader != null) {
                 linkedPackagesReuploader.reupload(linkedAutomationPackages, refreshResourceResult);
@@ -351,6 +373,18 @@ public class AutomationPackageResourceManager {
         }
 
         return refreshResourceResult;
+    }
+
+    private void saveMavenFileContentInResourceManager(Resource resource, MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) {
+        try {
+            // restore the automation package file from maven
+            File file = MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier, existingSnapshotTimestamp).artifactFile;
+            try (FileInputStream fis = new FileInputStream(file)) {
+                resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
+            }
+        } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
+            throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", ex);
+        }
     }
 
     public void deleteResource(String resourceId, ObjectPredicate writeAccessPredicate) throws AutomationPackageAccessException {

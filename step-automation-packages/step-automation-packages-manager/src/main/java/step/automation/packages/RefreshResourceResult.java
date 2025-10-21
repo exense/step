@@ -24,12 +24,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RefreshResourceResult {
-    private boolean ok = true;
+    private ResultStatus resultStatus = ResultStatus.NOT_REQUIRED;
     private final List<String> errorMessages = new ArrayList<>();
     private final List<String> infoMessages = new ArrayList<>();
 
     public void addError(String errorMessage) {
-        ok = false;
+        resultStatus = ResultStatus.FAILED;
         errorMessages.add(errorMessage);
     }
 
@@ -37,8 +37,16 @@ public class RefreshResourceResult {
         infoMessages.add(infoMessage);
     }
 
-    public boolean isOk() {
-        return ok;
+    public ResultStatus getResultStatus() {
+        return resultStatus;
+    }
+
+    public void setResultStatus(ResultStatus resultStatus) {
+        this.resultStatus = resultStatus;
+    }
+
+    public boolean isFailed(){
+        return resultStatus == ResultStatus.FAILED;
     }
 
     public List<String> getErrorMessages() {
@@ -47,5 +55,11 @@ public class RefreshResourceResult {
 
     public List<String> getInfoMessages() {
         return infoMessages;
+    }
+
+    public enum ResultStatus {
+        REFRESHED,
+        NOT_REQUIRED,
+        FAILED
     }
 }
