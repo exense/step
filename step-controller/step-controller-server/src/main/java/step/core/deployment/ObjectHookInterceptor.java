@@ -20,6 +20,7 @@ package step.core.deployment;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -37,10 +38,12 @@ import org.glassfish.jersey.server.ExtendedUriInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import step.core.access.User;
 import step.core.collections.PojoFilter;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.objectenricher.ObjectAccessException;
 import step.core.ql.OQLFilterBuilder;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
@@ -49,6 +52,7 @@ import step.framework.server.security.Secured;
 @Provider
 public class ObjectHookInterceptor extends AbstractStepServices implements ReaderInterceptor, WriterInterceptor  {
 
+	public static final String ENTITY_ACCESS_DENIED = "ENTITY_ACCESS_DENIED";
 	@SuppressWarnings("unused")
 	private static Logger logger = LoggerFactory.getLogger(ObjectHookInterceptor.class);
 
@@ -56,6 +60,8 @@ public class ObjectHookInterceptor extends AbstractStepServices implements Reade
 	private ExtendedUriInfo extendendUriInfo;
 	
 	private ObjectHookRegistry objectHookRegistry;
+
+	private final Predicate<Object> isNotEnricheable = e->!(e instanceof EnricheableObject);
 	
 	@PostConstruct
 	public void init() throws Exception {
@@ -70,9 +76,14 @@ public class ObjectHookInterceptor extends AbstractStepServices implements Reade
 			EnricheableObject enricheableObject = (EnricheableObject) entity;
 			Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
 			if (annotation == null) {
-				Session session = getSession();
-				if (!objectHookRegistry.isObjectAcceptableInContext(session, enricheableObject)) {
-					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "Authorization error", "You're not allowed to edit this object from within this context");
+				Session<User> session = getSession();
+				Optional<ObjectAccessException> accessException = objectHookRegistry.isObjectEditableInContext(session, enricheableObject);
+				if (accessException.isPresent()) {
+					ObjectAccessException objectAccessException = accessException.get();
+					throw new ControllerServiceException(
+						HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
+							objectAccessException.getMessage(), objectAccessException.getViolations()
+					);
 				} else {
 					ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
 					objectEnricher.accept(enricheableObject);
@@ -82,25 +93,32 @@ public class ObjectHookInterceptor extends AbstractStepServices implements Reade
 		return entity;
 	}
 
-	private Predicate<Object> isNotEnricheable = e->!(e instanceof EnricheableObject);
-
 	@Override
 	public void aroundWriteTo(WriterInterceptorContext context) 
 			throws IOException, WebApplicationException {
 		Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
 		if(annotation == null) {
 			Object entity = context.getEntity();
-			Session session = getSession();
+			Session<User> session = getSession();
 			String oqlFilter = objectHookRegistry.getObjectFilter(session).getOQLFilter();
 			PojoFilter<Object> filter = OQLFilterBuilder.getPojoFilter(oqlFilter);
 			Predicate<Object> predicate = isNotEnricheable.or(filter);
+			//When returning list of entities we filter the entities accessible from the current context (predicate)
 			if(entity instanceof List) {
 				List<?> list = (List<?>)entity;
 				final List<?> newList = list.stream().filter(predicate).collect(Collectors.toList());
 				context.setEntity(newList);
 			} else {
-				if(!predicate.test(entity)) {
-					throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "You're not allowed to access this object from within this context");
+				//For single entity we check read access for the entity
+				if (entity instanceof EnricheableObject) {
+					Optional<ObjectAccessException> accessException = objectHookRegistry.isObjectReadableInContext(session, (EnricheableObject) entity);
+					if (accessException.isPresent()) {
+						ObjectAccessException objectAccessException = accessException.get();
+						throw new ControllerServiceException(
+							HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
+								objectAccessException.getMessage(), objectAccessException.getViolations()
+						);
+					}
 				}
 			}
 		}
