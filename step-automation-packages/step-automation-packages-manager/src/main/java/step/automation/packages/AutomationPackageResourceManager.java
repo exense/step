@@ -336,34 +336,41 @@ public class AutomationPackageResourceManager {
 
         // REUPLOAD THE RESOURCE
         MavenArtifactIdentifier mavenArtifactIdentifier = MavenArtifactIdentifier.fromShortString(resource.getOrigin());
-        if (!resourceFileExists) {
-            // if file is missing in resource manager, we always download the actual content
-            saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, null);
-            refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.REFRESHED);
-        } else {
-            // if file already exists, we don't need to download the actual content:
-            // * for release artifacts (non-modifiable)
-            // * for snapshots with the same remote metadata (not changed snapshots)
-            if (mavenArtifactIdentifier.isModifiable()) {
-                try {
+        try {
+            if (!resourceFileExists) {
+                // if file is missing in resource manager, we always download the actual content
+                Long newSnapshotTimestamp = null;
+                if (mavenArtifactIdentifier.isModifiable()) {
+                    SnapshotMetadata snapshotMetadata = MavenArtifactDownloader.fetchSnapshotMetadata(mavenConfig, mavenArtifactIdentifier, resource.getOriginTimestamp());
+                    if(snapshotMetadata != null){
+                        newSnapshotTimestamp = snapshotMetadata.timestamp;
+                    }
+                }
+                saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, null, newSnapshotTimestamp);
+                refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.REFRESHED);
+            } else {
+                // if file already exists, we don't need to download the actual content:
+                // * for release artifacts (non-modifiable)
+                // * for snapshots with the same remote metadata (not changed snapshots)
+                if (mavenArtifactIdentifier.isModifiable()) {
                     SnapshotMetadata snapshotMetadata = MavenArtifactDownloader.fetchSnapshotMetadata(mavenConfig, mavenArtifactIdentifier, resource.getOriginTimestamp());
                     if (snapshotMetadata.newSnapshotVersion) {
                         log.debug("New snapshot version found for {}, downloading it", mavenArtifactIdentifier.toStringRepresentation());
-                        saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, resource.getOriginTimestamp());
+                        saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, resource.getOriginTimestamp(), snapshotMetadata.timestamp);
                         refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.REFRESHED);
                     } else {
-                        //reuse resource
+                        // reuse resource
                         log.debug("Latest snapshot version already downloaded for {}, reusing it", mavenArtifactIdentifier.toStringRepresentation());
                         refreshResourceResult.addInfo("Refresh is not required for resource " + mavenArtifactIdentifier.toStringRepresentation() + ". The content of this resource is already actual");
                         refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.NOT_REQUIRED);
                     }
-                } catch (AutomationPackageReadingException e) {
-                    throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", e);
+                } else {
+                    refreshResourceResult.addInfo("Refresh is not required for resource " + mavenArtifactIdentifier.toStringRepresentation() + ". The content of this resource is already actual");
+                    refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.NOT_REQUIRED);
                 }
-            } else {
-                refreshResourceResult.addInfo("Refresh is not required for resource " + mavenArtifactIdentifier.toStringRepresentation() + ". The content of this resource is already actual");
-                refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.NOT_REQUIRED);
             }
+        } catch (AutomationPackageReadingException e) {
+            throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", e);
         }
 
         if (refreshResourceResult.getResultStatus() == RefreshResourceResult.ResultStatus.REFRESHED) {
@@ -376,12 +383,17 @@ public class AutomationPackageResourceManager {
         return refreshResourceResult;
     }
 
-    private void saveMavenFileContentInResourceManager(Resource resource, MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) {
+    private void saveMavenFileContentInResourceManager(Resource resource, MavenArtifactIdentifier mavenArtifactIdentifier,
+                                                       Long existingSnapshotTimestamp, Long newSnapshotTimestamp) {
         try {
             // restore the automation package file from maven
             File file = MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier, existingSnapshotTimestamp).artifactFile;
             try (FileInputStream fis = new FileInputStream(file)) {
                 resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
+
+                // update timestamp
+                resource.setOriginTimestamp(newSnapshotTimestamp);
+                resourceManager.saveResource(resource);
             }
         } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", ex);
