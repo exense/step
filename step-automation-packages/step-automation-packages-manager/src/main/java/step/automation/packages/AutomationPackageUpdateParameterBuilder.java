@@ -129,7 +129,7 @@ public class AutomationPackageUpdateParameterBuilder {
         return this;
     }
 
-    public AutomationPackageUpdateParameterBuilder forRedeployPackage(ObjectHookRegistry<User> objectHookRegistry, AutomationPackage oldPackage, AutomationPackageUpdateParameter parentParameters) {
+    public AutomationPackageUpdateParameterBuilder forRedeployPackage(ObjectHookRegistry objectHookRegistry, AutomationPackage oldPackage, AutomationPackageUpdateParameter parentParameters) {
         this.allowUpdate = true;
         this.allowCreate = false;
         this.explicitOldId = oldPackage.getId();
@@ -145,19 +145,19 @@ public class AutomationPackageUpdateParameterBuilder {
         this.automationPackageVersion = oldPackage.getVersion();
         this.activationExpression = oldPackage.getActivationExpression() != null ? oldPackage.getActivationExpression().getScript() : null;
 
-        //We need to rebuild the context to get the proper object enricher , predicate and write access validator when redeploying
+        //We need to rebuild the context to get the proper object enricher
+        //For redeployment of linked package we assume that if they reference the resource that got updated, we are allowed to refresh them
         AbstractContext context = new AbstractContext() { };
         try {
             objectHookRegistry.rebuildContext(context, oldPackage);
         } catch (Exception e) {
-            String errorMessage = "Error while rebuilding context for origin automation packaage " + AutomationPackageManager.getLogRepresentation(oldPackage);
+            String errorMessage = "Error while rebuilding context for origin automation package " + AutomationPackageManager.getLogRepresentation(oldPackage);
             throw new RuntimeException(errorMessage, e);
         }
         this.enricher = objectHookRegistry.getObjectEnricher(context);
-        this.objectPredicate =  objectHookRegistry.getObjectPredicate(context);
+        this.objectPredicate =  o -> true;
         //noinspection unchecked
-        this.writeAccessValidator = (parentParameters.writeAccessValidator instanceof WriteAccessValidatorImpl) ?
-                new WriteAccessValidatorImpl<>(objectHookRegistry, context, ((WriteAccessValidatorImpl<User>) parentParameters.writeAccessValidator).user) : parentParameters.writeAccessValidator;
+        this.writeAccessValidator = getNoWriteAccessValidator();
         this.async = false;
         this.actorUser = parentParameters.actorUser;
         this.allowUpdateOfOtherPackages = false;
@@ -192,7 +192,12 @@ public class AutomationPackageUpdateParameterBuilder {
     }
 
     public static WriteAccessValidator getNoWriteAccessValidator() {
-        return new WriteAccessValidator() { };
+        return new WriteAccessValidator(null, null) {
+            @Override
+            public Optional<ObjectAccessException> validate(EnricheableObject entity) {
+                return Optional.empty();
+            }
+        };
     }
 
     /**

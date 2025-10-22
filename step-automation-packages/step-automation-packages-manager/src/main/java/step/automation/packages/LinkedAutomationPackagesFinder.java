@@ -59,14 +59,6 @@ public class LinkedAutomationPackagesFinder {
             if (conflictingAutomationPackages.apWithSameOriginExists() || conflictingAutomationPackages.apWithSameLibraryExists()) {
                 throw new AutomationPackageCollisionException(apsForReupload, conflictingAutomationPackages.getApWithSameLibrary());
             }
-        } else {
-            // even if allowUpdateOfOtherPackages flag is set we have to check if current user has enough permissions to modify these automation packages
-            if (apsForReupload != null) {
-                for (ObjectId apId : apsForReupload) {
-                    AutomationPackage apForReupload = automationPackageManager.automationPackageAccessor.get(apId);
-                    automationPackageManager.checkAccess(apForReupload, true, writeAccessValidator);
-                }
-            }
         }
         return conflictingAutomationPackages;
     }

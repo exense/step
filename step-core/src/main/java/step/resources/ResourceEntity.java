@@ -15,7 +15,7 @@ public class ResourceEntity extends Entity<Resource, Accessor<Resource>> {
 	private final Logger logger = LoggerFactory.getLogger(ResourceEntity.class);
 
     public ResourceEntity(Accessor<Resource> accessor, EntityManager entityManager) {
-		super(EntityManager.resources, accessor, Resource.class, "resource");
+		super(EntityManager.resources, accessor, Resource.class);
         entityManager.addDependencyTreeVisitorHook(new DependencyTreeVisitorHook() {
 			
 			@Override

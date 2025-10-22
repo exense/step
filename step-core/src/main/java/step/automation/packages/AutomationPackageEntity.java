@@ -32,10 +32,9 @@ public class AutomationPackageEntity extends Entity<AutomationPackage, Automatio
     public static final String AUTOMATION_PACKAGE_FILE_NAME = "automationPackageFileName";
 
     public static final String entityName = "automationPackages";
-    public static final String entityBaseRightName = "automation-package";
 
     public AutomationPackageEntity(AutomationPackageAccessor accessor) {
-        super(entityName, accessor, AutomationPackage.class, "automation-package");
+        super(entityName, accessor, AutomationPackage.class);
     }
 
     public static Map<String, String> getAutomationPackageIdCriteria(ObjectId automationPackageId) {

@@ -28,7 +28,7 @@ import step.automation.packages.library.*;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.commons.activation.Expression;
 import step.core.AbstractStepContext;
-import step.core.access.User;
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
 import step.core.entities.Entity;
@@ -87,7 +87,7 @@ public class AutomationPackageManager {
     private final ExecutorService delayedUpdateExecutor = Executors.newCachedThreadPool();
     public final AutomationPackageOperationMode operationMode;
     private final int maxParallelVersionsPerPackage;
-    private final ObjectHookRegistry<User> objectHookRegistry;
+    private final ObjectHookRegistry objectHookRegistry;
 
 
     /**
@@ -107,7 +107,7 @@ public class AutomationPackageManager {
                                      AutomationPackageLocks automationPackageLocks,
                                      AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
                                      int maxParallelVersionsPerPackage,
-                                     ObjectHookRegistry<User> objectHookRegistry) {
+                                     ObjectHookRegistry objectHookRegistry) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
@@ -218,7 +218,7 @@ public class AutomationPackageManager {
                                                                               AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                               AutomationPackageLocks locks,
                                                                               AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
-                                                                              int maxParallelVersionsPerPackage, ObjectHookRegistry<User> objectHookRegistry
+                                                                              int maxParallelVersionsPerPackage, ObjectHookRegistry objectHookRegistry
     ) {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onMainAutomationPackageManagerCreate(extensions);
@@ -294,7 +294,7 @@ public class AutomationPackageManager {
      */
     public void removeAutomationPackage(ObjectId id, String actorUser, ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator) throws AutomationPackageManagerException {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
-        checkAccess(automationPackage, false, writeAccessValidator);
+        checkAccess(automationPackage, writeAccessValidator);
         String automationPackageId = automationPackage.getId().toHexString();
         if (automationPackageLocks.tryWriteLock(automationPackageId)) {
             try {
@@ -377,15 +377,15 @@ public class AutomationPackageManager {
 
             //Implement limit on parallel deployments of multiple version of the same AP (based on its base name, i.e. without AP version appened to it)
             //Limit is only applied for a value greater than 0
-            if (maxParallelVersionsPerPackage > 0) {
-                List<AutomationPackage> otherVersions = findOtherVersionsOfPackage(parameters.explicitOldId, parameters.objectPredicate, packageContent);
+            if (maxParallelVersionsPerPackage > 0 && !parameters.isRedeployment) {
+                List<AutomationPackage> otherVersions = findOtherVersionsOfPackage(Optional.ofNullable(oldPackage).map(AbstractIdentifiableObject::getId).orElse(null), parameters.objectPredicate, packageContent);
                 if (otherVersions.size() >= maxParallelVersionsPerPackage) {
                     throw new AutomationPackageManagerException("The maximum number of parallel versions (" + maxParallelVersionsPerPackage + ") is reached for the package '" + packageContent.getBaseName() + "'. You must clean up older versions of this package before deploying new ones, or contact your administrator to increase this limit.");
                 }
             }
 
             if (oldPackage != null) {
-                checkAccess(oldPackage, parameters.isRedeployment, parameters.writeAccessValidator);
+                checkAccess(oldPackage, parameters.writeAccessValidator);
             }
 
             List<ObjectId> apsForReupload;
@@ -419,8 +419,9 @@ public class AutomationPackageManager {
             // we enrich all included entities with automation package id
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
 
+            //We first make sure we would be able to update or reuse the library before modifying the package itself
+            automationPackageResourceManager.validateUploadOrReuseAutomationPackageLibrary(apLibraryProvider, parameters, true);
 
-            // TODO: potential issue - in code below we use the accessChecker in uploadApResourceIfRequired and uploadKeywordLibrary and if the check blocks the uploadKeywordLibrary the uploaded ap resource will not be cleaned up
             // always upload the automation package file as resource
             // NOTE: for the main ap resource don't need to enrich the resource with automation package id (because the same resource can be shared between several automation packages) - so we use simple enricher
             automationPackageResourceManager.uploadOrReuseApResource(
@@ -483,13 +484,13 @@ public class AutomationPackageManager {
         }
     }
 
-    private List<AutomationPackage> findOtherVersionsOfPackage(ObjectId explicitOldId, ObjectPredicate objectPredicate, AutomationPackageContent packageContent) {
+    private List<AutomationPackage> findOtherVersionsOfPackage(ObjectId currentPackageId, ObjectPredicate objectPredicate, AutomationPackageContent packageContent) {
         Stream<AutomationPackage> stream = StreamSupport.stream(automationPackageAccessor.findManyByAttributes(Map.of(AP_BASE_NAME_ATTR_KEY, packageContent.getBaseName())), false);
         if (objectPredicate != null) {
             stream = stream.filter(objectPredicate);//filter package readable in context
         }
-        if (explicitOldId != null) {
-            stream = stream.filter(a -> !a.getId().equals(explicitOldId)); //remove current package in case of update
+        if (currentPackageId != null) {
+            stream = stream.filter(a -> !a.getId().equals(currentPackageId)); //remove current package in case of update
         }
         return stream.collect(Collectors.toList());
     }
@@ -552,7 +553,7 @@ public class AutomationPackageManager {
         try {
             switch (resourceType) {
                 case ResourceManager.RESOURCE_TYPE_AP_LIBRARY:
-                    // We upload the new resource for keyword library. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
+                    // We upload the new resource for package library. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
                     try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(fileSource, parameters.objectPredicate)) {
                         return automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
                                 automationPackageLibraryProvider,
@@ -976,7 +977,7 @@ public class AutomationPackageManager {
                     if (canBeDeleted) {
                         Resource resource = resourceManager.getResource(resourceId);
                         if (resource != null) {
-                            Optional<ObjectAccessException> violations = writeAccessValidator.validateByContext(resource);
+                            Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
                             if (violations.isEmpty()) {
                                 log.debug("Remove the resource linked with AP '{}':{}", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), apResourceToCheck);
                                 resourceManager.deleteResource(resourceId);
@@ -1023,13 +1024,11 @@ public class AutomationPackageManager {
         return planAccessor.findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
     }
 
-    public static void checkAccess(AutomationPackage automationPackage, boolean isLinkedPackage, WriteAccessValidator writeAccessValidator) {
+    public static void checkAccess(AutomationPackage automationPackage, WriteAccessValidator writeAccessValidator) {
         if (writeAccessValidator != null) {
-            Optional<ObjectAccessException> violations = (isLinkedPackage) ?
-                    writeAccessValidator.validateByUser(automationPackage) :
-                    writeAccessValidator.validateByContext(automationPackage);
+            Optional<ObjectAccessException> violations = writeAccessValidator.validate(automationPackage);
             if (violations.isPresent()) {
-                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this " + (isLinkedPackage ? " linked " : "") + " automation package: " +
+                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this automation package: " +
                         getLogRepresentation(automationPackage), violations.get());
             }
         }

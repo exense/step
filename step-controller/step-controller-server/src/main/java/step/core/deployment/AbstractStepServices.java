@@ -43,7 +43,7 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 
 	protected Configuration configuration;
 
-	private ObjectHookRegistry<User> objectHookRegistry;
+	private ObjectHookRegistry objectHookRegistry;
 
 	@Inject
 	GlobalContext serverContext;
@@ -56,7 +56,7 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 	public void init() throws Exception {
 		configuration = serverContext.getConfiguration();
         //noinspection unchecked
-        objectHookRegistry = (ObjectHookRegistry<User>) serverContext.get(ObjectHookRegistry.class);
+        objectHookRegistry = serverContext.get(ObjectHookRegistry.class);
 	}
 
 	protected GlobalContext getContext() {
@@ -135,6 +135,6 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 	}
 
 	protected WriteAccessValidator getWriteAccessValidator() {
-		return new WriteAccessValidatorImpl<>(objectHookRegistry, getSession(), getSession().getUser());
+		return new WriteAccessValidator(objectHookRegistry, getSession());
 	}
 }

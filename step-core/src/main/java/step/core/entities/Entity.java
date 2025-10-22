@@ -35,18 +35,12 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 	private final T accessor;
 	private final Class<A> entityClass;
 	private boolean byPassObjectPredicate = false;
-	private String entityBaseRightName; //Not final this is currently optional
 
 	public Entity(String name, T accessor, Class<A> entityClass) {
-		this(name, accessor, entityClass, null);
-	}
-
-	public Entity(String name, T accessor, Class<A> entityClass, String entityBaseRightName) {
 		super();
 		this.name = name;
 		this.accessor = accessor;
 		this.entityClass = entityClass;
-		this.entityBaseRightName = entityBaseRightName;
 	}
 
 	public String getName() {
@@ -73,11 +67,7 @@ public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>>
 		this.byPassObjectPredicate = byPassObjectPredicate;
 	}
 
-    public String getEntityBaseRightName() {
-        return entityBaseRightName;
-    }
-
-    /**
+	/**
 	 * This method is responsible for the resolution of atomic references to entity
 	 * id
 	 * 

@@ -66,6 +66,41 @@ public class AutomationPackageResourceManager {
         this.mavenConfig = mavenConfig;
     }
 
+    /**
+     * This method is used to check that we could reuse and update the existing resource, to be called before updating the package resource
+     * @param apLibProvider the apLibProvider
+     * @param parameters the updated parameters
+     * @param allowToReuseOldResource the flag allowing or not to reuse libraries
+     */
+    public void validateUploadOrReuseAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider,
+                                                          AutomationPackageUpdateParameter parameters, boolean allowToReuseOldResource) {
+        try {
+            File apLibrary = apLibProvider.getAutomationPackageLibrary();
+            if (apLibrary != null) {
+                // we can reuse the existing old resource in case it is identifiable (can be found by origin) and unmodifiable
+                List<Resource> oldResources = null;
+                if (apLibProvider.canLookupResources()) {
+                    oldResources = apLibProvider.lookupExistingResources(resourceManager, parameters.objectPredicate);
+                    if (oldResources != null && !oldResources.isEmpty()) {
+                        Resource oldResource = oldResources.get(0);
+                        if(!allowToReuseOldResource){
+                            throw new AutomationPackageManagerException("Old resource " + oldResource.getResourceName() + " ( " + oldResource.getId() + " ) has been detected and cannot be reused");
+                        } else if (apLibProvider.isModifiableResource() && apLibProvider.hasNewContent()) {
+                            checkResourceWriteAccess(apLibrary.getName(), oldResource, parameters.writeAccessValidator);
+                        }
+                    }
+                }
+
+            }
+        } catch (AutomationPackageReadingException e) {
+            // all these exceptions are technical, so we log the whole stack trace here, but throw the AutomationPackageManagerException
+            // to provide the short error message without technical details to the client
+            log.error("Unable to upload the automation package library", e);
+            throw new AutomationPackageManagerException("Unable to upload the automation package library: " + apLibProvider, e);
+        }
+
+    }
+
     public Resource uploadOrReuseAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider,
                                                         AutomationPackage automationPackageToBeLinkedWithLib,
                                                         AutomationPackageUpdateParameter parameters, boolean allowToReuseOldResource) {
@@ -218,17 +253,9 @@ public class AutomationPackageResourceManager {
                                                                WriteAccessValidator writeAccessValidator) throws IOException, InvalidResourceFormatException, AutomationPackageAccessException {
         String resourceId = oldResource.getId().toHexString();
         //Check write access to the resource itself
-        Optional<ObjectAccessException> violations = writeAccessValidator.validateByContext(oldResource);
-        if (violations.isPresent()) {
-            String errorMessage = "The existing resource " + resourceId + " for file " + resourceFileName + " referenced by the provided package cannot be modified in the current context.";
-            log.error(errorMessage);
-            throw new AutomationPackageAccessException(errorMessage, violations.get());
-        }
+        checkResourceWriteAccess(resourceFileName, oldResource, writeAccessValidator);
         // Check write access to other APs using this resource. We cannot reupload the resources if they are linked with another package, which is not accessible
         List<ObjectId> ignoredApsToLookup = currentApId == null ? List.of() : List.of(currentApId);
-        for (ObjectId apId : linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resourceId, ignoredApsToLookup)) {
-            AutomationPackageManager.checkAccess(automationPackageAccessor.get(apId), true, writeAccessValidator);
-        }
 
         log.info("Existing resource {} for file {} will be actualized and reused in AP {}", resourceId, resourceFileName, apName);
         Resource uploadedResource = resourceManager.saveResourceContent(resourceId, fis, resourceFileName, actorUser);
@@ -237,9 +264,18 @@ public class AutomationPackageResourceManager {
         return uploadedResource;
     }
 
+    public static void checkResourceWriteAccess(String resourceFileName, Resource oldResource, WriteAccessValidator writeAccessValidator) {
+        Optional<ObjectAccessException> violations = writeAccessValidator.validate(oldResource);
+        if (violations.isPresent()) {
+            String errorMessage = "The existing resource " + oldResource.getId().toHexString() + " for file " + resourceFileName + " referenced by the provided package cannot be modified in the current context.";
+            log.error(errorMessage);
+            throw new AutomationPackageAccessException(errorMessage, violations.get());
+        }
+    }
+
     protected void checkAccess(Resource resource, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
         if (writeAccessValidator != null) {
-            Optional<ObjectAccessException> violations = writeAccessValidator.validateByContext(resource);
+            Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
             if (violations.isPresent()) {
                 throw new AutomationPackageAccessException("You're not allowed to edit the linked automation package  " + getLogRepresentation(resource), violations.get());
             }
@@ -291,7 +327,7 @@ public class AutomationPackageResourceManager {
                                                                   LinkedPackagesReuploader linkedPackagesReuploader) {
         RefreshResourceResult refreshResourceResult = new RefreshResourceResult();
 
-        Optional<ObjectAccessException> violations = writeAccessValidator.validateByContext(resource);
+        Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
         if (violations.isPresent()) {
             refreshResourceResult.addError("You have no access to resource with id: " + resource.getId() + ". Access denied reason: " + violations.get().getMessage());
             return refreshResourceResult;
@@ -308,21 +344,13 @@ public class AutomationPackageResourceManager {
             refreshResourceResult.addError("Unsupported resource origin for refresh: " + resource.getOrigin() + ". Only maven artefact resources are supported");
         }
 
-        // check access for linked automation packages
+        //Here we already checked that we have write access to the refreshed resource, we allow updated all AP that are using it
+        //So we get all APs using this resource and update them with no further access checks
         Set<AutomationPackage> linkedAutomationPackages
                 = linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resource.getId().toHexString(), new ArrayList<>())
                 .stream()
                 .map(automationPackageAccessor::get)
                 .collect(Collectors.toSet());
-
-        //Here we already checked that we have write access to the refreshed resource, we allow updated all AP that are using it
-        for (AutomationPackage linkedAutomationPackage : linkedAutomationPackages) {
-            try {
-                AutomationPackageManager.checkAccess(linkedAutomationPackage, true, writeAccessValidator);
-            } catch (AutomationPackageAccessException ex) {
-                refreshResourceResult.addError(ex.getMessage());
-            }
-        }
 
         // DO NOTHING ON VALIDATION FAILURES
         if (refreshResourceResult.isFailed()) {
