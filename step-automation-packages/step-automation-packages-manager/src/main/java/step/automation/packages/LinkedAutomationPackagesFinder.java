@@ -64,7 +64,7 @@ public class LinkedAutomationPackagesFinder {
             if (apsForReupload != null) {
                 for (ObjectId apId : apsForReupload) {
                     AutomationPackage apForReupload = automationPackageManager.automationPackageAccessor.get(apId);
-                    automationPackageManager.checkAccess(apForReupload, writeAccessValidator);
+                    automationPackageManager.checkAccess(apForReupload, true, writeAccessValidator);
                 }
             }
         }

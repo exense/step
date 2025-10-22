@@ -32,6 +32,7 @@ import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
@@ -131,7 +132,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                     context.require(AutomationPackageReaderRegistry.class),
                     automationPackageLocks,
                     mavenConfigProvider,
-                    maxVersionPerPackage
+                    maxVersionPerPackage,
+                    context.get(ObjectHookRegistry.class)
             );
             context.put(AutomationPackageManager.class, packageManager);
         }

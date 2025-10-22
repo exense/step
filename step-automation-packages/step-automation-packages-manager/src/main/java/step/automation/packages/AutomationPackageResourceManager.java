@@ -31,6 +31,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectAccessException;
 import step.core.objectenricher.WriteAccessValidator;
+import step.repositories.artifact.ResolvedMavenArtifact;
 import step.repositories.artifact.SnapshotMetadata;
 import step.resources.*;
 
@@ -217,7 +218,7 @@ public class AutomationPackageResourceManager {
                                                                WriteAccessValidator writeAccessValidator) throws IOException, InvalidResourceFormatException, AutomationPackageAccessException {
         String resourceId = oldResource.getId().toHexString();
         //Check write access to the resource itself
-        Optional<ObjectAccessException> violations = writeAccessValidator.validate(oldResource);
+        Optional<ObjectAccessException> violations = writeAccessValidator.validateByContext(oldResource);
         if (violations.isPresent()) {
             String errorMessage = "The existing resource " + resourceId + " for file " + resourceFileName + " referenced by the provided package cannot be modified in the current context.";
             log.error(errorMessage);
@@ -226,7 +227,7 @@ public class AutomationPackageResourceManager {
         // Check write access to other APs using this resource. We cannot reupload the resources if they are linked with another package, which is not accessible
         List<ObjectId> ignoredApsToLookup = currentApId == null ? List.of() : List.of(currentApId);
         for (ObjectId apId : linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resourceId, ignoredApsToLookup)) {
-            checkAccess(automationPackageAccessor.get(apId), writeAccessValidator);
+            AutomationPackageManager.checkAccess(automationPackageAccessor.get(apId), true, writeAccessValidator);
         }
 
         log.info("Existing resource {} for file {} will be actualized and reused in AP {}", resourceId, resourceFileName, apName);
@@ -236,18 +237,9 @@ public class AutomationPackageResourceManager {
         return uploadedResource;
     }
 
-    protected void checkAccess(AutomationPackage automationPackage, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
-        if (writeAccessValidator != null) {
-            Optional<ObjectAccessException> violations = writeAccessValidator.validate(automationPackage);
-            if (violations.isPresent()) {
-                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit the linked automation package " + getLogRepresentation(automationPackage), violations.get());
-            }
-        }
-    }
-
     protected void checkAccess(Resource resource, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
         if (writeAccessValidator != null) {
-            Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
+            Optional<ObjectAccessException> violations = writeAccessValidator.validateByContext(resource);
             if (violations.isPresent()) {
                 throw new AutomationPackageAccessException("You're not allowed to edit the linked automation package  " + getLogRepresentation(resource), violations.get());
             }
@@ -266,12 +258,14 @@ public class AutomationPackageResourceManager {
         return refreshResourceAndLinkedPackages(resource, parameters.writeAccessValidator, (linkedAutomationPackages, refreshResourceResult) -> {
             List<AutomationPackage> reuploadedPackages = new ArrayList<>(linkedAutomationPackages);
             List<AutomationPackage> failedPackages = new ArrayList<>();
+            String errorMessage = null;
             try {
                 apManager.updateRelatedAutomationPackages(
                         linkedAutomationPackages.stream().map(AbstractIdentifiableObject::getId).collect(Collectors.toList()),
                         parameters
                 );
             } catch (AutomationPackageRedeployException ex) {
+                errorMessage = ex.getMessage();
                 for (ObjectId failedId : ex.getFailedApsId()) {
                     AutomationPackage failedPackage = linkedAutomationPackages.stream().filter(ap -> ap.getId().equals(failedId)).findFirst().orElse(null);
                     if (failedPackage != null) {
@@ -281,10 +275,13 @@ public class AutomationPackageResourceManager {
                 }
             }
             if (!reuploadedPackages.isEmpty()) {
-                refreshResourceResult.addInfo("The following automation packages have been reuploaded: " + reuploadedPackages.stream().map(AutomationPackageResourceManager::getLogRepresentation));
+                refreshResourceResult.addInfo("The following automation packages have been reuploaded: " + reuploadedPackages.stream().map(AutomationPackageManager::getLogRepresentation).collect(Collectors.toList()));
             }
             if (!failedPackages.isEmpty()) {
-                refreshResourceResult.addInfo("Failed to reupload the following automation packages: " + failedPackages.stream().map(AutomationPackageResourceManager::getLogRepresentation));
+                refreshResourceResult.addError("Failed to reupload the following automation packages: " + failedPackages.stream().map(AutomationPackageManager::getLogRepresentation).collect(Collectors.toList())
+                        + "Reason: " + errorMessage);
+            } else if (errorMessage != null) {
+                refreshResourceResult.addError(errorMessage);
             }
         });
     }
@@ -294,9 +291,9 @@ public class AutomationPackageResourceManager {
                                                                   LinkedPackagesReuploader linkedPackagesReuploader) {
         RefreshResourceResult refreshResourceResult = new RefreshResourceResult();
 
-        Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
+        Optional<ObjectAccessException> violations = writeAccessValidator.validateByContext(resource);
         if (violations.isPresent()) {
-            refreshResourceResult.addError("You have no access to resource with id: " + resource.getId());
+            refreshResourceResult.addError("You have no access to resource with id: " + resource.getId() + ". Access denied reason: " + violations.get().getMessage());
             return refreshResourceResult;
         }
 
@@ -318,9 +315,10 @@ public class AutomationPackageResourceManager {
                 .map(automationPackageAccessor::get)
                 .collect(Collectors.toSet());
 
+        //Here we already checked that we have write access to the refreshed resource, we allow updated all AP that are using it
         for (AutomationPackage linkedAutomationPackage : linkedAutomationPackages) {
             try {
-                checkAccess(linkedAutomationPackage, writeAccessValidator);
+                AutomationPackageManager.checkAccess(linkedAutomationPackage, true, writeAccessValidator);
             } catch (AutomationPackageAccessException ex) {
                 refreshResourceResult.addError(ex.getMessage());
             }
@@ -346,7 +344,7 @@ public class AutomationPackageResourceManager {
                         newSnapshotTimestamp = snapshotMetadata.timestamp;
                     }
                 }
-                saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, null, newSnapshotTimestamp);
+                saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, null);
                 refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.REFRESHED);
             } else {
                 // if file already exists, we don't need to download the actual content:
@@ -356,7 +354,7 @@ public class AutomationPackageResourceManager {
                     SnapshotMetadata snapshotMetadata = MavenArtifactDownloader.fetchSnapshotMetadata(mavenConfig, mavenArtifactIdentifier, resource.getOriginTimestamp());
                     if (snapshotMetadata.newSnapshotVersion) {
                         log.debug("New snapshot version found for {}, downloading it", mavenArtifactIdentifier.toStringRepresentation());
-                        saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, resource.getOriginTimestamp(), snapshotMetadata.timestamp);
+                        saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, resource.getOriginTimestamp());
                         refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.REFRESHED);
                     } else {
                         // reuse resource
@@ -384,16 +382,17 @@ public class AutomationPackageResourceManager {
     }
 
     private void saveMavenFileContentInResourceManager(Resource resource, MavenArtifactIdentifier mavenArtifactIdentifier,
-                                                       Long existingSnapshotTimestamp, Long newSnapshotTimestamp) {
+                                                       Long existingSnapshotTimestamp) {
         try {
             // restore the automation package file from maven
-            File file = MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier, existingSnapshotTimestamp).artifactFile;
+            ResolvedMavenArtifact resolvedMavenArtifact = MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier, existingSnapshotTimestamp);
+            File file = resolvedMavenArtifact.artifactFile;
             try (FileInputStream fis = new FileInputStream(file)) {
-                resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
+                Resource updated = resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
 
                 // update timestamp
-                resource.setOriginTimestamp(newSnapshotTimestamp);
-                resourceManager.saveResource(resource);
+                updated.setOriginTimestamp(Optional.ofNullable(resolvedMavenArtifact.snapshotMetadata).map(s -> s.timestamp).orElse(null));
+                resourceManager.saveResource(updated);
             }
         } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", ex);
@@ -412,7 +411,7 @@ public class AutomationPackageResourceManager {
         if (!linkedAps.isEmpty()) {
             throw new AutomationPackageAccessException("Resource " + getLogRepresentation(resource) +
                     " cannot be deleted, because there are automation packages using this resource: " +
-                    linkedAps.stream().map(p -> getLogRepresentation(automationPackageAccessor.get(p))).collect(Collectors.toList())
+                    linkedAps.stream().map(p -> AutomationPackageManager.getLogRepresentation(automationPackageAccessor.get(p))).collect(Collectors.toList())
             );
         }
 
@@ -421,10 +420,6 @@ public class AutomationPackageResourceManager {
 
     public List<AutomationPackage> findAutomationPackagesByResourceId(String resourceId, List<ObjectId> ignoredApIds) {
         return linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, ignoredApIds);
-    }
-
-    private static String getLogRepresentation(AutomationPackage p) {
-        return "'" + p.getAttribute(AbstractOrganizableObject.NAME) + "'(" + p.getId() + ")";
     }
 
     private static String getLogRepresentation(Resource r) {

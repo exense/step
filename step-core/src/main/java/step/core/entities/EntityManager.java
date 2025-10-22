@@ -72,6 +72,10 @@ public class EntityManager  {
 		return entities.get(entityName);
 	}
 
+    public Entity<?,?> getEntityByClass(Class<?> clazz) {
+        return entities.values().stream().filter(entity -> entity.getEntityClass().equals(clazz)).findFirst().orElse(null);
+    }
+
 	public Entity<?,?> getEntityByCollectionName(String collectionName) {
 		return entities.values().stream().filter(e -> e.getCollectionName().equals(collectionName)).findFirst().orElseThrow();
 	}

@@ -24,37 +24,30 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.ObjectAccessException;
 
 public class AutomationPackageAccessException extends AutomationPackageManagerException {
-    public AutomationPackageAccessException(AutomationPackage automationPackage) {
-        this(automationPackage, null);
-    }
 
     public AutomationPackageAccessException(String errorMessage){
         super(errorMessage);
     }
 
-    public AutomationPackageAccessException(AutomationPackage automationPackage, String errorMessage){
-        super(getErrorMessage(automationPackage, errorMessage, null));
+    public AutomationPackageAccessException(String errorMessage, ObjectAccessException objectAccessException) {
+        super(errorMessage + ". Access violation reason: " + objectAccessException.getMessage());
     }
 
-    public AutomationPackageAccessException(String errorMessage, ObjectAccessException e) {
-        super(errorMessage + ". Access violation reason: " + e.getMessage());
-    }
-
-    public AutomationPackageAccessException(AutomationPackage automationPackage, String errorMessage, ObjectAccessException e) {
-        super(getErrorMessage(automationPackage, errorMessage, e));
+    public AutomationPackageAccessException(AutomationPackage automationPackage, String errorMessage, ObjectAccessException objectAccessException) {
+        super(getErrorMessage(automationPackage, errorMessage, objectAccessException));
     }
 
     private static String getCommonErrorMessage(AutomationPackage automationPackage) {
         return "Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " is not acceptable";
     }
 
-    private static String getErrorMessage(AutomationPackage automationPackage, String additionalMessage, ObjectAccessException e){
+    private static String getErrorMessage(AutomationPackage automationPackage, String additionalMessage, ObjectAccessException objectAccessException){
         String finalMessage = getCommonErrorMessage(automationPackage);
         if(additionalMessage != null){
             finalMessage += ". " + additionalMessage;
         }
-        if (e != null) {
-            finalMessage += ". Access violation reason: " + e.getMessage();
+        if (objectAccessException != null) {
+            finalMessage += ". Access violation reason: " + objectAccessException.getMessage();
         }
         return finalMessage;
     }

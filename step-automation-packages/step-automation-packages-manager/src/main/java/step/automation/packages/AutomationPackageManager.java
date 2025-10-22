@@ -28,6 +28,7 @@ import step.automation.packages.library.*;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.commons.activation.Expression;
 import step.core.AbstractStepContext;
+import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
 import step.core.entities.Entity;
@@ -86,6 +87,7 @@ public class AutomationPackageManager {
     private final ExecutorService delayedUpdateExecutor = Executors.newCachedThreadPool();
     public final AutomationPackageOperationMode operationMode;
     private final int maxParallelVersionsPerPackage;
+    private final ObjectHookRegistry<User> objectHookRegistry;
 
 
     /**
@@ -104,7 +106,8 @@ public class AutomationPackageManager {
                                      AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                      AutomationPackageLocks automationPackageLocks,
                                      AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
-                                     int maxParallelVersionsPerPackage) {
+                                     int maxParallelVersionsPerPackage,
+                                     ObjectHookRegistry<User> objectHookRegistry) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
@@ -128,6 +131,7 @@ public class AutomationPackageManager {
 
         this.linkedAutomationPackagesFinder = new LinkedAutomationPackagesFinder(this.resourceManager, this.automationPackageAccessor);
         this.maxParallelVersionsPerPackage = maxParallelVersionsPerPackage;
+        this.objectHookRegistry = objectHookRegistry;
 
         this.automationPackageResourceManager = new AutomationPackageResourceManager(resourceManager, operationMode, automationPackageAccessor, linkedAutomationPackagesFinder, mavenConfigProvider == null ? null : mavenConfigProvider.getConfig());
         addDefaultExtensions();
@@ -160,7 +164,7 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry, automationPackageReaderRegistry,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
-                null, -1
+                null, -1, null
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -199,7 +203,7 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry, automationPackageReaderRegistry,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
-                mavenConfigProvider, -1
+                mavenConfigProvider, -1, null
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -214,7 +218,7 @@ public class AutomationPackageManager {
                                                                               AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                               AutomationPackageLocks locks,
                                                                               AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
-                                                                              int maxParallelVersionsPerPackage
+                                                                              int maxParallelVersionsPerPackage, ObjectHookRegistry<User> objectHookRegistry
     ) {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onMainAutomationPackageManagerCreate(extensions);
@@ -229,7 +233,8 @@ public class AutomationPackageManager {
                 automationPackageReaderRegistry,
                 locks,
                 mavenConfigProvider,
-                maxParallelVersionsPerPackage
+                maxParallelVersionsPerPackage,
+                objectHookRegistry
         );
     }
 
@@ -289,7 +294,7 @@ public class AutomationPackageManager {
      */
     public void removeAutomationPackage(ObjectId id, String actorUser, ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator) throws AutomationPackageManagerException {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
-        checkAccess(automationPackage, writeAccessValidator);
+        checkAccess(automationPackage, false, writeAccessValidator);
         String automationPackageId = automationPackage.getId().toHexString();
         if (automationPackageLocks.tryWriteLock(automationPackageId)) {
             try {
@@ -380,7 +385,7 @@ public class AutomationPackageManager {
             }
 
             if (oldPackage != null) {
-                checkAccess(oldPackage, parameters.writeAccessValidator);
+                checkAccess(oldPackage, parameters.isRedeployment, parameters.writeAccessValidator);
             }
 
             List<ObjectId> apsForReupload;
@@ -529,7 +534,7 @@ public class AutomationPackageManager {
 
                 // here we call the `createOrUpdateAutomationPackage` method with checkForSameOrigin=false to avoid infinite recursive loop
                 // we should only redeploy AP using the modified package keeping all other existing attributes
-                AutomationPackageUpdateParameter redeploymentParameters = new AutomationPackageUpdateParameterBuilder().forRedeployPackage(oldPackage, parameters).build();
+                AutomationPackageUpdateParameter redeploymentParameters = new AutomationPackageUpdateParameterBuilder().forRedeployPackage(objectHookRegistry, oldPackage, parameters).build();
                 createOrUpdateAutomationPackage(redeploymentParameters);
             } catch (Exception e) {
                 log.error("Failed to redeploy the automation package {}: {}", objectId, e.getMessage(), e);
@@ -971,7 +976,7 @@ public class AutomationPackageManager {
                     if (canBeDeleted) {
                         Resource resource = resourceManager.getResource(resourceId);
                         if (resource != null) {
-                            Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
+                            Optional<ObjectAccessException> violations = writeAccessValidator.validateByContext(resource);
                             if (violations.isEmpty()) {
                                 log.debug("Remove the resource linked with AP '{}':{}", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), apResourceToCheck);
                                 resourceManager.deleteResource(resourceId);
@@ -1018,13 +1023,20 @@ public class AutomationPackageManager {
         return planAccessor.findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
     }
 
-    protected void checkAccess(AutomationPackage automationPackage, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
+    public static void checkAccess(AutomationPackage automationPackage, boolean isLinkedPackage, WriteAccessValidator writeAccessValidator) {
         if (writeAccessValidator != null) {
-            Optional<ObjectAccessException> violations = writeAccessValidator.validate(automationPackage);
+            Optional<ObjectAccessException> violations = (isLinkedPackage) ?
+                    writeAccessValidator.validateByUser(automationPackage) :
+                    writeAccessValidator.validateByContext(automationPackage);
             if (violations.isPresent()) {
-                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this automation package", violations.get());
+                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this " + (isLinkedPackage ? " linked " : "") + " automation package: " +
+                        getLogRepresentation(automationPackage), violations.get());
             }
         }
+    }
+
+    public static String getLogRepresentation(AutomationPackage p) {
+        return "'" + p.getAttribute(AbstractOrganizableObject.NAME) + "'(" + p.getId() + ")";
     }
 
     public AutomationPackageReaderRegistry getAutomationPackageReaderRegistry() {

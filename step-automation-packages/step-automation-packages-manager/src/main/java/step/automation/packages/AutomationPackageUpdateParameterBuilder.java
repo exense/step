@@ -2,11 +2,14 @@ package step.automation.packages;
 
 import org.bson.types.ObjectId;
 import step.attachments.FileResolver;
+import step.core.AbstractContext;
+import step.core.access.User;
+import step.core.accessors.AbstractUser;
+import step.core.execution.ExecutionEngine;
 import step.core.objectenricher.*;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public class AutomationPackageUpdateParameterBuilder {
     private boolean allowUpdate = true;
@@ -28,6 +31,7 @@ public class AutomationPackageUpdateParameterBuilder {
     private Map<String, String> plansAttributes;
     private Map<String, String> tokenSelectionCriteria;
     private boolean executeFunctionLocally;
+    private boolean isRedeployment = false;
 
     public AutomationPackageUpdateParameterBuilder withAllowUpdate(boolean allowUpdate) {
         this.allowUpdate = allowUpdate;
@@ -125,7 +129,7 @@ public class AutomationPackageUpdateParameterBuilder {
         return this;
     }
 
-    public AutomationPackageUpdateParameterBuilder forRedeployPackage(AutomationPackage oldPackage, AutomationPackageUpdateParameter parentParameters) {
+    public AutomationPackageUpdateParameterBuilder forRedeployPackage(ObjectHookRegistry<User> objectHookRegistry, AutomationPackage oldPackage, AutomationPackageUpdateParameter parentParameters) {
         this.allowUpdate = true;
         this.allowCreate = false;
         this.explicitOldId = oldPackage.getId();
@@ -140,9 +144,20 @@ public class AutomationPackageUpdateParameterBuilder {
         }
         this.automationPackageVersion = oldPackage.getVersion();
         this.activationExpression = oldPackage.getActivationExpression() != null ? oldPackage.getActivationExpression().getScript() : null;
-        this.enricher = parentParameters.enricher;
-        this.objectPredicate = parentParameters.objectPredicate;
-        this.writeAccessValidator = parentParameters.writeAccessValidator;
+
+        //We need to rebuild the context to get the proper object enricher , predicate and write access validator when redeploying
+        AbstractContext context = new AbstractContext() { };
+        try {
+            objectHookRegistry.rebuildContext(context, oldPackage);
+        } catch (Exception e) {
+            String errorMessage = "Error while rebuilding context for origin automation packaage " + AutomationPackageManager.getLogRepresentation(oldPackage);
+            throw new RuntimeException(errorMessage, e);
+        }
+        this.enricher = objectHookRegistry.getObjectEnricher(context);
+        this.objectPredicate =  objectHookRegistry.getObjectPredicate(context);
+        //noinspection unchecked
+        this.writeAccessValidator = (parentParameters.writeAccessValidator instanceof WriteAccessValidatorImpl) ?
+                new WriteAccessValidatorImpl<>(objectHookRegistry, context, ((WriteAccessValidatorImpl<User>) parentParameters.writeAccessValidator).user) : parentParameters.writeAccessValidator;
         this.async = false;
         this.actorUser = parentParameters.actorUser;
         this.allowUpdateOfOtherPackages = false;
@@ -151,6 +166,7 @@ public class AutomationPackageUpdateParameterBuilder {
         this.plansAttributes = oldPackage.getPlansAttributes();
         this.tokenSelectionCriteria = oldPackage.getTokenSelectionCriteria();
         this.executeFunctionLocally = oldPackage.getExecuteFunctionLocally();
+        this.isRedeployment = true;
         return this;
     }
 
@@ -176,13 +192,7 @@ public class AutomationPackageUpdateParameterBuilder {
     }
 
     public static WriteAccessValidator getNoWriteAccessValidator() {
-        return new WriteAccessValidator(null, null) {
-
-            @Override
-            public Optional<ObjectAccessException> validate(EnricheableObject entity) {
-                return Optional.empty();
-            }
-        };
+        return new WriteAccessValidator() { };
     }
 
     /**
@@ -203,7 +213,10 @@ public class AutomationPackageUpdateParameterBuilder {
     }
 
     public AutomationPackageUpdateParameter build() {
-        return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource, apLibrarySource, automationPackageVersion, activationExpression, enricher, objectPredicate, writeAccessValidator, async, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin, functionsAttributes, plansAttributes, tokenSelectionCriteria, executeFunctionLocally);
+        return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource,
+                apLibrarySource, automationPackageVersion, activationExpression, enricher, objectPredicate, writeAccessValidator,
+                async, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin, functionsAttributes, plansAttributes,
+                tokenSelectionCriteria, executeFunctionLocally, isRedeployment);
     }
 
 
