@@ -6,7 +6,6 @@ import step.core.objectenricher.*;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public class AutomationPackageUpdateParameterBuilder {
     private boolean allowUpdate = true;
@@ -27,7 +26,7 @@ public class AutomationPackageUpdateParameterBuilder {
     private Map<String, String> functionsAttributes;
     private Map<String, String> plansAttributes;
     private Map<String, String> tokenSelectionCriteria;
-    private boolean executeFunctionLocally;
+    private boolean executeFunctionsLocally;
 
     public AutomationPackageUpdateParameterBuilder withAllowUpdate(boolean allowUpdate) {
         this.allowUpdate = allowUpdate;
@@ -120,8 +119,8 @@ public class AutomationPackageUpdateParameterBuilder {
         return this;
     }
 
-    public AutomationPackageUpdateParameterBuilder withExecuteFunctionLocally(boolean executeFunctionLocally) {
-        this.executeFunctionLocally =  executeFunctionLocally;
+    public AutomationPackageUpdateParameterBuilder withExecuteFunctionsLocally(boolean executeFunctionsLocally) {
+        this.executeFunctionsLocally =  executeFunctionsLocally;
         return this;
     }
 
@@ -150,7 +149,7 @@ public class AutomationPackageUpdateParameterBuilder {
         this.functionsAttributes = oldPackage.getFunctionsAttributes();
         this.plansAttributes = oldPackage.getPlansAttributes();
         this.tokenSelectionCriteria = oldPackage.getTokenSelectionCriteria();
-        this.executeFunctionLocally = oldPackage.getExecuteFunctionLocally();
+        this.executeFunctionsLocally = oldPackage.getExecuteFunctionsLocally();
         return this;
     }
 
@@ -203,7 +202,7 @@ public class AutomationPackageUpdateParameterBuilder {
     }
 
     public AutomationPackageUpdateParameter build() {
-        return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource, apLibrarySource, automationPackageVersion, activationExpression, enricher, objectPredicate, writeAccessValidator, async, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin, functionsAttributes, plansAttributes, tokenSelectionCriteria, executeFunctionLocally);
+        return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource, apLibrarySource, automationPackageVersion, activationExpression, enricher, objectPredicate, writeAccessValidator, async, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin, functionsAttributes, plansAttributes, tokenSelectionCriteria, executeFunctionsLocally);
     }
 
 

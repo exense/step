@@ -923,7 +923,7 @@ public class AutomationPackageManager {
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
         fillEntities(completeFunctions, oldFunctions, enricher);
         //Only propagate metadata to all the functions if any of the metadata impacting the functions is set
-        if (newPackage.getActivationExpression() != null || newPackage.getFunctionsAttributes() != null || newPackage.getTokenSelectionCriteria() != null || newPackage.getExecuteFunctionLocally()) {
+        if (newPackage.getActivationExpression() != null || newPackage.getFunctionsAttributes() != null || newPackage.getTokenSelectionCriteria() != null || newPackage.getExecuteFunctionsLocally()) {
             propagatePackageMetadataToFunctions(newPackage, completeFunctions);
         }
         return completeFunctions;
@@ -937,7 +937,7 @@ public class AutomationPackageManager {
                 completeFunction.getAttributes().putAll(newPackage.getFunctionsAttributes());
             }
             //Execute on controller true has priority whether it is defined at package or keyword level and forced for composite Keywords
-            completeFunction.setExecuteLocally(newPackage.getExecuteFunctionLocally() || completeFunction.isExecuteLocally() ||
+            completeFunction.setExecuteLocally(newPackage.getExecuteFunctionsLocally() || completeFunction.isExecuteLocally() ||
                     (completeFunction instanceof CompositeFunction));
             if (newPackage.getTokenSelectionCriteria() != null) {
                 //Token selection criteria maps are merged; for keys defined twice, values from the package override the ones from the keyword
@@ -987,7 +987,7 @@ public class AutomationPackageManager {
         newPackage.setPlansAttributes(parameters.plansAttributes);
         newPackage.setFunctionsAttributes(parameters.functionsAttributes);
         newPackage.setTokenSelectionCriteria(parameters.tokenSelectionCriteria);
-        newPackage.setExecuteFunctionLocally(parameters.executionFunctionsLocally);
+        newPackage.setExecuteFunctionsLocally(parameters.executionFunctionsLocally);
 
         newPackage.addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_FILE_NAME, fileName);
 

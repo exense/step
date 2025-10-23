@@ -172,7 +172,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
                     .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
                     .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
-                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
+                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
             ObjectId id = automationPackageManager.createOrUpdateAutomationPackage(parameters).getId();
             return id == null ? null : id.toString();
@@ -307,7 +307,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
                     .withAsync(async).withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
                     .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
-                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
+                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
             return automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
         } catch (AutomationPackageAccessException ex) {
@@ -382,7 +382,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
                     .withAsync(async).withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
                     .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
-                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionLocally(executeFunctionsLocally)
+                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
             Response.ResponseBuilder responseBuilder;
