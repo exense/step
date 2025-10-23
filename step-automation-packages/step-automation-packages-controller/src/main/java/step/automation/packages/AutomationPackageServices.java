@@ -162,7 +162,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                           @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
                                           @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
         try {
-            ParsedRequestParameters parsedRequestParameters = getParsedRequestParamteres(automationPackageInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
+            ParsedRequestParameters parsedRequestParameters = getParsedRequestParamteres(automationPackageInputStream, fileDetail,
+                    apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId,
+                    plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
             AutomationPackageUpdateParameter parameters = getAutomationPackageUpdateParameterBuilder()
                     .withAllowCreate(true).withAllowUpdate(false).withAsync(false)
@@ -329,7 +331,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
-    private AutomationPackageFileSource getFileSource(InputStream uploadedInputStream, FormDataContentDisposition fileDetail, String apMavenSnippet, String invalidSnippetErrorText, String resourceId) {
+    private AutomationPackageFileSource getFileSource(InputStream uploadedInputStream, FormDataContentDisposition fileDetail, String apMavenSnippet, String invalidSnippetErrorText, String resourceIdPath) {
         AutomationPackageFileSource automationPackageFileSource = null;
         try {
             automationPackageFileSource = AutomationPackageFileSource.empty();
@@ -339,11 +341,11 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             if (apMavenSnippet != null) {
                 automationPackageFileSource.addMavenIdentifier(getMavenArtifactIdentifierFromXml(apMavenSnippet));
             }
-            if(resourceId != null){
-                if (!FileResolver.isResource(resourceId)) {
-                    throw new ControllerServiceException("Only resource path 'resource:<resourceId>' are allowed.");
+            if(resourceIdPath != null){
+                if (!FileResolver.isResource(resourceIdPath)) {
+                    throw new ControllerServiceException("Only resource path 'resource:<resourceIdPath>' are allowed.");
                 }
-                automationPackageFileSource.addResourceId(resourceId);
+                automationPackageFileSource.addResourceId(FileResolver.resolveResourceId(resourceIdPath));
             }
         } catch (JsonProcessingException e) {
             throw new ControllerServiceException(invalidSnippetErrorText + e.getMessage());
@@ -402,7 +404,10 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
-    private ParsedRequestParameters getParsedRequestParamteres(InputStream uploadedInputStream, FormDataContentDisposition fileDetail, String apMavenSnippet, InputStream apLibraryInputStream, FormDataContentDisposition apLibraryFileDetail, String apLibraryMavenSnippet, String apResourceId, String apLibraryResourceId, String plansAttributesAsString, String functionsAttributesAsString, String tokenSelectionCriteriaAsString) {
+    private ParsedRequestParameters getParsedRequestParamteres(InputStream uploadedInputStream, FormDataContentDisposition fileDetail,
+                                                               String apMavenSnippet, InputStream apLibraryInputStream, FormDataContentDisposition apLibraryFileDetail,
+                                                               String apLibraryMavenSnippet, String apResourceId, String apLibraryResourceId, String plansAttributesAsString,
+                                                               String functionsAttributesAsString, String tokenSelectionCriteriaAsString) {
         AutomationPackageFileSource apFileSource = getFileSource(
                 uploadedInputStream, fileDetail,
                 apMavenSnippet, "Invalid maven snippet for automation package: ",
