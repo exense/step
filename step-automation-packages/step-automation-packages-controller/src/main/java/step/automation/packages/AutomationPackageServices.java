@@ -34,6 +34,7 @@ import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import step.attachments.FileResolver;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
@@ -341,6 +342,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 automationPackageFileSource.addMavenIdentifier(getMavenArtifactIdentifierFromXml(apMavenSnippet));
             }
             if(resourceId != null){
+                if (!FileResolver.isResource(resourceId)) {
+                    throw new ControllerServiceException("Only resource path 'resource:<resourceId>' are allowed.");
+                }
                 automationPackageFileSource.addResourceId(resourceId);
             }
         } catch (JsonProcessingException e) {
