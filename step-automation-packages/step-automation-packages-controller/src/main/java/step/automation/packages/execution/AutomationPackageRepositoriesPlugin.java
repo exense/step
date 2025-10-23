@@ -86,7 +86,8 @@ public class AutomationPackageRepositoriesPlugin extends AbstractControllerPlugi
         LocalAutomationPackageRepository localApRepository = new LocalAutomationPackageRepository(
                 context.require(AutomationPackageManager.class),
                 context.require(FunctionTypeRegistry.class),
-                context.require(FunctionAccessor.class)
+                context.require(FunctionAccessor.class),
+                context.getResourceManager()
         );
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.LOCAL_AUTOMATION_PACKAGE, localApRepository);
         context.put(LocalAutomationPackageRepository.class, localApRepository);

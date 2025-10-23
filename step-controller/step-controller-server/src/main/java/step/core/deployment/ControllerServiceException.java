@@ -6,6 +6,7 @@ public class ControllerServiceException extends RuntimeException {
 	private final String errorName;
 	private final String errorMessage;
 	private final Object errorDetails;
+    private boolean technicalError = true;
 
 	public ControllerServiceException(String errorMessage) {
 		super(errorMessage);
@@ -87,5 +88,13 @@ public class ControllerServiceException extends RuntimeException {
 				", errorMessage='" + errorMessage + '\'' +
 				", errorDetails=" + errorDetails +
 				'}';
+	}
+
+	public boolean isTechnicalError() {
+		return technicalError;
+	}
+
+	public void setTechnicalError(boolean technicalError) {
+		this.technicalError = technicalError;
 	}
 }

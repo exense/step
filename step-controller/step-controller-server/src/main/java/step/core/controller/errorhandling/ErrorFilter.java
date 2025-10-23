@@ -40,8 +40,10 @@ public class ErrorFilter extends AbstractStepServices implements ExceptionMapper
 	@Override
 	public Response toResponse(Exception exception) {
 		if(exception instanceof ControllerServiceException) {
-			logger.warn("A controller service exception occurred: {}", exception.toString());
-			ControllerServiceException controllerServiceException = (ControllerServiceException) exception;
+            if (((ControllerServiceException) exception).isTechnicalError()) {
+                logger.warn("A controller service exception occurred: {}", exception.toString());
+            }
+            ControllerServiceException controllerServiceException = (ControllerServiceException) exception;
 			ControllerServiceError controllerServiceError = new ControllerServiceError();
 			controllerServiceError.setErrorName(controllerServiceException.getErrorName());
 			controllerServiceError.setErrorMessage(controllerServiceException.getErrorMessage());

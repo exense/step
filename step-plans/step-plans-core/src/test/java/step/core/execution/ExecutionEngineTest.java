@@ -22,7 +22,6 @@ import org.junit.Test;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.handlers.CheckArtefactHandler;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.*;
 import step.core.execution.ExecutionEngine.Builder;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
@@ -293,7 +292,7 @@ public class ExecutionEngineTest {
 				}
 				
 				@Override
-				public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+				public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate, String actorUser) throws Exception {
 					return null;
 				}
 				

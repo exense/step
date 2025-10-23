@@ -134,7 +134,7 @@ public class ReportNodeAttachmentManager {
 	public AttachmentMeta createAttachmentWithoutQuotaCheck(byte[] content, String filename, String mimeType) {
 		ResourceRevisionContainer container;
 		try {
-			container = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_ATTACHMENT, filename);
+			container = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_ATTACHMENT, filename, null);
 			try {
 				BufferedOutputStream bos = new BufferedOutputStream(container.getOutputStream());
 				bos.write(content);

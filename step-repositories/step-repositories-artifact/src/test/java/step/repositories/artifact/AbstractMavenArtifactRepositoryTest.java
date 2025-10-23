@@ -20,9 +20,7 @@ package step.repositories.artifact;
 
 import ch.exense.commons.app.Configuration;
 import org.mockito.Mockito;
-import step.automation.packages.AutomationPackageHookRegistry;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.*;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.controller.InMemoryControllerSettingAccessor;
@@ -80,11 +78,15 @@ public abstract class AbstractMavenArtifactRepositoryTest {
 
         Configuration configuration = new Configuration();
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
-        AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, new AutomationPackageSerializationRegistry(), configuration);
+        AutomationPackageSerializationRegistry automationPackageSerializationRegistry = new AutomationPackageSerializationRegistry();
+        AutomationPackageReader apReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, automationPackageSerializationRegistry, configuration);
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, automationPackageSerializationRegistry);
+        automationPackageReaderRegistry.register(apReader);
         FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry();
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
-        this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), new LocalResourceManagerImpl(), apReader, hookRegistry);
-        artifactRepository = new MavenArtifactRepository(apManager, functionTypeRegistry, functionAccessor, configuration, controllerSettingAccessor, null);
+        LocalResourceManagerImpl resourceManager = new LocalResourceManagerImpl();
+        this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), resourceManager, automationPackageReaderRegistry, hookRegistry);
+        artifactRepository = new MavenArtifactRepository(apManager, functionTypeRegistry, functionAccessor, configuration, controllerSettingAccessor, resourceManager);
 
         // mock the context, which is normally prepared via FunctionPlugin
         executionContext = ExecutionEngine.builder().build().newExecutionContext();

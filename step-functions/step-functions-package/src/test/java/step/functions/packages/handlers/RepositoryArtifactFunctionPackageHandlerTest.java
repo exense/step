@@ -104,7 +104,7 @@ public class RepositoryArtifactFunctionPackageHandlerTest {
 		});
 		Assert.assertEquals(2, functions.size());
 		
-		Resource resource = resourceManager.getResource(fileResolver.resolveResourceId(functionPackage.getPackageLocation()));
+		Resource resource = resourceManager.getResource(FileResolver.resolveResourceId(functionPackage.getPackageLocation()));
 		Assert.assertEquals("attributeValue1", resource.getAttribute("attribute1"));
 	}
 

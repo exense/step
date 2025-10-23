@@ -22,99 +22,62 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
-
 import java.util.List;
+import java.util.Objects;
 
-import static step.automation.packages.AutomationPackageArchiveType.JAVA;
 
-public class AutomationPackageArchive implements Closeable {
+public abstract class AutomationPackageArchive implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchive.class);
     public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
+    public static final String NULL_TYPE_ERROR_MSG = "The type of the AutomationPackageArchive must not be null";
 
-    private final ClassLoader classLoader;
     private final File originalFile;
-    private boolean internalClassLoader = false;
-    private final AutomationPackageArchiveType type;
-    private final ResourcePathMatchingResolver pathMatchingResourceResolver;
+    private final File keywordLibFile;
+    private final String type;
+    private final String archiveName;
 
-    public AutomationPackageArchive(ClassLoader classLoader) {
-        this.classLoader = classLoader;
+    protected AutomationPackageArchive(String type) {
         this.originalFile = null;
-        this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
-        this.type = JAVA;
+        this.keywordLibFile = null;
+        Objects.requireNonNull(type, NULL_TYPE_ERROR_MSG);
+        this.type = type;
+        this.archiveName = null;
     }
 
-    public AutomationPackageArchive(File automationPackageFile) throws AutomationPackageReadingException {
-        this.internalClassLoader = true;
+    public AutomationPackageArchive(File automationPackageFile, File keywordLibFile, String type, String archiveName) throws AutomationPackageReadingException {
+        Objects.requireNonNull(automationPackageFile, "The automationPackageFile must not be null");
+        Objects.requireNonNull(automationPackageFile, NULL_TYPE_ERROR_MSG);
+        this.archiveName = archiveName;
         if (!automationPackageFile.exists()) {
             throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " doesn't exist");
         }
-        if (!automationPackageFile.isDirectory() && !isArchive(automationPackageFile)) {
-            throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " is neither zip archive nor jar file nor directory");
-        }
         this.originalFile = automationPackageFile;
-        this.type = JAVA; //Only supported type for now
-        try {
-            this.classLoader = new URLClassLoader(new URL[]{automationPackageFile.toURI().toURL()}, null);
-            this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
-        } catch (MalformedURLException ex) {
-            throw new AutomationPackageReadingException("Unable to read automation package", ex);
-        }
+        this.keywordLibFile = keywordLibFile;
+        this.type = type;
     }
 
-    private static boolean isArchive(File f) {
-        int fileSignature = 0;
-        try (RandomAccessFile raf = new RandomAccessFile(f, "r")) {
-            fileSignature = raf.readInt();
-        } catch (IOException e) {
-            // handle if you like
-        }
-        return fileSignature == 0x504B0304 || fileSignature == 0x504B0506 || fileSignature == 0x504B0708;
+    /**
+     * this method should be called in case the automation package does not contain any YAML descriptor with a name set in it
+     * @return the name of the automation package
+     */
+    public String getAutomationPackageName() {
+        return (archiveName == null) ? getOriginalFileName() : archiveName;
     }
 
-    public boolean hasAutomationPackageDescriptor() {
-        for (String metadataFile : METADATA_FILES) {
-            URL metadataFileUrl = classLoader.getResource(metadataFile);
-            if (metadataFileUrl != null) {
-                return true;
-            }
-        }
-        return false;
-    }
+    abstract public boolean hasAutomationPackageDescriptor();
 
-    public InputStream getDescriptorYaml() {
-        for (String metadataFile : METADATA_FILES) {
-            InputStream yamlDescriptor = classLoader.getResourceAsStream(metadataFile);
-            if (yamlDescriptor != null) {
-                return yamlDescriptor;
-            }
-        }
-        return null;
-    }
+    abstract public InputStream getDescriptorYaml();
 
-    public InputStream getResourceAsStream(String resourcePath) throws IOException {
-        URL url = getResource(resourcePath);
-        return url.openStream();
-    }
+    abstract public InputStream getResourceAsStream(String resourcePath) throws IOException;
 
-    public URL getResource(String resourcePath) {
-        URL resource = classLoader.getResource(resourcePath);
-        if (log.isDebugEnabled()) {
-            log.debug("Obtain resource from automation package: {}", resource);
-        }
-        return resource;
-    }
+    abstract public URL getResource(String resourcePath) ;
 
-    public List<URL> getResourcesByPattern(String resourcePathPattern) {
-        return pathMatchingResourceResolver.getResourcesByPattern(resourcePathPattern);
-    }
+    abstract public List<URL> getResourcesByPattern(String resourcePathPattern);
 
-    public ClassLoader getClassLoader() {
-        return classLoader;
+    public File getKeywordLibFile(){
+        return keywordLibFile;
     }
 
     public File getOriginalFile() {
@@ -125,14 +88,9 @@ public class AutomationPackageArchive implements Closeable {
         return originalFile == null ? null : originalFile.getName();
     }
 
-    @Override
-    public void close() throws IOException {
-        if (internalClassLoader && this.classLoader instanceof Closeable) {
-            ((Closeable) this.classLoader).close();
-        }
-    }
-
-    public AutomationPackageArchiveType getType() {
+    public String getType() {
         return type;
     }
+
+    abstract public ResourcePathMatchingResolver getResourcePathMatchingResolver();
 }

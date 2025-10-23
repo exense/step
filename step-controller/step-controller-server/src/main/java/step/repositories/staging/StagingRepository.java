@@ -74,7 +74,7 @@ public class StagingRepository extends AbstractRepository {
 	}
 
 	@Override
-	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate, String actorUser) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}

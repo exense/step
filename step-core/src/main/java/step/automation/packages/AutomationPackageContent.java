@@ -27,6 +27,7 @@ public class AutomationPackageContent {
 
     private String version;
     private String name;
+    private String baseName;
 
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
     private List<Plan> plans = new ArrayList<>();
@@ -38,6 +39,14 @@ public class AutomationPackageContent {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getBaseName() {
+        return baseName;
+    }
+
+    public void setBaseName(String baseName) {
+        this.baseName = baseName;
     }
 
     public List<AutomationPackageKeyword> getKeywords() {

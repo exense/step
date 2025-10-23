@@ -7,9 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageHookRegistry;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageReader;
+import step.automation.packages.*;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.execution.ExecutionContext;
@@ -42,15 +40,18 @@ public class ResourceArtifactRepositoryTest {
         this.resourceManager = new ResourceManagerImpl(FileHelper.createTempFolder(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
 
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
-        AutomationPackageReader apReader = new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, new AutomationPackageSerializationRegistry(), new Configuration());
+        AutomationPackageSerializationRegistry automationPackageSerializationRegistry = new AutomationPackageSerializationRegistry();
+        AutomationPackageReader apReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, automationPackageSerializationRegistry, new Configuration());
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, automationPackageSerializationRegistry);
+        automationPackageReaderRegistry.register(apReader);
         this.functionTypeRegistry = MavenArtifactRepositoryTest.prepareTestFunctionTypeRegistry();
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
-        this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), new LocalResourceManagerImpl(), apReader, hookRegistry);
+        this.apManager = AutomationPackageManager.createLocalAutomationPackageManager(functionTypeRegistry, functionAccessor, new InMemoryPlanAccessor(), new LocalResourceManagerImpl(), automationPackageReaderRegistry, hookRegistry);
         this.repo = new ResourceArtifactRepository(resourceManager, apManager, functionTypeRegistry, functionAccessor);
     }
 
     @Test
-    public void importArtefact() throws SimilarResourceExistingException {
+    public void importArtefact() {
         // In this test we have 2 plans and to keywords annotated with @Keyword
         // One of these plans also has the inner keyword declared in .plan file
         // We expect that the jar will be correctly parsed into the TestSet containing all @Keywords from the jar file (non-duplicated)
@@ -63,7 +64,7 @@ public class ResourceArtifactRepositoryTest {
                 executionContext.put(FunctionTypeRegistry.class, functionTypeRegistry);
 
                 // upload the jar
-                Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, "plans-with-keywords.jar", false, null);
+                Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, "plans-with-keywords.jar", null, "testUser");
                 log.info("Resource uploaded: {}", resource.getId().toString());
 
                 Map<String, String> repoParams = new HashMap<>();
