@@ -142,7 +142,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             AbstractOrganizableObject a = (AbstractOrganizableObject) entity;
             entityName = a.getAttribute(AbstractOrganizableObject.NAME);
         }
-        Map<String, String> attributes = new LinkedHashMap<>(getObjectEnricher().getAdditionalAttributes());
+        Map<String, String> attributes = new LinkedHashMap<>(Objects.requireNonNullElse(getObjectEnricher().getAdditionalAttributes(), Map.of()));
         Optional.ofNullable(moreAttributes).ifPresent(attributes::putAll);
         AuditLogger.logEntityModification(getHttpSession(), operation, this.entityName, entity.getId().toHexString(), entityName, attributes);
     }
