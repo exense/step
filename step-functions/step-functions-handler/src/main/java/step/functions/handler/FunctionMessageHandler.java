@@ -190,7 +190,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			Object liveReportingClient = liveReportingClientClass.getDeclaredConstructor(Map.class, Map.class, ExecutorService.class, AtomicReference.class)
 					.newInstance(properties, agentTokenServices.getAgentProperties(), liveReportingExecutor, webSocketContainerRef);
 
-			// WHY do we actually need an additional proxy here? Isn't creating it in a separate classloader enough?
+			// We still need an additional proxy object to force everything to run in the correct context,
+			// classloader separation alone is not enough.
 			LiveReportingClient liveReportingClientProxy = (LiveReportingClient) Proxy.newProxyInstance(
 					liveReportingClientClass.getClassLoader(), new Class[]{LiveReportingClient.class},
 					(proxy, method, args) -> {
@@ -202,7 +203,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 						}
 					}
 			);
-			return new LiveReporting(liveReportingClientProxy.getStreamingUploadProvider(), liveReportingClientProxy.getLiveMeasureSink());
+			return new LiveReporting(liveReportingClientProxy.getStreamingUploadProvider(), liveReportingClientProxy.getLiveMeasureDestination());
 		});
 	}
 

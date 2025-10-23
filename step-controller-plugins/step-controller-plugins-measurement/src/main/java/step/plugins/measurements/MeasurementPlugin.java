@@ -325,19 +325,10 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	private void enrichWithNodeAttributes(Measurement measurement, ReportNode node) {
 		measurement.setExecId(node.getExecutionID());
 		measurement.addCustomField(RN_ID, node.getId().toString());
-		ReportNodeStatus nodeStatus = node.getStatus();
-		if(nodeStatus == ReportNodeStatus.RUNNING) {
-			// For live measures, the node status is still RUNNING, so we rely on the measure status
-			if (measurement.getStatus() == null) {
-				// this should never be the case, as all measures should now have a status (PASSED by default), but better safe than sorry
-				measurement.setStatus(nodeStatus.name());
-			}
-		} else {
-			// "old-style" measures (attached to output) take the node status, EXCEPT if the measure itself indicates a non-default status, i.e. a failure
-			String mStatus = measurement.getStatus();
-			if (mStatus == null || mStatus.equals(Measure.Status.PASSED.name())) {
-				measurement.setStatus(nodeStatus.name());
-			}
+		// If a measurement already has its own status (mandatory for live measures, optional for output measures),
+		// keep it unconditionally, otherwise set the status from the report node.
+		if (measurement.getStatus() == null) {
+			measurement.setStatus(node.getStatus().name());
 		}
 	}
 

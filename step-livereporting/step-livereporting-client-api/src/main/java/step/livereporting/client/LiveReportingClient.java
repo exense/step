@@ -24,7 +24,7 @@ import step.streaming.client.upload.StreamingUploadProvider;
 
 public interface LiveReportingClient {
 
-    LiveMeasureDestination getLiveMeasureSink();
+    LiveMeasureDestination getLiveMeasureDestination();
 
     StreamingUploadProvider getStreamingUploadProvider();
 }

@@ -71,7 +71,7 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
     }
 
     @Override
-    public LiveMeasureDestination getLiveMeasureSink() {
+    public LiveMeasureDestination getLiveMeasureDestination() {
         return liveMeasureSink;
     }
 
