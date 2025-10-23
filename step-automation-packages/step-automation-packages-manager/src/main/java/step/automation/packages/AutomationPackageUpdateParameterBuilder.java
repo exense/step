@@ -3,9 +3,6 @@ package step.automation.packages;
 import org.bson.types.ObjectId;
 import step.attachments.FileResolver;
 import step.core.AbstractContext;
-import step.core.access.User;
-import step.core.accessors.AbstractUser;
-import step.core.execution.ExecutionEngine;
 import step.core.objectenricher.*;
 
 import java.util.Map;
@@ -30,7 +27,7 @@ public class AutomationPackageUpdateParameterBuilder {
     private Map<String, String> functionsAttributes;
     private Map<String, String> plansAttributes;
     private Map<String, String> tokenSelectionCriteria;
-    private boolean executeFunctionLocally;
+    private boolean executeFunctionsLocally;
     private boolean isRedeployment = false;
 
     public AutomationPackageUpdateParameterBuilder withAllowUpdate(boolean allowUpdate) {
@@ -124,8 +121,8 @@ public class AutomationPackageUpdateParameterBuilder {
         return this;
     }
 
-    public AutomationPackageUpdateParameterBuilder withExecuteFunctionLocally(boolean executeFunctionLocally) {
-        this.executeFunctionLocally =  executeFunctionLocally;
+    public AutomationPackageUpdateParameterBuilder withExecuteFunctionsLocally(boolean executeFunctionsLocally) {
+        this.executeFunctionsLocally =  executeFunctionsLocally;
         return this;
     }
 
@@ -164,7 +161,7 @@ public class AutomationPackageUpdateParameterBuilder {
         this.functionsAttributes = oldPackage.getFunctionsAttributes();
         this.plansAttributes = oldPackage.getPlansAttributes();
         this.tokenSelectionCriteria = oldPackage.getTokenSelectionCriteria();
-        this.executeFunctionLocally = oldPackage.getExecuteFunctionLocally();
+        this.executeFunctionsLocally = oldPackage.getExecuteFunctionsLocally();
         this.isRedeployment = true;
         return this;
     }
@@ -215,7 +212,7 @@ public class AutomationPackageUpdateParameterBuilder {
         return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource,
                 apLibrarySource, automationPackageVersion, activationExpression, enricher, objectPredicate, writeAccessValidator,
                 async, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin, functionsAttributes, plansAttributes,
-                tokenSelectionCriteria, executeFunctionLocally, isRedeployment);
+                tokenSelectionCriteria, executeFunctionsLocally, isRedeployment);
     }
 
 

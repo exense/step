@@ -1256,7 +1256,7 @@ public class AutomationPackageManagerOSTest {
                     .withApLibrarySource(automationPackageFileSource)
                     .withAutomationPackageVersion(version).withActivationExpression(activationExpression)
                     .withPlansAttributes(plansAttributes).withFunctionsAttributes(functionAttributes).withTokenSelectionCriteria(tokenSelectionAttributes)
-                    .withExecuteFunctionLocally(executeFunctionsLocally)
+                    .withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
             result = manager.createOrUpdateAutomationPackage(createParameters).getId();
         } else {
@@ -1267,7 +1267,7 @@ public class AutomationPackageManagerOSTest {
                     .withApLibrarySource(automationPackageFileSource)
                     .withAutomationPackageVersion(version).withActivationExpression(activationExpression)
                     .withPlansAttributes(plansAttributes).withFunctionsAttributes(functionAttributes).withTokenSelectionCriteria(tokenSelectionAttributes)
-                    .withExecuteFunctionLocally(executeFunctionsLocally)
+                    .withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
             AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(updateParameters);
             if (async && expectedDelay) {

@@ -50,12 +50,12 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
     /**
      * whether the keywords from this package should all be executed locally (i.e. on controller)
      */
-    private boolean executeFunctionLocally;
+    private boolean executeFunctionsLocally;
 
     public AutomationPackage(AutomationPackageStatus status, String version, Expression activationExpression,
                              String automationPackageResource, String automationPackageLibraryResource,
                              Map<String, String> functionsAttributes, Map<String, String> plansAttributes,
-                             Map<String, String> tokenSelectionCriteria, boolean executeFunctionLocally) {
+                             Map<String, String> tokenSelectionCriteria, boolean executeFunctionsLocally) {
         this.status = status;
         this.version = version;
         this.activationExpression = activationExpression;
@@ -64,7 +64,7 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
         this.functionsAttributes = functionsAttributes;
         this.plansAttributes = plansAttributes;
         this.tokenSelectionCriteria = tokenSelectionCriteria;
-        this.executeFunctionLocally = executeFunctionLocally;
+        this.executeFunctionsLocally = executeFunctionsLocally;
     }
 
     public AutomationPackage() {
@@ -118,12 +118,12 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
         this.tokenSelectionCriteria = tokenSelectionCriteria;
     }
 
-    public boolean getExecuteFunctionLocally() {
-        return executeFunctionLocally;
+    public boolean getExecuteFunctionsLocally() {
+        return executeFunctionsLocally;
     }
 
-    public void setExecuteFunctionLocally(boolean executeFunctionLocally) {
-        this.executeFunctionLocally = executeFunctionLocally;
+    public void setExecuteFunctionsLocally(boolean executeFunctionsLocally) {
+        this.executeFunctionsLocally = executeFunctionsLocally;
     }
 
     /**
