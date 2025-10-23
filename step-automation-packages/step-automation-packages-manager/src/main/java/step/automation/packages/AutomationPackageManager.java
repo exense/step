@@ -977,11 +977,11 @@ public class AutomationPackageManager {
                     if (canBeDeleted) {
                         Resource resource = resourceManager.getResource(resourceId);
                         if (resource != null) {
-                            Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
-                            if (violations.isEmpty()) {
+                            try {
+                                writeAccessValidator.validate(resource);
                                 log.debug("Remove the resource linked with AP '{}':{}", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), apResourceToCheck);
                                 resourceManager.deleteResource(resourceId);
-                            } else {
+                            } catch (ObjectAccessException e) {
                                 log.debug("The resource linked with AP '{}':{} is not writable and won't be deleted with the package", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), apResourceToCheck);
                             }
                         }
@@ -1026,10 +1026,11 @@ public class AutomationPackageManager {
 
     public static void checkAccess(AutomationPackage automationPackage, WriteAccessValidator writeAccessValidator) {
         if (writeAccessValidator != null) {
-            Optional<ObjectAccessException> violations = writeAccessValidator.validate(automationPackage);
-            if (violations.isPresent()) {
+            try {
+                writeAccessValidator.validate(automationPackage);
+            } catch (ObjectAccessException e) {
                 throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this automation package: " +
-                        getLogRepresentation(automationPackage), violations.get());
+                        getLogRepresentation(automationPackage), e);
             }
         }
     }

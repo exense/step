@@ -134,6 +134,6 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 	}
 
 	protected WriteAccessValidator getWriteAccessValidator() {
-		return new WriteAccessValidator(objectHookRegistry, getSession());
+		return new WriteAccessValidatorImpl(objectHookRegistry, getSession());
 	}
 }

@@ -191,12 +191,7 @@ public class AutomationPackageUpdateParameterBuilder {
     }
 
     public static WriteAccessValidator getNoWriteAccessValidator() {
-        return new WriteAccessValidator(null, null) {
-            @Override
-            public Optional<ObjectAccessException> validate(EnricheableObject entity) {
-                return Optional.empty();
-            }
-        };
+        return new WriteAccessValidator() {};
     }
 
     /**

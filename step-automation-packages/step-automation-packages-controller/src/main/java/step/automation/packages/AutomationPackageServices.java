@@ -48,6 +48,7 @@ import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
+import step.framework.server.tables.service.bulk.BulkOperationWarningException;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 import step.resources.Resource;
@@ -540,7 +541,13 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-delete")
     public AsyncTaskStatus<TableBulkOperationReport> bulkDeleteAutomationPackageResource(TableBulkOperationRequest request) {
-        Consumer<String> consumer = resourceId -> automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
+        Consumer<String> consumer = resourceId -> {
+            try {
+                automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
+            } catch (AutomationPackageUnsuportedResourceTypeException e) {
+                throw new BulkOperationWarningException(e.getMessage());
+            }
+        };
         return scheduleAsyncTaskWithinSessionContext(h ->
                 tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
     }
@@ -564,7 +571,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
-        } catch (AutomationPackageManagerException e) {
+        } catch (AutomationPackageManagerException | AutomationPackageUnsuportedResourceTypeException e) {
             throw new ControllerServiceException(e.getMessage(), e);
         }
     }

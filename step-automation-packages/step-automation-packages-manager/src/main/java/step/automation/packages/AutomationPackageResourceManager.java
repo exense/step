@@ -53,6 +53,10 @@ public class AutomationPackageResourceManager {
     private final AutomationPackageAccessor automationPackageAccessor;
     private final LinkedAutomationPackagesFinder linkedAutomationPackagesFinder;
     private final AutomationPackageMavenConfig mavenConfig;
+    private Set<String> supportedResourceTypes = Set.of(
+            ResourceManager.RESOURCE_TYPE_AP,
+            ResourceManager.RESOURCE_TYPE_AP_LIBRARY
+    );
 
     public AutomationPackageResourceManager(ResourceManager resourceManager,
                                             AutomationPackageOperationMode operationMode,
@@ -159,7 +163,7 @@ public class AutomationPackageResourceManager {
                     }
                 }
             }
-        } catch (IOException | InvalidResourceFormatException | AutomationPackageReadingException e) {
+        } catch (IOException | InvalidResourceFormatException | AutomationPackageReadingException |AutomationPackageUnsuportedResourceTypeException e) {
             // all these exceptions are technical, so we log the whole stack trace here, but throw the AutomationPackageManagerException
             // to provide the short error message without technical details to the client
             log.error("Unable to upload the automation package library", e);
@@ -204,7 +208,7 @@ public class AutomationPackageResourceManager {
                             is, apProvider.getSnapshotTimestamp(), resource,
                             parameters.actorUser, parameters.writeAccessValidator
                     );
-                } catch (IOException | InvalidResourceFormatException e) {
+                } catch (IOException | InvalidResourceFormatException | AutomationPackageUnsuportedResourceTypeException e) {
                     throw new RuntimeException("Unable to create the resource for automation package", e);
                 }
             }
@@ -250,10 +254,11 @@ public class AutomationPackageResourceManager {
                                                                String apName, ObjectId currentApId,
                                                                FileInputStream fis, Long newOriginTimestamp,
                                                                Resource oldResource, String actorUser,
-                                                               WriteAccessValidator writeAccessValidator) throws IOException, InvalidResourceFormatException, AutomationPackageAccessException {
+                                                               WriteAccessValidator writeAccessValidator) throws IOException, InvalidResourceFormatException, AutomationPackageAccessException, AutomationPackageUnsuportedResourceTypeException {
         String resourceId = oldResource.getId().toHexString();
         //Check write access to the resource itself
         checkResourceWriteAccess(resourceFileName, oldResource, writeAccessValidator);
+        validateResourceType(oldResource);
         // Check write access to other APs using this resource. We cannot reupload the resources if they are linked with another package, which is not accessible
         List<ObjectId> ignoredApsToLookup = currentApId == null ? List.of() : List.of(currentApId);
 
@@ -265,19 +270,21 @@ public class AutomationPackageResourceManager {
     }
 
     public static void checkResourceWriteAccess(String resourceFileName, Resource oldResource, WriteAccessValidator writeAccessValidator) {
-        Optional<ObjectAccessException> violations = writeAccessValidator.validate(oldResource);
-        if (violations.isPresent()) {
+        try {
+            writeAccessValidator.validate(oldResource);
+        } catch (ObjectAccessException e) {
             String errorMessage = "The existing resource " + oldResource.getId().toHexString() + " for file " + resourceFileName + " referenced by the provided package cannot be modified in the current context.";
             log.error(errorMessage);
-            throw new AutomationPackageAccessException(errorMessage, violations.get());
+            throw new AutomationPackageAccessException(errorMessage, e);
         }
     }
 
     protected void checkAccess(Resource resource, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
         if (writeAccessValidator != null) {
-            Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
-            if (violations.isPresent()) {
-                throw new AutomationPackageAccessException("You're not allowed to edit the linked automation package  " + getLogRepresentation(resource), violations.get());
+            try {
+                writeAccessValidator.validate(resource);
+            } catch (ObjectAccessException e) {
+                throw new AutomationPackageAccessException("You're not allowed to edit the linked automation package  " + getLogRepresentation(resource), e);
             }
         }
     }
@@ -327,18 +334,15 @@ public class AutomationPackageResourceManager {
                                                                   LinkedPackagesReuploader linkedPackagesReuploader) {
         RefreshResourceResult refreshResourceResult = new RefreshResourceResult();
 
-        Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
-        if (violations.isPresent()) {
-            refreshResourceResult.addError("You have no access to resource with id: " + resource.getId() + ". Access denied reason: " + violations.get().getMessage());
+        try {
+            writeAccessValidator.validate(resource);
+        } catch (ObjectAccessException e) {
+            refreshResourceResult.addError("You have no access to resource with id: " + resource.getId() + ". Access denied reason: " + e.getMessage());
             return refreshResourceResult;
         }
 
-        Set<String> supportedResourceTypesForRefresh = Set.of(
-                ResourceManager.RESOURCE_TYPE_AP,
-                ResourceManager.RESOURCE_TYPE_AP_LIBRARY
-        );
-        if (!supportedResourceTypesForRefresh.contains(resource.getResourceType())) {
-            refreshResourceResult.addError("Unsupported resource type for refresh: " + resource.getResourceType() + ". Supported types: " + supportedResourceTypesForRefresh);
+        if (!supportedResourceTypes.contains(resource.getResourceType())) {
+            refreshResourceResult.addError("Unsupported resource type for refresh: " + resource.getResourceType() + ". Supported types: " + supportedResourceTypes);
         }
         if (!MavenArtifactIdentifier.isMvnIdentifierShortString(resource.getOrigin())) {
             refreshResourceResult.addError("Unsupported resource origin for refresh: " + resource.getOrigin() + ". Only maven artefact resources are supported");
@@ -427,8 +431,9 @@ public class AutomationPackageResourceManager {
         }
     }
 
-    public void deleteResource(String resourceId, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
+    public void deleteResource(String resourceId, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException, AutomationPackageUnsuportedResourceTypeException {
         Resource resource = resourceManager.getResource(resourceId);
+        validateResourceType(resource);
         if (resource == null) {
             throw new AutomationPackageManagerException("Resource is not found by id: " + resourceId);
         }
@@ -444,6 +449,12 @@ public class AutomationPackageResourceManager {
         }
 
         resourceManager.deleteResource(resourceId);
+    }
+
+    private void validateResourceType(Resource resource) throws AutomationPackageUnsuportedResourceTypeException {
+        if (!supportedResourceTypes.contains(resource.getResourceType())) {
+            throw new AutomationPackageUnsuportedResourceTypeException(resource.getResourceType(), supportedResourceTypes);
+        }
     }
 
     public List<AutomationPackage> findAutomationPackagesByResourceId(String resourceId, List<ObjectId> ignoredApIds) {
