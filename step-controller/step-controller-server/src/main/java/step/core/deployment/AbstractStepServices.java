@@ -55,8 +55,7 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 	@PostConstruct
 	public void init() throws Exception {
 		configuration = serverContext.getConfiguration();
-        //noinspection unchecked
-        objectHookRegistry = serverContext.get(ObjectHookRegistry.class);
+		objectHookRegistry = serverContext.get(ObjectHookRegistry.class);
 	}
 
 	protected GlobalContext getContext() {

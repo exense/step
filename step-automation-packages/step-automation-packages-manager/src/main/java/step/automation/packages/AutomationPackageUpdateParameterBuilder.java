@@ -156,7 +156,6 @@ public class AutomationPackageUpdateParameterBuilder {
         }
         this.enricher = objectHookRegistry.getObjectEnricher(context);
         this.objectPredicate =  o -> true;
-        //noinspection unchecked
         this.writeAccessValidator = getNoWriteAccessValidator();
         this.async = false;
         this.actorUser = parentParameters.actorUser;
