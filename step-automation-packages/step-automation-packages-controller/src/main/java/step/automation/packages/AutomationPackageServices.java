@@ -118,6 +118,22 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
+    private void auditLog(String operation, Resource resource) {
+        if (resource != null) {
+            AuditLogger.logEntityModification(getHttpSession(), operation, "automation-packages-resources", resource, getObjectEnricher());
+        }
+    }
+
+    private void auditLogForResource(String operation, String resourceId) {
+        if (resourceId != null && AuditLogger.isEntityModificationsLoggingEnabled()) {
+            try {
+                auditLog(operation, automationPackageManager.getResourceManager().getResource(resourceId));
+            } catch (Exception ignored) {
+                // not expected to fail, but let's not crash in case it does
+            }
+        }
+    }
+
     @DELETE
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
@@ -527,6 +543,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     getFileSource(uploadedInputStream, fileDetail, mavenSnippet, "Invalid maven snippet", null),
                     automationPackageUpdateParameter
             );
+            auditLog("create",  resource);
             return resource == null ? null : resource.getId().toHexString();
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
@@ -535,13 +552,15 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
+
+
     @POST
     @Path("/resources/{id}/refresh")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     public RefreshResourceResult refreshAutomationPackageResource(@PathParam("id") String resourceId){
         try {
-           return refreshResourceAndLinkedPackages(resourceId);
+            return refreshResourceAndLinkedPackages(resourceId);
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {
@@ -551,7 +570,11 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
 
     private RefreshResourceResult refreshResourceAndLinkedPackages(String resourceId) {
         AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter();
-        return automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, automationPackageUpdateParameter, automationPackageManager);
+        RefreshResourceResult refreshResourceResult = automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, automationPackageUpdateParameter, automationPackageManager);
+        if (!refreshResourceResult.isFailed()){
+            auditLogForResource("refresh",  resourceId);
+        }
+        return refreshResourceResult;
     }
 
     private AutomationPackageUpdateParameter getAutomationPackageUpdateParameter() {
@@ -571,6 +594,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         Consumer<String> consumer = resourceId -> {
             try {
                 automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
+                auditLogForResource("delete",  resourceId);
             } catch (AutomationPackageUnsupportedResourceTypeException e) {
                 throw new BulkOperationWarningException(e.getMessage());
             }
@@ -596,6 +620,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public void deleteAutomationPackageResource(@PathParam("id") String resourceId) {
         try {
             automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
+            auditLogForResource("delete",  resourceId);
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException | AutomationPackageUnsupportedResourceTypeException e) {
