@@ -46,6 +46,7 @@ import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
+import step.framework.server.audit.AuditLogger;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.BulkOperationWarningException;
@@ -93,7 +94,28 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
+    }
 
+    private void auditLog(String operation, ObjectId apId) {
+        if (apId != null) {
+            auditLog(operation, apId.toString());
+        }
+    }
+
+    private void auditLog(String operation, String apId) {
+        if (apId != null && AuditLogger.isEntityModificationsLoggingEnabled()) {
+            try {
+                auditLog(operation, getAutomationPackage(apId));
+            } catch (Exception ignored) {
+                // not expected to fail, but let's not crash in case it does
+            }
+        }
+    }
+
+    private void auditLog(String operation, AutomationPackage ap) {
+        if (ap != null) {
+            AuditLogger.logEntityModification(getHttpSession(), operation, "automation-packages", ap, getObjectEnricher());
+        }
     }
 
     @DELETE
@@ -110,6 +132,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             assertEntityIsEditableInContext(automationPackage);
             automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),
                     getObjectPredicate(), getWriteAccessValidator());
+            auditLog("delete",  automationPackage);
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (Exception e) {
@@ -178,6 +201,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
             ObjectId id = automationPackageManager.createOrUpdateAutomationPackage(parameters).getId();
+            auditLog("create",  id);
             return id == null ? null : id.toString();
         } catch (AutomationPackageCollisionException e){
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
@@ -312,7 +336,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
                     .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
-            return automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
+            AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
+            auditLog("update", result.getId());
+            return result;
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageCollisionException e) {
@@ -388,6 +414,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
+            auditLog("create-or-update", result.getId());
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(Response.Status.CREATED);

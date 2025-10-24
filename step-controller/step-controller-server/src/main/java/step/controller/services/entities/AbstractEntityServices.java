@@ -14,6 +14,7 @@ import step.core.accessors.Accessor;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
+import step.framework.server.audit.AuditLogger;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
@@ -22,10 +23,7 @@ import step.framework.server.tables.service.TableServiceException;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Spliterator;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -101,7 +99,9 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("/{id}")
     @Secured(right = "{entity}-delete")
     public void delete(@PathParam("id") String id) {
-        assertEntityIsEditableInContext(getEntity(id));
+        T entity = getEntity(id);
+        assertEntityIsEditableInContext(entity);
+        auditLog("delete", entity);
         accessor.remove(new ObjectId(id));
     }
 
@@ -123,7 +123,28 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     public T save(T entity) {
         trackEntityIfApplicable(entity);
         entity = beforeSave(entity);
-        return accessor.save(entity);
+        T result = accessor.save(entity);
+        auditLog("save", result);
+        return result;
+    }
+
+    protected void auditLog(String operation, T entity) {
+        auditLog(operation, entity, null);
+    }
+
+    protected void auditLog(String operation, T entity, Map<String, String> moreAttributes) {
+        if (entity == null || !AuditLogger.isEntityModificationsLoggingEnabled()) {
+            return;
+        }
+        String entityName = null;
+        if (entity instanceof AbstractOrganizableObject) {
+            // this should always be the case
+            AbstractOrganizableObject a = (AbstractOrganizableObject) entity;
+            entityName = a.getAttribute(AbstractOrganizableObject.NAME);
+        }
+        Map<String, String> attributes = new LinkedHashMap<>(Objects.requireNonNullElse(getObjectEnricher().getAdditionalAttributes(), Map.of()));
+        Optional.ofNullable(moreAttributes).ifPresent(attributes::putAll);
+        AuditLogger.logEntityModification(getHttpSession(), operation, this.entityName, entity.getId().toHexString(), entityName, attributes);
     }
 
     private void trackEntityIfApplicable(T entity) {
@@ -165,6 +186,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         }
         // Save the cloned entity
         assertEntityIsEditableInContext(clonedEntity);
+        auditLog("clone", clonedEntity);
         save(clonedEntity);
         return clonedEntity;
     }
@@ -234,7 +256,9 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Path("{id}/restore/{versionId}")
     public T restoreVersion(@PathParam("id") String id, @PathParam("versionId") String versionId) {
         assertEntityIsEditableInContext(getEntity(id));
-        return accessor.restoreVersion(new ObjectId(id), new ObjectId(versionId));
+        T result = accessor.restoreVersion(new ObjectId(id), new ObjectId(versionId));
+        auditLog("restoreVersion", result, Map.of("restoredVersion", versionId));
+        return result;
     }
 
     @Operation(operationId = "is{Entity}Locked", description = "Get entity locking state")
@@ -264,6 +288,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         }
         assertEntityIsEditableInContext(t);
         t.addCustomField(CUSTOM_FIELD_LOCKED, locked);
+        auditLog("set-lock", t, Map.of("locked", Objects.toString(locked)));
         accessor.save(t);
     }
 
