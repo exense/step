@@ -27,7 +27,7 @@ import step.resources.ResourceOrigin;
 import step.resources.ResourceRevisionFileHandle;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Optional;
 
 public class AbstractAutomationPackageFromResourceIdProvider implements AutomationPackageProvider {
 
@@ -72,8 +72,8 @@ public class AbstractAutomationPackageFromResourceIdProvider implements Automati
     }
 
     @Override
-    public List<Resource> lookupExistingResources(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
+    public Optional<Resource> lookupExistingResource(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
         Resource r = resourceManager.getResource(resourceId);
-        return r == null || !objectPredicate.test(r) ? List.of() : List.of(r);
+        return (r == null || !objectPredicate.test(r)) ? Optional.empty() : Optional.of(r);
     }
 }

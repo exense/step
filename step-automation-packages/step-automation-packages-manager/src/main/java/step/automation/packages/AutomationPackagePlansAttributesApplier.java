@@ -57,23 +57,23 @@ public class AutomationPackagePlansAttributesApplier {
                                               String actorUser,
                                               ObjectEnricher objectEnricher, Map<String, Object> extensions,
                                               AutomationPackageOperationMode operationMode) {
-        AutomationPackageContext apContext = prepareContext(newPackage, operationMode, automationPackageArchive, packageContent, actorUser, objectEnricher, extensions);
+        StagingAutomationPackageContext apContext = prepareContext(newPackage, operationMode, automationPackageArchive, packageContent, actorUser, objectEnricher, extensions);
         for (Plan plan : plans) {
             applySpecialValuesForArtifact(plan.getRoot(), apContext);
         }
     }
 
-    protected AutomationPackageContext prepareContext(AutomationPackage automationPackage, AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
+    protected StagingAutomationPackageContext prepareContext(AutomationPackage automationPackage, AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
                                                       String actorUser, ObjectEnricher enricher, Map<String, Object> extensions) {
-        return new AutomationPackageContext(automationPackage, operationMode, resourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
+        return new StagingAutomationPackageContext(automationPackage, operationMode, resourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
     }
 
-    private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageContext apContext) {
+    private void applySpecialValuesForArtifact(AbstractArtefact artifact, StagingAutomationPackageContext apContext) {
         fillResources(artifact, apContext);
         applySpecialValuesForChildren(artifact, apContext);
     }
 
-    private void fillResources(Object object, AutomationPackageContext apContext) {
+    private void fillResources(Object object, StagingAutomationPackageContext apContext) {
         try {
             applyResourcePropertyRecursively(object, apContext);
         } catch (Exception e) {
@@ -101,7 +101,7 @@ public class AutomationPackagePlansAttributesApplier {
         }
     }
 
-    private void applyResourcePropertyRecursively(Object object, AutomationPackageContext apContext) throws InvocationTargetException, IllegalAccessException {
+    private void applyResourcePropertyRecursively(Object object, StagingAutomationPackageContext apContext) throws InvocationTargetException, IllegalAccessException {
         if (object == null) {
             return;
         }
@@ -147,7 +147,7 @@ public class AutomationPackagePlansAttributesApplier {
         }
     }
 
-    private String uploadAutomationPackageResource(String yamlResourceRef, AutomationPackageContext apContext) {
+    private String uploadAutomationPackageResource(String yamlResourceRef, StagingAutomationPackageContext apContext) {
         AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
         Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_DATASOURCE, apContext);
         String result = null;
@@ -157,7 +157,7 @@ public class AutomationPackagePlansAttributesApplier {
         return result;
     }
 
-    private void applySpecialValuesForChildren(AbstractArtefact parent, AutomationPackageContext apContext) {
+    private void applySpecialValuesForChildren(AbstractArtefact parent, StagingAutomationPackageContext apContext) {
         List<AbstractArtefact> children = parent.getChildren();
         if (children != null) {
             for (AbstractArtefact child : children) {

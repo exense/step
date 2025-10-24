@@ -18,13 +18,13 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.AutomationPackageContext;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.functions.Function;
 
 public interface AutomationPackageKeyword {
 
     String KEYWORDS_ENTITY_NAME = "keywords";
 
-    Function prepareKeyword(AutomationPackageContext context);
+    Function prepareKeyword(StagingAutomationPackageContext context);
 
 }

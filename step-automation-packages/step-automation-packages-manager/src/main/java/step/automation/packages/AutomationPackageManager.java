@@ -315,7 +315,7 @@ public class AutomationPackageManager {
         // schedules will be deleted in deleteAdditionalData via hooks
         deleteResources(automationPackage, newPackage, writeAccessValidator);
         deleteAdditionalData(automationPackage, new AutomationPackageContext(automationPackage, operationMode, resourceManager,
-                null,  null, actorUser, null, extensions));
+                null, actorUser, null, extensions));
     }
 
     private Expression getActivationExpression(String apVersion, String activationExpression, String baseApName) {
@@ -447,8 +447,8 @@ public class AutomationPackageManager {
                     log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
                     ObjectId result = updateAutomationPackage(oldPackage, newPackage,
                             packageContent, staging, enricherForIncludedEntities,
-                            immediateWriteLock, automationPackageArchive, apLibraryResourceString,
-                            apsForReupload, automationPackageProvider, apLibraryProvider, parameters);
+                            immediateWriteLock, apLibraryResourceString,
+                            apsForReupload, parameters);
                     return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result, conflictingAutomationPackages);
                 } else {
                     // async update
@@ -460,9 +460,8 @@ public class AutomationPackageManager {
                         try {
                             updateAutomationPackage(
                                     oldPackage, newPackage, packageContent, staging, enricherForIncludedEntities,
-                                    false, automationPackageArchive, apLibraryResourceString,
-                                    apsForReupload, automationPackageProvider,
-                                    apLibraryProvider, parameters
+                                    false, apLibraryResourceString,
+                                    apsForReupload, parameters
                             );
                         } catch (Exception e) {
                             log.error("Exception on delayed AP update", e);
@@ -608,7 +607,7 @@ public class AutomationPackageManager {
             AutomationPackageHook<?> hook = automationPackageHookRegistry.getHook(hookName);
             result.putAll(hook.getEntitiesForAutomationPackage(
                             automationPackageId,
-                            new AutomationPackageContext(automationPackage, operationMode, resourceManager, null, null, null, null, extensions)
+                            new AutomationPackageContext(automationPackage, operationMode, resourceManager, null, null, null, extensions)
                     )
             );
         }
@@ -617,10 +616,9 @@ public class AutomationPackageManager {
 
     private ObjectId updateAutomationPackage(AutomationPackage oldPackage, AutomationPackage newPackage,
                                              AutomationPackageContent packageContent, AutomationPackageStaging staging, ObjectEnricher enricherForIncludedEntities,
-                                             boolean alreadyLocked, AutomationPackageArchive automationPackageArchive,
+                                             boolean alreadyLocked,
                                              String apLibraryResource,
                                              List<ObjectId> additionalPackagesForRedeploy,
-                                             AutomationPackageArchiveProvider apArchiveProvider, AutomationPackageLibraryProvider apLibProvider,
                                              AutomationPackageUpdateParameter parameters) {
         ObjectId mainUpdatedAp = null;
         try {
@@ -635,7 +633,7 @@ public class AutomationPackageManager {
                 deleteAutomationPackageEntities(oldPackage, newPackage, parameters.actorUser, parameters.writeAccessValidator);
             }
             // persist all staged entities
-            persistStagedEntities(newPackage, staging, enricherForIncludedEntities, automationPackageArchive, packageContent, apLibraryResource, parameters.actorUser);
+            persistStagedEntities(newPackage, staging, enricherForIncludedEntities, packageContent, apLibraryResource, parameters.actorUser);
             ObjectId result = automationPackageAccessor.save(newPackage).getId();
             logAfterSave(staging, oldPackage, newPackage);
             mainUpdatedAp = result;
@@ -705,7 +703,7 @@ public class AutomationPackageManager {
             try {
                 boolean hooked = automationPackageHookRegistry.onPrepareStaging(
                         hookEntry.fieldName,
-                        new AutomationPackageContext(newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, apLibraryResourceString, enricherForIncludedEntities, extensions),
+                        new StagingAutomationPackageContext(newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, apLibraryResourceString, enricherForIncludedEntities, extensions),
                         packageContent,
                         hookEntry.values,
                         oldPackage, staging, objectPredicate);
@@ -723,7 +721,6 @@ public class AutomationPackageManager {
 
     protected void persistStagedEntities(AutomationPackage newPackage, AutomationPackageStaging staging,
                                          ObjectEnricher objectEnricher,
-                                         AutomationPackageArchive automationPackageArchive,
                                          AutomationPackageContent packageContent,
                                          String apLibraryResource, String actorUser) {
         List<Resource> stagingResources = staging.getResourceManager().findManyByCriteria(null);
@@ -758,7 +755,7 @@ public class AutomationPackageManager {
             try {
                 boolean hooked = automationPackageHookRegistry.onCreate(
                         hookEntry.fieldName, hookEntry.values,
-                        new AutomationPackageContext(newPackage, operationMode, resourceManager, automationPackageArchive, packageContent, apLibraryResource, objectEnricher, extensions)
+                        new AutomationPackageContext(newPackage, operationMode, resourceManager, packageContent, apLibraryResource, objectEnricher, extensions)
                 );
                 if (!hooked) {
                     log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
@@ -812,7 +809,7 @@ public class AutomationPackageManager {
 
     protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
                                                      AutomationPackage oldPackage, ResourceManager stagingResourceManager, String apLibraryResourceString) {
-        AutomationPackageContext apContext = new AutomationPackageContext(newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, apLibraryResourceString, enricher, extensions);
+        StagingAutomationPackageContext apContext = new StagingAutomationPackageContext(newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, apLibraryResourceString, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids

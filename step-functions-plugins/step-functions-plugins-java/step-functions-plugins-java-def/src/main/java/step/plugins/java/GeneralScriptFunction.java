@@ -19,7 +19,7 @@
 package step.plugins.java;
 
 import step.automation.packages.AutomationPackage;
-import step.automation.packages.AutomationPackageContext;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AutomationPackageContextual;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
@@ -90,7 +90,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 	}
 
 	@Override
-	public GeneralScriptFunction applyAutomationPackageContext(AutomationPackageContext context) {
+	public GeneralScriptFunction applyAutomationPackageContext(StagingAutomationPackageContext context) {
 		if (getScriptFile().get() == null || getScriptFile().get().isEmpty()) {
 			AutomationPackage ap = context.getAutomationPackage();
 			if (ap != null && ap.getAutomationPackageResource() != null && !ap.getAutomationPackageResource().isEmpty()) {

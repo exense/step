@@ -18,13 +18,10 @@
  ******************************************************************************/
 package step.plugins.functions.types.automation;
 
-import step.automation.packages.AutomationPackageContext;
-import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
@@ -58,7 +55,7 @@ public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunctio
     }
 
     @Override
-    protected void fillDeclaredFields(CompositeFunction res, AutomationPackageContext context) {
+    protected void fillDeclaredFields(CompositeFunction res, StagingAutomationPackageContext context) {
         super.fillDeclaredFields(res, context);
         if (plan != null) {
             res.setPlan(yamlPlanToPlan(plan));

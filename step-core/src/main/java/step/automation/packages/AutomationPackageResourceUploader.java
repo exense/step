@@ -37,7 +37,7 @@ public class AutomationPackageResourceUploader {
 
     public String applyResourceReference(String resourceReference,
                                          String resourceType,
-                                         AutomationPackageContext context) {
+                                         StagingAutomationPackageContext context) {
         String result = null;
         if (resourceReference != null && !resourceReference.startsWith(FileResolver.RESOURCE_PREFIX)) {
             Resource resource = uploadResourceFromAutomationPackage(resourceReference, resourceType, context);
@@ -52,7 +52,7 @@ public class AutomationPackageResourceUploader {
 
     public Resource uploadResourceFromAutomationPackage(String resourcePath,
                                                          String resourceType,
-                                                         AutomationPackageContext context) {
+                                                         StagingAutomationPackageContext context) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
 

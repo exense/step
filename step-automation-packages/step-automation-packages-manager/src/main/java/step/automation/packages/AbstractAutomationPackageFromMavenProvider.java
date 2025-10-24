@@ -29,7 +29,7 @@ import step.resources.ResourceManager;
 import step.resources.ResourceOrigin;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Optional;
 
 public abstract class AbstractAutomationPackageFromMavenProvider implements AutomationPackageProvider {
 
@@ -57,10 +57,10 @@ public abstract class AbstractAutomationPackageFromMavenProvider implements Auto
     }
 
     protected ResolvedMavenArtifact getResolvedMavenArtefact() throws AutomationPackageReadingException {
-        List<Resource> existingResource = lookupExistingResources(resourceManager, objectPredicate);
+        Optional<Resource> existingResource = lookupExistingResource(resourceManager, objectPredicate);
 
-        if (existingResource != null && !existingResource.isEmpty()) {
-            Resource resource = existingResource.get(0);
+        if (existingResource.isPresent()) {
+            Resource resource = existingResource.get();
 
             // If an artefact resource with the same origin is found. If it is a snapshot with a newer version available, we fetch it
             // Otherwise we reuse the same resource

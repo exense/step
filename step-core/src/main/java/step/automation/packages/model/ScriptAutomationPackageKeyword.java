@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.AutomationPackageContext;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.functions.Function;
 
 public class ScriptAutomationPackageKeyword implements AutomationPackageKeyword {
@@ -34,7 +34,7 @@ public class ScriptAutomationPackageKeyword implements AutomationPackageKeyword 
     }
 
     @Override
-    public Function prepareKeyword(AutomationPackageContext context) {
+    public Function prepareKeyword(StagingAutomationPackageContext context) {
         if (keyword instanceof AutomationPackageContextual) {
             return ((AutomationPackageContextual<Function>) keyword).applyAutomationPackageContext(context);
         } else {

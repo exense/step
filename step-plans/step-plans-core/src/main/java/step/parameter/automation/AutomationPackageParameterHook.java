@@ -76,7 +76,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
             try {
                 getParameterManager(context.getExtensions()).save(entity, null, null);
             } catch (ParameterManagerException e) {
-                log.error("The automation package parameter {} cannot be saved for automation package {}.", entity.getKey(), context.getAutomationPackageArchive().getOriginalFileName(), e);
+                log.error("The automation package parameter {} cannot be saved for automation package {}.", entity.getKey(), context.getPackageContent().getName(), e);
                 throw new ParameterManagerException("The automation package parameter " + entity.getKey() + " cannot be saved: " + e.getMessage());
             }
         }

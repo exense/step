@@ -6,7 +6,7 @@ import step.core.AbstractContext;
 import step.core.objectenricher.*;
 
 import java.util.Map;
-import java.util.Optional;
+import static step.core.objectenricher.WriteAccessValidator.NO_CHECKS_VALIDATOR;
 
 public class AutomationPackageUpdateParameterBuilder {
     private boolean allowUpdate = true;
@@ -142,8 +142,7 @@ public class AutomationPackageUpdateParameterBuilder {
         this.automationPackageVersion = oldPackage.getVersion();
         this.activationExpression = oldPackage.getActivationExpression() != null ? oldPackage.getActivationExpression().getScript() : null;
 
-        //We need to rebuild the context to get the proper object enricher
-        //For redeployment of linked package we assume that if they reference the resource that got updated, we are allowed to refresh them
+        //We need to rebuild the context to get the proper object enricher of the provided package
         AbstractContext context = new AbstractContext() { };
         try {
             objectHookRegistry.rebuildContext(context, oldPackage);
@@ -152,8 +151,9 @@ public class AutomationPackageUpdateParameterBuilder {
             throw new RuntimeException(errorMessage, e);
         }
         this.enricher = objectHookRegistry.getObjectEnricher(context);
+        //The access checks ensure that we can modify the resources used by automation packages. Reloading automation package that chose to use these resources is always allowed
         this.objectPredicate =  o -> true;
-        this.writeAccessValidator = getNoWriteAccessValidator();
+        this.writeAccessValidator = NO_CHECKS_VALIDATOR;
         this.async = false;
         this.actorUser = parentParameters.actorUser;
         this.allowUpdateOfOtherPackages = false;
@@ -182,13 +182,9 @@ public class AutomationPackageUpdateParameterBuilder {
      */
     public AutomationPackageUpdateParameterBuilder forJunit() {
         this.objectPredicate = o -> true;
-        this.writeAccessValidator = getNoWriteAccessValidator();
+        this.writeAccessValidator = NO_CHECKS_VALIDATOR;
         this.actorUser = "testUser";
         return this;
-    }
-
-    public static WriteAccessValidator getNoWriteAccessValidator() {
-        return new WriteAccessValidator() {};
     }
 
     /**
@@ -197,7 +193,7 @@ public class AutomationPackageUpdateParameterBuilder {
     public AutomationPackageUpdateParameterBuilder forLocalExecution() {
         this.isLocalPackage = true;
         this.objectPredicate = o -> true;
-        this.writeAccessValidator = getNoWriteAccessValidator();
+        this.writeAccessValidator = NO_CHECKS_VALIDATOR;
         this.explicitOldId = null;
         this.async = false;
         this.actorUser = null;

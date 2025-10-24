@@ -25,23 +25,26 @@ import step.resources.ResourceOrigin;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Optional;
 
 public interface AutomationPackageProvider extends Closeable {
 
     ResourceOrigin getOrigin();
 
     default boolean isModifiableResource() {
-        return getOrigin() == null ? false : getOrigin().isModifiable();
+        return getOrigin() != null && getOrigin().isModifiable();
     }
 
     default boolean canLookupResources() {
-        return getOrigin() == null ? false : getOrigin().isIdentifiable();
+        return getOrigin() != null && getOrigin().isIdentifiable();
     }
 
-    default List<Resource> lookupExistingResources(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
+    default Optional<Resource> lookupExistingResource(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
         // by default, we look up resources by resource origin
         if (canLookupResources() && getOrigin() != null) {
-            return resourceManager.getResourcesByOrigin(getOrigin().toStringRepresentation(), objectPredicate, getResourceType());
+            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(getOrigin().toStringRepresentation(), objectPredicate, getResourceType());
+            // Resource by origin are unique and only so at max one resrouce should be found. It is however not the role of this method to validate it, so no check is done here
+            return (resourcesByOrigin.isEmpty()) ?  Optional.empty() : Optional.of(resourcesByOrigin.get(0));
         } else {
             throw new UnsupportedOperationException("Resources cannot be looked up for provider " + this.getClass().getSimpleName());
         }

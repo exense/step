@@ -544,7 +544,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         Consumer<String> consumer = resourceId -> {
             try {
                 automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
-            } catch (AutomationPackageUnsuportedResourceTypeException e) {
+            } catch (AutomationPackageUnsupportedResourceTypeException e) {
                 throw new BulkOperationWarningException(e.getMessage());
             }
         };
@@ -571,7 +571,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
-        } catch (AutomationPackageManagerException | AutomationPackageUnsuportedResourceTypeException e) {
+        } catch (AutomationPackageManagerException | AutomationPackageUnsupportedResourceTypeException e) {
             throw new ControllerServiceException(e.getMessage(), e);
         }
     }

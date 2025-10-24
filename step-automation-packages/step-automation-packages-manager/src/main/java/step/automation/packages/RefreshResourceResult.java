@@ -24,9 +24,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RefreshResourceResult {
+
     private ResultStatus resultStatus = ResultStatus.NOT_REQUIRED;
     private final List<String> errorMessages = new ArrayList<>();
     private final List<String> infoMessages = new ArrayList<>();
+
+    public enum ResultStatus {
+        REFRESHED,
+        NOT_REQUIRED,
+        FAILED
+    }
 
     public void addError(String errorMessage) {
         resultStatus = ResultStatus.FAILED;
@@ -55,11 +62,5 @@ public class RefreshResourceResult {
 
     public List<String> getInfoMessages() {
         return infoMessages;
-    }
-
-    public enum ResultStatus {
-        REFRESHED,
-        NOT_REQUIRED,
-        FAILED
     }
 }

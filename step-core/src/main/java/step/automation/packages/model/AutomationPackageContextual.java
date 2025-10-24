@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.AutomationPackageContext;
+import step.automation.packages.StagingAutomationPackageContext;
 
 public interface AutomationPackageContextual<T> {
-    T applyAutomationPackageContext(AutomationPackageContext context);
+    T applyAutomationPackageContext(StagingAutomationPackageContext context);
 }

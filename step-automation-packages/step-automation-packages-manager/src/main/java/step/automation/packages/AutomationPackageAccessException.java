@@ -42,13 +42,13 @@ public class AutomationPackageAccessException extends AutomationPackageManagerEx
     }
 
     private static String getErrorMessage(AutomationPackage automationPackage, String additionalMessage, ObjectAccessException objectAccessException){
-        String finalMessage = getCommonErrorMessage(automationPackage);
+        StringBuilder finalMessage = new StringBuilder(getCommonErrorMessage(automationPackage));
         if(additionalMessage != null){
-            finalMessage += ". " + additionalMessage;
+            finalMessage.append(". ").append(additionalMessage);
         }
         if (objectAccessException != null) {
-            finalMessage += ". Access violation reason: " + objectAccessException.getMessage();
+            finalMessage.append(". Access violation reason: ").append(objectAccessException.getMessage());
         }
-        return finalMessage;
+        return finalMessage.toString();
     }
 }
