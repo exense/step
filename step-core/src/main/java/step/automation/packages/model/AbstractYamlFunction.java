@@ -19,7 +19,7 @@
 package step.automation.packages.model;
 
 import jakarta.json.JsonObject;
-import step.automation.packages.AutomationPackageContext;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.core.yaml.YamlModelUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
@@ -106,7 +106,7 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
         this.name = name;
     }
 
-    protected void fillDeclaredFields(T res, AutomationPackageContext context){
+    protected void fillDeclaredFields(T res, StagingAutomationPackageContext context){
         res.addAttribute(AbstractOrganizableObject.NAME, this.getName());
         copyFieldsToObject(res, true);
     }
@@ -114,7 +114,7 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
     protected abstract T createFunctionInstance();
 
     @Override
-    public T applyAutomationPackageContext(AutomationPackageContext context) {
+    public T applyAutomationPackageContext(StagingAutomationPackageContext context) {
         T res = createFunctionInstance();
         fillDeclaredFields(res, context);
         return res;

@@ -45,7 +45,7 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
                                                                                           AutomationPackageLibraryProvider apLibraryProvider,
                                                                                           ResourceManager resourceManager) throws AutomationPackageReadingException {
         return new MockedAutomationPackageFromMavenProvider(apReaderRegistry,
-                mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(predicate),
+                mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(),
                 apFileSource.getMavenArtifactIdentifier(),
                 apLibraryProvider
         );
@@ -54,7 +54,7 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
     @Override
     protected AutomationPackageLibraryFromMavenProvider createAutomationPackageLibraryFromMavenProvider(AutomationPackageFileSource apLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider, ResourceManager resourceManager) throws AutomationPackageReadingException {
         return new MockedAutomationPackageLibraryFromMavenProvider(mavenConfigProvider == null ? null :
-                mavenConfigProvider.getConfig(predicate), apLibrarySource.getMavenArtifactIdentifier(),
+                mavenConfigProvider.getConfig(), apLibrarySource.getMavenArtifactIdentifier(),
                 resourceManager, predicate);
     }
 

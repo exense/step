@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.plugins.java.automation;
 
-import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.AutomationPackageResourceUploader;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
@@ -41,7 +41,7 @@ public class YamlGeneralScriptFunction extends AbstractYamlFunction<GeneralScrip
     private GeneralFunctionScriptLanguage scriptLanguage = null;
 
     @Override
-    protected void fillDeclaredFields(GeneralScriptFunction res, AutomationPackageContext context) {
+    protected void fillDeclaredFields(GeneralScriptFunction res, StagingAutomationPackageContext context) {
         super.fillDeclaredFields(res, context);
         if (scriptLanguage != null) {
             res.setScriptLanguage(new DynamicValue<>(scriptLanguage.name()));

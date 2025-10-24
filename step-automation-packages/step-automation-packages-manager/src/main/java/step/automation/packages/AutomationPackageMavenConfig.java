@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.core.objectenricher.ObjectPredicate;
-
 import java.io.File;
 import java.time.Duration;
 
@@ -70,6 +68,6 @@ public class AutomationPackageMavenConfig {
     }
 
     public interface ConfigProvider {
-        AutomationPackageMavenConfig getConfig(ObjectPredicate objectPredicate);
+        AutomationPackageMavenConfig getConfig();
     }
 }

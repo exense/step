@@ -130,7 +130,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
             throw new AutomationPackageManagerException("The requested Automation Package file has been removed by the housekeeping (package name '" + apName + "' and execution context " + contextId + ")");
         }
 
-        return getAutomationPackageFileByResource(contextId, resource, objectPredicate);
+        return getAutomationPackageFileByResource(contextId, resource);
     }
 
     @Override

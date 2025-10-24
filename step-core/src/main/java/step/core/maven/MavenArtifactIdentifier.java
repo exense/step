@@ -128,12 +128,16 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
      * @param shortString the maven identifier in string format ('mvn:artifactId:groupId:version:classifier:type'). Classifier and type are optional
      */
     public static MavenArtifactIdentifier fromShortString(String shortString){
-        if(shortString != null && shortString.startsWith(MVN_PREFIX + ":")) {
+        if(isMvnIdentifierShortString(shortString)) {
             String[] split = shortString.split(":");
             return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null, split.length >= 6 ? split[5] : null);
         } else {
             throw new IllegalArgumentException("Invalid maven identifier: " + shortString);
         }
+    }
+
+    public static boolean isMvnIdentifierShortString(String shortString){
+        return shortString != null && shortString.startsWith(MVN_PREFIX + ":");
     }
     
     public String toShortString() {

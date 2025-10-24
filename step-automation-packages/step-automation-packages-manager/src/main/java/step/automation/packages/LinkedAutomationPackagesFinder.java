@@ -25,17 +25,14 @@ import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.WriteAccessValidator;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceOrigin;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LinkedAutomationPackagesFinder {
@@ -62,14 +59,6 @@ public class LinkedAutomationPackagesFinder {
             if (conflictingAutomationPackages.apWithSameOriginExists() || conflictingAutomationPackages.apWithSameLibraryExists()) {
                 throw new AutomationPackageCollisionException(apsForReupload, conflictingAutomationPackages.getApWithSameLibrary());
             }
-        } else {
-            // even if allowUpdateOfOtherPackages flag is set we have to check if current user has enough permissions to modify these automation packages
-            if (apsForReupload != null) {
-                for (ObjectId apId : apsForReupload) {
-                    AutomationPackage apForReupload = automationPackageManager.automationPackageAccessor.get(apId);
-                    automationPackageManager.checkAccess(apForReupload, writeAccessValidator);
-                }
-            }
         }
         return conflictingAutomationPackages;
     }
@@ -87,9 +76,9 @@ public class LinkedAutomationPackagesFinder {
         List<ObjectId> automationPackagesWithSameOrigin = new ArrayList<>();
         ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
         if (apOrigin != null && automationPackageProvider.canLookupResources() && automationPackageProvider.isModifiableResource() && automationPackageProvider.hasNewContent()) {
-            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate);
+            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate, ResourceManager.RESOURCE_TYPE_AP);
             for (Resource resource : resourcesByOrigin) {
-              automationPackagesWithSameOrigin.addAll(findAutomationPackagesByResourceId(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
+              automationPackagesWithSameOrigin.addAll(findAutomationPackagesIdsByResourceId(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
             }
             conflictingAutomationPackages.setApWithSameOrigin(automationPackagesWithSameOrigin);
         }
@@ -97,16 +86,16 @@ public class LinkedAutomationPackagesFinder {
         Set<ObjectId> apWithSameLibrary = new HashSet<>();
         ResourceOrigin apLibOrigin = apLibProvider == null ? null : apLibProvider.getOrigin();
         if (apLibOrigin != null && apLibProvider.canLookupResources() && apLibProvider.isModifiableResource() && apLibProvider.hasNewContent()) {
-            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apLibOrigin.toStringRepresentation(), objectPredicate);
+            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apLibOrigin.toStringRepresentation(), objectPredicate, ResourceManager.RESOURCE_TYPE_AP_LIBRARY);
             for (Resource resource : resourcesByOrigin) {
-                apWithSameLibrary.addAll(findAutomationPackagesByResourceId(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
+                apWithSameLibrary.addAll(findAutomationPackagesIdsByResourceId(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
             }
             conflictingAutomationPackages.setApWithSameLibrary(new ArrayList<>(apWithSameLibrary));
         }
         return conflictingAutomationPackages;
     }
 
-    public Set<ObjectId> findAutomationPackagesByResourceId(String resourceId, List<ObjectId> ignoredApIds){
+    public Set<ObjectId> findAutomationPackagesIdsByResourceId(String resourceId, List<ObjectId> ignoredApIds) {
         Set<ObjectId> result = new HashSet<>();
         result.addAll(automationPackageAccessor.findByAutomationPackageResource(FileResolver.RESOURCE_PREFIX + resourceId).stream()
                 .map(AbstractIdentifiableObject::getId)
@@ -117,5 +106,13 @@ public class LinkedAutomationPackagesFinder {
                 .filter(ap -> !ignoredApIds.contains(ap))
                 .collect(Collectors.toList()));
         return result;
+    }
+
+    public List<AutomationPackage> findAutomationPackagesByResourceId(String resourceId, List<ObjectId> ignoredApIds) {
+        return findAutomationPackagesIdsByResourceId(resourceId, ignoredApIds)
+                .stream()
+                .map(automationPackageAccessor::get)
+                .sorted(Comparator.comparing(o -> o.getAttribute(AbstractOrganizableObject.NAME)))
+                .collect(Collectors.toList());
     }
 }

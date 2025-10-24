@@ -41,14 +41,17 @@ import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
+import step.core.entities.EntityManager;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
+import step.framework.server.tables.service.bulk.BulkOperationWarningException;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
+import step.resources.Resource;
 
 import java.io.InputStream;
 import java.util.List;
@@ -482,6 +485,108 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 tableService.performBulkOperation(AutomationPackageEntity.entityName, request, consumer, getSession()));
     }
 
+    @POST
+    @Path("/resources")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Secured(right = "automation-package-write")
+    public String createNewAutomationPackageResource(@FormDataParam("resourceType") String resourceType,
+                                                     @FormDataParam("file") InputStream uploadedInputStream,
+                                                     @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                     @FormDataParam("mavenSnippet") String mavenSnippet){
+        try {
+            AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter();
+            Resource resource = automationPackageManager.createAutomationPackageResource(
+                    resourceType,
+                    getFileSource(uploadedInputStream, fileDetail, mavenSnippet, "Invalid maven snippet", null),
+                    automationPackageUpdateParameter
+            );
+            return resource == null ? null : resource.getId().toHexString();
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
 
+    @POST
+    @Path("/resources/{id}/refresh")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-write")
+    public RefreshResourceResult refreshAutomationPackageResource(@PathParam("id") String resourceId){
+        try {
+           return refreshResourceAndLinkedPackages(resourceId);
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
 
+    private RefreshResourceResult refreshResourceAndLinkedPackages(String resourceId) {
+        AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter();
+        return automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, automationPackageUpdateParameter, automationPackageManager);
+    }
+
+    private AutomationPackageUpdateParameter getAutomationPackageUpdateParameter() {
+        return new AutomationPackageUpdateParameterBuilder()
+                .withEnricher(getObjectEnricher())
+                .withObjectPredicate(getObjectPredicate())
+                .withWriteAccessValidator(getWriteAccessValidator())
+                .withActorUser(getUser()).build();
+    }
+
+    @POST
+    @Path("/resources/bulk/delete")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-delete")
+    public AsyncTaskStatus<TableBulkOperationReport> bulkDeleteAutomationPackageResource(TableBulkOperationRequest request) {
+        Consumer<String> consumer = resourceId -> {
+            try {
+                automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
+            } catch (AutomationPackageUnsupportedResourceTypeException e) {
+                throw new BulkOperationWarningException(e.getMessage());
+            }
+        };
+        return scheduleAsyncTaskWithinSessionContext(h ->
+                tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
+    }
+
+    @POST
+    @Path("/resources/bulk/refresh")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-write")
+    public AsyncTaskStatus<TableBulkOperationReport> bulkRefreshAutomationPackageResource(TableBulkOperationRequest request) {
+        Consumer<String> consumer = this::refreshResourceAndLinkedPackages;
+        return scheduleAsyncTaskWithinSessionContext(h ->
+                tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
+    }
+
+    @DELETE
+    @Path("/resources/{id}")
+    @Secured(right = "automation-package-delete")
+    public void deleteAutomationPackageResource(@PathParam("id") String resourceId) {
+        try {
+            automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
+        } catch (AutomationPackageAccessException ex) {
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException | AutomationPackageUnsupportedResourceTypeException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
+
+    @GET
+    @Path("/resources/{id}/automation-packages")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-read")
+    public List<AutomationPackage> getLinkedAutomationPackagesForResource(@PathParam("id") String resourceId) {
+        try {
+            return automationPackageManager.getAutomationPackageResourceManager().findAutomationPackagesByResourceId(resourceId, List.of());
+        } catch (AutomationPackageAccessException ex) {
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
 }

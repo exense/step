@@ -37,6 +37,7 @@ public class AutomationPackageCollisionException extends AutomationPackageManage
     }
 
     public static String createErrorMessage(List<ObjectId> automationPackagesWithSameOrigin, List<ObjectId> automationPackagesWithSameKeywordLib) {
+        // TODO: add the automation package name to message
         String res = "";
         boolean newLineRequired = false;
         if (automationPackagesWithSameOrigin != null && !automationPackagesWithSameOrigin.isEmpty()) {

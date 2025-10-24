@@ -29,9 +29,8 @@ public class AutomationPackageContext {
     public static final String PLAN_ACCESSOR = "planAccessor";
     public static final String FUNCTION_ACCESSOR = "functionAccessor";
 
-    private ResourceManager resourceManager;
-    private AutomationPackageArchive automationPackageArchive;
-    private AutomationPackageContent packageContent;
+    private final ResourceManager resourceManager;
+    private final AutomationPackageContent packageContent;
 
     private String actorUser;
     private ObjectEnricher enricher;
@@ -46,13 +45,11 @@ public class AutomationPackageContext {
     public AutomationPackageContext(AutomationPackage automationPackage,
                                     AutomationPackageOperationMode operationMode,
                                     ResourceManager resourceManager,
-                                    AutomationPackageArchive automationPackageArchive,
                                     AutomationPackageContent packageContent, String actorUser,
                                     ObjectEnricher enricher, Map<String, Object> extensions) {
         this.automationPackage = automationPackage;
         this.operationMode = Objects.requireNonNull(operationMode);
         this.resourceManager = resourceManager;
-        this.automationPackageArchive = automationPackageArchive;
         this.packageContent = packageContent;
         this.actorUser = actorUser;
         this.enricher = enricher;
@@ -61,10 +58,6 @@ public class AutomationPackageContext {
 
     public ResourceManager getResourceManager() {
         return resourceManager;
-    }
-
-    public AutomationPackageArchive getAutomationPackageArchive() {
-        return automationPackageArchive;
     }
 
     public ObjectEnricher getEnricher() {

@@ -56,9 +56,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static step.automation.packages.AutomationPackageUpdateParameterBuilder.getNoWriteAccessValidator;
 import static step.automation.packages.execution.IsolatedAutomationPackageRepository.CONTEXT_ID_CUSTOM_FIELD;
 import static step.automation.packages.execution.IsolatedAutomationPackageRepository.LAST_EXECUTION_TIME_CUSTOM_FIELD;
+import static step.core.objectenricher.WriteAccessValidator.NO_CHECKS_VALIDATOR;
 import static step.planbuilder.BaseArtefacts.callPlan;
 
 public abstract class RepositoryWithAutomationPackageSupport extends AbstractRepository {
@@ -193,7 +193,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         }
     }
 
-    protected AutomationPackageFile getAutomationPackageFileByResource(String contextId, Resource resource, ObjectPredicate objectPredicate) {
+    protected AutomationPackageFile getAutomationPackageFileByResource(String contextId, Resource resource) {
         File file = null;
 
         ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(resource.getId().toString());
@@ -201,7 +201,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             file = fileHandle.getResourceFile();
         }
         if (file == null || !file.exists()) {
-            if (!tryToReloadResourceFromMaven(resource, objectPredicate)) {
+            if (!tryToReloadResourceFromMaven(resource)) {
                 throw new AutomationPackageManagerException("Automation package file is not found for execution context " + contextId);
             }
         }
@@ -363,20 +363,20 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             } else {
                 return null;
             }
-            return getAutomationPackageFileByResource(contextId, resource, objectPredicate);
+            return getAutomationPackageFileByResource(contextId, resource);
         }
     }
 
-    protected boolean tryToReloadResourceFromMaven(Resource resource, ObjectPredicate objectPredicate) {
+    protected boolean tryToReloadResourceFromMaven(Resource resource) {
         File file;
         if (resource.getOrigin() != null && resource.getOrigin().startsWith(MavenArtifactIdentifier.MVN_PREFIX)) {
             MavenArtifactIdentifier mavenArtifactIdentifier = MavenArtifactIdentifier.fromShortString(resource.getOrigin());
-            if (!mavenArtifactIdentifier.isSnapshot()) {
+            if (mavenArtifactIdentifier.isSnapshot()) {
                 log.warn("The maven artifact {} cannot be reloaded, because it is SNAPSHOT", mavenArtifactIdentifier.toStringRepresentation());
             } else {
                 try {
                     // restore the automation package file from maven
-                    file = MavenArtifactDownloader.getFile(manager.getMavenConfig(objectPredicate), mavenArtifactIdentifier, null).artifactFile;
+                    file = MavenArtifactDownloader.getFile(manager.getMavenConfig(), mavenArtifactIdentifier, null).artifactFile;
                     try (FileInputStream fis = new FileInputStream(file)) {
                         resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
                         return true;
@@ -407,7 +407,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                     .withAllowUpdate(false)
                     .withApSource(AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()))
                     .withEnricher(enricher).withObjectPredicate(predicate)
-                    .withWriteAccessValidator(getNoWriteAccessValidator()) //this is read only and inMemory anyway
+                    .withWriteAccessValidator(NO_CHECKS_VALIDATOR) //this is read only and inMemory anyway
                     .withActorUser(actorUser);
 
             if (kwLibFis != null) {

@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.AutomationPackageContext;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.functions.Function;
 
 public class YamlAutomationPackageKeyword implements AutomationPackageKeyword {
@@ -38,7 +38,7 @@ public class YamlAutomationPackageKeyword implements AutomationPackageKeyword {
     }
 
     @Override
-    public Function prepareKeyword(AutomationPackageContext context) {
+    public Function prepareKeyword(StagingAutomationPackageContext context) {
         return yamlKeyword.applyAutomationPackageContext(context);
     }
 }

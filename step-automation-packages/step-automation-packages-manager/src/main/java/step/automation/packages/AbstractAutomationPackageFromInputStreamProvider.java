@@ -24,7 +24,7 @@ import step.resources.UploadedResourceOrigin;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class AbstractAutomationPackageFromInputStreamProvider implements AutomationPackageProvider {
+public abstract class AbstractAutomationPackageFromInputStreamProvider implements AutomationPackageProvider {
 
     protected InputStreamToTempFileDownloader.TempFile tempFile;
 

@@ -18,8 +18,8 @@
  ******************************************************************************/
 package step.plugins.jmeter.automation;
 
-import step.automation.packages.AutomationPackageContext;
 import step.automation.packages.AutomationPackageResourceUploader;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
@@ -42,7 +42,7 @@ public class YamlJMeterFunction extends AbstractYamlFunction<JMeterFunction> {
     }
 
     @Override
-    protected void fillDeclaredFields(JMeterFunction function, AutomationPackageContext context) {
+    protected void fillDeclaredFields(JMeterFunction function, StagingAutomationPackageContext context) {
         super.fillDeclaredFields(function, context);
         AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
 

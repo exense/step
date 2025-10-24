@@ -28,6 +28,7 @@ import step.automation.packages.library.*;
 import step.automation.packages.model.AutomationPackageKeyword;
 import step.commons.activation.Expression;
 import step.core.AbstractStepContext;
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
 import step.core.entities.Entity;
@@ -49,9 +50,7 @@ import step.plugins.functions.types.CompositeFunction;
 import step.resources.*;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -79,6 +78,7 @@ public class AutomationPackageManager {
     protected final ResourceManager resourceManager;
     protected final AutomationPackageHookRegistry automationPackageHookRegistry;
     private final LinkedAutomationPackagesFinder linkedAutomationPackagesFinder;
+    private final AutomationPackageResourceManager automationPackageResourceManager;
     protected DefaultProvidersResolver providersResolver;
     protected boolean isIsolated = false;
     protected final AutomationPackageLocks automationPackageLocks;
@@ -87,6 +87,7 @@ public class AutomationPackageManager {
     private final ExecutorService delayedUpdateExecutor = Executors.newCachedThreadPool();
     public final AutomationPackageOperationMode operationMode;
     private final int maxParallelVersionsPerPackage;
+    private final ObjectHookRegistry objectHookRegistry;
 
 
     /**
@@ -105,7 +106,8 @@ public class AutomationPackageManager {
                                      AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                      AutomationPackageLocks automationPackageLocks,
                                      AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
-                                     int maxParallelVersionsPerPackage) {
+                                     int maxParallelVersionsPerPackage,
+                                     ObjectHookRegistry objectHookRegistry) {
         this.automationPackageAccessor = automationPackageAccessor;
 
         this.functionManager = functionManager;
@@ -129,7 +131,9 @@ public class AutomationPackageManager {
 
         this.linkedAutomationPackagesFinder = new LinkedAutomationPackagesFinder(this.resourceManager, this.automationPackageAccessor);
         this.maxParallelVersionsPerPackage = maxParallelVersionsPerPackage;
+        this.objectHookRegistry = objectHookRegistry;
 
+        this.automationPackageResourceManager = new AutomationPackageResourceManager(resourceManager, operationMode, automationPackageAccessor, linkedAutomationPackagesFinder, mavenConfigProvider == null ? null : mavenConfigProvider.getConfig());
         addDefaultExtensions();
     }
 
@@ -160,7 +164,7 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry, automationPackageReaderRegistry,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
-                null, -1
+                null, -1, null
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -199,7 +203,7 @@ public class AutomationPackageManager {
                 extensions,
                 hookRegistry, automationPackageReaderRegistry,
                 new AutomationPackageLocks(DEFAULT_READLOCK_TIMEOUT_SECONDS),
-                mavenConfigProvider, -1
+                mavenConfigProvider, -1, null
         );
         automationPackageManager.isIsolated = true;
         return automationPackageManager;
@@ -214,7 +218,7 @@ public class AutomationPackageManager {
                                                                               AutomationPackageReaderRegistry automationPackageReaderRegistry,
                                                                               AutomationPackageLocks locks,
                                                                               AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
-                                                                              int maxParallelVersionsPerPackage
+                                                                              int maxParallelVersionsPerPackage, ObjectHookRegistry objectHookRegistry
     ) {
         Map<String, Object> extensions = new HashMap<>();
         hookRegistry.onMainAutomationPackageManagerCreate(extensions);
@@ -229,7 +233,8 @@ public class AutomationPackageManager {
                 automationPackageReaderRegistry,
                 locks,
                 mavenConfigProvider,
-                maxParallelVersionsPerPackage
+                maxParallelVersionsPerPackage,
+                objectHookRegistry
         );
     }
 
@@ -310,7 +315,7 @@ public class AutomationPackageManager {
         // schedules will be deleted in deleteAdditionalData via hooks
         deleteResources(automationPackage, newPackage, writeAccessValidator);
         deleteAdditionalData(automationPackage, new AutomationPackageContext(automationPackage, operationMode, resourceManager,
-                null,  null, actorUser, null, extensions));
+                null, actorUser, null, extensions));
     }
 
     private Expression getActivationExpression(String apVersion, String activationExpression, String baseApName) {
@@ -372,8 +377,8 @@ public class AutomationPackageManager {
 
             //Implement limit on parallel deployments of multiple version of the same AP (based on its base name, i.e. without AP version appened to it)
             //Limit is only applied for a value greater than 0
-            if (maxParallelVersionsPerPackage > 0) {
-                List<AutomationPackage> otherVersions = findOtherVersionsOfPackage(parameters.explicitOldId, parameters.objectPredicate, packageContent);
+            if (maxParallelVersionsPerPackage > 0 && !parameters.isRedeployment) {
+                List<AutomationPackage> otherVersions = findOtherVersionsOfPackage(Optional.ofNullable(oldPackage).map(AbstractIdentifiableObject::getId).orElse(null), parameters.objectPredicate, packageContent);
                 if (otherVersions.size() >= maxParallelVersionsPerPackage) {
                     throw new AutomationPackageManagerException("The maximum number of parallel versions (" + maxParallelVersionsPerPackage + ") is reached for the package '" + packageContent.getBaseName() + "'. You must clean up older versions of this package before deploying new ones, or contact your administrator to increase this limit.");
                 }
@@ -397,7 +402,6 @@ public class AutomationPackageManager {
                 conflictingAutomationPackages = new ConflictingAutomationPackages();
             }
 
-            ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
             // keep old package id
             newPackage = createNewInstance(
                     automationPackageArchive.getOriginalFileName(),
@@ -415,15 +419,22 @@ public class AutomationPackageManager {
             // we enrich all included entities with automation package id
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
 
+            //We first make sure we would be able to update or reuse the library before modifying the package itself
+            automationPackageResourceManager.validateUploadOrReuseAutomationPackageLibrary(apLibraryProvider, parameters, true);
 
-            // TODO: potential issue - in code below we use the accessChecker in uploadApResourceIfRequired and uploadKeywordLibrary and if the check blocks the uploadKeywordLibrary the uploaded ap resource will not be cleaned up
             // always upload the automation package file as resource
             // NOTE: for the main ap resource don't need to enrich the resource with automation package id (because the same resource can be shared between several automation packages) - so we use simple enricher
-            uploadApResourceIfRequired(automationPackageProvider, automationPackageArchive, newPackage, apOrigin, parameters);
+            automationPackageResourceManager.uploadOrReuseApResource(
+                    automationPackageProvider, automationPackageArchive, newPackage,
+                    parameters, true
+            );
 
             // upload automation package library if provided
             // NOTE: for ap lib we don't need to enrich the resource with automation package id (because the same lib can be shared between several automation packages) - so we use simple enricher
-            String apLibraryResourceString = uploadAutomationPackageLibrary(apLibraryProvider, newPackage, packageContent.getName(), parameters);
+            Resource apLibResource = automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
+                    apLibraryProvider, newPackage, parameters, true
+            );
+            String apLibraryResourceString = apLibResource == null ? null : FileResolver.RESOURCE_PREFIX + apLibResource.getId().toHexString();
 
             fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, apLibraryResourceString, parameters.actorUser, parameters.objectPredicate);
 
@@ -436,8 +447,8 @@ public class AutomationPackageManager {
                     log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
                     ObjectId result = updateAutomationPackage(oldPackage, newPackage,
                             packageContent, staging, enricherForIncludedEntities,
-                            immediateWriteLock, automationPackageArchive, apLibraryResourceString,
-                            apsForReupload, automationPackageProvider, apLibraryProvider, parameters);
+                            immediateWriteLock, apLibraryResourceString,
+                            apsForReupload, parameters);
                     return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result, conflictingAutomationPackages);
                 } else {
                     // async update
@@ -449,9 +460,8 @@ public class AutomationPackageManager {
                         try {
                             updateAutomationPackage(
                                     oldPackage, newPackage, packageContent, staging, enricherForIncludedEntities,
-                                    false, automationPackageArchive, apLibraryResourceString,
-                                    apsForReupload, automationPackageProvider,
-                                    apLibraryProvider, parameters
+                                    false, apLibraryResourceString,
+                                    apsForReupload, parameters
                             );
                         } catch (Exception e) {
                             log.error("Exception on delayed AP update", e);
@@ -468,18 +478,18 @@ public class AutomationPackageManager {
                     releaseWriteLock(newPackage);
                 }
             }
-        } catch(AutomationPackageReadingException | IOException e){
+        } catch (AutomationPackageReadingException | IOException e) {
             throw new AutomationPackageManagerException("Unable to read automation package. Cause: " + e.getMessage(), e);
         }
     }
 
-    private List<AutomationPackage> findOtherVersionsOfPackage(ObjectId explicitOldId, ObjectPredicate objectPredicate, AutomationPackageContent packageContent) {
+    private List<AutomationPackage> findOtherVersionsOfPackage(ObjectId currentPackageId, ObjectPredicate objectPredicate, AutomationPackageContent packageContent) {
         Stream<AutomationPackage> stream = StreamSupport.stream(automationPackageAccessor.findManyByAttributes(Map.of(AP_BASE_NAME_ATTR_KEY, packageContent.getBaseName())), false);
         if (objectPredicate != null) {
             stream = stream.filter(objectPredicate);//filter package readable in context
         }
-        if (explicitOldId != null) {
-            stream = stream.filter(a -> !a.getId().equals(explicitOldId)); //remove current package in case of update
+        if (currentPackageId != null) {
+            stream = stream.filter(a -> !a.getId().equals(currentPackageId)); //remove current package in case of update
         }
         return stream.collect(Collectors.toList());
     }
@@ -507,10 +517,9 @@ public class AutomationPackageManager {
     }
 
 
-    private void updateRelatedAutomationPackages(List<ObjectId> automationPackagesForRedeploy,
-                                                AutomationPackageArchiveProvider packageArchiveProvider,
-                                                AutomationPackageUpdateParameter parameters) {
-        if (automationPackagesForRedeploy == null || automationPackagesForRedeploy.isEmpty() || !packageArchiveProvider.hasNewContent()) {
+    public void updateRelatedAutomationPackages(List<ObjectId> automationPackagesForRedeploy,
+                                                AutomationPackageUpdateParameter parameters) throws AutomationPackageRedeployException {
+        if (automationPackagesForRedeploy == null || automationPackagesForRedeploy.isEmpty()) {
             return;
         }
         List<ObjectId> failedAps = new ArrayList<>();
@@ -519,171 +528,57 @@ public class AutomationPackageManager {
                 log.info("Redeploying the AP {}", objectId.toHexString());
                 AutomationPackage oldPackage = automationPackageAccessor.get(objectId);
 
+                if (!FileResolver.isResource(oldPackage.getAutomationPackageResource())) {
+                    throw new AutomationPackageManagerException("Automation package " + oldPackage.getId() + " has no linked resource and cannot be redeployed");
+                }
+
                 // here we call the `createOrUpdateAutomationPackage` method with checkForSameOrigin=false to avoid infinite recursive loop
                 // we should only redeploy AP using the modified package keeping all other existing attributes
-                AutomationPackageUpdateParameter redeploymentParameters = new AutomationPackageUpdateParameterBuilder().forRedeployPackage(oldPackage, parameters).build();
+                AutomationPackageUpdateParameter redeploymentParameters = new AutomationPackageUpdateParameterBuilder().forRedeployPackage(objectHookRegistry, oldPackage, parameters).build();
                 createOrUpdateAutomationPackage(redeploymentParameters);
             } catch (Exception e) {
-                log.error("Failed to redeploy the automation package {}: {}", objectId.toHexString(), e.getMessage());
+                log.error("Failed to redeploy the automation package {}: {}", objectId, e.getMessage(), e);
                 failedAps.add(objectId);
             }
         }
         if (!failedAps.isEmpty()) {
-            throw new AutomationPackageManagerException("Unable to reupload the old automation packages: " + failedAps.stream().map(ObjectId::toHexString).collect(Collectors.toList()));
+            throw new AutomationPackageRedeployException(failedAps);
         }
     }
 
-    private void uploadApResourceIfRequired(AutomationPackageArchiveProvider apProvider,
-                                            AutomationPackageArchive automationPackageArchive,
-                                            AutomationPackage newPackage,
-                                            ResourceOrigin apOrigin,
-                                            AutomationPackageUpdateParameter parameters) {
-        File originalFile = automationPackageArchive.getOriginalFile();
-        if (originalFile == null) {
-            return;
-        }
 
-        Resource resource = null;
-
-        List<Resource> existingResource = null;
-        if (apProvider.canLookupResources()) {
-            existingResource = apProvider.lookupExistingResources(resourceManager, parameters.objectPredicate);
-        }
-
-        if (existingResource != null && !existingResource.isEmpty()) {
-            resource = existingResource.get(0);
-
-            // we just reuse the existing resource of unmodifiable origin (i.e non-SNAPSHOT)
-            // and for SNAPSHOT we keep the same resource id, but update the content if a new version was found
-            if (apProvider.isModifiableResource() && apProvider.hasNewContent()) {
-                try (FileInputStream is = new FileInputStream(originalFile)) {
-                    resource = updateExistingResourceContentAndPropagate(
-                            originalFile.getName(),
-                            newPackage.getAttribute(AbstractOrganizableObject.NAME), newPackage.getId(),
-                            is, apProvider.getSnapshotTimestamp(), resource,
-                            parameters.actorUser, parameters.writeAccessValidator
-                    );
-                } catch (IOException | InvalidResourceFormatException e) {
-                    throw new RuntimeException("Unable to create the resource for automation package", e);
-                }
-            }
-        }
-
-        // create the new resource if the old one cannot be reused
-        if (resource == null) {
-            try (InputStream is = new FileInputStream(originalFile)) {
-                resource = resourceManager.createTrackedResource(
-                        ResourceManager.RESOURCE_TYPE_AP, false, is, originalFile.getName(), parameters.enricher, null, parameters.actorUser,
-                        apOrigin == null ? null : apOrigin.toStringRepresentation(), apProvider.getSnapshotTimestamp()
-                );
-            } catch (IOException | InvalidResourceFormatException e) {
-                throw new RuntimeException("Unable to create the resource for automation package", e);
-            }
-        }
-
-        String resourceString = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-        log.info("The resource has been been linked with AP '{}': {}", newPackage.getAttribute(AbstractOrganizableObject.NAME), resourceString);
-        newPackage.setAutomationPackageResource(resourceString);
-    }
-
-    protected String uploadAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider, AutomationPackage newPackage,
-                                                    String apName, AutomationPackageUpdateParameter parameters) {
-        String apLibraryResourceString = null;
+    public Resource createAutomationPackageResource(String resourceType, AutomationPackageFileSource fileSource,
+                                                    AutomationPackageUpdateParameter parameters) throws AutomationPackageManagerException {
         try {
-            File apLibrary = apLibProvider.getAutomationPackageLibrary();
-            Resource uploadedResource = null;
-            if (apLibrary != null) {
-                try (FileInputStream fis = new FileInputStream(apLibrary)) {
-                    // for isolated execution we always use the isolatedAp resource type to support auto cleanup after execution
-                    String resourceType = this.operationMode == AutomationPackageOperationMode.ISOLATED ? ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB : apLibProvider.getResourceType();
-
-                    // we can reuse the existing old resource in case it is identifiable (can be found by origin) and unmodifiable
-                    List<Resource> oldResources = null;
-                    if (apLibProvider.canLookupResources()) {
-                        oldResources = apLibProvider.lookupExistingResources(resourceManager, parameters.objectPredicate);
-                    }
-
-                    if (oldResources != null && !oldResources.isEmpty()) {
-                        Resource oldResource = oldResources.get(0);
-                        if (!apLibProvider.isModifiableResource()) {
-                            // for unmodifiable origins we just reused the previously uploaded resource
-                            log.info("Existing automation package library {} with resource id {} has been detected and will be reused in AP {}", apLibrary.getName(), oldResource.getId().toHexString(), apName);
-                            uploadedResource = oldResource;
-                        } else if (apLibProvider.hasNewContent()){
-                            // for modifiable resources (i.e. SNAPSHOTS) we can reuse the old resource id and metadata, but we need to update the content if a new version was downloaded
-                            uploadedResource = updateExistingResourceContentAndPropagate(apLibrary.getName(),
-                                    apName, newPackage.getId(),
-                                    fis, apLibProvider.getSnapshotTimestamp(), oldResource,
-                                    parameters.actorUser, parameters.writeAccessValidator
-                            );
-                        } else {
-                            uploadedResource = oldResource;
-                        }
-                    } else {
-                        ResourceOrigin origin = apLibProvider.getOrigin();
-
-                        // old resource is not found - we create a new one
-                        uploadedResource = resourceManager.createTrackedResource(
-                                resourceType, false, fis, apLibrary.getName(), parameters.enricher, null,
-                                parameters.actorUser, origin == null ? null : origin.toStringRepresentation(),
-                                apLibProvider.getSnapshotTimestamp()
+            switch (resourceType) {
+                case ResourceManager.RESOURCE_TYPE_AP_LIBRARY:
+                    // We upload the new resource for package library. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
+                    try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(fileSource, parameters.objectPredicate)) {
+                        return automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
+                                automationPackageLibraryProvider,
+                                null, parameters, false
                         );
-                        log.info("The new automation package library ({}) has been uploaded as ({})", apLibProvider, uploadedResource.getId().toHexString());
+                    } catch (IOException e) {
+                        throw new AutomationPackageManagerException("Automation package library provider exception", e);
                     }
-                    apLibraryResourceString = FileResolver.RESOURCE_PREFIX + uploadedResource.getId().toString();
-                    newPackage.setAutomationPackageLibraryResource(apLibraryResourceString);
-                }
+                case ResourceManager.RESOURCE_TYPE_AP:
+                    // We upload the new main resource for AP. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
+                    try (AutomationPackageArchiveProvider automationPackageArchiveProvider = getAutomationPackageArchiveProvider(fileSource, parameters.objectPredicate, new NoAutomationPackageLibraryProvider())) {
+                        AutomationPackageArchive apArchive = automationPackageArchiveProvider.getAutomationPackageArchive();
+                        return automationPackageResourceManager.uploadOrReuseApResource(
+                                automationPackageArchiveProvider, apArchive, null,
+                                parameters,
+                                false
+                        );
+                    } catch (IOException e) {
+                        throw new AutomationPackageManagerException("Automation package library provider exception", e);
+                    }
+                default:
+                    throw new AutomationPackageManagerException("Unsupported resource type: " + resourceType);
             }
-        } catch (IOException | InvalidResourceFormatException | AutomationPackageReadingException e) {
-            // all these exceptions are technical, so we log the whole stack trace here, but throw the AutomationPackageManagerException
-            // to provide the short error message without technical details to the client
-            log.error("Unable to upload the automation package library", e);
-            throw new AutomationPackageManagerException("Unable to upload the automation package library: " + apLibProvider, e);
+        } catch (AutomationPackageReadingException ex) {
+            throw new AutomationPackageManagerException("Cannot create new resource: " + resourceType, ex);
         }
-        return apLibraryResourceString;
-    }
-
-    /**
-     * This method is called for modifiable resource (currently only maven snapshot artefact) to update the existing Step
-     * resource with the new content and propagate the update to Automation Packages using this resource
-     *
-     * @param resourceFileName the resource file name
-     * @param apName the name of the automation pacakge
-     * @param currentApId the automation package Id
-     * @param fis the resource input stream
-     * @param newOriginTimestamp the artefact snapshot timestamp (null if no new snapshot was downloaded
-     * @param oldResource the resource to be updated if required
-     * @param actorUser the user triggering this update
-     * @param writeAccessValidator predicate to check if this resource can be updated in this context
-     * @return the updated resource
-     * @throws IOException in case of error when writing the resource content to the file system
-     * @throws InvalidResourceFormatException in case the new resource content is invalid
-     * @throws AutomationPackageAccessException in case the resource of linked AP cannot be updated in the current context
-     */
-    private Resource updateExistingResourceContentAndPropagate(String resourceFileName,
-                                                               String apName, ObjectId currentApId,
-                                                               FileInputStream fis, Long newOriginTimestamp,
-                                                               Resource oldResource, String actorUser,
-                                                               WriteAccessValidator writeAccessValidator) throws IOException, InvalidResourceFormatException, AutomationPackageAccessException {
-        String resourceId = oldResource.getId().toHexString();
-        //Check write access to the resource itself
-        Optional<ObjectAccessException> validationErrors = writeAccessValidator.validate(oldResource);
-        if (validationErrors.isPresent()) {
-            String errorMessage = "The existing resource " + resourceId + " for file " + resourceFileName + " referenced by the provided package cannot be modified.";
-            log.error(errorMessage);
-            throw new AutomationPackageAccessException(errorMessage, validationErrors.get());
-        }
-
-        // Check write access to other APs using this resource. We cannot reupload the resources if they are linked with another package, which is not accessible
-        for (ObjectId apId : linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, List.of(currentApId))) {
-            checkAccess(automationPackageAccessor.get(apId), writeAccessValidator);
-        }
-
-        log.info("Existing resource {} for file {} will be actualized and reused in AP {}", resourceId, resourceFileName, apName);
-        Resource uploadedResource = resourceManager.saveResourceContent(resourceId, fis, resourceFileName, actorUser);
-        uploadedResource.setOriginTimestamp(newOriginTimestamp);
-        resourceManager.saveResource(uploadedResource);
-        return uploadedResource;
     }
 
     public AutomationPackageLibraryProvider getAutomationPackageLibraryProvider(AutomationPackageFileSource apLibrarySource,
@@ -712,7 +607,7 @@ public class AutomationPackageManager {
             AutomationPackageHook<?> hook = automationPackageHookRegistry.getHook(hookName);
             result.putAll(hook.getEntitiesForAutomationPackage(
                             automationPackageId,
-                            new AutomationPackageContext(automationPackage, operationMode, resourceManager, null, null, null, null, extensions)
+                            new AutomationPackageContext(automationPackage, operationMode, resourceManager, null, null, null, extensions)
                     )
             );
         }
@@ -721,10 +616,9 @@ public class AutomationPackageManager {
 
     private ObjectId updateAutomationPackage(AutomationPackage oldPackage, AutomationPackage newPackage,
                                              AutomationPackageContent packageContent, AutomationPackageStaging staging, ObjectEnricher enricherForIncludedEntities,
-                                             boolean alreadyLocked, AutomationPackageArchive automationPackageArchive,
+                                             boolean alreadyLocked,
                                              String apLibraryResource,
                                              List<ObjectId> additionalPackagesForRedeploy,
-                                             AutomationPackageArchiveProvider apArchiveProvider, AutomationPackageLibraryProvider apLibProvider,
                                              AutomationPackageUpdateParameter parameters) {
         ObjectId mainUpdatedAp = null;
         try {
@@ -739,7 +633,7 @@ public class AutomationPackageManager {
                 deleteAutomationPackageEntities(oldPackage, newPackage, parameters.actorUser, parameters.writeAccessValidator);
             }
             // persist all staged entities
-            persistStagedEntities(newPackage, staging, enricherForIncludedEntities, automationPackageArchive, packageContent, apLibraryResource, parameters.actorUser);
+            persistStagedEntities(newPackage, staging, enricherForIncludedEntities, packageContent, apLibraryResource, parameters.actorUser);
             ObjectId result = automationPackageAccessor.save(newPackage).getId();
             logAfterSave(staging, oldPackage, newPackage);
             mainUpdatedAp = result;
@@ -753,7 +647,7 @@ public class AutomationPackageManager {
         }
 
         //Only redeploy APs using the same package if a new snapshot versions was downloaded
-        updateRelatedAutomationPackages(additionalPackagesForRedeploy, apArchiveProvider, parameters);
+        updateRelatedAutomationPackages(additionalPackagesForRedeploy, parameters);
         return mainUpdatedAp;
     }
 
@@ -809,7 +703,7 @@ public class AutomationPackageManager {
             try {
                 boolean hooked = automationPackageHookRegistry.onPrepareStaging(
                         hookEntry.fieldName,
-                        new AutomationPackageContext(newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, apLibraryResourceString, enricherForIncludedEntities, extensions),
+                        new StagingAutomationPackageContext(newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, apLibraryResourceString, enricherForIncludedEntities, extensions),
                         packageContent,
                         hookEntry.values,
                         oldPackage, staging, objectPredicate);
@@ -827,7 +721,6 @@ public class AutomationPackageManager {
 
     protected void persistStagedEntities(AutomationPackage newPackage, AutomationPackageStaging staging,
                                          ObjectEnricher objectEnricher,
-                                         AutomationPackageArchive automationPackageArchive,
                                          AutomationPackageContent packageContent,
                                          String apLibraryResource, String actorUser) {
         List<Resource> stagingResources = staging.getResourceManager().findManyByCriteria(null);
@@ -862,7 +755,7 @@ public class AutomationPackageManager {
             try {
                 boolean hooked = automationPackageHookRegistry.onCreate(
                         hookEntry.fieldName, hookEntry.values,
-                        new AutomationPackageContext(newPackage, operationMode, resourceManager, automationPackageArchive, packageContent, apLibraryResource, objectEnricher, extensions)
+                        new AutomationPackageContext(newPackage, operationMode, resourceManager, packageContent, apLibraryResource, objectEnricher, extensions)
                 );
                 if (!hooked) {
                     log.warn("Additional field in automation package has been ignored and skipped: " + hookEntry.fieldName);
@@ -916,7 +809,7 @@ public class AutomationPackageManager {
 
     protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
                                                      AutomationPackage oldPackage, ResourceManager stagingResourceManager, String apLibraryResourceString) {
-        AutomationPackageContext apContext = new AutomationPackageContext(newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, apLibraryResourceString, enricher, extensions);
+        StagingAutomationPackageContext apContext = new StagingAutomationPackageContext(newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, apLibraryResourceString, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids
@@ -1072,7 +965,7 @@ public class AutomationPackageManager {
 
                 if (canBeDeleted) {
                     String resourceId = FileResolver.resolveResourceId(apResourceToCheck);
-                    Set<ObjectId> otherApsWithSameResource = linkedAutomationPackagesFinder.findAutomationPackagesByResourceId(resourceId, List.of(currentAutomationPackage.getId()));
+                    Set<ObjectId> otherApsWithSameResource = linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resourceId, List.of(currentAutomationPackage.getId()));
                     if (!otherApsWithSameResource.isEmpty()) {
                         log.info("Resource {} cannot be deleted, because it is reused in other automation packages: {}", apResourceToCheck, otherApsWithSameResource);
                         canBeDeleted = false;
@@ -1081,11 +974,11 @@ public class AutomationPackageManager {
                     if (canBeDeleted) {
                         Resource resource = resourceManager.getResource(resourceId);
                         if (resource != null) {
-                            Optional<ObjectAccessException> violations = writeAccessValidator.validate(resource);
-                            if (violations.isEmpty()) {
+                            try {
+                                writeAccessValidator.validate(resource);
                                 log.debug("Remove the resource linked with AP '{}':{}", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), apResourceToCheck);
                                 resourceManager.deleteResource(resourceId);
-                            } else {
+                            } catch (ObjectAccessException e) {
                                 log.debug("The resource linked with AP '{}':{} is not writable and won't be deleted with the package", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), apResourceToCheck);
                             }
                         }
@@ -1128,13 +1021,19 @@ public class AutomationPackageManager {
         return planAccessor.findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
     }
 
-    protected void checkAccess(AutomationPackage automationPackage, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException {
+    public static void checkAccess(AutomationPackage automationPackage, WriteAccessValidator writeAccessValidator) {
         if (writeAccessValidator != null) {
-            Optional<ObjectAccessException> violations = writeAccessValidator.validate(automationPackage);
-            if (violations.isPresent()) {
-                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this automation package", violations.get());
+            try {
+                writeAccessValidator.validate(automationPackage);
+            } catch (ObjectAccessException e) {
+                throw new AutomationPackageAccessException(automationPackage, "You're not allowed to edit this automation package: " +
+                        getLogRepresentation(automationPackage), e);
             }
         }
+    }
+
+    public static String getLogRepresentation(AutomationPackage p) {
+        return "'" + p.getAttribute(AbstractOrganizableObject.NAME) + "'(" + p.getId() + ")";
     }
 
     public AutomationPackageReaderRegistry getAutomationPackageReaderRegistry() {
@@ -1173,8 +1072,8 @@ public class AutomationPackageManager {
         this.providersResolver = providersResolver;
     }
 
-    public AutomationPackageMavenConfig getMavenConfig(ObjectPredicate objectPredicate) {
-        return mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(objectPredicate);
+    public AutomationPackageMavenConfig getMavenConfig() {
+        return mavenConfigProvider == null ? null : mavenConfigProvider.getConfig();
     }
 
     public void cleanup() {
@@ -1197,6 +1096,10 @@ public class AutomationPackageManager {
             this.fieldName = fieldName;
             this.values = values;
         }
+    }
+
+    public AutomationPackageResourceManager getAutomationPackageResourceManager() {
+        return automationPackageResourceManager;
     }
 
     public interface AutomationPackageProvidersResolver {
@@ -1246,7 +1149,7 @@ public class AutomationPackageManager {
                                                                                               AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
                                                                                               AutomationPackageLibraryProvider apLibraryProvider,
                                                                                               ResourceManager resourceManager) throws AutomationPackageReadingException {
-            return new AutomationPackageFromMavenProvider(apReaderRegistry, mavenConfigProvider.getConfig(predicate),
+            return new AutomationPackageFromMavenProvider(apReaderRegistry, mavenConfigProvider.getConfig(),
                     apFileSource.getMavenArtifactIdentifier(), apLibraryProvider, resourceManager, predicate);
         }
 
@@ -1272,7 +1175,7 @@ public class AutomationPackageManager {
         }
 
         protected AutomationPackageLibraryFromMavenProvider createAutomationPackageLibraryFromMavenProvider(AutomationPackageFileSource apLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider, ResourceManager resourceManager) throws AutomationPackageReadingException {
-            return new AutomationPackageLibraryFromMavenProvider(mavenConfigProvider.getConfig(predicate), apLibrarySource.getMavenArtifactIdentifier(), resourceManager, predicate);
+            return new AutomationPackageLibraryFromMavenProvider(mavenConfigProvider.getConfig(), apLibrarySource.getMavenArtifactIdentifier(), resourceManager, predicate);
         }
     }
 

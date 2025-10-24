@@ -13,6 +13,8 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
+import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
+import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
@@ -138,7 +140,8 @@ public class AutomationPackageManagerOSTest {
                 automationPackageHookRegistry,
                 automationPackageReaderRegistry,
                 automationPackageLocks,
-                null, -1
+                null, -1,
+                new ObjectHookRegistry()
         );
 
         this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>(), resourceManager, automationPackageReaderRegistry));
@@ -1145,13 +1148,23 @@ public class AutomationPackageManagerOSTest {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
 
+        // create AP resource and Lib via AutomationPackageResourceManager
         Resource savedApResource;
         Resource savedkwResource;
         try (InputStream is = new FileInputStream(automationPackageJar);
-             InputStream kwIs = new FileInputStream(kwLibSnapshotJar);) {
-            savedApResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_AP, is, SAMPLE1_FILE_NAME, null, "testUser");
-            savedkwResource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_AP_LIBRARY, kwIs, KW_LIB_FILE_NAME, null, "testUser");
-        } catch (IOException | InvalidResourceFormatException e) {
+             InputStream kwIs = new FileInputStream(kwLibSnapshotJar);
+             AutomationPackageLibraryProvider apLibProvider = new AutomationPackageLibraryFromInputStreamProvider(kwIs, KW_LIB_FILE_NAME);
+             AutomationPackageArchiveProvider apProvider = new AutomationPackageFromInputStreamProvider(manager.getAutomationPackageReaderRegistry(), is, SAMPLE1_FILE_NAME, apLibProvider)) {
+
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit().build();
+            savedApResource = manager.getAutomationPackageResourceManager().uploadOrReuseApResource(apProvider, apProvider.getAutomationPackageArchive(), null, parameters, false);
+            Assert.assertNotNull(savedApResource);
+            Assert.assertEquals(ResourceManager.RESOURCE_TYPE_AP, savedApResource.getResourceType());
+
+            savedkwResource = manager.getAutomationPackageResourceManager().uploadOrReuseAutomationPackageLibrary(apLibProvider, null, parameters, false);
+            Assert.assertNotNull(savedkwResource);
+            Assert.assertEquals(ResourceManager.RESOURCE_TYPE_AP_LIBRARY, savedkwResource.getResourceType());
+        } catch (IOException | AutomationPackageReadingException e) {
             throw new RuntimeException("Unexpected exception", e);
         }
 
@@ -1175,6 +1188,14 @@ public class AutomationPackageManagerOSTest {
 
         checkResourceCleanup(savedApResource.getId().toHexString(), apFile, savedkwResource.getId().toHexString(), kwLibFile);
     }
+
+//    @Test
+//    public void testCreateSharedAutomationPackageLib(){
+//         upload new library as resource
+//        AutomationPackageResourceManager resourceManager = manager.getAutomationPackageResourceManager();
+//
+//        resourceManager.uploadOrReuseAutomationPackageLibrary()
+//    }
 
     private void checkResourceCleanup(String apResourceId, ResourceRevisionFileHandle ap1File,
                                       String kwLibResourceId, ResourceRevisionFileHandle kwLibFile) {

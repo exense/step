@@ -19,13 +19,11 @@
 package step.automation.packages;
 
 import org.bson.types.ObjectId;
-import step.core.accessors.AbstractIdentifiableObject;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.WriteAccessValidator;
 
 import java.util.Map;
-import java.util.function.Consumer;
 
 public class AutomationPackageUpdateParameter {
     /**
@@ -108,13 +106,19 @@ public class AutomationPackageUpdateParameter {
      */
     public final boolean executionFunctionsLocally;
 
+    /**
+     * flag explicitly used in case of a redeployment of linked packages
+     */
+    public final boolean isRedeployment;
+
     public AutomationPackageUpdateParameter(boolean allowUpdate, boolean allowCreate, boolean isLocalPackage, ObjectId explicitOldId,
                                             AutomationPackageFileSource apSource, AutomationPackageFileSource apLibrarySource,
                                             String automationPackageVersion, String activationExpression, ObjectEnricher enricher,
                                             ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator, boolean async,
                                             String actorUser, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin,
                                             Map<String, String> functionsAttributes, Map<String, String> plansAttributes,
-                                            Map<String, String> tokenSelectionCriteria, boolean executionFunctionsLocally) {
+                                            Map<String, String> tokenSelectionCriteria, boolean executionFunctionsLocally,
+                                            boolean isRedeployment) {
         if (objectPredicate == null) {
             throw new AutomationPackageManagerException("The objectPredicate cannot be null");
         }
@@ -140,6 +144,7 @@ public class AutomationPackageUpdateParameter {
         this.plansAttributes = plansAttributes;
         this.tokenSelectionCriteria = tokenSelectionCriteria;
         this.executionFunctionsLocally = executionFunctionsLocally;
+        this.isRedeployment = isRedeployment;
     }
 
 
