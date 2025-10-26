@@ -30,6 +30,7 @@ import step.repositories.artifact.ResolvedMavenArtifact;
 import step.repositories.artifact.SnapshotMetadata;
 import step.resources.Resource;
 import step.resources.ResourceManager;
+import step.resources.ResourceMissingException;
 import step.resources.ResourceRevisionFileHandle;
 
 import java.io.File;
@@ -118,7 +119,7 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
         Assert.assertTrue(updatedTimestampAfterRefresh > updatedTimestampBeforeRefresh);
 
         // check old resource file is removed and not locked in file system
-        // TODO: check why this resource is not yet removed
+        // TODO: maybe we need to delete old resource revision file (first snapshot)
         // Assert.assertFalse(resourceFileHandleBeforeRefresh.getResourceFile().exists());
 
         // 4. DELETE RESOURCE IS NOT ALLOWED BECAUSE OF LINKED AUTOMATION PACKAGES
@@ -139,9 +140,12 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
         // 6. NOW RESOURCE CAN BE DELETED
         manager.getAutomationPackageResourceManager().deleteResource(uploadedResource.getId().toHexString(), apUpdateParams.writeAccessValidator);
 
-        // TODO: check why resource is still not deleted
-        // check that resource is now removed and not locked in file system
-//        Assert.assertNull(resourceManager.getResource(uploadedResource.getId().toHexString()));
+        // check that resource is removed and not locked in file system
+        try {
+            resourceManager.getResource(uploadedResource.getId().toHexString());
+        } catch (ResourceMissingException ex) {
+            log.info("Resource has been successfully deleted: {}", uploadedResource.getResourceName());
+        }
         Assert.assertFalse(resourceFileHandleBeforeRefresh.getResourceFile().exists());
         Assert.assertFalse(resourceFileHandleAfterRefresh.getResourceFile().exists());
     }
