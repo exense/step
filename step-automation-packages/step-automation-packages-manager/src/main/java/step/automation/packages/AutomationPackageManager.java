@@ -32,6 +32,7 @@ import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.IndexField;
 import step.core.entities.Entity;
+import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.*;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
@@ -47,6 +48,8 @@ import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
 import step.plugins.functions.types.CompositeFunction;
+import step.repositories.artifact.ResolvedMavenArtifact;
+import step.repositories.artifact.SnapshotMetadata;
 import step.resources.*;
 
 import java.io.File;
@@ -78,7 +81,7 @@ public class AutomationPackageManager {
     protected final ResourceManager resourceManager;
     protected final AutomationPackageHookRegistry automationPackageHookRegistry;
     private final LinkedAutomationPackagesFinder linkedAutomationPackagesFinder;
-    private final AutomationPackageResourceManager automationPackageResourceManager;
+    private AutomationPackageResourceManager automationPackageResourceManager;
     protected DefaultProvidersResolver providersResolver;
     protected boolean isIsolated = false;
     protected final AutomationPackageLocks automationPackageLocks;
@@ -133,8 +136,15 @@ public class AutomationPackageManager {
         this.maxParallelVersionsPerPackage = maxParallelVersionsPerPackage;
         this.objectHookRegistry = objectHookRegistry;
 
-        this.automationPackageResourceManager = new AutomationPackageResourceManager(resourceManager, operationMode, automationPackageAccessor, linkedAutomationPackagesFinder, mavenConfigProvider == null ? null : mavenConfigProvider.getConfig());
+        this.automationPackageResourceManager = createAutomationPackageResourceManager();
         addDefaultExtensions();
+    }
+
+    private AutomationPackageResourceManager createAutomationPackageResourceManager() {
+        return new AutomationPackageResourceManager(
+                resourceManager, operationMode, automationPackageAccessor,
+                linkedAutomationPackagesFinder, providersResolver.createMavenOperations(mavenConfigProvider)
+        );
     }
 
     private void addDefaultExtensions() {
@@ -292,13 +302,13 @@ public class AutomationPackageManager {
     /**
      * @throws AutomationPackageAccessException if the automation package is not acceptable in current context
      */
-    public void removeAutomationPackage(ObjectId id, String actorUser, ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator) throws AutomationPackageManagerException {
+    public void removeAutomationPackage(ObjectId id, String actorUser, ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator, boolean cleanupUnusedMainResources) throws AutomationPackageManagerException {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
         checkAccess(automationPackage, writeAccessValidator);
         String automationPackageId = automationPackage.getId().toHexString();
         if (automationPackageLocks.tryWriteLock(automationPackageId)) {
             try {
-                deleteAutomationPackageEntities(automationPackage, null, actorUser, writeAccessValidator);
+                deleteAutomationPackageEntities(automationPackage, null, actorUser, writeAccessValidator, cleanupUnusedMainResources);
                 automationPackageAccessor.remove(automationPackage.getId());
                 log.info("Automation package ({}) has been removed", id);
             } finally {
@@ -309,11 +319,14 @@ public class AutomationPackageManager {
         }
     }
 
-    protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, AutomationPackage newPackage, String actorUser, WriteAccessValidator writeAccessValidator) {
+    protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, AutomationPackage newPackage, String actorUser, WriteAccessValidator writeAccessValidator, boolean cleanupUnusedMainResources) {
         deleteFunctions(automationPackage);
         deletePlans(automationPackage);
+
+        // remove all internal resources (scripts, files etc.) and the main automation file + automation lib if there are no other APs linked with these files
+        deleteResources(automationPackage, newPackage, writeAccessValidator, cleanupUnusedMainResources);
+
         // schedules will be deleted in deleteAdditionalData via hooks
-        deleteResources(automationPackage, newPackage, writeAccessValidator);
         deleteAdditionalData(automationPackage, new AutomationPackageContext(automationPackage, operationMode, resourceManager,
                 null, actorUser, null, extensions));
     }
@@ -630,7 +643,8 @@ public class AutomationPackageManager {
             }
             // delete old package entities
             if (oldPackage != null) {
-                deleteAutomationPackageEntities(oldPackage, newPackage, parameters.actorUser, parameters.writeAccessValidator);
+                // TODO: here by default we will cleanup unused old resources and libs for AP (cleanupUnusedMainResources=true), but maybe it is better to do it manually via resource view (https://exense.atlassian.net/browse/SED-4253)
+                deleteAutomationPackageEntities(oldPackage, newPackage, parameters.actorUser, parameters.writeAccessValidator, parameters.cleanupUnusedMainResources);
             }
             // persist all staged entities
             persistStagedEntities(newPackage, staging, enricherForIncludedEntities, packageContent, apLibraryResource, parameters.actorUser);
@@ -934,7 +948,7 @@ public class AutomationPackageManager {
      * @param newAutomationPackage new (not persisted yet) automation package
      * @param writeAccessValidator validator used to check write access on the resource to be deleted
      */
-    protected void deleteResources(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, WriteAccessValidator writeAccessValidator) {
+    protected void deleteResources(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, WriteAccessValidator writeAccessValidator, boolean removeMainResourcesIfPossible) {
         // 1. included resources (files within automation package)
         List<Resource> resources = getPackageResources(currentAutomationPackage.getId());
         for (Resource resource : resources) {
@@ -950,8 +964,10 @@ public class AutomationPackageManager {
         }
 
         // 2. main resources (AP file and AP lib file)
-        deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageResource(), writeAccessValidator);
-        deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageLibraryResource(), writeAccessValidator);
+        if (removeMainResourcesIfPossible) {
+            deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageResource(), writeAccessValidator);
+            deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageLibraryResource(), writeAccessValidator);
+        }
     }
 
     private void deleteMainApResourceIfPossible(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, String apResourceToCheck, WriteAccessValidator writeAccessValidator) {
@@ -1069,7 +1085,9 @@ public class AutomationPackageManager {
     }
 
     public void setProvidersResolver(DefaultProvidersResolver providersResolver) {
+        // providers resolver affects the maven operations for AutomationPackageResourceManager, so it should be re-created
         this.providersResolver = providersResolver;
+        this.automationPackageResourceManager = createAutomationPackageResourceManager();
     }
 
     public AutomationPackageMavenConfig getMavenConfig() {
@@ -1104,6 +1122,8 @@ public class AutomationPackageManager {
 
     public interface AutomationPackageProvidersResolver {
 
+        AutomationPackageResourceManager.MavenOperations createMavenOperations(AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider);
+
         AutomationPackageArchiveProvider getAutomationPackageArchiveProvider(AutomationPackageFileSource apFileSource,
                                                                              ObjectPredicate predicate,
                                                                              AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider,
@@ -1122,6 +1142,28 @@ public class AutomationPackageManager {
         public DefaultProvidersResolver(AutomationPackageReaderRegistry apReaderRegistry, ResourceManager resourceManager) {
             this.apReaderRegistry = apReaderRegistry;
             this.resourceManager = resourceManager;
+        }
+
+        @Override
+        public AutomationPackageResourceManager.MavenOperations createMavenOperations(AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
+
+            return new AutomationPackageResourceManager.MavenOperations() {
+                @Override
+                public SnapshotMetadata fetchSnapshotMetadata(MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) throws AutomationPackageReadingException {
+                    if (mavenConfigProvider == null || mavenConfigProvider.getConfig() == null) {
+                        throw new AutomationPackageReadingException("Unable to fetch metadata for artifact" + mavenArtifactIdentifier.toShortString() + " from maven. Maven configuration is missing");
+                    }
+                    return MavenArtifactDownloader.fetchSnapshotMetadata(mavenConfigProvider.getConfig(), mavenArtifactIdentifier, existingSnapshotTimestamp);
+                }
+
+                @Override
+                public ResolvedMavenArtifact getFile(MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) throws AutomationPackageReadingException {
+                    if (mavenConfigProvider == null || mavenConfigProvider.getConfig() == null) {
+                        throw new AutomationPackageReadingException("Unable to download the artifact " + mavenArtifactIdentifier.toShortString() + "  from maven. Maven configuration is missing");
+                    }
+                    return MavenArtifactDownloader.getFile(mavenConfigProvider.getConfig(), mavenArtifactIdentifier, existingSnapshotTimestamp);
+                }
+            };
         }
 
         @Override

@@ -108,8 +108,13 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
             assertEntityIsEditableInContext(automationPackage);
-            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),
-                    getObjectPredicate(), getWriteAccessValidator());
+
+            // TODO: here we will cleanup unused old resources and libs for AP (cleanupUnusedMainResources=true), but maybe it is better to do it manually via resource view (https://exense.atlassian.net/browse/SED-4253)
+            automationPackageManager.removeAutomationPackage(
+                    new ObjectId(id), getSession().getUser().getUsername(),
+                    getObjectPredicate(), getWriteAccessValidator(),
+                    true
+            );
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (Exception e) {
