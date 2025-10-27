@@ -4,6 +4,7 @@ public class ControllerServiceError {
 
 	private String errorName;
 	private String errorMessage;
+	private Object errorDetails;
 
 	public String getErrorName() {
 		return errorName;
@@ -21,4 +22,11 @@ public class ControllerServiceError {
 		this.errorMessage = errorMessage;
 	}
 
+	public Object getErrorDetails() {
+		return errorDetails;
+	}
+
+	public void setErrorDetails(Object errorDetails) {
+		this.errorDetails = errorDetails;
+	}
 }

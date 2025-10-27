@@ -46,7 +46,7 @@ public class ReportNodeAttachmentManager {
 	
 	private ResourceManager resourceManager;
 	
-	private ExecutionContext context;
+	private final ExecutionContext context;
 
 	public ReportNodeAttachmentManager(ExecutionContext context) {
 		super();
@@ -68,6 +68,7 @@ public class ReportNodeAttachmentManager {
 	// The other methods need an ExecutionContext to check the quota usage
 	public ReportNodeAttachmentManager(ResourceManager resourceManager) {
 		super();
+		this.context = null;
 		this.resourceManager = resourceManager;
 	}
 
@@ -77,20 +78,15 @@ public class ReportNodeAttachmentManager {
 			
 			Integer count;
 			try {
-				count = varManager.getVariableAsInteger(QUOTA_COUNT_VARNAME);
-				varManager.updateVariable(QUOTA_COUNT_VARNAME, count+1); 
+				count = varManager.getVariableAsInteger(QUOTA_COUNT_VARNAME) + 1;
+				varManager.updateVariable(QUOTA_COUNT_VARNAME, count);
 			} catch (UndefinedVariableException e) {
 				count = 1;
 				varManager.putVariable(context.getReport(), QUOTA_COUNT_VARNAME, count);				
 			}
-			
-			Integer quota;
-			try {
-				quota = varManager.getVariableAsInteger(QUOTA_VARNAME);
-			} catch (UndefinedVariableException e) {
-				quota = 100;
-			}
-			
+
+			Integer quota = varManager.getVariableAsInteger(QUOTA_VARNAME, 100);
+
 			if(quota==count) {
 				logger.info(context.getExecutionId().toString() + ". Maximum number of attachment (" +quota+") reached. Next attachments will be skipped.");
 			}
