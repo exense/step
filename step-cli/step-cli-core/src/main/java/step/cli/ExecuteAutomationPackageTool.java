@@ -110,9 +110,10 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
             List<String> executionIds;
             try {
                 executionIds = automationPackageClient.executeAutomationPackage(
-                        createSource(params.getAutomationPackageFile(), createMavenArtifactXml(params.getAutomationPackageMavenArtifact())),
+                        createPackageSource(params.getAutomationPackageFile(), createMavenArtifactXml(params.getAutomationPackageMavenArtifact())),
                         executionParameters,
-                        createSource(params.getAutomationPackageLibraryFile(), createMavenArtifactXml(params.getAutomationPackageLibraryMavenArtifact())));
+                        createLibrarySource(params.getAutomationPackageLibraryFile(), createMavenArtifactXml(params.getAutomationPackageLibraryMavenArtifact())
+                        , params.getAutomationPackageManagedLibraryName()));
             } catch (AutomationPackageClientException e) {
                 throw new StepCliExecutionException("Error while executing automation package: " + e.getMessage());
             }
@@ -296,6 +297,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
         private MavenArtifactIdentifier automationPackageMavenArtifact;
         private File automationPackageLibraryFile;
         private MavenArtifactIdentifier automationPackageLibraryMavenArtifact;
+        private String automationPackageManagedLibraryName;
 
         private String stepProjectName;
         private String userId;
@@ -477,6 +479,15 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool {
 
         public Params setPackageLibraryMavenArtifact(MavenArtifactIdentifier packageLibraryMavenArtifact) {
             this.automationPackageLibraryMavenArtifact = packageLibraryMavenArtifact;
+            return this;
+        }
+
+        public String getAutomationPackageManagedLibraryName() {
+            return automationPackageManagedLibraryName;
+        }
+
+        public Params setAutomationPackageManagedLibraryName(String automationPackageManagedLibraryName) {
+            this.automationPackageManagedLibraryName = automationPackageManagedLibraryName;
             return this;
         }
 

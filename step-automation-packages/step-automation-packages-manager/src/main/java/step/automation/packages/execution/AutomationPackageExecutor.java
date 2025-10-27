@@ -138,7 +138,7 @@ public class AutomationPackageExecutor {
                     }
                 }
             }
-        } catch (IOException | AutomationPackageReadingException e) {
+        } catch (IOException | AutomationPackageReadingException | ManagedLibraryMissingException e) {
             throw new AutomationPackageManagerException("Unable to read the provided package library. Reason: " + e.getMessage(), e);
         }
 

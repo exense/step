@@ -57,10 +57,10 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
 
             try {
                 updateResult = automationPackageClient.createOrUpdateAutomationPackage(
-                        createSource(params.getAutomationPackageFile(), mavenAutomationPackageXml),
-                        createSource(params.getAutomationPackageLibraryFile(), mavenPackageLibraryXml),
+                        createPackageSource(params.getAutomationPackageFile(), mavenAutomationPackageXml),
+                        createLibrarySource(params.getAutomationPackageLibraryFile(), mavenPackageLibraryXml, params.getAutomationPackageManagedLibraryName()),
                         params.getApVersion(), params.getActivationExpression(), null, null, null, null,
-                        params.getAsync(), params.getallowUpdateOfOtherPackages()
+                        params.getAsync(), params.getForceRefreshOfSnapshots()
 
                 );
 
@@ -93,12 +93,13 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
         private Boolean async;
         private String apVersion;
         private String activationExpression;
-        private Boolean allowUpdateOfOtherPackages;
+        private Boolean forceRefreshOfSnapshots;
         private File automationPackageFile;
         private MavenArtifactIdentifier automationPackageMavenArtifact;
 
         private MavenArtifactIdentifier automationPackageLibraryMavenArtifact;
         private File automationPackageLibraryFile;
+        private String automationPackageManagedLibraryName;
 
         /**
          * @return the maven snippet of automation package to be uploaded or null to use the local file instead.
@@ -127,6 +128,15 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
 
         public Params setPackageLibraryFile(File packageLibraryFile) {
             this.automationPackageLibraryFile = packageLibraryFile;
+            return this;
+        }
+
+        public String getAutomationPackageManagedLibraryName() {
+            return automationPackageManagedLibraryName;
+        }
+
+        public Params setAutomationPackageManagedLibraryName(String automationPackageManagedLibraryName) {
+            this.automationPackageManagedLibraryName = automationPackageManagedLibraryName;
             return this;
         }
 
@@ -175,12 +185,12 @@ public class DeployAutomationPackageTool extends AbstractCliTool {
             return this;
         }
 
-        public Boolean getallowUpdateOfOtherPackages() {
-            return allowUpdateOfOtherPackages;
+        public Boolean getForceRefreshOfSnapshots() {
+            return forceRefreshOfSnapshots;
         }
 
-        public Params setallowUpdateOfOtherPackages(Boolean allowUpdateOfOtherPackages) {
-            this.allowUpdateOfOtherPackages = allowUpdateOfOtherPackages;
+        public Params setForceRefreshOfSnapshots(Boolean forceRefreshOfSnapshots) {
+            this.forceRefreshOfSnapshots = forceRefreshOfSnapshots;
             return this;
         }
 

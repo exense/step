@@ -19,6 +19,7 @@
 package step.resources;
 
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectPredicate;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -120,6 +121,11 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
+    public Resource getResourceByNameAndType(String resourceName, String resourceType, ObjectPredicate predicate) {
+        return layeredLookup(resourceManager -> resourceManager.getResourceByNameAndType(resourceName, resourceType, predicate));
+    }
+
+    @Override
     public ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException {
         for (ResourceManager resourceManager : resourceManagers) {
             ResourceRevisionContentImpl found = resourceManager.getResourceRevisionContent(resourceRevisionId);
@@ -143,7 +149,13 @@ public class LayeredResourceManager implements ResourceManager {
     @Override
     public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher,
                                           String trackingAttribute, String actorUser, String origin, Long originTimestamp) throws IOException, InvalidResourceFormatException {
-        return getManagerForPersistence().createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, objectEnricher, trackingAttribute, actorUser, origin, originTimestamp);
+        return createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, null, objectEnricher, trackingAttribute, actorUser, origin, originTimestamp);
+    }
+
+    @Override
+    public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, String optionalResourceName, ObjectEnricher objectEnricher,
+                                          String trackingAttribute, String actorUser, String origin, Long originTimestamp) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, optionalResourceName, objectEnricher, trackingAttribute, actorUser, origin, originTimestamp);
     }
 
     @Override
@@ -152,8 +164,8 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
-    public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String actorUser) throws IOException, InvalidResourceFormatException {
-        return getManagerForPersistence().saveResourceContent(resourceId, resourceStream, resourceFileName, actorUser);
+    public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().saveResourceContent(resourceId, resourceStream, resourceFileName, optionalResourceName, actorUser);
     }
 
     @Override

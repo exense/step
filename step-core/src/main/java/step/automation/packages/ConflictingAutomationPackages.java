@@ -22,28 +22,29 @@ package step.automation.packages;
 
 import org.bson.types.ObjectId;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ConflictingAutomationPackages {
-    private List<ObjectId> apWithSameOrigin = null;
-    private List<ObjectId> apWithSameLibrary = null;
+    private Set<ObjectId> apWithSameOrigin = new HashSet<>();
+    private Set<ObjectId> apWithSameLibrary = new HashSet<>();
 
     public ConflictingAutomationPackages() {
     }
 
-    public List<ObjectId> getApWithSameOrigin() {
+    public Set<ObjectId> getApWithSameOrigin() {
         return apWithSameOrigin;
     }
 
-    public void setApWithSameOrigin(List<ObjectId> apWithSameOrigin) {
+    public void setApWithSameOrigin(Set<ObjectId> apWithSameOrigin) {
         this.apWithSameOrigin = apWithSameOrigin;
     }
 
-    public List<ObjectId> getApWithSameLibrary() {
+    public Set<ObjectId> getApWithSameLibrary() {
         return apWithSameLibrary;
     }
 
-    public void setApWithSameLibrary(List<ObjectId> apWithSameLibrary) {
+    public void setApWithSameLibrary(Set<ObjectId> apWithSameLibrary) {
         this.apWithSameLibrary = apWithSameLibrary;
     }
 

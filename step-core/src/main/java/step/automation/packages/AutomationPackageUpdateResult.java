@@ -20,18 +20,22 @@ package step.automation.packages;
 
 import org.bson.types.ObjectId;
 
+import java.util.Set;
+
 public class AutomationPackageUpdateResult {
     private AutomationPackageUpdateStatus status;
     private ObjectId id;
     private ConflictingAutomationPackages conflictingAutomationPackages;
+    private Set<String> warnings;
 
     public AutomationPackageUpdateResult() {
     }
 
-    public AutomationPackageUpdateResult(AutomationPackageUpdateStatus status, ObjectId id, ConflictingAutomationPackages conflictingAutomationPackages) {
+    public AutomationPackageUpdateResult(AutomationPackageUpdateStatus status, ObjectId id, ConflictingAutomationPackages conflictingAutomationPackages, Set<String> warnings) {
         this.status = status;
         this.id = id;
         this.conflictingAutomationPackages = conflictingAutomationPackages;
+        this.warnings = warnings;
     }
 
     public AutomationPackageUpdateStatus getStatus() {
@@ -56,5 +60,13 @@ public class AutomationPackageUpdateResult {
 
     public void setConflictingAutomationPackages(ConflictingAutomationPackages conflictingAutomationPackages) {
         this.conflictingAutomationPackages = conflictingAutomationPackages;
+    }
+
+    public Set<String> getWarnings() {
+        return warnings;
+    }
+
+    public void setWarnings(Set<String> warnings) {
+        this.warnings = warnings;
     }
 }

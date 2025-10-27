@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectPredicate;
 import step.grid.io.Attachment;
 import step.grid.io.AttachmentHelper;
 import step.resources.*;
@@ -45,6 +46,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * This class provides an API to upload resources (compiled code of a keyword, etc) to the controller 
@@ -143,6 +145,13 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 
 	@Override
 	public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher,
+										  String trackingAttribute, String actorUser, String origin, Long originTimestamp) throws IOException, InvalidResourceFormatException {
+		return createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, null, objectEnricher, trackingAttribute, actorUser, origin, originTimestamp);
+	}
+
+	@Override
+	public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName,
+										  String optionalResourceName, ObjectEnricher objectEnricher,
 										  String trackingAttribute, String actorUser, String origin, Long originTimestamp) {
 		StreamDataBodyPart bodyPart = new StreamDataBodyPart("file", resourceStream, resourceFileName);
 
@@ -156,9 +165,9 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	@Override
-	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String actorUser)
+	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser)
 			throws IOException {
-		
+
 		return null;
 	}
 
@@ -211,6 +220,11 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 		Builder b = requestBuilder("/rest/resources/"+resourceId);
 		Resource resource = executeRequest(()->b.get(Resource.class));
 		return resource;
+	}
+
+	@Override
+	public Resource getResourceByNameAndType(String resourceName, String resourceType, ObjectPredicate predicate) {
+		throw new RuntimeException("Not implemented");
 	}
 
 	@Override

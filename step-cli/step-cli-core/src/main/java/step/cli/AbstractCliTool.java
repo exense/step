@@ -21,8 +21,6 @@ package step.cli;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.client.model.AutomationPackageSource;
-import step.automation.packages.client.model.FileSource;
-import step.automation.packages.client.model.MavenSnippetSource;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.maven.MavenArtifactIdentifier;
@@ -128,15 +126,26 @@ public abstract class AbstractCliTool implements CliToolLogging {
         return builder.toString();
     }
 
-    protected AutomationPackageSource createSource(File file, String mavenSnippet) {
+    protected AutomationPackageSource createPackageSource(File file, String mavenSnippet) {
+        return createSource(file, mavenSnippet, null);
+
+    }
+
+    protected AutomationPackageSource createLibrarySource(File file, String mavenSnippet, String managedLibraryName) {
+        return createSource(file, mavenSnippet, managedLibraryName);
+    }
+
+    private AutomationPackageSource createSource(File file, String mavenSnippet, String managedLibraryName) {
         if (mavenSnippet != null && file != null) {
             throw new IllegalArgumentException("You cannot use both file and maven snippet as file source");
         }
 
         if (mavenSnippet != null) {
-            return new MavenSnippetSource(mavenSnippet);
+            return AutomationPackageSource.withMavenSnippet(mavenSnippet);
         } else if (file != null) {
-            return new FileSource(file);
+            return AutomationPackageSource.withFile(file);
+        } else if (managedLibraryName != null) {
+            return AutomationPackageSource.withManagedLibraryName(managedLibraryName);
         } else {
             return null;
         }

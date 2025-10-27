@@ -160,7 +160,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      * Convenience service to only allow creation of a new package
      * @param apVersion the version to be set for this AP
      * @param activationExpression activation expression to selected entities of this AP during executions
-     * @param allowUpdateOfOtherPackages if other AP would be modified (because they use the same snapshot artefacts that has a new version) this flag must be true to allow the update
+     * @param forceRefreshOfSnapshots if other AP would be modified (because they use the same snapshot artefacts that has a new version) this flag must be true to allow the update
      * @param automationPackageInputStream AP package file as input stream
      * @param fileDetail FormDataContentDisposition of the file when provided as inputstream
      * @param apMavenSnippet maven snippet of the package when deploying from a maven repository
@@ -188,39 +188,38 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public String createAutomationPackage(@FormDataParam("version") String apVersion,
+    public String createAutomationPackage(@FormDataParam("versionName") String apVersion,
                                           @FormDataParam("activationExpr") String activationExpression,
-                                          @FormDataParam("allowUpdateOfOtherPackages") boolean allowUpdateOfOtherPackages,
+                                          @FormDataParam("forceRefreshOfSnapshots") boolean forceRefreshOfSnapshots,
                                           @FormDataParam("file") InputStream automationPackageInputStream,
                                           @FormDataParam("file") FormDataContentDisposition fileDetail,
                                           @FormDataParam("apMavenSnippet") String apMavenSnippet,
+                                          @FormDataParam("apResourceId") String apResourceId,
                                           @FormDataParam("apLibrary") InputStream apLibraryInputStream,
                                           @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
                                           @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
-                                          @FormDataParam("apResourceId") String apResourceId,
                                           @FormDataParam("apLibraryResourceId") String apLibraryResourceId,
+                                          @FormDataParam("managedLibraryName") String managedLibraryName,
                                           @FormDataParam(PLANS_ATTRIBUTES) String plansAttributesAsString,
                                           @FormDataParam(FUNCTIONS_ATTRIBUTES) String functionsAttributesAsString,
                                           @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
                                           @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
         try {
-            ParsedRequestParameters parsedRequestParameters = getParsedRequestParamteres(automationPackageInputStream, fileDetail,
+            ParsedRequestParameters parsedRequestParameters = getParsedRequestParameters(automationPackageInputStream, fileDetail,
                     apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId,
-                    plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
+                    managedLibraryName, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
             AutomationPackageUpdateParameter parameters = getAutomationPackageUpdateParameterBuilder()
                     .withAllowCreate(true).withAllowUpdate(false).withAsync(false)
-                    .withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages).withCheckForSameOrigin(true)
+                    .withForceRefreshOfSnapshots(forceRefreshOfSnapshots).withCheckForSameOrigin(true)
                     .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
-                    .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
+                    .withVersionName(apVersion).withActivationExpression(activationExpression)
                     .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
                     .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
             ObjectId id = automationPackageManager.createOrUpdateAutomationPackage(parameters).getId();
             auditLog("create",  id);
             return id == null ? null : id.toString();
-        } catch (AutomationPackageCollisionException e){
-            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);
         }
@@ -246,12 +245,13 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public List<String> executeAutomationPackage(@FormDataParam("file") InputStream automationPackageInputStream,
                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                  @FormDataParam("apMavenSnippet") String apMavenSnippet,
+                                                 @FormDataParam("apResourceId") String apResourceId,
                                                  @FormDataParam("apLibrary") InputStream apLibraryInputStream,
                                                  @FormDataParam("apLibrary") FormDataContentDisposition apLibraryFileDetail,
-                                                 @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart,
                                                  @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
-                                                 @FormDataParam("apResourceId") String apResourceId,
-                                                 @FormDataParam("apLibraryResourceId") String apLibraryResourceId) {
+                                                 @FormDataParam("apLibraryResourceId") String apLibraryResourceId,
+                                                 @FormDataParam("managedLibraryName") String managedLibraryName,
+                                                 @FormDataParam("executionParams") FormDataBodyPart executionParamsBodyPart) {
         IsolatedAutomationPackageExecutionParameters executionParameters;
         if (executionParamsBodyPart != null) {
             // The workaround to parse execution parameters as application/json even if the Content-Type for this part is not explicitly set in request
@@ -272,8 +272,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
 
         try {
-            AutomationPackageFileSource apLibrarySource = getFileSource(apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ", apLibraryResourceId);
-            AutomationPackageFileSource apSource = getFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for ap: ", apResourceId);
+            AutomationPackageFileSource apLibrarySource = getLibraryFileSource(apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet,
+                    apLibraryResourceId, managedLibraryName);
+            AutomationPackageFileSource apSource = getApFileSource(automationPackageInputStream, fileDetail, apMavenSnippet, apResourceId);
 
             return automationPackageExecutor.runInIsolation(
                     apSource,
@@ -326,9 +327,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-write")
     public AutomationPackageUpdateResult updateAutomationPackage(@PathParam("id") String id,
                                                                  @FormDataParam("async") boolean async,
-                                                                 @FormDataParam("version") String apVersion,
+                                                                 @FormDataParam("versionName") String apVersion,
                                                                  @FormDataParam("activationExpr") String activationExpression,
-                                                                 @FormDataParam("allowUpdateOfOtherPackages") boolean allowUpdateOfOtherPackages,
+                                                                 @FormDataParam("forceRefreshOfSnapshots") boolean forceRefreshOfSnapshots,
                                                                  @FormDataParam("file") InputStream uploadedInputStream,
                                                                  @FormDataParam("file") FormDataContentDisposition fileDetail,
                                                                  @FormDataParam("apMavenSnippet") String apMavenSnippet,
@@ -337,18 +338,20 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                                  @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                                                  @FormDataParam("apResourceId") String apResourceId,
                                                                  @FormDataParam("apLibraryResourceId") String apLibraryResourceId,
+                                                                 @FormDataParam("managedLibraryName") String managedLibraryName,
                                                                  @FormDataParam(PLANS_ATTRIBUTES) String plansAttributesAsString,
                                                                  @FormDataParam(FUNCTIONS_ATTRIBUTES) String functionsAttributesAsString,
                                                                  @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
                                                                  @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
         try {
             checkAutomationPackageAcceptable(id);
-            ParsedRequestParameters parsedRequestParameters = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
+            ParsedRequestParameters parsedRequestParameters = getParsedRequestParameters(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream, apLibraryFileDetail,
+                    apLibraryMavenSnippet, apResourceId, apLibraryResourceId, managedLibraryName, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
             AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder().withAllowCreate(false).withExplicitOldId(new ObjectId(id))
                     .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
-                    .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
-                    .withAsync(async).withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
+                    .withVersionName(apVersion).withActivationExpression(activationExpression)
+                    .withAsync(async).withForceRefreshOfSnapshots(forceRefreshOfSnapshots)
                     .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
                     .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
@@ -357,8 +360,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             return result;
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
-        } catch (AutomationPackageCollisionException e) {
-            throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
@@ -376,26 +377,39 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
-    private AutomationPackageFileSource getFileSource(InputStream uploadedInputStream, FormDataContentDisposition fileDetail, String apMavenSnippet, String invalidSnippetErrorText, String resourceIdPath) {
-        AutomationPackageFileSource automationPackageFileSource = null;
+    private AutomationPackageFileSource getApFileSource(InputStream uploadedInputStream, FormDataContentDisposition fileDetail,
+                                                      String apMavenSnippet, String resourceIdPath) {
+        return getFileSource(uploadedInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for automation package: ", resourceIdPath, null);
+    }
+
+    private AutomationPackageFileSource getLibraryFileSource(InputStream uploadedInputStream, FormDataContentDisposition fileDetail,
+                                                             String apMavenSnippet, String resourceIdPath,
+                                                             String managedLibraryName) {
+        return getFileSource(uploadedInputStream, fileDetail, apMavenSnippet, "Invalid maven snippet for automation package library: ", resourceIdPath, managedLibraryName);
+    }
+
+    private AutomationPackageFileSource getFileSource(InputStream uploadedInputStream, FormDataContentDisposition fileDetail,
+                                                      String apMavenSnippet, String invalidSnippetErrorText, String resourceIdPath,
+                                                      String managedLibraryName) {
+
         try {
-            automationPackageFileSource = AutomationPackageFileSource.empty();
+            AutomationPackageFileSource automationPackageFileSource = AutomationPackageFileSource.empty();
             if (uploadedInputStream != null) {
                 automationPackageFileSource.addInputStream(uploadedInputStream, fileDetail == null ? null : fileDetail.getFileName());
-            }
-            if (apMavenSnippet != null) {
+            } else if (apMavenSnippet != null) {
                 automationPackageFileSource.addMavenIdentifier(getMavenArtifactIdentifierFromXml(apMavenSnippet));
-            }
-            if(resourceIdPath != null){
+            } else if (resourceIdPath != null) {
                 if (!FileResolver.isResource(resourceIdPath)) {
                     throw new ControllerServiceException("Only resource path 'resource:<resourceIdPath>' are allowed.");
                 }
                 automationPackageFileSource.addResourceId(FileResolver.resolveResourceId(resourceIdPath));
+            } else if (managedLibraryName != null) {
+                automationPackageFileSource.addManagerLibraryKey(managedLibraryName);
             }
+            return automationPackageFileSource;
         } catch (JsonProcessingException e) {
             throw new ControllerServiceException(invalidSnippetErrorText + e.getMessage());
         }
-        return automationPackageFileSource;
     }
 
     @PUT
@@ -403,8 +417,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     public Response createOrUpdateAutomationPackage(@FormDataParam("async") boolean async,
-                                                    @FormDataParam("version") String apVersion,
-                                                    @FormDataParam("allowUpdateOfOtherPackages") boolean allowUpdateOfOtherPackages,
+                                                    @FormDataParam("versionName") String apVersion,
+                                                    @FormDataParam("forceRefreshOfSnapshots") boolean forceRefreshOfSnapshots,
                                                     @FormDataParam("activationExpr") String activationExpression,
                                                     @FormDataParam("file") InputStream uploadedInputStream,
                                                     @FormDataParam("file") FormDataContentDisposition fileDetail,
@@ -414,18 +428,20 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam("apLibraryMavenSnippet") String apLibraryMavenSnippet,
                                                     @FormDataParam("apResourceId") String apResourceId,
                                                     @FormDataParam("apLibraryResourceId") String apLibraryResourceId,
+                                                    @FormDataParam("managedLibraryName") String managedLibraryName,
                                                     @FormDataParam(PLANS_ATTRIBUTES) String plansAttributesAsString,
                                                     @FormDataParam(FUNCTIONS_ATTRIBUTES) String functionsAttributesAsString,
                                                     @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
                                                     @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
         try {
-            ParsedRequestParameters parsedRequestParameters = getParsedRequestParamteres(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
-                    apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
+            ParsedRequestParameters parsedRequestParameters = getParsedRequestParameters(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
+                    apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, managedLibraryName,
+                    plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
 
             AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
                     .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
-                    .withAutomationPackageVersion(apVersion).withActivationExpression(activationExpression)
-                    .withAsync(async).withAllowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
+                    .withVersionName(apVersion).withActivationExpression(activationExpression)
+                    .withAsync(async).withForceRefreshOfSnapshots(forceRefreshOfSnapshots)
                     .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
                     .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
@@ -440,30 +456,19 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             return responseBuilder.entity(result).build();
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
-        } catch (AutomationPackageCollisionException e){
-            ControllerServiceException ex = new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
-            // to avoid stack trace in ErrorFilter
-            ex.setTechnicalError(false);
-            throw ex;
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);
         }
     }
 
-    private ParsedRequestParameters getParsedRequestParamteres(InputStream uploadedInputStream, FormDataContentDisposition fileDetail,
+    private ParsedRequestParameters getParsedRequestParameters(InputStream uploadedInputStream, FormDataContentDisposition fileDetail,
                                                                String apMavenSnippet, InputStream apLibraryInputStream, FormDataContentDisposition apLibraryFileDetail,
-                                                               String apLibraryMavenSnippet, String apResourceId, String apLibraryResourceId, String plansAttributesAsString,
-                                                               String functionsAttributesAsString, String tokenSelectionCriteriaAsString) {
-        AutomationPackageFileSource apFileSource = getFileSource(
-                uploadedInputStream, fileDetail,
-                apMavenSnippet, "Invalid maven snippet for automation package: ",
-                apResourceId
-        );
-        AutomationPackageFileSource apLibrarySource = getFileSource(
-                apLibraryInputStream, apLibraryFileDetail,
-                apLibraryMavenSnippet, "Invalid maven snippet for automation package library: ",
-                apLibraryResourceId
-        );
+                                                               String apLibraryMavenSnippet, String apResourceId, String apLibraryResourceId, String managedLibraryName,
+                                                               String plansAttributesAsString, String functionsAttributesAsString, String tokenSelectionCriteriaAsString) {
+        AutomationPackageFileSource apFileSource = getApFileSource(uploadedInputStream, fileDetail,
+                apMavenSnippet, apResourceId);
+        AutomationPackageFileSource apLibrarySource = getLibraryFileSource(apLibraryInputStream, apLibraryFileDetail,
+                apLibraryMavenSnippet, apLibraryResourceId, managedLibraryName);
 
         Map<String, String> plansAttributes = deserializeFormDataParamToMapOfStrings(plansAttributesAsString, PLANS_ATTRIBUTES);
         Map<String, String> functionsAttributes = deserializeFormDataParamToMapOfStrings(functionsAttributesAsString, FUNCTIONS_ATTRIBUTES);
@@ -535,12 +540,14 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public String createNewAutomationPackageResource(@FormDataParam("resourceType") String resourceType,
                                                      @FormDataParam("file") InputStream uploadedInputStream,
                                                      @FormDataParam("file") FormDataContentDisposition fileDetail,
-                                                     @FormDataParam("mavenSnippet") String mavenSnippet){
+                                                     @FormDataParam("mavenSnippet") String mavenSnippet,
+                                                     @FormDataParam("managedLibraryName") String managedLibraryName){
         try {
-            AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter();
+            AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter().build();
             Resource resource = automationPackageManager.createAutomationPackageResource(
                     resourceType,
-                    getFileSource(uploadedInputStream, fileDetail, mavenSnippet, "Invalid maven snippet", null),
+                    getLibraryFileSource(uploadedInputStream, fileDetail, mavenSnippet, null, null),
+                    managedLibraryName,
                     automationPackageUpdateParameter
             );
             auditLog("create",  resource);
@@ -552,7 +559,50 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
+    @POST
+    @Path("/resources/{id}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Secured(right = "automation-package-write")
+    public String updateAutomationPackageResource(@PathParam("id") String id,
+                                                     @FormDataParam("file") InputStream uploadedInputStream,
+                                                     @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                     @FormDataParam("mavenSnippet") String mavenSnippet,
+                                                     @FormDataParam("newManagedLibraryName") String newManagedLibraryName){
+        try {
+            AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter()
+                    .withForceRefreshOfSnapshots(true).build();
+            Resource resource = automationPackageManager.updateAutomationPackageManagedLibrary(
+                    id,
+                    getLibraryFileSource(uploadedInputStream, fileDetail, mavenSnippet, null, null),
+                    newManagedLibraryName,
+                    automationPackageUpdateParameter
+            );
+            auditLog("create",  resource);
+            return resource == null ? null : resource.getId().toHexString();
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
 
+    @POST
+    @Path("/{id}/refresh")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-write")
+    public RefreshResourceResult refreshAutomationPackage(@PathParam("id") String automationPackageId){
+        try {
+            AutomationPackage automationPackage = getAutomationPackage(automationPackageId);
+            if (!FileResolver.isResource(automationPackage.getAutomationPackageResource())) {
+                throw new ControllerServiceException("This Automation Package does not reference a valid package: " + automationPackage.getAutomationPackageResource());
+            }
+            return refreshResourceAndLinkedPackages(FileResolver.resolveResourceId(automationPackage.getAutomationPackageResource()));
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
 
     @POST
     @Path("/resources/{id}/refresh")
@@ -569,7 +619,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     private RefreshResourceResult refreshResourceAndLinkedPackages(String resourceId) {
-        AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter();
+        AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter()
+                .withForceRefreshOfSnapshots(true).build();
         RefreshResourceResult refreshResourceResult = automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, automationPackageUpdateParameter, automationPackageManager);
         if (!refreshResourceResult.isFailed()){
             auditLogForResource("refresh",  resourceId);
@@ -577,12 +628,12 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         return refreshResourceResult;
     }
 
-    private AutomationPackageUpdateParameter getAutomationPackageUpdateParameter() {
+    private AutomationPackageUpdateParameterBuilder getAutomationPackageUpdateParameter() {
         return new AutomationPackageUpdateParameterBuilder()
                 .withEnricher(getObjectEnricher())
                 .withObjectPredicate(getObjectPredicate())
                 .withWriteAccessValidator(getWriteAccessValidator())
-                .withActorUser(getUser()).build();
+                .withActorUser(getUser());
     }
 
     @POST

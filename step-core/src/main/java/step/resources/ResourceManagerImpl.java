@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectPredicate;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -31,9 +32,13 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static step.core.accessors.AbstractAccessor.ATTRIBUTES_FIELD_NAME;
+
 public class ResourceManagerImpl implements ResourceManager {
 
 	private static final String ZIP_EXTENSION = ".zip";
+	public static final String RESOURCE_TYPE = "resourceType";
+	public static final String ORIGIN = "origin";
 	protected final File resourceRootFolder;
 	protected final ResourceAccessor resourceAccessor;
 	protected final ResourceRevisionAccessor resourceRevisionAccessor;
@@ -59,6 +64,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceTypes.put(RESOURCE_TYPE_ISOLATED_AP, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_AP, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_AP_LIBRARY, new CustomResourceType(false));
+		resourceTypes.put(RESOURCE_TYPE_AP_MANAGED_LIBRARY, new CustomResourceType(false));
 		resourceTypes.put(RESOURCE_TYPE_ISOLATED_AP_LIB, new CustomResourceType(false));
 	}
 
@@ -68,7 +74,7 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String actorUser) throws IOException {
-		return createResourceContainer(resourceType, resourceFileName, false, null, actorUser, null, null);
+		return createResourceContainer(resourceType, resourceFileName, null, false, null, actorUser, null, null);
 	}
 
 	@Override
@@ -78,7 +84,7 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, null, actorUser, null, null);
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, null, isDirectory, null, actorUser, null, null);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
 		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();
@@ -106,11 +112,24 @@ public class ResourceManagerImpl implements ResourceManager {
 										  boolean isDirectory,
 										  InputStream resourceStream,
 										  String resourceFileName,
+										  ObjectEnricher objectEnricher,
+										  String trackingAttribute,
+										  String actorUser,
+										  String origin, Long originTimestamp) throws IOException, InvalidResourceFormatException {
+		return createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, null, objectEnricher, trackingAttribute, actorUser, origin, originTimestamp);
+	}
+
+	@Override
+	public Resource createTrackedResource(String resourceType,
+										  boolean isDirectory,
+										  InputStream resourceStream,
+										  String resourceFileName,
+										  String optionalResourceName,
                                           ObjectEnricher objectEnricher,
 										  String trackingAttribute,
 										  String actorUser,
 										  String origin, Long originTimestamp) throws IOException, InvalidResourceFormatException {
-		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser, origin, originTimestamp);
+		ResourceRevisionContainer resourceContainer = createResourceContainer(resourceType, resourceFileName, optionalResourceName, isDirectory, trackingAttribute, actorUser, origin, originTimestamp);
 		FileHelper.copy(resourceStream, resourceContainer.getOutputStream(), 2048);
 		resourceContainer.save(objectEnricher);
 		return resourceContainer.getResource();
@@ -121,8 +140,8 @@ public class ResourceManagerImpl implements ResourceManager {
 		return new ResourceRevisionContainer(resource, revision, this);
 	}
 
-	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, boolean isDirectory, String trackingAttribute, String actorUser, String origin, Long originTimestamp) throws IOException {
-		Resource resource = createTrackedResource(resourceType, resourceFileName, isDirectory, trackingAttribute, actorUser, origin, originTimestamp);
+	private ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String optionalResourceName, boolean isDirectory, String trackingAttribute, String actorUser, String origin, Long originTimestamp) throws IOException {
+		Resource resource = createTrackedResource(resourceType, resourceFileName, optionalResourceName, isDirectory, trackingAttribute, actorUser, origin, originTimestamp);
 		ResourceRevision revision = createResourceRevisionContainer(resourceFileName, resource);
 		return new ResourceRevisionContainer(resource, revision, this);
 	}
@@ -155,9 +174,19 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
-	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String actorUser) throws IOException, InvalidResourceFormatException {
+	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser) throws IOException, InvalidResourceFormatException {
 		Resource resource = getResource(resourceId);
-		String resourceName = getResourceName(resourceFileName, resource.isDirectory());
+		String resourceName = null;
+
+		//resource name is either the optional one provide as parameter, the origin if set or a resolution based on its file name
+		if (optionalResourceName !=  null && !optionalResourceName.isBlank()) {
+			resourceName = optionalResourceName;
+		} else if (resource.getOrigin() != null && ! resource.getOrigin().isBlank())  {
+			resourceName = resource.getOrigin();
+		} else {
+			resourceName = getResourceName(resourceFileName, resource.isDirectory());
+		}
+
 		// Keep resourceName and name attribute in sync
 		resource.setResourceName(resourceName);
 		resource.addAttribute(AbstractOrganizableObject.NAME, resourceName);
@@ -263,6 +292,14 @@ public class ResourceManagerImpl implements ResourceManager {
 		return resource;
 	}
 
+	@Override
+	public Resource getResourceByNameAndType(String resourceName, String resourceType, ObjectPredicate predicate) {
+		Map<String, String> criteria = new HashMap<>();
+		criteria.put(ATTRIBUTES_FIELD_NAME + "." + AbstractOrganizableObject.NAME, Objects.requireNonNull(resourceName, "Name cannot be null"));
+		criteria.put(RESOURCE_TYPE, Objects.requireNonNull(resourceType, "Name cannot be null"));
+		return findManyByCriteria(criteria).stream().filter(predicate).findFirst().orElse(null);
+	}
+
 	public ResourceRevision getResourceRevision(String resourceRevisionId) {
 		return getResourceRevision(new ObjectId(resourceRevisionId));
 	}
@@ -299,16 +336,24 @@ public class ResourceManagerImpl implements ResourceManager {
 		return revision;
 	}
 
-	private Resource createTrackedResource(String resourceTypeId, String name, boolean isDirectory, String trackingAttribute, String actorUser, String origin, Long originTimestamp) {
+	private Resource createTrackedResource(String resourceTypeId, String fileName, String optionalResourceName, boolean isDirectory, String trackingAttribute, String actorUser, String origin, Long originTimestamp) {
 		ResourceType resourceType = resourceTypes.get(resourceTypeId);
 		if(resourceType ==  null) {
 			throw new RuntimeException("Unknown resource type "+resourceTypeId);
 		}
 
 		String resourceName;
-		resourceName = getResourceName(name, isDirectory);
+		//resource name is either the optional one provide as parameter, the origin if set or a resolution based on its file name
+		if (optionalResourceName !=  null && !optionalResourceName.isBlank()) {
+			resourceName = optionalResourceName;
+		} else if (origin != null && ! origin.isBlank())  {
+			resourceName = origin;
+		} else {
+			resourceName = getResourceName(fileName, isDirectory);
+		}
 
 		Resource resource = new Resource(actorUser);
+		// Keep resourceName and name attribute in sync
 		resource.addAttribute(AbstractOrganizableObject.NAME, resourceName);
 		resource.setResourceName(resourceName);
 		resource.setResourceType(resourceTypeId);

@@ -5,6 +5,7 @@ import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import step.constants.StreamingConstants;
 import step.core.GlobalContext;
@@ -97,6 +98,7 @@ public class StepStreamingResourceManagerTests {
         String otherResourceId = manager.registerNewResource(new StreamingResourceMetadata("dummy.txt", CommonMimeTypes.TEXT_PLAIN, false), uploadContext2.contextId);
         assertEquals(2, manager.getCatalog().accessor.stream().count());
 
+        Thread.sleep(10000);
         // This is what housekeeping does
         assertEquals(List.of(resourceId), manager.getCatalog().findResourceIdsForExecution(executionId).collect(Collectors.toList()));
         manager.deleteResource(resourceId);

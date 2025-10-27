@@ -45,20 +45,13 @@ public class LinkedAutomationPackagesFinder {
         this.automationPackageAccessor = automationPackageAccessor;
     }
 
-    public ConflictingAutomationPackages findConflictingPackagesAndCheckAccess(AutomationPackageArchiveProvider automationPackageProvider, ObjectPredicate objectPredicate,
-                                                                               WriteAccessValidator writeAccessValidator, AutomationPackageLibraryProvider apLibraryProvider, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin, AutomationPackage oldPackage, AutomationPackageManager automationPackageManager) {
+    public ConflictingAutomationPackages findConflictingPackages(AutomationPackageArchiveProvider automationPackageProvider, ObjectPredicate objectPredicate,
+                                                                 AutomationPackageLibraryProvider apLibraryProvider, boolean checkForSameOrigin, AutomationPackage oldPackage) {
         ConflictingAutomationPackages conflictingAutomationPackages;
         if (checkForSameOrigin) {
             conflictingAutomationPackages = findConflictingAutomationPackages(apLibraryProvider, automationPackageProvider, oldPackage, objectPredicate);
         } else {
             conflictingAutomationPackages = new ConflictingAutomationPackages();
-        }
-
-        List<ObjectId> apsForReupload = conflictingAutomationPackages.getApWithSameOrigin();
-        if (!allowUpdateOfOtherPackages) {
-            if (conflictingAutomationPackages.apWithSameOriginExists() || conflictingAutomationPackages.apWithSameLibraryExists()) {
-                throw new AutomationPackageCollisionException(apsForReupload, conflictingAutomationPackages.getApWithSameLibrary());
-            }
         }
         return conflictingAutomationPackages;
     }
@@ -73,12 +66,12 @@ public class LinkedAutomationPackagesFinder {
         // the libraries with identifiable (to search the resource by origin) and modifiable (i.e. SNAPSHOT) origins,
         // because for non-identifiable origins we will always upload the new resource and for unmodifiable origins - reuse the exiting resource
         // (both these cases are not conflicting and don't require the additional confirmation from user)
-        List<ObjectId> automationPackagesWithSameOrigin = new ArrayList<>();
+        Set<ObjectId> automationPackagesWithSameOrigin = new HashSet<>();
         ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
         if (apOrigin != null && automationPackageProvider.canLookupResources() && automationPackageProvider.isModifiableResource() && automationPackageProvider.hasNewContent()) {
-            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apOrigin.toStringRepresentation(), objectPredicate, ResourceManager.RESOURCE_TYPE_AP);
-            for (Resource resource : resourcesByOrigin) {
-              automationPackagesWithSameOrigin.addAll(findAutomationPackagesIdsByResourceId(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
+            Resource resourcesByOrigin = resourceManager.getResourceByNameAndType(apOrigin.toStringRepresentation(), ResourceManager.RESOURCE_TYPE_AP, objectPredicate);
+            if (resourcesByOrigin != null) {
+              automationPackagesWithSameOrigin.addAll(findAutomationPackagesIdsByResourceId(resourcesByOrigin.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
             }
             conflictingAutomationPackages.setApWithSameOrigin(automationPackagesWithSameOrigin);
         }
@@ -86,11 +79,11 @@ public class LinkedAutomationPackagesFinder {
         Set<ObjectId> apWithSameLibrary = new HashSet<>();
         ResourceOrigin apLibOrigin = apLibProvider == null ? null : apLibProvider.getOrigin();
         if (apLibOrigin != null && apLibProvider.canLookupResources() && apLibProvider.isModifiableResource() && apLibProvider.hasNewContent()) {
-            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(apLibOrigin.toStringRepresentation(), objectPredicate, ResourceManager.RESOURCE_TYPE_AP_LIBRARY);
-            for (Resource resource : resourcesByOrigin) {
-                apWithSameLibrary.addAll(findAutomationPackagesIdsByResourceId(resource.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
+            Resource resourcesByOrigin = resourceManager.getResourceByNameAndType(apLibOrigin.toStringRepresentation(), ResourceManager.RESOURCE_TYPE_AP_LIBRARY, objectPredicate);
+            if (resourcesByOrigin != null) {
+                apWithSameLibrary.addAll(findAutomationPackagesIdsByResourceId(resourcesByOrigin.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
             }
-            conflictingAutomationPackages.setApWithSameLibrary(new ArrayList<>(apWithSameLibrary));
+            conflictingAutomationPackages.setApWithSameLibrary(new HashSet<>(apWithSameLibrary));
         }
         return conflictingAutomationPackages;
     }

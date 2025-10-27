@@ -16,6 +16,7 @@ import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 public class DeployAutomationPackageToolTest {
 
@@ -61,7 +62,7 @@ public class DeployAutomationPackageToolTest {
                 Mockito.any(), Mockito.any(), Mockito.isNull(),
                 Mockito.isNull(), Mockito.isNull(), Mockito.isNull(),
                 Mockito.anyBoolean(), Mockito.isNull())
-        ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID, null));
+        ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID, null, Set.of()));
         return remoteClient;
     }
 

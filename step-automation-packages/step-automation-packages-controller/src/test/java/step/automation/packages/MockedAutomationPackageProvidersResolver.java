@@ -33,8 +33,9 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
 
     private final Map<MavenArtifactIdentifier, ResolvedMavenArtifact> mavenArtifactMocks;
 
-    public MockedAutomationPackageProvidersResolver(Map<MavenArtifactIdentifier, ResolvedMavenArtifact> mavenArtifactMocks, ResourceManager resourceManager, AutomationPackageReaderRegistry apReaderRegistry){
-        super(apReaderRegistry, resourceManager);
+    public MockedAutomationPackageProvidersResolver(Map<MavenArtifactIdentifier, ResolvedMavenArtifact> mavenArtifactMocks, ResourceManager resourceManager,
+                                                    AutomationPackageReaderRegistry apReaderRegistry, AutomationPackageResourceManager automationPackageResourceManager){
+        super(apReaderRegistry, resourceManager, automationPackageResourceManager);
         this.mavenArtifactMocks = mavenArtifactMocks;
     }
 

@@ -23,10 +23,9 @@ import step.core.objectenricher.ObjectPredicate;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public interface ResourceManager {
 
@@ -41,13 +40,14 @@ public interface ResourceManager {
 	String RESOURCE_TYPE_ISOLATED_AP_LIB = "isolatedApLib";
 	String RESOURCE_TYPE_AP = "automationPackage";
 	String RESOURCE_TYPE_AP_LIBRARY = "automationPackageLibrary";
+	String RESOURCE_TYPE_AP_MANAGED_LIBRARY = "automationPackageManagedLibrary";
 
 	/**
 	 * @param resourceType     the type of the resource
 	 * @param resourceStream   the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename)
 	 * @param objectEnricher   the {@link ObjectEnricher} of the context
-	 * @param actorUser
+	 * @param actorUser	       the user creating the resource
 	 * @return the created {@link Resource}
 	 * @throws IOException                      an IOException occurs during the call
 	 */
@@ -77,19 +77,7 @@ public interface ResourceManager {
 
 	Resource getResource(String resourceId);
 
-	default List<Resource> getResourcesByOrigin(String origin, ObjectPredicate objectPredicate, String resourceType) {
-		// TODO: we have to use ObjectFilter instead of objectPredicate, but it is harder to use it in implementations like RemoteResourceManager
-		Map<String, String> criteria = new HashMap<>();
-		criteria.put("origin", origin);
-		if (resourceType != null) {
-			criteria.put("resourceType", resourceType);
-		}
-		List<Resource> res = findManyByCriteria(criteria);
-		if (objectPredicate != null) {
-			res = res.stream().filter(objectPredicate).collect(Collectors.toList());
-		}
-		return res;
-	}
+	Resource getResourceByNameAndType(String resourceName, String resourceType, ObjectPredicate predicate);
 
 	ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException;
 
@@ -101,6 +89,16 @@ public interface ResourceManager {
 								   boolean isDirectory,
 								   InputStream resourceStream,
 								   String resourceFileName,
+								   ObjectEnricher objectEnricher,
+								   String trackingAttribute,
+								   String actorUser, String origin,
+								   Long originTimestamp) throws IOException, InvalidResourceFormatException;
+
+	Resource createTrackedResource(String resourceType,
+								   boolean isDirectory,
+								   InputStream resourceStream,
+								   String resourceFileName,
+								   String optionalResourceName,
 								   ObjectEnricher objectEnricher,
 								   String trackingAttribute,
 								   String actorUser, String origin,
@@ -125,11 +123,12 @@ public interface ResourceManager {
 	 * @param resourceId       the id of the resource to be updated
 	 * @param resourceStream   the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename)
-	 * @param actorUser
+	 * @param optionalResourceName an optional name for the resource, the filename os used otherwise
+	 * @param actorUser       the user triggering the operation
 	 * @return the updated {@link Resource}
 	 * @throws IOException an IOException occurs during the call
 	 */
-	Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String actorUser)
+	Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser)
 			throws IOException, InvalidResourceFormatException;
 
 	/**
@@ -141,6 +140,7 @@ public interface ResourceManager {
 	Resource saveResource(Resource resource) throws IOException;
 
 	ResourceRevision saveResourceRevision(ResourceRevision resourceRevision) throws IOException;
+
 
 	/**
 	 * Delete the resource and all its revisions 
@@ -155,5 +155,4 @@ public interface ResourceManager {
 
 	default void cleanup() {
 	}
-
 }

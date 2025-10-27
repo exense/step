@@ -55,6 +55,7 @@ public class StepConsole implements Callable<Integer> {
     private static final String AP_IGNORE_NAME = ".apignore";
 
     private static final Logger log = LoggerFactory.getLogger(StepConsole.class);
+    public static final String MANAGED = "managed:";
 
     @Override
     public Integer call() throws Exception {
@@ -75,7 +76,7 @@ public class StepConsole implements Callable<Integer> {
         public static final String CONFIG = "-c";
         public static final String LOCAL = "--local";
         public static final String FORCE = "--force";
-        public static final String ALLOW_UPDATE_OF_OTHER_PACKAGES = "--allowUpdateOfOtherPackages";
+        public static final String FORCE_REFRESH_OF_SNAPSHOTS = "--forceRefreshOfSnapshots";
 
         @CommandLine.Spec
         protected CommandLine.Model.CommandSpec spec;
@@ -101,9 +102,9 @@ public class StepConsole implements Callable<Integer> {
         @Option(names = {FORCE}, defaultValue = "false", description = "To force execution in case of uncritical errors")
         protected boolean force;
 
-        @Option(names = {ALLOW_UPDATE_OF_OTHER_PACKAGES}, defaultValue = "false",
-                description = "To force update of another automation packages in case they reference the same maven artifact")
-        protected boolean allowUpdateOfOtherPackages;
+        @Option(names = {FORCE_REFRESH_OF_SNAPSHOTS}, defaultValue = "false",
+                description = "To force the refresh of snapshot content when available in the remote repository, this will trigger reloading all automation packages using the same snapshot artefact in case of update.")
+        protected boolean forceRefreshOfSnapshots;
 
         protected String getStepProjectName() {
             return stepProjectName;
@@ -154,6 +155,14 @@ public class StepConsole implements Callable<Integer> {
             }
         }
 
+        protected String getManagedLibraryName(String packageLibraryParam) {
+            if (packageLibraryParam != null && packageLibraryParam.startsWith(MANAGED)) {
+                return packageLibraryParam.substring(MANAGED.length());
+            } else {
+                return null;
+            }
+        }
+
         @Override
         public Integer call() throws Exception {
             printConfigIfRequired();
@@ -173,10 +182,10 @@ public class StepConsole implements Callable<Integer> {
 
         public static abstract class AbstractApCommand extends AbstractStepCommand {
 
-            @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The path to the automation-package.yaml file or to the folder or the archive containing it. Maven coordinate are supported.")
+            @Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The path to the automation-package.yaml file, folder or the archive containing it. Maven coordinate (example mvn:groupId:artefactId:version) are supported.")
             protected String apFile;
 
-            @Option(names = {"--packageLibrary"}, paramLabel = "<PackageLibrary>", description = "The path or maven coordinate to the archive file containing the Package library for the automation package. This Library is used a keyword library when applicable.")
+            @Option(names = {"--packageLibrary"}, paramLabel = "<PackageLibrary>", description = "The file path, maven coordinate (example mvn:groupId:artefactId:version), or am existing managed library referenced by name (example managed:MY_COMMON_LIBRARY) of am automation package library.")
             protected String packageLibrary;
 
             /**
@@ -315,6 +324,7 @@ public class StepConsole implements Callable<Integer> {
                 checkStepControllerVersion();
                 MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);
                 MavenArtifactIdentifier packageLibraryMavenArtifact = getMavenArtifact(packageLibrary);
+                String managedLibraryName = getManagedLibraryName(packageLibrary);
 
                 DeployAutomationPackageTool.Params params = new DeployAutomationPackageTool.Params()
                         .setAutomationPackageMavenArtifact(apMavenArtifact)
@@ -322,11 +332,12 @@ public class StepConsole implements Callable<Integer> {
                         .setStepProjectName(getStepProjectName())
                         .setAuthToken(getAuthToken())
                         .setAsync(async)
-                        .setallowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
+                        .setForceRefreshOfSnapshots(forceRefreshOfSnapshots)
                         .setApVersion(apVersion)
                         .setActivationExpression(activationExpr)
                         .setPackageLibraryMavenArtifact(packageLibraryMavenArtifact)
-                        .setPackageLibraryFile(packageLibraryMavenArtifact != null || packageLibrary == null || packageLibrary.isEmpty() ? null : prepareKPackageLibraryFile(packageLibrary));
+                        .setAutomationPackageManagedLibraryName(managedLibraryName)
+                        .setPackageLibraryFile(packageLibraryMavenArtifact != null || managedLibraryName!= null || packageLibrary == null || packageLibrary.isEmpty() ? null : prepareKPackageLibraryFile(packageLibrary));
                 executeTool(stepUrl, params);
             }
 
@@ -436,12 +447,12 @@ public class StepConsole implements Callable<Integer> {
                     throw new StepCliExecutionException("The report generation is not supported for local execution");
                 }
 
-                File kwLibFile = null;
+                File packageLibraryFile = null;
                 if (packageLibrary != null && !packageLibrary.isEmpty()) {
-                    kwLibFile = prepareKPackageLibraryFile(packageLibrary);
+                    packageLibraryFile = prepareKPackageLibraryFile(packageLibrary);
                 }
 
-                executeLocally(file, kwLibFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
+                executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
             }
 
             protected void executeLocally(File file, File kwLibFile, String includePlans, String excludePlans, String includeCategories,
@@ -462,6 +473,7 @@ public class StepConsole implements Callable<Integer> {
                 List<ExecuteAutomationPackageTool.Report> reports = parseReportsParams();
                 MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);
                 MavenArtifactIdentifier packageLibMavenArtifact = getMavenArtifact(packageLibrary);
+                String managedLibraryName = getManagedLibraryName(packageLibrary);
 
                 executeRemotely(stepUrl,
                         new ExecuteAutomationPackageTool.Params()
@@ -469,6 +481,7 @@ public class StepConsole implements Callable<Integer> {
                                 .setAutomationPackageMavenArtifact(apMavenArtifact)
                                 .setPackageLibraryFile(packageLibMavenArtifact != null || packageLibrary == null || packageLibrary.isEmpty() ? null : prepareKPackageLibraryFile(packageLibrary))
                                 .setPackageLibraryMavenArtifact(packageLibMavenArtifact)
+                                .setAutomationPackageManagedLibraryName(managedLibraryName)
                                 .setStepProjectName(getStepProjectName())
                                 .setUserId(stepUser)
                                 .setAuthToken(getAuthToken())

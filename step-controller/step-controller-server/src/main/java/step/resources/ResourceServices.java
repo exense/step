@@ -118,7 +118,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
 			throw new RuntimeException("Invalid arguments");
 
 		try {
-			Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName(), getSession().getUser().getUsername());
+			Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName(), null, getSession().getUser().getUsername());
 			return new ResourceUploadResponse(resource, null);
 		} catch (InvalidResourceFormatException e) {
 			throw uploadFileNotAnArchive();

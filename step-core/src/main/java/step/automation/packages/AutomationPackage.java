@@ -29,7 +29,7 @@ import java.util.Map;
 public class AutomationPackage extends AbstractTrackedObject implements EnricheableObject {
 
     private AutomationPackageStatus status;
-    private String version;
+    private String versionName;
     private Expression activationExpression;
 
     private String automationPackageResource;
@@ -52,12 +52,12 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
      */
     private boolean executeFunctionsLocally;
 
-    public AutomationPackage(AutomationPackageStatus status, String version, Expression activationExpression,
+    public AutomationPackage(AutomationPackageStatus status, String versionName, Expression activationExpression,
                              String automationPackageResource, String automationPackageLibraryResource,
                              Map<String, String> functionsAttributes, Map<String, String> plansAttributes,
                              Map<String, String> tokenSelectionCriteria, boolean executeFunctionsLocally) {
         this.status = status;
-        this.version = version;
+        this.versionName = versionName;
         this.activationExpression = activationExpression;
         this.automationPackageResource = automationPackageResource;
         this.automationPackageLibraryResource = automationPackageLibraryResource;
@@ -86,12 +86,12 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
         this.activationExpression = activationExpression;
     }
 
-    public String getVersion() {
-        return version;
+    public String getVersionName() {
+        return versionName;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
+    public void setVersionName(String versionName) {
+        this.versionName = versionName;
     }
 
     public Map<String, String> getFunctionsAttributes() {

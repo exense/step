@@ -29,13 +29,13 @@ public class AutomationPackageFromResourceIdProvider extends AbstractAutomationP
     private final AutomationPackageArchive archive;
 
     public AutomationPackageFromResourceIdProvider(AutomationPackageReaderRegistry apReaderRegistry, ResourceManager resourceManager,
-                                                   String resourceId, AutomationPackageLibraryProvider keywordLibraryProvider,
+                                                   String resourceId, AutomationPackageLibraryProvider packageLibraryProvider,
                                                    ObjectPredicate objectPredicate) {
         super(resourceManager, resourceId, objectPredicate);
         AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(resourceFile.getResourceFile());
         try {
             this.archive = reader.createAutomationPackageArchive(resourceFile.getResourceFile(),
-                    keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary(),
+                    packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
                     null);
         } catch (AutomationPackageReadingException e) {
             throw new AutomationPackageManagerException("Unable to load automation package by resource id: " + resourceId);

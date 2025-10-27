@@ -22,12 +22,39 @@ package step.automation.packages.client.model;
 
 import java.io.File;
 
-public interface AutomationPackageSource {
-    default String getMavenSnippet() {
-        return null;
+public class AutomationPackageSource {
+
+    private String mavenSnippet;
+    private File file;
+    private String managedLibraryName;
+
+    public static AutomationPackageSource withMavenSnippet(String mavenSnippet) {
+        AutomationPackageSource automationPackageSource = new AutomationPackageSource();
+        automationPackageSource.mavenSnippet = mavenSnippet;
+        return automationPackageSource;
     }
 
-    default File getFile() {
-        return null;
+    public static AutomationPackageSource withFile(File file) {
+        AutomationPackageSource automationPackageSource = new AutomationPackageSource();
+        automationPackageSource.file = file;
+        return automationPackageSource;
+    }
+
+    public static AutomationPackageSource withManagedLibraryName(String managedLibraryName) {
+        AutomationPackageSource automationPackageSource = new AutomationPackageSource();
+        automationPackageSource.managedLibraryName = managedLibraryName;
+        return automationPackageSource;
+    }
+
+    public String getMavenSnippet() {
+        return mavenSnippet;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public String getManagedLibraryName() {
+        return managedLibraryName;
     }
 }

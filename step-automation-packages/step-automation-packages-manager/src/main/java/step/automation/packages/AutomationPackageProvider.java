@@ -42,9 +42,10 @@ public interface AutomationPackageProvider extends Closeable {
     default Optional<Resource> lookupExistingResource(ResourceManager resourceManager, ObjectPredicate objectPredicate) {
         // by default, we look up resources by resource origin
         if (canLookupResources() && getOrigin() != null) {
-            List<Resource> resourcesByOrigin = resourceManager.getResourcesByOrigin(getOrigin().toStringRepresentation(), objectPredicate, getResourceType());
-            // Resource by origin are unique and only so at max one resrouce should be found. It is however not the role of this method to validate it, so no check is done here
-            return (resourcesByOrigin.isEmpty()) ?  Optional.empty() : Optional.of(resourcesByOrigin.get(0));
+            //Since the introduction of managed library, the resource name and origin are aligned for non managed library. It is allowed to have 2 library with the same origin if one is managed and antoher one is unmanaged
+            Resource resourcesByOrigin = resourceManager.getResourceByNameAndType(getOrigin().toStringRepresentation(), getResourceType(), objectPredicate);
+            // Resource by origin are unique and only so at max one resource should be found. It is however not the role of this method to validate it, so no check is done here
+            return (resourcesByOrigin == null) ?  Optional.empty() : Optional.of(resourcesByOrigin);
         } else {
             throw new UnsupportedOperationException("Resources cannot be looked up for provider " + this.getClass().getSimpleName());
         }

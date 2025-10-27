@@ -15,14 +15,14 @@ public class AutomationPackageUpdateParameterBuilder {
     private ObjectId explicitOldId = null;
     private AutomationPackageFileSource apSource;
     private AutomationPackageFileSource apLibrarySource;
-    private String automationPackageVersion = null;
+    private String versionName = null;
     private String activationExpression = null;
     private ObjectEnricher enricher;
     private ObjectPredicate objectPredicate;
     private WriteAccessValidator writeAccessValidator;
     private boolean async = false;
     private String actorUser;
-    private boolean allowUpdateOfOtherPackages = false;
+    private boolean forceRefreshOfSnapshots = false;
     private boolean checkForSameOrigin = true;
     private Map<String, String> functionsAttributes;
     private Map<String, String> plansAttributes;
@@ -61,8 +61,8 @@ public class AutomationPackageUpdateParameterBuilder {
         return this;
     }
 
-    public AutomationPackageUpdateParameterBuilder withAutomationPackageVersion(String automationPackageVersion) {
-        this.automationPackageVersion = automationPackageVersion;
+    public AutomationPackageUpdateParameterBuilder withVersionName(String automationPackageVersion) {
+        this.versionName = automationPackageVersion;
         return this;
     }
 
@@ -96,8 +96,8 @@ public class AutomationPackageUpdateParameterBuilder {
         return this;
     }
 
-    public AutomationPackageUpdateParameterBuilder withAllowUpdateOfOtherPackages(boolean allowUpdateOfOtherPackages) {
-        this.allowUpdateOfOtherPackages = allowUpdateOfOtherPackages;
+    public AutomationPackageUpdateParameterBuilder withForceRefreshOfSnapshots(boolean forceRefreshOfSnapshots) {
+        this.forceRefreshOfSnapshots = forceRefreshOfSnapshots;
         return this;
     }
 
@@ -139,7 +139,7 @@ public class AutomationPackageUpdateParameterBuilder {
         if (FileResolver.isResource(automationPackageLibraryResource)) {
             this.apLibrarySource = AutomationPackageFileSource.withResourceId(FileResolver.resolveResourceId(automationPackageLibraryResource));
         }
-        this.automationPackageVersion = oldPackage.getVersion();
+        this.versionName = oldPackage.getVersionName();
         this.activationExpression = oldPackage.getActivationExpression() != null ? oldPackage.getActivationExpression().getScript() : null;
 
         //We need to rebuild the context to get the proper object enricher of the provided package
@@ -156,7 +156,7 @@ public class AutomationPackageUpdateParameterBuilder {
         this.writeAccessValidator = NO_CHECKS_VALIDATOR;
         this.async = false;
         this.actorUser = parentParameters.actorUser;
-        this.allowUpdateOfOtherPackages = false;
+        this.forceRefreshOfSnapshots = false;
         this.checkForSameOrigin = false;
         this.functionsAttributes = oldPackage.getFunctionsAttributes();
         this.plansAttributes = oldPackage.getPlansAttributes();
@@ -197,17 +197,17 @@ public class AutomationPackageUpdateParameterBuilder {
         this.explicitOldId = null;
         this.async = false;
         this.actorUser = null;
-        this.automationPackageVersion = null;
+        this.versionName = null;
         this.activationExpression = null;
-        this.allowUpdateOfOtherPackages = false;
+        this.forceRefreshOfSnapshots = false;
         this.checkForSameOrigin = true;
         return this;
     }
 
     public AutomationPackageUpdateParameter build() {
         return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource,
-                apLibrarySource, automationPackageVersion, activationExpression, enricher, objectPredicate, writeAccessValidator,
-                async, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin, functionsAttributes, plansAttributes,
+                apLibrarySource, versionName, activationExpression, enricher, objectPredicate, writeAccessValidator,
+                async, actorUser, forceRefreshOfSnapshots, checkForSameOrigin, functionsAttributes, plansAttributes,
                 tokenSelectionCriteria, executeFunctionsLocally, isRedeployment);
     }
 
