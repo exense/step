@@ -270,7 +270,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		measurement.addCustomFields(functionAttributes);
 		measurement.setName(measure.getName());
 		if (measure.getStatus() != null) {
-			// Note: status SHOULD always be non-null, but better safe than sorry.
+			// Note: status should always be set for live measures, but is null unless explicitly set for "output measures".
 			// The final value will always be set in enrichWithNodeAttributes (called below), even in case it was missing.
 			measurement.setStatus(measure.getStatus().name());
 		}

@@ -14,3 +14,4 @@ tokenGroups:
 properties:
   plugins.jmeter.home: "/path/to/jmeter"
   step.reporting.url: "http://localhost:8080"
+  plugins.sikulix.jar2: "/tmp/step/sikulixide.jar2"
