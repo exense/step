@@ -39,7 +39,7 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 		super.serverStart(context);
 
 		Collection<Measurement> collection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
-		context.get(TableRegistry.class).register(ReportMeasurementsTableName,
+		context.require(TableRegistry.class).register(ReportMeasurementsTableName,
 				new Table<>(collection, null, false)
 						.withResultItemTransformer((m, session) -> convertToPseudoMeasure(m))
 		);
@@ -50,7 +50,10 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 	/*
 	 This will convert a "full", flattened, measurement back
 	 to a format that's structurally identical to a measure.
-	 IOW, the (JSON) serialized result should be deserializable back to a Measure.
+	 IOW, the (JSON) serialized result should "almost" be deserializable back to a Measure,
+	 but it may contain status values that come from a ReportNode instead of a Measure, and
+	 therefore might be invalid as a Measure.Status enum value. The frontend (who is the
+	 only intended user of this) knows how to handle these objects.
 	 */
 	private Measurement convertToPseudoMeasure(Measurement in) {
 		Measurement out = new Measurement();
