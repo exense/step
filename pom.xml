@@ -46,7 +46,7 @@
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
 		<dependencies.version>2025.6.25</dependencies.version>
-		<step-grid.version>2025.10.15-68ef67002c8af16504f55581</step-grid.version>
+		<step-grid.version>2025.10.27-68ff7d12965ede24cff49432</step-grid.version>
 		<step-framework.version>2025.10.23-68fa2958606f681aa9b47184</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
@@ -107,11 +107,13 @@
 		<module>step-libs-maven-client</module>
 		<module>step-json-schema</module>
 		<module>step-cli</module>
+		<module>step-livereporting</module>
 	</modules>
 
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
+
 			<dependency>
 				<groupId>ch.exense.step</groupId>
 				<artifactId>step-framework</artifactId>

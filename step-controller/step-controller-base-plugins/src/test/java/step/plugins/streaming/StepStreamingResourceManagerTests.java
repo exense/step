@@ -6,7 +6,7 @@ import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import step.constants.StreamingConstants;
+import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;
 import step.core.collections.CollectionFactory;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
@@ -75,7 +75,7 @@ public class StepStreamingResourceManagerTests {
         StreamingResourceUploadContext uploadContext = new StreamingResourceUploadContext();
         uploadContexts.registerContext(uploadContext);
         String executionId = new ObjectId().toHexString();
-        uploadContext.getAttributes().put(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID, executionId);
+        uploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_EXECUTION_ID, executionId);
         String resourceId = manager.registerNewResource(new StreamingResourceMetadata("dummy.txt", CommonMimeTypes.TEXT_PLAIN, true), uploadContext.contextId);
 
         // Write data
@@ -93,7 +93,7 @@ public class StepStreamingResourceManagerTests {
         // Just for completeness, register another resource
         StreamingResourceUploadContext uploadContext2 = new StreamingResourceUploadContext();
         uploadContexts.registerContext(uploadContext2);
-        uploadContext2.getAttributes().put(StreamingConstants.AttributeNames.RESOURCE_EXECUTION_ID, new ObjectId().toHexString());
+        uploadContext2.getAttributes().put(LiveReportingConstants.CONTEXT_EXECUTION_ID, new ObjectId().toHexString());
         String otherResourceId = manager.registerNewResource(new StreamingResourceMetadata("dummy.txt", CommonMimeTypes.TEXT_PLAIN, false), uploadContext2.contextId);
         assertEquals(2, manager.getCatalog().accessor.stream().count());
 
