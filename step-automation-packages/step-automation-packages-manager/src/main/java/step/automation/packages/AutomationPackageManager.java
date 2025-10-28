@@ -559,28 +559,34 @@ public class AutomationPackageManager {
         try {
             validateSourceMode(fileSource);
             switch (resourceType) {
-                case ResourceManager.RESOURCE_TYPE_AP_LIBRARY:
                 case ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY:
-                    // We upload the new resource for package library. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
                     //When creating a managed library the name is mandatory
-                    boolean isManagedLibrary = ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY.equals(resourceType);
-                    if (isManagedLibrary && (managedLibraryName == null || managedLibraryName.isBlank())) {
+                    if (StringUtils.isBlank(managedLibraryName)) {
                         throw new AutomationPackageManagerException("The name of the managed library is mandatory");
                     }
+                    //When creating a managed library the name must be unique
+                    Resource resourceByNameAndType = resourceManager.getResourceByNameAndType(managedLibraryName, ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY, parameters.objectPredicate);
+                    if (resourceByNameAndType != null) {
+                        throw new AutomationPackageManagerException("A managed library with the name '"  + managedLibraryName + "' already exists");
+                    }
                     try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(fileSource, parameters.objectPredicate)) {
-                        if (isManagedLibrary) {
-                            try (AutomationPackageLibraryProvider managedLibraryProvider = new ManagedLibraryProvider(automationPackageLibraryProvider, null)) {
-                                return automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
-                                        managedLibraryProvider,
-                                        null, parameters, false, managedLibraryName,
-                                        true);
-                            }
-                        } else {
+                        try (AutomationPackageLibraryProvider managedLibraryProvider = new ManagedLibraryProvider(automationPackageLibraryProvider, null)) {
                             return automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
-                                    automationPackageLibraryProvider,
+                                    managedLibraryProvider,
                                     null, parameters, false, managedLibraryName,
                                     true);
                         }
+                    } catch (IOException | ManagedLibraryMissingException e) {
+                        throw new AutomationPackageManagerException("Automation package library provider exception", e);
+                    }
+                case ResourceManager.RESOURCE_TYPE_AP_LIBRARY:
+                    // We upload the new resource for package library. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
+
+                    try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(fileSource, parameters.objectPredicate)) {
+                        return automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
+                                automationPackageLibraryProvider,
+                                null, parameters, false, managedLibraryName,
+                                true);
                     } catch (IOException | ManagedLibraryMissingException e) {
                         throw new AutomationPackageManagerException("Automation package library provider exception", e);
                     }
@@ -615,8 +621,14 @@ public class AutomationPackageManager {
                 throw new AutomationPackageManagerException("The managed library with id : " + id + " does not exists.");
             } else if (! ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY.equals(resource.getResourceType())) {
                 throw new AutomationPackageManagerException("Only managed library can be updated, the resource provided has an incorrect type: " + resource.getResourceType());
-            } else if (newManagedLibraryName == null ||  newManagedLibraryName.isBlank()) {
+            } else if (StringUtils.isBlank(newManagedLibraryName)) {
                 throw new AutomationPackageManagerException("The managed library name cannot be null or empty");
+            } else if (!newManagedLibraryName.equals(resource.getAttribute(AbstractOrganizableObject.NAME))) {
+                //When changing the name of a managed library the name must still be unique
+                Resource resourceByNameAndType = resourceManager.getResourceByNameAndType(newManagedLibraryName, ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY, automationPackageUpdateParameter.objectPredicate);
+                if (resourceByNameAndType != null) {
+                    throw new AutomationPackageManagerException("Cannot renamed the managed library, another managed library with the name '"  + newManagedLibraryName + "' already exists");
+                }
             }
             try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(libraryFileSource, automationPackageUpdateParameter.objectPredicate)) {
                 try (AutomationPackageLibraryProvider managedLibraryProvider = new ManagedLibraryProvider(automationPackageLibraryProvider, resource)) {

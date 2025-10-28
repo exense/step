@@ -23,7 +23,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.google.api.client.http.HttpStatusCodes;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
@@ -602,6 +601,16 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);
         }
+    }
+
+    @POST
+    @Path("/bulk/refresh")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-write")
+    public AsyncTaskStatus<TableBulkOperationReport> bulkRefresh(TableBulkOperationRequest request) {
+        Consumer<String> consumer = this::refreshAutomationPackage;
+        return scheduleAsyncTaskWithinSessionContext(h ->
+                tableService.performBulkOperation(AutomationPackageEntity.entityName, request, consumer, getSession()));
     }
 
     @POST
