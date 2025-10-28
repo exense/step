@@ -423,7 +423,7 @@ public class AutomationPackageManager {
             // NOTE: for ap lib we don't need to enrich the resource with automation package id (because the same lib can be shared between several automation packages) - so we use simple enricher
             Resource apLibResource = automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
                     apLibraryProvider, newPackage, parameters, true,
-                    null, allowUpdateContent);
+                    allowUpdateContent);
             String apLibraryResourceString = apLibResource == null ? null : FileResolver.RESOURCE_PREFIX + apLibResource.getId().toHexString();
 
             fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, apLibraryResourceString, parameters.actorUser, parameters.objectPredicate);
@@ -570,10 +570,10 @@ public class AutomationPackageManager {
                         throw new AutomationPackageManagerException("A managed library with the name '"  + managedLibraryName + "' already exists");
                     }
                     try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(fileSource, parameters.objectPredicate)) {
-                        try (AutomationPackageLibraryProvider managedLibraryProvider = new ManagedLibraryProvider(automationPackageLibraryProvider, null)) {
+                        try (AutomationPackageLibraryProvider managedLibraryProvider = new ManagedLibraryProvider(automationPackageLibraryProvider, null, managedLibraryName)) {
                             return automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
                                     managedLibraryProvider,
-                                    null, parameters, false, managedLibraryName,
+                                    null, parameters, false,
                                     true);
                         }
                     } catch (IOException | ManagedLibraryMissingException e) {
@@ -585,7 +585,7 @@ public class AutomationPackageManager {
                     try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(fileSource, parameters.objectPredicate)) {
                         return automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
                                 automationPackageLibraryProvider,
-                                null, parameters, false, managedLibraryName,
+                                null, parameters, false,
                                 true);
                     } catch (IOException | ManagedLibraryMissingException e) {
                         throw new AutomationPackageManagerException("Automation package library provider exception", e);
@@ -631,17 +631,17 @@ public class AutomationPackageManager {
                 }
             }
             try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(libraryFileSource, automationPackageUpdateParameter.objectPredicate)) {
-                try (AutomationPackageLibraryProvider managedLibraryProvider = new ManagedLibraryProvider(automationPackageLibraryProvider, resource)) {
+                try (AutomationPackageLibraryProvider managedLibraryProvider = new ManagedLibraryProvider(automationPackageLibraryProvider, resource, newManagedLibraryName)) {
                     updatedResource = automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
                             managedLibraryProvider,
-                            null, automationPackageUpdateParameter, true, newManagedLibraryName,
+                            null, automationPackageUpdateParameter, true,
                             true);
                 }
             } catch (IOException | ManagedLibraryMissingException e) {
                 throw new AutomationPackageManagerException("Automation package library provider exception", e);
             }
         } catch (AutomationPackageReadingException ex) {
-            throw new AutomationPackageManagerException("Cannot update the managed library with id " + id, ex);
+            throw new AutomationPackageManagerException("Cannot update the managed library with id " + id + "; reason: " + ex.getMessage(), ex);
         }
         //Now that we updated the managed library, we trigger the reload of APs using it
         Set<ObjectId> automationPackagesIdsByResourceId = linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resource.getId().toHexString(), List.of());

@@ -20,17 +20,20 @@ public class ManagedLibraryProvider implements AutomationPackageLibraryProvider 
     private final AutomationPackageLibraryProvider sourceContentProvider;
     private final Resource existingManagedLibrary;
     private final boolean managingLibrary;
+    private final String managedLibraryName;
 
     public ManagedLibraryProvider(ResourceManager resourceManager, String managedLibraryName, ObjectPredicate objectPredicate) throws ManagedLibraryMissingException {
         this.existingManagedLibrary = getManagedLibraryResource(resourceManager, managedLibraryName, objectPredicate);
         this.sourceContentProvider = new AutomationPackageLibraryFromResourceIdProvider(resourceManager, getManagedLibraryResource(resourceManager, managedLibraryName, objectPredicate).getId().toHexString(), objectPredicate);
         this.managingLibrary = false;
+        this.managedLibraryName = managedLibraryName;
     }
 
-    public ManagedLibraryProvider(AutomationPackageLibraryProvider sourceContentProvider, Resource resource) throws ManagedLibraryMissingException {
+    public ManagedLibraryProvider(AutomationPackageLibraryProvider sourceContentProvider, Resource resource, String managedLibraryName) throws ManagedLibraryMissingException {
         this.sourceContentProvider = sourceContentProvider;
         this.existingManagedLibrary = resource;
         this.managingLibrary = true;
+        this.managedLibraryName = managedLibraryName;
     }
 
     public static Resource getManagedLibraryResource(ResourceManager resourceManager, String managedLibraryName, ObjectPredicate objectPredicate) throws ManagedLibraryMissingException {
@@ -66,6 +69,11 @@ public class ManagedLibraryProvider implements AutomationPackageLibraryProvider 
     @Override
     public ResourceOrigin getOrigin() {
         return sourceContentProvider.getOrigin();
+    }
+
+    @Override
+    public String getResourceName() {
+        return managedLibraryName;
     }
 
     @Override

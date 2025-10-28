@@ -10,6 +10,7 @@ import step.artefacts.reports.EchoReportNode;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.client.model.AutomationPackageSource;
+import step.cli.parameters.ApExecuteParameters;
 import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.Tenant;
@@ -200,7 +201,7 @@ public class ExecuteAutomationPackageToolTest {
                                                             RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws URISyntaxException {
         return new ExecuteAutomationPackageToolTestable(
                 "http://localhost:8080",
-                new ExecuteAutomationPackageTool.Params()
+                new ApExecuteParameters()
                         .setAutomationPackageFile(new File("test-file-jar-with-dependencies.jar"))
                         .setStepProjectName(TENANT_1.getName())
                         .setUserId("testUser")
@@ -237,7 +238,7 @@ public class ExecuteAutomationPackageToolTest {
         private final RemoteExecutionManager remoteExecutionManagerMock;
         private final RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
-        public ExecuteAutomationPackageToolTestable(String url, Params params,
+        public ExecuteAutomationPackageToolTestable(String url, ApExecuteParameters params,
                                                     RemoteExecutionManager remoteExecutionManagerMock,
                                                     RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
             super(url, params);

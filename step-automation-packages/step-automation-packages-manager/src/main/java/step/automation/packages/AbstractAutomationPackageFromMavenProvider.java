@@ -102,6 +102,11 @@ public abstract class AbstractAutomationPackageFromMavenProvider implements Auto
     }
 
     @Override
+    public String getResourceName() {
+        return mavenArtifactIdentifier.toStringRepresentation();
+    }
+
+    @Override
     public void close() throws IOException {
 
     }

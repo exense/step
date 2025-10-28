@@ -24,12 +24,13 @@ import step.resources.ResourceManager;
 import step.resources.ResourceOrigin;
 
 import java.io.Closeable;
-import java.util.List;
 import java.util.Optional;
 
 public interface AutomationPackageProvider extends Closeable {
 
     ResourceOrigin getOrigin();
+
+    String getResourceName();
 
     default boolean isModifiableResource() {
         return getOrigin() != null && getOrigin().isModifiable();

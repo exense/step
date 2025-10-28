@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.cli.ExecuteAutomationPackageTool;
+import step.cli.parameters.ApExecuteParameters;
 
 import java.net.URISyntaxException;
 import java.util.*;
@@ -119,14 +120,14 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		private final ExecuteAutomationPackageTool mockedTool = Mockito.mock(ExecuteAutomationPackageTool.class);
 
 		private String url;
-		private ExecuteAutomationPackageTool.Params params;
+		private ApExecuteParameters params;
 
 		public ExecuteAutomationPackageMojoTestable() {
 			super();
 		}
 
 		@Override
-		protected ExecuteAutomationPackageTool createTool(String url, ExecuteAutomationPackageTool.Params params) {
+		protected ExecuteAutomationPackageTool createTool(String url, ApExecuteParameters params) {
 			this.url = url;
 			this.params = params;
 			return mockedTool;

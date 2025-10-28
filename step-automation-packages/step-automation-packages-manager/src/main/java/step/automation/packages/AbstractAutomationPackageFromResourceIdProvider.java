@@ -55,6 +55,12 @@ public class AbstractAutomationPackageFromResourceIdProvider implements Automati
     }
 
     @Override
+    public String getResourceName() {
+        //Let the resource manager determine the name
+        return null;
+    }
+
+    @Override
     public void close() throws IOException {
         if (resourceFile != null) {
             resourceFile.close();

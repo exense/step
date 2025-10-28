@@ -24,6 +24,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.cli.DeployAutomationPackageTool;
 import step.cli.StepCliExecutionException;
+import step.cli.parameters.ApDeployParameters;
 import step.client.credentials.ControllerCredentials;
 import step.core.maven.MavenArtifactIdentifier;
 
@@ -32,21 +33,13 @@ import java.io.File;
 @Mojo(name = "deploy-automation-package")
 public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
-    @Parameter(property = "step.step-project-name")
-    private String stepProjectName;
-
-    @Parameter(property = "step.auth-token")
-    private String authToken;
 
     @Parameter(property = "step-deploy-automation-package.async")
     private Boolean async;
-
     @Parameter(property = "step-deploy-automation-package.ap-version")
     private String apVersion;
-
     @Parameter(property = "step-deploy-automation-package.activation-expression")
     private String activationExpression;
-
     @Parameter(property = "step-deploy-auto-packages.artifact-group-id")
     private String artifactGroupId;
     @Parameter(property = "step-deploy-auto-packages.artifact-id")
@@ -100,7 +93,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         MavenArtifactIdentifier remoteApMavenIdentifier = getRemoteMavenIdentifier();
         File localApFile = remoteApMavenIdentifier != null ? null : DeployAutomationPackageMojo.this.getFileToUpload();
         return new MavenDeployAutomationPackageTool(
-                url, new DeployAutomationPackageTool.Params()
+                url, new ApDeployParameters()
                 .setAutomationPackageMavenArtifact(remoteApMavenIdentifier)
                 .setAutomationPackageFile(localApFile)
                 .setPackageLibraryFile(libArtifactPath == null ? null : new File(libArtifactPath))
@@ -131,22 +124,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setArtifactClassifier(String artifactClassifier) {
         this.artifactClassifier = artifactClassifier;
-    }
-
-    public String getStepProjectName() {
-        return stepProjectName;
-    }
-
-    public void setStepProjectName(String stepProjectName) {
-        this.stepProjectName = stepProjectName;
-    }
-
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
     }
 
     public Boolean getAsync() {
@@ -290,7 +267,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     protected class MavenDeployAutomationPackageTool extends DeployAutomationPackageTool {
 
-        public MavenDeployAutomationPackageTool(String url, Params params) {
+        public MavenDeployAutomationPackageTool(String url, ApDeployParameters params) {
             super(url, params);
         }
 

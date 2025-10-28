@@ -28,6 +28,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.bson.types.ObjectId;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -52,9 +53,11 @@ import step.framework.server.tables.service.bulk.BulkOperationWarningException;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 import step.resources.Resource;
+import step.resources.ResourceManager;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.Map;
 
@@ -559,6 +562,50 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     @POST
+    @Path("/library")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Secured(right = "automation-package-write")
+    public AutomationPackageUpdateResult deployAutomationPackageLibrary(@FormDataParam("file") InputStream uploadedInputStream,
+                                                     @FormDataParam("file") FormDataContentDisposition fileDetail,
+                                                     @FormDataParam("mavenSnippet") String mavenSnippet,
+                                                     @FormDataParam("managedLibraryName") String managedLibraryName){
+        try {
+            AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter().build();
+            //in case of managed library we first determined if we are creating a new one or updating an existing one, otherwise we always created a new library
+            boolean managedLibrary = !StringUtils.isBlank(managedLibraryName);
+            String resourceType = (managedLibrary) ? ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY : ResourceManager.RESOURCE_TYPE_AP_LIBRARY;
+            Resource updated = null;
+            AutomationPackageUpdateStatus status = null;
+            if (managedLibrary) {
+                Resource existingResource = automationPackageManager.getResourceManager().getResourceByNameAndType(managedLibraryName, resourceType, getObjectPredicate());
+                if (existingResource != null) {
+                    updated = automationPackageManager.updateAutomationPackageManagedLibrary(existingResource.getId().toHexString(),
+                             getLibraryFileSource(uploadedInputStream, fileDetail, mavenSnippet, null, null),
+                             managedLibraryName,
+                             automationPackageUpdateParameter);
+                    status = AutomationPackageUpdateStatus.UPDATED;
+                }
+            }
+            //If it's not a managed library or if it's a new managed library we use the create method
+            if (!managedLibrary || updated == null) {
+                updated = automationPackageManager.createAutomationPackageResource(
+                        resourceType,
+                        getLibraryFileSource(uploadedInputStream, fileDetail, mavenSnippet, null, null),
+                        managedLibraryName,
+                        automationPackageUpdateParameter
+                );
+                status = AutomationPackageUpdateStatus.CREATED;
+            }
+            auditLog("deploy",  updated);
+            return new AutomationPackageUpdateResult(status, updated.getId(), new ConflictingAutomationPackages(), Set.of() );
+        } catch (AutomationPackageAccessException ex){
+            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+        } catch (AutomationPackageManagerException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
+    }
+
+    @POST
     @Path("/resources/{id}")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Secured(right = "automation-package-write")
@@ -576,7 +623,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     newManagedLibraryName,
                     automationPackageUpdateParameter
             );
-            auditLog("create",  resource);
+            auditLog("update",  resource);
             return resource == null ? null : resource.getId().toHexString();
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());

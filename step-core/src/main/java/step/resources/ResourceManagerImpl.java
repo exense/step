@@ -178,11 +178,9 @@ public class ResourceManagerImpl implements ResourceManager {
 		Resource resource = getResource(resourceId);
 		String resourceName = null;
 
-		//resource name is either the optional one provide as parameter, the origin if set or a resolution based on its file name
+		//resource name is either the optional one provide as parameter, a resolution based on its file name
 		if (optionalResourceName !=  null && !optionalResourceName.isBlank()) {
 			resourceName = optionalResourceName;
-		} else if (resource.getOrigin() != null && ! resource.getOrigin().isBlank())  {
-			resourceName = resource.getOrigin();
 		} else {
 			resourceName = getResourceName(resourceFileName, resource.isDirectory());
 		}
@@ -343,11 +341,9 @@ public class ResourceManagerImpl implements ResourceManager {
 		}
 
 		String resourceName;
-		//resource name is either the optional one provide as parameter, the origin if set or a resolution based on its file name
+		//resource name is either the optional one provide as parameter or a resolution based on its file name
 		if (optionalResourceName !=  null && !optionalResourceName.isBlank()) {
 			resourceName = optionalResourceName;
-		} else if (origin != null && ! origin.isBlank())  {
-			resourceName = origin;
 		} else {
 			resourceName = getResourceName(fileName, isDirectory);
 		}

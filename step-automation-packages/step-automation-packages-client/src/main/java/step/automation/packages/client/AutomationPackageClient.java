@@ -42,4 +42,6 @@ public interface AutomationPackageClient extends Closeable {
 
     void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
 
+    AutomationPackageUpdateResult createOrUpdateAutomationPackageLibrary(AutomationPackageSource librarySource, String managedLibraryName) throws AutomationPackageClientException;
+
 }

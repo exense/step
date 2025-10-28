@@ -48,6 +48,12 @@ public class AutomationPackageFromFolderProvider implements AutomationPackageArc
     }
 
     @Override
+    public String getResourceName() {
+        //Let the resource manager determine the name
+        return null;
+    }
+
+    @Override
     public void close() throws IOException {
 
     }

@@ -84,6 +84,22 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
         executeAutomationPackageClientRequest(() -> builder.delete(Void.class));
     }
 
+    @Override
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackageLibrary(AutomationPackageSource librarySource, String managedLibraryName) throws AutomationPackageClientException {
+        MultiPart multiPart = new MultiPart();
+        multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        if (librarySource != null && librarySource.getFile() != null) {
+            multiPart.bodyPart(new FileDataBodyPart("file", librarySource.getFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        }
+        if (librarySource != null && librarySource.getMavenSnippet() != null) {
+            multiPart.bodyPart(new FormDataBodyPart("mavenSnippet", librarySource.getMavenSnippet()));
+        }
+        addStringBodyPart("managedLibraryName", managedLibraryName, multiPart);
+        Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
+        Invocation.Builder builder = requestBuilder("/rest/automation-packages/library");
+        return this.executeAutomationPackageClientRequest(() -> builder.post(entity, AutomationPackageUpdateResult.class));
+    }
+
     private <T> T executeAutomationPackageClientRequest(Supplier<T> provider) throws AutomationPackageClientException {
         try {
             return executeRequest(provider);

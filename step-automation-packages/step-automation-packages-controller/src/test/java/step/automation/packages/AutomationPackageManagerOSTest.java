@@ -1176,7 +1176,7 @@ public class AutomationPackageManagerOSTest {
             Assert.assertNotNull(savedApResource);
             Assert.assertEquals(ResourceManager.RESOURCE_TYPE_AP, savedApResource.getResourceType());
 
-            savedkwResource = manager.getAutomationPackageResourceManager().uploadOrReuseAutomationPackageLibrary(apLibProvider, null, parameters, false, null, true);
+            savedkwResource = manager.getAutomationPackageResourceManager().uploadOrReuseAutomationPackageLibrary(apLibProvider, null, parameters, false, true);
             Assert.assertNotNull(savedkwResource);
             Assert.assertEquals(ResourceManager.RESOURCE_TYPE_AP_LIBRARY, savedkwResource.getResourceType());
         } catch (IOException | AutomationPackageReadingException e) {

@@ -59,7 +59,7 @@ public class ResourceImporter implements BiConsumer<Object, ImportContext> {
 			
 			File resourceFile = localResourceMgr.getResourceFile(origResourceId).getResourceFile();
 			try (InputStream fileInputStream = new FileInputStream(resourceFile)){
-				Resource newResource = resourceManager.saveResourceContent(resource.getId().toString(), fileInputStream, resource.getResourceName(), null, importConfiguration.getUsername());
+				Resource newResource = resourceManager.saveResourceContent(resource.getId().toString(), fileInputStream, resource.getResourceName(), resource.getResourceName(), importConfiguration.getUsername());
 				// Update the revision id
 				resource.setCurrentRevisionId(newResource.getCurrentRevisionId());
 			} catch (IOException | InvalidResourceFormatException e) {

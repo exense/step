@@ -380,7 +380,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                     // restore the automation package file from maven
                     file = MavenArtifactDownloader.getFile(manager.getMavenConfig(), mavenArtifactIdentifier, null).artifactFile;
                     try (FileInputStream fis = new FileInputStream(file)) {
-                        resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), null, resource.getCreationUser());
+                        resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), mavenArtifactIdentifier.toStringRepresentation(), resource.getCreationUser());
                         return true;
                     }
                 } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
