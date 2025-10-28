@@ -302,13 +302,13 @@ public class AutomationPackageManager {
     /**
      * @throws AutomationPackageAccessException if the automation package is not acceptable in current context
      */
-    public void removeAutomationPackage(ObjectId id, String actorUser, ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator, boolean cleanupUnusedMainResources) throws AutomationPackageManagerException {
+    public void removeAutomationPackage(ObjectId id, String actorUser, ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator) throws AutomationPackageManagerException {
         AutomationPackage automationPackage = getAutomationPackageById(id, objectPredicate);
         checkAccess(automationPackage, writeAccessValidator);
         String automationPackageId = automationPackage.getId().toHexString();
         if (automationPackageLocks.tryWriteLock(automationPackageId)) {
             try {
-                deleteAutomationPackageEntities(automationPackage, null, actorUser, writeAccessValidator, cleanupUnusedMainResources);
+                deleteAutomationPackageEntities(automationPackage, null, actorUser, writeAccessValidator);
                 automationPackageAccessor.remove(automationPackage.getId());
                 log.info("Automation package ({}) has been removed", id);
             } finally {
@@ -319,12 +319,12 @@ public class AutomationPackageManager {
         }
     }
 
-    protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, AutomationPackage newPackage, String actorUser, WriteAccessValidator writeAccessValidator, boolean cleanupUnusedMainResources) {
+    protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, AutomationPackage newPackage, String actorUser, WriteAccessValidator writeAccessValidator) {
         deleteFunctions(automationPackage);
         deletePlans(automationPackage);
 
         // remove all internal resources (scripts, files etc.) and the main automation file + automation lib if there are no other APs linked with these files
-        deleteResources(automationPackage, newPackage, writeAccessValidator, cleanupUnusedMainResources);
+        deleteResources(automationPackage, newPackage, writeAccessValidator);
 
         // schedules will be deleted in deleteAdditionalData via hooks
         deleteAdditionalData(automationPackage, new AutomationPackageContext(automationPackage, operationMode, resourceManager,
@@ -643,8 +643,7 @@ public class AutomationPackageManager {
             }
             // delete old package entities
             if (oldPackage != null) {
-                // TODO: here by default we will cleanup unused old resources and libs for AP (cleanupUnusedMainResources=true), but maybe it is better to do it manually via resource view (https://exense.atlassian.net/browse/SED-4253)
-                deleteAutomationPackageEntities(oldPackage, newPackage, parameters.actorUser, parameters.writeAccessValidator, parameters.cleanupUnusedMainResources);
+                deleteAutomationPackageEntities(oldPackage, newPackage, parameters.actorUser, parameters.writeAccessValidator);
             }
             // persist all staged entities
             persistStagedEntities(newPackage, staging, enricherForIncludedEntities, packageContent, apLibraryResource, parameters.actorUser);
@@ -948,7 +947,7 @@ public class AutomationPackageManager {
      * @param newAutomationPackage new (not persisted yet) automation package
      * @param writeAccessValidator validator used to check write access on the resource to be deleted
      */
-    protected void deleteResources(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, WriteAccessValidator writeAccessValidator, boolean removeMainResourcesIfPossible) {
+    protected void deleteResources(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, WriteAccessValidator writeAccessValidator) {
         // 1. included resources (files within automation package)
         List<Resource> resources = getPackageResources(currentAutomationPackage.getId());
         for (Resource resource : resources) {
@@ -964,10 +963,8 @@ public class AutomationPackageManager {
         }
 
         // 2. main resources (AP file and AP lib file)
-        if (removeMainResourcesIfPossible) {
-            deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageResource(), writeAccessValidator);
-            deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageLibraryResource(), writeAccessValidator);
-        }
+        deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageResource(), writeAccessValidator);
+        deleteMainApResourceIfPossible(currentAutomationPackage, newAutomationPackage, currentAutomationPackage.getAutomationPackageLibraryResource(), writeAccessValidator);
     }
 
     private void deleteMainApResourceIfPossible(AutomationPackage currentAutomationPackage, AutomationPackage newAutomationPackage, String apResourceToCheck, WriteAccessValidator writeAccessValidator) {

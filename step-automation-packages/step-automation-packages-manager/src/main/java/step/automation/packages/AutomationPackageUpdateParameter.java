@@ -95,8 +95,6 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
      */
     public final boolean isRedeployment;
 
-    public final boolean cleanupUnusedMainResources;
-
     public AutomationPackageUpdateParameter(boolean allowUpdate, boolean allowCreate, boolean isLocalPackage, ObjectId explicitOldId,
                                             AutomationPackageFileSource apSource, AutomationPackageFileSource apLibrarySource,
                                             String automationPackageVersion, String activationExpression, ObjectEnricher enricher,
@@ -104,7 +102,7 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
                                             String actorUser, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin,
                                             Map<String, String> functionsAttributes, Map<String, String> plansAttributes,
                                             Map<String, String> tokenSelectionCriteria, boolean executionFunctionsLocally,
-                                            boolean isRedeployment, boolean cleanupUnusedMainResources) {
+                                            boolean isRedeployment) {
         super(enricher, objectPredicate, writeAccessValidator, actorUser);
         this.allowUpdate = allowUpdate;
         this.allowCreate = allowCreate;
@@ -122,7 +120,6 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
         this.tokenSelectionCriteria = tokenSelectionCriteria;
         this.executionFunctionsLocally = executionFunctionsLocally;
         this.isRedeployment = isRedeployment;
-        this.cleanupUnusedMainResources = cleanupUnusedMainResources;
     }
 
 

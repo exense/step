@@ -179,7 +179,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         Assert.assertEquals(r.storedTask.getId(), r2.storedTask.getId());
 
         // 4. Delete package by name - everything should be removed
-        manager.removeAutomationPackage(r2.storedPackage.getId(), "testUser", null, null, true);
+        manager.removeAutomationPackage(r2.storedPackage.getId(), "testUser", null, null);
 
         Assert.assertEquals(0, automationPackageAccessor.stream().count());
 

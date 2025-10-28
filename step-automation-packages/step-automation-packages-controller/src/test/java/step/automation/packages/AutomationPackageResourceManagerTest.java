@@ -118,10 +118,6 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
         // update timestamp in AP has been actualized
         Assert.assertTrue(updatedTimestampAfterRefresh > updatedTimestampBeforeRefresh);
 
-        // check old resource file is removed and not locked in file system
-        // TODO: maybe we need to delete old resource revision file (first snapshot)
-        // Assert.assertFalse(resourceFileHandleBeforeRefresh.getResourceFile().exists());
-
         // 4. DELETE RESOURCE IS NOT ALLOWED BECAUSE OF LINKED AUTOMATION PACKAGES
         try {
             manager.getAutomationPackageResourceManager().deleteResource(uploadedResource.getId().toHexString(), apUpdateParams.writeAccessValidator);
@@ -130,19 +126,35 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
             log.info("Caught exception: {}", ex.getMessage());
         }
 
-        // 5. REMOVE AP, BUT DO NOT REMOVE THE LINKED RESOURCE (removeMainResourcesIfPossible=FALSE)
-        manager.removeAutomationPackage(createdPackage.getId(), apUpdateParams.actorUser, apUpdateParams.objectPredicate, apUpdateParams.writeAccessValidator, false);
+        // 5. REMOVE AP - LINKED RESOURCE WILL BE AUTOMATICALLY DELETED
+        manager.removeAutomationPackage(createdPackage.getId(), apUpdateParams.actorUser, apUpdateParams.objectPredicate, apUpdateParams.writeAccessValidator);
 
-        // check that resource file is not yet removed
-        Assert.assertNotNull(resourceManager.getResource(uploadedResource.getId().toHexString()));
-        Assert.assertTrue(resourceFileHandleAfterRefresh.getResourceFile().exists());
+        // check resource file is removed
+        try {
+            resourceManager.getResource(uploadedResource.getId().toHexString());
+            Assert.fail("Resource still exists");
+        } catch (ResourceMissingException ex){
+            log.info("Resource has been successfully deleted: {}", uploadedResource.getResourceName());
+        }
+        Assert.assertFalse(resourceFileHandleAfterRefresh.getResourceFile().exists());
 
-        // 6. NOW RESOURCE CAN BE DELETED
+        // 6. CREATE RESOURCE AGAIN
+        uploadedResource = manager.getAutomationPackageResourceManager().uploadOrReuseAutomationPackageLibrary(
+                manager.getAutomationPackageLibraryProvider(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot), o -> true),
+                null,
+                apUpdateParams,
+                false
+        );
+        resourceFileHandleAfterRefresh = resourceManager.getResourceFile(uploadedResource.getId().toHexString());
+        log.info("Resource after the second upload: {}", resourceFileHandleBeforeRefresh.getResourceFile().getAbsolutePath());
+
+        // 7. RESOURCE WITHOUT LINKED AP CAN BE DELETED
         manager.getAutomationPackageResourceManager().deleteResource(uploadedResource.getId().toHexString(), apUpdateParams.writeAccessValidator);
 
         // check that resource is removed and not locked in file system
         try {
             resourceManager.getResource(uploadedResource.getId().toHexString());
+            Assert.fail("Resource still exists");
         } catch (ResourceMissingException ex) {
             log.info("Resource has been successfully deleted: {}", uploadedResource.getResourceName());
         }

@@ -29,7 +29,6 @@ public class AutomationPackageUpdateParameterBuilder {
     private Map<String, String> tokenSelectionCriteria;
     private boolean executeFunctionsLocally;
     private boolean isRedeployment = false;
-    private boolean cleanupUnusedMainResources = true;
 
     public AutomationPackageUpdateParameterBuilder withAllowUpdate(boolean allowUpdate) {
         this.allowUpdate = allowUpdate;
@@ -127,11 +126,6 @@ public class AutomationPackageUpdateParameterBuilder {
         return this;
     }
 
-    public AutomationPackageUpdateParameterBuilder withCleanupUnusedMainResources(boolean cleanupUnusedMainResources) {
-        this.cleanupUnusedMainResources =  cleanupUnusedMainResources;
-        return this;
-    }
-
     public AutomationPackageUpdateParameterBuilder forRedeployPackage(ObjectHookRegistry objectHookRegistry, AutomationPackage oldPackage, AutomationPackageUpdateParameter parentParameters) {
         this.allowUpdate = true;
         this.allowCreate = false;
@@ -214,7 +208,7 @@ public class AutomationPackageUpdateParameterBuilder {
         return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource,
                 apLibrarySource, automationPackageVersion, activationExpression, enricher, objectPredicate, writeAccessValidator,
                 async, actorUser, allowUpdateOfOtherPackages, checkForSameOrigin, functionsAttributes, plansAttributes,
-                tokenSelectionCriteria, executeFunctionsLocally, isRedeployment, cleanupUnusedMainResources);
+                tokenSelectionCriteria, executeFunctionsLocally, isRedeployment);
     }
 
 
