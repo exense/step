@@ -191,7 +191,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Secured(right = "automation-package-write")
-    public String createAutomationPackage(@FormDataParam("versionName") String apVersion,
+    public AutomationPackageUpdateResult createAutomationPackage(@FormDataParam("versionName") String apVersion,
                                           @FormDataParam("activationExpr") String activationExpression,
                                           @FormDataParam("forceRefreshOfSnapshots") boolean forceRefreshOfSnapshots,
                                           @FormDataParam("file") InputStream automationPackageInputStream,
@@ -220,9 +220,10 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
                     .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
-            ObjectId id = automationPackageManager.createOrUpdateAutomationPackage(parameters).getId();
+            AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(parameters);
+            ObjectId id = result.getId();
             auditLog("create",  id);
-            return id == null ? null : id.toString();
+            return result;
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);
         }
