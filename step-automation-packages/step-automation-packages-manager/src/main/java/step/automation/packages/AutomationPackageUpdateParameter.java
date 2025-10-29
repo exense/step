@@ -25,7 +25,7 @@ import step.core.objectenricher.WriteAccessValidator;
 
 import java.util.Map;
 
-public class AutomationPackageUpdateParameter {
+public class AutomationPackageUpdateParameter extends AutomationPackageAccessParameters {
     /**
      * whether update of existing package is allowed, set to false when a creation of package is expected
      */
@@ -55,29 +55,13 @@ public class AutomationPackageUpdateParameter {
      */
     public final String versionName;
     /**
-     * the activation expression of the Automation Package, this is propagated to the depoyed functions and plans of this package and is used for their selection when multiple versions of a package ar deployed
+     * the activation expression of the Automation Package, this is propagated to the deployed functions and plans of this package and is used for their selection when multiple versions of a package ar deployed
      */
     public final String activationExpression;
-    /**
-     * the object enricher used to enrich the package and its entities during deployment
-     */
-    public final ObjectEnricher enricher;
-    /**
-     * the predicate used to check read access, i.e. when searching for existing packages, resources... during deployment
-     */
-    public final ObjectPredicate objectPredicate;
-    /**
-     * the write predicate used during deployment, to ensure we can update existing entities (also used to make sure we can update other packages sharing the same artefact resources)
-     */
-    public final WriteAccessValidator writeAccessValidator;
     /**
      * Whether the deployment of the package is synchronous, i.e. we wait to acquire the lock and deploy/update all entities before returning
      */
     public final boolean async;
-    /**
-     * the user triggering the operation, this is used to udpate tracking information for the package and its resources
-     */
-    public final String actorUser;
     /**
      * Whether we want to force the update of the snapshot artefacts content when these artefact are already used by other automation packages.
      * By default, if a snapshot artefact is already used by other automation packages, even if new content would be available in the remote artefact repository, we do not update it to not impact other automation packages using it
@@ -118,12 +102,7 @@ public class AutomationPackageUpdateParameter {
                                             Map<String, String> functionsAttributes, Map<String, String> plansAttributes,
                                             Map<String, String> tokenSelectionCriteria, boolean executionFunctionsLocally,
                                             boolean isRedeployment) {
-        if (objectPredicate == null) {
-            throw new AutomationPackageManagerException("The objectPredicate cannot be null");
-        }
-        if (writeAccessValidator == null) {
-            throw new AutomationPackageManagerException("The writeAccessValidator cannot be null");
-        }
+        super(enricher, objectPredicate, writeAccessValidator, actorUser);
         this.allowUpdate = allowUpdate;
         this.allowCreate = allowCreate;
         this.isLocalPackage = isLocalPackage;
@@ -132,11 +111,7 @@ public class AutomationPackageUpdateParameter {
         this.apLibrarySource = apLibrarySource;
         this.versionName = versionName;
         this.activationExpression = activationExpression;
-        this.enricher = enricher;
-        this.objectPredicate = objectPredicate;
-        this.writeAccessValidator = writeAccessValidator;
         this.async = async;
-        this.actorUser = actorUser;
         this.forceRefreshOfSnapshots = forceRefreshOfSnapshots;
         this.checkForSameOrigin = checkForSameOrigin;
         this.functionsAttributes = functionsAttributes;

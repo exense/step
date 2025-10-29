@@ -25,6 +25,7 @@ import step.automation.packages.library.AutomationPackageLibraryFromMavenProvide
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.ObjectPredicate;
 import step.repositories.artifact.ResolvedMavenArtifact;
+import step.repositories.artifact.SnapshotMetadata;
 import step.resources.ResourceManager;
 
 import java.util.Map;
@@ -37,6 +38,22 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
                                                     AutomationPackageReaderRegistry apReaderRegistry, AutomationPackageResourceManager automationPackageResourceManager){
         super(apReaderRegistry, resourceManager, automationPackageResourceManager);
         this.mavenArtifactMocks = mavenArtifactMocks;
+    }
+
+    @Override
+    public AutomationPackageResourceManager.MavenOperations createMavenOperations(AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider) {
+        return new AutomationPackageResourceManager.MavenOperations() {
+            @Override
+            public SnapshotMetadata fetchSnapshotMetadata(MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) {
+                ResolvedMavenArtifact resolvedMavenArtifact = mavenArtifactMocks.get(mavenArtifactIdentifier);
+                return resolvedMavenArtifact == null ? null : resolvedMavenArtifact.snapshotMetadata;
+            }
+
+            @Override
+            public ResolvedMavenArtifact getFile(MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) {
+                return mavenArtifactMocks.get(mavenArtifactIdentifier);
+            }
+        };
     }
 
     @Override

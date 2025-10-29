@@ -55,8 +55,9 @@ public class AutomationPackageResourceManager {
     private final AutomationPackageOperationMode operationMode;
     private final AutomationPackageAccessor automationPackageAccessor;
     private final LinkedAutomationPackagesFinder linkedAutomationPackagesFinder;
-    private final AutomationPackageMavenConfig mavenConfig;
-    private final Set<String> supportedResourceTypes = Set.of(
+    private final MavenOperations mavenOperations;
+
+    private Set<String> supportedResourceTypes = Set.of(
             ResourceManager.RESOURCE_TYPE_AP,
             ResourceManager.RESOURCE_TYPE_AP_LIBRARY,
             ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY
@@ -66,12 +67,12 @@ public class AutomationPackageResourceManager {
                                             AutomationPackageOperationMode operationMode,
                                             AutomationPackageAccessor automationPackageAccessor,
                                             LinkedAutomationPackagesFinder linkedAutomationPackagesFinder,
-                                            AutomationPackageMavenConfig mavenConfig) {
+                                            MavenOperations mavenOperations) {
         this.resourceManager = resourceManager;
         this.operationMode = operationMode;
         this.automationPackageAccessor = automationPackageAccessor;
         this.linkedAutomationPackagesFinder = linkedAutomationPackagesFinder;
-        this.mavenConfig = mavenConfig;
+        this.mavenOperations = mavenOperations;
     }
 
     public Resource findManagedLibrary(String managedLibraryName, ObjectPredicate predicate) throws ManagedLibraryMissingException {
@@ -85,7 +86,7 @@ public class AutomationPackageResourceManager {
      * @param allowToReuseOldResource the flag allowing or not to reuse libraries
      */
     public void validateUploadOrReuseAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider,
-                                                          AutomationPackageUpdateParameter parameters, boolean allowToReuseOldResource) {
+                                                              AutomationPackageAccessParameters parameters, boolean allowToReuseOldResource) {
         try {
             File apLibrary = apLibProvider.getAutomationPackageLibrary();
             if (apLibrary != null) {
@@ -115,7 +116,7 @@ public class AutomationPackageResourceManager {
 
     public Resource uploadOrReuseAutomationPackageLibrary(AutomationPackageLibraryProvider apLibProvider,
                                                           AutomationPackage automationPackageToBeLinkedWithLib,
-                                                          AutomationPackageUpdateParameter parameters, boolean allowToReuseOldResource, boolean allowUpdateContent) {
+                                                          AutomationPackageAccessParameters parameters, boolean allowToReuseOldResource, boolean allowUpdateContent) {
         String apName = automationPackageToBeLinkedWithLib == null ? "" : automationPackageToBeLinkedWithLib.getAttribute(AbstractOrganizableObject.NAME);
         String origin = Optional.ofNullable(apLibProvider.getOrigin()).map(ResourceOrigin::toStringRepresentation).orElse(null);
         String apLibraryResourceString = null;
@@ -139,22 +140,34 @@ public class AutomationPackageResourceManager {
                         throw new AutomationPackageManagerException("Existing resource " + oldResource.getResourceName() + " ( " + oldResource.getId() + " ) has been detected and cannot be reused / updated");
                     }
 
-                    if (!apLibProvider.isModifiableResource()) {
-                        // for unmodifiable origins we just reused the previously uploaded resource
-                        log.info("Existing automation package library {} with resource id {} has been detected and will be reused in AP {}", apLibrary.getName(), oldResource.getId().toHexString(), apName);
-                        uploadedResource = oldResource;
-                    } else if (apLibProvider.hasNewContent() && allowUpdateContent) {
-                        // for modifiable resources (i.e. SNAPSHOTS) we can reuse the old resource id and metadata, but we need to update the content if a new version was downloaded
-                        try (FileInputStream fis = new FileInputStream(apLibrary)) {
-                            uploadedResource = updateExistingResourceContentAndPropagate(apLibrary.getName(),
-                                    apName,
-                                    automationPackageToBeLinkedWithLib == null ? null : automationPackageToBeLinkedWithLib.getId(),
-                                    fis, origin, apLibProvider.getSnapshotTimestamp(), oldResource, apLibProvider.getResourceName(),
-                                    parameters.actorUser, parameters.writeAccessValidator
-                            );
-                        }
+                    ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(oldResource.getId().toString());
+                    boolean resourceFileExists = fileHandle != null && fileHandle.getResourceFile() != null && fileHandle.getResourceFile().exists();
+
+                    if (!resourceFileExists && MavenArtifactIdentifier.isMvnIdentifierShortString(oldResource.getOrigin())) {
+                        // the file is already cleaned up in resource - we need to restore it anyway
+                        uploadedResource = updateExistingResourceContentAndPropagate(apLibrary.getName(),
+                                apName,
+                                fis, apLibProvider.getSnapshotTimestamp(), oldResource,
+                                parameters.actorUser, parameters.writeAccessValidator
+                        );
                     } else {
-                        uploadedResource = oldResource;
+                        if (!apLibProvider.isModifiableResource()) {
+                            // for unmodifiable origins we just reused the previously uploaded resource
+                            log.info("Existing automation package library {} with resource id {} has been detected and will be reused in AP {}", apLibrary.getName(), oldResource.getId().toHexString(), apName);
+                            uploadedResource = oldResource;
+                        } else if (apLibProvider.hasNewContent() && allowUpdateContent) {
+                            // for modifiable resources (i.e. SNAPSHOTS) we can reuse the old resource id and metadata, but we need to update the content if a new version was downloaded
+                            try (FileInputStream fis = new FileInputStream(apLibrary)) {
+                                uploadedResource = updateExistingResourceContentAndPropagate(apLibrary.getName(),
+                                        apName,
+                                        automationPackageToBeLinkedWithLib == null ? null : automationPackageToBeLinkedWithLib.getId(),
+                                        fis, origin, apLibProvider.getSnapshotTimestamp(), oldResource, apLibProvider.getResourceName(),
+                                        parameters.actorUser, parameters.writeAccessValidator
+                                );
+                            }
+                        } else {
+                            uploadedResource = oldResource;
+                        }
                     }
                 } else {
                     // old resource is not found - we create a new one
@@ -185,7 +198,7 @@ public class AutomationPackageResourceManager {
     public Resource uploadOrReuseApResource(AutomationPackageArchiveProvider apProvider,
                                             AutomationPackageArchive automationPackageArchive,
                                             AutomationPackage automationPackageToBeLinkedWithResource,
-                                            AutomationPackageUpdateParameter parameters,
+                                            AutomationPackageAccessParameters parameters,
                                             boolean allowToReuseOldResource, boolean allowUpdateContent) {
         String origin = Optional.ofNullable(apProvider.getOrigin()).map(ResourceOrigin::toStringRepresentation).orElse(null);
         File originalFile = automationPackageArchive.getOriginalFile();
@@ -208,19 +221,28 @@ public class AutomationPackageResourceManager {
                 throw new AutomationPackageManagerException("Existing resource " + resource.getResourceName() + " ( " + resource.getId() + " ) has been detected and cannot be reused / updated");
             }
 
-            // we just reuse the existing resource of unmodifiable origin (i.e non-SNAPSHOT)
-            // and for SNAPSHOT we keep the same resource id, but update the content if a new version was found
-            if (apProvider.isModifiableResource() && apProvider.hasNewContent() && allowUpdateContent) {
-                try (FileInputStream is = new FileInputStream(originalFile)) {
-                    resource = updateExistingResourceContentAndPropagate(
-                            originalFile.getName(),
-                            apName, automationPackageToBeLinkedWithResource == null ? null : automationPackageToBeLinkedWithResource.getId(),
-                            is, origin, apProvider.getSnapshotTimestamp(), resource, apProvider.getResourceName(),
-                            parameters.actorUser, parameters.writeAccessValidator
-                    );
-                } catch (IOException | InvalidResourceFormatException |
-                         AutomationPackageUnsupportedResourceTypeException e) {
-                    throw new RuntimeException("Unable to create the resource for automation package", e);
+            ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(resource.getId().toString());
+            boolean resourceFileExists = fileHandle != null && fileHandle.getResourceFile() != null && fileHandle.getResourceFile().exists();
+
+            //If the resource file has been deleted from the file system we try to redownload it for maven artifcats
+            if (!resourceFileExists && MavenArtifactIdentifier.isMvnIdentifierShortString(resource.getOrigin())) {
+                // the file is already cleaned up in resource - we need to restore it anyway
+                resource = updateExistingResourceContentAndPropagate(parameters, originalFile, resource, apName, origin, apProvider.getSnapshotTimestamp());
+            } else {
+                // we just reuse the existing resource of unmodifiable origin (i.e non-SNAPSHOT)
+                // and for SNAPSHOT we keep the same resource id, but update the content if a new version was found
+                if (apProvider.isModifiableResource() && apProvider.hasNewContent() && allowUpdateContent) {
+                    try (FileInputStream is = new FileInputStream(originalFile)) {
+                        resource = updateExistingResourceContentAndPropagate(
+                                originalFile.getName(),
+                                apName, automationPackageToBeLinkedWithResource == null ? null : automationPackageToBeLinkedWithResource.getId(),
+                                is, origin, apProvider.getSnapshotTimestamp(), resource, apProvider.getResourceName(),
+                                parameters.actorUser, parameters.writeAccessValidator
+                        );
+                    } catch (IOException | InvalidResourceFormatException |
+                             AutomationPackageUnsupportedResourceTypeException e) {
+                        throw new RuntimeException("Unable to create the resource for automation package", e);
+                    }
                 }
             }
         }
@@ -241,6 +263,25 @@ public class AutomationPackageResourceManager {
             String resourceString = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
             log.info("The resource has been been linked with AP '{}': {}", apName, resourceString);
             automationPackageToBeLinkedWithResource.setAutomationPackageResource(resourceString);
+        }
+        return resource;
+    }
+
+    private Resource updateExistingResourceContentAndPropagate(AutomationPackageAccessParameters parameters,
+                                                               File originalFile,
+                                                               Resource resource,
+                                                               String apName,
+                                                               Long newOriginTimestamp) {
+        try (FileInputStream is = new FileInputStream(originalFile)) {
+            resource = updateExistingResourceContentAndPropagate(
+                    originalFile.getName(),
+                    apName,
+                    is, newOriginTimestamp, resource,
+                    parameters.actorUser, parameters.writeAccessValidator
+            );
+        } catch (IOException | InvalidResourceFormatException |
+                 AutomationPackageUnsupportedResourceTypeException e) {
+            throw new RuntimeException("Unable to create the resource for automation package", e);
         }
         return resource;
     }
@@ -382,13 +423,6 @@ public class AutomationPackageResourceManager {
         try {
             if (!resourceFileExists) {
                 // if file is missing in resource manager, we always download the actual content
-                Long newSnapshotTimestamp = null;
-                if (mavenArtifactIdentifier.isModifiable()) {
-                    SnapshotMetadata snapshotMetadata = MavenArtifactDownloader.fetchSnapshotMetadata(mavenConfig, mavenArtifactIdentifier, resource.getOriginTimestamp());
-                    if(snapshotMetadata != null){
-                        newSnapshotTimestamp = snapshotMetadata.timestamp;
-                    }
-                }
                 saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, null);
                 refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.REFRESHED);
             } else {
@@ -396,7 +430,7 @@ public class AutomationPackageResourceManager {
                 // * for release artifacts (non-modifiable)
                 // * for snapshots with the same remote metadata (not changed snapshots)
                 if (mavenArtifactIdentifier.isModifiable()) {
-                    SnapshotMetadata snapshotMetadata = MavenArtifactDownloader.fetchSnapshotMetadata(mavenConfig, mavenArtifactIdentifier, resource.getOriginTimestamp());
+                    SnapshotMetadata snapshotMetadata = mavenOperations.fetchSnapshotMetadata(mavenArtifactIdentifier, resource.getOriginTimestamp());
                     if (snapshotMetadata.newSnapshotVersion) {
                         log.debug("New snapshot version found for {}, downloading it", mavenArtifactIdentifier.toStringRepresentation());
                         saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, resource.getOriginTimestamp());
@@ -430,7 +464,7 @@ public class AutomationPackageResourceManager {
                                                        Long existingSnapshotTimestamp) {
         try {
             // restore the automation package file from maven
-            ResolvedMavenArtifact resolvedMavenArtifact = MavenArtifactDownloader.getFile(mavenConfig, mavenArtifactIdentifier, existingSnapshotTimestamp);
+            ResolvedMavenArtifact resolvedMavenArtifact = mavenOperations.getFile(mavenArtifactIdentifier, existingSnapshotTimestamp);
             File file = resolvedMavenArtifact.artifactFile;
             try (FileInputStream fis = new FileInputStream(file)) {
                 Resource updated = resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), mavenArtifactIdentifier.toStringRepresentation(), resource.getCreationUser());
@@ -446,10 +480,10 @@ public class AutomationPackageResourceManager {
 
     public void deleteResource(String resourceId, WriteAccessValidator writeAccessValidator) throws AutomationPackageAccessException, AutomationPackageUnsupportedResourceTypeException {
         Resource resource = resourceManager.getResource(resourceId);
-        validateResourceType(resource);
         if (resource == null) {
             throw new AutomationPackageManagerException("Resource is not found by id: " + resourceId);
         }
+        validateResourceType(resource);
         checkAccess(resource, writeAccessValidator);
 
         Set<ObjectId> linkedAps = linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resourceId, List.of());
@@ -482,6 +516,11 @@ public class AutomationPackageResourceManager {
         void reupload(Set<AutomationPackage> linkedAutomationPackages,
                       RefreshResourceResult refreshResourceResult
         );
+    }
+
+    public interface MavenOperations {
+        SnapshotMetadata fetchSnapshotMetadata(MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) throws AutomationPackageReadingException;
+        ResolvedMavenArtifact getFile(MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) throws AutomationPackageReadingException;
     }
 
 }

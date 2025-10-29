@@ -148,7 +148,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
             assertEntityIsEditableInContext(automationPackage);
-            automationPackageManager.removeAutomationPackage(new ObjectId(id), getSession().getUser().getUsername(),
+            automationPackageManager.removeAutomationPackage(new ObjectId(id),
+                    getSession().getUser().getUsername(),
                     getObjectPredicate(), getWriteAccessValidator());
             auditLog("delete",  automationPackage);
         } catch (AutomationPackageAccessException ex){
