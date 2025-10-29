@@ -46,6 +46,7 @@ import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
+import step.framework.server.audit.AuditLogger;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.BulkOperationWarningException;
@@ -93,7 +94,44 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
+    }
 
+    private void auditLog(String operation, ObjectId apId) {
+        if (apId != null) {
+            auditLog(operation, apId.toString());
+        }
+    }
+
+    private void auditLog(String operation, String apId) {
+        if (apId != null && AuditLogger.isEntityModificationsLoggingEnabled()) {
+            try {
+                auditLog(operation, getAutomationPackage(apId));
+            } catch (Exception ignored) {
+                // not expected to fail, but let's not crash in case it does
+            }
+        }
+    }
+
+    private void auditLog(String operation, AutomationPackage ap) {
+        if (ap != null) {
+            AuditLogger.logEntityModification(getHttpSession(), operation, "automation-packages", ap, getObjectEnricher());
+        }
+    }
+
+    private void auditLog(String operation, Resource resource) {
+        if (resource != null) {
+            AuditLogger.logEntityModification(getHttpSession(), operation, "automation-packages-resources", resource, getObjectEnricher());
+        }
+    }
+
+    private void auditLogForResource(String operation, String resourceId) {
+        if (resourceId != null && AuditLogger.isEntityModificationsLoggingEnabled()) {
+            try {
+                auditLog(operation, automationPackageManager.getResourceManager().getResource(resourceId));
+            } catch (Exception ignored) {
+                // not expected to fail, but let's not crash in case it does
+            }
+        }
     }
 
     @DELETE
@@ -108,11 +146,10 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             AutomationPackage automationPackage = getAutomationPackage(id);
             assertEntityIsEditableInContext(automationPackage);
-
-            automationPackageManager.removeAutomationPackage(
-                    new ObjectId(id), getSession().getUser().getUsername(),
-                    getObjectPredicate(), getWriteAccessValidator()
-            );
+            automationPackageManager.removeAutomationPackage(new ObjectId(id),
+                    getSession().getUser().getUsername(),
+                    getObjectPredicate(), getWriteAccessValidator());
+            auditLog("delete",  automationPackage);
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (Exception e) {
@@ -181,6 +218,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
             ObjectId id = automationPackageManager.createOrUpdateAutomationPackage(parameters).getId();
+            auditLog("create",  id);
             return id == null ? null : id.toString();
         } catch (AutomationPackageCollisionException e){
             throw new ControllerServiceException(HttpStatusCodes.STATUS_CODE_CONFLICT, COLLISION_ERROR_NAME, e.getMessage());
@@ -315,7 +353,9 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
                     .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
-            return automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
+            AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
+            auditLog("update", result.getId());
+            return result;
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageCollisionException e) {
@@ -391,6 +431,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
                     .build();
             AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
+            auditLog("create-or-update", result.getId());
             Response.ResponseBuilder responseBuilder;
             if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
                 responseBuilder = Response.status(Response.Status.CREATED);
@@ -503,6 +544,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     getFileSource(uploadedInputStream, fileDetail, mavenSnippet, "Invalid maven snippet", null),
                     automationPackageUpdateParameter
             );
+            auditLog("create",  resource);
             return resource == null ? null : resource.getId().toHexString();
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
@@ -511,13 +553,15 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
+
+
     @POST
     @Path("/resources/{id}/refresh")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     public RefreshResourceResult refreshAutomationPackageResource(@PathParam("id") String resourceId){
         try {
-           return refreshResourceAndLinkedPackages(resourceId);
+            return refreshResourceAndLinkedPackages(resourceId);
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException e) {
@@ -527,7 +571,11 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
 
     private RefreshResourceResult refreshResourceAndLinkedPackages(String resourceId) {
         AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter();
-        return automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, automationPackageUpdateParameter, automationPackageManager);
+        RefreshResourceResult refreshResourceResult = automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, automationPackageUpdateParameter, automationPackageManager);
+        if (!refreshResourceResult.isFailed()){
+            auditLogForResource("refresh",  resourceId);
+        }
+        return refreshResourceResult;
     }
 
     private AutomationPackageUpdateParameter getAutomationPackageUpdateParameter() {
@@ -547,6 +595,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         Consumer<String> consumer = resourceId -> {
             try {
                 automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
+                auditLogForResource("delete",  resourceId);
             } catch (AutomationPackageUnsupportedResourceTypeException e) {
                 throw new BulkOperationWarningException(e.getMessage());
             }
@@ -572,6 +621,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public void deleteAutomationPackageResource(@PathParam("id") String resourceId) {
         try {
             automationPackageManager.getAutomationPackageResourceManager().deleteResource(resourceId, getWriteAccessValidator());
+            auditLogForResource("delete",  resourceId);
         } catch (AutomationPackageAccessException ex) {
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
         } catch (AutomationPackageManagerException | AutomationPackageUnsupportedResourceTypeException e) {
