@@ -135,7 +135,7 @@ public class AutomationPackageResourceManager {
                         ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(oldResource.getId().toString());
                         boolean resourceFileExists = fileHandle != null && fileHandle.getResourceFile() != null && fileHandle.getResourceFile().exists();
 
-                        if (!resourceFileExists) {
+                        if (!resourceFileExists && MavenArtifactIdentifier.isMvnIdentifierShortString(oldResource.getOrigin())) {
                             // the file is already cleaned up in resource - we need to restore it anyway
                             uploadedResource = updateExistingResourceContentAndPropagate(apLibrary.getName(),
                                     apName,
@@ -214,7 +214,7 @@ public class AutomationPackageResourceManager {
             ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(resource.getId().toString());
             boolean resourceFileExists = fileHandle != null && fileHandle.getResourceFile() != null && fileHandle.getResourceFile().exists();
 
-            if (!resourceFileExists) {
+            if (!resourceFileExists && MavenArtifactIdentifier.isMvnIdentifierShortString(resource.getOrigin())) {
                 // the file is already cleaned up in resource - we need to restore it anyway
                 resource = updateExistingResourceContentAndPropagate(parameters, originalFile, resource, apName, apProvider.getSnapshotTimestamp());
             } else {
