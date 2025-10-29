@@ -138,8 +138,9 @@ public class AutomationPackageManager {
         this.maxParallelVersionsPerPackage = maxParallelVersionsPerPackage;
         this.objectHookRegistry = objectHookRegistry;
 
+        this.providersResolver = new DefaultProvidersResolver(automationPackageReaderRegistry, resourceManager);
         this.automationPackageResourceManager = createAutomationPackageResourceManager();
-        this.providersResolver = new DefaultProvidersResolver(automationPackageReaderRegistry, resourceManager, automationPackageResourceManager);
+
         addDefaultExtensions();
     }
 
@@ -1222,13 +1223,10 @@ public class AutomationPackageManager {
 
         private final AutomationPackageReaderRegistry apReaderRegistry;
         private final ResourceManager resourceManager;
-        private final AutomationPackageResourceManager automationPackageResourceManager;
 
-        public DefaultProvidersResolver(AutomationPackageReaderRegistry apReaderRegistry, ResourceManager resourceManager,
-                                        AutomationPackageResourceManager automationPackageResourceManager) {
+        public DefaultProvidersResolver(AutomationPackageReaderRegistry apReaderRegistry, ResourceManager resourceManager) {
             this.apReaderRegistry = apReaderRegistry;
             this.resourceManager = resourceManager;
-            this.automationPackageResourceManager = automationPackageResourceManager;
         }
 
         @Override
