@@ -45,7 +45,7 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageResourceManagerTest.class);
 
     @Test
-    public void testAutomationPackageLibResourceCrud() throws AutomationPackageReadingException, AutomationPackageUnsupportedResourceTypeException, IOException {
+    public void testAutomationPackageLibResourceCrud() throws AutomationPackageReadingException, AutomationPackageUnsupportedResourceTypeException, IOException, ManagedLibraryMissingException {
         // *** PREPARE TEST DATA ***
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File kwLibSnapshotJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
@@ -69,7 +69,7 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
                 manager.getAutomationPackageLibraryProvider(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot), o -> true),
                 null,
                 apUpdateParams,
-                false
+                false, false
         );
         ResourceRevisionFileHandle resourceFileHandleBeforeRefresh = resourceManager.getResourceFile(uploadedResource.getId().toHexString());
         log.info("Resource after the first upload: {}", resourceFileHandleBeforeRefresh.getResourceFile().getAbsolutePath());
@@ -143,7 +143,7 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
                 manager.getAutomationPackageLibraryProvider(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot), o -> true),
                 null,
                 apUpdateParams,
-                false
+                false, false
         );
         resourceFileHandleAfterRefresh = resourceManager.getResourceFile(uploadedResource.getId().toHexString());
         log.info("Resource after the second upload: {}", resourceFileHandleBeforeRefresh.getResourceFile().getAbsolutePath());

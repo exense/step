@@ -1212,20 +1212,6 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         assertNull(resourceByNameAndType);
     }
 
-    private void checkResourceCleanup(String apResourceId, ResourceRevisionFileHandle ap1File,
-                                      String kwLibResourceId, ResourceRevisionFileHandle kwLibFile) {
-        // check that all used can be deleted (not blocked)
-        log.info("Delete AP resource: {}", apResourceId);
-        resourceManager.deleteResource(apResourceId);
-        Assert.assertFalse(ap1File.getResourceFile().exists());
-
-        if (kwLibResourceId != null) {
-            log.info("Delete keyword resource: {}", kwLibResourceId);
-            resourceManager.deleteResource(kwLibResourceId);
-            Assert.assertFalse(kwLibFile.getResourceFile().exists());
-        }
-    }
-
     private void checkResources(AutomationPackage ap1, String expectedApFileName, String expectedKwFileName,
                                 String expectedApOrigin, String expectedKwOrigin) {
         Resource ap1Resource = resourceManager.getResource(FileResolver.resolveResourceId(ap1.getAutomationPackageResource()));
