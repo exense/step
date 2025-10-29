@@ -144,7 +144,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         }
         Map<String, String> attributes = new LinkedHashMap<>(Objects.requireNonNullElse(getObjectEnricher().getAdditionalAttributes(), Map.of()));
         Optional.ofNullable(moreAttributes).ifPresent(attributes::putAll);
-        AuditLogger.logEntityModification(getHttpSession(), operation, this.entityName, entity.getId().toHexString(), entityName, attributes);
+        AuditLogger.logEntityModification(getSession(), operation, this.entityName, entity.getId().toHexString(), entityName, attributes);
     }
 
     private void trackEntityIfApplicable(T entity) {
