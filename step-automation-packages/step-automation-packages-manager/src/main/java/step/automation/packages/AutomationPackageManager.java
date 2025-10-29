@@ -1081,7 +1081,11 @@ public class AutomationPackageManager {
         return providersResolver;
     }
 
-    public void setProvidersResolver(DefaultProvidersResolver providersResolver) {
+    /**
+     * This method is package protected and only used for Junit tests
+     * @param providersResolver
+     */
+    protected void setProvidersResolver(DefaultProvidersResolver providersResolver) {
         // providers resolver affects the maven operations for AutomationPackageResourceManager, so it should be re-created
         this.providersResolver = providersResolver;
         this.automationPackageResourceManager = createAutomationPackageResourceManager();
