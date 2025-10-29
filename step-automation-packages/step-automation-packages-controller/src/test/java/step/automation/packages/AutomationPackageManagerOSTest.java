@@ -1,60 +1,34 @@
 package step.automation.packages;
 
-import ch.exense.commons.app.Configuration;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.types.ObjectId;
 import org.junit.*;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
-import step.automation.packages.accessor.AutomationPackageAccessorImpl;
 import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
-import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.yaml.YamlAutomationPackageVersions;
-import step.core.accessors.AbstractAccessor;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.Accessor;
-import step.core.collections.inmemory.InMemoryCollection;
-import step.core.controller.ControllerSettingAccessorImpl;
-import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.maven.MavenArtifactIdentifier;
-import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
-import step.core.plans.PlanAccessorImpl;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.*;
 import step.datapool.excel.ExcelDataPool;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-import step.expressions.ExpressionHandler;
 import step.functions.Function;
-import step.functions.accessor.FunctionAccessorImpl;
-import step.functions.manager.FunctionManagerImpl;
-import step.functions.type.FunctionTypeRegistry;
-import step.functions.type.FunctionTypeRegistryImpl;
-import step.grid.client.MockedGridClientImpl;
 import step.parameter.Parameter;
-import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
-import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plugins.functions.types.CompositeFunction;
-import step.plugins.functions.types.CompositeFunctionType;
 import step.plugins.java.GeneralScriptFunction;
-import step.plugins.java.GeneralScriptFunctionType;
 import step.plugins.jmeter.JMeterFunction;
-import step.plugins.jmeter.JMeterFunctionType;
 import step.plugins.node.NodeFunction;
-import step.plugins.node.NodeFunctionType;
 import step.repositories.artifact.ResolvedMavenArtifact;
 import step.repositories.artifact.SnapshotMetadata;
 import step.resources.*;
@@ -67,10 +41,9 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
-import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 import static step.automation.packages.AutomationPackageTestUtils.*;
 
-public class AutomationPackageManagerOSTest {
+public class AutomationPackageManagerOSTest extends AbstractAutomationPackageManagerTest {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageManagerOSTest.class);
 
@@ -83,91 +56,6 @@ public class AutomationPackageManagerOSTest {
 
     // 3 parameters from one fragment and 1 from another
     public static final int PARAMETERS_COUNT = 4;
-    private static final String SAMPLE1_FILE_NAME = "step-automation-packages-sample1.jar";
-    private static final String SAMPLE1_EXTENDED_FILE_NAME = "step-automation-packages-sample1-extended.jar";
-    private static final String SAMPLE_ECHO_FILE_NAME = "step-automation-packages-sample-echo.jar";
-    private static final String KW_LIB_CALL_FILE_NAME = "step-automation-packages-kw-lib-call.jar";
-
-    private static final String KW_LIB_FILE_NAME = "step-automation-packages-kw-lib.jar";
-    private static final String KW_LIB_FILE_UPDATED_NAME = "step-automation-packages-kw-lib-updated.jar";
-    private static final String KW_LIB_FILE_RELEASE_NAME = "step-automation-packages-kw-lib-release.jar";
-
-    private AutomationPackageManager manager;
-    private AutomationPackageAccessorImpl automationPackageAccessor;
-    private FunctionManagerImpl functionManager;
-    private FunctionAccessorImpl functionAccessor;
-    private PlanAccessorImpl planAccessor;
-    private LocalResourceManagerImpl resourceManager;
-    private ExecutionTaskAccessorImpl executionTaskAccessor;
-    private ExecutionScheduler executionScheduler;
-    private Accessor<Parameter> parameterAccessor;
-
-    private AutomationPackageLocks automationPackageLocks = new AutomationPackageLocks(AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT);
-
-    @Before
-    public void before() {
-        this.automationPackageAccessor = new AutomationPackageAccessorImpl(new InMemoryCollection<>());
-        this.functionAccessor = new FunctionAccessorImpl(new InMemoryCollection<>());
-        this.parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
-        ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, "groovy", new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
-
-        Configuration configuration = createTestConfiguration();
-        this.resourceManager = new LocalResourceManagerImpl();
-        FunctionTypeRegistry functionTypeRegistry = prepareTestFunctionTypeRegistry(configuration, resourceManager);
-
-        this.functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
-        this.planAccessor = new PlanAccessorImpl(new InMemoryCollection<>());
-
-        this.executionTaskAccessor = new ExecutionTaskAccessorImpl(new InMemoryCollection<>());
-
-        // scheduler with mocked executor
-        this.executionScheduler = new ExecutionScheduler(new ControllerSettingAccessorImpl(new InMemoryCollection<>()), executionTaskAccessor, Mockito.mock(Executor.class));
-        AutomationPackageHookRegistry automationPackageHookRegistry = new AutomationPackageHookRegistry();
-        AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
-        AutomationPackageSchedulerPlugin.registerSchedulerHooks(automationPackageHookRegistry, serializationRegistry, executionScheduler);
-        AutomationPackageParametersRegistration.registerParametersHooks(automationPackageHookRegistry, serializationRegistry, parameterManager);
-
-        JavaAutomationPackageReader apReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry, configuration);
-        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry);
-        automationPackageReaderRegistry.register(apReader);
-
-        this.manager = AutomationPackageManager.createMainAutomationPackageManager(
-                automationPackageAccessor,
-                functionManager,
-                functionAccessor,
-                planAccessor,
-                resourceManager,
-                automationPackageHookRegistry,
-                automationPackageReaderRegistry,
-                automationPackageLocks,
-                null, -1,
-                new ObjectHookRegistry()
-        );
-
-        this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>(), resourceManager, automationPackageReaderRegistry));
-
-    }
-
-    private static FunctionTypeRegistry prepareTestFunctionTypeRegistry(Configuration configuration, LocalResourceManagerImpl resourceManager) {
-        FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(new FileResolver(resourceManager), new MockedGridClientImpl(), new ObjectHookRegistry());
-        functionTypeRegistry.registerFunctionType(new JMeterFunctionType(configuration));
-        functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(configuration));
-        functionTypeRegistry.registerFunctionType(new CompositeFunctionType(new ObjectHookRegistry()));
-        functionTypeRegistry.registerFunctionType(new NodeFunctionType());
-
-        return functionTypeRegistry;
-    }
-
-    private static Configuration createTestConfiguration() {
-        return new Configuration();
-    }
-
-    @After
-    public void after() {
-        if (resourceManager != null) {
-            resourceManager.cleanup();
-        }
-    }
 
     @Test
     public void testCrud() throws IOException {
@@ -1187,28 +1075,6 @@ public class AutomationPackageManagerOSTest {
         ResourceRevisionFileHandle kwLibFile = resourceManager.getResourceFile(savedkwResource.getId().toHexString());
 
         checkResourceCleanup(savedApResource.getId().toHexString(), apFile, savedkwResource.getId().toHexString(), kwLibFile);
-    }
-
-//    @Test
-//    public void testCreateSharedAutomationPackageLib(){
-//         upload new library as resource
-//        AutomationPackageResourceManager resourceManager = manager.getAutomationPackageResourceManager();
-//
-//        resourceManager.uploadOrReuseAutomationPackageLibrary()
-//    }
-
-    private void checkResourceCleanup(String apResourceId, ResourceRevisionFileHandle ap1File,
-                                      String kwLibResourceId, ResourceRevisionFileHandle kwLibFile) {
-        // check that all used can be deleted (not blocked)
-        log.info("Delete AP resource: {}", apResourceId);
-        resourceManager.deleteResource(apResourceId);
-        Assert.assertFalse(ap1File.getResourceFile().exists());
-
-        if (kwLibResourceId != null) {
-            log.info("Delete keyword resource: {}", kwLibResourceId);
-            resourceManager.deleteResource(kwLibResourceId);
-            Assert.assertFalse(kwLibFile.getResourceFile().exists());
-        }
     }
 
     private void checkResources(AutomationPackage ap1, String expectedApFileName, String expectedKwFileName,
