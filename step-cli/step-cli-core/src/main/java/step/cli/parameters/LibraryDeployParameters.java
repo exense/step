@@ -38,7 +38,7 @@ public class LibraryDeployParameters extends Parameters<LibraryDeployParameters>
     }
 
     public void validate() {
-        if ((getLibraryFile() == null) ^ (getLibraryMavenArtifact() == null)) {
+        if ((getLibraryFile() == null) == (getLibraryMavenArtifact() == null)) {
             throw new StepCliExecutionException("Invalid parameters detected. The automation package library should be referenced either as local file or as maven snipped");
         }
     }
