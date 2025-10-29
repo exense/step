@@ -292,7 +292,7 @@ public class ApCommand implements Callable<Integer> {
                     new ApExecuteParameters()
                             .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
                             .setAutomationPackageMavenArtifact(apMavenArtifact)
-                            .setPackageLibraryFile(packageLibMavenArtifact != null || packageLibrary == null || packageLibrary.isEmpty() ? null : preparePackageLibraryFile(packageLibrary))
+                            .setPackageLibraryFile(packageLibMavenArtifact != null || managedLibraryName != null || packageLibrary == null || packageLibrary.isEmpty() ? null : preparePackageLibraryFile(packageLibrary))
                             .setPackageLibraryMavenArtifact(packageLibMavenArtifact)
                             .setAutomationPackageManagedLibraryName(managedLibraryName)
                             .setStepProjectName(getStepProjectName())

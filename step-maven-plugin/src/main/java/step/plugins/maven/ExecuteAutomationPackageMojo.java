@@ -62,6 +62,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     private String libArtifactClassifier;
     @Parameter(property = "step-execute-auto-packages.lib-artifact-type", required = false)
     private String libArtifactType;
+    @Parameter(property = "step-execute-auto-packages.managed-library-name")
+    private String managedLibraryName;
 
     @Parameter(property = "step-execute-auto-packages.execution-parameters", required = false)
     private Map<String, String> executionParameters;
@@ -157,6 +159,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                     .setAutomationPackageMavenArtifact(remoteMavenArtifact)
                     .setPackageLibraryFile(getLibArtifactPath() == null ? null : new File(getLibArtifactPath()))
                     .setPackageLibraryMavenArtifact(getKeywordLibRemoteMavenIdentifier())
+                    .setAutomationPackageManagedLibraryName(getManagedLibraryName())
                     .setStepProjectName(getStepProjectName())
                     .setUserId(getUserId())
                     .setAuthToken(getAuthToken())
@@ -401,6 +404,14 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setLibArtifactType(String libArtifactType) {
         this.libArtifactType = libArtifactType;
+    }
+
+    public String getManagedLibraryName() {
+        return managedLibraryName;
+    }
+
+    public void setManagedLibraryName(String managedLibraryName) {
+        this.managedLibraryName = managedLibraryName;
     }
 
     public String getLibArtifactPath() {

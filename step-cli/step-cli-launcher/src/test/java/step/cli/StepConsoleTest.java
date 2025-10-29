@@ -2,6 +2,7 @@ package step.cli;
 
 import ch.exense.commons.io.FileHelper;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -145,6 +146,26 @@ public class StepConsoleTest {
         Assert.assertEquals("some-step-keyword-lib", usedParams.params.getAutomationPackageLibraryMavenArtifact().getArtifactId());
         Assert.assertEquals("1.0.0", usedParams.params.getAutomationPackageLibraryMavenArtifact().getVersion());
         Assert.assertEquals("tests", usedParams.params.getAutomationPackageLibraryMavenArtifact().getClassifier());
+    }
+
+
+    @Test
+    @Ignore
+    public void testRemoteExecuteForReal() {
+        List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory = new ArrayList<>();
+
+        Histories histories = new Histories(null, null, remoteExecuteHistory, null);
+
+        // all parameters
+        StepConsole.main( "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar",
+                "-u=http://localhost:8080", "--projectName=automation-packages",
+                "--token=eyJhbGciOiJIUzI1NiJ9....",
+                "--async", "--includePlans=p1,p2",
+                "--packageLibrary=managed:MyLib",
+                "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD",
+                "--executionTimeoutS=1000",
+                "--excludePlans=p3,p4", "-ep=key1=value1|key2=value2", "-ep=key3=value3"
+        );
     }
 
     @Test
