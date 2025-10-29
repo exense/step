@@ -9,6 +9,7 @@ import step.resources.ResourceOrigin;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ManagedLibraryProvider implements AutomationPackageLibraryProvider {
@@ -24,13 +25,13 @@ public class ManagedLibraryProvider implements AutomationPackageLibraryProvider 
 
     public ManagedLibraryProvider(ResourceManager resourceManager, String managedLibraryName, ObjectPredicate objectPredicate) throws ManagedLibraryMissingException {
         this.existingManagedLibrary = getManagedLibraryResource(resourceManager, managedLibraryName, objectPredicate);
-        this.sourceContentProvider = new AutomationPackageLibraryFromResourceIdProvider(resourceManager, getManagedLibraryResource(resourceManager, managedLibraryName, objectPredicate).getId().toHexString(), objectPredicate);
+        this.sourceContentProvider = new AutomationPackageLibraryFromResourceIdProvider(resourceManager, existingManagedLibrary.getId().toHexString(), objectPredicate);
         this.managingLibrary = false;
         this.managedLibraryName = managedLibraryName;
     }
 
     public ManagedLibraryProvider(AutomationPackageLibraryProvider sourceContentProvider, Resource resource, String managedLibraryName) throws ManagedLibraryMissingException {
-        this.sourceContentProvider = sourceContentProvider;
+        this.sourceContentProvider = Objects.requireNonNull(sourceContentProvider);
         this.existingManagedLibrary = resource;
         this.managingLibrary = true;
         this.managedLibraryName = managedLibraryName;
@@ -93,7 +94,7 @@ public class ManagedLibraryProvider implements AutomationPackageLibraryProvider 
 
     @Override
     public boolean hasNewContent() {
-        //In case of direct update of the library, we allow modification of managed library content in all cases
+        //In case of direct creation/update of the managed library there is always new content otherwise delegate to the source content provider
         if (managingLibrary) {
             return true;
         } else {

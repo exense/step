@@ -40,7 +40,7 @@ public class AutomationPackageFileSource {
         MAVEN,
         RESOURCE_ID,
         MANAGED_LIBRARY_NAME,
-        EMPTY
+        NONE
     }
 
     private AutomationPackageFileSource(){
@@ -95,21 +95,21 @@ public class AutomationPackageFileSource {
         return managedLibraryName;
     }
 
-    public void addInputStream(InputStream inputStream, String fileName){
+    public void setInputStream(InputStream inputStream, String fileName){
         this.inputStream = inputStream;
         this.fileName = fileName;
     }
 
-    public void addMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier){
+    public void setMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier){
         this.mavenArtifactIdentifier = mavenArtifactIdentifier;
     }
 
 
-    public void addResourceId(String resourceId){
+    public void setResourceId(String resourceId){
         this.resourceId = resourceId;
     }
 
-    public void addManagerLibraryKey(String managedLibraryName) {
+    public void setManagedLibraryKey(String managedLibraryName) {
         this.managedLibraryName = managedLibraryName;
     }
 
@@ -128,10 +128,10 @@ public class AutomationPackageFileSource {
             modes.add(Mode.MANAGED_LIBRARY_NAME);
         }
         if (modes.size() > 1) {
-            throw new AutomationPackageManagerException("Ambiguous file definition :" + modes + ". Please use only one of this modes");
+            throw new AutomationPackageManagerException("Ambiguous file definition :" + modes + ". Please use only one of these modes");
         }
         if (modes.isEmpty()) {
-            return Mode.EMPTY;
+            return Mode.NONE;
         } else {
             return modes.get(0);
         }

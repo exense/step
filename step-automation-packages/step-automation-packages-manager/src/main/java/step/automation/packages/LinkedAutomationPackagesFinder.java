@@ -69,9 +69,9 @@ public class LinkedAutomationPackagesFinder {
         Set<ObjectId> automationPackagesWithSameOrigin = new HashSet<>();
         ResourceOrigin apOrigin = automationPackageProvider.getOrigin();
         if (apOrigin != null && automationPackageProvider.canLookupResources() && automationPackageProvider.isModifiableResource() && automationPackageProvider.hasNewContent()) {
-            Resource resourcesByOrigin = resourceManager.getResourceByNameAndType(apOrigin.toStringRepresentation(), ResourceManager.RESOURCE_TYPE_AP, objectPredicate);
-            if (resourcesByOrigin != null) {
-              automationPackagesWithSameOrigin.addAll(findAutomationPackagesIdsByResourceId(resourcesByOrigin.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
+            Resource resourceByOrigin = resourceManager.getResourceByNameAndType(apOrigin.toStringRepresentation(), ResourceManager.RESOURCE_TYPE_AP, objectPredicate);
+            if (resourceByOrigin != null) {
+              automationPackagesWithSameOrigin.addAll(findAutomationPackagesIdsByResourceId(resourceByOrigin.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
             }
             conflictingAutomationPackages.setApWithSameOrigin(automationPackagesWithSameOrigin);
         }

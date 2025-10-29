@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.apache.commons.collections.set.TransformedSet;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -490,7 +491,7 @@ public class AutomationPackageManager {
     }
 
     private static Set<String> getWarnings(AutomationPackageUpdateParameter parameters, ConflictingAutomationPackages conflictingAutomationPackages) {
-        Set<String> warnings = new HashSet<>();
+        Set<String> warnings = new TreeSet<>();
         if (!parameters.forceRefreshOfSnapshots) {
             if (conflictingAutomationPackages.apWithSameOriginExists()) {
                 warnings.add("This Automation Package is using an outdated SNAPSHOT content. " +
@@ -633,15 +634,18 @@ public class AutomationPackageManager {
             resource = resourceManager.getResource(id);
             if (resource == null) {
                 throw new AutomationPackageManagerException("The managed library with id : " + id + " does not exists.");
-            } else if (! ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY.equals(resource.getResourceType())) {
+            }
+            if (! ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY.equals(resource.getResourceType())) {
                 throw new AutomationPackageManagerException("Only managed library can be updated, the resource provided has an incorrect type: " + resource.getResourceType());
-            } else if (StringUtils.isBlank(newManagedLibraryName)) {
+            }
+            if (StringUtils.isBlank(newManagedLibraryName)) {
                 throw new AutomationPackageManagerException("The managed library name cannot be null or empty");
-            } else if (!newManagedLibraryName.equals(resource.getAttribute(AbstractOrganizableObject.NAME))) {
+            }
+            if (!newManagedLibraryName.equals(resource.getAttribute(AbstractOrganizableObject.NAME))) {
                 //When changing the name of a managed library the name must still be unique
                 Resource resourceByNameAndType = resourceManager.getResourceByNameAndType(newManagedLibraryName, ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY, automationPackageUpdateParameter.objectPredicate);
                 if (resourceByNameAndType != null) {
-                    throw new AutomationPackageManagerException("Cannot renamed the managed library, another managed library with the name '"  + newManagedLibraryName + "' already exists");
+                    throw new AutomationPackageManagerException("Cannot rename the managed library, another managed library with the name '"  + newManagedLibraryName + "' already exists");
                 }
             }
             try (AutomationPackageLibraryProvider automationPackageLibraryProvider = getAutomationPackageLibraryProvider(libraryFileSource, automationPackageUpdateParameter.objectPredicate)) {
@@ -652,7 +656,7 @@ public class AutomationPackageManager {
                             true);
                 }
             } catch (IOException | ManagedLibraryMissingException e) {
-                throw new AutomationPackageManagerException("Automation package library provider exception", e);
+                throw new AutomationPackageManagerException("Automation package library provider exception: " + e.getMessage(), e);
             }
         } catch (AutomationPackageReadingException ex) {
             throw new AutomationPackageManagerException("Cannot update the managed library with id " + id + "; reason: " + ex.getMessage(), ex);
@@ -972,8 +976,8 @@ public class AutomationPackageManager {
             }
         }
         newPackage.setVersionName(parameters.versionName);
-        Expression resolvedActivationExpression = new Expression(parameters.activationExpression);
-        newPackage.setActivationExpression(resolvedActivationExpression);
+        Expression expression = Optional.ofNullable(parameters.activationExpression).map(Expression::new).orElse(null);
+        newPackage.setActivationExpression(expression);
         newPackage.setPlansAttributes(parameters.plansAttributes);
         newPackage.setFunctionsAttributes(parameters.functionsAttributes);
         newPackage.setTokenSelectionCriteria(parameters.tokenSelectionCriteria);
@@ -1265,7 +1269,7 @@ public class AutomationPackageManager {
                     return new AutomationPackageFromResourceIdProvider(apReaderRegistry, resourceManager, apFileSource.getResourceId(), apLibraryProvider, predicate);
                 } else if (apFileSource.getMode() == MANAGED_LIBRARY_NAME) {
                     throw new AutomationPackageManagerException("A managed library cannot be used as automation package");
-                }else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.EMPTY) {
+                }else if (apFileSource.getMode() == AutomationPackageFileSource.Mode.NONE) {
                     // automation package archive is mandatory
                     throw new AutomationPackageManagerException("The automation package is not provided");
                 }
@@ -1295,7 +1299,7 @@ public class AutomationPackageManager {
                     return new AutomationPackageLibraryFromResourceIdProvider(resourceManager, apLibrarySource.getResourceId(), predicate);
                 } else if (apLibrarySource.getMode() == MANAGED_LIBRARY_NAME) {
                     return new ManagedLibraryProvider(resourceManager, apLibrarySource.getManagedLibraryName(), predicate);
-                } else if(apLibrarySource.getMode() == AutomationPackageFileSource.Mode.EMPTY){
+                } else if(apLibrarySource.getMode() == AutomationPackageFileSource.Mode.NONE){
                     return new NoAutomationPackageLibraryProvider();
                 } else {
                     throw new AutomationPackageManagerException("Unsupported mode for automation package library source: " + apLibrarySource.getMode());

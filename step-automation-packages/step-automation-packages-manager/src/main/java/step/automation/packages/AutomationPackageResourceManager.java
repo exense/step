@@ -128,13 +128,13 @@ public class AutomationPackageResourceManager {
                 String resourceType = this.operationMode == AutomationPackageOperationMode.ISOLATED ? ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB : apLibProvider.getResourceType();
 
                 // we can reuse the existing old resource in case it is identifiable (can be found by origin) and unmodifiable
-                Optional<Resource> oldResources = Optional.empty();
+                Optional<Resource> oldResourceOpt = Optional.empty();
                 if (apLibProvider.canLookupResources()) {
-                    oldResources = apLibProvider.lookupExistingResource(resourceManager, parameters.objectPredicate);
+                    oldResourceOpt = apLibProvider.lookupExistingResource(resourceManager, parameters.objectPredicate);
                 }
 
-                if (oldResources.isPresent()) {
-                    Resource oldResource = oldResources.get();
+                if (oldResourceOpt.isPresent()) {
+                    Resource oldResource = oldResourceOpt.get();
 
                     if(!allowToReuseOldResource){
                         throw new AutomationPackageManagerException("Existing resource " + oldResource.getResourceName() + " ( " + oldResource.getId() + " ) has been detected and cannot be reused / updated");
@@ -208,8 +208,8 @@ public class AutomationPackageResourceManager {
             ResourceRevisionFileHandle fileHandle = resourceManager.getResourceFile(resource.getId().toString());
             boolean resourceFileExists = fileHandle != null && fileHandle.getResourceFile() != null && fileHandle.getResourceFile().exists();
 
-            //For existing maven artefact resources, we get new content if the resrouce file doesn't exist anymore or it is a
-            // snapshot with new content
+            //For existing maven artefact resources, we get new content if the resource file doesn't exist anymore or it is a
+            // snapshot with new content    
             boolean mavenResourceFileDeleted = !resourceFileExists && MavenArtifactIdentifier.isMvnIdentifierShortString(resource.getOrigin());
             boolean mavenSnapshotWithNewContent = apProvider.isModifiableResource() && apProvider.hasNewContent() && allowUpdateContent;
             if (mavenResourceFileDeleted || mavenSnapshotWithNewContent) {

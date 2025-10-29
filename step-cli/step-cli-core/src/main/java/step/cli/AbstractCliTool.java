@@ -28,6 +28,7 @@ import step.client.credentials.ControllerCredentials;
 import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
+import java.util.Objects;
 
 public abstract class AbstractCliTool<T extends Parameters> implements CliToolLogging {
 
@@ -39,7 +40,7 @@ public abstract class AbstractCliTool<T extends Parameters> implements CliToolLo
 
     public AbstractCliTool(String url, T parameters) {
         this.url = url;
-        this.parameters = parameters;
+        this.parameters = Objects.requireNonNull(parameters);
     }
 
     public String getUrl() {

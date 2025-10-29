@@ -398,16 +398,16 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             AutomationPackageFileSource automationPackageFileSource = AutomationPackageFileSource.empty();
             if (uploadedInputStream != null) {
-                automationPackageFileSource.addInputStream(uploadedInputStream, fileDetail == null ? null : fileDetail.getFileName());
+                automationPackageFileSource.setInputStream(uploadedInputStream, fileDetail == null ? null : fileDetail.getFileName());
             } else if (apMavenSnippet != null) {
-                automationPackageFileSource.addMavenIdentifier(getMavenArtifactIdentifierFromXml(apMavenSnippet));
+                automationPackageFileSource.setMavenIdentifier(getMavenArtifactIdentifierFromXml(apMavenSnippet));
             } else if (resourceIdPath != null) {
                 if (!FileResolver.isResource(resourceIdPath)) {
-                    throw new ControllerServiceException("Only resource path 'resource:<resourceIdPath>' are allowed.");
+                    throw new ControllerServiceException("Invalid resource path: '"+ resourceIdPath + "' Resource paths must be given in the format 'resource:<id>'.");
                 }
-                automationPackageFileSource.addResourceId(FileResolver.resolveResourceId(resourceIdPath));
+                automationPackageFileSource.setResourceId(FileResolver.resolveResourceId(resourceIdPath));
             } else if (managedLibraryName != null) {
-                automationPackageFileSource.addManagerLibraryKey(managedLibraryName);
+                automationPackageFileSource.setManagedLibraryKey(managedLibraryName);
             }
             return automationPackageFileSource;
         } catch (JsonProcessingException e) {
@@ -546,7 +546,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                      @FormDataParam("mavenSnippet") String mavenSnippet,
                                                      @FormDataParam("managedLibraryName") String managedLibraryName){
         try {
-            AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter().build();
+            AutomationPackageUpdateParameter automationPackageUpdateParameter = createAutomationPackageUpdateParameterBuilder().build();
             Resource resource = automationPackageManager.createAutomationPackageResource(
                     resourceType,
                     getLibraryFileSource(uploadedInputStream, fileDetail, mavenSnippet, null, null),
@@ -571,8 +571,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                      @FormDataParam("mavenSnippet") String mavenSnippet,
                                                      @FormDataParam("managedLibraryName") String managedLibraryName){
         try {
-            AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter().build();
-            //in case of managed library we first determined if we are creating a new one or updating an existing one, otherwise we always created a new library
+            AutomationPackageUpdateParameter automationPackageUpdateParameter = createAutomationPackageUpdateParameterBuilder().build();
+            //in case of managed library we first determine if we are creating a new one or updating an existing one, otherwise we always create a new library
             boolean managedLibrary = !StringUtils.isBlank(managedLibraryName);
             String resourceType = (managedLibrary) ? ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY : ResourceManager.RESOURCE_TYPE_AP_LIBRARY;
             Resource updated = null;
@@ -585,6 +585,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                              managedLibraryName,
                              automationPackageUpdateParameter);
                     status = AutomationPackageUpdateStatus.UPDATED;
+                    auditLog("deploy(update)",  updated);
                 }
             }
             //If it's not a managed library or if it's a new managed library we use the create method
@@ -596,8 +597,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                         automationPackageUpdateParameter
                 );
                 status = AutomationPackageUpdateStatus.CREATED;
+                auditLog("deploy(create)",  updated);
             }
-            auditLog("deploy",  updated);
             return new AutomationPackageUpdateResult(status, updated.getId(), new ConflictingAutomationPackages(), Set.of() );
         } catch (AutomationPackageAccessException ex){
             throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
@@ -616,7 +617,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                      @FormDataParam("mavenSnippet") String mavenSnippet,
                                                      @FormDataParam("newManagedLibraryName") String newManagedLibraryName){
         try {
-            AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter()
+            AutomationPackageUpdateParameter automationPackageUpdateParameter = createAutomationPackageUpdateParameterBuilder()
                     .withForceRefreshOfSnapshots(true).build();
             Resource resource = automationPackageManager.updateAutomationPackageManagedLibrary(
                     id,
@@ -641,7 +642,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         try {
             AutomationPackage automationPackage = getAutomationPackage(automationPackageId);
             if (!FileResolver.isResource(automationPackage.getAutomationPackageResource())) {
-                throw new ControllerServiceException("This Automation Package does not reference a valid package: " + automationPackage.getAutomationPackageResource());
+                throw new ControllerServiceException("The Automation Package (" + automationPackageId + ") cannot be refreshed because the resource path of his package file is invalid '"  +
+                        automationPackage.getAutomationPackageResource() + "'. Resource paths should be in the format 'resource:<id>'.");
             }
             return refreshResourceAndLinkedPackages(FileResolver.resolveResourceId(automationPackage.getAutomationPackageResource()));
         } catch (AutomationPackageAccessException ex){
@@ -676,7 +678,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     private RefreshResourceResult refreshResourceAndLinkedPackages(String resourceId) {
-        AutomationPackageUpdateParameter automationPackageUpdateParameter = getAutomationPackageUpdateParameter()
+        AutomationPackageUpdateParameter automationPackageUpdateParameter = createAutomationPackageUpdateParameterBuilder()
                 .withForceRefreshOfSnapshots(true).build();
         RefreshResourceResult refreshResourceResult = automationPackageManager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(resourceId, automationPackageUpdateParameter, automationPackageManager);
         if (!refreshResourceResult.isFailed()){
@@ -685,7 +687,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         return refreshResourceResult;
     }
 
-    private AutomationPackageUpdateParameterBuilder getAutomationPackageUpdateParameter() {
+    private AutomationPackageUpdateParameterBuilder createAutomationPackageUpdateParameterBuilder() {
         return new AutomationPackageUpdateParameterBuilder()
                 .withEnricher(getObjectEnricher())
                 .withObjectPredicate(getObjectPredicate())
