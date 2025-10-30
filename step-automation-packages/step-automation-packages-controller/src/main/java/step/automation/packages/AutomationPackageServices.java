@@ -189,7 +189,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     public AutomationPackageUpdateResult createAutomationPackage(@FormDataParam("versionName") String apVersion,
                                           @FormDataParam("activationExpr") String activationExpression,
