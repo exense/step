@@ -430,9 +430,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot)).build();
         AutomationPackageUpdateResult echoApResult = manager.createOrUpdateAutomationPackage(updateParameters);
 
-        AutomationPackageUpdateResult ap1Result;
-
-        // try to upload another AP with same snapshot lib - collision should be detected
+        // try to upload another AP with same snapshot lib - outdated snapshot should be detected (the mock still fakes a new snapshot content remotely)
         updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot)).build();
@@ -441,17 +439,55 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         Assert.assertEquals(Set.of(echoApResult.getId()), result.getConflictingAutomationPackages().getApWithSameLibrary());
         assertEquals(Set.of("This Automation Package is using a library with an outdated SNAPSHOT content. " +
                 "The snapshot could not be updated automatically because it's used by other Automation Packages. You can either use the UI refresh action for libraries or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages."), result.getWarnings());
+        AutomationPackage automationPackage = automationPackageAccessor.get(result.getId().toHexString());
+        Resource resourcePackage = resourceManager.getResource(FileResolver.resolveResourceId(automationPackage.getAutomationPackageResource()));
+        Resource resourceLibrary = resourceManager.getResource(FileResolver.resolveResourceId(automationPackage.getAutomationPackageLibraryResource()));
+        assertEquals(resourcePackage.getCreationDate(), resourcePackage.getLastModificationDate());
+        assertEquals(resourceLibrary.getCreationDate(), resourceLibrary.getLastModificationDate());
+        assertEquals(automationPackage.getCreationDate(), automationPackage.getLastModificationDate());
+        //Echo AP is unchanged
+        AutomationPackage echoAP = automationPackageAccessor.get(echoApResult.getId());
+        assertEquals(echoAP.getCreationDate(), echoAP.getLastModificationDate());
 
 
-        // try again with 'forceRefreshOfSnapshots' flag
+        // Reupload this 2nd AP, the lib should still remain unchanged, the package is not used by other AP so it should be updated
+        updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot)).build();
+        result = manager.createOrUpdateAutomationPackage(updateParameters);
+        Assert.assertTrue(result.getConflictingAutomationPackages().getApWithSameOrigin().isEmpty());
+        Assert.assertEquals(Set.of(echoApResult.getId()), result.getConflictingAutomationPackages().getApWithSameLibrary());
+        assertEquals(Set.of("This Automation Package is using a library with an outdated SNAPSHOT content. " +
+                "The snapshot could not be updated automatically because it's used by other Automation Packages. You can either use the UI refresh action for libraries or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages."), result.getWarnings());
+        automationPackage = automationPackageAccessor.get(result.getId().toHexString());
+        resourcePackage = resourceManager.getResource(FileResolver.resolveResourceId(automationPackage.getAutomationPackageResource()));
+        resourceLibrary = resourceManager.getResource(FileResolver.resolveResourceId(automationPackage.getAutomationPackageLibraryResource()));
+        assertNotEquals(resourcePackage.getCreationDate(), resourcePackage.getLastModificationDate());
+        assertEquals(resourceLibrary.getCreationDate(), resourceLibrary.getLastModificationDate());
+        assertNotEquals(automationPackage.getCreationDate(), automationPackage.getLastModificationDate());
+        //Echo AP is unchanged
+        echoAP = automationPackageAccessor.get(echoApResult.getId());
+        assertEquals(echoAP.getCreationDate(), echoAP.getLastModificationDate());
+
+        // try again with 'forceRefreshOfSnapshots' flag, both should be updated
         updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot))
                 .withForceRefreshOfSnapshots(true).build();
-        ap1Result = manager.createOrUpdateAutomationPackage(updateParameters);
+        AutomationPackageUpdateResult ap1Result = manager.createOrUpdateAutomationPackage(updateParameters);
+        automationPackage = automationPackageAccessor.get(ap1Result.getId().toHexString());
         Assert.assertEquals(Set.of(echoApResult.getId()), ap1Result.getConflictingAutomationPackages().getApWithSameLibrary());
         Assert.assertTrue(ap1Result.getConflictingAutomationPackages().getApWithSameOrigin().isEmpty());
         assertTrue(ap1Result.getWarnings().isEmpty());
+
+        resourcePackage = resourceManager.getResource(FileResolver.resolveResourceId(automationPackage.getAutomationPackageResource()));
+        resourceLibrary = resourceManager.getResource(FileResolver.resolveResourceId(automationPackage.getAutomationPackageLibraryResource()));
+        assertNotEquals(resourcePackage.getCreationDate(), resourcePackage.getLastModificationDate());
+        assertNotEquals(resourceLibrary.getCreationDate(), resourceLibrary.getLastModificationDate());
+        assertNotEquals(automationPackage.getCreationDate(), automationPackage.getLastModificationDate());
+        //Echo AP should be reloaded as withForceRefreshOfSnapshots was true and it's using the same KW lib snapshot that has a new content
+        echoAP = automationPackageAccessor.get(echoApResult.getId());
+        assertNotEquals(echoAP.getCreationDate(), echoAP.getLastModificationDate());
 
         // the keyword lib for 'echo' package should be automatically re-uploaded
         AutomationPackage ap1 = automationPackageAccessor.get(ap1Result.getId().toHexString());

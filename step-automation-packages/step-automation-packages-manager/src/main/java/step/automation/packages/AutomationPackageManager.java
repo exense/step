@@ -392,17 +392,22 @@ public class AutomationPackageManager {
                 checkAccess(oldPackage, parameters.writeAccessValidator);
             }
 
-            Set<ObjectId> apsForReload;
+            Set<ObjectId> apsWithSamePackage;
+            Set<ObjectId> apsWithSameLibrary;
             ConflictingAutomationPackages conflictingAutomationPackages;
+            Date beforeResourcesUpdates = new Date();
             if ((automationPackageProvider.isModifiableResource() && automationPackageProvider.hasNewContent()) ||
                     (apLibraryProvider.isModifiableResource() && apLibraryProvider.hasNewContent())) {
                 // validate if we have the APs with same origin
                 conflictingAutomationPackages = linkedAutomationPackagesFinder.findConflictingPackages(automationPackageProvider,
                         parameters.objectPredicate, apLibraryProvider,
                         parameters.checkForSameOrigin, oldPackage);
-                apsForReload = conflictingAutomationPackages.getApWithSameOrigin();
+                apsWithSamePackage = conflictingAutomationPackages.getApWithSameOrigin();
+                apsWithSameLibrary = conflictingAutomationPackages.getApWithSameLibrary();
+
             } else {
-                apsForReload = Collections.emptySet();
+                apsWithSamePackage = Collections.emptySet();
+                apsWithSameLibrary = Collections.emptySet();
                 conflictingAutomationPackages = new ConflictingAutomationPackages();
             }
 
@@ -428,24 +433,28 @@ public class AutomationPackageManager {
 
             // always upload the automation package file as resource
             // NOTE: for the main ap resource don't need to enrich the resource with automation package id (because the same resource can be shared between several automation packages) - so we use simple enricher
-            boolean allowUpdateContent = apsForReload.isEmpty() || parameters.forceRefreshOfSnapshots;
-            automationPackageResourceManager.uploadOrReuseApResource(
+            Resource packageResource = automationPackageResourceManager.uploadOrReuseApResource(
                     automationPackageProvider, automationPackageArchive, newPackage,
-                    parameters, true, allowUpdateContent
+                    parameters, true, apsWithSamePackage.isEmpty() || parameters.forceRefreshOfSnapshots
             );
 
             // upload automation package library if provided
             // NOTE: for ap lib we don't need to enrich the resource with automation package id (because the same lib can be shared between several automation packages) - so we use simple enricher
-            Resource apLibResource = automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
+            Resource libraryResource = automationPackageResourceManager.uploadOrReuseAutomationPackageLibrary(
                     apLibraryProvider, newPackage, parameters, true,
-                    allowUpdateContent);
-            String apLibraryResourceString = apLibResource == null ? null : FileResolver.RESOURCE_PREFIX + apLibResource.getId().toHexString();
+                    apsWithSameLibrary.isEmpty() || parameters.forceRefreshOfSnapshots);
+            String apLibraryResourceString = libraryResource == null ? null : FileResolver.RESOURCE_PREFIX + libraryResource.getId().toHexString();
 
             fillStaging(newPackage, staging, packageContent, oldPackage, enricherForIncludedEntities, automationPackageArchive, apLibraryResourceString, parameters.actorUser, parameters.objectPredicate);
 
             // persist and activate automation package
             log.debug("Updating automation package, old package is " + ((oldPackage == null) ? "null" : "not null" + ", async: " + parameters.async));
             boolean immediateWriteLock = tryObtainImmediateWriteLock(newPackage);
+            Set<ObjectId> apForReload = new HashSet<>();
+            if (parameters.forceRefreshOfSnapshots) {
+                Optional.ofNullable(packageResource).filter(r -> r.getLastModificationDate().getTime() > beforeResourcesUpdates.getTime()).ifPresent(p -> apForReload.addAll(apsWithSamePackage));
+                Optional.ofNullable(libraryResource).filter(r -> r.getLastModificationDate().getTime() > beforeResourcesUpdates.getTime()).ifPresent(p -> apForReload.addAll(apsWithSameLibrary));
+            }
             try {
                 if (oldPackage == null || !parameters.async || immediateWriteLock) {
                     //If not async or if it's a new package, we synchronously wait on a write lock and update
@@ -453,7 +462,7 @@ public class AutomationPackageManager {
                     ObjectId result = updateAutomationPackage(oldPackage, newPackage,
                             packageContent, staging, enricherForIncludedEntities,
                             immediateWriteLock, apLibraryResourceString,
-                            apsForReload, parameters);
+                            apForReload, parameters);
                     Set<String> warnings = getWarnings(parameters, conflictingAutomationPackages);
                     return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result, conflictingAutomationPackages, warnings);
                 } else {
@@ -467,7 +476,7 @@ public class AutomationPackageManager {
                             updateAutomationPackage(
                                     oldPackage, newPackage, packageContent, staging, enricherForIncludedEntities,
                                     false, apLibraryResourceString,
-                                    apsForReload, parameters
+                                    apForReload, parameters
                             );
                         } catch (Exception e) {
                             log.error("Exception on delayed AP update", e);
@@ -541,7 +550,7 @@ public class AutomationPackageManager {
 
     public void reloadRelatedAutomationPackages(Set<ObjectId> automationPackagesForRedeploy,
                                                 AutomationPackageUpdateParameter parameters) throws AutomationPackageRedeployException {
-        if (automationPackagesForRedeploy == null || automationPackagesForRedeploy.isEmpty() || parameters.forceRefreshOfSnapshots) {
+        if (automationPackagesForRedeploy == null || automationPackagesForRedeploy.isEmpty()) {
             return;
         }
         List<ObjectId> failedAps = new ArrayList<>();
