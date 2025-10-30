@@ -51,8 +51,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.Map;
+import java.util.function.Consumer;
 
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
@@ -103,7 +103,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
 
     private void auditLog(String operation, AutomationPackage ap) {
         if (ap != null) {
-            AuditLogger.logEntityModification(getHttpSession(), operation, "automation-packages", ap, getObjectEnricher());
+            AuditLogger.logEntityModification(getSession(), operation, "automation-packages", ap, getObjectEnricher());
         }
     }
 
