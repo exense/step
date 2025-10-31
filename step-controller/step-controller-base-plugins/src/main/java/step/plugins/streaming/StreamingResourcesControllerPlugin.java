@@ -69,7 +69,7 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
         URITemplateBasedReferenceProducer referenceProducer = new URITemplateBasedReferenceProducer(websocketBaseUri, DOWNLOAD_PATH, DOWNLOAD_PARAMETER_NAME);
 
-        int uploadsPoolSize = conf.getPropertyAsInteger("streaming.uploads.poolsize", 16);
+        int uploadsPoolSize = conf.getPropertyAsInteger("streaming.uploads.poolsize", 64);
         int uploadsQueueSize = conf.getPropertyAsInteger("streaming.uploads.queuesize", 1000);
 
         // behavior: this will scale up to uploadsPoolSize threads when needed (and back down to 0 when idle),
