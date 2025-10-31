@@ -30,12 +30,12 @@ public class AutomationPackageFromMavenProvider extends AbstractAutomationPackag
     public AutomationPackageFromMavenProvider(AutomationPackageReaderRegistry apReaderRegistry,
                                               AutomationPackageMavenConfig mavenConfig,
                                               MavenArtifactIdentifier mavenArtifactIdentifier,
-                                              AutomationPackageLibraryProvider keywordLibraryProvider,
+                                              AutomationPackageLibraryProvider packageLibraryProvider,
                                               ResourceManager resourceManager, ObjectPredicate objectPredicate) throws AutomationPackageReadingException {
         super(mavenConfig, mavenArtifactIdentifier, resourceManager, objectPredicate);
         AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(resolvedMavenArtefact.artifactFile);
         this.archive = reader.createAutomationPackageArchive(resolvedMavenArtefact.artifactFile,
-                keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary(),
+                packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
                 mavenArtifactIdentifier.getArtifactId());
     }
 

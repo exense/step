@@ -30,16 +30,18 @@ public interface AutomationPackageClient extends Closeable {
 
     AutomationPackageUpdateResult createOrUpdateAutomationPackage(AutomationPackageSource automationPackageSource,
                                                                   AutomationPackageSource apLibrarySource,
-                                                                  String apVersion, String activationExpr,
+                                                                  String versionName, String activationExpr,
                                                                   Map<String, String> plansAttributes, Map<String, String> functionsAttributes,
                                                                   Map<String, String> tokenSelectionCriteria,
                                                                   Boolean executeFunctionsLocally,
-                                                                  Boolean async, Boolean allowUpdateOfOtherPackages) throws AutomationPackageClientException;
+                                                                  Boolean async, Boolean forceRefreshOfSnapshots) throws AutomationPackageClientException;
 
     List<String> executeAutomationPackage(AutomationPackageSource automationPackageSource,
                                           IsolatedAutomationPackageExecutionParameters params,
                                           AutomationPackageSource keywordLibSource) throws AutomationPackageClientException;
 
     void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
+
+    AutomationPackageUpdateResult createOrUpdateAutomationPackageLibrary(AutomationPackageSource librarySource, String managedLibraryName) throws AutomationPackageClientException;
 
 }

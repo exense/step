@@ -51,9 +51,9 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
      */
     public final AutomationPackageFileSource apLibrarySource;
     /**
-     * the version to be set for the created/updated automation package
+     * the version name to be set for the created/updated automation package
      */
-    public final String automationPackageVersion;
+    public final String versionName;
     /**
      * the activation expression of the Automation Package, this is propagated to the deployed functions and plans of this package and is used for their selection when multiple versions of a package ar deployed
      */
@@ -63,12 +63,11 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
      */
     public final boolean async;
     /**
-     * Whether we are allowed to update other automation packages sharing the same artefact resources.
-     * If the deployed package uses a snapshot artefact that would trigger the update of an existing artefact resource
-     * (because the resource is already used by other packages and because it has a new version in the remote repository),
-     * the deployment is only allowed if we can update all "linked" packages
+     * Whether we want to force the update of the snapshot artefacts content when these artefact are already used by other automation packages.
+     * By default, if a snapshot artefact is already used by other automation packages, even if new content would be available in the remote artefact repository, we do not update it to not impact other automation packages using it
+     * If the force refresh of snapshots flag is set to true, we will update the artefact with the latest snapshot content and reload all automation packages using it
      */
-    public final boolean allowUpdateOfOtherPackages;
+    public final boolean forceRefreshOfSnapshots;
     /**
      * Whether to check if resources with the same origin already exists, true in most cases except when recursively checking for linked automation packages
      */
@@ -97,9 +96,9 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
 
     public AutomationPackageUpdateParameter(boolean allowUpdate, boolean allowCreate, boolean isLocalPackage, ObjectId explicitOldId,
                                             AutomationPackageFileSource apSource, AutomationPackageFileSource apLibrarySource,
-                                            String automationPackageVersion, String activationExpression, ObjectEnricher enricher,
+                                            String versionName, String activationExpression, ObjectEnricher enricher,
                                             ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator, boolean async,
-                                            String actorUser, boolean allowUpdateOfOtherPackages, boolean checkForSameOrigin,
+                                            String actorUser, boolean forceRefreshOfSnapshots, boolean checkForSameOrigin,
                                             Map<String, String> functionsAttributes, Map<String, String> plansAttributes,
                                             Map<String, String> tokenSelectionCriteria, boolean executionFunctionsLocally,
                                             boolean isRedeployment) {
@@ -110,10 +109,10 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
         this.explicitOldId = explicitOldId;
         this.apSource = apSource;
         this.apLibrarySource = apLibrarySource;
-        this.automationPackageVersion = automationPackageVersion;
+        this.versionName = versionName;
         this.activationExpression = activationExpression;
         this.async = async;
-        this.allowUpdateOfOtherPackages = allowUpdateOfOtherPackages;
+        this.forceRefreshOfSnapshots = forceRefreshOfSnapshots;
         this.checkForSameOrigin = checkForSameOrigin;
         this.functionsAttributes = functionsAttributes;
         this.plansAttributes = plansAttributes;

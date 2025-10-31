@@ -24,6 +24,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.cli.DeployAutomationPackageTool;
 import step.cli.StepCliExecutionException;
+import step.cli.parameters.ApDeployParameters;
 import step.client.credentials.ControllerCredentials;
 import step.core.maven.MavenArtifactIdentifier;
 
@@ -32,21 +33,13 @@ import java.io.File;
 @Mojo(name = "deploy-automation-package")
 public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
-    @Parameter(property = "step.step-project-name")
-    private String stepProjectName;
-
-    @Parameter(property = "step.auth-token")
-    private String authToken;
 
     @Parameter(property = "step-deploy-automation-package.async")
     private Boolean async;
-
     @Parameter(property = "step-deploy-automation-package.ap-version")
     private String apVersion;
-
     @Parameter(property = "step-deploy-automation-package.activation-expression")
     private String activationExpression;
-
     @Parameter(property = "step-deploy-auto-packages.artifact-group-id")
     private String artifactGroupId;
     @Parameter(property = "step-deploy-auto-packages.artifact-id")
@@ -60,6 +53,8 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     @Parameter(property = "step-deploy-auto-packages.lib-artifact-path")
     private String libArtifactPath;
+    @Parameter(property = "step-deploy-auto-packages.managed-library-name")
+    private String managedLibraryName;
     @Parameter(property = "step-deploy-auto-packages.lib-artifact-group-id")
     private String libArtifactGroupId;
     @Parameter(property = "step-deploy-auto-packages.lib-artifact-id")
@@ -71,8 +66,8 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-deploy-auto-packages.lib-artifact-type", required = false)
     private String libArtifactType;
 
-    @Parameter(property = "step-deploy-auto-packages.force-upload", required = false)
-    private Boolean allowUpdateOfOtherPackages;
+    @Parameter(property = "step-deploy-auto-packages.force-refresh-snapshots", required = false)
+    private Boolean forceRefreshOfSnapshots;
 
     @Override
     protected ControllerCredentials getControllerCredentials() {
@@ -85,7 +80,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getApVersion(), getActivationExpression(), getLibArtifactPath(), getallowUpdateOfOtherPackages()).execute();
+            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getApVersion(), getActivationExpression(), getLibArtifactPath(), getManagedLibraryName(), getForceRefreshOfSnapshots()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -94,19 +89,20 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     protected DeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
-                                                     final String apVersion, final String activationExpr, String libArtifactPath, Boolean allowUpdateOfOtherPackages) throws MojoExecutionException {
+                                                     final String apVersion, final String activationExpr, String libArtifactPath, String managedLibraryName, Boolean forceRefreshOfSnapshots) throws MojoExecutionException {
         MavenArtifactIdentifier remoteApMavenIdentifier = getRemoteMavenIdentifier();
         File localApFile = remoteApMavenIdentifier != null ? null : DeployAutomationPackageMojo.this.getFileToUpload();
         return new MavenDeployAutomationPackageTool(
-                url, new DeployAutomationPackageTool.Params()
+                url, new ApDeployParameters()
                 .setAutomationPackageMavenArtifact(remoteApMavenIdentifier)
                 .setAutomationPackageFile(localApFile)
                 .setPackageLibraryFile(libArtifactPath == null ? null : new File(libArtifactPath))
                 .setPackageLibraryMavenArtifact(getKeywordLibRemoteMavenIdentifier())
+                .setAutomationPackageManagedLibraryName(managedLibraryName)
                 .setStepProjectName(projectName)
                 .setAuthToken(authToken)
                 .setAsync(async)
-                .setallowUpdateOfOtherPackages(allowUpdateOfOtherPackages)
+                .setForceRefreshOfSnapshots(forceRefreshOfSnapshots)
                 .setApVersion(apVersion)
                 .setActivationExpression(activationExpr)
         );
@@ -128,22 +124,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setArtifactClassifier(String artifactClassifier) {
         this.artifactClassifier = artifactClassifier;
-    }
-
-    public String getStepProjectName() {
-        return stepProjectName;
-    }
-
-    public void setStepProjectName(String stepProjectName) {
-        this.stepProjectName = stepProjectName;
-    }
-
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
     }
 
     public Boolean getAsync() {
@@ -242,16 +222,24 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         return libArtifactPath;
     }
 
+    public String getManagedLibraryName() {
+        return managedLibraryName;
+    }
+
+    public void setManagedLibraryName(String managedLibraryName) {
+        this.managedLibraryName = managedLibraryName;
+    }
+
     public void setLibArtifactPath(String libArtifactPath) {
         this.libArtifactPath = libArtifactPath;
     }
 
-    public Boolean getallowUpdateOfOtherPackages() {
-        return allowUpdateOfOtherPackages;
+    public Boolean getForceRefreshOfSnapshots() {
+        return forceRefreshOfSnapshots;
     }
 
-    public void setallowUpdateOfOtherPackages(Boolean allowUpdateOfOtherPackages) {
-        this.allowUpdateOfOtherPackages = allowUpdateOfOtherPackages;
+    public void setForceRefreshOfSnapshots(Boolean forceRefreshOfSnapshots) {
+        this.forceRefreshOfSnapshots = forceRefreshOfSnapshots;
     }
 
     protected boolean isLocalMavenArtifact() {
@@ -279,7 +267,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
     protected class MavenDeployAutomationPackageTool extends DeployAutomationPackageTool {
 
-        public MavenDeployAutomationPackageTool(String url, Params params) {
+        public MavenDeployAutomationPackageTool(String url, ApDeployParameters params) {
             super(url, params);
         }
 

@@ -39,6 +39,11 @@ public class NoAutomationPackageLibraryProvider implements AutomationPackageLibr
     }
 
     @Override
+    public String getResourceName() {
+        return null;
+    }
+
+    @Override
     public void close() throws IOException {
 
     }

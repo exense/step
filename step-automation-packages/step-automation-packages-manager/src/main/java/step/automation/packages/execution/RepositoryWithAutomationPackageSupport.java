@@ -320,10 +320,10 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 contextId = new ObjectId().toString();
             }
             // Here we resolve the original AP file used for previous isolated execution and re-use it to create the execution context
-            AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters, predicate);
+            AutomationPackageFile apFile = restorePackageFile(contextId, repositoryParameters, predicate);
 
             // Restore keyword library file
-            AutomationPackageFile kwLibFile = restoreKwFile(contextId, repositoryParameters, predicate);
+            AutomationPackageFile kwLibFile = restoreLibraryFile(contextId, repositoryParameters, predicate);
             return createIsolatedPackageExecutionContext(
                     enricher, predicate, contextId, apFile, false,
                     kwLibFile,
@@ -334,7 +334,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         }
     }
 
-    protected AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+    protected AutomationPackageFile restorePackageFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
         File artifact = getArtifact(repositoryParameters, objectPredicate);
         if (artifact == null) {
             throw new AutomationPackageManagerException("Unable to resolve the requested Automation Package file in artifact repository " + this.getClass().getSimpleName() + " with parameters " + repositoryParameters);
@@ -342,15 +342,17 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return new AutomationPackageFile(artifact, null);
     }
 
-    protected AutomationPackageFile restoreKwFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate){
+    protected AutomationPackageFile restoreLibraryFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate){
         String maven_source = repositoryParameters.get(PACKAGE_LIBRARY_MAVEN_SOURCE);
         if (maven_source != null && !maven_source.isBlank()) {
-            AutomationPackageFileSource keywordLibraryFileSource = AutomationPackageFileSource.withMavenIdentifier(MavenArtifactIdentifier.fromShortString(maven_source));
+            AutomationPackageFileSource libraryFileSource = AutomationPackageFileSource.withMavenIdentifier(MavenArtifactIdentifier.fromShortString(maven_source));
             try {
-                AutomationPackageLibraryProvider keywordLibraryProvider = manager.getAutomationPackageLibraryProvider(keywordLibraryFileSource, objectPredicate);
-                return new AutomationPackageFile(keywordLibraryProvider.getAutomationPackageLibrary(), null);
+                AutomationPackageLibraryProvider libraryProvider = manager.getAutomationPackageLibraryProvider(libraryFileSource, objectPredicate);
+                return new AutomationPackageFile(libraryProvider.getAutomationPackageLibrary(), null);
             } catch (AutomationPackageReadingException e) {
-                throw new AutomationPackageManagerException("Unable to resolve keyword library with maven source " + maven_source, e);
+                throw new AutomationPackageManagerException("Unable to resolve package library with maven source " + maven_source, e);
+            } catch (ManagedLibraryMissingException e) {
+                throw new AutomationPackageManagerException("Unexpected exception while resolving library with maven coordinate " + maven_source, e);
             }
         } else {
             List<Resource> foundResources = resourceManager.findManyByCriteria(
@@ -378,7 +380,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                     // restore the automation package file from maven
                     file = MavenArtifactDownloader.getFile(manager.getMavenConfig(), mavenArtifactIdentifier, null).artifactFile;
                     try (FileInputStream fis = new FileInputStream(file)) {
-                        resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getCreationUser());
+                        resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), mavenArtifactIdentifier.toStringRepresentation(), resource.getCreationUser());
                         return true;
                     }
                 } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {

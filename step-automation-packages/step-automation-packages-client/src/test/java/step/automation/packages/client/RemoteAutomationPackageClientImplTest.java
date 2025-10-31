@@ -3,7 +3,7 @@ package step.automation.packages.client;
 import org.junit.Ignore;
 import org.junit.Test;
 import step.automation.packages.AutomationPackageUpdateResult;
-import step.automation.packages.client.model.FileSource;
+import step.automation.packages.client.model.AutomationPackageSource;
 import step.client.credentials.ControllerCredentials;
 
 import java.io.File;
@@ -30,12 +30,11 @@ public class RemoteAutomationPackageClientImplTest {
             throw new RuntimeException("Temp file cannot be created", e);
         }
 
-        FileSource fileSource = new FileSource(testFile);
-        RemoteAutomationPackageClientImpl automationPackageClient = new RemoteAutomationPackageClientImpl(new ControllerCredentials("http://localhost:8080", "admin", "init"));
-
-
-        AutomationPackageUpdateResult ver1 = automationPackageClient.createOrUpdateAutomationPackage(fileSource, null, "v1", "env == DEV",
-                null, Map.of("FunctionAttr1", "FunctionAttr1Value"), Map.of("OS", "LINUX"),null, true, false);
+        AutomationPackageSource fileSource = AutomationPackageSource.withFile(testFile);
+        try (RemoteAutomationPackageClientImpl automationPackageClient = new RemoteAutomationPackageClientImpl(new ControllerCredentials("http://localhost:8080", "admin", "init"))) {
+            AutomationPackageUpdateResult ver1 = automationPackageClient.createOrUpdateAutomationPackage(fileSource, null, "v1", "env == DEV",
+                    null, Map.of("FunctionAttr1", "FunctionAttr1Value"), Map.of("OS", "LINUX"), null, true, false);
+        }
 
 
     }

@@ -20,23 +20,27 @@ package step.cli;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.client.model.AutomationPackageSource;
-import step.automation.packages.client.model.FileSource;
-import step.automation.packages.client.model.MavenSnippetSource;
+import step.cli.parameters.Parameters;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
 import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
+import java.util.Objects;
 
-public abstract class AbstractCliTool implements CliToolLogging {
+public abstract class AbstractCliTool<T extends Parameters> implements CliToolLogging {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractCliTool.class);
 
     private String url;
 
-    public AbstractCliTool(String url) {
+    protected final T parameters;
+
+    public AbstractCliTool(String url, T parameters) {
         this.url = url;
+        this.parameters = Objects.requireNonNull(parameters);
     }
 
     public String getUrl() {
@@ -76,13 +80,24 @@ public abstract class AbstractCliTool implements CliToolLogging {
     }
 
     protected ControllerCredentials getControllerCredentials() {
-        return new ControllerCredentials(getUrl(), null);
+        String authToken = parameters.getAuthToken();
+        return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
+    }
+
+    protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
+        RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
+        addProjectHeaderToRemoteClient(client);
+        return client;
     }
 
     protected void addProjectHeaderToRemoteClient(String stepProjectName, AbstractRemoteClient remoteClient) {
         if (stepProjectName != null && !stepProjectName.isEmpty()) {
             remoteClient.getHeaders().addProjectName(stepProjectName);
         }
+    }
+
+    protected void addProjectHeaderToRemoteClient(AbstractRemoteClient remoteClient) {
+        addProjectHeaderToRemoteClient(parameters.getStepProjectName(), remoteClient);
     }
 
     protected String createMavenArtifactXml(MavenArtifactIdentifier identifier) {
@@ -128,15 +143,26 @@ public abstract class AbstractCliTool implements CliToolLogging {
         return builder.toString();
     }
 
-    protected AutomationPackageSource createSource(File file, String mavenSnippet) {
+    protected AutomationPackageSource createPackageSource(File file, String mavenSnippet) {
+        return createSource(file, mavenSnippet, null);
+
+    }
+
+    protected AutomationPackageSource createLibrarySource(File file, String mavenSnippet, String managedLibraryName) {
+        return createSource(file, mavenSnippet, managedLibraryName);
+    }
+
+    private AutomationPackageSource createSource(File file, String mavenSnippet, String managedLibraryName) {
         if (mavenSnippet != null && file != null) {
             throw new IllegalArgumentException("You cannot use both file and maven snippet as file source");
         }
 
         if (mavenSnippet != null) {
-            return new MavenSnippetSource(mavenSnippet);
+            return AutomationPackageSource.withMavenSnippet(mavenSnippet);
         } else if (file != null) {
-            return new FileSource(file);
+            return AutomationPackageSource.withFile(file);
+        } else if (managedLibraryName != null) {
+            return AutomationPackageSource.withManagedLibraryName(managedLibraryName);
         } else {
             return null;
         }

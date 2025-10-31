@@ -33,6 +33,15 @@ public class AutomationPackageFileSource {
     private String resourceId;
     private String fileName;
     private InputStream inputStream;
+    private String managedLibraryName;
+
+    public enum Mode {
+        INPUT_STREAM,
+        MAVEN,
+        RESOURCE_ID,
+        MANAGED_LIBRARY_NAME,
+        NONE
+    }
 
     private AutomationPackageFileSource(){
     }
@@ -56,6 +65,12 @@ public class AutomationPackageFileSource {
         return res;
     }
 
+    public static AutomationPackageFileSource withManagedLibraryName(String managedLibraryName){
+        AutomationPackageFileSource res = new AutomationPackageFileSource();
+        res.managedLibraryName = managedLibraryName;
+        return res;
+    }
+
     public static AutomationPackageFileSource empty(){
         return new AutomationPackageFileSource();
     }
@@ -76,21 +91,26 @@ public class AutomationPackageFileSource {
         return resourceId;
     }
 
-    public AutomationPackageFileSource addInputStream(InputStream inputStream, String fileName){
+    public String getManagedLibraryName() {
+        return managedLibraryName;
+    }
+
+    public void setInputStream(InputStream inputStream, String fileName){
         this.inputStream = inputStream;
         this.fileName = fileName;
-        return this;
     }
 
-    public AutomationPackageFileSource addMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier){
+    public void setMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier){
         this.mavenArtifactIdentifier = mavenArtifactIdentifier;
-        return this;
     }
 
 
-    public AutomationPackageFileSource addResourceId(String resourceId){
+    public void setResourceId(String resourceId){
         this.resourceId = resourceId;
-        return this;
+    }
+
+    public void setManagedLibraryKey(String managedLibraryName) {
+        this.managedLibraryName = managedLibraryName;
     }
 
     public Mode getMode() throws AutomationPackageManagerException {
@@ -104,11 +124,14 @@ public class AutomationPackageFileSource {
         if (getResourceId() != null) {
             modes.add(Mode.RESOURCE_ID);
         }
+        if (getManagedLibraryName() != null) {
+            modes.add(Mode.MANAGED_LIBRARY_NAME);
+        }
         if (modes.size() > 1) {
-            throw new AutomationPackageManagerException("Ambiguous file definition :" + modes + ". Please use only one of this modes");
+            throw new AutomationPackageManagerException("Ambiguous file definition :" + modes + ". Please use only one of these modes");
         }
         if (modes.isEmpty()) {
-            return Mode.EMPTY;
+            return Mode.NONE;
         } else {
             return modes.get(0);
         }
@@ -122,12 +145,5 @@ public class AutomationPackageFileSource {
                 ", fileName='" + fileName + '\'' +
                 ", inputStream=" + (inputStream == null ? "no" : "yes") +
                 '}';
-    }
-
-    public enum Mode {
-        INPUT_STREAM,
-        MAVEN,
-        RESOURCE_ID,
-        EMPTY
     }
 }

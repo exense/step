@@ -98,7 +98,7 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
                 tempProperties.load(fis);
                 for (Map.Entry<Object, Object> temp : tempProperties.entrySet()) {
                     // for "execution parameters" we should merge values but not replace them
-                    if (StepConsole.ApCommand.ApExecuteCommand.EP_DESCRIPTION_KEY.equals(temp.getKey())) {
+                    if (ApCommand.ApExecuteCommand.EP_DESCRIPTION_KEY.equals(temp.getKey())) {
                         res.merge(temp.getKey(), temp.getValue(), (object, object2) -> {
                             if (object2 == null || object.toString().isEmpty()) {
                                 return object;

@@ -24,17 +24,17 @@ import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import step.cli.DeployAutomationPackageTool;
+import step.cli.DeployLibraryTool;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Set;
 
-public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
+public class DeployLibraryMojoTest extends AbstractMojoTest {
 
     @Test
     public void testUpload() throws Exception {
-        DeployAutomationPackageMojoTestable mojo = new DeployAutomationPackageMojoTestable();
+        DeployLibraryMojoTestable mojo = new DeployLibraryMojoTestable();
 
         // configure mojo with test parameters and mocked Maven Project
         configureMojo(mojo);
@@ -42,20 +42,17 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
 
         Mockito.verify(mojo.mockedTool, Mockito.times(1)).execute();
         Assert.assertEquals("http://localhost:8080", mojo.toolUrl);
-        Assert.assertEquals(false, mojo.toolAsync);
         Assert.assertEquals(TENANT_1.getName(), mojo.toolProjectName);
         Assert.assertEquals("dummyToken", mojo.toolAuthToken);
     }
 
-    private void configureMojo(DeployAutomationPackageMojoTestable mojo) throws URISyntaxException {
+    private void configureMojo(DeployLibraryMojoTestable mojo) throws URISyntaxException {
         mojo.setUrl("http://localhost:8080");
         mojo.setBuildFinalName("Test build name");
         mojo.setProjectVersion(VERSION_ID);
         mojo.setArtifactClassifier("jar-with-dependencies");
         mojo.setStepProjectName(TENANT_1.getName());
         mojo.setAuthToken("dummyToken");
-        mojo.setAsync(false);
-        mojo.setForceRefreshOfSnapshots(true);
 
         MavenProject mockedProject = Mockito.mock(MavenProject.class);
         Artifact mainArtifact = createArtifactMock();
@@ -71,26 +68,23 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         mojo.setProject(mockedProject);
     }
 
-    private static class DeployAutomationPackageMojoTestable extends DeployAutomationPackageMojo {
+    private static class DeployLibraryMojoTestable extends DeployLibraryMojo {
 
-        private final DeployAutomationPackageTool mockedTool = Mockito.mock(DeployAutomationPackageTool.class);
+        private final DeployLibraryTool mockedTool = Mockito.mock(DeployLibraryTool.class);
 
         private String toolUrl;
         private String toolProjectName;
         private String toolAuthToken;
-        private Boolean toolAsync;
-        private Boolean toolforceRefreshOfSnapshots;
 
-        public DeployAutomationPackageMojoTestable() {
+
+        public DeployLibraryMojoTestable() {
         }
 
         @Override
-        protected DeployAutomationPackageTool createTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr, String libArtifactPath, String managedLibraryName, Boolean forceRefreshOfSnapshots) {
-            this.toolAsync = async;
+        protected DeployLibraryTool createTool(String url, String projectName, String authToken, String managedLibraryName) {
             this.toolUrl = url;
             this.toolProjectName = projectName;
             this.toolAuthToken = authToken;
-            this.toolforceRefreshOfSnapshots = forceRefreshOfSnapshots;
             return mockedTool;
         }
 

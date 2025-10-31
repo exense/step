@@ -27,11 +27,11 @@ public class AutomationPackageFromInputStreamProvider extends AbstractAutomation
     private final AutomationPackageArchive archive;
 
     public AutomationPackageFromInputStreamProvider(AutomationPackageReaderRegistry apReaderRegistry, InputStream packageStream,
-                                                    String fileName, AutomationPackageLibraryProvider keywordLibraryProvider) throws AutomationPackageReadingException {
+                                                    String fileName, AutomationPackageLibraryProvider packageLibraryProvider) throws AutomationPackageReadingException {
         super(packageStream, fileName);
         AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(tempFile.getTempFile());
         this.archive = reader.createAutomationPackageArchive(tempFile.getTempFile(),
-                keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary(),
+                packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
                 null);
     }
 

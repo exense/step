@@ -75,7 +75,7 @@ public class ResourceManagerImplTest {
 		assertResourceContent(resourceContent);
 		
 		// Update the resource content with another name
-		resourceManager.saveResourceContent(resourceId, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource2.txt", "testUser");
+		resourceManager.saveResourceContent(resourceId, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource2.txt", null, "testUser");
 		Resource actualResource = resourceManager.getResource(resourceId);
 		// Assert that the resource name matches with the new uploaded content
 		assertEquals("TestResource2.txt", actualResource.getResourceName());
@@ -111,7 +111,7 @@ public class ResourceManagerImplTest {
 		// Assert that the resource doesn't exist anymore and that the correct exception is thrown
 		Exception actualException = null;
 		try {
-			resourceManager.saveResourceContent(resourceId, null, null, "testUser");
+			resourceManager.saveResourceContent(resourceId, null, null, null, "testUser");
 		} catch (Exception e) {
 			actualException = e;
 		}
@@ -241,7 +241,7 @@ public class ResourceManagerImplTest {
 		ResourceRevision resourceRevision = resourceManager.getResourceRevision(actualResource.getCurrentRevisionId().toString());
 		assertEquals("TestResource", resourceRevision.getResourceFileName());
 
-		Resource updatedResource = resourceManager.saveResourceContent(resourceId, new FileInputStream(resourceContentFile), "newName.zip", "testUser");
+		Resource updatedResource = resourceManager.saveResourceContent(resourceId, new FileInputStream(resourceContentFile), "newName.zip", null,"testUser");
 		// Assert that the name of the resource and the resourceName have been updated accordingly
 		assertEquals("newName", updatedResource.getAttribute(AbstractOrganizableObject.NAME));
 		assertEquals("newName", updatedResource.getResourceName());

@@ -42,6 +42,12 @@ public class AutomationPackageFromClassLoaderProvider implements AutomationPacka
     }
 
     @Override
+    public String getResourceName() {
+        //Let the resource manager determine the name
+        return null;
+    }
+
+    @Override
     public void close() throws IOException {
     }
 }

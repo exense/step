@@ -28,23 +28,29 @@ import java.io.IOException;
 public class AutomationPackageFromFolderProvider implements AutomationPackageArchiveProvider {
 
     private final File apFolder;
-    private final AutomationPackageLibraryProvider keywordLibraryProvider;
+    private final AutomationPackageLibraryProvider packageLibraryProvider;
 
-    public AutomationPackageFromFolderProvider(File apFolder, AutomationPackageLibraryProvider keywordLibraryProvider) {
+    public AutomationPackageFromFolderProvider(File apFolder, AutomationPackageLibraryProvider packageLibraryProvider) {
         this.apFolder = apFolder;
-        this.keywordLibraryProvider = keywordLibraryProvider;
+        this.packageLibraryProvider = packageLibraryProvider;
     }
 
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
         return new JavaAutomationPackageArchive(apFolder,
-                keywordLibraryProvider == null ? null : keywordLibraryProvider.getAutomationPackageLibrary(),
+                packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
                 null);
     }
 
     @Override
     public ResourceOrigin getOrigin() {
         return new UploadedResourceOrigin();
+    }
+
+    @Override
+    public String getResourceName() {
+        //Let the resource manager determine the name
+        return null;
     }
 
     @Override

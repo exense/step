@@ -11,7 +11,7 @@ import step.automation.packages.AutomationPackageUpdateStatus;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.client.model.AutomationPackageSource;
-import step.cli.parameters.ApDeployParameters;
+import step.cli.parameters.LibraryDeployParameters;
 import step.controller.multitenancy.Tenant;
 import step.core.maven.MavenArtifactIdentifier;
 
@@ -19,14 +19,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
-public class DeployAutomationPackageToolTest {
+public class DeployLibraryToolTest {
 
-    private static final ObjectId UPDATED_PACK_ID = new ObjectId();
+    private static final ObjectId UPDATED_LIB_ID = new ObjectId();
     protected static final Tenant TENANT_1 = createTenant1();
-    protected static final Tenant TENANT_2 = createTenant2();
 
     @Test
-    public void testUpload() throws Exception {
+    public void testDeployLibrary() throws Exception {
         File testFile;
         try {
             testFile = FileHelper.createTempFile();
@@ -35,20 +34,17 @@ public class DeployAutomationPackageToolTest {
         }
 
         RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
-        DeployAutomationPackageToolTestable tool = new DeployAutomationPackageToolTestable(
-                "http://localhost:8080", testFile, TENANT_1.getName(),
-                null, false, "ver1", "true==true", null, null, automationPackageClient
+        DeployLibraryToolTestable tool = new DeployLibraryToolTestable(
+                "http://localhost:8080", TENANT_1.getName(),
+                null, null, testFile, null, automationPackageClient
         );
         tool.execute();
 
         // attributes used to search for existing function packages
         ArgumentCaptor<AutomationPackageSource> packageFileCaptor = ArgumentCaptor.forClass(AutomationPackageSource.class);
         Mockito.verify(automationPackageClient, Mockito.times(1))
-                .createOrUpdateAutomationPackage(
-                        packageFileCaptor.capture(), Mockito.isNull(),
-                        Mockito.eq("ver1"), Mockito.eq("true==true"),
-                        Mockito.isNull(), Mockito.isNull(), Mockito.isNull(), Mockito.isNull(),
-                        Mockito.anyBoolean(), Mockito.isNull()
+                .createOrUpdateAutomationPackageLibrary(
+                        packageFileCaptor.capture(), Mockito.isNull()
 
                 );
         Mockito.verify(automationPackageClient, Mockito.times(1)).close();
@@ -58,31 +54,25 @@ public class DeployAutomationPackageToolTest {
 
     private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {
         RemoteAutomationPackageClientImpl remoteClient = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteClient.createOrUpdateAutomationPackage(
-                Mockito.any(), Mockito.isNull(),
-                Mockito.any(), Mockito.any(), Mockito.isNull(),
-                Mockito.isNull(), Mockito.isNull(), Mockito.isNull(),
-                Mockito.anyBoolean(), Mockito.isNull())
-        ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID, null, Set.of()));
+        Mockito.when(remoteClient.createOrUpdateAutomationPackageLibrary(
+                Mockito.any(), Mockito.any())
+        ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_LIB_ID, null, Set.of()));
         return remoteClient;
     }
 
-    private static class DeployAutomationPackageToolTestable extends DeployAutomationPackageTool {
+    private static class DeployLibraryToolTestable extends DeployLibraryTool {
 
-        private RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
+        private final RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
-        public DeployAutomationPackageToolTestable(String url, File apFile, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpr,
-                                                   MavenArtifactIdentifier apLibraryMavenIdentifier, File apLibraryFile,
+        public DeployLibraryToolTestable(String url, String stepProjectName, String authToken,
+                                                   MavenArtifactIdentifier mavenIdentifier, File file, String managedLibraryName,
                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
-            super(url, new ApDeployParameters()
-                    .setAsync(async)
-                    .setApVersion(apVersion)
-                    .setActivationExpression(activationExpr)
-                    .setAutomationPackageFile(apFile)
+            super(url, new LibraryDeployParameters()
                     .setStepProjectName(stepProjectName)
                     .setAuthToken(authToken)
-                    .setPackageLibraryMavenArtifact(apLibraryMavenIdentifier)
-                    .setPackageLibraryFile(apLibraryFile));
+                    .setPackageLibraryMavenArtifact(mavenIdentifier)
+                    .setPackageLibraryFile(file)
+                    .setManagedLibraryName(managedLibraryName));
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }
 

@@ -23,6 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import step.cli.ExecuteAutomationPackageTool;
+import step.cli.parameters.ApExecuteParameters;
 import step.core.maven.MavenArtifactIdentifier;
 import step.cli.StepCliExecutionException;
 
@@ -36,13 +37,8 @@ import java.util.stream.Collectors;
 @Mojo(name = "execute-automation-package")
 public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
-    @Parameter(property = "step.step-project-name", required = false)
-    private String stepProjectName;
     @Parameter(property = "step-execute-auto-packages.user-id", required = false)
     private String userId;
-    @Parameter(property = "step.auth-token", required = false)
-    private String authToken;
-
     @Parameter(property = "step-execute-auto-packages.artifact-group-id")
     private String artifactGroupId;
     @Parameter(property = "step-execute-auto-packages.artifact-id")
@@ -66,6 +62,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     private String libArtifactClassifier;
     @Parameter(property = "step-execute-auto-packages.lib-artifact-type", required = false)
     private String libArtifactType;
+    @Parameter(property = "step-execute-auto-packages.managed-library-name")
+    private String managedLibraryName;
 
     @Parameter(property = "step-execute-auto-packages.execution-parameters", required = false)
     private Map<String, String> executionParameters;
@@ -156,11 +154,12 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                 }
             }
 
-            ExecuteAutomationPackageTool.Params params = new ExecuteAutomationPackageTool.Params()
+            ApExecuteParameters params = new ApExecuteParameters()
                     .setAutomationPackageFile(localApFile)
                     .setAutomationPackageMavenArtifact(remoteMavenArtifact)
                     .setPackageLibraryFile(getLibArtifactPath() == null ? null : new File(getLibArtifactPath()))
                     .setPackageLibraryMavenArtifact(getKeywordLibRemoteMavenIdentifier())
+                    .setAutomationPackageManagedLibraryName(getManagedLibraryName())
                     .setStepProjectName(getStepProjectName())
                     .setUserId(getUserId())
                     .setAuthToken(getAuthToken())
@@ -204,7 +203,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected ExecuteAutomationPackageTool createTool(final String url, ExecuteAutomationPackageTool.Params params) {
+    protected ExecuteAutomationPackageTool createTool(final String url, ApExecuteParameters params) {
         return new ExecuteAutomationPackageTool(url, params);
     }
 
@@ -221,13 +220,6 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         return getArtifactId() == null || getArtifactId().isEmpty() || getArtifactGroupId() == null || getArtifactGroupId().isEmpty();
     }
 
-    public String getStepProjectName() {
-        return stepProjectName;
-    }
-
-    public void setStepProjectName(String stepProjectName) {
-        this.stepProjectName = stepProjectName;
-    }
 
     public String getUserId() {
         return userId;
@@ -237,13 +229,6 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.userId = userId;
     }
 
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
 
     public String getArtifactGroupId() {
         return artifactGroupId;
@@ -419,6 +404,14 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
 
     public void setLibArtifactType(String libArtifactType) {
         this.libArtifactType = libArtifactType;
+    }
+
+    public String getManagedLibraryName() {
+        return managedLibraryName;
+    }
+
+    public void setManagedLibraryName(String managedLibraryName) {
+        this.managedLibraryName = managedLibraryName;
     }
 
     public String getLibArtifactPath() {

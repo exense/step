@@ -44,6 +44,12 @@ public abstract class AbstractAutomationPackageFromInputStreamProvider implement
     }
 
     @Override
+    public String getResourceName() {
+        //For input stream the name of the resource is created from the file name (legacy impl of resource manager)
+        return null;
+    }
+
+    @Override
     public void close() throws IOException {
         // cleanup temp file
         InputStreamToTempFileDownloader.cleanupTempFiles(tempFile);

@@ -103,7 +103,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
             throw new RuntimeException("Test set status overview cannot be prepared. ContextId is undefined");
         }
 
-        AutomationPackageFile apFile = restoreApFile(contextId, repositoryParameters, objectPredicate);
+        AutomationPackageFile apFile = restorePackageFile(contextId, repositoryParameters, objectPredicate);
         File file = apFile == null ? null : apFile.getFile();
         if (file == null) {
             throw new RuntimeException("Automation package file hasn't been found");
@@ -121,7 +121,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
         return new AutomationPackageFile(file, apResource);
     }
 
-    public AutomationPackageFile restoreApFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+    public AutomationPackageFile restorePackageFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
         String apName = repositoryParameters.get(AP_NAME);
 
         Resource resource = contextId == null ? null : getApResource(contextId, apName);
@@ -265,7 +265,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
             enricher.accept(resource);
             resourceManager.saveResource(resource);
 
-            resource = resourceManager.saveResourceContent(resource.getId().toString(), apStream, fileName, actorUser);
+            resource = resourceManager.saveResourceContent(resource.getId().toString(), apStream, fileName, null, actorUser);
 
             return resource;
         } catch (IOException | InvalidResourceFormatException ex) {

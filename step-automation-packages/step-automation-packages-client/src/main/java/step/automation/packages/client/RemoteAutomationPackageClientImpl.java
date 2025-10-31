@@ -52,12 +52,12 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
     @Override
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(AutomationPackageSource automationPackageSource,
                                                                          AutomationPackageSource apLibrarySource,
-                                                                         String apVersion, String activationExpr,
+                                                                         String versionName, String activationExpr,
                                                                          Map<String, String> plansAttributes, Map<String, String> functionsAttributes,
                                                                          Map<String, String> tokenSelectionCriteria, Boolean executeFunctionsLocally,
-                                                                         Boolean async, Boolean allowUpdateOfOtherPackages) throws AutomationPackageClientException {
-        return uploadPackage(automationPackageSource, apLibrarySource, apVersion, activationExpr,
-                plansAttributes, functionsAttributes, tokenSelectionCriteria, executeFunctionsLocally, async, allowUpdateOfOtherPackages,
+                                                                         Boolean async, Boolean forceRefreshOfSnapshots) throws AutomationPackageClientException {
+        return uploadPackage(automationPackageSource, apLibrarySource, versionName, activationExpr,
+                plansAttributes, functionsAttributes, tokenSelectionCriteria, executeFunctionsLocally, async, forceRefreshOfSnapshots,
                 multiPartEntity -> {
                     Invocation.Builder builder = requestBuilder("/rest/automation-packages");
                     return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
@@ -84,6 +84,22 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
         executeAutomationPackageClientRequest(() -> builder.delete(Void.class));
     }
 
+    @Override
+    public AutomationPackageUpdateResult createOrUpdateAutomationPackageLibrary(AutomationPackageSource librarySource, String managedLibraryName) throws AutomationPackageClientException {
+        MultiPart multiPart = new MultiPart();
+        multiPart.setMediaType(MediaType.MULTIPART_FORM_DATA_TYPE);
+        if (librarySource != null && librarySource.getFile() != null) {
+            multiPart.bodyPart(new FileDataBodyPart("file", librarySource.getFile(), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+        }
+        if (librarySource != null && librarySource.getMavenSnippet() != null) {
+            multiPart.bodyPart(new FormDataBodyPart("mavenSnippet", librarySource.getMavenSnippet()));
+        }
+        addStringBodyPart("managedLibraryName", managedLibraryName, multiPart);
+        Entity<MultiPart> entity = Entity.entity(multiPart, multiPart.getMediaType());
+        Invocation.Builder builder = requestBuilder("/rest/automation-packages/library");
+        return this.executeAutomationPackageClientRequest(() -> builder.post(entity, AutomationPackageUpdateResult.class));
+    }
+
     private <T> T executeAutomationPackageClientRequest(Supplier<T> provider) throws AutomationPackageClientException {
         try {
             return executeRequest(provider);
@@ -94,16 +110,16 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
 
     protected <T> T uploadPackage(AutomationPackageSource automationPackageSource,
                                   AutomationPackageSource apLibrarySource,
-                                  String apVersion, String activationExpr,
+                                  String versionName, String activationExpr,
                                   Map<String, String> plansAttributes, Map<String, String> functionsAttributes,
-                                  Map<String, String> tokenSelectionCriteria, Boolean executeFunctionsLocally, Boolean async, Boolean allowUpdateOfOtherPackages,
+                                  Map<String, String> tokenSelectionCriteria, Boolean executeFunctionsLocally, Boolean async, Boolean forceRefreshOfSnapshots,
                                   Function<Entity<MultiPart>, T> executeRequest) throws AutomationPackageClientException {
         MultiPart multiPart = prepareFileDataMultiPart(automationPackageSource, apLibrarySource);
 
-        addStringBodyPart("version", apVersion, multiPart);
+        addStringBodyPart("versionName", versionName, multiPart);
         addStringBodyPart("activationExpr", activationExpr, multiPart);
         addBooleanBodyPart("async", async, multiPart);
-        addBooleanBodyPart("allowUpdateOfOtherPackages", allowUpdateOfOtherPackages, multiPart);
+        addBooleanBodyPart("forceRefreshOfSnapshots", forceRefreshOfSnapshots, multiPart);
         addMapBodyPart("plansAttributes", plansAttributes, multiPart);
         addMapBodyPart("functionsAttributes", functionsAttributes, multiPart);
         addMapBodyPart("tokenSelectionCriteria", tokenSelectionCriteria, multiPart);
@@ -161,6 +177,10 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
 
         if (apLibrarySource != null && apLibrarySource.getMavenSnippet() != null) {
             multiPart.bodyPart(new FormDataBodyPart("apLibraryMavenSnippet", apLibrarySource.getMavenSnippet()));
+        }
+
+        if (apLibrarySource != null && apLibrarySource.getManagedLibraryName() != null) {
+            multiPart.bodyPart(new FormDataBodyPart("managedLibraryName", apLibrarySource.getManagedLibraryName()));
         }
         return multiPart;
     }
