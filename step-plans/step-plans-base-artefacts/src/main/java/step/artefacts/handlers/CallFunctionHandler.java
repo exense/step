@@ -348,7 +348,30 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				if(closeFunctionGroupSessionAfterExecution) {
 					functionGroupSession.releaseTokens(true);
 				}
-				if (streamingUploadContext != null) {
+				if (streamingUploadContext != null && !streamingAttachments.isEmpty()) {
+					// status updates come in a minimally asynchronous fashion, so for uploads that were NOT properly finalized,
+					// the transition message from IN_PROGRESS to FAILED may be sent slightly after the call is considered finished (SED-4277).
+					// If this is the case, try to wait a little bit for the message to arrive before unregistering our context listener
+					int max = 40; // x 50 ms = 2 seconds, this should be ample time
+					for (int i = 0; i <= max; ++i) {
+						boolean unfinished = streamingAttachments.values().stream()
+								.map(StreamingAttachmentMeta::getStatus)
+								.filter(Objects::nonNull)
+								.anyMatch(status -> !(status.equals(StreamingAttachmentMeta.Status.COMPLETED) || status.equals(StreamingAttachmentMeta.Status.FAILED)));
+						if (!unfinished) {
+							logger.error("DEBUG: No unfinished streams found");
+							break;
+						}
+						if (i == max) {
+							logger.error("Giving up waiting for streaming uploads to be finalized, reportNode {} may contain inconsistent attachment status metadata", node.getId());
+						} else {
+							if (logger.isErrorEnabled()) {
+								logger.error("Waiting for all streaming uploads to transition to a final state ({}/{}), rnId={}", (i + 1), max, node.getId());
+							}
+							Thread.sleep(50);
+						}
+					}
+
 					context.require(StreamingResourceUploadContexts.class).unregisterContext(streamingUploadContext);
 				}
 				callChildrenArtefacts(node, testArtefact);
