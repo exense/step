@@ -5,6 +5,7 @@ import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;

@@ -37,6 +37,7 @@ import step.core.repositories.TestSetStatusOverview;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.repositories.ArtifactRepositoryConstants;
+import step.resources.ResourceManager;
 
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,8 @@ import java.util.stream.Collectors;
  */
 public class LocalAutomationPackageRepository extends RepositoryWithAutomationPackageSupport {
 
-    public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor) {
-        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor);
+    public LocalAutomationPackageRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, ResourceManager resourceManager) {
+        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor, resourceManager);
     }
 
     @Override
@@ -71,12 +72,12 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
     }
 
     @Override
-    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate, String actorUser) throws Exception {
         TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
         if (isWrapPlansIntoTestSet(repositoryParameters)) {
             PackageExecutionContext ctx = null;
             try {
-                ctx = getOrRestorePackageExecutionContext(repositoryParameters, null, objectPredicate);
+                ctx = getOrRestorePackageExecutionContext(repositoryParameters, null, objectPredicate, actorUser);
                 //If wrap we return all plans of the AP
                 List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
                         .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
@@ -102,7 +103,7 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
     }
 
     @Override
-    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate) {
+    protected PackageExecutionContext getOrRestorePackageExecutionContext(Map<String, String> repositoryParameters, ObjectEnricher enricher, ObjectPredicate predicate, String actorUser) {
         String contextId = repositoryParameters.get(REPOSITORY_PARAM_CONTEXTID);
 
         // Execution context can be created in-advance and shared between several plans

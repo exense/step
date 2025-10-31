@@ -20,6 +20,8 @@ package step.resources;
 
 import step.core.accessors.Accessor;
 
-public interface ResourceAccessor extends Accessor<Resource> {
+import java.util.List;
 
+public interface ResourceAccessor extends Accessor<Resource> {
+    List<Resource> findByOrigin(String origin);
 }

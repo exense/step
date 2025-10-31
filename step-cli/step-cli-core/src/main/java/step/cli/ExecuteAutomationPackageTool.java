@@ -22,22 +22,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
+import step.cli.parameters.ApExecuteParameters;
 import step.cli.reports.AggregatedReportCreator;
 import step.cli.reports.JUnitReportCreator;
 import step.cli.reports.ReportCreator;
-import step.client.AbstractRemoteClient;
-import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
-import step.core.maven.MavenArtifactIdentifier;
 import step.core.plans.PlanFilter;
 import step.core.plans.filters.*;
 import step.core.plans.runner.PlanRunnerResult;
-import step.core.repositories.RepositoryObjectReference;
-import step.repositories.ArtifactRepositoryConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,14 +43,12 @@ import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTool {
+public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParameters> {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractExecuteAutomationPackageTool.class);
-    private final Params params;
+    private static final Logger logger = LoggerFactory.getLogger(ExecuteAutomationPackageTool.class);
 
-    public AbstractExecuteAutomationPackageTool(String url, Params params) {
-        super(url);
-        this.params = params;
+    public ExecuteAutomationPackageTool(String url, ApExecuteParameters params) {
+        super(url, params);
     }
 
     public static String getExecutionTreeAsString(PlanRunnerResult res) {
@@ -75,20 +69,22 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     }
 
     protected void executePackageOnStep() throws StepCliExecutionException {
+        parameters.validate();
+
         File outputFolder = null;
 
         // prepare folders to store requested reports
-        if (params.getReports() != null && !params.getReports().isEmpty()) {
-            if (!params.getWaitForExecution()) {
+        if (parameters.getReports() != null && !parameters.getReports().isEmpty()) {
+            if (!parameters.getWaitForExecution()) {
                 throw new StepCliExecutionException("The execution report can only been prepared in synchronous mode");
             }
 
             // even if the 'file' output mode is not defined, we create some output folder to store (temporarily) the report
             // because otherwise we will have no location to store the junit report before we print it to console in 'stdout' mode
-            if (params.getReportOutputDir() == null) {
+            if (parameters.getReportOutputDir() == null) {
                 outputFolder = new File(new File("").getAbsolutePath());
             } else {
-                outputFolder = params.getReportOutputDir();
+                outputFolder = parameters.getReportOutputDir();
             }
             if (outputFolder.exists()) {
                 if (!outputFolder.isDirectory()) {
@@ -105,20 +101,17 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient();
              RemoteExecutionManager remoteExecutionManager = createRemoteExecutionManager()) {
-            File automationPackageFile = null;
-
-            // if group id and artifact id are specified, this means, that don't want to send the artifact (binary) to the controller,
-            if (useLocalArtifact()) {
-                automationPackageFile = getAutomationPackageFile();
-            }
-
             IsolatedAutomationPackageExecutionParameters executionParameters = prepareExecutionParameters();
 
             List<String> executionIds;
             try {
-                executionIds = automationPackageClient.executeAutomationPackage(automationPackageFile, executionParameters);
+                executionIds = automationPackageClient.executeAutomationPackage(
+                        createPackageSource(parameters.getAutomationPackageFile(), createMavenArtifactXml(parameters.getAutomationPackageMavenArtifact())),
+                        executionParameters,
+                        createLibrarySource(parameters.getAutomationPackageLibraryFile(), createMavenArtifactXml(parameters.getAutomationPackageLibraryMavenArtifact())
+                        , parameters.getAutomationPackageManagedLibraryName()));
             } catch (AutomationPackageClientException e) {
-                throw logAndThrow("Error while executing automation package: " + e.getMessage());
+                throw new StepCliExecutionException("Error while executing automation package: " + e.getMessage());
             }
             if (executionIds != null) {
                 Map<String, Execution> executionInfos = new HashMap<>();
@@ -129,7 +122,7 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                     logInfo("- " + executionToString(executionId, executionInfo), null);
                 }
 
-                if (params.getWaitForExecution()) {
+                if (parameters.getWaitForExecution()) {
                     logInfo("Waiting for execution(s) to complete...", null);
 
                     Exception executionError = null;
@@ -140,9 +133,9 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                         executionError = ex;
                     }
 
-                    if (params.getReports() != null && !executionIds.isEmpty()) {
+                    if (parameters.getReports() != null && !executionIds.isEmpty()) {
                         try {
-                            for (Report report : params.getReports()) {
+                            for (Report report : parameters.getReports()) {
                                 ReportCreator reportCreator;
                                 ReportType reportType = report.getReportType();
                                 switch (reportType) {
@@ -181,13 +174,13 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
     }
 
     protected boolean useLocalArtifact() {
-        return params.getMavenArtifactIdentifier() == null;
+        return parameters.getAutomationPackageMavenArtifact() == null;
     }
 
     protected void waitForExecutionFinish(RemoteExecutionManager remoteExecutionManager, List<String> executionIds) throws StepCliExecutionException {
         // run the execution and wait until it is finished
         try {
-            List<Execution> endedExecutions = remoteExecutionManager.waitForTermination(executionIds, params.getExecutionResultTimeoutS() * 1000);
+            List<Execution> endedExecutions = remoteExecutionManager.waitForTermination(executionIds, parameters.getExecutionResultTimeoutS() * 1000);
             int executionFailureCount = 0;
             for (String id : executionIds) {
                 Execution endedExecution = endedExecutions.stream().filter(e -> e.getId().toString().equals(id)).findFirst().orElse(null);
@@ -212,12 +205,12 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
                     }
                 }
             }
-            if (executionFailureCount > 0 && params.getEnsureExecutionSuccess()) {
+            if (executionFailureCount > 0 && parameters.getEnsureExecutionSuccess()) {
                 int executionsCount = executionIds.size();
                 throw logAndThrow(executionFailureCount + "/" + executionsCount + " execution(s) failed. See " + getUrl() + "#/executions/list");
             }
         } catch (TimeoutException | InterruptedException ex) {
-            throw logAndThrow("Timeout after " + params.getExecutionResultTimeoutS() + " seconds while waiting for executions to complete", ex);
+            throw logAndThrow("Timeout after " + parameters.getExecutionResultTimeoutS() + " seconds while waiting for executions to complete", ex);
         } catch (StepCliExecutionException e) {
             // Rethrow MojoExecutionException
             throw e;
@@ -239,49 +232,21 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
         }
     }
 
-    protected abstract File getAutomationPackageFile() throws StepCliExecutionException;
-
-    @Override
-    protected ControllerCredentials getControllerCredentials() {
-        String authToken = params.getAuthToken();
-        return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
-    }
-
-    protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
-        RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
-        addProjectHeaderToRemoteClient(client);
-        return client;
-    }
-
     protected RemoteExecutionManager createRemoteExecutionManager() {
         RemoteExecutionManager remoteExecutionManager = new RemoteExecutionManager(getControllerCredentials());
         addProjectHeaderToRemoteClient(remoteExecutionManager);
         return remoteExecutionManager;
     }
 
-    private void addProjectHeaderToRemoteClient(AbstractRemoteClient remoteClient) {
-        addProjectHeaderToRemoteClient(params.getStepProjectName(), remoteClient);
-    }
-
     protected IsolatedAutomationPackageExecutionParameters prepareExecutionParameters() throws StepCliExecutionException {
         IsolatedAutomationPackageExecutionParameters executionParameters = new IsolatedAutomationPackageExecutionParameters();
         executionParameters.setMode(ExecutionMode.RUN);
-        executionParameters.setCustomParameters(params.getExecutionParameters());
-        executionParameters.setUserID(params.getUserId());
+        executionParameters.setCustomParameters(parameters.getExecutionParameters());
+        executionParameters.setUserID(parameters.getUserId());
 
-        executionParameters.setPlanFilter(getPlanFilters(params.getIncludePlans(), params.getExcludePlans(), params.getIncludeCategories(), params.getExcludeCategories()));
-        executionParameters.setWrapIntoTestSet(params.getWrapIntoTestSet());
-        executionParameters.setNumberOfThreads(params.getNumberOfThreads());
-
-        if (params.getMavenArtifactIdentifier() != null) {
-            Map<String, String> repositoryParameters = new HashMap<>();
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, params.getMavenArtifactIdentifier().getArtifactId());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, params.getMavenArtifactIdentifier().getGroupId());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, params.getMavenArtifactIdentifier().getVersion());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, params.getMavenArtifactIdentifier().getClassifier());
-            repositoryParameters.put(ArtifactRepositoryConstants.ARTIFACT_PARAM_TYPE, params.getMavenArtifactIdentifier().getType());
-            executionParameters.setOriginalRepositoryObject(new RepositoryObjectReference(ArtifactRepositoryConstants.MAVEN_REPO_ID, repositoryParameters));
-        }
+        executionParameters.setPlanFilter(getPlanFilters(parameters.getIncludePlans(), parameters.getExcludePlans(), parameters.getIncludeCategories(), parameters.getExcludeCategories()));
+        executionParameters.setWrapIntoTestSet(parameters.getWrapIntoTestSet());
+        executionParameters.setNumberOfThreads(parameters.getNumberOfThreads());
 
         return executionParameters;
     }
@@ -305,172 +270,6 @@ public abstract class AbstractExecuteAutomationPackageTool extends AbstractCliTo
 
     private static List<String> parseList(String string) {
         return (string != null && !string.isBlank()) ? Arrays.stream(string.split(",")).collect(Collectors.toList()) : new ArrayList<>();
-    }
-
-    public static class Params {
-        private String stepProjectName;
-        private String userId;
-        private String authToken;
-
-        private Map<String, String> executionParameters;
-        private Integer executionResultTimeoutS;
-        private Boolean waitForExecution;
-        private Boolean ensureExecutionSuccess;
-
-        private String includePlans;
-        private String excludePlans;
-        private Boolean wrapIntoTestSet;
-        private Integer numberOfThreads;
-        private MavenArtifactIdentifier mavenArtifactIdentifier;
-        private String includeCategories;
-        private String excludeCategories;
-
-        private List<Report> reports;
-        private File reportOutputDir;
-
-        public String getStepProjectName() {
-            return stepProjectName;
-        }
-
-        public String getUserId() {
-            return userId;
-        }
-
-        public String getAuthToken() {
-            return authToken;
-        }
-
-        public Map<String, String> getExecutionParameters() {
-            return executionParameters;
-        }
-
-        public Integer getExecutionResultTimeoutS() {
-            return executionResultTimeoutS;
-        }
-
-        public Boolean getWaitForExecution() {
-            return waitForExecution;
-        }
-
-        public Boolean getEnsureExecutionSuccess() {
-            return ensureExecutionSuccess;
-        }
-
-        public String getIncludePlans() {
-            return includePlans;
-        }
-
-        public String getExcludePlans() {
-            return excludePlans;
-        }
-
-        public String getIncludeCategories() {
-            return includeCategories;
-        }
-
-        public String getExcludeCategories() {
-            return excludeCategories;
-        }
-
-        public MavenArtifactIdentifier getMavenArtifactIdentifier() {
-            return mavenArtifactIdentifier;
-        }
-
-        public Boolean getWrapIntoTestSet() {
-            return wrapIntoTestSet;
-        }
-
-        public Integer getNumberOfThreads() {
-            return numberOfThreads;
-        }
-
-        public File getReportOutputDir() {
-            return reportOutputDir;
-        }
-
-        public List<Report> getReports() {
-            return reports;
-        }
-
-        public Params setStepProjectName(String stepProjectName) {
-            this.stepProjectName = stepProjectName;
-            return this;
-        }
-
-        public Params setUserId(String userId) {
-            this.userId = userId;
-            return this;
-        }
-
-        public Params setAuthToken(String authToken) {
-            this.authToken = authToken;
-            return this;
-        }
-
-        public Params setExecutionParameters(Map<String, String> executionParameters) {
-            this.executionParameters = executionParameters;
-            return this;
-        }
-
-        public Params setExecutionResultTimeoutS(Integer executionResultTimeoutS) {
-            this.executionResultTimeoutS = executionResultTimeoutS;
-            return this;
-        }
-
-        public Params setWaitForExecution(Boolean waitForExecution) {
-            this.waitForExecution = waitForExecution;
-            return this;
-        }
-
-        public Params setEnsureExecutionSuccess(Boolean ensureExecutionSuccess) {
-            this.ensureExecutionSuccess = ensureExecutionSuccess;
-            return this;
-        }
-
-        public Params setIncludePlans(String includePlans) {
-            this.includePlans = includePlans;
-            return this;
-        }
-
-        public Params setExcludePlans(String excludePlans) {
-            this.excludePlans = excludePlans;
-            return this;
-        }
-
-        public Params setWrapIntoTestSet(Boolean wrapIntoTestSet) {
-            this.wrapIntoTestSet = wrapIntoTestSet;
-            return this;
-        }
-
-        public Params setNumberOfThreads(Integer numberOfThreads) {
-            this.numberOfThreads = numberOfThreads;
-            return this;
-        }
-
-        public Params setMavenArtifactIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier) {
-            this.mavenArtifactIdentifier = mavenArtifactIdentifier;
-            return this;
-        }
-
-        public Params setIncludeCategories(String includeCategories) {
-            this.includeCategories = includeCategories;
-            return this;
-        }
-
-        public Params setExcludeCategories(String excludeCategories) {
-            this.excludeCategories = excludeCategories;
-            return this;
-        }
-
-        public Params setReportOutputDir(File reportOutputDir) {
-            this.reportOutputDir = reportOutputDir;
-            return this;
-        }
-
-        public Params setReports(List<Report> reports) {
-            this.reports = reports;
-            return this;
-        }
     }
 
     public enum ReportType {

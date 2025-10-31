@@ -28,6 +28,7 @@
             <version>${project.version}</version>
         </dependency>
 
+
         <dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-functions-plugins-defs-all-os</artifactId>
@@ -89,7 +90,7 @@
                                     <groupId>ch.exense.step</groupId>
                                     <artifactId>step-automation-packages-sample1-extended</artifactId>
                                     <version>${project.version}</version>
-                                    <classifier></classifier>
+                                    <classifier>jar-with-dependencies</classifier>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
@@ -112,7 +113,7 @@
                                     <groupId>ch.exense.step</groupId>
                                     <artifactId>step-automation-packages-sample2</artifactId>
                                     <version>${project.version}</version>
-                                    <classifier></classifier>
+                                    <classifier>jar-with-dependencies</classifier>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
@@ -140,6 +141,121 @@
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
                                     <destFileName>step-automation-packages-malformed.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-test-5</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>ch.exense.step</groupId>
+                                    <artifactId>step-automation-packages-kw-lib</artifactId>
+                                    <version>${project.version}</version>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
+                                    <destFileName>step-automation-packages-kw-lib.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-test-6</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>ch.exense.step</groupId>
+                                    <artifactId>step-automation-packages-kw-lib</artifactId>
+                                    <version>${project.version}</version>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
+                                    <destFileName>step-automation-packages-kw-lib-updated.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-test-7</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>ch.exense.step</groupId>
+                                    <artifactId>step-automation-packages-kw-lib</artifactId>
+                                    <version>${project.version}</version>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
+                                    <destFileName>step-automation-packages-kw-lib-release.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-test-8</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>ch.exense.step</groupId>
+                                    <artifactId>step-automation-packages-sample-echo</artifactId>
+                                    <version>${project.version}</version>
+                                    <classifier></classifier>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
+                                    <destFileName>step-automation-packages-sample-echo.jar</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-test-9</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>ch.exense.step</groupId>
+                                    <artifactId>step-automation-packages-kw-lib-call</artifactId>
+                                    <version>${project.version}</version>
+                                    <classifier>jar-with-dependencies</classifier>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
+                                    <destFileName>step-automation-packages-kw-lib-call.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
                             <overWriteReleases>true</overWriteReleases>

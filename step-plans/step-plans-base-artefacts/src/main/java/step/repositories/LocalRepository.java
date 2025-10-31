@@ -64,7 +64,7 @@ public class LocalRepository extends AbstractRepository {
 	}
 
 	@Override
-	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) throws Exception {
+	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate, String actorUser) throws Exception {
 		TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
 
 		String planId = getPlanId(repositoryParameters);

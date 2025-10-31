@@ -19,21 +19,29 @@
 package step.automation.packages.client;
 
 import step.automation.packages.AutomationPackageUpdateResult;
+import step.automation.packages.client.model.AutomationPackageSource;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 
 import java.io.Closeable;
-import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 public interface AutomationPackageClient extends Closeable {
 
-    String createAutomationPackage(File automationPackageFile, String apVersion, String activationExpr) throws AutomationPackageClientException;
+    AutomationPackageUpdateResult createOrUpdateAutomationPackage(AutomationPackageSource automationPackageSource,
+                                                                  AutomationPackageSource apLibrarySource,
+                                                                  String versionName, String activationExpr,
+                                                                  Map<String, String> plansAttributes, Map<String, String> functionsAttributes,
+                                                                  Map<String, String> tokenSelectionCriteria,
+                                                                  Boolean executeFunctionsLocally,
+                                                                  Boolean async, Boolean forceRefreshOfSnapshots) throws AutomationPackageClientException;
 
-    AutomationPackageUpdateResult createOrUpdateAutomationPackage(File automationPackageFile, Boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException;
-
-    AutomationPackageUpdateResult createOrUpdateAutomationPackageMvn(String mavenArtifactXml, Boolean async, String apVersion, String activationExpr) throws AutomationPackageClientException;
-
-    List<String> executeAutomationPackage(File automationPackageFile, IsolatedAutomationPackageExecutionParameters params) throws AutomationPackageClientException;
+    List<String> executeAutomationPackage(AutomationPackageSource automationPackageSource,
+                                          IsolatedAutomationPackageExecutionParameters params,
+                                          AutomationPackageSource keywordLibSource) throws AutomationPackageClientException;
 
     void deleteAutomationPackage(String packageName) throws AutomationPackageClientException;
+
+    AutomationPackageUpdateResult createOrUpdateAutomationPackageLibrary(AutomationPackageSource librarySource, String managedLibraryName) throws AutomationPackageClientException;
+
 }

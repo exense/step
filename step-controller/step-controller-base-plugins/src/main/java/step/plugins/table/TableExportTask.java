@@ -4,7 +4,6 @@ import org.apache.commons.beanutils.PropertyUtils;
 import step.controller.services.async.AsyncTask;
 import step.controller.services.async.AsyncTaskHandle;
 import step.framework.server.Session;
-import step.framework.server.tables.service.TableResponse;
 import step.framework.server.tables.service.TableService;
 import step.resources.Resource;
 import step.resources.ResourceManager;
@@ -35,7 +34,7 @@ public class TableExportTask implements AsyncTask<Resource> {
 
     @Override
     public Resource apply(AsyncTaskHandle exportTaskHandle) throws Exception {
-        ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "export.csv");
+        ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, "export.csv", null);
         PrintWriter writer = new PrintWriter(resourceContainer.getOutputStream());
 
         List<String> fields = exportRequest.getFields();

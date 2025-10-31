@@ -56,15 +56,16 @@ public class ClassLoaderResourceFilesystem {
             return new File(resourceUrl.getFile()).isDirectory();
         } else if (protocol.equals(JAR)) {
             JarResourcePath jarResourcePath = new JarResourcePath(resourceUrl);
-            ZipFile zip = new ZipFile(jarResourcePath.jarFile);
-            ZipEntry entry = zip.getEntry(jarResourcePath.pathInJar);
-            boolean isDirectory = entry.isDirectory();
-            if (!isDirectory) {
-                InputStream input = zip.getInputStream(entry);
-                isDirectory = input == null;
-                if (input != null) input.close();
+            try (ZipFile zip = new ZipFile(jarResourcePath.jarFile)) {
+                ZipEntry entry = zip.getEntry(jarResourcePath.pathInJar);
+                boolean isDirectory = entry.isDirectory();
+                if (!isDirectory) {
+                    try (InputStream input = zip.getInputStream(entry)) {
+                        isDirectory = input == null;
+                    }
+                }
+                return isDirectory;
             }
-            return isDirectory;
         } else {
             throw unsupportedProtocol(protocol);
         }

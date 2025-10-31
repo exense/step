@@ -25,7 +25,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import step.automation.packages.client.AutomationPackageClientException;
-import step.cli.AbstractExecuteAutomationPackageTool;
+import step.cli.ExecuteAutomationPackageTool;
+import step.cli.parameters.ApExecuteParameters;
 
 import java.net.URISyntaxException;
 import java.util.*;
@@ -53,8 +54,8 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		Assert.assertEquals((Integer) 3, mojo.params.getExecutionResultTimeoutS());
 		Assert.assertEquals(true, mojo.params.getWaitForExecution());
 		Assert.assertEquals(ensureExecutionSuccess, mojo.params.getEnsureExecutionSuccess());
-        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.junit, mojo.params.getReports().get(0).getReportType());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout, AbstractExecuteAutomationPackageTool.ReportOutputMode.file), mojo.params.getReports().get(0).getOutputModes());
+        Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.junit, mojo.params.getReports().get(0).getReportType());
+        Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout, ExecuteAutomationPackageTool.ReportOutputMode.file), mojo.params.getReports().get(0).getOutputModes());
 		Assert.assertEquals(createTestCustomParams(), mojo.params.getExecutionParameters());
 		Assert.assertEquals(TEST_INCLUDE_PLANS, mojo.params.getIncludePlans());
 		Assert.assertNull(TEST_INCLUDE_PLANS, mojo.params.getExcludePlans());
@@ -79,7 +80,7 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		mojo.setEnsureExecutionSuccess(ensureExecutionSuccess);
 
 		ExecuteAutomationPackageMojo.ReportParam reportParam = new ExecuteAutomationPackageMojo.ReportParam();
-		reportParam.setType(AbstractExecuteAutomationPackageTool.ReportType.junit);
+		reportParam.setType(ExecuteAutomationPackageTool.ReportType.junit);
 		reportParam.setOutput("stdout,file");
 		mojo.setReports(List.of(reportParam));
 		mojo.setReportDir("C://temp");
@@ -116,17 +117,17 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
 	private static class ExecuteAutomationPackageMojoTestable extends ExecuteAutomationPackageMojo {
 
-		private final AbstractExecuteAutomationPackageTool mockedTool = Mockito.mock(AbstractExecuteAutomationPackageTool.class);
+		private final ExecuteAutomationPackageTool mockedTool = Mockito.mock(ExecuteAutomationPackageTool.class);
 
 		private String url;
-		private AbstractExecuteAutomationPackageTool.Params params;
+		private ApExecuteParameters params;
 
 		public ExecuteAutomationPackageMojoTestable() {
 			super();
 		}
 
 		@Override
-		protected AbstractExecuteAutomationPackageTool createTool(String url, AbstractExecuteAutomationPackageTool.Params params) {
+		protected ExecuteAutomationPackageTool createTool(String url, ApExecuteParameters params) {
 			this.url = url;
 			this.params = params;
 			return mockedTool;

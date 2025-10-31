@@ -20,17 +20,27 @@ package step.cli;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.client.RemoteAutomationPackageClientImpl;
+import step.automation.packages.client.model.AutomationPackageSource;
+import step.cli.parameters.Parameters;
 import step.client.AbstractRemoteClient;
 import step.client.credentials.ControllerCredentials;
+import step.core.maven.MavenArtifactIdentifier;
 
-public abstract class AbstractCliTool implements CliToolLogging {
+import java.io.File;
+import java.util.Objects;
+
+public abstract class AbstractCliTool<T extends Parameters> implements CliToolLogging {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractCliTool.class);
 
     private String url;
 
-    public AbstractCliTool(String url) {
+    protected final T parameters;
+
+    public AbstractCliTool(String url, T parameters) {
         this.url = url;
+        this.parameters = Objects.requireNonNull(parameters);
     }
 
     public String getUrl() {
@@ -70,12 +80,91 @@ public abstract class AbstractCliTool implements CliToolLogging {
     }
 
     protected ControllerCredentials getControllerCredentials() {
-        return new ControllerCredentials(getUrl(), null);
+        String authToken = parameters.getAuthToken();
+        return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
+    }
+
+    protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
+        RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
+        addProjectHeaderToRemoteClient(client);
+        return client;
     }
 
     protected void addProjectHeaderToRemoteClient(String stepProjectName, AbstractRemoteClient remoteClient) {
         if (stepProjectName != null && !stepProjectName.isEmpty()) {
             remoteClient.getHeaders().addProjectName(stepProjectName);
+        }
+    }
+
+    protected void addProjectHeaderToRemoteClient(AbstractRemoteClient remoteClient) {
+        addProjectHeaderToRemoteClient(parameters.getStepProjectName(), remoteClient);
+    }
+
+    protected String createMavenArtifactXml(MavenArtifactIdentifier identifier) {
+        if (identifier == null) {
+            return null;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("<dependency>");
+
+        builder.append("<groupId>");
+        if(identifier.getGroupId() != null){
+            builder.append(identifier.getGroupId());
+        }
+        builder.append("</groupId>");
+
+        builder.append("<artifactId>");
+        if(identifier.getArtifactId() != null){
+            builder.append(identifier.getArtifactId());
+        }
+        builder.append("</artifactId>");
+
+        builder.append("<version>");
+        if(identifier.getVersion() != null){
+            builder.append(identifier.getVersion());
+        }
+        builder.append("</version>");
+
+        // classifier and type are optional fields
+        if (identifier.getClassifier() != null) {
+            builder.append("<classifier>");
+            builder.append(identifier.getClassifier());
+            builder.append("</classifier>");
+        }
+
+        if (identifier.getType() != null) {
+            builder.append("<type>");
+            builder.append(identifier.getType());
+            builder.append("</type>");
+        }
+
+        builder.append("</dependency>");
+        return builder.toString();
+    }
+
+    protected AutomationPackageSource createPackageSource(File file, String mavenSnippet) {
+        return createSource(file, mavenSnippet, null);
+
+    }
+
+    protected AutomationPackageSource createLibrarySource(File file, String mavenSnippet, String managedLibraryName) {
+        return createSource(file, mavenSnippet, managedLibraryName);
+    }
+
+    private AutomationPackageSource createSource(File file, String mavenSnippet, String managedLibraryName) {
+        if (mavenSnippet != null && file != null) {
+            throw new IllegalArgumentException("You cannot use both file and maven snippet as file source");
+        }
+
+        if (mavenSnippet != null) {
+            return AutomationPackageSource.withMavenSnippet(mavenSnippet);
+        } else if (file != null) {
+            return AutomationPackageSource.withFile(file);
+        } else if (managedLibraryName != null) {
+            return AutomationPackageSource.withManagedLibraryName(managedLibraryName);
+        } else {
+            return null;
         }
     }
 }

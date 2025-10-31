@@ -1,0 +1,9 @@
+version: 1.0.0
+name: "Package with external lib call"
+plans:
+  - name: Call keyword with external lib
+    root:
+      testCase:
+        children:
+          - callKeyword:
+              keyword: "KeywordWithExternalLibCall"

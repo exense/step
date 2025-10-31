@@ -18,20 +18,39 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.automation.packages.library.AutomationPackageLibraryProvider;
+import step.resources.ResourceOrigin;
+import step.resources.UploadedResourceOrigin;
+
 import java.io.File;
 import java.io.IOException;
 
 public class AutomationPackageFromFolderProvider implements AutomationPackageArchiveProvider {
 
     private final File apFolder;
+    private final AutomationPackageLibraryProvider packageLibraryProvider;
 
-    public AutomationPackageFromFolderProvider(File apFolder) {
+    public AutomationPackageFromFolderProvider(File apFolder, AutomationPackageLibraryProvider packageLibraryProvider) {
         this.apFolder = apFolder;
+        this.packageLibraryProvider = packageLibraryProvider;
     }
 
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-        return new AutomationPackageArchive(apFolder);
+        return new JavaAutomationPackageArchive(apFolder,
+                packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
+                null);
+    }
+
+    @Override
+    public ResourceOrigin getOrigin() {
+        return new UploadedResourceOrigin();
+    }
+
+    @Override
+    public String getResourceName() {
+        //Let the resource manager determine the name
+        return null;
     }
 
     @Override

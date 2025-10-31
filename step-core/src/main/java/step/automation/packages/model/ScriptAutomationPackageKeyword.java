@@ -18,14 +18,14 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
-import step.automation.packages.AutomationPackageContext;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.functions.Function;
 
-public class JavaAutomationPackageKeyword implements AutomationPackageKeyword {
+public class ScriptAutomationPackageKeyword implements AutomationPackageKeyword {
 
     private final Function keyword;
 
-    public JavaAutomationPackageKeyword(Function keyword) {
+    public ScriptAutomationPackageKeyword(Function keyword) {
         this.keyword = keyword;
     }
 
@@ -34,7 +34,7 @@ public class JavaAutomationPackageKeyword implements AutomationPackageKeyword {
     }
 
     @Override
-    public Function prepareKeyword(AutomationPackageContext context) {
+    public Function prepareKeyword(StagingAutomationPackageContext context) {
         if (keyword instanceof AutomationPackageContextual) {
             return ((AutomationPackageContextual<Function>) keyword).applyAutomationPackageContext(context);
         } else {

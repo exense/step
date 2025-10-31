@@ -9,6 +9,8 @@ import step.artefacts.Echo;
 import step.artefacts.reports.EchoReportNode;
 import step.automation.packages.client.AutomationPackageClientException;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
+import step.automation.packages.client.model.AutomationPackageSource;
+import step.cli.parameters.ApExecuteParameters;
 import step.client.executions.RemoteExecutionFuture;
 import step.client.executions.RemoteExecutionManager;
 import step.controller.multitenancy.Tenant;
@@ -37,7 +39,7 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public class AbstractExecuteAutomationPackageToolTest {
+public class ExecuteAutomationPackageToolTest {
 
     protected static final Tenant TENANT_1 = createTenant1();
 
@@ -70,7 +72,7 @@ public class AbstractExecuteAutomationPackageToolTest {
         RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
         RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(executionIds);
 
         ExecuteAutomationPackageToolTestable tool = createTool(true, remoteExecutionManagerMock, remoteAutomationPackageClientMock);
         tool.execute();
@@ -97,7 +99,7 @@ public class AbstractExecuteAutomationPackageToolTest {
         RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
         RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(executionIds);
 
         ExecuteAutomationPackageToolTestable tool = createTool(true, remoteExecutionManagerMock, remoteAutomationPackageClientMock);
         Assert.assertThrows(StepCliExecutionException.class, tool::execute);
@@ -114,7 +116,7 @@ public class AbstractExecuteAutomationPackageToolTest {
         RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
         RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(executionIds);
 
         ExecuteAutomationPackageToolTestable tool = createTool(true, remoteExecutionManagerMock, remoteAutomationPackageClientMock);
         Assert.assertThrows(StepCliExecutionException.class, tool::execute);
@@ -131,7 +133,7 @@ public class AbstractExecuteAutomationPackageToolTest {
         RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
 
         RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
-        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any())).thenReturn(executionIds);
+        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(executionIds);
 
         ExecuteAutomationPackageToolTestable tool = createTool(false, remoteExecutionManagerMock, remoteAutomationPackageClientMock);
         tool.execute();
@@ -139,11 +141,14 @@ public class AbstractExecuteAutomationPackageToolTest {
     }
 
     private static void assertAutomationPackageClientMockCalls(RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws AutomationPackageClientException {
-        ArgumentCaptor<File> fileCaptor = ArgumentCaptor.forClass(File.class);
+        ArgumentCaptor<AutomationPackageSource> fileCaptor = ArgumentCaptor.forClass(AutomationPackageSource.class);
+        // TODO: improve test - check the library file
+        ArgumentCaptor<AutomationPackageSource> libraryFileCaptor = ArgumentCaptor.forClass(AutomationPackageSource.class);
         ArgumentCaptor<IsolatedAutomationPackageExecutionParameters> executionParamsCaptor = ArgumentCaptor.forClass(IsolatedAutomationPackageExecutionParameters.class);
-        Mockito.verify(remoteAutomationPackageClientMock, Mockito.times(1)).executeAutomationPackage(fileCaptor.capture(), executionParamsCaptor.capture());
-        File capturedFile = fileCaptor.getValue();
-        Assert.assertEquals("test-file-jar-with-dependencies.jar", capturedFile.getName());
+        Mockito.verify(remoteAutomationPackageClientMock, Mockito.times(1)).executeAutomationPackage(
+                fileCaptor.capture(), executionParamsCaptor.capture(), libraryFileCaptor.capture());
+        AutomationPackageSource capturedFile = fileCaptor.getValue();
+        Assert.assertEquals("test-file-jar-with-dependencies.jar", capturedFile.getFile().getName());
 
         IsolatedAutomationPackageExecutionParameters captured = executionParamsCaptor.getValue();
         Assert.assertEquals("testUser", captured.getUserID());
@@ -196,7 +201,8 @@ public class AbstractExecuteAutomationPackageToolTest {
                                                             RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws URISyntaxException {
         return new ExecuteAutomationPackageToolTestable(
                 "http://localhost:8080",
-                new AbstractExecuteAutomationPackageTool.Params()
+                new ApExecuteParameters()
+                        .setAutomationPackageFile(new File("test-file-jar-with-dependencies.jar"))
                         .setStepProjectName(TENANT_1.getName())
                         .setUserId("testUser")
                         .setAuthToken("abc")
@@ -205,9 +211,9 @@ public class AbstractExecuteAutomationPackageToolTest {
                         .setWaitForExecution(true)
                         .setEnsureExecutionSuccess(ensureExecutionSuccess)
                         .setReports(List.of(
-                                new AbstractExecuteAutomationPackageTool.Report(
-                                        AbstractExecuteAutomationPackageTool.ReportType.aggregated,
-                                        List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout, AbstractExecuteAutomationPackageTool.ReportOutputMode.file)))
+                                new ExecuteAutomationPackageTool.Report(
+                                        ExecuteAutomationPackageTool.ReportType.aggregated,
+                                        List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout, ExecuteAutomationPackageTool.ReportOutputMode.file)))
                         )
                         .setReportOutputDir(tempReportFolder)
                         .setIncludePlans(TEST_INCLUDE_PLANS)
@@ -227,22 +233,17 @@ public class AbstractExecuteAutomationPackageToolTest {
         return params;
     }
 
-    private static class ExecuteAutomationPackageToolTestable extends AbstractExecuteAutomationPackageTool {
+    private static class ExecuteAutomationPackageToolTestable extends ExecuteAutomationPackageTool {
 
         private final RemoteExecutionManager remoteExecutionManagerMock;
         private final RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
-        public ExecuteAutomationPackageToolTestable(String url, Params params,
+        public ExecuteAutomationPackageToolTestable(String url, ApExecuteParameters params,
                                                     RemoteExecutionManager remoteExecutionManagerMock,
                                                     RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
             super(url, params);
             this.remoteExecutionManagerMock = remoteExecutionManagerMock;
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
-        }
-
-        @Override
-        protected File getAutomationPackageFile() throws StepCliExecutionException {
-            return new File("test-file-jar-with-dependencies.jar");
         }
 
         @Override
