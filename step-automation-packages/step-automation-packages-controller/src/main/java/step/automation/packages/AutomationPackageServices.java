@@ -122,7 +122,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
 
     private void auditLog(String operation, Resource resource) {
         if (resource != null) {
-            AuditLogger.logEntityModification(getHttpSession(), operation, "automation-packages-resources", resource, getObjectEnricher());
+            AuditLogger.logEntityModification(getSession(), operation, "automation-packages-resources", resource, getObjectEnricher());
         }
     }
 
