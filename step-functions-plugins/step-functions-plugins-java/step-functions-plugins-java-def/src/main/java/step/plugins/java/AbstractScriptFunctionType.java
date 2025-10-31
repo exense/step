@@ -204,7 +204,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		try {
 			objectHookRegistry.rebuildContext(context, function);
 			ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(context);
-			Resource resource = resourceManager.createResource(RESOURCE_TYPE_FUNCTIONS, resourceIS, newScriptFilename, false, objectEnricher);
+			Resource resource = resourceManager.createResource(RESOURCE_TYPE_FUNCTIONS, resourceIS, newScriptFilename, objectEnricher, null);
 			function.getScriptFile().setValue(fileResolver.createPathForResourceId(resource.getId().toHexString()));
 		} catch (Exception e) {
 			throw new SetupFunctionException("Unable to create the default script as resource", e);
@@ -222,7 +222,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 				copy.setScriptFile(new DynamicValue<>(""));//reset script to setup a new one
 				String scriptFileValue = scriptFile.get();
 
-				boolean isResource = fileResolver.isResource(scriptFileValue);
+				boolean isResource = FileResolver.isResource(scriptFileValue);
 				if (isResource) {
 					scriptFileValue = fileResolver.resolve(scriptFileValue).getAbsolutePath();
 					newFile = setupScriptFileAsResource(copy, new FileInputStream(scriptFileValue));

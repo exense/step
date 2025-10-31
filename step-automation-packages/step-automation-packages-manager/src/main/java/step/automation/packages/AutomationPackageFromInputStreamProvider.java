@@ -18,69 +18,25 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import ch.exense.commons.io.FileHelper;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import step.automation.packages.library.AutomationPackageLibraryProvider;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
-public class AutomationPackageFromInputStreamProvider implements AutomationPackageArchiveProvider {
-
-    private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchiveProvider.class);
+public class AutomationPackageFromInputStreamProvider extends AbstractAutomationPackageFromInputStreamProvider implements AutomationPackageArchiveProvider {
 
     private final AutomationPackageArchive archive;
-    private File tempFile;
-    private File tempFolder;
 
-    public AutomationPackageFromInputStreamProvider(InputStream packageStream, String fileName) throws AutomationPackageReadingException {
-        // store automation package into temp file
-        this.tempFile = null;
-        try {
-            copyStreamToTempFile(packageStream, fileName);
-        } catch (Exception ex) {
-            throw new AutomationPackageManagerException("Unable to store automation package file", ex);
-        }
-
-        this.archive = new AutomationPackageArchive(tempFile);
+    public AutomationPackageFromInputStreamProvider(AutomationPackageReaderRegistry apReaderRegistry, InputStream packageStream,
+                                                    String fileName, AutomationPackageLibraryProvider packageLibraryProvider) throws AutomationPackageReadingException {
+        super(packageStream, fileName);
+        AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(tempFile.getTempFile());
+        this.archive = reader.createAutomationPackageArchive(tempFile.getTempFile(),
+                packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
+                null);
     }
 
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
         return this.archive;
-    }
-
-    private void copyStreamToTempFile(InputStream in, String fileName) throws IOException {
-        // create temp folder to keep the original file name
-        File newFolder = FileHelper.createTempFolder();
-        newFolder.deleteOnExit();
-        File newFile = new File(newFolder, fileName);
-        newFile.deleteOnExit();
-
-        try (FileOutputStream out = new FileOutputStream(newFile)) {
-            IOUtils.copy(in, out);
-        }
-        this.tempFile = newFile;
-        this.tempFolder = newFolder;
-    }
-
-    @Override
-    public void close() throws IOException {
-        // cleanup temp file
-        try {
-            if (this.tempFile != null && tempFile.exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                tempFile.delete();
-            }
-            if (this.tempFolder != null && tempFolder.exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                tempFolder.delete();
-            }
-        } catch (Exception e) {
-            log.warn("Cannot cleanup temp file {}", this.tempFile == null ? "" : this.tempFile.getName(), e);
-        }
     }
 }

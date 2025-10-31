@@ -19,6 +19,7 @@
 package step.resources;
 
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectPredicate;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -74,18 +75,18 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
-    public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-        return getManagerForPersistence().createResource(resourceType, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+    public Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().createResource(resourceType, resourceStream, resourceFileName, objectEnricher, actorUser);
     }
 
     @Override
-    public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-        return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+    public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, objectEnricher, actorUser);
     }
 
     @Override
-    public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException {
-        return getManagerForPersistence().createResourceContainer(resourceType, resourceFileName);
+    public ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String actorUser) throws IOException {
+        return getManagerForPersistence().createResourceContainer(resourceType, resourceFileName, actorUser);
     }
 
     @Override
@@ -120,6 +121,11 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
+    public Resource getResourceByNameAndType(String resourceName, String resourceType, ObjectPredicate predicate) {
+        return layeredLookup(resourceManager -> resourceManager.getResourceByNameAndType(resourceName, resourceType, predicate));
+    }
+
+    @Override
     public ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException {
         for (ResourceManager resourceManager : resourceManagers) {
             ResourceRevisionContentImpl found = resourceManager.getResourceRevisionContent(resourceRevisionId);
@@ -141,18 +147,25 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
-    public Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher, String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-        return getManagerForPersistence().createResource(resourceType, isDirectory, resourceStream, resourceFileName, checkForDuplicates, objectEnricher);
+    public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher,
+                                          String trackingAttribute, String actorUser, String origin, Long originTimestamp) throws IOException, InvalidResourceFormatException {
+        return createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, null, objectEnricher, trackingAttribute, actorUser, origin, originTimestamp);
     }
 
     @Override
-    public Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException {
-        return getManagerForPersistence().copyResource(resource, sourceResourceManager);
+    public Resource createTrackedResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, String optionalResourceName, ObjectEnricher objectEnricher,
+                                          String trackingAttribute, String actorUser, String origin, Long originTimestamp) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().createTrackedResource(resourceType, isDirectory, resourceStream, resourceFileName, optionalResourceName, objectEnricher, trackingAttribute, actorUser, origin, originTimestamp);
     }
 
     @Override
-    public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName) throws IOException, InvalidResourceFormatException {
-        return getManagerForPersistence().saveResourceContent(resourceId, resourceStream, resourceFileName);
+    public Resource copyResource(Resource resource, ResourceManager sourceResourceManager, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().copyResource(resource, sourceResourceManager, actorUser);
+    }
+
+    @Override
+    public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().saveResourceContent(resourceId, resourceStream, resourceFileName, optionalResourceName, actorUser);
     }
 
     @Override
@@ -169,6 +182,13 @@ public class LayeredResourceManager implements ResourceManager {
     public void deleteResource(String resourceId) {
         for (ResourceManager resourceManager : resourceManagers) {
             resourceManager.deleteResource(resourceId);
+        }
+    }
+
+    @Override
+    public void deleteResourceRevisionContent(String resourceId) {
+        for (ResourceManager resourceManager : resourceManagers) {
+            resourceManager.deleteResourceRevisionContent(resourceId);
         }
     }
 

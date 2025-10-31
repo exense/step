@@ -21,6 +21,9 @@ package step.automation.packages.junit;
 import org.bson.types.ObjectId;
 import step.automation.packages.AutomationPackageFromClassLoaderProvider;
 import step.automation.packages.AutomationPackageManager;
+import step.automation.packages.AutomationPackageUpdateParameter;
+import step.automation.packages.AutomationPackageUpdateParameterBuilder;
+import step.automation.packages.library.NoAutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.ExecutionEngine;
@@ -45,10 +48,10 @@ public class JUnitPlansProvider {
         try {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
             AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(testClass.getClassLoader());
+            AutomationPackageUpdateParameter localCreateParameters = new AutomationPackageUpdateParameterBuilder().withCreateOnly()
+                    .forLocalExecution().build();
             ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-                    false, true, null, automationPackageProvider, null, null,
-                    true, null, null, false
-            ).getId();
+                   automationPackageProvider, new NoAutomationPackageLibraryProvider(), localCreateParameters).getId();
 
             List<PlanFilter> planFilterList = new ArrayList<>();
             IncludePlans includePlans = testClass.getAnnotation(IncludePlans.class);

@@ -18,54 +18,31 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import org.apache.maven.settings.building.SettingsBuildingException;
-import org.eclipse.aether.artifact.DefaultArtifact;
+import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.maven.MavenArtifactIdentifier;
-import step.repositories.artifact.MavenArtifactClient;
+import step.core.objectenricher.ObjectPredicate;
+import step.resources.ResourceManager;
 
-import java.io.File;
-import java.io.IOException;
+public class AutomationPackageFromMavenProvider extends AbstractAutomationPackageFromMavenProvider implements AutomationPackageArchiveProvider {
 
-public class AutomationPackageFromMavenProvider implements AutomationPackageArchiveProvider {
+    private final AutomationPackageArchive archive;
 
-    private final MavenArtifactIdentifier mavenArtifactIdentifier;
-    private final AutomationPackageMavenConfig mavenConfig;
-
-    public AutomationPackageFromMavenProvider(AutomationPackageMavenConfig mavenConfig,
-                                              MavenArtifactIdentifier mavenArtifactIdentifier) {
-        this.mavenConfig = mavenConfig;
-        this.mavenArtifactIdentifier = mavenArtifactIdentifier;
+    public AutomationPackageFromMavenProvider(AutomationPackageReaderRegistry apReaderRegistry,
+                                              AutomationPackageMavenConfig mavenConfig,
+                                              MavenArtifactIdentifier mavenArtifactIdentifier,
+                                              AutomationPackageLibraryProvider packageLibraryProvider,
+                                              ResourceManager resourceManager, ObjectPredicate objectPredicate) throws AutomationPackageReadingException {
+        super(mavenConfig, mavenArtifactIdentifier, resourceManager, objectPredicate);
+        AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(resolvedMavenArtefact.artifactFile);
+        this.archive = reader.createAutomationPackageArchive(resolvedMavenArtefact.artifactFile,
+                packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
+                mavenArtifactIdentifier.getArtifactId());
     }
 
     @Override
-    public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-        // The same client as in MavenArtifactRepository
-        try {
-            if (mavenConfig == null) {
-                throw new AutomationPackageReadingException("Maven config is not resolved");
-            }
-            if (mavenConfig.getMavenSettingsXml() == null) {
-                throw new AutomationPackageManagerException("Maven settings xml is not resolved");
-            }
-            if (mavenConfig.getLocalFileRepository() == null) {
-                throw new AutomationPackageManagerException("Maven local file repository is not resolved");
-            }
-            MavenArtifactClient mavenArtifactClient = new MavenArtifactClient(mavenConfig.getMavenSettingsXml(), mavenConfig.getLocalFileRepository());
-            File artifact = mavenArtifactClient.getArtifact(new DefaultArtifact(
-                    mavenArtifactIdentifier.getGroupId(),
-                    mavenArtifactIdentifier.getArtifactId(),
-                    mavenArtifactIdentifier.getClassifier(),
-                    mavenArtifactIdentifier.getType() == null || mavenArtifactIdentifier.getType().isEmpty() ? "jar" : mavenArtifactIdentifier.getType(),
-                    mavenArtifactIdentifier.getVersion())
-            );
-            return new AutomationPackageArchive(artifact);
-        } catch (SettingsBuildingException | org.eclipse.aether.resolution.ArtifactResolutionException e) {
-            throw new RuntimeException(e);
-        }
+    public AutomationPackageArchive getAutomationPackageArchive()  {
+        return archive;
     }
 
-    @Override
-    public void close() throws IOException {
 
-    }
 }

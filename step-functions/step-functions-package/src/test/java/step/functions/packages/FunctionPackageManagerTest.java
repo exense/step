@@ -44,7 +44,7 @@ public class FunctionPackageManagerTest {
 		resourceManager = new LocalResourceManagerImpl();
 		resolver = new FileResolver(resourceManager);
 		pm = new FunctionPackageManager(p, f, resourceManager,
-				resolver,new Configuration(), new ObjectHookRegistry());
+                new Configuration(), new ObjectHookRegistry());
 	}
 	
 	@After
@@ -264,7 +264,7 @@ public class FunctionPackageManagerTest {
 
 		// Create a resource
 		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, fis,
-				resourceFileName, false, null);
+				resourceFileName, null, "testUser");
 		assertNotNull(resource);
 		return resource;
 	}

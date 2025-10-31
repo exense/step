@@ -2,10 +2,14 @@ package step.cli;
 
 import ch.exense.commons.io.FileHelper;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.cli.parameters.ApDeployParameters;
+import step.cli.parameters.ApExecuteParameters;
+import step.cli.parameters.LibraryDeployParameters;
 import step.client.controller.ControllerServicesClient;
 import step.core.Constants;
 import step.core.Version;
@@ -24,9 +28,10 @@ public class StepConsoleTest {
     @Test
     public void testHelp() {
         List<TestApDeployCommand.ExecutionParams> deployExecRegistry = new ArrayList<>();
+        List<TestLibraryDeployCommand.ExecutionParams> deployLibraryExecRegistry = new ArrayList<>();
         List<TestApExecuteCommand.RemoteExecutionParams> remoteExecutionParams = new ArrayList<>();
         List<TestApExecuteCommand.LocalExecutionParams> localExecutionParams = new ArrayList<>();
-        Histories histories = new Histories(deployExecRegistry, remoteExecutionParams, localExecutionParams);
+        Histories histories = new Histories(deployExecRegistry, deployLibraryExecRegistry, remoteExecutionParams, localExecutionParams);
 
         int res = runMain(histories, "help");
         Assert.assertEquals(0, res);
@@ -70,7 +75,7 @@ public class StepConsoleTest {
     public void testDeployAp() {
         List<TestApDeployCommand.ExecutionParams> deployExecHistory = new ArrayList<>();
 
-        Histories histories = new Histories(deployExecHistory, null, null);
+        Histories histories = new Histories(deployExecHistory,  null,null, null);
 
         // for EE
         int res = runMain(histories, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--projectName=testProject", "--token=abc", "--async", "--apVersion=ver1", "--activationExpr=true==true");
@@ -79,12 +84,12 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         TestApDeployCommand.ExecutionParams usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals("abc", usedParams.authToken);
-        Assert.assertEquals("testProject", usedParams.projectName);
-        Assert.assertTrue(usedParams.async);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertEquals(usedParams.apVersion, "ver1");
-        Assert.assertEquals(usedParams.activationExpr, "true==true");
+        Assert.assertEquals("abc", usedParams.params.getAuthToken());
+        Assert.assertEquals("testProject", usedParams.params.getStepProjectName());
+        Assert.assertTrue(usedParams.params.getAsync());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+        Assert.assertEquals(usedParams.params.getApVersion(), "ver1");
+        Assert.assertEquals(usedParams.params.getActivationExpression(), "true==true");
 
         // for OS (required params only)
         deployExecHistory.clear();
@@ -93,8 +98,8 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertFalse(usedParams.async);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertFalse(usedParams.params.getAsync());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
 
         // incorrect parameters (project name / token)
         deployExecHistory.clear();
@@ -111,7 +116,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8081", usedParams.stepUrl);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
 
         // several properties files (containing url and project/token)
         deployExecHistory.clear();
@@ -120,28 +125,54 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8081", usedParams.stepUrl);
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertEquals("abc", usedParams.authToken);
-        Assert.assertEquals("testProject", usedParams.projectName);
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+        Assert.assertEquals("abc", usedParams.params.getAuthToken());
+        Assert.assertEquals("testProject", usedParams.params.getStepProjectName());
 
         // deploy from artifactory
         deployExecHistory.clear();
-        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--apVersion=1.0.0");
+        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--apVersion=1.0.0", "--packageLibrary=mvn:ch.exense.step:some-step-keyword-lib:1.0.0:tests");
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals("ch.exense.step", usedParams.mavenArtifact.getGroupId());
-        Assert.assertEquals("step-automation-packages-junit", usedParams.mavenArtifact.getArtifactId());
-        Assert.assertEquals("0.0.0", usedParams.mavenArtifact.getVersion());
-        Assert.assertEquals("tests", usedParams.mavenArtifact.getClassifier());
+
+        Assert.assertEquals("ch.exense.step", usedParams.params.getAutomationPackageMavenArtifact().getGroupId());
+        Assert.assertEquals("step-automation-packages-junit", usedParams.params.getAutomationPackageMavenArtifact().getArtifactId());
+        Assert.assertEquals("0.0.0", usedParams.params.getAutomationPackageMavenArtifact().getVersion());
+        Assert.assertEquals("tests", usedParams.params.getAutomationPackageMavenArtifact().getClassifier());
+
+        Assert.assertEquals("ch.exense.step", usedParams.params.getAutomationPackageLibraryMavenArtifact().getGroupId());
+        Assert.assertEquals("some-step-keyword-lib", usedParams.params.getAutomationPackageLibraryMavenArtifact().getArtifactId());
+        Assert.assertEquals("1.0.0", usedParams.params.getAutomationPackageLibraryMavenArtifact().getVersion());
+        Assert.assertEquals("tests", usedParams.params.getAutomationPackageLibraryMavenArtifact().getClassifier());
+    }
+
+
+    @Test
+    @Ignore
+    public void testRemoteExecuteForReal() {
+        List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory = new ArrayList<>();
+
+        Histories histories = new Histories(null, null, remoteExecuteHistory, null);
+
+        // all parameters
+        StepConsole.main( "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar",
+                "-u=http://localhost:8080", "--projectName=automation-packages",
+                "--token=eyJhbGciOiJIUzI1NiJ9....",
+                "--async", "--includePlans=p1,p2",
+                "--packageLibrary=managed:MyLib",
+                "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD",
+                "--executionTimeoutS=1000",
+                "--excludePlans=p3,p4", "-ep=key1=value1|key2=value2", "-ep=key3=value3"
+        );
     }
 
     @Test
     public void testRemoteExecute() {
         List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory = new ArrayList<>();
 
-        Histories histories = new Histories(null, remoteExecuteHistory, null);
+        Histories histories = new Histories(null, null, remoteExecuteHistory, null);
 
         // all parameters
         int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar",
@@ -164,8 +195,8 @@ public class StepConsoleTest {
         Assert.assertEquals("timeout doesn't match", (Integer) 1000, usedParams.params.getExecutionResultTimeoutS());
         Assert.assertFalse(usedParams.params.getWaitForExecution());
         Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.params.getExecutionParameters());
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertNull(usedParams.params.getMavenArtifactIdentifier());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+        Assert.assertNull(usedParams.params.getAutomationPackageMavenArtifact());
 
         // minimum parameters
         remoteExecuteHistory.clear();
@@ -175,8 +206,8 @@ public class StepConsoleTest {
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertTrue(usedParams.params.getWaitForExecution());
-        Assert.assertEquals("step-automation-packages-sample1.jar", new File(usedParams.apFile).getName());
-        Assert.assertNull(usedParams.params.getMavenArtifactIdentifier());
+        Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+        Assert.assertNull(usedParams.params.getAutomationPackageMavenArtifact());
 
         // use maven artifact instead of local file
         remoteExecuteHistory.clear();
@@ -185,7 +216,7 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
-        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests", null), usedParams.params.getMavenArtifactIdentifier());
+        Assert.assertEquals(new MavenArtifactIdentifier("ch.exense.step", "step-automation-packages-junit", "0.0.0", "tests", null), usedParams.params.getAutomationPackageMavenArtifact());
 
         // test various report types and output types
         remoteExecuteHistory.clear();
@@ -194,8 +225,8 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals(1, usedParams.params.getReports().size());
-        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.file), usedParams.params.getReports().get(0).getOutputModes());
+        Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
+        Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.file), usedParams.params.getReports().get(0).getOutputModes());
 
         remoteExecuteHistory.clear();
         res = runMain(histories, "ap", "execute", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080", "--reportType=junit;output=stdout", "--reportType=aggregated;output=file,stdout");
@@ -203,19 +234,20 @@ public class StepConsoleTest {
         Assert.assertEquals(1, remoteExecuteHistory.size());
         usedParams = remoteExecuteHistory.get(0);
         Assert.assertEquals(2, usedParams.params.getReports().size());
-        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(0).getOutputModes());
-        Assert.assertEquals(AbstractExecuteAutomationPackageTool.ReportType.aggregated, usedParams.params.getReports().get(1).getReportType());
-        Assert.assertEquals(List.of(AbstractExecuteAutomationPackageTool.ReportOutputMode.file, AbstractExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(1).getOutputModes());
+        Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.junit, usedParams.params.getReports().get(0).getReportType());
+        Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(0).getOutputModes());
+        Assert.assertEquals(ExecuteAutomationPackageTool.ReportType.aggregated, usedParams.params.getReports().get(1).getReportType());
+        Assert.assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.file, ExecuteAutomationPackageTool.ReportOutputMode.stdout), usedParams.params.getReports().get(1).getOutputModes());
     }
 
     @Test
     public void testOutdatedVersion(){
         List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory = new ArrayList<>();
+        List<TestLibraryDeployCommand.ExecutionParams> deployLibraryExecRegistry = new ArrayList<>();
         List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory = new ArrayList<>();
         List<TestApDeployCommand.ExecutionParams> deployExecuteHistory = new ArrayList<>();
 
-        Histories histories = new Histories(deployExecuteHistory, remoteExecuteHistory, localExecuteHistory);
+        Histories histories = new Histories(deployExecuteHistory, deployLibraryExecRegistry, remoteExecuteHistory, localExecuteHistory);
 
         Version actualVersion = Constants.STEP_API_VERSION;
         Version outdatedMajorVersion = new Version(actualVersion.getMajor() - 1, actualVersion.getMinor(), 0);
@@ -275,7 +307,7 @@ public class StepConsoleTest {
     public void testLocalExecute(){
         List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory = new ArrayList<>();
 
-        Histories histories = new Histories(null, null, localExecuteHistory);
+        Histories histories = new Histories(null, null,null, localExecuteHistory);
 
         // all parameters
         int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD","-ep=key1=value1|key2=value2", "-ep=key3=value3");
@@ -314,9 +346,10 @@ public class StepConsoleTest {
     @Test
     public void testPrepareApFile() throws IOException {
         List<TestApDeployCommand.ExecutionParams> deployExecRegistry = new ArrayList<>();
+        List<TestLibraryDeployCommand.ExecutionParams> deployLibraryExecRegistry = new ArrayList<>();
         List<TestApExecuteCommand.RemoteExecutionParams> remoteExecutionParams = new ArrayList<>();
         List<TestApExecuteCommand.LocalExecutionParams> localExecutionParams = new ArrayList<>();
-        Histories histories = new Histories(deployExecRegistry, remoteExecutionParams, localExecutionParams);
+        Histories histories = new Histories(deployExecRegistry, deployLibraryExecRegistry, remoteExecutionParams, localExecutionParams);
 
         TestApExecuteCommand executeCommand = new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory);
         TestApDeployCommand deployCommand = new TestApDeployCommand(histories.deployHistory);
@@ -337,7 +370,7 @@ public class StepConsoleTest {
         }
     }
 
-    private void prepareAndVerifyApFile(StepConsole.ApCommand.AbstractApCommand executeCommand, File inputFolder) throws IOException {
+    private void prepareAndVerifyApFile(ApCommand.AbstractApCommand executeCommand, File inputFolder) throws IOException {
         File preparedFile = executeCommand.prepareApFile(inputFolder.getAbsolutePath());
         Assert.assertNotNull(preparedFile);
 
@@ -368,6 +401,7 @@ public class StepConsoleTest {
         int res = StepConsole.executeMain(
                 () -> new TestApDeployCommand(histories.deployHistory),
                 () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory),
+                () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
                 false,
                 args
         );
@@ -380,6 +414,7 @@ public class StepConsoleTest {
         int res = StepConsole.executeMain(
                 () -> new TestApDeployCommand(histories.deployHistory, version),
                 () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version),
+                () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
                 false,
                 args
         );
@@ -389,19 +424,22 @@ public class StepConsoleTest {
 
     private static class Histories {
         private List<TestApDeployCommand.ExecutionParams> deployHistory;
+        private List<TestLibraryDeployCommand.ExecutionParams> deployLibraryHistory;
         private List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory;
         private List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory;
 
         public Histories(List<TestApDeployCommand.ExecutionParams> deployHistory,
+                         List<TestLibraryDeployCommand.ExecutionParams> deployLibraryHistory,
                          List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory,
                          List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory) {
             this.deployHistory = deployHistory;
+            this.deployLibraryHistory = deployLibraryHistory;
             this.remoteExecuteHistory = remoteExecuteHistory;
             this.localExecuteHistory = localExecuteHistory;
         }
     }
 
-    public static class TestApDeployCommand extends StepConsole.ApCommand.ApDeployCommand {
+    public static class TestApDeployCommand extends ApCommand.ApDeployCommand {
 
         public final List<ExecutionParams> testRegistry;
         private final Version mockedVersion;
@@ -418,27 +456,15 @@ public class StepConsoleTest {
 
         public static class ExecutionParams {
             private String stepUrl;
-            private String projectName;
-            private String authToken;
-            private boolean async;
-            private String apVersion;
-            private String activationExpr;
-            private String apFile;
-            private MavenArtifactIdentifier mavenArtifact;
+            private ApDeployParameters params;
         }
 
         @Override
-        protected void executeTool(String stepUrl1, String projectName, String authToken1, boolean async, String apVersion, String activationExpr, final MavenArtifactIdentifier mavenArtifact) {
+        protected void executeTool(final String stepUrl, ApDeployParameters params) {
             if (testRegistry != null) {
                 ExecutionParams p = new ExecutionParams();
-                p.stepUrl = stepUrl1;
-                p.projectName = projectName;
-                p.authToken = authToken1;
-                p.async = async;
-                p.apFile = this.apFile;
-                p.apVersion = apVersion;
-                p.activationExpr = activationExpr;
-                p.mavenArtifact = mavenArtifact;
+                p.stepUrl = stepUrl;
+                p.params = params;
                 testRegistry.add(p);
             }
         }
@@ -456,16 +482,58 @@ public class StepConsoleTest {
         }
     }
 
-    public static class TestApExecuteCommand extends StepConsole.ApCommand.ApExecuteCommand {
+    public static class TestLibraryDeployCommand extends LibraryCommand.DeployLibraryCommand {
+
+        public final List<ExecutionParams> testRegistry;
+        private final Version mockedVersion;
+
+        public TestLibraryDeployCommand(List<ExecutionParams> testRegistry) {
+            this.testRegistry = testRegistry;
+            this.mockedVersion = null;
+        }
+
+        public TestLibraryDeployCommand(List<ExecutionParams> testRegistry, Version mockedVersion) {
+            this.testRegistry = testRegistry;
+            this.mockedVersion = mockedVersion;
+        }
+
+        public static class ExecutionParams {
+            private String stepUrl;
+            private LibraryDeployParameters params;
+        }
+
+        @Override
+        protected void executeTool(final String stepUrl, LibraryDeployParameters params) {
+            if (testRegistry != null) {
+                ExecutionParams p = new ExecutionParams();
+                p.stepUrl = stepUrl;
+                p.params = params;
+                testRegistry.add(p);
+            }
+        }
+
+        @Override
+        protected Version getVersion() {
+            return mockedVersion == null ? super.getVersion() : mockedVersion;
+        }
+
+        @Override
+        protected ControllerServicesClient createControllerServicesClient() {
+            ControllerServicesClient mockedClient = Mockito.mock(ControllerServicesClient.class);
+            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_API_VERSION);
+            return mockedClient;
+        }
+    }
+
+    public static class TestApExecuteCommand extends ApCommand.ApExecuteCommand {
 
         public final List<RemoteExecutionParams> remoteParams;
         public final List<LocalExecutionParams> localParams;
         private final Version mockedVersion;
 
-        public static class RemoteExecutionParams {
+        public static class RemoteExecutionParams  {
             private String stepUrl;
-            private AbstractExecuteAutomationPackageTool.Params params;
-            private String apFile;
+            private ApExecuteParameters params;
         }
 
         public static class LocalExecutionParams {
@@ -490,19 +558,18 @@ public class StepConsoleTest {
         }
 
         @Override
-        protected void executeRemotely(String stepUrl, AbstractExecuteAutomationPackageTool.Params params) {
+        protected void executeRemotely(String stepUrl, ApExecuteParameters params) {
             if (remoteParams != null) {
                 RemoteExecutionParams p = new RemoteExecutionParams();
                 p.stepUrl = stepUrl;
                 p.params = params;
-                p.apFile = this.apFile;
 
                 remoteParams.add(p);
             }
         }
 
         @Override
-        protected void executeLocally(File file, String includePlans, String excludePlans,
+        protected void executeLocally(File file, File kwLibFile, String includePlans, String excludePlans,
                                       String includeCategories, String excludeCategories, Map<String, String> executionParameters) {
             if (localParams != null) {
                 LocalExecutionParams p = new LocalExecutionParams();

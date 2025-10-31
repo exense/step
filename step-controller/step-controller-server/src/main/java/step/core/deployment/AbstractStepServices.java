@@ -119,9 +119,9 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 	 * @param entity the entity to be asserted
 	 */
 	protected void assertEntityIsEditableInContext(AbstractIdentifiableObject entity) {
-		if(entity instanceof EnricheableObject) {
+		if (entity instanceof EnricheableObject) {
 			EnricheableObject enricheableObject = (EnricheableObject) entity;
-			Session session = getSession();
+			Session<User> session = getSession();
 			Optional<ObjectAccessException> optionalViolations = objectHookRegistry.isObjectEditableInContext(session, enricheableObject);
 			if (optionalViolations.isPresent()) {
 				ObjectAccessException objectAccessException = optionalViolations.get();
@@ -131,5 +131,9 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 				);
 			}
 		}
+	}
+
+	protected WriteAccessValidator getWriteAccessValidator() {
+		return new WriteAccessValidatorImpl(objectHookRegistry, getSession());
 	}
 }

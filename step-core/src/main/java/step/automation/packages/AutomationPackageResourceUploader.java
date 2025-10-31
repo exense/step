@@ -27,6 +27,7 @@ import step.resources.ResourceManager;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
@@ -36,7 +37,7 @@ public class AutomationPackageResourceUploader {
 
     public String applyResourceReference(String resourceReference,
                                          String resourceType,
-                                         AutomationPackageContext context) {
+                                         StagingAutomationPackageContext context) {
         String result = null;
         if (resourceReference != null && !resourceReference.startsWith(FileResolver.RESOURCE_PREFIX)) {
             Resource resource = uploadResourceFromAutomationPackage(resourceReference, resourceType, context);
@@ -51,10 +52,12 @@ public class AutomationPackageResourceUploader {
 
     public Resource uploadResourceFromAutomationPackage(String resourcePath,
                                                          String resourceType,
-                                                         AutomationPackageContext context) {
+                                                         StagingAutomationPackageContext context) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
 
+            InputStream resourceStream = null;
+            File tempFolder = null;
             try {
                 URL resourceUrl = context.getAutomationPackageArchive().getResource(resourcePath);
                 if (resourceUrl == null) {
@@ -63,10 +66,8 @@ public class AutomationPackageResourceUploader {
                 File resourceFile = new File(resourceUrl.getFile());
 
                 String fileName;
-                InputStream resourceStream;
                 // Check if the resource is a directory
                 boolean isDirectory = ClassLoaderResourceFilesystem.isDirectory(resourceUrl);
-                File tempFolder = null;
                 if (isDirectory) {
                     logger.debug("The referenced resource {} is a directory. It will be extracted to a temporary directory and zipped...", resourcePath);
                     // If the resource is a directory, extract it and create a zip out of it
@@ -88,23 +89,28 @@ public class AutomationPackageResourceUploader {
                     fileName = resourceFile.getName();
                 }
 
-                try {
-                    return resourceManager.createResource(
-                            resourceType,
-                            isDirectory,
-                            resourceStream,
-                            fileName,
-                            false, context.getEnricher()
-                    );
-                } finally {
-                    resourceStream.close();
-                    if (tempFolder != null) {
-                        // Delete the temporary folder
-                        FileHelper.deleteFolder(tempFolder);
-                    }
-                }
+                return resourceManager.createResource(
+                        resourceType,
+                        isDirectory,
+                        resourceStream,
+                        fileName,
+                        context.getEnricher(),
+                        context.getActorUser()
+                );
             } catch (Exception e) {
                 throw new RuntimeException("Unable to upload automation package resource " + resourcePath, e);
+            } finally {
+                if (resourceStream != null) {
+                    try {
+                        resourceStream.close();
+                    } catch (IOException e) {
+                        logger.error("Unable to close the automation package input stream.");
+                    }
+                }
+                if (tempFolder != null) {
+                    // Delete the temporary folder
+                    FileHelper.deleteFolder(tempFolder);
+                }
             }
         }
 

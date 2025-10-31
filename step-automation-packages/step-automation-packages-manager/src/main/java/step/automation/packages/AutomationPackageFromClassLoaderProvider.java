@@ -18,6 +18,9 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import step.resources.ResourceOrigin;
+import step.resources.UploadedResourceOrigin;
+
 import java.io.IOException;
 
 public class AutomationPackageFromClassLoaderProvider implements AutomationPackageArchiveProvider {
@@ -29,12 +32,22 @@ public class AutomationPackageFromClassLoaderProvider implements AutomationPacka
     }
 
     @Override
-    public AutomationPackageArchive getAutomationPackageArchive() {
-        return new AutomationPackageArchive(classLoader);
+    public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
+        return new JavaAutomationPackageArchive(classLoader);
+    }
+
+    @Override
+    public ResourceOrigin getOrigin() {
+        return new UploadedResourceOrigin();
+    }
+
+    @Override
+    public String getResourceName() {
+        //Let the resource manager determine the name
+        return null;
     }
 
     @Override
     public void close() throws IOException {
-
     }
 }

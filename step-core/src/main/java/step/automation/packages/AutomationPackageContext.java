@@ -29,24 +29,29 @@ public class AutomationPackageContext {
     public static final String PLAN_ACCESSOR = "planAccessor";
     public static final String FUNCTION_ACCESSOR = "functionAccessor";
 
-    private ResourceManager resourceManager;
-    private AutomationPackageArchive automationPackageArchive;
-    private AutomationPackageContent packageContent;
+    private final ResourceManager resourceManager;
+    private final AutomationPackageContent packageContent;
 
+    private String actorUser;
     private ObjectEnricher enricher;
 
-    private String uploadedPackageFileResource;
+
     private final Map<String, Object> extensions;
+
+    private final AutomationPackage automationPackage;
 
     public final AutomationPackageOperationMode operationMode;
 
-    public AutomationPackageContext(AutomationPackageOperationMode operationMode, ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive,
-                                    AutomationPackageContent packageContent,
+    public AutomationPackageContext(AutomationPackage automationPackage,
+                                    AutomationPackageOperationMode operationMode,
+                                    ResourceManager resourceManager,
+                                    AutomationPackageContent packageContent, String actorUser,
                                     ObjectEnricher enricher, Map<String, Object> extensions) {
+        this.automationPackage = automationPackage;
         this.operationMode = Objects.requireNonNull(operationMode);
         this.resourceManager = resourceManager;
-        this.automationPackageArchive = automationPackageArchive;
         this.packageContent = packageContent;
+        this.actorUser = actorUser;
         this.enricher = enricher;
         this.extensions = extensions;
     }
@@ -55,28 +60,8 @@ public class AutomationPackageContext {
         return resourceManager;
     }
 
-    public void setResourceManager(ResourceManager resourceManager) {
-        this.resourceManager = resourceManager;
-    }
-
-    public AutomationPackageArchive getAutomationPackageArchive() {
-        return automationPackageArchive;
-    }
-
-    public String getUploadedPackageFileResource() {
-        return uploadedPackageFileResource;
-    }
-
-    public void setUploadedPackageFileResource(String uploadedPackageFileResource) {
-        this.uploadedPackageFileResource = uploadedPackageFileResource;
-    }
-
     public ObjectEnricher getEnricher() {
         return enricher;
-    }
-
-    public void setAutomationPackageArchive(AutomationPackageArchive automationPackageArchive) {
-        this.automationPackageArchive = automationPackageArchive;
     }
 
     public void setEnricher(ObjectEnricher enricher) {
@@ -89,5 +74,17 @@ public class AutomationPackageContext {
 
     public AutomationPackageContent getPackageContent() {
         return packageContent;
+    }
+
+    public String getActorUser() {
+        return actorUser;
+    }
+
+    public void setActorUser(String actorUser) {
+        this.actorUser = actorUser;
+    }
+
+    public AutomationPackage getAutomationPackage() {
+        return automationPackage;
     }
 }
