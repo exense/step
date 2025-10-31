@@ -116,7 +116,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
 
     private void auditLog(String operation, AutomationPackage ap) {
         if (ap != null) {
-            AuditLogger.logEntityModification(getHttpSession(), operation, "automation-packages", ap, getObjectEnricher());
+            AuditLogger.logEntityModification(getSession(), operation, "automation-packages", ap, getObjectEnricher());
         }
     }
 
