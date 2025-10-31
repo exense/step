@@ -1421,7 +1421,8 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                 } else if (automationPackageFileSource == null) {
                     assertEquals("", generalScriptFunction.getLibrariesFile().get());
                 } else {
-                    assertEquals(r.storedPackage.getAutomationPackageLibraryResource(), generalScriptFunction.getLibrariesFile().get());
+                    assertEquals(r.storedPackage.getAutomationPackageResourceRevision(), generalScriptFunction.getScriptFile().get());
+                    assertEquals(r.storedPackage.getAutomationPackageLibraryResourceRevision(), generalScriptFunction.getLibrariesFile().get());
                 }
             }
         }

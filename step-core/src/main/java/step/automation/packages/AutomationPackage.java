@@ -34,6 +34,8 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
 
     private String automationPackageResource;
     private String automationPackageLibraryResource;
+    private String automationPackageResourceRevision;
+    private String automationPackageLibraryResourceRevision;
 
     /**
      * function attributes to be applied to all functions (aka keywords)
@@ -147,4 +149,19 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
         this.automationPackageResource = automationPackageResource;
     }
 
+    public String getAutomationPackageResourceRevision() {
+        return automationPackageResourceRevision;
+    }
+
+    public void setAutomationPackageResourceRevision(String automationPackageResourceRevision) {
+        this.automationPackageResourceRevision = automationPackageResourceRevision;
+    }
+
+    public String getAutomationPackageLibraryResourceRevision() {
+        return automationPackageLibraryResourceRevision;
+    }
+
+    public void setAutomationPackageLibraryResourceRevision(String automationPackageLibraryResourceRevision) {
+        this.automationPackageLibraryResourceRevision = automationPackageLibraryResourceRevision;
+    }
 }
