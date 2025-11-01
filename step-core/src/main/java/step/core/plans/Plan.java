@@ -31,7 +31,7 @@ import step.core.entities.EntityManager;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
-import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
+import step.core.plans.agents.configuration.AgentProvisioningModeConfiguration;
 import step.functions.EvaluationExpression;
 import step.functions.Function;
 
@@ -46,9 +46,10 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 	
 	protected Collection<Plan> subPlans;
 
+	// By default, the default configuration of the platform is used ('inherit' mode)
 	@JsonTypeInfo(use= Id.DEDUCTION)
-	protected AgentProvisioningConfiguration agents = new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect);
-	
+	protected AgentProvisioningConfiguration agents = new AgentProvisioningModeConfiguration(AgentProvisioningModeConfiguration.PlanAgentsPoolAutoMode.inherit);
+
 	protected boolean visible = true;
 
 	protected Expression activationExpression;

@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.Version;
@@ -33,7 +32,6 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.Plan;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
-import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
@@ -277,10 +275,8 @@ public class YamlPlanReader {
 		yamlPlan.setVersion(currentVersion.toString());
 		yamlPlan.setCategories(plan.getCategories());
 		yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
-		AgentProvisioningConfiguration agents = plan.getAgents();
-		//don't set the value of agents if the default values is used to keep the Yaml short
-		if (!(agents instanceof AutomaticAgentProvisioningConfiguration) ||
-				!((AutomaticAgentProvisioningConfiguration) agents).mode.equals(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect)) {
+		// Leave the "agents" field empty if the plan is configured to use the default configuration of the platform
+		if (plan.getAgents() != null && !plan.getAgents().usePlatformDefaultAgentProvisioningConfiguration()) {
 			yamlPlan.setAgents(plan.getAgents());
 		}
 		return yamlPlan;

@@ -3,7 +3,7 @@ _class: "step.core.plans.Plan"
 attributes:
   name: "Plan with return"
 agents:
-  mode: "auto_detect"
+  mode: "inherit"
 root:
   _class: "Sequence"
   attributes:

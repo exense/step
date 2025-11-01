@@ -36,14 +36,11 @@ public class YamlPlan {
 
 	private String version;
 	private String name;
-
-	private NamedYamlArtefact root;
-
+	private List<String> categories;
 	@JsonSerialize(using = AgentProvisioningConfigurationSerializer.class)
 	@JsonDeserialize(using = AgentProvisioningConfigurationDeserializer.class)
 	private AgentProvisioningConfiguration agents;
-
-	private List<String> categories;
+	private NamedYamlArtefact root;
 
 	public String getName() {
 		return name;

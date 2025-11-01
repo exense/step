@@ -12,7 +12,7 @@ import step.core.plans.Plan;
 import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
 import step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
-import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
+import step.core.plans.agents.configuration.AgentProvisioningModeConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,8 +57,8 @@ public class MigrateAgentProvisioningConfigurationTest {
 			migrateAgentProvisioningConfiguration.runUpgradeScript();
 			Plan newPlan = actualPlans.find(Filters.empty(), null, null, null, 0).findFirst().orElseThrow(() -> new RuntimeException("No plans found in collection"));
 			AgentProvisioningConfiguration agents = newPlan.getAgents();
-			assertTrue(agents instanceof AutomaticAgentProvisioningConfiguration);
-			assertEquals(((AutomaticAgentProvisioningConfiguration) agents).mode, AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect);
+			assertTrue(agents instanceof AgentProvisioningModeConfiguration);
+			assertEquals(((AgentProvisioningModeConfiguration) agents).mode, AgentProvisioningModeConfiguration.PlanAgentsPoolAutoMode.auto_detect);
 		}
 	}
 

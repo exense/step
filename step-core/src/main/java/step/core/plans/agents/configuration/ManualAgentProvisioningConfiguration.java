@@ -56,4 +56,9 @@ public class ManualAgentProvisioningConfiguration implements AgentProvisioningCo
     public boolean enableAgentProvisioning() {
         return configuredAgentPools != null && !configuredAgentPools.isEmpty();
     }
+
+    @Override
+    public boolean usePlatformDefaultAgentProvisioningConfiguration() {
+        return false;
+    }
 }

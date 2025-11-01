@@ -37,7 +37,7 @@ public class AgentProvisioningConfigurationDeserializer extends JsonDeserializer
             manualAgentProvisioningConfiguration.configuredAgentPools = jsonParser.readValueAs(new TypeReference<List<AgentPoolProvisioningConfiguration>>() {});
             return manualAgentProvisioningConfiguration;
         } else {
-            return new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.valueOf(jsonParser.readValueAs(String.class)));
+            return new AgentProvisioningModeConfiguration(AgentProvisioningModeConfiguration.PlanAgentsPoolAutoMode.valueOf(jsonParser.readValueAs(String.class)));
         }
     }
 }

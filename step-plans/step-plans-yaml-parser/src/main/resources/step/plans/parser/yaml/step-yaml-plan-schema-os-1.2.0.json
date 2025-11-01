@@ -2402,7 +2402,7 @@
       "oneOf" : [ {
         "$ref" : "#/$defs/agentPoolConfigurationArrayDef"
       }, {
-        "enum" : [ "auto_detect" ]
+        "enum" : [ "auto_detect", "inherit", "existing" ]
       } ]
     },
     "PlanDef" : {

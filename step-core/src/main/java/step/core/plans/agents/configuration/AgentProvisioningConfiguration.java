@@ -26,7 +26,7 @@ import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import java.util.List;
 
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = AutomaticAgentProvisioningConfiguration.class),
+        @JsonSubTypes.Type(value = AgentProvisioningModeConfiguration.class),
         @JsonSubTypes.Type(value = ManualAgentProvisioningConfiguration.class)
 })
 public interface AgentProvisioningConfiguration {
@@ -34,6 +34,8 @@ public interface AgentProvisioningConfiguration {
     boolean enableAutomaticTokenNumberCalculation();
 
     boolean enableAgentProvisioning();
+
+    boolean usePlatformDefaultAgentProvisioningConfiguration();
 
     @JsonIgnore
     List<AgentPoolRequirementSpec> getAgentPoolRequirementSpecs();

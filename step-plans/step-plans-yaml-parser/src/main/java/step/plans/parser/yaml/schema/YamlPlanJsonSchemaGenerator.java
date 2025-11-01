@@ -30,7 +30,7 @@ import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
 import step.core.Version;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
-import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
+import step.core.plans.agents.configuration.AgentProvisioningModeConfiguration;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
@@ -205,7 +205,7 @@ public class YamlPlanJsonSchemaGenerator {
 		//Add enum
 		JsonObjectBuilder enumBuilder = jsonSchemaCreator.getJsonProvider().createObjectBuilder();
 		JsonArrayBuilder enumArray = jsonSchemaCreator.getJsonProvider().createArrayBuilder();
-		for (Object enumValue : AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.values()) {
+		for (Object enumValue : AgentProvisioningModeConfiguration.PlanAgentsPoolAutoMode.values()) {
 			enumArray.add(enumValue.toString());
 		}
 		enumBuilder.add("enum", enumArray);

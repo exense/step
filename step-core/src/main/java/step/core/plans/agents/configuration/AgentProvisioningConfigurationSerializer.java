@@ -31,8 +31,8 @@ public class AgentProvisioningConfigurationSerializer extends JsonSerializer<Age
         if(agentProvisioningConfiguration instanceof ManualAgentProvisioningConfiguration) {
             ManualAgentProvisioningConfiguration manualAgentProvisioningConfiguration = (ManualAgentProvisioningConfiguration) agentProvisioningConfiguration;
             jsonGenerator.writePOJO(manualAgentProvisioningConfiguration.configuredAgentPools);
-        } else if (agentProvisioningConfiguration instanceof AutomaticAgentProvisioningConfiguration) {
-            String mode = ((AutomaticAgentProvisioningConfiguration) agentProvisioningConfiguration).mode.toString();
+        } else if (agentProvisioningConfiguration instanceof AgentProvisioningModeConfiguration) {
+            String mode = ((AgentProvisioningModeConfiguration) agentProvisioningConfiguration).mode.toString();
             jsonGenerator.writeString(mode);
         } else {
             jsonGenerator.writePOJO(agentProvisioningConfiguration);

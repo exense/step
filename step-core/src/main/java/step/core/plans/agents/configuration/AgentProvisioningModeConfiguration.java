@@ -24,22 +24,27 @@ import step.core.agents.provisioning.AgentPoolRequirementSpec;
 
 import java.util.List;
 
-public class AutomaticAgentProvisioningConfiguration implements AgentProvisioningConfiguration {
+public class AgentProvisioningModeConfiguration implements AgentProvisioningConfiguration {
 
     public final PlanAgentsPoolAutoMode mode;
 
-    public AutomaticAgentProvisioningConfiguration(@JsonProperty("mode") PlanAgentsPoolAutoMode mode) {
+    public AgentProvisioningModeConfiguration(@JsonProperty("mode") PlanAgentsPoolAutoMode mode) {
         this.mode = mode;
     }
 
     @Override
     public boolean enableAutomaticTokenNumberCalculation() {
-        return true;
+        return mode == PlanAgentsPoolAutoMode.auto_detect;
     }
 
     @Override
     public boolean enableAgentProvisioning() {
-        return true;
+        return mode == PlanAgentsPoolAutoMode.auto_detect;
+    }
+
+    @Override
+    public boolean usePlatformDefaultAgentProvisioningConfiguration() {
+        return mode == PlanAgentsPoolAutoMode.inherit;
     }
 
     @Override
@@ -48,6 +53,8 @@ public class AutomaticAgentProvisioningConfiguration implements AgentProvisionin
     }
 
     public enum PlanAgentsPoolAutoMode {
-        auto_detect;
+        auto_detect,
+        inherit,
+        existing;
     }
 }

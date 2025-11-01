@@ -4,7 +4,7 @@
     "name": "BeforeAfterOldVersion"
   },
   "agents": {
-    "mode": "auto_detect"
+    "mode": "inherit"
   },
   "root": {
     "_class": "ThreadGroup",

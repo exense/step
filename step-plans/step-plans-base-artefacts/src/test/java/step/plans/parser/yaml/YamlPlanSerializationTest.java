@@ -7,7 +7,7 @@ import org.junit.Test;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.plans.Plan;
 import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
-import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
+import step.core.plans.agents.configuration.AgentProvisioningModeConfiguration;
 import step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration;
 
 import java.util.List;
@@ -40,12 +40,12 @@ public class YamlPlanSerializationTest {
         ObjectMapper jsonObjectMapper = DefaultJacksonMapperProvider.getObjectMapper();
 
         Plan plan = new Plan();
-        plan.setAgents(new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect));
+        plan.setAgents(new AgentProvisioningModeConfiguration(AgentProvisioningModeConfiguration.PlanAgentsPoolAutoMode.auto_detect));
 
         String planStr = jsonObjectMapper.writeValueAsString(plan);
         plan = jsonObjectMapper.readValue(planStr, Plan.class);
 
-        assertEquals(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect, ((AutomaticAgentProvisioningConfiguration) plan.getAgents()).mode);
+        assertEquals(AgentProvisioningModeConfiguration.PlanAgentsPoolAutoMode.auto_detect, ((AgentProvisioningModeConfiguration) plan.getAgents()).mode);
 
         ManualAgentProvisioningConfiguration agents = new ManualAgentProvisioningConfiguration();
         agents.configuredAgentPools = List.of(new AgentPoolProvisioningConfiguration());
