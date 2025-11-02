@@ -1,0 +1,6 @@
+version: 1.0.0
+name: "test plan"
+agents: auto_detect
+root:
+  sequence:
+    children: []

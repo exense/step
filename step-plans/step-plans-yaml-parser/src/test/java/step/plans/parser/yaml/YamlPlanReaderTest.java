@@ -356,15 +356,35 @@ public class YamlPlanReaderTest {
 	}
 
 	@Test
-	public void checkPlanYamlConfiguration() {
+	public void testAgentProvisioningConfiguration() {
+		// Manual
 		convertFromYamlToPlan(
-				"src/test/resources/step/plans/parser/yaml/agents/test-agents-configuration-yaml.yml",
-				"src/test/resources/step/plans/parser/yaml/agents/test-expected-agents-configuration-tech-plan.yml"
+				"src/test/resources/step/plans/parser/yaml/agents/test-agents-configuration-manual.yml",
+				"src/test/resources/step/plans/parser/yaml/agents/test-expected-agents-configuration-manual-tech-plan.yml"
 		);
 
-		convertPlanToYaml(
-				"src/test/resources/step/plans/parser/yaml/controls/test-expected-controls-tech-plan.yml",
-				"src/test/resources/step/plans/parser/yaml/controls/test-controls-plan.yml"
+		// Auto_detect
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/agents/test-agents-configuration-auto.yml",
+				"src/test/resources/step/plans/parser/yaml/agents/test-expected-agents-configuration-auto-tech-plan.yml"
+		);
+
+		// Existing
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/agents/test-agents-configuration-existing.yml",
+				"src/test/resources/step/plans/parser/yaml/agents/test-expected-agents-configuration-existing-tech-plan.yml"
+		);
+
+		// Inherit
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/agents/test-agents-configuration-inherit.yml",
+				"src/test/resources/step/plans/parser/yaml/agents/test-expected-agents-configuration-inherit-tech-plan.yml"
+		);
+
+		// Default (unset)
+		convertFromYamlToPlan(
+				"src/test/resources/step/plans/parser/yaml/agents/test-agents-configuration-default.yml",
+				"src/test/resources/step/plans/parser/yaml/agents/test-expected-agents-configuration-inherit-tech-plan.yml"
 		);
 	}
 
