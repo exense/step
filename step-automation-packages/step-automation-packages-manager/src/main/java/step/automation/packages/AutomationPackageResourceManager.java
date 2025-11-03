@@ -489,10 +489,10 @@ public class AutomationPackageResourceManager {
         Set<String> usedRevision = new HashSet<>();
         String resourceId = resource.getId().toHexString();
         for (AutomationPackage automationPackage : findAutomationPackagesByResourceId(resourceId, List.of())) {
-            if (Optional.ofNullable(automationPackage.getAutomationPackageResourceRevision()).filter(path -> path.contains(resourceId)).isPresent()) {
+            if (Optional.ofNullable(automationPackage.getAutomationPackageResource()).filter(path -> path.contains(resourceId)).isPresent()) {
                 usedRevision.add(FileResolver.resolveRevisionId(automationPackage.getAutomationPackageResourceRevision()));
             }
-            if (Optional.ofNullable(automationPackage.getAutomationPackageLibraryResourceRevision()).filter(path -> path.contains(resourceId)).isPresent()) {
+            if (Optional.ofNullable(automationPackage.getAutomationPackageLibraryResource()).filter(path -> path.contains(resourceId)).isPresent()) {
                 usedRevision.add(FileResolver.resolveRevisionId(automationPackage.getAutomationPackageLibraryResourceRevision()));
             }
         }

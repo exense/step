@@ -369,6 +369,7 @@ public class AutomationPackageManager {
         AtomicReference<Resource> packageResource = new AtomicReference<>(null);
         AtomicReference<Resource> libraryResource = new AtomicReference<>(null);
         String packageName = "undefined";
+        String packageId = "undefined";
         AtomicBoolean isRunningAsync = new AtomicBoolean(false);
         AtomicReference<AutomationPackageStaging> staging = new AtomicReference<>(null);
         try (AutomationPackageArchive automationPackageArchive = automationPackageProvider.getAutomationPackageArchive()) {
@@ -384,7 +385,7 @@ public class AutomationPackageManager {
                 throw new AutomationPackageManagerException("Automation package '" + packageContent.getName() + "' doesn't exist");
             }
 
-            //Implement limit on parallel deployments of multiple version of the same AP (based on its base name, i.e. without AP version appened to it)
+            //Implement limit on parallel deployments of multiple version of the same AP (based on its base name, i.e. without AP version appended to it)
             //Limit is only applied for a value greater than 0
             if (maxParallelVersionsPerPackage > 0 && !parameters.reloading) {
                 List<AutomationPackage> otherVersions = findOtherVersionsOfPackage(Optional.ofNullable(oldPackage).map(AbstractIdentifiableObject::getId).orElse(null), parameters.objectPredicate, packageContent);
@@ -394,6 +395,7 @@ public class AutomationPackageManager {
             }
 
             if (oldPackage != null) {
+                packageId = oldPackage.getId().toHexString();
                 checkAccess(oldPackage, parameters.writeAccessValidator);
             }
 
@@ -422,6 +424,7 @@ public class AutomationPackageManager {
                     packageContent, oldPackage, parameters
             );
             packageName = newPackage.getAttribute(AbstractOrganizableObject.NAME);
+            packageId = newPackage.getId().toHexString();
 
             // prepare staging collections
             staging.set(createStaging());
@@ -429,7 +432,7 @@ public class AutomationPackageManager {
             if (parameters.enricher != null) {
                 enrichers.add(parameters.enricher);
             }
-            enrichers.add(new AutomationPackageLinkEnricher(newPackage.getId().toString()));
+            enrichers.add(new AutomationPackageLinkEnricher(packageId));
 
             // we enrich all included entities with automation package id
             ObjectEnricher enricherForIncludedEntities = ObjectEnricherComposer.compose(enrichers);
@@ -462,13 +465,13 @@ public class AutomationPackageManager {
             boolean immediateWriteLock = tryObtainImmediateWriteLock(newPackage);
             if (oldPackage == null || !parameters.async || immediateWriteLock) {
                 //If not async or if it's a new package, we synchronously wait on a write lock and update
-                log.info("Updating the automation package " + newPackage.getId().toString() + " synchronously, any running executions on this package will delay the update.");
+                log.info("Updating the automation package '{}':{} synchronously, any running executions on this package will delay the update.", packageName, packageId);
                 ObjectId result = performUpdateTasks(parameters, oldPackage, newPackage, packageContent, staging.get(), enricherForIncludedEntities, apForReload, packageResource.get(), libraryResource.get(), isRunningAsync.get(), immediateWriteLock);
                 Set<String> warnings = getWarnings(parameters, conflictingAutomationPackages);
                 return new AutomationPackageUpdateResult(oldPackage == null ? AutomationPackageUpdateStatus.CREATED : AutomationPackageUpdateStatus.UPDATED, result, conflictingAutomationPackages, warnings);
             } else {
                 // async update
-                log.info("Updating the automation package " + newPackage.getId().toString() + " asynchronously due to running execution(s).");
+                log.info("Updating the automation package '{}':{} asynchronously due to running execution(s).", packageName, packageId);
                 newPackage.setStatus(AutomationPackageStatus.DELAYED_UPDATE);
                 automationPackageAccessor.save(newPackage);
                 // update asynchronously
@@ -483,12 +486,10 @@ public class AutomationPackageManager {
                         conflictingAutomationPackages, warnings
                 );
             }
-        } catch (AutomationPackageReadingException | IOException e) {
-            handleAutomationPackageDeploymentErrors(parameters, packageResource.get(), packageName, libraryResource.get());
-            throw new AutomationPackageManagerException("Unable to read automation package. Cause: " + e.getMessage(), e);
         } catch (Throwable e) {
-            handleAutomationPackageDeploymentErrors(parameters, packageResource.get(), packageName, libraryResource.get());
-            throw e;
+            log.error("Error while updating the automation package with name '{}':{}}.", packageName, packageId);
+            handleAutomationPackageDeploymentErrors(parameters, packageName, packageId, packageResource.get(), libraryResource.get());
+            throw (e instanceof AutomationPackageManagerException) ? (AutomationPackageManagerException) e: new AutomationPackageManagerException("Unable to update the automation package '" + packageName + "':" + packageId + ". Cause: " + e.getMessage(), e);
         } finally {
             if (!isRunningAsync.get() && staging.get() != null) {
                 staging.get().getResourceManager().cleanup();
@@ -521,9 +522,18 @@ public class AutomationPackageManager {
             }
             return automationPackageId;
         } catch (Exception e) {
-            log.error("Exception on delayed AP update", e);
-            handleAutomationPackageDeploymentErrors(parameters, packageResource, newPackage.getAttribute(AbstractOrganizableObject.NAME), libraryResource);
-            throw new AutomationPackageManagerException("Unable to read automation package. Cause: " + e.getMessage(), e);
+            //Exception handling is already implemented in the caller when running synchronously, we must implement it here for the asynchronous update
+            if (isRunningAsync) {
+                String packageName = Objects.requireNonNullElse(newPackage.getAttribute(AbstractOrganizableObject.NAME), "unknown");
+                String packageId = newPackage.getId().toHexString();
+                log.error("Error while performing the delayed update for the automation package '{}':{}",
+                        packageName, packageId, e);
+                handleAutomationPackageDeploymentErrors(parameters, packageName, packageId, packageResource, libraryResource);
+                throw (e instanceof AutomationPackageManagerException) ? (AutomationPackageManagerException) e :
+                        new AutomationPackageManagerException("Unable to update the automation package '" + packageName + "':" + packageId + ". Cause: " + e.getMessage(), e);
+            } else {
+                throw e;
+            }
         } finally {
             if (isRunningAsync && staging != null) {
                 staging.getResourceManager().cleanup();
@@ -532,23 +542,25 @@ public class AutomationPackageManager {
     }
 
     /**
-     * In case of error while (re)deploying an automation package we perform some cleanup if required
-     * for instance resources might have been created and needs cleanup
+     * In case of error while (re)deploying an automation package we must clean up resources that were created but aren't used
+     * Since resources can be used by multiple APs we need to first ensure that they are unsued before deleting them
      * @param parameters the deployment parameters
      * @param packageResource the package resource that may need cleanup
      * @param packageName the name of the AP
      * @param libraryResource the library resource that my need cleanup
      */
-    private void handleAutomationPackageDeploymentErrors(AutomationPackageUpdateParameter parameters, Resource packageResource, String packageName, Resource libraryResource) {
+    private void handleAutomationPackageDeploymentErrors(AutomationPackageUpdateParameter parameters, String packageName, String packageId, Resource packageResource, Resource libraryResource) {
         try {
+            //Cleanup the package resource if it isn't used by any automation packages
             if (packageResource != null && linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(packageResource.getId().toHexString(), List.of()).isEmpty()) {
                 deleteMainApResource(packageName, parameters.writeAccessValidator, packageResource.getId().toHexString());
             }
+            //Cleanup the library resource if it isn't used by any automation packages
             if (libraryResource != null && linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(libraryResource.getId().toHexString(), List.of()).isEmpty()) {
                 deleteMainApResource(packageName, parameters.writeAccessValidator, libraryResource.getId().toHexString());
             }
         } catch (Throwable e1) {
-            log.error("Resources could not be cleaned up while handling automation package failure.", e1);
+            log.error("Resources could not be cleaned up while handling automation package update errors for package '{}':{}.", packageName, packageId, e1);
         }
     }
 
@@ -556,12 +568,12 @@ public class AutomationPackageManager {
         Set<String> warnings = new TreeSet<>();
         if (!parameters.forceRefreshOfSnapshots) {
             if (conflictingAutomationPackages.apWithSameOriginExists()) {
-                warnings.add("This Automation Package is using an outdated SNAPSHOT content. " +
-                        "The snapshot could not be updated automatically because it's used by other Automation Packages. You can either use the UI refresh action or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages.");
+                warnings.add("This automation package is using an outdated SNAPSHOT content. " +
+                        "The snapshot could not be updated automatically because it's used by other automation packages. You can either use the UI refresh action or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages.");
             }
             if (conflictingAutomationPackages.apWithSameLibraryExists()) {
-                warnings.add("This Automation Package is using a library with an outdated SNAPSHOT content. " +
-                        "The snapshot could not be updated automatically because it's used by other Automation Packages. You can either use the UI refresh action for libraries or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages.");
+                warnings.add("This automation package is using a library with an outdated SNAPSHOT content. " +
+                        "The snapshot could not be updated automatically because it's used by other automation packages. You can either use the UI refresh action for libraries or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages.");
             }
         }
         return warnings;
@@ -609,7 +621,7 @@ public class AutomationPackageManager {
         List<ObjectId> failedAps = new ArrayList<>();
         for (ObjectId objectId : automationPackagesForRedeploy) {
             try {
-                log.info("Reloading the AP {}", objectId.toHexString());
+                log.info("Reloading the automation package {}", objectId.toHexString());
                 AutomationPackage oldPackage = automationPackageAccessor.get(objectId);
 
                 if (!FileResolver.isResource(oldPackage.getAutomationPackageResource())) {
@@ -619,7 +631,7 @@ public class AutomationPackageManager {
                 // here we call the `createOrUpdateAutomationPackage` method with parameters specific for reloading (including a flag reloading=true)
                 AutomationPackageUpdateParameter redeploymentParameters = new AutomationPackageUpdateParameterBuilder().forRedeployPackage(objectHookRegistry, oldPackage, parameters).build();
                 createOrUpdateAutomationPackage(redeploymentParameters);
-                log.info("Successfully reloaded the AP {}", objectId.toHexString());
+                log.info("Successfully reloaded the automation package {}", objectId.toHexString());
             } catch (Exception e) {
                 log.error("Failed to reload the automation package {}: {}", objectId, e.getMessage(), e);
                 failedAps.add(objectId);
@@ -777,9 +789,11 @@ public class AutomationPackageManager {
         try {
             //If not already locked (i.e. was not able to acquire an immediate write lock)
             if (!alreadyLocked) {
-                log.info("Delaying update of the automation package " + newPackage.getId().toString() + " due to running execution(s) using this package.");
+                String packageName = Objects.requireNonNullElse(newPackage.getAttribute(AbstractOrganizableObject.NAME), "unknown");
+                String packageId = newPackage.getId().toHexString();
+                log.info("Delaying update of the automation package '{}':{} due to running execution(s).", packageName, packageId);
                 getWriteLock(newPackage);
-                log.info("Executions completed, proceeding with the update of the automation package " + newPackage.getId().toString());
+                log.info("Executions completed, proceeding with the update of the automation package '{}':{}", packageName, packageId);
             }
             // delete old package entities
             if (oldPackage != null) {
@@ -1097,7 +1111,7 @@ public class AutomationPackageManager {
         for (Resource resource : resources) {
             try {
                 // included resources are only used within the automation package (not shared between several packages, so they can be simply deleted)
-                log.debug("Remove the resource linked with AP '{}':{}", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), resource.getId().toHexString());
+                log.debug("Remove the resource linked with automation package '{}':{}", currentAutomationPackage.getAttribute(AbstractOrganizableObject.NAME), resource.getId().toHexString());
                 resourceManager.deleteResource(resource.getId().toString());
             } catch (Exception e) {
                 log.error("Error while deleting resource {} for automation package {}",
@@ -1145,10 +1159,10 @@ public class AutomationPackageManager {
         if (resource != null && ! (boolean) Objects.requireNonNullElse(resource.getCustomField(MANUALLY_CREATED_AP_RESOURCE), false)) {
             try {
                 writeAccessValidator.validate(resource);
-                log.debug("Remove the resource linked with AP '{}':{}", apName, resourceId);
+                log.debug("Remove the resource linked with the automation package '{}':{}", apName, resourceId);
                 resourceManager.deleteResource(resourceId);
             } catch (ObjectAccessException e) {
-                log.debug("The resource linked with AP '{}':{} is not writable and won't be deleted with the package", apName, resourceId);
+                log.debug("The resource linked with the automation package '{}':{} is not writable and won't be deleted with the package", apName, resourceId);
             }
         }
     }

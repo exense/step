@@ -432,6 +432,8 @@ public class ResourceManagerImpl implements ResourceManager {
 
 	@Override
 	public void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision) {
+		Objects.requireNonNull(resource, "Resource cannot be null");
+		Objects.requireNonNull(usedRevision, "usedRevision cannot be null");
 		String resourceId = resource.getId().toHexString();
 		//Always make sure the current resource revision is excluded
 		usedRevision.add(resource.getCurrentRevisionId().toString());
@@ -449,7 +451,7 @@ public class ResourceManagerImpl implements ResourceManager {
 		resourceRevisionAccessor.remove(resourceRevision.getId());
 		if(resourceRevisionContainer.exists()) {
 			if (!FileHelper.deleteFolder(resourceRevisionContainer)) {
-				logger.warn("The folder {} for the revision {} of the resource {} has been cleaned up.",
+				logger.warn("The folder {} for the revision {} of the resource {} could not be cleaned up.",
 						resourceRevisionContainer.getAbsolutePath(), resourceRevision.getId().toString(), resource.getId().toHexString());
 			}
 		}

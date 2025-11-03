@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 
+import org.bson.types.ObjectId;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionFileHandle;
@@ -75,6 +76,9 @@ public class FileResolver {
 			if (split.length == 2){
 				revisionId = split[1];
 			}
+		}
+		if (revisionId == null || !ObjectId.isValid(revisionId)) {
+			throw new RuntimeException("Invalid revision path: "  + path);
 		}
 		return revisionId;
 	}
