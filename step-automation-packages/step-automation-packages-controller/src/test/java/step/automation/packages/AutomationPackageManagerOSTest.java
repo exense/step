@@ -450,7 +450,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         assertEquals(echoAP.getCreationDate(), echoAP.getLastModificationDate());
 
 
-        // Reupload this 2nd AP, the lib should still remain unchanged, the package is not used by other AP so it should be updated
+        // Reupload this 2nd AP, the lib should still remain unchanged because it is used by the echo AP, and we do not set forceRefreshOfSnapshots=true
         updateParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
                 .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
                 .withApLibrarySource(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot)).build();
