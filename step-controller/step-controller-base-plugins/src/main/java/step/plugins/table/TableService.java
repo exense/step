@@ -28,7 +28,10 @@ import org.slf4j.LoggerFactory;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
+import step.core.access.User;
 import step.core.deployment.AbstractStepServices;
+import step.core.deployment.RestrictedScopeSession;
+import step.framework.server.Session;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
@@ -71,8 +74,12 @@ public class TableService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
-    public TableResponse<?> request(@PathParam("tableName") String tableName, TableRequest request) throws TableServiceException {
-        return tableService.request(tableName, request, getSession());
+    public TableResponse<?> request(@PathParam("tableName") String tableName, @DefaultValue("true") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities, TableRequest request) throws TableServiceException {
+        Session<User> session = getSession();
+        if (!includeGlobalEntities) {
+            session = new RestrictedScopeSession(getSession());
+        }
+        return tableService.request(tableName, request, session);
     }
 
     @POST
