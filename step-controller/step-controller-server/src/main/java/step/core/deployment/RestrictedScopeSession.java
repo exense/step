@@ -36,9 +36,9 @@ public class RestrictedScopeSession extends Session<User> {
 
     public RestrictedScopeSession(Session<User> session) {
         session.getKeys().stream().forEach(k -> put(k, session.get(k)));
-        session.setAuthenticated(session.isAuthenticated());
-        session.setUser(session.getUser());
-        session.setToken(session.getToken());
-        session.setTokenType(session.getTokenType());
+        setAuthenticated(session.isAuthenticated());
+        setUser(session.getUser());
+        setToken(session.getToken());
+        setTokenType(session.getTokenType());
     }
 }
