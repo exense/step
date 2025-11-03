@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 
 public interface ResourceManager {
 
@@ -74,6 +74,8 @@ public interface ResourceManager {
 	ResourceRevisionContent getResourceContent(String resourceId) throws IOException;
 
 	ResourceRevisionFileHandle getResourceFile(String resourceId);
+
+	ResourceRevisionFileHandle getResourceFile(String resourceId, String revisionId);
 
 	Resource getResource(String resourceId);
 
@@ -153,6 +155,9 @@ public interface ResourceManager {
 
 	List<Resource> findManyByCriteria(Map<String, String> criteria);
 
+	void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision);
+
 	default void cleanup() {
 	}
+
 }
