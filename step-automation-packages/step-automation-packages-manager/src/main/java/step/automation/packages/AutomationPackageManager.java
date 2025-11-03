@@ -472,8 +472,6 @@ public class AutomationPackageManager {
             } else {
                 // async update
                 log.info("Updating the automation package '{}':{} asynchronously due to running execution(s).", packageName, packageId);
-                newPackage.setStatus(AutomationPackageStatus.DELAYED_UPDATE);
-                automationPackageAccessor.save(newPackage);
                 // update asynchronously
                 isRunningAsync.set(true);
                 delayedUpdateExecutor.submit(() -> {
@@ -619,27 +617,38 @@ public class AutomationPackageManager {
             return;
         }
         List<ObjectId> failedAps = new ArrayList<>();
-        for (ObjectId objectId : automationPackagesForRedeploy) {
+        //Set reloading state to all automation packages to be reloaded
+        Set<AutomationPackage> automationPackages = automationPackagesForRedeploy.stream().map(automationPackageAccessor::get).collect(Collectors.toSet());
+        automationPackages.forEach(ap -> {
+            updateAutomationPackageStatus(ap, AutomationPackageStatus.SCHEDULED_RELOAD);
+        });
+        for (AutomationPackage automationPackage : automationPackages) {
             try {
-                log.info("Reloading the automation package {}", objectId.toHexString());
-                AutomationPackage oldPackage = automationPackageAccessor.get(objectId);
+                log.info("Reloading the automation package '{}':{}", automationPackage.getAttribute(AbstractOrganizableObject.NAME), automationPackage.getId().toHexString());
 
-                if (!FileResolver.isResource(oldPackage.getAutomationPackageResource())) {
-                    throw new AutomationPackageManagerException("Automation package " + oldPackage.getId() + " has no linked resource and cannot be reloaded");
+                if (!FileResolver.isResource(automationPackage.getAutomationPackageResource())) {
+                    throw new AutomationPackageManagerException("Automation package " + automationPackage.getId() + " has no linked resource and cannot be reloaded");
                 }
 
                 // here we call the `createOrUpdateAutomationPackage` method with parameters specific for reloading (including a flag reloading=true)
-                AutomationPackageUpdateParameter redeploymentParameters = new AutomationPackageUpdateParameterBuilder().forRedeployPackage(objectHookRegistry, oldPackage, parameters).build();
+                AutomationPackageUpdateParameter redeploymentParameters = new AutomationPackageUpdateParameterBuilder().forRedeployPackage(objectHookRegistry, automationPackage, parameters).build();
                 createOrUpdateAutomationPackage(redeploymentParameters);
-                log.info("Successfully reloaded the automation package {}", objectId.toHexString());
+                updateAutomationPackageStatus(automationPackage, null);
+                log.info("Successfully reloaded the automation package '{}':{}", automationPackage.getAttribute(AbstractOrganizableObject.NAME), automationPackage.getId().toHexString());
             } catch (Exception e) {
-                log.error("Failed to reload the automation package {}: {}", objectId, e.getMessage(), e);
-                failedAps.add(objectId);
+                updateAutomationPackageStatus(automationPackage, AutomationPackageStatus.RELOAD_FAILED);
+                log.error("Failed to reload the automation package '{}':{}; reason: {}", automationPackage.getAttribute(AbstractOrganizableObject.NAME), automationPackage.getId().toHexString(), e.getMessage(), e);
+                failedAps.add(automationPackage.getId());
             }
         }
         if (!failedAps.isEmpty()) {
             throw new AutomationPackageRedeployException(failedAps);
         }
+    }
+
+    private void updateAutomationPackageStatus(AutomationPackage automationPackage, AutomationPackageStatus status) {
+        automationPackage.setStatus(status);
+        automationPackageAccessor.save(automationPackage);
     }
 
 
@@ -792,6 +801,8 @@ public class AutomationPackageManager {
                 String packageName = Objects.requireNonNullElse(newPackage.getAttribute(AbstractOrganizableObject.NAME), "unknown");
                 String packageId = newPackage.getId().toHexString();
                 log.info("Delaying update of the automation package '{}':{} due to running execution(s).", packageName, packageId);
+                updateAutomationPackageStatus(newPackage, AutomationPackageStatus.DELAYED_UPDATE);
+                automationPackageAccessor.save(newPackage);
                 getWriteLock(newPackage);
                 log.info("Executions completed, proceeding with the update of the automation package '{}':{}", packageName, packageId);
             }
@@ -809,8 +820,7 @@ public class AutomationPackageManager {
                 releaseWriteLock(newPackage); //only release if lock was acquired in this method
             }
             //Clear delayed status
-            newPackage.setStatus(null);
-            automationPackageAccessor.save(newPackage);
+            updateAutomationPackageStatus(newPackage, null);
         }
         return mainUpdatedAp;
     }
