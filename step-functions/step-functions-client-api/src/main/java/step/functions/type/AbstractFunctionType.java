@@ -275,31 +275,24 @@ public abstract class AbstractFunctionType<T extends Function> {
 	protected FileVersionCloseable registerFile(File file, String propertyName, Map<String, String> props, boolean cleanable) {
 		FileVersion fileVersion = registerFile(file, cleanable);
 		registerFileVersionId(propertyName, props, fileVersion.getVersionId());
-		return new FileVersionCloseable(fileVersion);
+		return new FileVersionCloseable(fileVersion, gridFileServices);
 	}
 
-	/**
-	 * Release the provided file version in the grid's file manager. Should be called by the caller registering the file version once it doesn't require it anymore
-	 *
-	 * @param fileVersion the {@link FileVersion} to be released
-	 */
-	private void releaseFile(FileVersion fileVersion) {
-		if (fileVersion != null) {
-			gridFileServices.releaseFile(fileVersion);
-		}
-	}
+	protected static class FileVersionCloseable implements AutoCloseable {
 
-	protected class FileVersionCloseable implements AutoCloseable {
+		protected final FileVersion fileVersion;
+		protected final GridFileService gridFileServices;
 
-		public FileVersion fileVersion;
-
-		private FileVersionCloseable(FileVersion fileVersion) {
+		private FileVersionCloseable(FileVersion fileVersion, GridFileService gridFileServices) {
 			this.fileVersion = fileVersion;
+			this.gridFileServices = gridFileServices;
 		}
 
 		@Override
 		public void close() throws Exception {
-			releaseFile(fileVersion);
+			if (fileVersion != null) {
+				gridFileServices.releaseFile(fileVersion);
+			}
 		}
 	}
 
@@ -353,7 +346,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	protected FileVersionCloseable registerResource(ClassLoader cl, String resourceName, boolean isDirectory, String propertyName, Map<String, String> props, boolean cleanable) {
 		FileVersion fileVersion = registerResource(cl, resourceName, isDirectory, cleanable);
 		registerFileVersionId(propertyName, props, fileVersion.getVersionId());
-		return new FileVersionCloseable(fileVersion);
+		return new FileVersionCloseable(fileVersion, gridFileServices);
 	}
 
 	/**
