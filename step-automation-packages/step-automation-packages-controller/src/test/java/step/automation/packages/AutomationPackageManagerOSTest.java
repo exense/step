@@ -328,7 +328,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             });
 
             //Give some time to let the execution start
-            Thread.sleep(500);
+            Thread.sleep(50);
             uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is3, SAMPLE1_FILE_NAME), false, true, true, "v1",
                     "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
                     , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
