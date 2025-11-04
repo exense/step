@@ -108,8 +108,8 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
                 executionIds = automationPackageClient.executeAutomationPackage(
                         createPackageSource(parameters.getAutomationPackageFile(), createMavenArtifactXml(parameters.getAutomationPackageMavenArtifact())),
                         executionParameters,
-                        createLibrarySource(parameters.getAutomationPackageLibraryFile(), createMavenArtifactXml(parameters.getAutomationPackageLibraryMavenArtifact())
-                        , parameters.getAutomationPackageManagedLibraryName()));
+                        createLibrarySource(parameters.getLibraryFile(), createMavenArtifactXml(parameters.getLibraryMavenArtifact())
+                        , parameters.getManagedLibraryName()));
             } catch (AutomationPackageClientException e) {
                 throw new StepCliExecutionException("Error while executing automation package: " + e.getMessage());
             }

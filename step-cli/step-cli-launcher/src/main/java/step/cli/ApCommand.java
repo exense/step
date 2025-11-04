@@ -149,11 +149,11 @@ public class ApCommand implements Callable<Integer> {
                     .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
                     .setStepProjectName(getStepProjectName())
                     .setAuthToken(getAuthToken())
-                    .setApVersion(versionName)
+                    .setVersionName(versionName)
                     .setActivationExpression(activationExpression)
-                    .setPackageLibraryMavenArtifact(packageLibraryMavenArtifact)
-                    .setAutomationPackageManagedLibraryName(managedLibraryName)
-                    .setPackageLibraryFile(packageLibraryMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library));
+                    .setlibraryMavenArtifact(packageLibraryMavenArtifact)
+                    .setManagedLibraryName(managedLibraryName)
+                    .setLibraryFile(packageLibraryMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library));
             executeTool(stepUrl, params);
         }
 
@@ -292,9 +292,9 @@ public class ApCommand implements Callable<Integer> {
                     new ApExecuteParameters()
                             .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
                             .setAutomationPackageMavenArtifact(apMavenArtifact)
-                            .setPackageLibraryFile(packageLibMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library))
-                            .setPackageLibraryMavenArtifact(packageLibMavenArtifact)
-                            .setAutomationPackageManagedLibraryName(managedLibraryName)
+                            .setLibraryFile(packageLibMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library))
+                            .setlibraryMavenArtifact(packageLibMavenArtifact)
+                            .setManagedLibraryName(managedLibraryName)
                             .setStepProjectName(getStepProjectName())
                             .setUserId(stepUser)
                             .setAuthToken(getAuthToken())

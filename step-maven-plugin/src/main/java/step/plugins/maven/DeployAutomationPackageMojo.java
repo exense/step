@@ -92,14 +92,14 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
                 url, new ApDeployParameters()
                 .setAutomationPackageMavenArtifact(remoteApMavenIdentifier)
                 .setAutomationPackageFile(localApFile)
-                .setPackageLibraryFile(libraryFile)
-                .setPackageLibraryMavenArtifact(libraryMavenArtifact)
-                .setAutomationPackageManagedLibraryName(libraryName)
+                .setLibraryFile(libraryFile)
+                .setlibraryMavenArtifact(libraryMavenArtifact)
+                .setManagedLibraryName(libraryName)
                 .setStepProjectName(projectName)
                 .setAuthToken(authToken)
                 .setAsync(async)
                 .setForceRefreshOfSnapshots(forceRefreshOfSnapshots)
-                .setApVersion(apVersion)
+                .setVersionName(apVersion)
                 .setActivationExpression(activationExpr)
         );
     }

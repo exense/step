@@ -70,8 +70,8 @@ public class DeployLibraryToolTest {
             super(url, new LibraryDeployParameters()
                     .setStepProjectName(stepProjectName)
                     .setAuthToken(authToken)
-                    .setPackageLibraryMavenArtifact(mavenIdentifier)
-                    .setPackageLibraryFile(file)
+                    .setLibraryMavenArtifact(mavenIdentifier)
+                    .setLibraryFile(file)
                     .setManagedLibraryName(managedLibraryName));
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }
