@@ -50,20 +50,8 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.artifact-type", required = false)
     private String artifactType;
 
-    @Parameter(property = "step-execute-auto-packages.lib-artifact-path")
-    private String libArtifactPath;
-    @Parameter(property = "step-execute-auto-packages.lib-artifact-group-id")
-    private String libArtifactGroupId;
-    @Parameter(property = "step-execute-auto-packages.lib-artifact-id")
-    private String libArtifactId;
-    @Parameter(property = "step-execute-auto-packages.lib-artifact-version")
-    private String libArtifactVersion;
-    @Parameter(property = "step-execute-auto-packages.lib-artifact-classifier", required = false)
-    private String libArtifactClassifier;
-    @Parameter(property = "step-execute-auto-packages.lib-artifact-type", required = false)
-    private String libArtifactType;
-    @Parameter(property = "step-execute-auto-packages.managed-library-name")
-    private String managedLibraryName;
+    @Parameter(property = "step-execute-auto-packages.library")
+    private LibraryConfiguration library;
 
     @Parameter(property = "step-execute-auto-packages.execution-parameters", required = false)
     private Map<String, String> executionParameters;
@@ -121,6 +109,9 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
+            if (library != null) {
+                library.validate();
+            }
 
             MavenArtifactIdentifier remoteMavenArtifact = null;
             if (!isLocalMavenArtifact()) {
@@ -154,12 +145,16 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
                 }
             }
 
+            File libraryFile = library != null ? library.toFile() : null;
+            MavenArtifactIdentifier libraryMavenArtifact = library != null ? library.toMavenArtifactIdentifier() : null;
+            String libraryName = library != null && library.isManagedLibraryNameConfigured() ? library.getManaged() : null;
+
             ApExecuteParameters params = new ApExecuteParameters()
                     .setAutomationPackageFile(localApFile)
                     .setAutomationPackageMavenArtifact(remoteMavenArtifact)
-                    .setPackageLibraryFile(getLibArtifactPath() == null ? null : new File(getLibArtifactPath()))
-                    .setPackageLibraryMavenArtifact(getKeywordLibRemoteMavenIdentifier())
-                    .setAutomationPackageManagedLibraryName(getManagedLibraryName())
+                    .setPackageLibraryFile(libraryFile)
+                    .setPackageLibraryMavenArtifact(libraryMavenArtifact)
+                    .setAutomationPackageManagedLibraryName(libraryName)
                     .setStepProjectName(getStepProjectName())
                     .setUserId(getUserId())
                     .setAuthToken(getAuthToken())
@@ -206,15 +201,6 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     protected ExecuteAutomationPackageTool createTool(final String url, ApExecuteParameters params) {
         return new ExecuteAutomationPackageTool(url, params);
     }
-
-    protected MavenArtifactIdentifier getKeywordLibRemoteMavenIdentifier() throws MojoExecutionException {
-        if(getLibArtifactId() != null && !getLibArtifactId().isEmpty() && getLibArtifactGroupId() != null && !getLibArtifactGroupId().isEmpty()){
-            return new MavenArtifactIdentifier(getLibArtifactGroupId(), getLibArtifactId(), getLibArtifactVersion(), getLibArtifactClassifier(), getLibArtifactType());
-        } else {
-            return null;
-        }
-    }
-
 
     protected boolean isLocalMavenArtifact() {
         return getArtifactId() == null || getArtifactId().isEmpty() || getArtifactGroupId() == null || getArtifactGroupId().isEmpty();
@@ -366,59 +352,11 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.artifactType = artifactType;
     }
 
-    public String getLibArtifactGroupId() {
-        return libArtifactGroupId;
+    public LibraryConfiguration getLibrary() {
+        return library;
     }
 
-    public void setLibArtifactGroupId(String libArtifactGroupId) {
-        this.libArtifactGroupId = libArtifactGroupId;
-    }
-
-    public String getLibArtifactId() {
-        return libArtifactId;
-    }
-
-    public void setLibArtifactId(String libArtifactId) {
-        this.libArtifactId = libArtifactId;
-    }
-
-    public String getLibArtifactVersion() {
-        return libArtifactVersion;
-    }
-
-    public void setLibArtifactVersion(String libArtifactVersion) {
-        this.libArtifactVersion = libArtifactVersion;
-    }
-
-    public String getLibArtifactClassifier() {
-        return libArtifactClassifier;
-    }
-
-    public void setLibArtifactClassifier(String libArtifactClassifier) {
-        this.libArtifactClassifier = libArtifactClassifier;
-    }
-
-    public String getLibArtifactType() {
-        return libArtifactType;
-    }
-
-    public void setLibArtifactType(String libArtifactType) {
-        this.libArtifactType = libArtifactType;
-    }
-
-    public String getManagedLibraryName() {
-        return managedLibraryName;
-    }
-
-    public void setManagedLibraryName(String managedLibraryName) {
-        this.managedLibraryName = managedLibraryName;
-    }
-
-    public String getLibArtifactPath() {
-        return libArtifactPath;
-    }
-
-    public void setLibArtifactPath(String libArtifactPath) {
-        this.libArtifactPath = libArtifactPath;
+    public void setLibrary(LibraryConfiguration library) {
+        this.library = library;
     }
 }

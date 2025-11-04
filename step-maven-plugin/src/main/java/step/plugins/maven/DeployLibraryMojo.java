@@ -126,6 +126,10 @@ public class DeployLibraryMojo extends AbstractStepPluginMojo {
         return artifactType;
     }
 
+    public void setArtifactType(String artifactType) {
+        this.artifactType = artifactType;
+    }
+
     public String getManagedLibraryName() {
         return managedLibraryName;
     }
