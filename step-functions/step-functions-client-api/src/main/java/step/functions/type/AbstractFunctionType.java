@@ -42,10 +42,7 @@ import step.resources.ResourceManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -284,15 +281,13 @@ public abstract class AbstractFunctionType<T extends Function> {
 		protected final GridFileService gridFileServices;
 
 		private FileVersionCloseable(FileVersion fileVersion, GridFileService gridFileServices) {
-			this.fileVersion = fileVersion;
-			this.gridFileServices = gridFileServices;
+			this.fileVersion = Objects.requireNonNull(fileVersion);
+			this.gridFileServices = Objects.requireNonNull(gridFileServices);
 		}
 
 		@Override
 		public void close() throws Exception {
-			if (fileVersion != null) {
-				gridFileServices.releaseFile(fileVersion);
-			}
+			gridFileServices.releaseFile(fileVersion);
 		}
 	}
 

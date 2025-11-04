@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import ch.exense.commons.io.FileHelper;
@@ -275,15 +276,13 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		FileManagerClient fileManagerClient;
 
 		public FileVersionCloseable(FileVersion fileVersion, FileManagerClient fileManagerClient) {
-			this.fileVersion = fileVersion;
-			this.fileManagerClient = fileManagerClient;
+			this.fileVersion = Objects.requireNonNull(fileVersion);
+			this.fileManagerClient = Objects.requireNonNull(fileManagerClient);
 		}
 
 		@Override
 		public void close() throws Exception {
-			if (fileVersion != null) {
-				fileManagerClient.releaseFileVersion(fileVersion);
-			}
+			fileManagerClient.releaseFileVersion(fileVersion);
 		}
 	}
 
