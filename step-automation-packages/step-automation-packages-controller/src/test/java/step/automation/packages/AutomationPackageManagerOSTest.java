@@ -437,8 +437,8 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         AutomationPackageUpdateResult result = manager.createOrUpdateAutomationPackage(updateParameters);
         Assert.assertTrue(result.getConflictingAutomationPackages().getApWithSameOrigin().isEmpty());
         Assert.assertEquals(Set.of(echoApResult.getId()), result.getConflictingAutomationPackages().getApWithSameLibrary());
-        assertEquals(Set.of("This Automation Package is using a library with an outdated SNAPSHOT content. " +
-                "The snapshot could not be updated automatically because it's used by other Automation Packages. You can either use the UI refresh action for libraries or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages."), result.getWarnings());
+        assertEquals(Set.of("This automation package is using a library with an outdated SNAPSHOT content. " +
+                "The snapshot could not be updated automatically because it's used by other automation packages. You can either use the UI refresh action for libraries or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages."), result.getWarnings());
         AutomationPackage automationPackage = automationPackageAccessor.get(result.getId().toHexString());
         Resource resourcePackage = resourceManager.getResource(FileResolver.resolveResourceId(automationPackage.getAutomationPackageResource()));
         Resource resourceLibrary = resourceManager.getResource(FileResolver.resolveResourceId(automationPackage.getAutomationPackageLibraryResource()));
@@ -457,8 +457,8 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         result = manager.createOrUpdateAutomationPackage(updateParameters);
         Assert.assertTrue(result.getConflictingAutomationPackages().getApWithSameOrigin().isEmpty());
         Assert.assertEquals(Set.of(echoApResult.getId()), result.getConflictingAutomationPackages().getApWithSameLibrary());
-        assertEquals(Set.of("This Automation Package is using a library with an outdated SNAPSHOT content. " +
-                "The snapshot could not be updated automatically because it's used by other Automation Packages. You can either use the UI refresh action for libraries or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages."), result.getWarnings());
+        assertEquals(Set.of("This automation package is using a library with an outdated SNAPSHOT content. " +
+                "The snapshot could not be updated automatically because it's used by other automation packages. You can either use the UI refresh action for libraries or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages."), result.getWarnings());
         automationPackage = automationPackageAccessor.get(result.getId().toHexString());
         resourcePackage = resourceManager.getResource(FileResolver.resolveResourceId(automationPackage.getAutomationPackageResource()));
         resourceLibrary = resourceManager.getResource(FileResolver.resolveResourceId(automationPackage.getAutomationPackageLibraryResource()));
@@ -641,8 +641,8 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         Assert.assertEquals(Set.of(resultV1.getId(), resultEcho.getId()), new HashSet<>(result.getConflictingAutomationPackages().getApWithSameLibrary()));
         // v1 reuses the same AP artifact (SNAPSHOT) which was not modified
         Assert.assertEquals(Set.of(resultV1.getId()), new HashSet<>(result.getConflictingAutomationPackages().getApWithSameOrigin()));
-        assertEquals(Set.of("This Automation Package is using an outdated SNAPSHOT content. The snapshot could not be updated automatically because it's used by other Automation Packages. You can either use the UI refresh action or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages.",
-                "This Automation Package is using a library with an outdated SNAPSHOT content. The snapshot could not be updated automatically because it's used by other Automation Packages. You can either use the UI refresh action for libraries or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages."),
+        assertEquals(Set.of("This automation package is using an outdated SNAPSHOT content. The snapshot could not be updated automatically because it's used by other automation packages. You can either use the UI refresh action or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages.",
+                "This automation package is using a library with an outdated SNAPSHOT content. The snapshot could not be updated automatically because it's used by other automation packages. You can either use the UI refresh action for libraries or the CLI 'forceRefreshOfSnapshots' option to force its update and reload all related automation packages."),
                 result.getWarnings());
 
         long tsBeforeUpdate = System.currentTimeMillis();
@@ -1421,7 +1421,8 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                 } else if (automationPackageFileSource == null) {
                     assertEquals("", generalScriptFunction.getLibrariesFile().get());
                 } else {
-                    assertEquals(r.storedPackage.getAutomationPackageLibraryResource(), generalScriptFunction.getLibrariesFile().get());
+                    assertEquals(r.storedPackage.getAutomationPackageResourceRevision(), generalScriptFunction.getScriptFile().get());
+                    assertEquals(r.storedPackage.getAutomationPackageLibraryResourceRevision(), generalScriptFunction.getLibrariesFile().get());
                 }
             }
         }

@@ -92,7 +92,7 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
     /**
      * flag explicitly used in case of a redeployment of linked packages
      */
-    public final boolean isRedeployment;
+    public final boolean reloading;
 
     public AutomationPackageUpdateParameter(boolean allowUpdate, boolean allowCreate, boolean isLocalPackage, ObjectId explicitOldId,
                                             AutomationPackageFileSource apSource, AutomationPackageFileSource apLibrarySource,
@@ -101,7 +101,7 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
                                             String actorUser, boolean forceRefreshOfSnapshots, boolean checkForSameOrigin,
                                             Map<String, String> functionsAttributes, Map<String, String> plansAttributes,
                                             Map<String, String> tokenSelectionCriteria, boolean executionFunctionsLocally,
-                                            boolean isRedeployment) {
+                                            boolean reloading) {
         super(enricher, objectPredicate, writeAccessValidator, actorUser);
         this.allowUpdate = allowUpdate;
         this.allowCreate = allowCreate;
@@ -118,7 +118,7 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
         this.plansAttributes = plansAttributes;
         this.tokenSelectionCriteria = tokenSelectionCriteria;
         this.executionFunctionsLocally = executionFunctionsLocally;
-        this.isRedeployment = isRedeployment;
+        this.reloading = reloading;
     }
 
 

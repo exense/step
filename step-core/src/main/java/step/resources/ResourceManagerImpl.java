@@ -31,6 +31,8 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static step.core.accessors.AbstractAccessor.ATTRIBUTES_FIELD_NAME;
 
@@ -247,6 +249,14 @@ public class ResourceManagerImpl implements ResourceManager {
 		return new ResourceRevisionFileHandleImpl(this, resource, resourceRevisionFile);
 	}
 
+	@Override
+	public ResourceRevisionFileHandle getResourceFile(String resourceId, String revisionId) {
+		Resource resource = getResource(resourceId);
+		ResourceRevision resourceRevision = getResourceRevision(revisionId);
+		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
+		return new ResourceRevisionFileHandleImpl(this, resource, resourceRevisionFile);
+	}
+
 	private ResourceRevisionContentImpl getResourceRevisionContent(Resource resource, ResourceRevision resourceRevision)
 			throws IOException {
 		File resourceRevisionFile = getResourceRevisionFile(resource, resourceRevision);
@@ -418,6 +428,34 @@ public class ResourceManagerImpl implements ResourceManager {
 	@Override
 	public ResourceRevision saveResourceRevision(ResourceRevision resourceRevision) throws IOException {
 		return resourceRevisionAccessor.save(resourceRevision);
+	}
+
+	@Override
+	public void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision) {
+		Objects.requireNonNull(resource, "Resource cannot be null");
+		Objects.requireNonNull(usedRevision, "usedRevision cannot be null");
+		String resourceId = resource.getId().toHexString();
+		//Always make sure the current resource revision is excluded
+		usedRevision.add(resource.getCurrentRevisionId().toString());
+		Set<ResourceRevision> unusedRevisions = new HashSet<>();
+		resourceRevisionAccessor.getResourceRevisionsByResourceId(resourceId).forEachRemaining(r -> {
+				if (!usedRevision.contains(r.getId().toString())) {
+					unusedRevisions.add(r);
+				}
+		});
+		unusedRevisions.forEach(revision -> deleteResourceRevision(resource, revision));
+	}
+
+	private void deleteResourceRevision(Resource resource, ResourceRevision resourceRevision) {
+		File resourceRevisionContainer = getResourceRevisionContainer(resource, resourceRevision);
+		resourceRevisionAccessor.remove(resourceRevision.getId());
+		if(resourceRevisionContainer.exists()) {
+			if (!FileHelper.deleteFolder(resourceRevisionContainer)) {
+				logger.warn("The folder {} for the revision {} of the resource {} could not be cleaned up.",
+						resourceRevisionContainer.getAbsolutePath(), resourceRevision.getId().toString(), resource.getId().toHexString());
+			}
+		}
+		logger.info("Revision {} for resource {} has been cleaned up.", resourceRevision.getId().toString(), resource.getId().toHexString());
 	}
 
 	@Override

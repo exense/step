@@ -41,10 +41,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class AutomationPackageResourceManager {
@@ -165,8 +162,9 @@ public class AutomationPackageResourceManager {
                     }
                 }
                 if(automationPackageToBeLinkedWithLib != null) {
-                    apLibraryResourceString = FileResolver.RESOURCE_PREFIX + uploadedResource.getId().toString();
+                    apLibraryResourceString = FileResolver.createPathForResource(uploadedResource);
                     automationPackageToBeLinkedWithLib.setAutomationPackageLibraryResource(apLibraryResourceString);
+                    automationPackageToBeLinkedWithLib.setAutomationPackageLibraryResourceRevision(FileResolver.createRevisionPathForResource(uploadedResource));
                 }
             }
         } catch (IOException | InvalidResourceFormatException | AutomationPackageReadingException |
@@ -209,7 +207,7 @@ public class AutomationPackageResourceManager {
             boolean resourceFileExists = fileHandle != null && fileHandle.getResourceFile() != null && fileHandle.getResourceFile().exists();
 
             //For existing maven artefact resources, we get new content if the resource file doesn't exist anymore or it is a
-            // snapshot with new content    
+            // snapshot with new content
             boolean mavenResourceFileDeleted = !resourceFileExists && MavenArtifactIdentifier.isMvnIdentifierShortString(resource.getOrigin());
             boolean mavenSnapshotWithNewContent = apProvider.isModifiableResource() && apProvider.hasNewContent() && allowUpdateContent;
             if (mavenResourceFileDeleted || mavenSnapshotWithNewContent) {
@@ -239,9 +237,10 @@ public class AutomationPackageResourceManager {
         }
 
         if (automationPackageToBeLinkedWithResource != null) {
-            String resourceString = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-            log.info("The resource has been been linked with AP '{}': {}", apName, resourceString);
+            String resourceString = FileResolver.createPathForResource(resource);
             automationPackageToBeLinkedWithResource.setAutomationPackageResource(resourceString);
+            automationPackageToBeLinkedWithResource.setAutomationPackageResourceRevision(FileResolver.createRevisionPathForResource(resource));
+            log.info("The resource has been been linked with AP '{}': {}", apName, resourceString);
         }
         return resource;
     }
@@ -479,6 +478,25 @@ public class AutomationPackageResourceManager {
 
     private static String getLogRepresentation(Resource r) {
         return "'" + r.getResourceName() + "'(" + r.getId() + ")";
+    }
+
+    /**
+     * Search all revisions of the provided resource currently used by automation packages
+     * Then call the resource manager to delete all other revisions except the current resource revisionId
+     * @param resource the resource to clean-up
+     */
+    public void deleteUnusedResourceRevisions(Resource resource) {
+        Set<String> usedRevision = new HashSet<>();
+        String resourceId = resource.getId().toHexString();
+        for (AutomationPackage automationPackage : findAutomationPackagesByResourceId(resourceId, List.of())) {
+            if (Optional.ofNullable(automationPackage.getAutomationPackageResource()).filter(path -> path.contains(resourceId)).isPresent()) {
+                usedRevision.add(FileResolver.resolveRevisionId(automationPackage.getAutomationPackageResourceRevision()));
+            }
+            if (Optional.ofNullable(automationPackage.getAutomationPackageLibraryResource()).filter(path -> path.contains(resourceId)).isPresent()) {
+                usedRevision.add(FileResolver.resolveRevisionId(automationPackage.getAutomationPackageLibraryResourceRevision()));
+            }
+        }
+        resourceManager.findAndCleanupUnusedRevision(resource, usedRevision);
     }
 
     public interface LinkedPackagesReuploader {

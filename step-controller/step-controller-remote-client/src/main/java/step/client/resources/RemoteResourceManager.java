@@ -43,10 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * This class provides an API to upload resources (compiled code of a keyword, etc) to the controller 
@@ -256,6 +253,34 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	@Override
+	public ResourceRevisionFileHandle getResourceFile(String resourceId, String revisionId) {
+		Resource resource = getResource(resourceId);
+
+		Builder b = requestBuilder("/rest/resources/revision/"+revisionId+"/content");
+		byte[] content = executeRequest(()-> b.get(byte[].class));
+		File container = new File("resources/" + resourceId + "/" +  revisionId);
+		container.mkdirs();
+		File file = new File(container.getAbsolutePath()+"/"+resource.getResourceName());
+		try {
+			Files.copy(new ByteArrayInputStream(content), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			logger.error("Error while copying resource content to file "+file.getAbsolutePath(), e);
+		}
+
+		return new ResourceRevisionFileHandle() {
+
+			@Override
+			public File getResourceFile() {
+				return file;
+			}
+
+			@Override
+			public void close() throws IOException {
+			}
+		};
+	}
+
+	@Override
 	public ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException {
 		throw new RuntimeException("Not implemented");
 	}
@@ -291,4 +316,8 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 		throw new RuntimeException("Not implemented");
 	}
 
+	@Override
+	public void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision) {
+		throw new RuntimeException("Not implemented");
+	}
 }
