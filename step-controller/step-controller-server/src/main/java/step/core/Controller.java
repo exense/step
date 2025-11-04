@@ -123,8 +123,11 @@ public class Controller {
 		sessionResponseBuilder.registerHook(s -> Map.of("authenticated", s.isAuthenticated()));
 
 		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));
-		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(
-				collectionFactory.getCollection("resourceRevisions", ResourceRevision.class));
+
+		Collection<ResourceRevision> resourceRevisionCollection = collectionFactory.getCollection(EntityManager.resourceRevisions, ResourceRevision.class);
+		resourceRevisionCollection.createOrUpdateIndex("resourceId");
+		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(resourceRevisionCollection);
+
 		String resourceRootDir = ResourceManagerControllerPlugin.getResourceDir(configuration);
 		ResourceManager resourceManager = new ResourceManagerImpl(new File(resourceRootDir), resourceAccessor, resourceRevisionAccessor);
 		context.setResourceManager(resourceManager);
