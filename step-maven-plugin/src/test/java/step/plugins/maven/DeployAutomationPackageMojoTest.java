@@ -85,7 +85,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         }
 
         @Override
-        protected DeployAutomationPackageTool createTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr, String libArtifactPath, String managedLibraryName, Boolean forceRefreshOfSnapshots) {
+        protected DeployAutomationPackageTool createTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr,  Boolean forceRefreshOfSnapshots) {
             this.toolAsync = async;
             this.toolUrl = url;
             this.toolProjectName = projectName;

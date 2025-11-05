@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import ch.exense.commons.io.FileHelper;
@@ -269,19 +270,19 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		return delegate(ApplicationContextBuilder.MASTER, functionHandlerClassname, input);
 	}
 
-	private class FileVersionCloseable implements AutoCloseable {
+	private static class FileVersionCloseable implements AutoCloseable {
 
 		FileVersion fileVersion;
+		FileManagerClient fileManagerClient;
 
-		public FileVersionCloseable(FileVersion fileVersion) {
-			this.fileVersion = fileVersion;
+		public FileVersionCloseable(FileVersion fileVersion, FileManagerClient fileManagerClient) {
+			this.fileVersion = Objects.requireNonNull(fileVersion);
+			this.fileManagerClient = Objects.requireNonNull(fileManagerClient);
 		}
 
 		@Override
 		public void close() throws Exception {
-			if (fileVersion != null) {
-				releaseFileVersion(fileVersion);
-			}
+			fileManagerClient.releaseFileVersion(fileVersion);
 		}
 	}
 
@@ -290,7 +291,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		if(fileVersionId != null) {
 			FileVersion fileVersion = fileManagerClient.requestFileVersion(fileVersionId, cleanable);
 			if (fileVersion != null) {
-				registerObjectToBeClosedWithSession(new FileVersionCloseable(fileVersion));
+				registerObjectToBeClosedWithSession(new FileVersionCloseable(fileVersion, fileManagerClient));
 				return fileVersion.getFile();
 			} else {
 				return null;
@@ -302,10 +303,6 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	
 	protected File retrieveFileVersion(String properyName, Map<String,String> properties) throws FileManagerException {
 		return retrieveFileVersion(properyName,properties, true);
-	}
-
-	private void releaseFileVersion(FileVersion fileVersion) {
-		fileManagerClient.releaseFileVersion(fileVersion);
 	}
 	
 	protected FileVersionId getFileVersionId(String properyName, Map<String,String> properties) {

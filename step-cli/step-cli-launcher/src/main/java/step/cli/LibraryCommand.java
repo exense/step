@@ -57,8 +57,8 @@ public class LibraryCommand implements Callable<Integer> {
             LibraryDeployParameters libraryDeployParameters = new LibraryDeployParameters()
                     .setStepProjectName(getStepProjectName())
                     .setAuthToken(getAuthToken())
-                    .setPackageLibraryMavenArtifact(libraryMavenIdentifier)
-                    .setPackageLibraryFile(libraryFile)
+                    .setLibraryMavenArtifact(libraryMavenIdentifier)
+                    .setLibraryFile(libraryFile)
                     .setManagedLibraryName(managedLibraryName);
 
             executeTool(stepUrl, libraryDeployParameters);

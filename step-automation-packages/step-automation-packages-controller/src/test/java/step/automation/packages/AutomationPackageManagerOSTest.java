@@ -323,8 +323,9 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                     "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
                     , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
             ExecutorService executor = Executors.newFixedThreadPool(1);
+            Plan inlinePlanWithSleep = r.storedPlans.stream().filter(plan -> "Inline Plan".equals(plan.getAttribute(AbstractOrganizableObject.NAME))).findFirst().orElseThrow(() -> new RuntimeException("No 'Inline Plan' found"));
             executor.submit(() -> {
-                PlanRunnerResult execute = newExecutionEngineBuilder().build().execute(r.storedPlans.get(0));
+                PlanRunnerResult execute = newExecutionEngineBuilder().build().execute(inlinePlanWithSleep);
             });
 
             //Give some time to let the execution start

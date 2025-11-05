@@ -42,10 +42,7 @@ import step.resources.ResourceManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -275,31 +272,22 @@ public abstract class AbstractFunctionType<T extends Function> {
 	protected FileVersionCloseable registerFile(File file, String propertyName, Map<String, String> props, boolean cleanable) {
 		FileVersion fileVersion = registerFile(file, cleanable);
 		registerFileVersionId(propertyName, props, fileVersion.getVersionId());
-		return new FileVersionCloseable(fileVersion);
+		return new FileVersionCloseable(fileVersion, gridFileServices);
 	}
 
-	/**
-	 * Release the provided file version in the grid's file manager. Should be called by the caller registering the file version once it doesn't require it anymore
-	 *
-	 * @param fileVersion the {@link FileVersion} to be released
-	 */
-	private void releaseFile(FileVersion fileVersion) {
-		if (fileVersion != null) {
-			gridFileServices.releaseFile(fileVersion);
-		}
-	}
+	protected static class FileVersionCloseable implements AutoCloseable {
 
-	protected class FileVersionCloseable implements AutoCloseable {
+		protected final FileVersion fileVersion;
+		protected final GridFileService gridFileServices;
 
-		public FileVersion fileVersion;
-
-		private FileVersionCloseable(FileVersion fileVersion) {
-			this.fileVersion = fileVersion;
+		private FileVersionCloseable(FileVersion fileVersion, GridFileService gridFileServices) {
+			this.fileVersion = Objects.requireNonNull(fileVersion);
+			this.gridFileServices = Objects.requireNonNull(gridFileServices);
 		}
 
 		@Override
 		public void close() throws Exception {
-			releaseFile(fileVersion);
+			gridFileServices.releaseFile(fileVersion);
 		}
 	}
 
@@ -353,7 +341,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 	protected FileVersionCloseable registerResource(ClassLoader cl, String resourceName, boolean isDirectory, String propertyName, Map<String, String> props, boolean cleanable) {
 		FileVersion fileVersion = registerResource(cl, resourceName, isDirectory, cleanable);
 		registerFileVersionId(propertyName, props, fileVersion.getVersionId());
-		return new FileVersionCloseable(fileVersion);
+		return new FileVersionCloseable(fileVersion, gridFileServices);
 	}
 
 	/**
