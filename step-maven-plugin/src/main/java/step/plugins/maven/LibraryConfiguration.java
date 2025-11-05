@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.maven;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import step.core.maven.MavenArtifactIdentifier;
 
@@ -85,9 +86,15 @@ public class LibraryConfiguration {
      *
      * @return true if both groupId and artifactId are specified
      */
-    public boolean isMavenCoordinatesConfigured() {
-        return groupId != null && !groupId.isEmpty() && artifactId != null && !artifactId.isEmpty();
+    public boolean isMavenCoordinatesConfigured() throws MojoExecutionException {
+        boolean coordinatesConfigured = !StringUtils.isBlank(groupId) || !StringUtils.isBlank(artifactId) || !StringUtils.isBlank(version);
+        if (coordinatesConfigured && (StringUtils.isBlank(groupId) || StringUtils.isBlank(artifactId) || StringUtils.isBlank(version))) {
+            throw new MojoExecutionException(
+                    "Library configuration error: partial maven coordinates configuration found: groupId artifactId and version are required.");
+        }
+        return coordinatesConfigured;
     }
+
 
     /**
      * Checks if a file path is configured.
@@ -112,7 +119,7 @@ public class LibraryConfiguration {
      *
      * @return MavenArtifactIdentifier or null if Maven coordinates are not configured
      */
-    public MavenArtifactIdentifier toMavenArtifactIdentifier() {
+    public MavenArtifactIdentifier toMavenArtifactIdentifier() throws MojoExecutionException {
         if (isMavenCoordinatesConfigured()) {
             return new MavenArtifactIdentifier(groupId, artifactId, version, classifier, type);
         }

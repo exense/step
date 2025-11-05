@@ -642,6 +642,10 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public RefreshResourceResult refreshAutomationPackage(@PathParam("id") String automationPackageId){
         try {
             AutomationPackage automationPackage = getAutomationPackage(automationPackageId);
+            if (automationPackage.getAutomationPackageResource() == null) {
+                throw new ControllerServiceException("The Automation Package (" + automationPackageId +
+                        ") has no package defined and cannot be refreshed. This is the case for Automation Package deployed before Step 29.0");
+            }
             if (!FileResolver.isResource(automationPackage.getAutomationPackageResource())) {
                 throw new ControllerServiceException("The Automation Package (" + automationPackageId + ") cannot be refreshed because the resource path of his package file is invalid '"  +
                         automationPackage.getAutomationPackageResource() + "'. Resource paths should be in the format 'resource:<id>'.");
