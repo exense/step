@@ -349,6 +349,35 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 					functionGroupSession.releaseTokens(true);
 				}
 				if (streamingUploadContext != null) {
+					if (!streamingAttachments.isEmpty()) {
+						// Status updates come in an asynchronous fashion, so for uploads that were NOT properly finalized,
+						// the transition message from IN_PROGRESS to FAILED may be received slightly after the call is considered finished (SED-4277).
+						// If this is the case, try to wait a little bit for the message to arrive (will be handled in a different thread),
+						// before unregistering our context listener.
+
+						// Testing shows that we usually need 0, 1, or (rarely) 2, (extremely rarely) 3 or 4 iterations,
+						// and that it's more likely to occur if the KW is run on the controller itself (makes sense, because
+						// when the call is local, the WS streaming overhead is - relatively seen - higher than if both are remote)
+						int max = 30; // x 50 ms = 1.5 seconds, this should be more than enough time
+						for (int i = 0; i <= max; ++i) {
+							boolean unfinished = streamingAttachments.values().stream()
+									.map(StreamingAttachmentMeta::getStatus)
+									.filter(Objects::nonNull)
+									.anyMatch(status -> !(status.equals(StreamingAttachmentMeta.Status.COMPLETED) || status.equals(StreamingAttachmentMeta.Status.FAILED)));
+							if (!unfinished) {
+								break;
+							}
+							if (i == max) {
+								logger.warn("Giving up waiting for streaming uploads to be finalized, reportNode {} may contain inconsistent attachment status metadata", node.getId());
+							} else {
+								if (logger.isDebugEnabled()) {
+									logger.debug("Waiting for all streaming uploads to transition to a final state ({}/{}), rnId={}", (i + 1), max, node.getId());
+								}
+								Thread.sleep(50);
+							}
+						}
+					}
+
 					context.require(StreamingResourceUploadContexts.class).unregisterContext(streamingUploadContext);
 				}
 				callChildrenArtefacts(node, testArtefact);
