@@ -76,13 +76,13 @@ public class DeployAutomationPackageToolTest {
                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
             super(url, new ApDeployParameters()
                     .setAsync(async)
-                    .setApVersion(apVersion)
+                    .setVersionName(apVersion)
                     .setActivationExpression(activationExpr)
                     .setAutomationPackageFile(apFile)
                     .setStepProjectName(stepProjectName)
                     .setAuthToken(authToken)
-                    .setPackageLibraryMavenArtifact(apLibraryMavenIdentifier)
-                    .setPackageLibraryFile(apLibraryFile));
+                    .setlibraryMavenArtifact(apLibraryMavenIdentifier)
+                    .setLibraryFile(apLibraryFile));
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }
 

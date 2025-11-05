@@ -14,8 +14,8 @@ public class LibraryDeployParameters extends Parameters<LibraryDeployParameters>
         return libraryMavenArtifact;
     }
 
-    public LibraryDeployParameters setPackageLibraryMavenArtifact(MavenArtifactIdentifier packageLibraryMavenArtifact) {
-        this.libraryMavenArtifact = packageLibraryMavenArtifact;
+    public LibraryDeployParameters setLibraryMavenArtifact(MavenArtifactIdentifier libraryMavenArtifact) {
+        this.libraryMavenArtifact = libraryMavenArtifact;
         return this;
     }
 
@@ -23,8 +23,8 @@ public class LibraryDeployParameters extends Parameters<LibraryDeployParameters>
         return libraryFile;
     }
 
-    public LibraryDeployParameters setPackageLibraryFile(File packageLibraryFile) {
-        this.libraryFile = packageLibraryFile;
+    public LibraryDeployParameters setLibraryFile(File libraryFile) {
+        this.libraryFile = libraryFile;
         return this;
     }
 

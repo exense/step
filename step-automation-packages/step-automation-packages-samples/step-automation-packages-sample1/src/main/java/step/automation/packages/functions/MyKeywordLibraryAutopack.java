@@ -63,6 +63,8 @@ public class MyKeywordLibraryAutopack extends AbstractKeyword {
 	@Plan("Echo PARAM_EXEC")
 	@PlanCategories({"InlinePlan","AnnotatedPlan"})
 	@Keyword(name = "Inline Plan")
-	public void inlinePlan() {}
+	public void inlinePlan() throws InterruptedException {
+		Thread.sleep(1000);
+	}
 
 }
