@@ -86,7 +86,7 @@ public class StepStreamingResourceManagerTests {
         assertEquals(new StreamingResourceStatus(StreamingResourceTransferStatus.COMPLETED, 11, 2L), manager.getStatus(resourceId));
         // Retrieve data; this will work because we're directly using the respective manager method.
         // For websocket/REST access, checkDownloadPermission is invoked by the implementations before actually retrieving the data.
-        assertEquals(List.of("line1\n", "line2"), manager.getLines(resourceId, 0, 2).collect(Collectors.toList()));
+        assertEquals(List.of("line1\n", "line2"), manager.getLines(resourceId, 0, 2));
 
         // Expecting: data file + index file
         assertEquals(2, findMatchingFiles(storageDirectory, resourceId + "\\..*").size());
