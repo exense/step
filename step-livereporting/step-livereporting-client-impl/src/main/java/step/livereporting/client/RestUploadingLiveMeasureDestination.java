@@ -39,7 +39,7 @@ public class RestUploadingLiveMeasureDestination implements LiveMeasureDestinati
     private static final long DEFAULT_FLUSH_INTERVAL_MS = 1000;
 
     private final String reportingContextUrl;
-    private Client client;
+    private final Client client;
     private final BatchProcessor<Measure> batchProcessor;
 
     public RestUploadingLiveMeasureDestination(String reportingContextUrl) {
@@ -48,9 +48,7 @@ public class RestUploadingLiveMeasureDestination implements LiveMeasureDestinati
 
     public RestUploadingLiveMeasureDestination(String reportingContextUrl, int batchSize, long flushIntervalMs) {
         this.reportingContextUrl = reportingContextUrl;
-        runInProperContextClassloader(() -> {
-            this.client = ClientBuilder.newClient().register(JacksonFeature.class);
-        });
+        this.client = ClientBuilder.newClient().register(JacksonFeature.class);
         this.batchProcessor = new BatchProcessor<>(batchSize, flushIntervalMs, this::sendMeasures, "livereporting-measures-rest");
     }
 
@@ -64,29 +62,15 @@ public class RestUploadingLiveMeasureDestination implements LiveMeasureDestinati
             logger.debug("measures is null or empty, skipping upload");
             return;
         }
-
-        runInProperContextClassloader(() -> {
-            // the final URL corresponds to the one defined in LiveReportingServices (step-controller-base-plugins)
-            try (Response post = client.target(reportingContextUrl + "/measures")
-                    .request()
-                    .post(Entity.entity(measures, MediaType.APPLICATION_JSON_TYPE))) {
-                int status = post.getStatus();
-                if (status != 204) {
-                    String msg = "Error while reporting measures. The live reporting service returned " + status;
-                    logger.error(msg);
-                }
+        // the final URL corresponds to the one defined in LiveReportingServices (step-controller-base-plugins)
+        try (Response post = client.target(reportingContextUrl + "/measures")
+                .request()
+                .post(Entity.entity(measures, MediaType.APPLICATION_JSON_TYPE))) {
+            int status = post.getStatus();
+            if (status != 204) {
+                String msg = "Error while reporting measures. The live reporting service returned " + status;
+                logger.error(msg);
             }
-        });
-    }
-
-    private void runInProperContextClassloader(Runnable runnable) {
-        ClassLoader initialContextClassLoader = Thread.currentThread().getContextClassLoader();
-
-        Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-        try {
-            runnable.run();
-        } finally {
-            Thread.currentThread().setContextClassLoader(initialContextClassLoader);
         }
     }
 
