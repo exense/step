@@ -20,7 +20,6 @@
  */
 package step.automation.packages;
 
-import jakarta.validation.constraints.AssertTrue;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -143,7 +142,6 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
                     .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT, PROJECT_1))
                     .build();
 
-            // TODO: is it OK that the AP linked with project1 is automatically refreshed without write access to project1?
             AutomationPackageUpdateResult result3 = manager.createOrUpdateAutomationPackage(updateParameter);
             Assert.assertEquals(UPDATED, result3.getStatus());
 
@@ -177,8 +175,6 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
             Assert.assertNotNull(resourceManager.getResource(libResourceGlobal.getId().toHexString()));
             Assert.assertTrue(resourceManager.getResourceFile(libResourceGlobal.getId().toHexString()).getResourceFile().exists());
-
-
 
         } catch (IOException e) {
             throw new RuntimeException("IO Exception", e);
