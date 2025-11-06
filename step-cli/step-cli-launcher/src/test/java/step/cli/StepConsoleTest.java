@@ -78,7 +78,7 @@ public class StepConsoleTest {
         Histories histories = new Histories(deployExecHistory,  null,null, null);
 
         // for EE
-        int res = runMain(histories, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--projectName=testProject", "--token=abc", "--async", "--apVersion=ver1", "--activationExpr=true==true");
+        int res = runMain(histories, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--projectName=testProject", "--token=abc", "--async", "--versionName=ver1", "--activationExpression=true==true");
 
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, deployExecHistory.size());
@@ -88,7 +88,7 @@ public class StepConsoleTest {
         Assert.assertEquals("testProject", usedParams.params.getStepProjectName());
         Assert.assertTrue(usedParams.params.getAsync());
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
-        Assert.assertEquals(usedParams.params.getApVersion(), "ver1");
+        Assert.assertEquals(usedParams.params.getVersionName(), "ver1");
         Assert.assertEquals(usedParams.params.getActivationExpression(), "true==true");
 
         // for OS (required params only)
@@ -131,7 +131,7 @@ public class StepConsoleTest {
 
         // deploy from artifactory
         deployExecHistory.clear();
-        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--apVersion=1.0.0", "--packageLibrary=mvn:ch.exense.step:some-step-keyword-lib:1.0.0:tests");
+        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--versionName=1.0.0", "--library=mvn:ch.exense.step:some-step-keyword-lib:1.0.0:tests");
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
@@ -142,10 +142,10 @@ public class StepConsoleTest {
         Assert.assertEquals("0.0.0", usedParams.params.getAutomationPackageMavenArtifact().getVersion());
         Assert.assertEquals("tests", usedParams.params.getAutomationPackageMavenArtifact().getClassifier());
 
-        Assert.assertEquals("ch.exense.step", usedParams.params.getAutomationPackageLibraryMavenArtifact().getGroupId());
-        Assert.assertEquals("some-step-keyword-lib", usedParams.params.getAutomationPackageLibraryMavenArtifact().getArtifactId());
-        Assert.assertEquals("1.0.0", usedParams.params.getAutomationPackageLibraryMavenArtifact().getVersion());
-        Assert.assertEquals("tests", usedParams.params.getAutomationPackageLibraryMavenArtifact().getClassifier());
+        Assert.assertEquals("ch.exense.step", usedParams.params.getLibraryMavenArtifact().getGroupId());
+        Assert.assertEquals("some-step-keyword-lib", usedParams.params.getLibraryMavenArtifact().getArtifactId());
+        Assert.assertEquals("1.0.0", usedParams.params.getLibraryMavenArtifact().getVersion());
+        Assert.assertEquals("tests", usedParams.params.getLibraryMavenArtifact().getClassifier());
     }
 
 

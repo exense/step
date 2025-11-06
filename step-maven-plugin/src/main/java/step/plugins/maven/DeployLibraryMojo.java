@@ -74,8 +74,8 @@ public class DeployLibraryMojo extends AbstractStepPluginMojo {
                 .setStepProjectName(projectName)
                 .setAuthToken(authToken)
                 .setManagedLibraryName(managedLibraryName)
-                .setPackageLibraryFile(localFile)
-                .setPackageLibraryMavenArtifact(remoteApMavenIdentifier)
+                .setLibraryFile(localFile)
+                .setLibraryMavenArtifact(remoteApMavenIdentifier)
 
         );
     }
@@ -124,6 +124,10 @@ public class DeployLibraryMojo extends AbstractStepPluginMojo {
 
     public String getArtifactType() {
         return artifactType;
+    }
+
+    public void setArtifactType(String artifactType) {
+        this.artifactType = artifactType;
     }
 
     public String getManagedLibraryName() {
