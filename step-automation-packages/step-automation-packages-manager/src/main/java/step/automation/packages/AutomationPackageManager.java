@@ -644,7 +644,7 @@ public class AutomationPackageManager {
 
 
     public Resource createAutomationPackageResource(String resourceType, AutomationPackageFileSource fileSource,
-                                                    String managedLibraryName, AutomationPackageUpdateParameter parameters) throws AutomationPackageManagerException {
+                                                    String managedLibraryName, AutomationPackageAccessParameters parameters) throws AutomationPackageManagerException {
         try {
             validateSourceMode(fileSource);
             switch (resourceType) {

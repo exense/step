@@ -31,9 +31,13 @@ import step.core.objectenricher.*;
 import step.repositories.artifact.ResolvedMavenArtifact;
 import step.repositories.artifact.SnapshotMetadata;
 import step.resources.Resource;
+import step.resources.ResourceManager;
 import step.resources.ResourceMissingException;
+import step.resources.ResourceRevisionFileHandle;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.time.Instant;
 import java.util.*;
 
 import static step.automation.packages.AutomationPackageUpdateStatus.CREATED;
@@ -174,6 +178,104 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
             Assert.assertNotNull(resourceManager.getResource(libResourceGlobal.getId().toHexString()));
             Assert.assertTrue(resourceManager.getResourceFile(libResourceGlobal.getId().toHexString()).getResourceFile().exists());
 
+
+
+        } catch (IOException e) {
+            throw new RuntimeException("IO Exception", e);
+        }
+    }
+
+    @Test
+    public void testManagedLibrary(){
+        File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File anotherAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
+
+        File libJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
+        File libJarUpdated = new File("src/test/resources/samples/" + KW_LIB_FILE_UPDATED_NAME);
+
+        MavenArtifactIdentifier libVersion1 = new MavenArtifactIdentifier("test-group", "test-lib", "1.0.0-SNAPSHOT", null, null);
+        MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
+        providersResolver.getMavenArtifactMocks().put(libVersion1, new ResolvedMavenArtifact(libJar, new SnapshotMetadata("some timestamp", System.currentTimeMillis(), 1, false)));
+
+        try (InputStream is = new FileInputStream(automationPackageJar);
+             InputStream isAnother = new FileInputStream(anotherAutomationPackageJar);
+        ) {
+            AutomationPackageFileSource sample1ApSource = AutomationPackageFileSource.withInputStream(is, SAMPLE1_FILE_NAME);
+            AutomationPackageFileSource anotherApSource = AutomationPackageFileSource.withInputStream(isAnother, SAMPLE1_EXTENDED_FILE_NAME);
+            AutomationPackageFileSource libSource = AutomationPackageFileSource.withMavenIdentifier(libVersion1);
+
+            // 1. Create managed library by Global Admin
+            AutomationPackageUpdateParameter globalAdminParams = new AutomationPackageUpdateParameterBuilder()
+                    .forJunit()
+                    .withActorUser("globalAdmin")
+                    .withEnricher(createTenantEnricher(GLOBAL_PROJECT))
+                    .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT))
+                    .withWriteAccessValidator(createWriteAccessValidator(GLOBAL_PROJECT))
+                    .build();
+
+            Resource globalLibResource = manager.createAutomationPackageResource(ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY, libSource, "testManagedLibrary", globalAdminParams);
+            Assert.assertNotNull(globalLibResource);
+            Assert.assertEquals(GLOBAL_PROJECT, globalLibResource.getAttribute(ATTRIBUTE_PROJECT_NAME));
+
+            // 2. User in Project1 uses the managed library
+            AutomationPackageUpdateParameter user1CreateApParams = new AutomationPackageUpdateParameterBuilder()
+                    .forJunit()
+                    .withApSource(sample1ApSource)
+                    .withApLibrarySource(AutomationPackageFileSource.withResourceId(globalLibResource.getId().toHexString()))
+                    .withAllowUpdate(false)
+                    .withAsync(false)
+                    .withCheckForSameOrigin(true)
+                    .withEnricher(createTenantEnricher(PROJECT_1))
+                    .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT, PROJECT_1))
+                    .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
+                    .build();
+
+            Instant timeBeforeUpdate = Instant.now();
+            AutomationPackageUpdateResult resultAp1 = manager.createOrUpdateAutomationPackage(user1CreateApParams);
+            Assert.assertEquals(CREATED, resultAp1.getStatus());
+
+            // new library snapshot is uploaded in nexus
+            providersResolver.getMavenArtifactMocks().put(libVersion1, new ResolvedMavenArtifact(
+                    libJarUpdated,
+                    new SnapshotMetadata("some timestamp", System.currentTimeMillis(), 1, true))
+            );
+
+            // 3.1. The managed library cannot be created with the same name
+            try {
+                manager.createAutomationPackageResource(ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY, libSource, "testManagedLibrary", globalAdminParams);
+                Assert.fail("Exception is not thrown");
+            } catch (AutomationPackageManagerException ex){
+                log.info("Caught: {}", ex.getMessage());
+            }
+
+            // 3.2 Global admin updates the library
+            Resource updatedGlobalLibResource = manager.updateAutomationPackageManagedLibrary(
+                    globalLibResource.getId().toString(), libSource, "testManagedLibraryUpdated", globalAdminParams
+            );
+
+            // updated library has the same id as the original one
+            Assert.assertEquals(globalLibResource.getId(), updatedGlobalLibResource.getId());
+            Assert.assertEquals("globalAdmin", globalLibResource.getLastModificationUser());
+            Assert.assertTrue(globalLibResource.getLastModificationDate().toInstant().isAfter(timeBeforeUpdate));
+            ResourceRevisionFileHandle actualLibRevision = resourceManager.getResourceFile(updatedGlobalLibResource.getId().toHexString());
+
+            // actual resource revision contains updated lib
+            Assert.assertArrayEquals(Files.readAllBytes(libJarUpdated.toPath()), Files.readAllBytes(actualLibRevision.getResourceFile().toPath()));
+
+            // linked automation package is also updated (refreshed)
+            AutomationPackage apAfterLibUpdate = automationPackageAccessor.get(resultAp1.getId());
+            Assert.assertEquals(FileResolver.resolveResourceId(apAfterLibUpdate.getAutomationPackageLibraryResource()), updatedGlobalLibResource.getId().toHexString());
+            Assert.assertTrue(apAfterLibUpdate.getLastModificationDate().toInstant().isAfter(timeBeforeUpdate));
+
+            // 4. user without write permission cannot update the managed library
+            try {
+                manager.updateAutomationPackageManagedLibrary(
+                        globalLibResource.getId().toString(), libSource, "testManagedLibraryUpdated", user1CreateApParams
+                );
+                Assert.fail("Exception is not thrown");
+            } catch (AutomationPackageManagerException ex){
+                log.info("Exception caught: {}", ex.getMessage());
+            }
         } catch (IOException e) {
             throw new RuntimeException("IO Exception", e);
         }
