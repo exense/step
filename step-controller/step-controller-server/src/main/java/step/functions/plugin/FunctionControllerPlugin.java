@@ -29,6 +29,7 @@ import step.core.collections.Collection;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityManager;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
@@ -101,8 +102,8 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		TableRegistry tableRegistry = context.get(TableRegistry.class);
 		
 		Collection<Function> functionCollection = context.getCollectionFactory()
-				.getCollection(EntityManager.functions, Function.class);
-		tableRegistry.register(EntityManager.functions, new Table<>(functionCollection, "kw-read", true)
+				.getCollection(EntityConstants.functions, Function.class);
+		tableRegistry.register(EntityConstants.functions, new Table<>(functionCollection, "kw-read", true)
 				.withResultListFactory(()->new ArrayList<>(){}));
 	}
 
@@ -131,8 +132,8 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 
 	private void createTableSettingsIfNecessary(GlobalContext context, ScreenInput nameInput) {
 		TableSettingsAccessor tableSettingsAccessor = context.get(TableSettingsAccessor.class);
-		if (tableSettingsAccessor.findSystemTableSettings(EntityManager.functions).isEmpty()) {
-			TableSettings setting = TableSettingsBuilder.builder().withSettingId(EntityManager.functions)
+		if (tableSettingsAccessor.findSystemTableSettings(EntityConstants.functions).isEmpty()) {
+			TableSettings setting = TableSettingsBuilder.builder().withSettingId(EntityConstants.functions)
 					.addColumn("bulkSelection", true)
 					.addColumn("attributes.project", true)
 					.addColumn("attributes.name", true, nameInput)

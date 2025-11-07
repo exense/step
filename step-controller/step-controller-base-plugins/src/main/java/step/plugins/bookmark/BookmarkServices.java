@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.Path;
 import step.controller.services.entities.AbstractEntityServices;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.framework.server.security.SecuredContext;
 
 @Singleton
@@ -14,6 +14,6 @@ import step.framework.server.security.SecuredContext;
 @SecuredContext(key = "entity", value = "bookmark", allowAllSignedInUsers = true) // all users/role should have rights
 public class BookmarkServices extends AbstractEntityServices<UserBookmark> {
     public BookmarkServices() {
-        super(EntityManager.bookmarks);
+        super(EntityConstants.bookmarks);
     }
 }

@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.entities.EntityConstants;
+import step.core.entities.EntityReference;
 import step.core.json.JsonProviderCache;
 import step.core.objectenricher.EnricheableObject;
 
@@ -167,6 +169,7 @@ public class Function extends AbstractOrganizableObject implements EnricheableOb
 		this.activationExpression = activationExpression;
 	}
 
+	@EntityReference(type= EntityConstants.resources)
 	public String getAutomationPackageFile() {
 		return automationPackageFile;
 	}

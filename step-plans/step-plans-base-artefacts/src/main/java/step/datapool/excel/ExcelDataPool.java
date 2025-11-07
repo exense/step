@@ -22,7 +22,7 @@ import step.artefacts.automation.datasource.YamlExcelDataSource;
 
 import step.core.dynamicbeans.DynamicValue;
 import step.core.dynamicbeans.ProtectedDynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
 import step.core.yaml.YamlModel;
@@ -38,7 +38,7 @@ public class ExcelDataPool extends DataPoolConfiguration {
 	
 	DynamicValue<Boolean> headers = new DynamicValue<>(true);
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getFile() {
 		return file;
 	}

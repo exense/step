@@ -21,7 +21,7 @@ package step.datapool.file;
 import step.artefacts.automation.datasource.YamlFileDataSource;
 
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
 import step.core.yaml.YamlModel;
@@ -35,7 +35,7 @@ public class FileDataPool extends DataPoolConfiguration {
 		super();
 	}
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getFile() {
 		return file;
 	}

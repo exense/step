@@ -178,6 +178,11 @@ public class ResourceManagerImpl implements ResourceManager {
 	@Override
 	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser) throws IOException, InvalidResourceFormatException {
 		Resource resource = getResource(resourceId);
+		return saveResourceContent(resource, resourceStream, resourceFileName, optionalResourceName, actorUser);
+	}
+
+	@Override
+	public Resource saveResourceContent(Resource resource, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser) throws IOException, InvalidResourceFormatException {
 		String resourceName = null;
 
 		//resource name is either the optional one provide as parameter, a resolution based on its file name

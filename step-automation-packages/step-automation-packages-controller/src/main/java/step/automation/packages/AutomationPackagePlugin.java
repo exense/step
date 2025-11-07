@@ -27,6 +27,8 @@ import step.automation.packages.execution.AutomationPackageExecutor;
 import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
@@ -46,6 +48,7 @@ import step.resources.ResourceManagerControllerPlugin;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.Optional;
 
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS;
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
@@ -82,6 +85,12 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(collection);
         context.put(AutomationPackageAccessor.class, packageAccessor);
         context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
+        context.getEntityManager().registerImportHook((o, importContext) -> {
+            if (o instanceof AbstractIdentifiableObject) {
+                AbstractIdentifiableObject entity = (AbstractIdentifiableObject) o;
+                Optional.ofNullable(entity.getCustomFields()).ifPresent(fields -> fields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID));
+            }
+        });
 
         Table<AutomationPackageTableRecord> table = new Table<>(extendedCollection, "automation-package-read", true)
                 .withResultItemTransformer(new AutomationPackageTableTransformer(context.getResourceManager()));

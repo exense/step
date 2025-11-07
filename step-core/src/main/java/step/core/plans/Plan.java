@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
@@ -64,7 +64,7 @@ public class Plan extends AbstractOrganizableObject implements EnricheableObject
 		super();
 	}
 
-	@EntityReference(type=EntityManager.recursive)
+	@EntityReference(type= EntityConstants.recursive)
 	public AbstractArtefact getRoot() {
 		return root;
 	}

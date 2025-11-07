@@ -44,6 +44,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.entities.Entity;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityManager;
 import step.core.imports.ImportConfiguration;
 import step.core.imports.ImportManager;
@@ -148,7 +149,7 @@ public class ExportManagerTest {
 				.register(new PlanEntity(planAccessor, new PlanLocator(planAccessor, selectorHelper), entityManager))
 				.register(new FunctionEntity(functionAccessor, functionLocator, entityManager))
 				.register(new ResourceEntity(resourceAccessor, entityManager))
-				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
+				.register(new Entity<>(EntityConstants.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
 		entityManager.registerExportHook(new ParameterManagerControllerPlugin.ParameterExportBiConsumer());
 		entityManager.registerImportHook(new ParameterManagerControllerPlugin.ParameterImportBiConsumer(encryptionManager));
@@ -208,13 +209,13 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), EntityManager.functions, true, null);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), EntityConstants.functions, true, null);
 			ExportResult exportResult = exportManager.exportById(exportConfig, function.getId().toString());
 			assertTrue(exportResult.getMessages().isEmpty());
 			assertTrue(FileHelper.isArchive(testExportFile));
 
 			ImportManager importManager = createNewContextAndGetImportManager();
-			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of(EntityManager.functions), true));
+			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of(EntityConstants.functions), true));
 			assertTrue(importResult.getMessages().isEmpty());
 			functionAccessor.save(function);
 			Function actualFunction = functionAccessor.get(function.getId());

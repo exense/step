@@ -6,14 +6,13 @@ import org.slf4j.LoggerFactory;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskManagerPlugin;
 import step.core.GlobalContext;
-import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.IndexField;
 import step.core.collections.Order;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.Entity;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.*;
@@ -87,7 +86,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		mainIngestionPipeline = timeSeries.getIngestionPipeline();
 
 		TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
-		MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityManager.metricTypes, MetricType.class));
+		MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityConstants.metricTypes, MetricType.class));
 		TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(timeSeries, attributes);
 
 		context.put(TimeSeries.class, timeSeries);
@@ -98,14 +97,14 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
 
 		// dashboards
-		Collection<DashboardView> dashboardsCollection = context.getCollectionFactory().getCollection(EntityManager.dashboards, DashboardView.class);
+		Collection<DashboardView> dashboardsCollection = context.getCollectionFactory().getCollection(EntityConstants.dashboards, DashboardView.class);
 		dashboardAccessor = new DashboardAccessor(dashboardsCollection);
-		context.getEntityManager().register(new Entity<>(EntityManager.dashboards, dashboardAccessor, DashboardView.class));
+		context.getEntityManager().register(new Entity<>(EntityConstants.dashboards, dashboardAccessor, DashboardView.class));
 		context.put(DashboardAccessor.class, dashboardAccessor);
 		context.getServiceRegistrationCallback().registerService(DashboardsService.class);
 
 		TableRegistry tableRegistry = context.get(TableRegistry.class);
-		tableRegistry.register(EntityManager.dashboards, new Table<>(dashboardsCollection, "dashboard-read", true));
+		tableRegistry.register(EntityConstants.dashboards, new Table<>(dashboardsCollection, "dashboard-read", true));
 
 		MeasurementPlugin.registerMeasurementHandlers(handler);
 		GaugeCollectorRegistry.getInstance().registerHandler(handler);
