@@ -265,7 +265,9 @@ public class ApCommand implements Callable<Integer> {
 
             File packageLibraryFile = null;
             if (library != null && !library.isEmpty()) {
-                packageLibraryFile = preparePackageLibraryFile(library);
+                // TODO: SED-4035 - classloader issue for local execution with library - should be fixed later
+                throw new StepCliExecutionException("Libraries are not supported for local execution");
+//                packageLibraryFile = preparePackageLibraryFile(library);
             }
 
             executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);

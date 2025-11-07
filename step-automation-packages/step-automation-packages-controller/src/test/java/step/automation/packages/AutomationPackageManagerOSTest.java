@@ -3,6 +3,7 @@ package step.automation.packages;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.awaitility.Awaitility;
 import org.bson.types.ObjectId;
 import org.junit.*;
 import org.slf4j.Logger;
@@ -35,7 +36,9 @@ import step.resources.*;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -329,7 +332,6 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             });
 
             //Give some time to let the execution start
-            Thread.sleep(500);
             uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is3, SAMPLE1_FILE_NAME), false, true, true, "v1",
                     "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
                     , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
@@ -1309,7 +1311,9 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                     .build();
             AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(updateParameters);
             if (async && expectedDelay) {
-                Assert.assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
+                Awaitility.await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofMillis(50)).until(() -> {
+                    log.info("Current status: {}", updateResult.getStatus());
+                    return updateResult.getStatus().equals(AutomationPackageUpdateStatus.UPDATE_DELAYED);});
             } else {
                 Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, updateResult.getStatus());
             }
