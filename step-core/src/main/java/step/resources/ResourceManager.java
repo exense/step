@@ -23,6 +23,8 @@ import step.core.objectenricher.ObjectPredicate;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -174,6 +176,10 @@ public interface ResourceManager {
 	void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision);
 
 	default void cleanup() {
+	}
+
+	public static Path getResourceFilePath(String basePath, String resourceType, String resourceId, String revisionId, String fileName) {
+		return Paths.get(basePath, resourceType, resourceId, revisionId, fileName);
 	}
 
 }

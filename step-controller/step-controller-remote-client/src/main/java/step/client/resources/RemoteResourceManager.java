@@ -165,14 +165,14 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	public Resource saveResourceContent(Resource resource, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser)
 			throws IOException {
 
-		return null;
+		throw new RuntimeException("Not implemented");
 	}
 
 	@Override
 	public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser)
 			throws IOException {
 
-		return null;
+		throw new RuntimeException("Not implemented");
 	}
 
 	@Override

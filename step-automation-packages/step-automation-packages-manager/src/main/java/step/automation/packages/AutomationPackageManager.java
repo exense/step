@@ -897,12 +897,8 @@ public class AutomationPackageManager {
             throw new AutomationPackageManagerException("Unable to persist a resource in automation package", e);
         }
 
-        try {
-            for (Function completeFunction : staging.getFunctions()) {
-                functionManager.saveFunction(completeFunction);
-            }
-        } catch (SetupFunctionException | FunctionTypeException e) {
-            throw new AutomationPackageManagerException("Unable to persist a keyword in automation package", e);
+        for (Function completeFunction : staging.getFunctions()) {
+            functionAccessor.save(completeFunction);
         }
 
         for (Plan plan : staging.getPlans()) {

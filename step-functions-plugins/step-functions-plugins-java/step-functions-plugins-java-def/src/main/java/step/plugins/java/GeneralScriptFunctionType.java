@@ -39,17 +39,13 @@ public class GeneralScriptFunctionType extends AbstractScriptFunctionType<Genera
 		if(language.equals("java")) {
 			// No specific setup for java at the moment
 		} else {
-			//If the script file is not defined we create one based on the template (KW deployed from AP wil have a script file set
-			DynamicValue<String> scriptFile = function.getScriptFile();
-			if (scriptFile == null || (!scriptFile.isDynamic() && StringUtils.isBlank(scriptFile.getValue()))) {
-				String template = null;
-				if (language.equals("javascript")) {
-					template = "custom_script.js";
-				} else if (language.equals("groovy")) {
-					template = "custom_script.groovy";
-				}
-				setupScriptFileAsResource(function, template);
+			String template = null;
+			if (language.equals("javascript")) {
+				template = "custom_script.js";
+			} else if (language.equals("groovy")) {
+				template = "custom_script.groovy";
 			}
+			setupScriptFileAsResource(function, template);
 		}
 	}
 
