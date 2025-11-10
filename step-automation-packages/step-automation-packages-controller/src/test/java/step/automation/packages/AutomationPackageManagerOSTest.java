@@ -1274,7 +1274,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         Assert.assertEquals(expectedFileName, resource.getResourceName());
     }
 
-    private SampleUploadingResult uploadSample1WithAsserts(AutomationPackageFileSource sample1FileSource, boolean createNew, boolean async, boolean expectedDelay,
+    protected SampleUploadingResult uploadSample1WithAsserts(AutomationPackageFileSource sample1FileSource, boolean createNew, boolean async, boolean expectedDelay,
                                                            String version, String activationExpression, Map<String, String> plansAttributes,
                                                            Map<String, String> functionAttributes, Map<String, String> tokenSelectionAttributes) throws IOException {
         return uploadSample1WithAsserts(null, sample1FileSource, createNew, async, expectedDelay, version, activationExpression,
@@ -1312,9 +1312,16 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                     .build();
             AutomationPackageUpdateResult updateResult = manager.createOrUpdateAutomationPackage(updateParameters);
             if (async && expectedDelay) {
-                Awaitility.await().atMost(Duration.ofSeconds(10)).pollDelay(Duration.ofMillis(50)).until(() -> {
-                    log.info("Current status: {}", updateResult.getStatus());
-                    return updateResult.getStatus().equals(AutomationPackageUpdateStatus.UPDATE_DELAYED);});
+                //The results of createOrUpdateAutomationPackage must have the status UPDATE_DELAYED, and the AP status set to DELAYED_UPDATE
+                assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
+                assertEquals(AutomationPackageStatus.DELAYED_UPDATE, automationPackageAccessor.get(updateResult.getId()).getStatus());
+                //We then poll until the AP is updated before continuing with the assertion (its status should be reset to null
+                Awaitility.await().atMost(Duration.ofSeconds(20)).pollDelay(Duration.ofMillis(50)).until(() -> {
+                    AutomationPackage automationPackage = automationPackageAccessor.get(updateResult.getId());
+                    log.info("Current status: {}", automationPackage.getStatus());
+                    return automationPackage.getStatus() == null;
+                });
+                //Finally make sure we did not time out and that the status is really updated (should be null)
             } else {
                 Assert.assertEquals(AutomationPackageUpdateStatus.UPDATED, updateResult.getStatus());
             }
@@ -1376,6 +1383,10 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         r.storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
         Assert.assertEquals(KEYWORDS_COUNT, r.storedFunctions.size());
         for  (Function function : r.storedFunctions) {
+            //All function must have the automationPackageField set with a revision ID
+            String automationPackageFile = function.getAutomationPackageFile();
+            assertNotNull(automationPackageFile);
+            assertEquals(FileResolver.createRevisionPathForResource(resourceByAutomationPackage), automationPackageFile);
             //assert activation expression propagation
             if (activationExpression != null) {
                 assertEquals(activationExpression, function.getActivationExpression().getScript());
@@ -1508,12 +1519,5 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                         }
                     }
                 }));
-    }
-
-    private static class SampleUploadingResult {
-        private AutomationPackage storedPackage;
-        private List<Plan> storedPlans;
-        private List<Function> storedFunctions;
-        private ExecutiontTaskParameters storedTask;
     }
 }

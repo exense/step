@@ -38,6 +38,10 @@ public class LocalResourceManagerImpl extends ResourceManagerImpl {
 		super(resourceRootFolder, resourceAccessor, resourceRevisionAccessor);
 	}
 
+	public ResourceAccessor getResourceAccessor() {
+		return resourceAccessor;
+	}
+
 	public ResourceRevisionAccessor getResourceRevisionAccessor() {
 		return resourceRevisionAccessor;
 	}

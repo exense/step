@@ -974,10 +974,8 @@ public class AutomationPackageManager {
         // get old functions with same name and reuse their ids
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
         fillEntities(completeFunctions, oldFunctions, enricher);
-        //Only propagate metadata to all the functions if any of the metadata impacting the functions is set
-        if (newPackage.getActivationExpression() != null || newPackage.getFunctionsAttributes() != null || newPackage.getTokenSelectionCriteria() != null || newPackage.getExecuteFunctionsLocally()) {
-            propagatePackageMetadataToFunctions(newPackage, completeFunctions);
-        }
+        //Propagate metadata to all the functions
+        propagatePackageMetadataToFunctions(newPackage, completeFunctions);
         return completeFunctions;
     }
 
