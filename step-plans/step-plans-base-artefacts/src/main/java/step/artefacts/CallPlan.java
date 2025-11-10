@@ -22,7 +22,7 @@ import step.artefacts.automation.YamlCallPlan;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.core.yaml.YamlModel;
 
@@ -44,7 +44,7 @@ public class CallPlan extends AbstractArtefact {
 		return true;
 	}
 
-	@EntityReference(type=EntityManager.plans)
+	@EntityReference(type= EntityConstants.plans)
 	public String getPlanId() {
 		return planId;
 	}

@@ -6,7 +6,7 @@ import java.util.Map;
 import org.bson.types.ObjectId;
 
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
 import step.functions.Function;
@@ -40,7 +40,7 @@ public class FunctionPackage extends AbstractOrganizableObject implements Enrich
 	/**
 	 * @return the resource path to the package libraries. Package libraries are either a folder of jar or DLLs
 	 */
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public String getPackageLibrariesLocation() {
 		return packageLibrariesLocation;
 	}
@@ -52,7 +52,7 @@ public class FunctionPackage extends AbstractOrganizableObject implements Enrich
 	/**
 	 * @return the path to the package file. might be a {@link Resource}
 	 */
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public String getPackageLocation() {
 		return packageLocation;
 	}

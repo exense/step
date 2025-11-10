@@ -26,7 +26,7 @@ import step.core.collections.Collection;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.scheduler.housekeeping.HousekeepingJobsManager;
@@ -45,9 +45,9 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 		controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
-		Collection<ExecutiontTaskParameters> collectionDriver = context.getCollectionFactory().getCollection(EntityManager.tasks,
+		Collection<ExecutiontTaskParameters> collectionDriver = context.getCollectionFactory().getCollection(EntityConstants.tasks,
 				ExecutiontTaskParameters.class);
-		context.get(TableRegistry.class).register(EntityManager.tasks, new Table<>(collectionDriver, "task-read", true));
+		context.get(TableRegistry.class).register(EntityConstants.tasks, new Table<>(collectionDriver, "task-read", true));
 
 		this.housekeepingJobsManager = new HousekeepingJobsManager(context.getConfiguration(), controllerSettingAccessor);
 		context.put(HousekeepingJobsManager.class, housekeepingJobsManager);

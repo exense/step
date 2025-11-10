@@ -29,7 +29,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.MapDeserializer;
 import step.core.accessors.MapSerializer;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 
 import java.util.ArrayList;
@@ -87,7 +87,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		this.description = description;
 	}
 
-	@EntityReference(type=EntityManager.recursive)
+	@EntityReference(type= EntityConstants.recursive)
 	public List<AbstractArtefact> getChildren() {
 		return children;
 	}
@@ -235,7 +235,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		isWorkArtefact = workArtefact;
 	}
 
-	@EntityReference(type= EntityManager.recursive)
+	@EntityReference(type= EntityConstants.recursive)
 	public ChildrenBlock getBefore() {
 		return before;
 	}
@@ -244,7 +244,7 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 		this.before = before;
 	}
 
-	@EntityReference(type= EntityManager.recursive)
+	@EntityReference(type= EntityConstants.recursive)
 	public ChildrenBlock getAfter() {
 		return after;
 	}

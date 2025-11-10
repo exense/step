@@ -21,6 +21,7 @@ package step.functions.manager;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.AutomationPackageEntity;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.AbstractFunctionType;
@@ -31,6 +32,7 @@ import step.handlers.javahandler.Keyword;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class FunctionManagerImpl implements FunctionManager {
 
@@ -78,6 +80,7 @@ public class FunctionManagerImpl implements FunctionManager {
 		if(source!=null) {
 			AbstractFunctionType<Function> type = getFunctionType(source);
 			Function target = type.copyFunction(source);
+			Optional.ofNullable(target.getCustomFields()).ifPresent(fields -> fields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID));
 			functionRepository.save(target);
 			return target;
 		} else {
