@@ -15,14 +15,15 @@ import step.automation.packages.library.AutomationPackageLibraryFromInputStreamP
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.model.ExecutionParameters;
+import step.core.execution.model.ExecutionStatus;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.plans.Plan;
-import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.*;
 import step.datapool.excel.ExcelDataPool;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterScope;
@@ -38,7 +39,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -327,15 +327,27 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                     , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
             ExecutorService executor = Executors.newFixedThreadPool(1);
             Plan inlinePlanWithSleep = r.storedPlans.stream().filter(plan -> "Inline Plan".equals(plan.getAttribute(AbstractOrganizableObject.NAME))).findFirst().orElseThrow(() -> new RuntimeException("No 'Inline Plan' found"));
-            executor.submit(() -> {
-                PlanRunnerResult execute = newExecutionEngineBuilder().build().execute(inlinePlanWithSleep);
-            });
 
-            //Give some time to let the execution start
-            Thread.sleep(200);
-            uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is3, SAMPLE1_FILE_NAME), false, true, true, "v1",
-                    "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
-                    , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
+            try (ExecutionEngine executionEngine = newExecutionEngineBuilder().build()) {
+                String executionId = executionEngine.initializeExecution(new ExecutionParameters(inlinePlanWithSleep, null));
+                ExecutionAccessor executionAccessor = executionEngine.getExecutionEngineContext().getExecutionAccessor();
+                log.info("Starting execution in background and wait until running");
+                executor.submit(() -> {
+                    executionEngine.execute(executionId);
+                });
+
+                Awaitility.await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(50)).until(() -> {
+                    ExecutionStatus currentExecStatus = Optional.ofNullable(executionAccessor.get(executionId)).map(Execution::getStatus).orElse(null);
+                    log.info("Execution current status is  {}", currentExecStatus);
+                    return ExecutionStatus.RUNNING.equals(currentExecStatus);
+                });
+                assertEquals(ExecutionStatus.RUNNING, executionAccessor.get(executionId).getStatus());
+
+                uploadSample1WithAsserts(AutomationPackageFileSource.withInputStream(is3, SAMPLE1_FILE_NAME), false, true, true, "v1",
+                        "env == TEST", Map.of("planAttr", "planAttrValue"), Map.of("functionAttr", "functionAttrValue")
+                        , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
+            }
+
         }
     }
 
@@ -1316,7 +1328,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                 assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
                 assertEquals(AutomationPackageStatus.DELAYED_UPDATE, automationPackageAccessor.get(updateResult.getId()).getStatus());
                 //We then poll until the AP is updated before continuing with the assertion (its status should be reset to null
-                Awaitility.await().atMost(Duration.ofSeconds(20)).pollDelay(Duration.ofMillis(50)).until(() -> {
+                Awaitility.await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(50)).until(() -> {
                     AutomationPackage automationPackage = automationPackageAccessor.get(updateResult.getId());
                     log.info("Current status: {}", automationPackage.getStatus());
                     return automationPackage.getStatus() == null;
@@ -1507,17 +1519,6 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
 
     protected ExecutionEngine.Builder newExecutionEngineBuilder() {
         return ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(),
-                new AutomationPackageExecutionPlugin(automationPackageLocks),
-                new AbstractExecutionEnginePlugin() {
-                    @Override
-                    public void abortExecution(ExecutionContext context) {
-                        try {
-                            //delay end of execution to test locks
-                            Thread.sleep(2000);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }
-                }));
+                new AutomationPackageExecutionPlugin(automationPackageLocks)));
     }
 }
