@@ -3,6 +3,7 @@ package step.core.references;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractStepServices;
+import step.core.entities.EntityConstants;
 import step.framework.server.security.Secured;
 import step.core.entities.EntityDependencyTreeVisitor;
 import step.core.entities.EntityManager;
@@ -66,14 +67,14 @@ public class ReferenceFinderServices extends AbstractStepServices {
 
         List<FindReferencesResponse> results = new ArrayList<>();
 
-        PlanAccessor planAccessor = (PlanAccessor) entityManager.getEntityByName(EntityManager.plans).getAccessor();
+        PlanAccessor planAccessor = (PlanAccessor) entityManager.getEntityByName(EntityConstants.plans).getAccessor();
 
         // Find composite keywords containing requested usages; composite KWs are really just plans in disguise :-)
-        FunctionAccessor functionAccessor = (FunctionAccessor) entityManager.getEntityByName(EntityManager.functions).getAccessor();
+        FunctionAccessor functionAccessor = (FunctionAccessor) entityManager.getEntityByName(EntityConstants.functions).getAccessor();
 
         try (Stream<Function> functionStream = functionAccessor.streamLazy()) {
             functionStream.forEach(function -> {
-                List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.functions, function, request);
+                List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityConstants.functions, function, request);
                 if (!matchingObjects.isEmpty()) {
                     results.add(new FindReferencesResponse(function));
                 }
@@ -83,7 +84,7 @@ public class ReferenceFinderServices extends AbstractStepServices {
         // Find plans containing usages
         try (Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.streamLazy() : planAccessor.getVisiblePlans()) {
             stream.forEach(plan -> {
-                List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityManager.plans, plan, request);
+                List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityConstants.plans, plan, request);
                 if (!matchingObjects.isEmpty()) {
                     results.add(new FindReferencesResponse(plan));
                 }

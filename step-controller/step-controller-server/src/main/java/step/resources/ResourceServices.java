@@ -32,7 +32,7 @@ import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.objectenricher.ObjectEnricher;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
@@ -176,7 +176,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
 			}
 		};
 		return scheduleAsyncTaskWithinSessionContext(h ->
-				tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
+				tableService.performBulkOperation(EntityConstants.resources, request, consumer, getSession()));
 	}
 	
 	@GET

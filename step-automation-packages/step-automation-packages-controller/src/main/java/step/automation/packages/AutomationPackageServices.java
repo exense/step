@@ -41,7 +41,7 @@ import step.core.access.User;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.maven.MavenArtifactIdentifier;
@@ -715,7 +715,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             }
         };
         return scheduleAsyncTaskWithinSessionContext(h ->
-                tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
+                tableService.performBulkOperation(EntityConstants.resources, request, consumer, getSession()));
     }
 
     @POST
@@ -726,7 +726,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     public AsyncTaskStatus<TableBulkOperationReport> bulkRefreshAutomationPackageResource(TableBulkOperationRequest request) {
         Consumer<String> consumer = this::refreshResourceAndLinkedPackages;
         return scheduleAsyncTaskWithinSessionContext(h ->
-                tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
+                tableService.performBulkOperation(EntityConstants.resources, request, consumer, getSession()));
     }
 
     @DELETE

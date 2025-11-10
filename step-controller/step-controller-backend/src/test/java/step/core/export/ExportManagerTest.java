@@ -30,10 +30,13 @@ import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.attachments.FileResolver;
+import step.automation.packages.AutomationPackageEntity;
+import step.automation.packages.AutomationPackagePlugin;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.core.Controller;
 import step.core.accessors.AbstractAccessor;
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
 import step.core.artefacts.AbstractArtefact;
@@ -44,6 +47,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.entities.Entity;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityManager;
 import step.core.imports.ImportConfiguration;
 import step.core.imports.ImportManager;
@@ -75,9 +79,7 @@ import step.plugins.functions.types.CompositeFunctionType;
 import step.plugins.parametermanager.ParameterManagerControllerPlugin;
 import step.resources.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -101,29 +103,33 @@ public class ExportManagerTest {
 	
 	@Before
 	public void before() {
-		EncryptionManager encryptionManager = new EncryptionManager() {
+		EncryptionManager encryptionManager = getMockedEncryptionManager();
+		
+		newContext(encryptionManager);
+	}
+
+	public static EncryptionManager getMockedEncryptionManager() {
+		return new EncryptionManager() {
 			@Override
 			public String encrypt(String value) {
-				return "###"+value;
+				return "###" + value;
 			}
-			
+
 			@Override
 			public String decrypt(String encryptedValue) {
 				return encryptedValue.replaceFirst("###", "");
 			}
-			
+
 			@Override
 			public boolean isKeyPairChanged() {
 				return false;
 			}
-			
+
 			@Override
 			public boolean isFirstStart() {
 				return false;
 			}
 		};
-		
-		newContext(encryptionManager);
 	}
 
 	private void newContext(EncryptionManager encryptionManager) {
@@ -138,8 +144,26 @@ public class ExportManagerTest {
 		resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
 		resourceManager = new LocalResourceManagerImpl(new File("resources"), resourceAccessor, resourceRevisionAccessor);
 
-		entityManager = new EntityManager();
-		
+		entityManager = createEntityManager(encryptionManager, resourceManager, parameterAccessor, planAccessor
+				,functionAccessor, resourceAccessor, resourceRevisionAccessor);
+
+		migrationManager = createMigrationManager();
+	}
+
+	public static MigrationManager createMigrationManager() {
+		MigrationManager migrationManager = new MigrationManager();
+		migrationManager.register(MigrateArtefactsToPlans.class);
+		migrationManager.register(MigrateAssertNegation.class);
+		migrationManager.register(MigrateFunctionCallsById.class);
+		migrationManager.register(MigrateParametersToDynamicValues.class);
+		return migrationManager;
+	}
+
+	public static EntityManager createEntityManager(EncryptionManager encryptionManager, ResourceManager resourceManager, Accessor<Parameter> parameterAccessor,
+													PlanAccessor planAccessor, FunctionAccessor functionAccessor,
+													ResourceAccessor resourceAccessor, ResourceRevisionAccessor resourceRevisionAccessor) {
+		EntityManager entityManager = new EntityManager();
+
 		FileResolver fileResolver = new FileResolver(resourceManager);
 		SelectorHelper selectorHelper = new SelectorHelper(new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler())));
 		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
@@ -148,19 +172,15 @@ public class ExportManagerTest {
 				.register(new PlanEntity(planAccessor, new PlanLocator(planAccessor, selectorHelper), entityManager))
 				.register(new FunctionEntity(functionAccessor, functionLocator, entityManager))
 				.register(new ResourceEntity(resourceAccessor, entityManager))
-				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
-		
+				.register(new Entity<>(EntityConstants.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
+
 		entityManager.registerExportHook(new ParameterManagerControllerPlugin.ParameterExportBiConsumer());
 		entityManager.registerImportHook(new ParameterManagerControllerPlugin.ParameterImportBiConsumer(encryptionManager));
 		entityManager.registerImportHook(new ResourceImporter(resourceManager));
-		
-		migrationManager = new MigrationManager();
-		migrationManager.register(MigrateArtefactsToPlans.class);
-		migrationManager.register(MigrateAssertNegation.class);
-		migrationManager.register(MigrateFunctionCallsById.class);
-		migrationManager.register(MigrateParametersToDynamicValues.class);
+		entityManager.registerImportHook(new AutomationPackagePlugin.AutomationPackageImportHook());
+		return entityManager;
 	}
-	
+
 	@Test
 	public void testExportPlanById() throws Exception {
 		Plan plan = PlanBuilder.create().startBlock(sequence()).add(sequence()).endBlock().build();
@@ -187,7 +207,7 @@ public class ExportManagerTest {
 		}
 	}
 
-	private Map<String, String> buildMetadata() {
+	public static Map<String, String> buildMetadata() {
 		Map<String,String> metadata = new HashMap<>();
 		metadata.put("version", Controller.VERSION.toString());
 		metadata.put("export-time" , "1589542872475");
@@ -208,13 +228,13 @@ public class ExportManagerTest {
 		try (FileOutputStream outputStream = new FileOutputStream(testExportFile)) {
 			ExportManager exportManager = newExportManager();
 			Map<String, String> metadata = buildMetadata();
-			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), EntityManager.functions, true, null);
+			ExportConfiguration exportConfig = new ExportConfiguration(outputStream, metadata, dummyObjectPredicate(), EntityConstants.functions, true, null);
 			ExportResult exportResult = exportManager.exportById(exportConfig, function.getId().toString());
 			assertTrue(exportResult.getMessages().isEmpty());
 			assertTrue(FileHelper.isArchive(testExportFile));
 
 			ImportManager importManager = createNewContextAndGetImportManager();
-			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of(EntityManager.functions), true));
+			ImportResult importResult = importManager.importAll(new ImportConfiguration(testExportFile, dummyObjectEnricher(), List.of(EntityConstants.functions), true));
 			assertTrue(importResult.getMessages().isEmpty());
 			functionAccessor.save(function);
 			Function actualFunction = functionAccessor.get(function.getId());
@@ -225,7 +245,7 @@ public class ExportManagerTest {
 		}
 	}
 
-	protected ObjectEnricher dummyObjectEnricher() {
+	public static ObjectEnricher dummyObjectEnricher() {
 		return new ObjectEnricher() {
 
 			@Override
@@ -303,27 +323,7 @@ public class ExportManagerTest {
 			assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN,exportResult.getMessages().toArray()[1]);
 			assertEquals(ParameterManagerControllerPlugin.EXPORT_ENCRYPT_PARAM_WARN,exportResult.getMessages().toArray()[0]);
 
-			EncryptionManager encryptionManager = new EncryptionManager() {
-				@Override
-				public String encrypt(String value) {
-					return "###"+value;
-				}
-				
-				@Override
-				public String decrypt(String encryptedValue) {
-					return encryptedValue.replaceFirst("###", "");
-				}
-				
-				@Override
-				public boolean isKeyPairChanged() {
-					return false;
-				}
-				
-				@Override
-				public boolean isFirstStart() {
-					return false;
-				}
-			};
+			EncryptionManager encryptionManager = getMockedEncryptionManager();
 			newContext(encryptionManager);
 			ImportManager importManager = newImportManager();
 			ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, true);
@@ -860,7 +860,7 @@ public class ExportManagerTest {
 		return newResource.replace(FileResolver.RESOURCE_PREFIX, "");
 	}
 
-	protected ObjectPredicate dummyObjectPredicate() {
+	public static ObjectPredicate dummyObjectPredicate() {
 		return t -> true;
 	}
 	

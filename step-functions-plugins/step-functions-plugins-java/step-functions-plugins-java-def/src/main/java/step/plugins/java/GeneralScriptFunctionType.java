@@ -19,6 +19,7 @@
 package step.plugins.java;
 
 import ch.exense.commons.app.Configuration;
+import org.apache.commons.lang3.StringUtils;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
@@ -39,11 +40,11 @@ public class GeneralScriptFunctionType extends AbstractScriptFunctionType<Genera
 			// No specific setup for java at the moment
 		} else {
 			String template = null;
-			if(language.equals("javascript")) {
+			if (language.equals("javascript")) {
 				template = "custom_script.js";
-			} else if(language.equals("groovy")) {
+			} else if (language.equals("groovy")) {
 				template = "custom_script.groovy";
-			}			
+			}
 			setupScriptFileAsResource(function, template);
 		}
 	}

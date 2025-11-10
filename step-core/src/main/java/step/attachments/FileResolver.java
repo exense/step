@@ -87,6 +87,10 @@ public class FileResolver {
 		return path != null && path.startsWith(RESOURCE_PREFIX);
 	}
 
+    public static boolean isResourceRevision(String path) {
+        return path != null && path.startsWith(RESOURCE_PREFIX) && (extractResourceSubPath(path).split(RESOURCE_PATH_SEPARATOR).length == 2);
+    }
+
 	public static String createPathForResource(Resource resource) {
 		return createPathForResourceId(resource.getId().toString());
 	}
@@ -96,7 +100,11 @@ public class FileResolver {
 	}
 
 	public static String createRevisionPathForResource(Resource resource) {
-		return RESOURCE_PREFIX + resource.getId().toHexString() + RESOURCE_PATH_SEPARATOR + resource.getCurrentRevisionId().toHexString();
+		return createPathForResourceAndRevisionId(resource.getId().toHexString(), resource.getCurrentRevisionId().toHexString());
+	}
+
+	public static String createPathForResourceAndRevisionId(String resourceId, String revisionId) {
+		return RESOURCE_PREFIX + resourceId + RESOURCE_PATH_SEPARATOR + revisionId;
 	}
 
 	protected static String extractResourceSubPath(String path) {

@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import step.controller.grid.GridPlugin;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
@@ -38,7 +38,7 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 	public void serverStart(GlobalContext context) throws Exception {
 		super.serverStart(context);
 
-		Collection<Measurement> collection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
+		Collection<Measurement> collection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Measurement.class);
 		context.require(TableRegistry.class).register(ReportMeasurementsTableName,
 				new Table<>(collection, null, false)
 						.withResultItemTransformer((m, session) -> convertToPseudoMeasure(m))

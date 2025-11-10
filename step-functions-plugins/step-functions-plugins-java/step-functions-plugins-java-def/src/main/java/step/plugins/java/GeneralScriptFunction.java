@@ -22,7 +22,7 @@ import step.automation.packages.AutomationPackage;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AutomationPackageContextual;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.functions.Function;
 
@@ -41,7 +41,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 	
 	DynamicValue<String> errorHandlerFile = new DynamicValue<>("");
 	
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getScriptFile() {
 		return scriptFile;
 	}
@@ -64,7 +64,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 		this.scriptLanguage = scriptLanguage;
 	}
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getLibrariesFile() {
 		return librariesFile;
 	}
@@ -77,7 +77,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 		this.librariesFile = librariesFile;
 	}
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getErrorHandlerFile() {
 		return errorHandlerFile;
 	}

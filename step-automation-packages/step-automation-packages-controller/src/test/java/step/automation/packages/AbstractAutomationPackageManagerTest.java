@@ -39,11 +39,14 @@ import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.objectenricher.ObjectHookRegistry;
+import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
+import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.Executor;
 import step.expressions.ExpressionHandler;
+import step.functions.Function;
 import step.functions.accessor.FunctionAccessorImpl;
 import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.FunctionTypeRegistry;
@@ -59,11 +62,8 @@ import step.plugins.node.NodeFunctionType;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceRevisionFileHandle;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
 
@@ -169,5 +169,11 @@ public abstract class AbstractAutomationPackageManagerTest {
         }
     }
 
+    protected static class SampleUploadingResult {
+        protected AutomationPackage storedPackage;
+        protected List<Plan> storedPlans;
+        protected List<Function> storedFunctions;
+        protected ExecutiontTaskParameters storedTask;
+    }
 
 }

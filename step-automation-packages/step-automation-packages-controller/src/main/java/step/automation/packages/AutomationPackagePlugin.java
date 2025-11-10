@@ -27,11 +27,14 @@ import step.automation.packages.execution.AutomationPackageExecutor;
 import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
+import step.core.imports.ImportContext;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -46,6 +49,8 @@ import step.resources.ResourceManagerControllerPlugin;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS;
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
@@ -82,6 +87,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(collection);
         context.put(AutomationPackageAccessor.class, packageAccessor);
         context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
+        context.getEntityManager().registerImportHook(new AutomationPackageImportHook());
 
         Table<AutomationPackageTableRecord> table = new Table<>(extendedCollection, "automation-package-read", true)
                 .withResultItemTransformer(new AutomationPackageTableTransformer(context.getResourceManager()));
@@ -99,6 +105,17 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         JavaAutomationPackageReader javaAutomationPackageReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration());
         automationPackageReaderRegistry.register(javaAutomationPackageReader);
         context.put(AutomationPackageReaderRegistry.class, automationPackageReaderRegistry);
+    }
+
+    public static class AutomationPackageImportHook implements BiConsumer<Object, ImportContext> {
+
+        @Override
+        public void accept(Object o, ImportContext importContext) {
+            if (o instanceof AbstractIdentifiableObject) {
+                AbstractIdentifiableObject entity = (AbstractIdentifiableObject) o;
+                Optional.ofNullable(entity.getCustomFields()).ifPresent(fields -> fields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID));
+            }
+        }
     }
 
     @Override

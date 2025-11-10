@@ -21,7 +21,7 @@ package step.automation.packages;
 import step.attachments.FileResolver;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
@@ -90,7 +90,7 @@ public class AutomationPackagePlansAttributesApplier {
                 Method readMethod = pd.getReadMethod();
                 if (readMethod != null) {
                     EntityReference entityReference = readMethod.getAnnotation(EntityReference.class);
-                    if (entityReference != null && EntityManager.resources.equals(entityReference.type())) {
+                    if (entityReference != null && EntityConstants.resources.equals(entityReference.type())) {
                         entityReferenceDescriptors.add(pd);
                     }
                 }

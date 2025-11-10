@@ -918,12 +918,8 @@ public class AutomationPackageManager {
             throw new AutomationPackageManagerException("Unable to persist a resource in automation package", e);
         }
 
-        try {
-            for (Function completeFunction : staging.getFunctions()) {
-                functionManager.saveFunction(completeFunction);
-            }
-        } catch (SetupFunctionException | FunctionTypeException e) {
-            throw new AutomationPackageManagerException("Unable to persist a keyword in automation package", e);
+        for (Function completeFunction : staging.getFunctions()) {
+            functionAccessor.save(completeFunction);
         }
 
         for (Plan plan : staging.getPlans()) {
@@ -999,10 +995,8 @@ public class AutomationPackageManager {
         // get old functions with same name and reuse their ids
         List<Function> oldFunctions = oldPackage == null ? new ArrayList<>() : getPackageFunctions(oldPackage.getId());
         fillEntities(completeFunctions, oldFunctions, enricher);
-        //Only propagate metadata to all the functions if any of the metadata impacting the functions is set
-        if (newPackage.getActivationExpression() != null || newPackage.getFunctionsAttributes() != null || newPackage.getTokenSelectionCriteria() != null || newPackage.getExecuteFunctionsLocally()) {
-            propagatePackageMetadataToFunctions(newPackage, completeFunctions);
-        }
+        //Propagate metadata to all the functions
+        propagatePackageMetadataToFunctions(newPackage, completeFunctions);
         return completeFunctions;
     }
 
