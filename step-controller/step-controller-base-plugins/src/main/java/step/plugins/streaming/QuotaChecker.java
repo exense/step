@@ -128,37 +128,56 @@ public class QuotaChecker {
 
     /**
      * Monotonic size update (only grows).
-     * Enforces per-resource and per-execution quotas strictly (no temporary overshoot).
+     * Enforces per-resource and per-execution quotas.
      * Note: for a given resourceId, updates are expected to be performed by a single thread at a time (no concurrent writers).
+     * Because this method is invoked *after* the bytes were already written, we must allow a small overshoot for resources
+     * that were accepted for creation before the quota was reached. However, once the (total) quota is reached or exceeded,
+     * reservations for new resources will be outright refused
      */
     public void onSizeChanged(String resourceId, long currentSize) throws QuotaExceededException {
         if (currentSize < 0) throw new IllegalArgumentException("currentSize must be >= 0");
-        checkSizeQuotaPerResource(resourceId, currentSize);
-
         Long previousSize = resources.get(resourceId); // single-writer per resource => stable during this call
         if (previousSize == null)
             throw new IllegalStateException("Unexpected: Resource " + resourceId + " not tracked in this execution");
 
-        if (currentSize < previousSize) {
+        long delta = currentSize - previousSize;
+        if (delta < 0) {
             throw new IllegalArgumentException("Size update decreased for " + resourceId + " in execution " + executionId + ": " + currentSize + " < " + previousSize);
         }
-
-        long delta = currentSize - previousSize;
         if (delta == 0) return; // no-op
 
-        // If there is a per-execution cap, pre-acquire quota (strict cap, no overshoot).
+        // Always update the resource with current size, writes were already performed anyway.
+        resources.put(resourceId, currentSize);
+
+        // In theory, one write can violate both per-resource and per-execution quotas, so make sure all quotas
+        // are updated
+        QuotaExceededException exception = null;
+        try {
+            checkSizeQuotaPerResource(resourceId, currentSize);
+        } catch (QuotaExceededException e) {
+            exception = e;
+        }
+
+        // If there is a per-execution cap, acquire quota (may overshoot exactly once).
         if (limits.maxBytesPerExecution != null) {
-            if (!tryGrow(totalBytes, delta, limits.maxBytesPerExecution)) {
+            if (!grow(totalBytes, delta, limits.maxBytesPerExecution)) {
                 String msg = String.format(
                         "Total size for execution %s reached quota %d",
                         executionId, limits.maxBytesPerExecution);
                 logger.warn(msg);
-                throw new QuotaExceededException(msg);
+                QuotaExceededException ex2 = new QuotaExceededException(msg);
+                if (exception == null) {
+                    exception = ex2;
+                } else {
+                    exception.addSuppressed(ex2);
+                }
             }
         }
+        // throw a single exception (if present)
+        if (exception != null) {
+            throw exception;
+        }
 
-        // Commit the per-resource size after quota was secured (or immediately if no cap).
-        resources.put(resourceId, currentSize);
     }
 
     private void checkSizeQuotaPerResource(String resourceId, long currentSize) throws QuotaExceededException {
@@ -172,8 +191,8 @@ public class QuotaChecker {
     }
 
     // Lock-free growth of a shared counter by `delta`, capped at `maxAllowed`.
-    // Returns true if applied; false if it would exceed the cap.
-    private static boolean tryGrow(AtomicLong count, long delta, long maxAllowed) {
+    // Returns false if cap is reached or exceeded. Counter is always adjusted though.
+    private static boolean grow(AtomicLong count, long delta, long maxAllowed) {
         if (delta == 0) return true;                  // no-op
         if (delta < 0) throw new IllegalArgumentException("delta must be >= 0");
 
@@ -181,10 +200,10 @@ public class QuotaChecker {
         for (; ; ) {
             current = count.get();
             long remaining = maxAllowed - current;    // avoids (theoretical) overflow from current + delta
-            if (remaining < delta) return false;      // would exceed cap, leave unchanged
-            long next = current + delta;              // safe because remaining >= delta
+            long next = current + delta;              // update regardless of quota violation (SED-4352)
             if (count.compareAndSet(current, next)) {
-                return true;                          // success
+                // returns false if quota reached or exceeded, true if quota not reached
+                return remaining >= delta;
             }
             // else: raced; retry with fresh current
         }
