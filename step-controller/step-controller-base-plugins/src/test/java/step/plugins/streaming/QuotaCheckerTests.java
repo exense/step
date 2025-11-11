@@ -96,29 +96,6 @@ public class QuotaCheckerTests {
     }
 
     @Test
-    public void perExecutionQuotaEnforcedNoOvershootSingleExecution() throws Exception {
-        QuotaChecker checker = newChecker(5L, 10_000L, 150L); // exec cap = 150 bytes
-        reserveAndBind(checker, "r1");
-        reserveAndBind(checker, "r2");
-
-        checker.onSizeChanged("r1", 100L); // total = 100
-        assertEquals(100L, checker.totalBytes.get());
-        assertEquals(Long.valueOf(100L), checker.resources.get("r1"));
-        assertEquals(Long.valueOf(0L), checker.resources.get("r2"));
-
-        // Would push total to 160 (>150) -> must fail; r2 remains unchanged
-        QuotaExceededException ex = assertThrows(QuotaExceededException.class, () -> checker.onSizeChanged("r2", 60L));
-        assertTrue(ex.getMessage().contains("reached quota"));
-        assertEquals(Long.valueOf(0L), checker.resources.get("r2")); // unchanged
-        assertEquals(100L, checker.totalBytes.get()); // unchanged
-
-        // Growing r2 to 50 is allowed (100 + 50 == 150)
-        checker.onSizeChanged("r2", 50L);
-        assertEquals(150L, checker.totalBytes.get());
-        assertEquals(Long.valueOf(50L), checker.resources.get("r2"));
-    }
-
-    @Test
     public void totalsUpdateWithMultipleResourcesPerExecution() throws Exception {
         QuotaChecker checker = newChecker(10L, 1_000_000L, 1_000_000L);
 
@@ -166,15 +143,15 @@ public class QuotaCheckerTests {
         assertEquals(400L, exec1.totalBytes.get());
         assertEquals(350L, exec2.totalBytes.get());
 
-        // Try to exceed exec1 cap by growing r2 -> should fail; exec2 unaffected
+        // Exceed exec1 cap by growing r2 -> should throw but update counter; exec2 unaffected
         QuotaExceededException ex = assertThrows(QuotaExceededException.class, () -> exec1.onSizeChanged("r2", 350L)); // delta +50 => 450 > 400
         assertTrue(ex.getMessage().contains("reached quota"));
-        assertEquals(400L, exec1.totalBytes.get()); // unchanged
+        assertEquals(450L, exec1.totalBytes.get()); // violated, but updated
 
         // exec2 can still grow within its own cap
         exec2.onSizeChanged("s2", 240L); // delta +40 => 150 + 240 = 390
         assertEquals(390L, exec2.totalBytes.get());
-        assertEquals(400L, exec1.totalBytes.get()); // unchanged
+        assertEquals(450L, exec1.totalBytes.get()); // unchanged
     }
 
     @Test
@@ -207,6 +184,54 @@ public class QuotaCheckerTests {
 
         QuotaExceededException ex = assertThrows(QuotaExceededException.class, checker::reserveNewResource);
         assertTrue(ex.getMessage().contains("reached quota"));
+    }
+
+    @Test
+    public void reserveAndGrowNearLimitWithMultipleQuotaViolations()  throws Exception {
+        QuotaChecker checker = newChecker(10L, 100L, 100L);
+        // 99 is "just before" the execution limit, every additional (non-zero) write will reach the limit.
+        checker.totalBytes.set(99L);
+        // Create two uploads that will trigger the "total quota exceeded";
+        // (before fixing SED-4352): writes were performed and quota checker complained, but did not
+        // internally update its state to account for the "violating" bytes, thus constantly
+        // trying to exceed the limit but never adjusting its internal state, so reservations were still
+        // allowed but all writes resulted in exceptions. Now violating writes (which already happened anyway)
+        // update the limit, so a few may slightly overshoot, but future ones are correctly refused instead of
+        // being accepted, then throwing during write.
+        reserveAndBind(checker, "r1");
+        reserveAndBind(checker, "r2");
+        try {
+            checker.onSizeChanged("r1", 101L); // total: 99 -> 200
+            fail("Expected QuotaExceededException");
+        } catch (QuotaExceededException qe) {
+            // this one triggered both per-resource and per-execution quotas
+            assertEquals("Resource r1 reached resource size quota 100", qe.getMessage());
+            assertEquals(1, qe.getSuppressed().length);
+            String msg = qe.getSuppressed()[0].getMessage();
+            assertTrue(msg.startsWith("Total size for execution"));
+            assertTrue(msg.endsWith("reached quota 100"));
+        }
+        // New reservations won't go through anymore. This is what fixes SED-4352.
+        QuotaExceededException ex = assertThrows(QuotaExceededException.class, checker::reserveNewResource);
+        assertTrue(ex.getMessage().contains("reached quota"));
+
+        // However, r2 already was reserved before the quota was reached, so it can still perform (violating) writes
+        checker.onSizeChanged("r2", 0L); // Edge case, just test that 0-byte writes don't trigger any processing/exceptions
+        try {
+            checker.onSizeChanged("r2", 1L); // total: 200 -> 201
+            fail("Expected QuotaExceededException");
+        } catch (QuotaExceededException qe) {
+            String msg = qe.getMessage();
+            assertTrue(msg.startsWith("Total size for execution"));
+            assertTrue(msg.endsWith("reached quota 100"));
+            assertEquals(0, qe.getSuppressed().length);
+        }
+        assertEquals(201L, checker.totalBytes.get());
+
+        // for good measure, try (and fail) again
+        ex = assertThrows(QuotaExceededException.class, checker::reserveNewResource);
+        assertTrue(ex.getMessage().contains("reached quota"));
+
     }
 
 }
