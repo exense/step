@@ -50,6 +50,10 @@
             <groupId>ch.exense.streaming</groupId>
             <artifactId>step-streaming-impl-websocket-client-upload</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.connectors</groupId>
+            <artifactId>jersey-apache-connector</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

@@ -114,7 +114,7 @@
 	<dependencyManagement>
 		<dependencies>
 
-			<!-- TODO REMOVE -- temporary: directly override streaming version to avoid rebuilding api & grid every time -->
+			<!-- TODO REMOVE temporary: directly override streaming version to avoid rebuilding api & grid every time -->
 			<dependency>
 				<groupId>ch.exense.streaming</groupId>
 				<artifactId>step-streaming</artifactId>
