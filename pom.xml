@@ -114,11 +114,11 @@
 	<dependencyManagement>
 		<dependencies>
 
-			<!-- temporary: directly override streaming version to avoid rebuilding api & grid every time -->
+			<!-- TODO REMOVE -- temporary: directly override streaming version to avoid rebuilding api & grid every time -->
 			<dependency>
 				<groupId>ch.exense.streaming</groupId>
 				<artifactId>step-streaming</artifactId>
-				<version>2025.11.12-69148506d38caf136ff401cc</version>
+				<version>2025.11.12-6914aab4d38caf136f100a35</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
