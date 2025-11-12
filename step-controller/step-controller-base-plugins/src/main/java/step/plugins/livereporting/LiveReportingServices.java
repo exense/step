@@ -8,6 +8,7 @@ import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.Unfiltered;
 import step.core.reports.Measure;
+import step.framework.server.security.NoSession;
 import step.livereporting.LiveReportingContexts;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class LiveReportingServices extends AbstractStepServices {
     @Path("/{contextId}/measures")
     @Consumes(MediaType.APPLICATION_JSON)
     @Unfiltered
+    @NoSession
     public void injectMeasures(List<Measure> measures, @PathParam("contextId") String contextId) {
         liveReportingContexts.onMeasuresReceived(contextId, measures);
     }
