@@ -20,7 +20,7 @@ package step.automation.packages;
 
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractTrackedObject;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.EnricheableObject;
 
@@ -34,6 +34,8 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
 
     private String automationPackageResource;
     private String automationPackageLibraryResource;
+    private String automationPackageResourceRevision;
+    private String automationPackageLibraryResourceRevision;
 
     /**
      * function attributes to be applied to all functions (aka keywords)
@@ -129,7 +131,7 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
     /**
      * @return the resource path to the package libraries. Package libraries are either a folder of jar or DLLs
      */
-    @EntityReference(type= EntityManager.resources)
+    @EntityReference(type= EntityConstants.resources)
     public String getAutomationPackageLibraryResource() {
         return automationPackageLibraryResource;
     }
@@ -138,7 +140,7 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
         this.automationPackageLibraryResource = automationPackageLibraryResource;
     }
 
-    @EntityReference(type= EntityManager.resources)
+    @EntityReference(type= EntityConstants.resources)
     public String getAutomationPackageResource() {
         return automationPackageResource;
     }
@@ -147,4 +149,19 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
         this.automationPackageResource = automationPackageResource;
     }
 
+    public String getAutomationPackageResourceRevision() {
+        return automationPackageResourceRevision;
+    }
+
+    public void setAutomationPackageResourceRevision(String automationPackageResourceRevision) {
+        this.automationPackageResourceRevision = automationPackageResourceRevision;
+    }
+
+    public String getAutomationPackageLibraryResourceRevision() {
+        return automationPackageLibraryResourceRevision;
+    }
+
+    public void setAutomationPackageLibraryResourceRevision(String automationPackageLibraryResourceRevision) {
+        this.automationPackageLibraryResourceRevision = automationPackageLibraryResourceRevision;
+    }
 }

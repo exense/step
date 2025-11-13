@@ -44,6 +44,7 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.entities.Bean;
 import step.core.entities.Entity;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessorImpl;
@@ -123,8 +124,11 @@ public class Controller {
 		sessionResponseBuilder.registerHook(s -> Map.of("authenticated", s.isAuthenticated()));
 
 		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));
-		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(
-				collectionFactory.getCollection("resourceRevisions", ResourceRevision.class));
+
+		Collection<ResourceRevision> resourceRevisionCollection = collectionFactory.getCollection(EntityConstants.resourceRevisions, ResourceRevision.class);
+		resourceRevisionCollection.createOrUpdateIndex("resourceId");
+		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(resourceRevisionCollection);
+
 		String resourceRootDir = ResourceManagerControllerPlugin.getResourceDir(configuration);
 		ResourceManager resourceManager = new ResourceManagerImpl(new File(resourceRootDir), resourceAccessor, resourceRevisionAccessor);
 		context.setResourceManager(resourceManager);
@@ -192,14 +196,14 @@ public class Controller {
 				.register(new Entity<Bean, AbstractAccessor<Bean>>("beans",
 						new AbstractAccessor(context.getCollectionFactory().getCollection("beans", Bean.class)),
 						Bean.class))
-				.register(new Entity<>(EntityManager.executions, context.getExecutionAccessor(), Execution.class))
+				.register(new Entity<>(EntityConstants.executions, context.getExecutionAccessor(), Execution.class))
 				.register(new PlanEntity(context.getPlanAccessor(), planLocator, entityManager))
-				.register(new Entity<>(EntityManager.reports, context.getReportAccessor(), ReportNode.class))
+				.register(new Entity<>(EntityConstants.reports, context.getReportAccessor(), ReportNode.class))
 				.register(new ScheduleEntity(context.getScheduleAccessor(), ExecutiontTaskParameters.class, entityManager))
-				.register(new Entity<>(EntityManager.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class))
-				.register(new Entity<>(EntityManager.users, context.getUserAccessor(), User.class))
+				.register(new Entity<>(EntityConstants.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class))
+				.register(new Entity<>(EntityConstants.users, context.getUserAccessor(), User.class))
 				.register(new ResourceEntity(resourceAccessor, entityManager))
-				.register(new Entity<>(EntityManager.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
+				.register(new Entity<>(EntityConstants.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 		
 		entityManager.registerImportHook(new ResourceImporter(context.getResourceManager()));
 

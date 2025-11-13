@@ -2,7 +2,7 @@ package step.cli.parameters;
 
 public class ApDeployParameters extends ApParameters<ApDeployParameters> {
     private Boolean async;
-    private String apVersion;
+    private String versionName;
     private String activationExpression;
     private Boolean forceRefreshOfSnapshots;
 
@@ -15,12 +15,12 @@ public class ApDeployParameters extends ApParameters<ApDeployParameters> {
         return this;
     }
 
-    public String getApVersion() {
-        return apVersion;
+    public String getVersionName() {
+        return versionName;
     }
 
-    public ApDeployParameters setApVersion(String apVersion) {
-        this.apVersion = apVersion;
+    public ApDeployParameters setVersionName(String versionName) {
+        this.versionName = versionName;
         return this;
     }
 

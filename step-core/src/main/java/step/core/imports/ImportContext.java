@@ -39,7 +39,6 @@ public class ImportContext implements AutoCloseable {
 	private Map<String, String> metadata;
 
 	private final File workFolder;
-	private final LocalResourceManagerImpl localResourceMgr;
 
 	private final CollectionFactory tempCollectionFactory;
 
@@ -53,7 +52,6 @@ public class ImportContext implements AutoCloseable {
 
 		tempCollectionFactory = new InMemoryCollectionFactory(null);
 		workFolder = FileHelper.createTempFolder("step-import");
-		localResourceMgr = new LocalResourceManagerImpl(workFolder);
 	}
 
 	public ImportConfiguration getImportConfiguration() {
@@ -74,10 +72,6 @@ public class ImportContext implements AutoCloseable {
 
 	public void setMetadata(Map<String, String> metadata) {
 		this.metadata = metadata;
-	}
-
-	public LocalResourceManagerImpl getLocalResourceMgr() {
-		return localResourceMgr;
 	}
 
 	public CollectionFactory getTempCollectionFactory() {

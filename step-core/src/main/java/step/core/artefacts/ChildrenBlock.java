@@ -2,7 +2,7 @@ package step.core.artefacts;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.core.yaml.YamlModel;
 import step.core.yaml.model.YamlChildrenBlock;
@@ -27,7 +27,7 @@ public class ChildrenBlock {
         return steps.add(e);
     }
 
-    @EntityReference(type= EntityManager.recursive)
+    @EntityReference(type= EntityConstants.recursive)
     public List<AbstractArtefact> getSteps() {
         return steps;
     }

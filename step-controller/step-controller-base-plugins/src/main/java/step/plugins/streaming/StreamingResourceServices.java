@@ -101,8 +101,7 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
 
         manager.checkDownloadPermission(entity, getSession());
         // argument validation is performed in this method, may throw various exceptions
-        Stream<String> lines = manager.getLines(resourceId, startIndex, count);
-        return lines.collect(Collectors.toList());
+        return manager.getLines(resourceId, startIndex, count);
     }
 
 

@@ -31,11 +31,11 @@ public class ApCommand implements Callable<Integer> {
 
     public static abstract class AbstractApCommand extends StepConsole.AbstractStepCommand {
 
-        @CommandLine.Option(names = {"-p", "--package"}, paramLabel = "<AutomationPackage>", description = "The path to the automation-package.yaml file, folder or the archive containing it. Maven coordinate (example mvn:groupId:artefactId:version) are supported.")
+        @CommandLine.Option(names = {"-p", "--package"}, paramLabel = "<Package>", description = "The path to the automation-package.yaml file, folder or the archive containing it. Maven coordinate (example mvn:groupId:artefactId:version) are supported.")
         protected String apFile;
 
-        @CommandLine.Option(names = {"--packageLibrary"}, paramLabel = "<PackageLibrary>", description = "The file path, maven coordinate (example mvn:groupId:artefactId:version), or the name of an existing managed library (example managed:MY_COMMON_LIBRARY).")
-        protected String packageLibrary;
+        @CommandLine.Option(names = {"-l", "--library"}, paramLabel = "<Library>", description = "The file path, maven coordinate (example mvn:groupId:artefactId:version), or the name of an existing managed library (example managed:MY_COMMON_LIBRARY).")
+        protected String library;
 
         /**
          * If the param points to the folder, prepares the zipped AP file with .stz extension.
@@ -112,18 +112,18 @@ public class ApCommand implements Callable<Integer> {
             subcommands = {CommandLine.HelpCommand.class})
     public static class ApDeployCommand extends AbstractApCommand {
 
-        public static final String AP_VERSION = "--apVersion";
+        public static final String VERSION_NAME = "--versionName";
         public static final String FORCE_REFRESH_OF_SNAPSHOTS = "--forceRefreshOfSnapshots";
 
         @CommandLine.Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
                 description = "Whether to waits for the deployment to complete")
         protected boolean async;
 
-        @CommandLine.Option(names = {AP_VERSION}, description = "Optionally set the version of this automation package. This allows to deploy and use multiple versions of the same package on Step. If a version is set, them the activation expression is required too.")
-        protected String apVersion;
+        @CommandLine.Option(names = {VERSION_NAME}, description = "Optionally set the version of this automation package. This allows to deploy and use multiple versions of the same package on Step. If a version is set, them the activation expression is required too.")
+        protected String versionName;
 
-        @CommandLine.Option(names = {"--activationExpr"}, description = "When deploying multiple versions of the same package (see \"apVersion\"), the expression is used to select the proper versions during the execution of plans. Example: \"env == PROD\"")
-        protected String activationExpr;
+        @CommandLine.Option(names = {"--activationExpression"}, description = "When deploying multiple versions of the same package (see \"apVersion\"), the expression is used to select the proper versions during the execution of plans. Example: \"env == PROD\"")
+        protected String activationExpression;
 
         @CommandLine.Option(names = {FORCE_REFRESH_OF_SNAPSHOTS}, defaultValue = "false",
                 description = "To force the refresh of snapshot content when available in the remote repository, this will trigger reloading all automation packages using the same snapshot artefact in case of update.")
@@ -139,8 +139,8 @@ public class ApCommand implements Callable<Integer> {
         protected void handleApDeployCommand() {
             checkAll();
             MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);
-            MavenArtifactIdentifier packageLibraryMavenArtifact = getMavenArtifact(packageLibrary);
-            String managedLibraryName = getManagedLibraryName(packageLibrary);
+            MavenArtifactIdentifier packageLibraryMavenArtifact = getMavenArtifact(library);
+            String managedLibraryName = getManagedLibraryName(library);
 
             ApDeployParameters params = new ApDeployParameters()
                     .setAsync(async)
@@ -149,11 +149,11 @@ public class ApCommand implements Callable<Integer> {
                     .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
                     .setStepProjectName(getStepProjectName())
                     .setAuthToken(getAuthToken())
-                    .setApVersion(apVersion)
-                    .setActivationExpression(activationExpr)
-                    .setPackageLibraryMavenArtifact(packageLibraryMavenArtifact)
-                    .setAutomationPackageManagedLibraryName(managedLibraryName)
-                    .setPackageLibraryFile(packageLibraryMavenArtifact != null || managedLibraryName != null || packageLibrary == null || packageLibrary.isEmpty() ? null : preparePackageLibraryFile(packageLibrary));
+                    .setVersionName(versionName)
+                    .setActivationExpression(activationExpression)
+                    .setlibraryMavenArtifact(packageLibraryMavenArtifact)
+                    .setManagedLibraryName(managedLibraryName)
+                    .setLibraryFile(packageLibraryMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library));
             executeTool(stepUrl, params);
         }
 
@@ -264,8 +264,10 @@ public class ApCommand implements Callable<Integer> {
             }
 
             File packageLibraryFile = null;
-            if (packageLibrary != null && !packageLibrary.isEmpty()) {
-                packageLibraryFile = preparePackageLibraryFile(packageLibrary);
+            if (library != null && !library.isEmpty()) {
+                // TODO: SED-4035 - classloader issue for local execution with library - should be fixed later
+                throw new StepCliExecutionException("Libraries are not supported for local execution");
+//                packageLibraryFile = preparePackageLibraryFile(library);
             }
 
             executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
@@ -285,16 +287,16 @@ public class ApCommand implements Callable<Integer> {
 
             List<ExecuteAutomationPackageTool.Report> reports = parseReportsParams();
             MavenArtifactIdentifier apMavenArtifact = getMavenArtifact(apFile);
-            MavenArtifactIdentifier packageLibMavenArtifact = getMavenArtifact(packageLibrary);
-            String managedLibraryName = getManagedLibraryName(packageLibrary);
+            MavenArtifactIdentifier packageLibMavenArtifact = getMavenArtifact(library);
+            String managedLibraryName = getManagedLibraryName(library);
 
             executeRemotely(stepUrl,
                     new ApExecuteParameters()
                             .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
                             .setAutomationPackageMavenArtifact(apMavenArtifact)
-                            .setPackageLibraryFile(packageLibMavenArtifact != null || managedLibraryName != null || packageLibrary == null || packageLibrary.isEmpty() ? null : preparePackageLibraryFile(packageLibrary))
-                            .setPackageLibraryMavenArtifact(packageLibMavenArtifact)
-                            .setAutomationPackageManagedLibraryName(managedLibraryName)
+                            .setLibraryFile(packageLibMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library))
+                            .setlibraryMavenArtifact(packageLibMavenArtifact)
+                            .setManagedLibraryName(managedLibraryName)
                             .setStepProjectName(getStepProjectName())
                             .setUserId(stepUser)
                             .setAuthToken(getAuthToken())

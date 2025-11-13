@@ -116,6 +116,11 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
+    public ResourceRevisionFileHandle getResourceFile(String resourceId, String revisionId) {
+        return layeredLookup(resourceManager -> resourceManager.getResourceFile(resourceId, revisionId));
+    }
+
+    @Override
     public Resource getResource(String resourceId) {
         return layeredLookup(resourceManager -> resourceManager.getResource(resourceId));
     }
@@ -161,6 +166,11 @@ public class LayeredResourceManager implements ResourceManager {
     @Override
     public Resource copyResource(Resource resource, ResourceManager sourceResourceManager, String actorUser) throws IOException, InvalidResourceFormatException {
         return getManagerForPersistence().copyResource(resource, sourceResourceManager, actorUser);
+    }
+
+    @Override
+    public Resource saveResourceContent(Resource resource, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().saveResourceContent(resource, resourceStream, resourceFileName, optionalResourceName, actorUser);
     }
 
     @Override
@@ -226,6 +236,13 @@ public class LayeredResourceManager implements ResourceManager {
 
     protected <V> List<V> layeredSearch(Function<ResourceManager, List<V>> searchFunction) {
         return resourceManagers.stream().map(searchFunction).flatMap(Collection::stream).collect(Collectors.toList());
+    }
+
+    @Override
+    public void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision) {
+        for (ResourceManager resourceManager : resourceManagers) {
+            resourceManager.findAndCleanupUnusedRevision(resource, usedRevision);
+        }
     }
 
     @Override

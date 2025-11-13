@@ -9,9 +9,9 @@ public abstract class ApParameters<T extends ApParameters<T>> extends Parameters
 
     private File automationPackageFile;
     private MavenArtifactIdentifier automationPackageMavenArtifact;
-    private MavenArtifactIdentifier automationPackageLibraryMavenArtifact;
-    private File automationPackageLibraryFile;
-    private String automationPackageManagedLibraryName;
+    private MavenArtifactIdentifier libraryMavenArtifact;
+    private File libraryFile;
+    private String managedLibraryName;
 
     /**
      * @return the maven snippet of automation package to be uploaded or null to use the local file instead.
@@ -26,32 +26,32 @@ public abstract class ApParameters<T extends ApParameters<T>> extends Parameters
         return (T) this;
     }
 
-    public MavenArtifactIdentifier getAutomationPackageLibraryMavenArtifact() {
-        return automationPackageLibraryMavenArtifact;
+    public MavenArtifactIdentifier getLibraryMavenArtifact() {
+        return libraryMavenArtifact;
     }
 
-    public T setPackageLibraryMavenArtifact(MavenArtifactIdentifier packageLibraryMavenArtifact) {
-        this.automationPackageLibraryMavenArtifact = packageLibraryMavenArtifact;
+    public T setlibraryMavenArtifact(MavenArtifactIdentifier libraryMavenArtifact) {
+        this.libraryMavenArtifact = libraryMavenArtifact;
         //noinspection unchecked
         return (T) this;
     }
 
-    public File getAutomationPackageLibraryFile() {
-        return automationPackageLibraryFile;
+    public File getLibraryFile() {
+        return libraryFile;
     }
 
-    public T setPackageLibraryFile(File packageLibraryFile) {
-        this.automationPackageLibraryFile = packageLibraryFile;
+    public T setLibraryFile(File libraryFile) {
+        this.libraryFile = libraryFile;
         //noinspection unchecked
         return (T) this;
     }
 
-    public String getAutomationPackageManagedLibraryName() {
-        return automationPackageManagedLibraryName;
+    public String getManagedLibraryName() {
+        return managedLibraryName;
     }
 
-    public T setAutomationPackageManagedLibraryName(String automationPackageManagedLibraryName) {
-        this.automationPackageManagedLibraryName = automationPackageManagedLibraryName;
+    public T setManagedLibraryName(String managedLibraryName) {
+        this.managedLibraryName = managedLibraryName;
         //noinspection unchecked
         return (T) this;
     }
@@ -70,7 +70,7 @@ public abstract class ApParameters<T extends ApParameters<T>> extends Parameters
         if (getAutomationPackageFile() != null && getAutomationPackageMavenArtifact() != null) {
             throw new StepCliExecutionException("Invalid parameters detected. The automation package should be referenced either as local file or as maven snipped");
         }
-        if (getAutomationPackageLibraryFile() != null && getAutomationPackageLibraryMavenArtifact() != null) {
+        if (getLibraryFile() != null && getLibraryMavenArtifact() != null) {
             throw new StepCliExecutionException("Invalid parameters detected. The automation package library should be referenced either as local file or as maven snipped");
         }
     }

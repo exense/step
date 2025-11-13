@@ -32,6 +32,7 @@ import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.entities.Entity;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
@@ -102,19 +103,19 @@ public class GlobalContextBuilder {
 
 		context.setEntityManager(new EntityManager());
 		context.getEntityManager()
-				.register(new Entity<Execution, ExecutionAccessor>(EntityManager.executions,
+				.register(new Entity<Execution, ExecutionAccessor>(EntityConstants.executions,
 						context.getExecutionAccessor(), Execution.class))
-				.register(new Entity<Plan, PlanAccessor>(EntityManager.plans, context.getPlanAccessor(), Plan.class))
-				.register(new Entity<ReportNode, ReportNodeAccessor>(EntityManager.reports, context.getReportAccessor(),
+				.register(new Entity<Plan, PlanAccessor>(EntityConstants.plans, context.getPlanAccessor(), Plan.class))
+				.register(new Entity<ReportNode, ReportNodeAccessor>(EntityConstants.reports, context.getReportAccessor(),
 						ReportNode.class))
-				.register(new Entity<ExecutiontTaskParameters, ExecutionTaskAccessor>(EntityManager.tasks,
+				.register(new Entity<ExecutiontTaskParameters, ExecutionTaskAccessor>(EntityConstants.tasks,
 						context.getScheduleAccessor(), ExecutiontTaskParameters.class))
-				.register(new Entity<User, UserAccessor>(EntityManager.users, context.getUserAccessor(), User.class))
-				.register(new Entity<Function, FunctionAccessor>(EntityManager.functions,
+				.register(new Entity<User, UserAccessor>(EntityConstants.users, context.getUserAccessor(), User.class))
+				.register(new Entity<Function, FunctionAccessor>(EntityConstants.functions,
 						(FunctionAccessor) functionAccessor, Function.class))
-				.register(new Entity<Resource, ResourceAccessor>(EntityManager.resources, resourceAccessor,
+				.register(new Entity<Resource, ResourceAccessor>(EntityConstants.resources, resourceAccessor,
 						Resource.class))
-				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityManager.resourceRevisions,
+				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityConstants.resourceRevisions,
 						resourceRevisionAccessor, ResourceRevision.class));
 
 		context.setArtefactHandlerRegistry(new ArtefactHandlerRegistry());

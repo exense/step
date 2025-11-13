@@ -23,9 +23,11 @@ import step.core.objectenricher.ObjectPredicate;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 
 public interface ResourceManager {
 
@@ -74,6 +76,8 @@ public interface ResourceManager {
 	ResourceRevisionContent getResourceContent(String resourceId) throws IOException;
 
 	ResourceRevisionFileHandle getResourceFile(String resourceId);
+
+	ResourceRevisionFileHandle getResourceFile(String resourceId, String revisionId);
 
 	Resource getResource(String resourceId);
 
@@ -132,6 +136,22 @@ public interface ResourceManager {
 			throws IOException, InvalidResourceFormatException;
 
 	/**
+	 * Save the content provided as stream to an existing resource.
+	 * This creates a new {@link ResourceRevision} for the {@link Resource}
+	 * and saves the content provided as stream under this revision.
+	 *
+	 * @param resource       the resource to be updated
+	 * @param resourceStream   the stream of the resource to be saved
+	 * @param resourceFileName the name of the resource (filename)
+	 * @param optionalResourceName an optional name for the resource, the filename os used otherwise
+	 * @param actorUser       the user triggering the operation
+	 * @return the updated {@link Resource}
+	 * @throws IOException an IOException occurs during the call
+	 */
+	Resource saveResourceContent(Resource resource, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser)
+			throws IOException, InvalidResourceFormatException;
+
+	/**
 	 * Saved the resource object only
 	 * @param resource the resource to be saved
 	 * @return the updated {@link Resource}
@@ -153,6 +173,13 @@ public interface ResourceManager {
 
 	List<Resource> findManyByCriteria(Map<String, String> criteria);
 
+	void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision);
+
 	default void cleanup() {
 	}
+
+	public static Path getResourceFilePath(String basePath, String resourceType, String resourceId, String revisionId, String fileName) {
+		return Paths.get(basePath, resourceType, resourceId, revisionId, fileName);
+	}
+
 }

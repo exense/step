@@ -23,6 +23,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
+import step.automation.packages.AutomationPackageEntity;
 import step.commons.activation.Expression;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
@@ -39,6 +40,7 @@ import step.parameter.ParameterScope;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -133,6 +135,8 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		// Create a clone of the source parameter
 		Parameter newParameter = parameterAccessor.get(new ObjectId(id));
 		newParameter.setId(new ObjectId());
+		//Remove link to AP
+		Optional.ofNullable(newParameter.getCustomFields()).ifPresent(fields -> fields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID));
 		return save(newParameter, sourceParameter);
 	}
 

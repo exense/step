@@ -39,15 +39,15 @@ public class DeployAutomationPackageTool extends AbstractCliTool<ApDeployParamet
                 mavenAutomationPackageXml = createMavenArtifactXml(parameters.getAutomationPackageMavenArtifact());
             }
             String mavenPackageLibraryXml = null;
-            if (parameters.getAutomationPackageLibraryMavenArtifact() != null) {
-                mavenPackageLibraryXml = createMavenArtifactXml(parameters.getAutomationPackageLibraryMavenArtifact());
+            if (parameters.getLibraryMavenArtifact() != null) {
+                mavenPackageLibraryXml = createMavenArtifactXml(parameters.getLibraryMavenArtifact());
             }
 
             try {
                 updateResult = automationPackageClient.createOrUpdateAutomationPackage(
                         createPackageSource(parameters.getAutomationPackageFile(), mavenAutomationPackageXml),
-                        createLibrarySource(parameters.getAutomationPackageLibraryFile(), mavenPackageLibraryXml, parameters.getAutomationPackageManagedLibraryName()),
-                        parameters.getApVersion(), parameters.getActivationExpression(), null, null, null, null,
+                        createLibrarySource(parameters.getLibraryFile(), mavenPackageLibraryXml, parameters.getManagedLibraryName()),
+                        parameters.getVersionName(), parameters.getActivationExpression(), null, null, null, null,
                         parameters.getAsync(), parameters.getForceRefreshOfSnapshots()
 
                 );

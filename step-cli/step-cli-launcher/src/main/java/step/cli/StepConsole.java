@@ -147,9 +147,9 @@ public class StepConsole implements Callable<Integer> {
             }
         }
 
-        protected String getManagedLibraryName(String packageLibraryParam) {
-            if (packageLibraryParam != null && packageLibraryParam.startsWith(MANAGED)) {
-                return packageLibraryParam.substring(MANAGED.length());
+        protected String getManagedLibraryName(String managedLibraryName) {
+            if (managedLibraryName != null && managedLibraryName.startsWith(MANAGED)) {
+                return managedLibraryName.substring(MANAGED.length());
             } else {
                 return null;
             }

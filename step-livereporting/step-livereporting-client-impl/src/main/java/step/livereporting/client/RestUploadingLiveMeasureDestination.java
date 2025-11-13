@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.reports.Measure;
 import step.reporting.impl.LiveMeasureDestination;
+import step.streaming.util.BatchProcessor;
 
 import java.util.List;
 

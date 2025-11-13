@@ -28,7 +28,7 @@ public class AutomationPackageUpdateParameterBuilder {
     private Map<String, String> plansAttributes;
     private Map<String, String> tokenSelectionCriteria;
     private boolean executeFunctionsLocally;
-    private boolean isRedeployment = false;
+    private boolean reloading = false;
 
     public AutomationPackageUpdateParameterBuilder withAllowUpdate(boolean allowUpdate) {
         this.allowUpdate = allowUpdate;
@@ -162,7 +162,7 @@ public class AutomationPackageUpdateParameterBuilder {
         this.plansAttributes = oldPackage.getPlansAttributes();
         this.tokenSelectionCriteria = oldPackage.getTokenSelectionCriteria();
         this.executeFunctionsLocally = oldPackage.getExecuteFunctionsLocally();
-        this.isRedeployment = true;
+        this.reloading = true;
         return this;
     }
 
@@ -208,7 +208,7 @@ public class AutomationPackageUpdateParameterBuilder {
         return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource,
                 apLibrarySource, versionName, activationExpression, enricher, objectPredicate, writeAccessValidator,
                 async, actorUser, forceRefreshOfSnapshots, checkForSameOrigin, functionsAttributes, plansAttributes,
-                tokenSelectionCriteria, executeFunctionsLocally, isRedeployment);
+                tokenSelectionCriteria, executeFunctionsLocally, reloading);
     }
 
 

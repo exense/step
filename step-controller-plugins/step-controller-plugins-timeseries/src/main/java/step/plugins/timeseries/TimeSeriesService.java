@@ -15,10 +15,9 @@ import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.timeseries.*;
-import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.metric.MetricType;
 import step.core.timeseries.metric.MetricTypeAccessor;
 import step.framework.server.security.Secured;
@@ -27,8 +26,6 @@ import step.plugins.timeseries.api.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static step.plugins.timeseries.TimeSeriesControllerPlugin.*;
 
 @Singleton
 @Path("/time-series")
@@ -49,7 +46,7 @@ public class TimeSeriesService extends AbstractStepServices {
         GlobalContext context = getContext();
         List<String> timeSeriesAttributes = context.get(TimeSeriesBucketingHandler.class).getHandledAttributes();
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
-        Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityManager.measurements, Measurement.class);
+        Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Measurement.class);
         metricTypeAccessor = context.require(MetricTypeAccessor.class);
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
