@@ -45,7 +45,7 @@ public class QuotaChecker {
     /**
      * Upcoming uploads which don't have an ID yet
      */
-    final Set<String> reservations = new HashSet<>();
+    final Set<String> reservations = ConcurrentHashMap.newKeySet();
 
     private final String executionId;
 
