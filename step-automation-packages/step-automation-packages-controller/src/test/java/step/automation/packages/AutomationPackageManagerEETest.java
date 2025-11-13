@@ -184,6 +184,7 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
     @Test
     public void testManagedLibrary(){
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
+        File anotherAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
 
         File libJar = new File("src/test/resources/samples/" + KW_LIB_FILE_NAME);
         File libJarUpdated = new File("src/test/resources/samples/" + KW_LIB_FILE_UPDATED_NAME);
@@ -194,6 +195,7 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             AutomationPackageFileSource sample1ApSource = AutomationPackageFileSource.withInputStream(is, SAMPLE1_FILE_NAME);
+            AutomationPackageFileSource anotherApSource = AutomationPackageFileSource.withInputStream(isAnother, SAMPLE1_EXTENDED_FILE_NAME);
             AutomationPackageFileSource libSource = AutomationPackageFileSource.withMavenIdentifier(libVersion1);
 
             // 1. Create managed library by Global Admin

@@ -5,6 +5,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
+import step.automation.packages.AutomationPackageEntity;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractIdentifiableObject;
@@ -182,6 +183,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             Map<String, Object> customFields = organizableObject.getCustomFields();
             if (customFields != null) {
                 customFields.remove(CUSTOM_FIELD_LOCKED);
+                customFields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
             }
         }
         // Save the cloned entity

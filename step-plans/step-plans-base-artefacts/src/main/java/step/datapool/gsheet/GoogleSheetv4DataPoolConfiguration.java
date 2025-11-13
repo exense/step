@@ -21,7 +21,7 @@ package step.datapool.gsheet;
 import step.artefacts.automation.datasource.YamlGSheetDataSource;
 
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
 import step.core.yaml.YamlModel;
@@ -45,7 +45,7 @@ public class GoogleSheetv4DataPoolConfiguration extends DataPoolConfiguration {
 		this.fileId = fileId;
 	}
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getServiceAccountKey() {
 		return serviceAccountKey;
 	}

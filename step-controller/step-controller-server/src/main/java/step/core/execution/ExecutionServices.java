@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import step.core.artefacts.reports.aggregated.AggregatedReport;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewRequest;
 import step.core.artefacts.reports.aggregated.FlatAggregatedReport;
+import step.core.entities.EntityConstants;
 import step.reports.CustomReportType;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
@@ -41,7 +42,6 @@ import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.deployment.FindByCriteraParam;
-import step.core.entities.EntityManager;
 import step.core.execution.model.*;
 import step.core.repositories.RepositoryObjectReference;
 import step.framework.server.Session;
@@ -427,7 +427,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 			}
 		};
 		return scheduleAsyncTaskWithinSessionContext(h ->
-				tableService.performBulkOperation(EntityManager.executions, request, consumer, getSession()));
+				tableService.performBulkOperation(EntityConstants.executions, request, consumer, getSession()));
 	}
 
 	@Operation(description = "Stop multiple executions according to the provided parameters.")
@@ -444,7 +444,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 			}
 		};
 		return scheduleAsyncTaskWithinSessionContext(h ->
-				tableService.performBulkOperation(EntityManager.executions, request, consumer, getSession()));
+				tableService.performBulkOperation(EntityConstants.executions, request, consumer, getSession()));
 	}
 
 }

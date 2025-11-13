@@ -36,6 +36,7 @@ import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
 import step.core.collections.Filters;
 import step.core.entities.Entity;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityManager;
 import step.migration.MigrationManager;
 
@@ -137,8 +138,8 @@ public class ImportManager {
 			entityNames.forEach(entityName -> replaceIds(importContext, entityName));
 		}
 
-		// Then import them from the temporary collection
-		entityNames.forEach(entityName -> importFromTempCollection(importContext, entityName, generateNewObjectIds));
+		// Then import them from the temporary collection to database at the exception of resource revisions which are created using the resource manager
+		entityNames.stream().filter(e -> !EntityConstants.resourceRevisions.equals(e)).forEach(entityName -> importFromTempCollection(importContext, entityName, generateNewObjectIds));
 	}
 
 	private void replaceIds(ImportContext importContext, String entityName) {
@@ -229,11 +230,6 @@ public class ImportManager {
 				entityManager.updateReferences(entity, importContext.getReferences(), o -> true, importContext.getMessages());
 
 			}
-			// save the entity before running the import hooks. this is needed because
-			// the ResourceImporter relies on the ResourceManager that is backed by the
-			// ResourceAccessor of the GlobalContext. Remove this as soon as the
-			// ResourceImporter doesn't need it anymore
-			accessor.save(entity);
 			// import hooks
 			entityManager.runImportHooks(entity, importContext);
 			// save again after having applied the import hooks
@@ -252,7 +248,7 @@ public class ImportManager {
 				firstValue = jParser.getValueAsString();
 			}
 		}
-		if (firstKey.equals("_class") && !skipEntityType(importConfig.getEntitiesFilter(), EntityManager.plans)) {
+		if (firstKey.equals("_class") && !skipEntityType(importConfig.getEntitiesFilter(), EntityConstants.plans)) {
 			String collectionName;
 			Version version;
 			if (firstValue.startsWith("step.")) {
@@ -278,7 +274,7 @@ public class ImportManager {
 				}
 			}
 
-			importEntitiesFromTemporaryCollection(importConfig, importContext, List.of(EntityManager.plans));
+			importEntitiesFromTemporaryCollection(importConfig, importContext, List.of(EntityConstants.plans));
 		} else {
 			logger.error("Import failed, the first property was unexpected '" + firstKey + "':'" + firstValue + "'");
 			throw new RuntimeException("Import failed, the first property was unexpected '" + firstKey + "':'"

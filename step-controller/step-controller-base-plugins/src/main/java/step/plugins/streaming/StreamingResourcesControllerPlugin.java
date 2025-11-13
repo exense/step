@@ -19,7 +19,6 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
-import step.grid.threads.NamedThreadFactory;
 import step.resources.ResourceManagerControllerPlugin;
 import step.resources.StreamingResourceContentProvider;
 import step.streaming.common.StreamingResourceUploadContexts;
@@ -33,7 +32,6 @@ import step.streaming.websocket.server.WebsocketUploadEndpoint;
 
 import java.io.File;
 import java.net.URI;
-import java.util.concurrent.*;
 import java.util.function.Supplier;
 
 import static step.plugins.streaming.StepStreamingResourceManager.ATTRIBUTE_STEP_SESSION;
@@ -69,20 +67,7 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(context);
         URITemplateBasedReferenceProducer referenceProducer = new URITemplateBasedReferenceProducer(websocketBaseUri, DOWNLOAD_PATH, DOWNLOAD_PARAMETER_NAME);
 
-        int uploadsPoolSize = conf.getPropertyAsInteger("streaming.uploads.poolsize", 16);
-        int uploadsQueueSize = conf.getPropertyAsInteger("streaming.uploads.queuesize", 1000);
-
-        // behavior: this will scale up to uploadsPoolSize threads when needed (and back down to 0 when idle),
-        // then will start enqueuing requests up to the pool size before rejecting them
-        ThreadPoolExecutor uploadProcessorPool = new ThreadPoolExecutor(uploadsPoolSize, uploadsPoolSize,
-                30L, TimeUnit.SECONDS,
-                new ArrayBlockingQueue<>(uploadsQueueSize),
-                NamedThreadFactory.create("ws-upload-processor", true)
-        );
-        uploadProcessorPool.allowCoreThreadTimeOut(true);
-
-        //ExecutorService uploadProcessorPool = Executors.newFixedThreadPool(16, ThreadPools.namedDaemon("ws-uploads"));
-        manager = new StepStreamingResourceManager(context, catalog, storage, referenceProducer, uploadContexts, uploadProcessorPool);
+        manager = new StepStreamingResourceManager(context, catalog, storage, referenceProducer, uploadContexts);
 
         context.put(StepStreamingResourceManager.class, manager);
         context.getServiceRegistrationCallback().registerService(StreamingResourceServices.class);

@@ -169,6 +169,11 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
+    public Resource saveResourceContent(Resource resource, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser) throws IOException, InvalidResourceFormatException {
+        return getManagerForPersistence().saveResourceContent(resource, resourceStream, resourceFileName, optionalResourceName, actorUser);
+    }
+
+    @Override
     public Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser) throws IOException, InvalidResourceFormatException {
         return getManagerForPersistence().saveResourceContent(resourceId, resourceStream, resourceFileName, optionalResourceName, actorUser);
     }

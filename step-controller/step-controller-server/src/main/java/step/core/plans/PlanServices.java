@@ -39,7 +39,7 @@ import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.deployment.ControllerServiceException;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.framework.server.security.Secured;
@@ -70,7 +70,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	private final YamlPlanReader yamlPlanReader = new YamlPlanReader();
 
 	public PlanServices() {
-		super(EntityManager.plans);
+		super(EntityConstants.plans);
 	}
 
 	@PostConstruct

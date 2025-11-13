@@ -5,7 +5,6 @@ import ch.exense.commons.io.FileHelper;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;
@@ -25,7 +24,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -70,7 +68,7 @@ public class StepStreamingResourceManagerTests {
         StreamingResourceCollectionCatalogBackend catalog = new StreamingResourceCollectionCatalogBackend(globalContext);
         StreamingResourcesStorageBackend storage = new FilesystemStreamingResourcesStorageBackend(storageDirectory);
         Function<String, StreamingResourceReference> refProducer = resourceId -> new StreamingResourceReference(URI.create("http://dummy/" + resourceId));
-        StepStreamingResourceManager manager = new StepStreamingResourceManager(globalContext, catalog, storage, refProducer, uploadContexts, Executors.newCachedThreadPool());
+        StepStreamingResourceManager manager = new StepStreamingResourceManager(globalContext, catalog, storage, refProducer, uploadContexts);
 
         // Simulate an upload; we basically manually do the steps that the framework normally does
         StreamingResourceUploadContext uploadContext = new StreamingResourceUploadContext();

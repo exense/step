@@ -36,7 +36,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.ControllerServiceException;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
@@ -74,7 +74,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	protected ObjectPredicateFactory objectPredicateFactory;
 
 	public AbtractFunctionServices() {
-		super(EntityManager.functions);
+		super(EntityConstants.functions);
 	}
 
 	@PostConstruct

@@ -21,7 +21,7 @@ package step.resources;
 import ch.exense.commons.app.Configuration;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
@@ -34,9 +34,9 @@ public class ResourceManagerControllerPlugin extends AbstractControllerPlugin {
 	public void serverStart(GlobalContext context) throws Exception {
 		context.getServiceRegistrationCallback().registerService(ResourceServices.class);
 		
-		Collection<Resource> collectionDriver = context.getCollectionFactory().getCollection(EntityManager.resources,
+		Collection<Resource> collectionDriver = context.getCollectionFactory().getCollection(EntityConstants.resources,
 				Resource.class);
-		context.get(TableRegistry.class).register(EntityManager.resources, new Table<>(collectionDriver, null, true));
+		context.get(TableRegistry.class).register(EntityConstants.resources, new Table<>(collectionDriver, null, true));
 	}
 
 	public static String getResourceDir(Configuration configuration) {
