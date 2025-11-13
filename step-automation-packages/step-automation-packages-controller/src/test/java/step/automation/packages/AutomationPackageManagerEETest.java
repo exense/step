@@ -195,7 +195,6 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             AutomationPackageFileSource sample1ApSource = AutomationPackageFileSource.withInputStream(is, SAMPLE1_FILE_NAME);
-            AutomationPackageFileSource anotherApSource = AutomationPackageFileSource.withInputStream(isAnother, SAMPLE1_EXTENDED_FILE_NAME);
             AutomationPackageFileSource libSource = AutomationPackageFileSource.withMavenIdentifier(libVersion1);
 
             // 1. Create managed library by Global Admin
