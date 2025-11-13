@@ -406,7 +406,7 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
         // the same id has been used
         Assert.assertEquals(projectLibResource1.getId(), updatedLib1Resource.getId());
         // lib1 has been updated
-        Assert.assertFalse(projectLibResource1.getLastModificationDate().toInstant().isBefore(nowBeforeLib1Update));
+        Assert.assertFalse(updatedLib1Resource.getLastModificationDate().toInstant().isBefore(nowBeforeLib1Update));
         // lib2 is not updated
         Assert.assertFalse(projectLibResource2.getLastModificationDate().toInstant().isAfter(nowBeforeLib1Update));
         Assert.assertArrayEquals(Files.readAllBytes(resourceManager.getResourceFile(projectLibResource1.getId().toHexString()).getResourceFile().toPath()), Files.readAllBytes(libJarUpdated.toPath()));
