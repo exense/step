@@ -39,8 +39,8 @@ import java.util.List;
 public class RestUploadingLiveMeasureDestination implements LiveMeasureDestination {
 
     private static final Logger logger = LoggerFactory.getLogger(RestUploadingLiveMeasureDestination.class);
-    private static final int DEFAULT_BATCH_SIZE = 50;
-    private static final long DEFAULT_FLUSH_INTERVAL_MS = 1000;
+    private static final int DEFAULT_BATCH_SIZE = 500;
+    private static final long DEFAULT_FLUSH_INTERVAL_MS = 5000;
 
     private final String reportingContextUrl;
     private final Client client;
@@ -82,9 +82,7 @@ public class RestUploadingLiveMeasureDestination implements LiveMeasureDestinati
                 .request()
                 .post(Entity.entity(measures, MediaType.APPLICATION_JSON_TYPE))) {
             //Make sure to always consume the response to avoid leak
-            if (post.hasEntity()) {
-                post.readEntity(String.class);
-            }
+            post.readEntity(String.class);
             int status = post.getStatus();
             if (status != 204) {
                 String msg = "Error while reporting measures. The live reporting service returned " + status;
