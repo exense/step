@@ -82,7 +82,9 @@ public class RestUploadingLiveMeasureDestination implements LiveMeasureDestinati
                 .request()
                 .post(Entity.entity(measures, MediaType.APPLICATION_JSON_TYPE))) {
             //Make sure to always consume the response to avoid leak
-            post.readEntity(String.class);
+            if (post.hasEntity()) {
+                post.readEntity(String.class);
+            }
             int status = post.getStatus();
             if (status != 204) {
                 String msg = "Error while reporting measures. The live reporting service returned " + status;
