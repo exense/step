@@ -24,13 +24,9 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.apache.http.NoHttpResponseException;
-import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.glassfish.jersey.apache.connector.ApacheClientProperties;
 import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,39 +57,12 @@ public class RestUploadingLiveMeasureDestination implements LiveMeasureDestinati
     }
 
     private Client createClient() {
-        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-        connectionManager.setMaxTotal(10);
-        connectionManager.setDefaultMaxPerRoute(2);
-        connectionManager.setValidateAfterInactivity(2000);  // test idle connection before using them
-
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(10_000)
-                .setSocketTimeout(30_000)
-                .setConnectionRequestTimeout(5_000)
-                .build();
-
         ClientConfig config = new ClientConfig();
+        // Use Apache connector (has built-in pooling with reasonable defaults)
         config.connectorProvider(new ApacheConnectorProvider());
-
-        config.property(ApacheClientProperties.CONNECTION_MANAGER, connectionManager);
-        config.property(ApacheClientProperties.REQUEST_CONFIG, requestConfig);
-
-        // CRITICAL: Enable retry for POST requests
-        // Create a custom retry handler that treats POST as idempotent for NoHttpResponseException
-        HttpRequestRetryHandler retryHandler = (exception, executionCount, context) -> {
-            if (executionCount > 3) {
-                return false;  // Max 3 retries
-            }
-            // Retry on NoHttpResponseException even for POST
-            // This is safe because the exception means the server never received the request
-            if (exception instanceof NoHttpResponseException) {
-                logger.warn("Connection failed before server received request, retrying (attempt {})", executionCount);
-                return true;
-            }
-            return false;
-        };
-
-        config.property(ApacheClientProperties.RETRY_HANDLER, retryHandler);
+        // Set timeouts
+        config.property(ClientProperties.CONNECT_TIMEOUT, 10_000);
+        config.property(ClientProperties.READ_TIMEOUT, 30_000);
         config.register(JacksonFeature.class);
         return ClientBuilder.newClient(config);
     }
