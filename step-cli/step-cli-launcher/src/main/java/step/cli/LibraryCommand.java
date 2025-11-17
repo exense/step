@@ -31,7 +31,7 @@ public class LibraryCommand implements Callable<Integer> {
     }
 
     public static abstract class AbstractLibraryCommand extends StepConsole.AbstractStepCommand {
-        @CommandLine.Option(names = {"-l", "--library"}, paramLabel = "<Library Path>", description = "The file path or maven coordinate (example mvn:groupId:artefactId:version) of the automation package library.")
+        @CommandLine.Option(names = {"-l", "--library"}, paramLabel = "<Library Path>", description = "The file path or maven coordinate (mvn:groupId:artefactId:version[:classifier:type]) of the automation package library.")
         protected String libraryPath;
 
     }

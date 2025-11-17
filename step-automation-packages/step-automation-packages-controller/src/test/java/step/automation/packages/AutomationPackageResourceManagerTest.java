@@ -126,27 +126,17 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
             log.info("Caught exception: {}", ex.getMessage());
         }
 
-        // 5. REMOVE AP - LINKED RESOURCE WILL BE AUTOMATICALLY DELETED
+        // 5. REMOVE AP - LINKED RESOURCE WAS CREATED MANUALLY, IT SHOULD NOT BE DELETED  AUTOMATICALLY
         manager.removeAutomationPackage(createdPackage.getId(), apUpdateParams.actorUser, apUpdateParams.objectPredicate, apUpdateParams.writeAccessValidator);
 
         // check resource file is removed
         try {
             resourceManager.getResource(uploadedResource.getId().toHexString());
-            Assert.fail("Resource still exists");
         } catch (ResourceMissingException ex){
+            Assert.fail("Manually created resource has been deleted");
             log.info("Resource has been successfully deleted: {}", uploadedResource.getResourceName());
         }
-        Assert.assertFalse(resourceFileHandleAfterRefresh.getResourceFile().exists());
-
-        // 6. CREATE RESOURCE AGAIN
-        uploadedResource = manager.getAutomationPackageResourceManager().uploadOrReuseAutomationPackageLibrary(
-                manager.getAutomationPackageLibraryProvider(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot), o -> true),
-                null,
-                apUpdateParams,
-                false, false
-        );
-        resourceFileHandleAfterRefresh = resourceManager.getResourceFile(uploadedResource.getId().toHexString());
-        log.info("Resource after the second upload: {}", resourceFileHandleBeforeRefresh.getResourceFile().getAbsolutePath());
+        Assert.assertTrue(resourceFileHandleAfterRefresh.getResourceFile().exists());
 
         // 7. RESOURCE WITHOUT LINKED AP CAN BE DELETED
         manager.getAutomationPackageResourceManager().deleteResource(uploadedResource.getId().toHexString(), apUpdateParams.writeAccessValidator);

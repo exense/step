@@ -41,6 +41,7 @@ import step.reporting.LiveReporting;
 public abstract class AbstractFunctionHandler<IN, OUT> {
 
 	public static final String AUTOMATION_PACKAGE_FILE = "$automationPackageFile";
+	public static final String PROPERTY_VERSION_SUFFIX = ".version";
 	private FileManagerClient fileManagerClient;
 	private LiveReporting liveReporting;
 	private ApplicationContextBuilder applicationContextBuilder;
@@ -309,7 +310,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 		String key = properyName+".id";
 		if(properties.containsKey(key)) {
 			String transferFileId = properties.get(key);
-			String transferFileVersion = properties.get(properyName+".version");
+			String transferFileVersion = properties.get(properyName + PROPERTY_VERSION_SUFFIX);
 			return new FileVersionId(transferFileId, transferFileVersion);
 		} else {
 			return null;
@@ -385,6 +386,6 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 * @return true if the properties contain a reference to an automation package file.
 	 */
 	public boolean containsAutomationPackageFileReference(Map<String, String> properties) {
-		return properties.containsKey(AUTOMATION_PACKAGE_FILE);
+		return properties.containsKey(AUTOMATION_PACKAGE_FILE + PROPERTY_VERSION_SUFFIX);
 	}
 }
