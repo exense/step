@@ -27,7 +27,7 @@ import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
-@Plugin(dependencies= {})
+@Plugin()
 public class LiveReportingPlugin extends AbstractExecutionEnginePlugin {
 
     public static final String LIVE_REPORTING_CONTEXT = "$liveReportingContext";
@@ -38,7 +38,7 @@ public class LiveReportingPlugin extends AbstractExecutionEnginePlugin {
         liveReportingContexts = parentContext != null ? parentContext.get(LiveReportingContexts.class) : null;
         if (liveReportingContexts == null) {
             // TODO set up live reporting for local executions
-            liveReportingContexts = new LiveReportingContexts("");
+            liveReportingContexts = new LiveReportingContexts();
         }
         executionEngineContext.put(LiveReportingContexts.class, liveReportingContexts);
     }

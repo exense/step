@@ -247,7 +247,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 						streamingUploadContext.getAttributes().put(LiveReportingConstants.ACCESSCONTROL_ENRICHER, enricher);
 					}
 
-					buildInputResults.input.getProperties().put(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL, (String) context.get(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL));
+					buildInputResults.input.getProperties().put(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL, (String) context.get(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL));
 					buildInputResults.input.getProperties().put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, (String) context.get(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH));
 					buildInputResults.input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, streamingUploadContext.contextId);
 
@@ -290,8 +290,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				LiveReportingContext liveReportingContext = LiveReportingPlugin.getLiveReportingContext(context);
 				if (liveReportingContext != null) {
 					// set up the plumbing to let the handler know where to forward measures
-					String url = liveReportingContext.getReportingUrl();
-					buildInputResults.input.getProperties().put(LiveReportingConstants.LIVEREPORTING_CONTEXT_URL, url);
+					buildInputResults.input.getProperties().put(LiveReportingConstants.LIVEREPORTING_CONTEXT_ID, liveReportingContext.id);
 				}
 
 				if(gridToken.isLocal()) {

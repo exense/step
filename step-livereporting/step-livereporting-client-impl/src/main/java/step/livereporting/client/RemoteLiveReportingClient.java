@@ -38,7 +38,7 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
 
     private static final Logger logger = LoggerFactory.getLogger(RemoteLiveReportingClient.class);
 
-    private final RestUploadingLiveMeasureDestination liveMeasureSink;
+    private final RestUploadingLiveMeasureDestination liveMeasureDestination;
     private final StreamingUploadProvider streamingUploadProvider;
 
     public RemoteLiveReportingClient(Map<String, String> contextProperties, Map<String, String> agentProperties, ExecutorService executorService, AtomicReference<Object> websocketContainer) {
@@ -61,18 +61,19 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
             // API liveReporting knows how to handle null values
             streamingUploadProvider = null;
         }
-        String liveReportingUrl = contextProperties.get(LiveReportingConstants.LIVEREPORTING_CONTEXT_URL);
-        if (liveReportingUrl != null) {
-            liveMeasureSink = new RestUploadingLiveMeasureDestination(liveReportingUrl);
+        String liveReportingContextId = contextProperties.get(LiveReportingConstants.LIVEREPORTING_CONTEXT_ID);
+        if (liveReportingContextId != null) {
+            String url = String.format("%s/rest/live-reporting/%s/measures", getReportingUrl(contextProperties, agentProperties), liveReportingContextId);
+            liveMeasureDestination = new RestUploadingLiveMeasureDestination(url);
         } else {
             // API liveReporting knows how to handle null values
-            liveMeasureSink = null;
+            liveMeasureDestination = null;
         }
     }
 
     @Override
     public LiveMeasureDestination getLiveMeasureDestination() {
-        return liveMeasureSink;
+        return liveMeasureDestination;
     }
 
     @Override
@@ -80,8 +81,8 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
         return streamingUploadProvider;
     }
 
-    private URI getWebsocketUploadUri(Map<String, String> properties, Map<String, String> agentProperties, String uploadContextId) {
-        String host; // actually contains scheme, hostname, and potentially port.
+    private String getReportingUrl(Map<String, String> contextProperties, Map<String, String> agentProperties) {
+        String url; // actually contains scheme, hostname, and potentially port.
         // If present, agent-side configuration overrides the default value, but both agentProperties or the value might be undefined.
         String agentConfUrl = Optional.ofNullable(agentProperties)
                 .map(m -> m.get("step.reporting.url"))
@@ -91,17 +92,20 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
             if (!agentConfUrl.matches("^https?://.+")) {
                 throw new IllegalArgumentException("Invalid URL in 'step.reporting.url' (agent-side configuration): " + agentConfUrl);
             }
-            // switch from http to websocket by replacing prefix
-            host = agentConfUrl.replaceAll("^http", "ws");
+            url = agentConfUrl;
         } else {
-            // The controller defines a default URL, derived from controller.url in step.properties.
-            // This is always defined, and already has the correct Websocket prefix.
-            host = properties.get(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL);
+            // The controller defines the default controller.url in step.properties.
+            url = contextProperties.get(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL);
         }
         // Strip trailing slashes, just in case there are any (normally not expected)
-        while (host.endsWith("/")) {
-            host = host.substring(0, host.length() - 1);
+        while (url.endsWith("/")) {
+            url = url.substring(0, url.length() - 1);
         }
+        return url;
+    }
+
+    private URI getWebsocketUploadUri(Map<String, String> properties, Map<String, String> agentProperties, String uploadContextId) {
+        String host = getReportingUrl(properties, agentProperties).replaceFirst("^http", "ws");
         String path = properties.get(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH);
         // Strip leading slashes, just in case
         while (path.startsWith("/")) {
