@@ -333,6 +333,8 @@ public class AutomationPackageResourceManager {
                         linkedAutomationPackages.stream().map(AbstractIdentifiableObject::getId).collect(Collectors.toSet()),
                         parameters
                 );
+                //Cleanup older unused revision in case of snapshot update
+                deleteUnusedResourceRevisions(resource);
             } catch (AutomationPackageRedeployException ex) {
                 errorMessage = ex.getMessage();
                 for (ObjectId failedId : ex.getFailedApsId()) {
