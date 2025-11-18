@@ -324,7 +324,7 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	@Override
-	public void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision) {
+	public void findAndCleanupUnusedRevision(String resourceId, Set<String> usedRevision) {
 		throw new RuntimeException("Not implemented");
 	}
 }

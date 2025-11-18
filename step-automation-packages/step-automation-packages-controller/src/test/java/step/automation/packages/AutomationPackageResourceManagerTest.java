@@ -28,15 +28,15 @@ import org.slf4j.LoggerFactory;
 import step.core.maven.MavenArtifactIdentifier;
 import step.repositories.artifact.ResolvedMavenArtifact;
 import step.repositories.artifact.SnapshotMetadata;
-import step.resources.Resource;
-import step.resources.ResourceManager;
-import step.resources.ResourceMissingException;
-import step.resources.ResourceRevisionFileHandle;
+import step.resources.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.Assert.assertEquals;
 import static step.automation.packages.AutomationPackageUpdateStatus.CREATED;
 import static step.automation.packages.RefreshResourceResult.ResultStatus.REFRESHED;
 
@@ -73,6 +73,7 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
         );
         ResourceRevisionFileHandle resourceFileHandleBeforeRefresh = resourceManager.getResourceFile(uploadedResource.getId().toHexString());
         log.info("Resource after the first upload: {}", resourceFileHandleBeforeRefresh.getResourceFile().getAbsolutePath());
+        assertEquals(1, countRevisions(uploadedResource));
 
         // check resource metadata
         checkResourceMetadata(uploadedResource, ResourceManager.RESOURCE_TYPE_AP_LIBRARY, firstTimestamp, kwLibSnapshot.toShortString());
@@ -87,20 +88,25 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
                         .withApLibrarySource(AutomationPackageFileSource.withResourceId(uploadedResource.getId().toString()))
                         .build()
         );
-        Assert.assertEquals(CREATED, createdPackage.getStatus());
+        assertEquals(CREATED, createdPackage.getStatus());
         AutomationPackage apBeforeRefresh = manager.getAutomationPackageById(createdPackage.getId(), o -> true);
         Long updatedTimestampBeforeRefresh = apBeforeRefresh.getLastModificationDate().toInstant().toEpochMilli();
+        assertEquals(1, countRevisions(uploadedResource));
 
         // 3. REFRESH THE LIB RESOURCE (UPLOAD NEW SNAPSHOT)
         Long secondTimestamp = System.currentTimeMillis();
         providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibUpdatedSnapshotJar, new SnapshotMetadata("new timestamp", secondTimestamp, 2, true)));
 
         RefreshResourceResult refreshResourceResult = manager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(uploadedResource.getId().toHexString(), apUpdateParams, manager);
-        Assert.assertEquals(REFRESHED, refreshResourceResult.getResultStatus());
+        assertEquals(REFRESHED, refreshResourceResult.getResultStatus());
         Assert.assertTrue(refreshResourceResult.getErrorMessages().isEmpty());
 
         // actualize resource metadata after refresh
         uploadedResource = resourceManager.getResource(uploadedResource.getId().toHexString());
+
+        //Make sure we cleaned up the old resource revision
+        assertEquals(1, countRevisions(uploadedResource));
+        Assert.assertFalse(resourceFileHandleBeforeRefresh.getResourceFile().exists());
 
         // check resource metadata after refresh
         checkResourceMetadata(uploadedResource, ResourceManager.RESOURCE_TYPE_AP_LIBRARY, secondTimestamp, kwLibSnapshot.toShortString());
@@ -129,13 +135,8 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
         // 5. REMOVE AP - LINKED RESOURCE WAS CREATED MANUALLY, IT SHOULD NOT BE DELETED  AUTOMATICALLY
         manager.removeAutomationPackage(createdPackage.getId(), apUpdateParams.actorUser, apUpdateParams.objectPredicate, apUpdateParams.writeAccessValidator);
 
-        // check resource file is removed
-        try {
-            resourceManager.getResource(uploadedResource.getId().toHexString());
-        } catch (ResourceMissingException ex){
-            Assert.fail("Manually created resource has been deleted");
-            log.info("Resource has been successfully deleted: {}", uploadedResource.getResourceName());
-        }
+        // check resource and uts file still exist
+        resourceManager.getResource(uploadedResource.getId().toHexString());
         Assert.assertTrue(resourceFileHandleAfterRefresh.getResourceFile().exists());
 
         // 7. RESOURCE WITHOUT LINKED AP CAN BE DELETED
@@ -152,9 +153,16 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
         Assert.assertFalse(resourceFileHandleAfterRefresh.getResourceFile().exists());
     }
 
+    private int countRevisions(Resource uploadedResource) {
+        Iterator<ResourceRevision> resourceRevisionsByResourceId = resourceManager.getResourceRevisionAccessor().getResourceRevisionsByResourceId(uploadedResource.getId().toString());
+        AtomicInteger revisionCount = new AtomicInteger();
+        resourceRevisionsByResourceId.forEachRemaining(r -> revisionCount.getAndIncrement());
+        return revisionCount.get();
+    }
+
     private static void checkResourceMetadata(Resource resource, String expectedResourceType, Long expectedOriginTimestamp, String expectedOrigin) {
-        Assert.assertEquals(expectedResourceType, resource.getResourceType());
-        Assert.assertEquals(expectedOrigin, resource.getOrigin());
-        Assert.assertEquals(expectedOriginTimestamp, resource.getOriginTimestamp());
+        assertEquals(expectedResourceType, resource.getResourceType());
+        assertEquals(expectedOrigin, resource.getOrigin());
+        assertEquals(expectedOriginTimestamp, resource.getOriginTimestamp());
     }
 }

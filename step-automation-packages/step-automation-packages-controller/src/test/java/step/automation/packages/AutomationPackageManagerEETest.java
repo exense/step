@@ -249,6 +249,8 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
                     globalLibResource.getId().toString(), libSource, "testManagedLibraryUpdated", globalAdminParams
             );
 
+            //Get latest verions of resource
+            globalLibResource = resourceManager.getResource(globalLibResource.getId().toHexString());
             // updated library has the same id as the original one
             Assert.assertEquals(globalLibResource.getId(), updatedGlobalLibResource.getId());
             Assert.assertEquals("globalAdmin", globalLibResource.getLastModificationUser());

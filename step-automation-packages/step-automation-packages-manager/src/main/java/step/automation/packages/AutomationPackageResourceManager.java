@@ -506,7 +506,7 @@ public class AutomationPackageResourceManager {
                 usedRevision.add(FileResolver.resolveRevisionId(automationPackage.getAutomationPackageLibraryResourceRevision()));
             }
         }
-        resourceManager.findAndCleanupUnusedRevision(resource, usedRevision);
+        resourceManager.findAndCleanupUnusedRevision(resourceId, usedRevision);
     }
 
     public interface LinkedPackagesReuploader {

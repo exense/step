@@ -59,7 +59,7 @@ public class AutomationPackageReaderRegistry {
         return (AutomationPackageReader<T>)  readers.values().stream().filter(r -> r.isValidForFile(file)).findFirst().orElseThrow(() ->
                 new AutomationPackageManagerException("No Automation Package reader found for file " + file.getName() +
                         ". Supported types are: " + getSupportedTypes() +
-                        (fileExists ? "" : ". Reason: the file does not exists.")));
+                        (fileExists ? "" : ". Reason: the file does not exist.")));
     }
 
     public String getSupportedTypes() {
