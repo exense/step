@@ -24,6 +24,9 @@ import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.glassfish.jersey.apache.connector.ApacheConnectorProvider;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +39,8 @@ import java.util.List;
 public class RestUploadingLiveMeasureDestination implements LiveMeasureDestination {
 
     private static final Logger logger = LoggerFactory.getLogger(RestUploadingLiveMeasureDestination.class);
-    private static final int DEFAULT_BATCH_SIZE = 50;
-    private static final long DEFAULT_FLUSH_INTERVAL_MS = 1000;
+    private static final int DEFAULT_BATCH_SIZE = 500;
+    private static final long DEFAULT_FLUSH_INTERVAL_MS = 5000;
 
     private final String reportingContextUrl;
     private final Client client;
@@ -49,8 +52,19 @@ public class RestUploadingLiveMeasureDestination implements LiveMeasureDestinati
 
     public RestUploadingLiveMeasureDestination(String reportingContextUrl, int batchSize, long flushIntervalMs) {
         this.reportingContextUrl = reportingContextUrl;
-        this.client = ClientBuilder.newClient().register(JacksonFeature.class);
+        this.client = createClient();
         this.batchProcessor = new BatchProcessor<>(batchSize, flushIntervalMs, this::sendMeasures, "livereporting-measures-rest");
+    }
+
+    private Client createClient() {
+        ClientConfig config = new ClientConfig();
+        // Use Apache connector (has built-in pooling with reasonable defaults)
+        config.connectorProvider(new ApacheConnectorProvider());
+        // Set timeouts
+        config.property(ClientProperties.CONNECT_TIMEOUT, 10_000);
+        config.property(ClientProperties.READ_TIMEOUT, 30_000);
+        config.register(JacksonFeature.class);
+        return ClientBuilder.newClient(config);
     }
 
     @Override
@@ -67,6 +81,10 @@ public class RestUploadingLiveMeasureDestination implements LiveMeasureDestinati
         try (Response post = client.target(reportingContextUrl + "/measures")
                 .request()
                 .post(Entity.entity(measures, MediaType.APPLICATION_JSON_TYPE))) {
+            //Make sure to always consume the response to avoid leak
+            if (post.hasEntity()) {
+                post.readEntity(String.class);
+            }
             int status = post.getStatus();
             if (status != 204) {
                 String msg = "Error while reporting measures. The live reporting service returned " + status;
