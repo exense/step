@@ -173,7 +173,7 @@ public interface ResourceManager {
 
 	List<Resource> findManyByCriteria(Map<String, String> criteria);
 
-	void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision);
+	void findAndCleanupUnusedRevision(String resourceId, Set<String> usedRevision);
 
 	default void cleanup() {
 	}

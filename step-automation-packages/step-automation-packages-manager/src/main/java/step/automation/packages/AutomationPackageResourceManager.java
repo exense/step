@@ -158,6 +158,10 @@ public class AutomationPackageResourceManager {
                                 parameters.actorUser, origin,
                                 apLibProvider.getSnapshotTimestamp()
                         );
+                        if (automationPackageToBeLinkedWithLib == null) {
+                            uploadedResource.addCustomField(MANUALLY_CREATED_AP_RESOURCE, true);
+                            resourceManager.saveResource(uploadedResource);
+                        }
                         log.info("The new automation package library ({}) has been uploaded as ({})", apLibProvider, uploadedResource.getId().toHexString());
                     }
                 }
@@ -329,6 +333,8 @@ public class AutomationPackageResourceManager {
                         linkedAutomationPackages.stream().map(AbstractIdentifiableObject::getId).collect(Collectors.toSet()),
                         parameters
                 );
+                //Cleanup older unused revision in case of snapshot update
+                deleteUnusedResourceRevisions(resource);
             } catch (AutomationPackageRedeployException ex) {
                 errorMessage = ex.getMessage();
                 for (ObjectId failedId : ex.getFailedApsId()) {
@@ -391,7 +397,7 @@ public class AutomationPackageResourceManager {
         try {
             if (!resourceFileExists) {
                 // if file is missing in resource manager, we always download the actual content
-                saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, null);
+                updateMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, null);
                 refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.REFRESHED);
             } else {
                 // if file already exists, we don't need to download the actual content:
@@ -399,9 +405,12 @@ public class AutomationPackageResourceManager {
                 // * for snapshots with the same remote metadata (not changed snapshots)
                 if (mavenArtifactIdentifier.isModifiable()) {
                     SnapshotMetadata snapshotMetadata = mavenOperations.fetchSnapshotMetadata(mavenArtifactIdentifier, resource.getOriginTimestamp());
-                    if (snapshotMetadata.newSnapshotVersion) {
+                    if (snapshotMetadata == null || snapshotMetadata.newSnapshotVersion) {
+                        if (snapshotMetadata == null) {
+                            log.warn("{} has no snapshot metadata and will be treated as if new content is available", mavenArtifactIdentifier.toStringRepresentation());
+                        }
                         log.debug("New snapshot version found for {}, downloading it", mavenArtifactIdentifier.toStringRepresentation());
-                        saveMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, resource.getOriginTimestamp());
+                        updateMavenFileContentInResourceManager(resource, mavenArtifactIdentifier, resource.getOriginTimestamp());
                         refreshResourceResult.setResultStatus(RefreshResourceResult.ResultStatus.REFRESHED);
                     } else {
                         // reuse resource
@@ -428,14 +437,15 @@ public class AutomationPackageResourceManager {
         return refreshResourceResult;
     }
 
-    private void saveMavenFileContentInResourceManager(Resource resource, MavenArtifactIdentifier mavenArtifactIdentifier,
-                                                       Long existingSnapshotTimestamp) {
+    private void updateMavenFileContentInResourceManager(Resource resource, MavenArtifactIdentifier mavenArtifactIdentifier,
+                                                         Long existingSnapshotTimestamp) {
         try {
             // restore the automation package file from maven
             ResolvedMavenArtifact resolvedMavenArtifact = mavenOperations.getFile(mavenArtifactIdentifier, existingSnapshotTimestamp);
             File file = resolvedMavenArtifact.artifactFile;
             try (FileInputStream fis = new FileInputStream(file)) {
-                Resource updated = resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), mavenArtifactIdentifier.toStringRepresentation(), resource.getCreationUser());
+                //The resource name doesn't change when saving new maven content for existing resource
+                Resource updated = resourceManager.saveResourceContent(resource.getId().toHexString(), fis, file.getName(), resource.getAttribute(AbstractOrganizableObject.NAME), resource.getCreationUser());
 
                 // update timestamp
                 updated.setOriginTimestamp(Optional.ofNullable(resolvedMavenArtifact.snapshotMetadata).map(s -> s.timestamp).orElse(null));
@@ -496,7 +506,7 @@ public class AutomationPackageResourceManager {
                 usedRevision.add(FileResolver.resolveRevisionId(automationPackage.getAutomationPackageLibraryResourceRevision()));
             }
         }
-        resourceManager.findAndCleanupUnusedRevision(resource, usedRevision);
+        resourceManager.findAndCleanupUnusedRevision(resourceId, usedRevision);
     }
 
     public interface LinkedPackagesReuploader {

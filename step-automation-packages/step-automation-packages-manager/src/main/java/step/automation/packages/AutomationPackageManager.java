@@ -759,6 +759,8 @@ public class AutomationPackageManager {
         //Now that we updated the managed library, we trigger the reload of APs using it
         Set<ObjectId> automationPackagesIdsByResourceId = linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resource.getId().toHexString(), List.of());
         reloadRelatedAutomationPackages(automationPackagesIdsByResourceId, automationPackageUpdateParameter);
+        //Cleanup unused revision (for instance if a new snapshot version was downloaded to a resource
+        Optional.ofNullable(updatedResource).ifPresent(r-> automationPackageResourceManager.deleteUnusedResourceRevisions(r));
         return updatedResource;
     }
 
