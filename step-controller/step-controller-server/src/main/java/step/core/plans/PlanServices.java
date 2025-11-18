@@ -263,7 +263,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Secured(right="{entity}-read")
-	public Plan lookupCallPlan(LookupCallPlanRequest lookupCallPlanRequest) {
+	public Plan lookupCallPlanWithBindings(LookupCallPlanRequest lookupCallPlanRequest) {
 		Plan result = null;
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
