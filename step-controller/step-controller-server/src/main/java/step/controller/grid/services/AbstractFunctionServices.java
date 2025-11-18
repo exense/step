@@ -145,7 +145,7 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
 			if(!contextBindings.containsKey("user") && session!=null) {
 				contextBindings.put("user", session.getUser().getUsername());
 			}
-			function = functionLocator.getFunction(lookupCallFunctionRequest.callFunction, objectPredicate, lookupCallFunctionRequest.bindings);
+			function = functionLocator.getFunction(lookupCallFunctionRequest.callFunction, objectPredicate, contextBindings);
 		} catch (RuntimeException e) {}
 		return function;
 	}
