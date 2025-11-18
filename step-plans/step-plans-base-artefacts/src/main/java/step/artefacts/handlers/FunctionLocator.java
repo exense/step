@@ -123,7 +123,7 @@ public class FunctionLocator {
 					break;
 				}
 			}
-			if (evaluationExprressionIsDefined(entity)) {
+			if (evaluationExpressionIsDefined(entity)) {
 				if (isActivated(bindings, entity)) {
 					entitiesActivatedExplicitly.add(entity);
 				}
@@ -139,12 +139,12 @@ public class FunctionLocator {
 		return orderedEntities;
 	}
 
-	private static <T extends AbstractOrganizableObject> boolean evaluationExprressionIsDefined(T entity) {
+	private static <T extends AbstractOrganizableObject> boolean evaluationExpressionIsDefined(T entity) {
 		return (entity instanceof EvaluationExpression && ((EvaluationExpression) entity).getActivationExpression() != null);
 	}
 
-	private static <T extends AbstractOrganizableObject> boolean isActivated(Map<String, Object> bindings, T entity) {
-		if (evaluationExprressionIsDefined(entity)) {
+	public static <T extends AbstractOrganizableObject> boolean isActivated(Map<String, Object> bindings, T entity) {
+		if (evaluationExpressionIsDefined(entity)) {
 			Expression activationExpression = ((EvaluationExpression) entity).getActivationExpression();
 			return Activator.evaluateActivationExpression(bindings == null ? null : new SimpleBindings(bindings), activationExpression, Activator.DEFAULT_SCRIPT_ENGINE);
 		} else {

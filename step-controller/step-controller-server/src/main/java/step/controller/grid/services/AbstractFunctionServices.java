@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.controller.grid.services;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.PostConstruct;
 import jakarta.json.Json;
@@ -59,8 +61,9 @@ import step.grid.TokenWrapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-public abstract class AbtractFunctionServices extends AbstractEntityServices<Function> {
+public abstract class AbstractFunctionServices extends AbstractEntityServices<Function> {
 
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
@@ -73,7 +76,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	protected FunctionLocator functionLocator;
 	protected ObjectPredicateFactory objectPredicateFactory;
 
-	public AbtractFunctionServices() {
+	public AbstractFunctionServices() {
 		super(EntityConstants.functions);
 	}
 
@@ -125,6 +128,38 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 			function = functionLocator.getFunction(callFunction, objectPredicate, null);
 		} catch (RuntimeException e) {}
 		return function;
+	}
+
+	@Operation(operationId = "lookupCall{Entity}WithBindings")
+	@POST
+	@Path("/lookup-with-bindings")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right="{entity}-read")
+	public Function lookupCallFunctionWithBindings(LookupCallFunctionRequest lookupCallFunctionRequest) {
+		Function function = null;
+		try {
+			ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+			Session<User> session = getSession();
+			Map<String, Object> contextBindings = Objects.requireNonNullElse(lookupCallFunctionRequest.bindings, new HashMap<>());
+			if(!contextBindings.containsKey("user") && session!=null) {
+				contextBindings.put("user", session.getUser().getUsername());
+			}
+			function = functionLocator.getFunction(lookupCallFunctionRequest.callFunction, objectPredicate, lookupCallFunctionRequest.bindings);
+		} catch (RuntimeException e) {}
+		return function;
+	}
+
+	public static class LookupCallFunctionRequest {
+		public CallFunction callFunction;
+		public Map<String, Object> bindings;
+
+		@JsonCreator
+		public LookupCallFunctionRequest(@JsonProperty("callFunction")  CallFunction callFunction,
+										 @JsonProperty("bindings") Map<String, Object> bindings) {
+			this.callFunction = callFunction;
+			this.bindings = bindings;
+		}
 	}
 
 	@Operation(operationId = "get{Entity}Editor")

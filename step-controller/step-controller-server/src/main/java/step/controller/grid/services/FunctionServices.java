@@ -21,14 +21,13 @@ package step.controller.grid.services;
 import jakarta.ws.rs.Path;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 
 @SecuredContext(key = "entity", value = "kw")
 @Path("/functions")
 @Tag(name = "Keywords")
 @Tag(name = "Entity=Function")
-public class FunctionServices extends AbtractFunctionServices {
+public class FunctionServices extends AbstractFunctionServices {
 
 
 }
