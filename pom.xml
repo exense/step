@@ -46,7 +46,7 @@
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
 		<dependencies.version>2025.6.25</dependencies.version>
-		<step-grid.version>2025.11.10-691227a21e9eb03e39bf2284</step-grid.version>
+		<step-grid.version>2025.11.18-691c3a4111ea7b7be5ab483c</step-grid.version>
 		<step-framework.version>2025.11.12-69147c0cd38caf136fe97633</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
@@ -113,15 +113,6 @@
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
-
-			<!-- TODO REMOVE temporary: directly override streaming version to avoid rebuilding api & grid every time -->
-			<dependency>
-				<groupId>ch.exense.streaming</groupId>
-				<artifactId>step-streaming</artifactId>
-				<version>2025.11.12-6914aab4d38caf136f100a35</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
 
 			<dependency>
 				<groupId>ch.exense.step</groupId>
