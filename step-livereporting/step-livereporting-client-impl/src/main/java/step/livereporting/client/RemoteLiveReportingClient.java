@@ -63,8 +63,13 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
         }
         String liveReportingContextId = contextProperties.get(LiveReportingConstants.LIVEREPORTING_CONTEXT_ID);
         if (liveReportingContextId != null) {
-            String url = String.format("%s/rest/live-reporting/%s/measures", getReportingUrl(contextProperties, agentProperties), liveReportingContextId);
-            liveMeasureDestination = new RestUploadingLiveMeasureDestination(url);
+            String baseUrl = getReportingUrl(contextProperties, agentProperties);
+            if (baseUrl != null) {
+                String url = String.format("%s/rest/live-reporting/%s/measures", baseUrl, liveReportingContextId);
+                liveMeasureDestination = new RestUploadingLiveMeasureDestination(url);
+            } else {
+                liveMeasureDestination = null;
+            }
         } else {
             // API liveReporting knows how to handle null values
             liveMeasureDestination = null;
@@ -81,6 +86,7 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
         return streamingUploadProvider;
     }
 
+    // Note that this method will return null when running in a local context (i.e. not a "real" Step infrastructure)
     private String getReportingUrl(Map<String, String> contextProperties, Map<String, String> agentProperties) {
         String url; // actually contains scheme, hostname, and potentially port.
         // If present, agent-side configuration overrides the default value, but both agentProperties or the value might be undefined.
@@ -98,7 +104,7 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
             url = contextProperties.get(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL);
         }
         // Strip trailing slashes, just in case there are any (normally not expected)
-        while (url.endsWith("/")) {
+        while (url != null && url.endsWith("/")) {
             url = url.substring(0, url.length() - 1);
         }
         return url;
