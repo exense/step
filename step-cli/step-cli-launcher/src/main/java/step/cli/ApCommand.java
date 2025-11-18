@@ -31,7 +31,7 @@ public class ApCommand implements Callable<Integer> {
 
     public static abstract class AbstractApCommand extends StepConsole.AbstractStepCommand {
 
-        @CommandLine.Option(names = {"-p", "--package"}, paramLabel = "<Package>", description = "The path to the automation-package.yaml file, folder or the archive containing it. Also supports maven coordinates (mvn:groupId:artefactId:version[:classifier:type]) are supported.")
+        @CommandLine.Option(names = {"-p", "--package"}, paramLabel = "<Package>", description = "The path to the automation-package.yaml file, folder or the archive containing it. Also supports maven coordinates (mvn:groupId:artefactId:version[:classifier:type]).")
         protected String apFile;
 
         @CommandLine.Option(names = {"-l", "--library"}, paramLabel = "<Library>", description = "The file path, maven coordinate (mvn:groupId:artefactId:version[:classifier:type]), or the name of an existing managed library (example managed:MY_COMMON_LIBRARY).")
