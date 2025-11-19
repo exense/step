@@ -156,11 +156,11 @@ public class MavenArtifactClient {
                     }
                 }
             } catch (Exception e) {
-                logger.debug("Failed to fetch metadata from repository {}: {}",
+                logger.warn("Failed to fetch metadata from repository {}: {}",
                         repository.getId(), e.getMessage());
             }
         }
-
+        logger.warn("Failed to find metadata for artifact {}:{}:{}", artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
         return null;
     }
 

@@ -54,9 +54,12 @@ public class AutomationPackageReaderRegistry {
     }
 
     public <T extends AutomationPackageArchive> AutomationPackageReader<T> getReaderForFile(File file) {
+        boolean fileExists = file.exists();
         //noinspection unchecked
         return (AutomationPackageReader<T>)  readers.values().stream().filter(r -> r.isValidForFile(file)).findFirst().orElseThrow(() ->
-                new AutomationPackageManagerException("No Automation Package reader found for file " + file.getName() + ". Supported types are: " + getSupportedTypes()));
+                new AutomationPackageManagerException("No Automation Package reader found for file " + file.getName() +
+                        ". Supported types are: " + getSupportedTypes() +
+                        (fileExists ? "" : ". Reason: the file does not exist.")));
     }
 
     public String getSupportedTypes() {

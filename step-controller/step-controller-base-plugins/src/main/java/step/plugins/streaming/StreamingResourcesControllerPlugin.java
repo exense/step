@@ -46,19 +46,15 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     private final WebsocketServerEndpointSessionsHandler sessionsHandler = new DefaultWebsocketServerEndpointSessionsHandler();
     private final StreamingResourceUploadContexts uploadContexts = new StreamingResourceUploadContexts();
     private StepStreamingResourceManager manager;
-    private String websocketBaseUrl;
+    private String controllerUrl;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
 
-        Configuration conf = context.getConfiguration();
-
-        String controllerUrl = StepControllerPlugin.getControllerUrl(context.getConfiguration(), true, true);
-        // We need the websocket variant
+        controllerUrl = StepControllerPlugin.getControllerUrl(context.getConfiguration(), true, true);
+        // We need the websocket variant for websockets
         URI websocketBaseUri = URI.create(controllerUrl.replaceFirst("^http", "ws"));
-
-        websocketBaseUrl = websocketBaseUri.toString();
 
         File resourcesRootDir = new File(ResourceManagerControllerPlugin.getResourceDir(context.getConfiguration()));
         File storageBaseDir = new File(resourcesRootDir, "streamedAttachment");
@@ -127,8 +123,9 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
             public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
                 // Makes streaming available to the execution
                 executionContext.put(StreamingResourceUploadContexts.class, uploadContexts);
-                executionContext.put(LiveReportingConstants.STREAMING_WEBSOCKET_BASE_URL, websocketBaseUrl);
                 executionContext.put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, UPLOAD_PATH);
+                // Note: this URL is also used by the measures streaming to determine the hostname.
+                executionContext.put(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL, controllerUrl);
             }
 
 

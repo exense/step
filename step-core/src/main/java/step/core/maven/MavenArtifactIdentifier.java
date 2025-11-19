@@ -88,13 +88,17 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
         StringBuilder buffer = new StringBuilder(128);
         buffer.append(getGroupId());
         buffer.append(':').append(getArtifactId());
-        if (getClassifier() != null && !getClassifier().isEmpty()) {
-            buffer.append(':').append(getClassifier());
-        }
         buffer.append(':').append(getVersion());
-        if (getType() != null && !getType().isEmpty()) {
-            buffer.append(':').append(getType());
+        if ((getClassifier() != null && !getClassifier().isEmpty()) || (getType() != null && !getType().isEmpty())) {
+            buffer.append(':');
+            if (getClassifier() != null && !getClassifier().isEmpty()) {
+                buffer.append(getClassifier());
+            }
+            if (getType() != null && !getType().isEmpty()) {
+                buffer.append(':').append(getType());
+            }
         }
+
         return buffer.toString();
     }
 
@@ -142,11 +146,14 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
     
     public String toShortString() {
         String res = String.format(MVN_PREFIX + ":%s:%s:%s", getGroupId(),  this.getArtifactId(), getVersion());
-        if (this.getClassifier() != null) {
-            res += ":" + this.getClassifier();
-        }
-        if (this.getType() != null) {
-            res +=  ":" + this.getType();
+        if (this.getClassifier() != null || this.getType() != null) {
+            res += ":";
+            if (this.getClassifier() != null) {
+                res += this.getClassifier();
+            }
+            if (this.getType() != null) {
+                res +=  ":" + this.getType();
+            }
         }
         return res;
     }

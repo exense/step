@@ -1,5 +1,6 @@
 package step.automation.packages;
 
+import ch.exense.commons.app.Configuration;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,21 +15,28 @@ import step.attachments.FileResolver;
 import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.ExecutionEngineContext;
+import step.core.execution.OperationMode;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.plans.Plan;
+import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.*;
 import step.datapool.excel.ExcelDataPool;
+import step.engine.plugins.FunctionPlugin;
 import step.functions.Function;
+import step.functions.accessor.FunctionAccessor;
 import step.parameter.Parameter;
 import step.parameter.ParameterScope;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.java.GeneralScriptFunction;
+import step.plugins.java.GeneralScriptFunctionPlugin;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.node.NodeFunction;
 import step.repositories.artifact.ResolvedMavenArtifact;
@@ -45,6 +53,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static step.automation.packages.AutomationPackageTestUtils.*;
+import static step.plugins.parametermanager.ParameterManagerPlugin.CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS;
 
 public class AutomationPackageManagerOSTest extends AbstractAutomationPackageManagerTest {
 
@@ -761,7 +770,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         Assert.assertEquals(ap1.getAutomationPackageResource(), ap2.getAutomationPackageResource());
         // automation packages entities should be taken from updated snapshot
         List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(ap2.getId())).collect(Collectors.toList());
-        Assert.assertEquals(KEYWORDS_COUNT + 1, storedFunctions.size());
+        Assert.assertEquals(KEYWORDS_COUNT + 1 /* additioanl KW in extend jar*/ + 1 /* additioanl KW in lib */, storedFunctions.size());
         Function updatedFunction = storedFunctions.stream().filter(f -> f.getAttribute(AbstractOrganizableObject.NAME).equals(J_METER_KEYWORD_1)).findFirst().orElse(null);
         Assert.assertNotNull(updatedFunction);
         checkResourceCleanup(FileResolver.resolveResourceId(ap2.getAutomationPackageResource()), ap2Revision, null, null);
@@ -1043,6 +1052,18 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
 
         // deploy should not fail
         Assert.assertEquals(AutomationPackageUpdateStatus.CREATED, result.getStatus());
+        Optional<Plan> plan = planAccessor.stream().filter(p -> "Call keyword with external lib".equals(p.getAttribute(AbstractOrganizableObject.NAME))).findFirst();
+        if (plan.isEmpty()) {
+            fail("The plan Call keyword with external lib was not found");
+        }
+
+        try (ExecutionEngine executionEngine = newExecutionEngineBuilder().build()) {
+            PlanRunnerResult executeResult = executionEngine.execute(plan.get());
+            executeResult.printTree();
+            assertEquals(ReportNodeStatus.PASSED, executeResult.getResult());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -1393,7 +1414,9 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         }
 
         r.storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-        Assert.assertEquals(KEYWORDS_COUNT, r.storedFunctions.size());
+        //If the package lib is provided, an additional KW declared is the lib is expected
+        int expectedKWCount = (automationPackageFileSource != null) ? KEYWORDS_COUNT + 1 : KEYWORDS_COUNT;
+        Assert.assertEquals(expectedKWCount, r.storedFunctions.size());
         for  (Function function : r.storedFunctions) {
             //All function must have the automationPackageField set with a revision ID
             String automationPackageFile = function.getAutomationPackageFile();
@@ -1518,7 +1541,16 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
     }
 
     protected ExecutionEngine.Builder newExecutionEngineBuilder() {
-        return ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(),
+        ExecutionEngine.Builder builder = ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(), new FunctionPlugin(),
+                new GeneralScriptFunctionPlugin(),
                 new AutomationPackageExecutionPlugin(automationPackageLocks)));
+        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+        parentContext.put(FunctionAccessor.class, functionAccessor);
+        parentContext.setPlanAccessor(planAccessor);
+        parentContext.setResourceManager(resourceManager);
+        Configuration configuration = new Configuration();
+        parentContext.setConfiguration(configuration);
+        builder.withParentContext(parentContext);
+        return builder;
     }
 }
