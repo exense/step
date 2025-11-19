@@ -29,6 +29,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.UriInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
@@ -63,7 +65,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static step.core.table.ActivableEntityTableEnricher.enrichBindingsWithSession;
+
 public abstract class AbstractFunctionServices extends AbstractEntityServices<Function> {
+
+	private static final Logger log = LoggerFactory.getLogger(AbstractFunctionServices.class);
 
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
@@ -115,7 +121,7 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
 		return functionManager.getFunctionByAttributes(attributes);
 	}
 
-	@Operation(operationId = "lookupCall{Entity}")
+	@Operation(operationId = "lookupCall{Entity}", description = "Returns the function referenced by the given callFunction without applying any binding parameters.")
 	@POST
 	@Path("/lookup")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -126,11 +132,13 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
 		try {
 			ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 			function = functionLocator.getFunction(callFunction, objectPredicate, null);
-		} catch (RuntimeException e) {}
+		} catch (RuntimeException e) {
+			logLookupError(callFunction, e);
+		}
 		return function;
 	}
 
-	@Operation(operationId = "lookupCall{Entity}WithBindings")
+	@Operation(operationId = "lookupCall{Entity}WithBindings", description = "Returns the function referenced by the given callFunction applying the provided binding parameters.")
 	@POST
 	@Path("/lookup-with-bindings")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -141,12 +149,11 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
 		try {
 			ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 			Session<User> session = getSession();
-			Map<String, Object> contextBindings = Objects.requireNonNullElse(lookupCallFunctionRequest.bindings, new HashMap<>());
-			if(!contextBindings.containsKey("user") && session!=null) {
-				contextBindings.put("user", session.getUser().getUsername());
-			}
+			Map<String, Object> contextBindings = enrichBindingsWithSession(session, lookupCallFunctionRequest.bindings);
 			function = functionLocator.getFunction(lookupCallFunctionRequest.callFunction, objectPredicate, contextBindings);
-		} catch (RuntimeException e) {}
+		} catch (RuntimeException e) {
+			logLookupError(lookupCallFunctionRequest.callFunction, e);
+		}
 		return function;
 	}
 
@@ -160,6 +167,14 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
 			this.callFunction = callFunction;
 			this.bindings = bindings;
 		}
+	}
+
+	private static void logLookupError(CallFunction callFunction, RuntimeException e) {
+		String selectionCriteria = "unresolved selection criteria";
+		try {
+			selectionCriteria = callFunction.getFunction().get();
+		} catch (Throwable t) {	}
+		log.warn("The referenced keyword with selection criteria '{}' could not be found. Reason: {}", selectionCriteria, e.getMessage());
 	}
 
 	@Operation(operationId = "get{Entity}Editor")

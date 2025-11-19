@@ -55,6 +55,8 @@ import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static step.core.table.ActivableEntityTableEnricher.enrichBindingsWithSession;
+
 @Singleton
 @Path("plans")
 @Tag(name = "Plans")
@@ -223,11 +225,13 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		try {
 			result = planLocator.selectPlan(artefact, objectPredicate, null);
-		} catch (RuntimeException e) {}
+		} catch (RuntimeException e) {
+			logLookupError(artefact, e);
+		}
 		return result;
 	}
 
-	@Operation(description = "Returns the plan referenced by the given CallPlan.")
+	@Operation(description = "Returns the plan referenced by the given CallPlan without applying any binding parameters.")
 	@POST
 	@Path("/lookup")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -235,13 +239,16 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Secured(right="{entity}-read")
 	public Plan lookupCallPlan(CallPlan callPlan) {
 		Plan result = null;
+		Objects.requireNonNull(callPlan);
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		try {
 			result = planLocator.selectPlan(callPlan, objectPredicate, null);
-		} catch (RuntimeException e) {}
+		} catch (RuntimeException e) {
+			logLookupError(callPlan, e);
+		}
 		return result;
 	}
 
@@ -257,7 +264,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		}
 	}
 
-	@Operation(description = "Returns the plan referenced by the given CallPlan applying provided binding parameters.")
+	@Operation(description = "Returns the plan referenced by the given CallPlan applying the provided binding parameters.")
 	@POST
 	@Path("/lookup-with-bindings")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -265,19 +272,32 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Secured(right="{entity}-read")
 	public Plan lookupCallPlanWithBindings(LookupCallPlanRequest lookupCallPlanRequest) {
 		Plan result = null;
+		Objects.requireNonNull(lookupCallPlanRequest);
+		Objects.requireNonNull(lookupCallPlanRequest.callPlan);
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
 		Session<User> session = getSession();
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(session);
-		Map<String, Object> contextBindings = Objects.requireNonNullElse(lookupCallPlanRequest.bindings, new HashMap<>());
-		if(!contextBindings.containsKey("user") && session!=null) {
-			contextBindings.put("user", session.getUser().getUsername());
-		}
+		Map<String, Object> contextBindings = enrichBindingsWithSession(session, lookupCallPlanRequest.bindings);
 		try {
 			result = planLocator.selectPlan(lookupCallPlanRequest.callPlan, objectPredicate, contextBindings);
-		} catch (RuntimeException e) {}
+		} catch (RuntimeException e) {
+			logLookupError(lookupCallPlanRequest.callPlan, e);
+		}
 		return result;
+	}
+
+	private static void logLookupError(CallPlan callPlan, RuntimeException e) {
+		String selectionCriteria = callPlan.getPlanId();
+		if (selectionCriteria == null) {
+			try {
+				selectionCriteria = callPlan.getSelectionAttributes().get();
+			} catch (Throwable t) {
+				selectionCriteria = "unresolved selection criteria";
+			}
+		}
+		log.warn("The referenced plan with selection criteria '{}' could not be found. Reason: {}", selectionCriteria, e.getMessage());
 	}
 
 	@Operation(description = "Clones the provided artefact.")
