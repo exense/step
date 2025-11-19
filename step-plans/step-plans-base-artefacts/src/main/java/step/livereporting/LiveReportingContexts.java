@@ -33,10 +33,7 @@ public class LiveReportingContexts {
     private static final Logger logger = LoggerFactory.getLogger(LiveReportingContexts.class);
     private final Map<String, LiveReportingContext> contexts = new ConcurrentHashMap<>();
 
-    private final String baseUrl;
-
-    public LiveReportingContexts(String baseUrl) {
-        this.baseUrl = baseUrl;
+    public LiveReportingContexts() {
     }
 
     public void onMeasuresReceived(String contextHandle, List<Measure> measures) {
@@ -53,7 +50,7 @@ public class LiveReportingContexts {
     }
 
     public LiveReportingContext createNewContext() {
-        LiveReportingContext context = new LiveReportingContext(baseUrl);
+        LiveReportingContext context = new LiveReportingContext();
         contexts.put(context.id, context);
         return context;
     }
