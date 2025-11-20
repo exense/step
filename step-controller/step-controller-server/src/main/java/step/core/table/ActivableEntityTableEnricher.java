@@ -31,9 +31,9 @@ public class ActivableEntityTableEnricher<T extends AbstractOrganizableObject> i
     }
 
     public static Map<String, Object> enrichBindingsWithSession(Session<?> session, Map<String, Object> bindings) {
+        //Add the user from the session, if present, to the bindings
         Optional<String> optionalUserName = Optional.ofNullable(session).map(Session::getUser).map(AbstractUser::getSessionUsername);
-        if (optionalUserName.isPresent() && (bindings == null || !bindings.containsKey("user"))) {
-            //A user exists in session and is not part of the provided bindings, we create a copy and add the user of the session to it
+        if (optionalUserName.isPresent()) {
             Map<String, Object> contextBindings = Optional.ofNullable(bindings).map(HashMap::new).orElse(new HashMap<>());
             contextBindings.put("user", optionalUserName.get());
             return contextBindings;
