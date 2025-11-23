@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
+import step.automation.packages.library.ManagedLibraryProvider;
 import step.core.AbstractContext;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.*;
@@ -35,7 +36,6 @@ import step.resources.ResourceManager;
 import step.resources.ResourceMissingException;
 import step.resources.ResourceRevisionFileHandle;
 
-import javax.xml.transform.Result;
 import java.io.*;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -277,7 +277,7 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
     }
 
     @Test
-    public void testManagedLibraryInIsolatedProjects() throws IOException {
+    public void testManagedLibraryInIsolatedProjects() throws IOException, ManagedLibraryMissingException, AutomationPackageReadingException {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File anotherAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
 
@@ -394,7 +394,7 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
         Assert.assertEquals(FileResolver.resolveResourceId(ap1.getAutomationPackageLibraryResource()), projectLibResource1.getId().toHexString());
         Assert.assertEquals(FileResolver.resolveResourceId(ap2.getAutomationPackageLibraryResource()), projectLibResource2.getId().toHexString());
 
-        // 5. User1 updates the lib in project1 - AP from project2 should be untouched
+        // 4.1 User1 updates the lib in project1 - AP from project2 should be untouched
         providersResolver.getMavenArtifactMocks().put(libVersion1, new ResolvedMavenArtifact(
                 libJarUpdated,
                 new SnapshotMetadata("some timestamp", System.currentTimeMillis(), 1, true))
@@ -424,6 +424,32 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
         // ap2 has not been reuploaded
         Assert.assertFalse(ap2.getLastModificationDate().toInstant().isAfter(nowBeforeLib1Update));
+
+        // original tenants for automation packages should not be changed after reupload
+        Assert.assertEquals(PROJECT_1, ap1.getAttribute(ATTRIBUTE_PROJECT_NAME));
+        Assert.assertEquals(PROJECT_2, ap2.getAttribute(ATTRIBUTE_PROJECT_NAME));
+
+        // 4.2 User1 re-uploads the same managed library again - the behavior should be the same as in 4.1
+        providersResolver.getMavenArtifactMocks().put(libVersion1, new ResolvedMavenArtifact(
+                libJarUpdated,
+                new SnapshotMetadata("some timestamp 2", System.currentTimeMillis(), 1, true))
+        );
+
+        nowBeforeLib1Update = Instant.now();
+        updatedLib1Resource = manager.getAutomationPackageResourceManager().uploadOrReuseAutomationPackageLibrary(
+               new ManagedLibraryProvider(manager.getAutomationPackageLibraryProvider(libSource, createAccessPredicate(PROJECT_1)), projectLibResource1, "testManagedLibrary"), ap1, user1Params, true, true
+        );
+
+        Assert.assertFalse(updatedLib1Resource.getLastModificationDate().toInstant().isBefore(nowBeforeLib1Update));
+        Assert.assertArrayEquals(Files.readAllBytes(resourceManager.getResourceFile(projectLibResource1.getId().toHexString()).getResourceFile().toPath()), Files.readAllBytes(libJarUpdated.toPath()));
+
+        // lib2 is not updated
+        Assert.assertFalse(projectLibResource2.getLastModificationDate().toInstant().isAfter(nowBeforeLib1Update));
+        Assert.assertArrayEquals(Files.readAllBytes(resourceManager.getResourceFile(projectLibResource2.getId().toHexString()).getResourceFile().toPath()), Files.readAllBytes(libJar.toPath()));
+
+        // take the actual state from db
+        ap1 = automationPackageAccessor.get(ap1.getId());
+        ap2 = automationPackageAccessor.get(ap2.getId());
 
         // original tenants for automation packages should not be changed after reupload
         Assert.assertEquals(PROJECT_1, ap1.getAttribute(ATTRIBUTE_PROJECT_NAME));
