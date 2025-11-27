@@ -74,6 +74,8 @@
 		<dep.mvn.surefire.version>2.22.1</dep.mvn.surefire.version>
 
 		<excluded.jmeter.group>step.junit.categories.LocalJMeter</excluded.jmeter.group>
+
+		<jacoco.overall.exec>${maven.multiModuleProjectDirectory}/target/jacoco_analysis/jacoco.exec</jacoco.overall.exec>
 	</properties>
 
 	<repositories>
@@ -787,6 +789,98 @@
 						<configuration>
 							<publishingServerId>sonatype</publishingServerId>
 						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<!-- This profile should be activated to collect the test coverage report in single file in root folder -->
+		<profile>
+			<id>AggregatedJacocoReportEnabled</id>
+			<activation>
+				<property>
+					<name>AggregatedJacocoReportEnabled</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<pluginManagement>
+					<plugins>
+						<plugin>
+							<groupId>org.jacoco</groupId>
+							<artifactId>jacoco-maven-plugin</artifactId>
+							<version>${dep.mvn.jacoco.version}</version>
+							<configuration>
+								<!-- destFile and dataFile are overridden to collect overall coverage data in root folder -->
+								<destFile>${jacoco.overall.exec}</destFile>
+								<dataFile>${jacoco.overall.exec}</dataFile>
+								<excludes>
+									<exclude>*.jar</exclude>
+								</excludes>
+							</configuration>
+						</plugin>
+					</plugins>
+
+
+				</pluginManagement>
+			</build>
+		</profile>
+
+		<!-- This profile should be activated together with AggregatedJacocoReportEnabled to run tests and save the coverage into the aggregated report (mvn clean verify) -->
+		<profile>
+			<id>AggregatedJacocoReportRunTests</id>
+			<activation>
+				<property>
+					<name>AggregatedJacocoReportRunTests</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+
+				<plugins>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>default-prepare-agent</id>
+								<goals>
+									<goal>prepare-agent</goal>
+								</goals>
+								<configuration>
+									<append>true</append>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+		<!-- This profile should be activated together with AggregatedJacocoReportEnabled after the overall report is collected (via the AggregatedJacocoReportRunTests) -->
+		<!-- to save the results for each submodule in 'target/site' folder (mvn validate) -->
+		<profile>
+			<id>AggregatedJacocoReportCreateSingleReports</id>
+			<activation>
+				<property>
+					<name>AggregatedJacocoReportCreateSingleReports</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>default-report</id>
+								<phase>validate</phase>
+								<goals>
+									<goal>report</goal>
+								</goals>
+							</execution>
+						</executions>
 					</plugin>
 				</plugins>
 			</build>
