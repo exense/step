@@ -269,7 +269,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
             return resource;
         } catch (IOException | InvalidResourceFormatException ex) {
-            throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName, ex);
+            throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName + ".", ex, true);
         }
     }
 
@@ -283,7 +283,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
             resource.addCustomField(AP_NAME_CUSTOM_FIELD, apName);
             resourceManager.saveResource(resource);
         } catch (IOException ex) {
-            throw new AutomationPackageManagerException("Cannot update the automation package name in resource: " + resource.getId(), ex);
+            throw new AutomationPackageManagerException("Cannot update the automation package name in resource: " + resource.getId() + ".", ex, true);
         }
     }
 
