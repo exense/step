@@ -38,7 +38,7 @@ import step.core.collections.inmemory.InMemoryCollection;
 import step.core.controller.ControllerSettingAccessorImpl;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
-import step.core.objectenricher.ObjectHookRegistry;
+import step.core.objectenricher.*;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
 import step.core.scheduler.ExecutionScheduler;
@@ -132,7 +132,13 @@ public abstract class AbstractAutomationPackageManagerTest {
         AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, automationPackageHookRegistry, serializationRegistry);
         automationPackageReaderRegistry.register(apReader);
 
-        this.manager = AutomationPackageManager.createMainAutomationPackageManager(
+        this.manager = createManager(automationPackageHookRegistry, automationPackageReaderRegistry);
+
+        this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>(), resourceManager, automationPackageReaderRegistry));
+    }
+
+    protected AutomationPackageManager createManager(AutomationPackageHookRegistry automationPackageHookRegistry, AutomationPackageReaderRegistry automationPackageReaderRegistry) {
+        return AutomationPackageManager.createMainAutomationPackageManager(
                 automationPackageAccessor,
                 functionManager,
                 functionAccessor,
@@ -144,8 +150,6 @@ public abstract class AbstractAutomationPackageManagerTest {
                 null, -1,
                 new ObjectHookRegistry()
         );
-
-        this.manager.setProvidersResolver(new MockedAutomationPackageProvidersResolver(new HashMap<>(), resourceManager, automationPackageReaderRegistry));
     }
 
     @After
