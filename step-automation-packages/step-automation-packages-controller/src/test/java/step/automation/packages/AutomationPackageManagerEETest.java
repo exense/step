@@ -440,6 +440,15 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
         // ap1 doesn't exist anymore
         Assert.assertNull(automationPackageAccessor.get(ap1.getId()));
 
+        //Library resources were created manually, they shall not be deleted when deleting APs using them
+        resourceManager.getResourceFile(updatedLib1Resource.getId().toString());
+        resourceManager.getResourceFile(projectLibResource2.getId().toString());
+        try {
+            manager.getAutomationPackageResourceManager().deleteResource(updatedLib1Resource.getId().toString(), user1Params.writeAccessValidator);
+        } catch (AutomationPackageUnsupportedResourceTypeException e) {
+            log.error("Unable to delete library", e);
+            Assert.fail("Unable to delete library");
+        }
         try {
             resourceManager.getResourceFile(updatedLib1Resource.getId().toString());
             Assert.fail("Exception should be thrown");
