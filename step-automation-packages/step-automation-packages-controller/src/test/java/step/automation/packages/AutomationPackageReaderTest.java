@@ -4,6 +4,7 @@ import ch.exense.commons.app.Configuration;
 import ch.exense.commons.io.FileHelper;
 import jakarta.json.spi.JsonProvider;
 import org.apache.commons.collections.CollectionUtils;
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -252,6 +253,25 @@ public class AutomationPackageReaderTest {
         } catch (AutomationPackageReadingException e) {
             assertEquals("Package name contains unsafe characters: My package';. Simple quote and backslash characters are not allowed.", e.getMessage());
         }
+    }
+
+    @Test
+    public void testMissingDescriptor() throws IOException, AutomationPackageReadingException {
+        File tempFolder = FileHelper.createTempFolder();
+        FileHelper.unzip(this.getClass().getClassLoader().getResourceAsStream("step/automation/packages/step-automation-packages.zip"), tempFolder);
+
+        // remove descriptor - reader will use the folder name as AP name and autoscan to lookup existing plans in this folder
+        File descriptor = new File(tempFolder, "automation-package.yaml");
+        boolean deleteOk = descriptor.delete();
+        Assert.assertTrue(deleteOk);
+
+        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(tempFolder, null, null);
+        assertNotNull(automationPackageContent);
+        assertEquals(tempFolder.getName(), automationPackageContent.getName());
+
+        List<Plan> plans = automationPackageContent.getPlans();
+        assertEquals(0, plans.size());
+
     }
 
 }
