@@ -56,6 +56,7 @@ import step.core.plans.Plan;
 import step.core.plugins.ExecutionCallbacks;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
+import step.core.reports.Measure;
 import step.core.variables.VariablesManager;
 import step.datapool.DataSetHandle;
 import step.expressions.ProtectedVariable;
@@ -64,6 +65,7 @@ import step.functions.accessor.FunctionAccessor;
 import step.functions.execution.FunctionExecutionService;
 import step.functions.execution.FunctionExecutionServiceException;
 import step.functions.handler.AbstractFunctionHandler;
+import step.functions.handler.MeasureTypes;
 import step.functions.io.FunctionInput;
 import step.functions.io.Output;
 import step.functions.type.FunctionTypeRegistry;
@@ -181,212 +183,230 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	@Override
 	protected void execute_(CallFunctionReportNode node, CallFunction testArtefact) throws Exception {
-		String argumentStr = testArtefact.getArgument().get();
-		node.setInput(argumentStr);
+		//This try / finally block is meant to ensure that a keyword measurement is always created even in case error like token selection or keyword call timeouts
+		long startTime = System.currentTimeMillis(); //initial value might be updated before the actual Keyword call
+		Long endTime = null; //can be updated right after the keyword call fails, or defined right before creating the error case measurement
+		try {
+			String argumentStr = testArtefact.getArgument().get();
+			node.setInput(argumentStr);
 
-		Function function = getFunction(testArtefact);
+			Function function = getFunction(testArtefact);
 
-		ExecutionCallbacks executionCallbacks = context.getExecutionCallbacks();
-		executionCallbacks.beforeFunctionExecution(context, node, function);
+			ExecutionCallbacks executionCallbacks = context.getExecutionCallbacks();
+			executionCallbacks.beforeFunctionExecution(context, node, function);
 
-		node.setFunctionId(function.getId().toString());
-		node.setFunctionAttributes(function.getAttributes());
+			node.setFunctionId(function.getId().toString());
+			node.setFunctionAttributes(function.getAttributes());
 
-		String name = node.getName();
-		// Name the report node after the keyword if it's not already the case
-		String functionName = function.getAttribute(AbstractOrganizableObject.NAME);
-		if(name.equals(CallFunction.ARTEFACT_NAME) && functionName != null) {
-			node.setName(functionName);
-		}
-		
-		BuildInputResults buildInputResults = buildInput(argumentStr);
-		node.setInput(buildInputResults.inputArgumentsObfuscated);
-		
-		validateInput(buildInputResults.input, function);
+			String name = node.getName();
+			// Name the report node after the keyword if it's not already the case
+			String functionName = function.getAttribute(AbstractOrganizableObject.NAME);
+			if (name.equals(CallFunction.ARTEFACT_NAME) && functionName != null) {
+				node.setName(functionName);
+			}
 
-		Output<JsonObject> output;
-		Map<String, StreamingAttachmentMeta> streamingAttachments = new ConcurrentHashMap<>();
+			BuildInputResults buildInputResults = buildInput(argumentStr);
+			node.setInput(buildInputResults.inputArgumentsObfuscated);
 
-		if(!context.isSimulation()) {
-			FunctionGroupContext functionGroupContext = getFunctionGroupContext();
-			boolean closeFunctionGroupSessionAfterExecution = (functionGroupContext == null);
-			FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionExecutionService, functionGroupContext);
+			validateInput(buildInputResults.input, function);
 
-			// Force local token selection for local plan executions
-			boolean forceLocalToken =  context.getOperationMode() == OperationMode.LOCAL;
-			TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
+			Output<JsonObject> output;
+			Map<String, StreamingAttachmentMeta> streamingAttachments = new ConcurrentHashMap<>();
 
-			StreamingResourceUploadContext streamingUploadContext = null;
+			if (!context.isSimulation()) {
+				FunctionGroupContext functionGroupContext = getFunctionGroupContext();
+				boolean closeFunctionGroupSessionAfterExecution = (functionGroupContext == null);
+				FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionExecutionService, functionGroupContext);
 
-			try {
-				String agentUrl = token.getAgent().getAgentUrl();
-				node.setAgentUrl(agentUrl);
-				node.setTokenId(token.getID());
+				// Force local token selection for local plan executions
+				boolean forceLocalToken = context.getOperationMode() == OperationMode.LOCAL;
+				TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
-				Token gridToken = token.getToken();
-
-				/* Support for streaming uploads produced during this call. We create and register a new context,
-				provide the necessary information for the upload provider, and set up a listener for the context,
-				so we can populate the attachment metadata in realtime and attach it to the report node.
-
-				Note / potential TODO:
-				This could also be "outsourced" to different classes, similarly to how the LiveReportingPlugin
-				handles the non-websocket context through before/afterReportNodeExecution hooks, then MeasurementPlugin
-				using that information. For the streaming attachments, all of the logic is concentrated in the following block.
-				*/
-				// FIXME: SED-4192 (Step 30+) This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
-				StreamingResourceUploadContexts streamingUploadContexts = context.get(StreamingResourceUploadContexts.class);
-				if (streamingUploadContexts != null) {
-					streamingUploadContext = new StreamingResourceUploadContext();
-					streamingUploadContexts.registerContext(streamingUploadContext);
-					streamingUploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_EXECUTION_ID, context.getExecutionId());
-					streamingUploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_VARIABLES_MANAGER, context.getVariablesManager());
-					streamingUploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_REPORT_NODE, node);
-					ObjectEnricher enricher = context.getObjectEnricher();
-					if (enricher != null) {
-						streamingUploadContext.getAttributes().put(LiveReportingConstants.ACCESSCONTROL_ENRICHER, enricher);
-					}
-
-					buildInputResults.input.getProperties().put(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL, (String) context.get(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL));
-					buildInputResults.input.getProperties().put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, (String) context.get(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH));
-					buildInputResults.input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, streamingUploadContext.contextId);
-
-					streamingUploadContexts.registerListener(streamingUploadContext.contextId, new StreamingResourceUploadContextListener() {
-
-						@Override
-						public void onResourceCreationRefused(StreamingResourceMetadata metadata, String reasonPhrase) {
-							node.getAttachments().add(new SkippedAttachmentMeta(metadata.getFilename(), metadata.getMimeType(), reasonPhrase));
-							reportNodeAccessor.save(node);
-						}
-
-						@Override
-						public void onResourceCreated(String resourceId, StreamingResourceMetadata metadata) {
-							// This will create an attachment with its immutable properties, but it will not yet "publish" it to the reportNode or set its status etc.
-							streamingAttachments.put(resourceId, new StreamingAttachmentMeta(new ObjectId(resourceId), metadata.getFilename(), metadata.getMimeType()));
-						}
-
-						@Override
-						public void onResourceStatusChanged(String resourceId, StreamingResourceStatus status) {
-							// Here's where we update the attachment status etc.
-							StreamingAttachmentMeta attachment = streamingAttachments.get(resourceId);
-							if (attachment != null) {
-								// initially, there is no status set (see above)
-								boolean isFirstUpdate = attachment.getStatus() == null;
-								attachment.setCurrentSize(status.getCurrentSize());
-								attachment.setCurrentNumberOfLines(status.getNumberOfLines());
-								attachment.setStatus(StreamingAttachmentMeta.Status.valueOf(status.getTransferStatus().name()));
-								if (isFirstUpdate) {
-									// this ensures that attachments are added to the node exactly once, and with meaningful initial data
-									node.getAttachments().add(attachment);
-								}
-								reportNodeAccessor.save(node);
-							} else {
-								logger.warn("Unexpected: Unable to find attachment for resource '{}'", resourceId);
-							}
-						}
-					});
-				}
-
-				LiveReportingContext liveReportingContext = LiveReportingPlugin.getLiveReportingContext(context);
-				if (liveReportingContext != null) {
-					// set up the plumbing to let the handler know where to forward measures
-					buildInputResults.input.getProperties().put(LiveReportingConstants.LIVEREPORTING_CONTEXT_ID, liveReportingContext.id);
-				}
-
-				if(gridToken.isLocal()) {
-					TokenReservationSession session = (TokenReservationSession) gridToken.getAttachedObject(TokenWrapper.TOKEN_RESERVATION_SESSION);
-					session.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, new ExecutionContextWrapper(context));
-					session.put(AbstractFunctionHandler.ARTEFACT_PATH, currentArtefactPath());
-				} else {
-					// only report non-local (i.e. actual agent) URLs
-					context.addAgentUrl(agentUrl);
-				}
-
-				OperationManager.getInstance().enter(OPERATION_KEYWORD_CALL, new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
-						node.getId().toString(), node.getArtefactHash());
+				StreamingResourceUploadContext streamingUploadContext = null;
 
 				try {
-					output = functionExecutionService.callFunction(token.getID(), function, buildInputResults.input, JsonObject.class, context);
-				} finally {
-					OperationManager.getInstance().exit();
-				}
-				executionCallbacks.afterFunctionExecution(context, node, function, output);
+					String agentUrl = token.getAgent().getAgentUrl();
+					node.setAgentUrl(agentUrl);
+					node.setTokenId(token.getID());
 
-				Error error = output.getError();
-				if(error!=null) {
-					node.setError(error);
-					node.setStatus(error.getType()==ErrorType.TECHNICAL?ReportNodeStatus.TECHNICAL_ERROR:ReportNodeStatus.FAILED);
-				} else {
-					node.setStatus(ReportNodeStatus.PASSED);
-				}
+					Token gridToken = token.getToken();
 
-				if(output.getPayload() != null) {
-					Object outputPayload = (useLegacyOutput) ? output.getPayload() : new UserFriendlyJsonObject(output.getPayload());
-					context.getVariablesManager().putVariable(node, "output", outputPayload);
-					node.setOutput(output.getPayload().toString());
-					node.setOutputObject(output.getPayload());
-					ReportNode parentNode = context.getReportNodeCache().get(node.getParentID());
-					if(parentNode!=null) {
-						context.getVariablesManager().putVariable(parentNode, "previous", outputPayload);
-					}
-				}
+					/* Support for streaming uploads produced during this call. We create and register a new context,
+					provide the necessary information for the upload provider, and set up a listener for the context,
+					so we can populate the attachment metadata in realtime and attach it to the report node.
 
-				if(output.getAttachments()!=null) {
-					for(Attachment a:output.getAttachments()) {
-						AttachmentMeta attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName(), a.getMimeType());
-						node.addAttachment(attachmentMeta);
-					}
-				}
-				if(output.getMeasures()!=null) {
-					node.setMeasures(output.getMeasures());
-				}
+					Note / potential TODO:
+					This could also be "outsourced" to different classes, similarly to how the LiveReportingPlugin
+					handles the non-websocket context through before/afterReportNodeExecution hooks, then MeasurementPlugin
+					using that information. For the streaming attachments, all of the logic is concentrated in the following block.
+					*/
+					// FIXME: SED-4192 (Step 30+) This will currently only work in a full Step server, not for local AP executions, Unit Tests etc.
+					StreamingResourceUploadContexts streamingUploadContexts = context.get(StreamingResourceUploadContexts.class);
+					if (streamingUploadContexts != null) {
+						streamingUploadContext = new StreamingResourceUploadContext();
+						streamingUploadContexts.registerContext(streamingUploadContext);
+						streamingUploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_EXECUTION_ID, context.getExecutionId());
+						streamingUploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_VARIABLES_MANAGER, context.getVariablesManager());
+						streamingUploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_REPORT_NODE, node);
+						ObjectEnricher enricher = context.getObjectEnricher();
+						if (enricher != null) {
+							streamingUploadContext.getAttributes().put(LiveReportingConstants.ACCESSCONTROL_ENRICHER, enricher);
+						}
 
-				String drainOutputValue = testArtefact.getResultMap().get();
-				drainOutput(drainOutputValue, output);
-			} finally {
-				if(closeFunctionGroupSessionAfterExecution) {
-					functionGroupSession.releaseTokens(true);
-				}
-				if (streamingUploadContext != null) {
-					if (!streamingAttachments.isEmpty()) {
-						// Status updates come in an asynchronous fashion, so for uploads that were NOT properly finalized,
-						// the transition message from IN_PROGRESS to FAILED may be received slightly after the call is considered finished (SED-4277).
-						// If this is the case, try to wait a little bit for the message to arrive (will be handled in a different thread),
-						// before unregistering our context listener.
+						buildInputResults.input.getProperties().put(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL, (String) context.get(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL));
+						buildInputResults.input.getProperties().put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, (String) context.get(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH));
+						buildInputResults.input.getProperties().put(StreamingResourceUploadContext.PARAMETER_NAME, streamingUploadContext.contextId);
 
-						// Testing shows that we usually need 0, 1, or (rarely) 2, (extremely rarely) 3 or 4 iterations,
-						// and that it's more likely to occur if the KW is run on the controller itself (makes sense, because
-						// when the call is local, the WS streaming overhead is - relatively seen - higher than if both are remote)
-						int max = 30; // x 50 ms = 1.5 seconds, this should be more than enough time
-						for (int i = 0; i <= max; ++i) {
-							boolean unfinished = streamingAttachments.values().stream()
-									.map(StreamingAttachmentMeta::getStatus)
-									.filter(Objects::nonNull)
-									.anyMatch(status -> !(status.equals(StreamingAttachmentMeta.Status.COMPLETED) || status.equals(StreamingAttachmentMeta.Status.FAILED)));
-							if (!unfinished) {
-								break;
+						streamingUploadContexts.registerListener(streamingUploadContext.contextId, new StreamingResourceUploadContextListener() {
+
+							@Override
+							public void onResourceCreationRefused(StreamingResourceMetadata metadata, String reasonPhrase) {
+								node.getAttachments().add(new SkippedAttachmentMeta(metadata.getFilename(), metadata.getMimeType(), reasonPhrase));
+								reportNodeAccessor.save(node);
 							}
-							if (i == max) {
-								logger.warn("Giving up waiting for streaming uploads to be finalized, reportNode {} may contain inconsistent attachment status metadata", node.getId());
-							} else {
-								if (logger.isDebugEnabled()) {
-									logger.debug("Waiting for all streaming uploads to transition to a final state ({}/{}), rnId={}", (i + 1), max, node.getId());
+
+							@Override
+							public void onResourceCreated(String resourceId, StreamingResourceMetadata metadata) {
+								// This will create an attachment with its immutable properties, but it will not yet "publish" it to the reportNode or set its status etc.
+								streamingAttachments.put(resourceId, new StreamingAttachmentMeta(new ObjectId(resourceId), metadata.getFilename(), metadata.getMimeType()));
+							}
+
+							@Override
+							public void onResourceStatusChanged(String resourceId, StreamingResourceStatus status) {
+								// Here's where we update the attachment status etc.
+								StreamingAttachmentMeta attachment = streamingAttachments.get(resourceId);
+								if (attachment != null) {
+									// initially, there is no status set (see above)
+									boolean isFirstUpdate = attachment.getStatus() == null;
+									attachment.setCurrentSize(status.getCurrentSize());
+									attachment.setCurrentNumberOfLines(status.getNumberOfLines());
+									attachment.setStatus(StreamingAttachmentMeta.Status.valueOf(status.getTransferStatus().name()));
+									if (isFirstUpdate) {
+										// this ensures that attachments are added to the node exactly once, and with meaningful initial data
+										node.getAttachments().add(attachment);
+									}
+									reportNodeAccessor.save(node);
+								} else {
+									logger.warn("Unexpected: Unable to find attachment for resource '{}'", resourceId);
 								}
-								Thread.sleep(50);
 							}
+						});
+					}
+
+					LiveReportingContext liveReportingContext = LiveReportingPlugin.getLiveReportingContext(context);
+					if (liveReportingContext != null) {
+						// set up the plumbing to let the handler know where to forward measures
+						buildInputResults.input.getProperties().put(LiveReportingConstants.LIVEREPORTING_CONTEXT_ID, liveReportingContext.id);
+					}
+
+					if (gridToken.isLocal()) {
+						TokenReservationSession session = (TokenReservationSession) gridToken.getAttachedObject(TokenWrapper.TOKEN_RESERVATION_SESSION);
+						session.put(AbstractFunctionHandler.EXECUTION_CONTEXT_KEY, new ExecutionContextWrapper(context));
+						session.put(AbstractFunctionHandler.ARTEFACT_PATH, currentArtefactPath());
+					} else {
+						// only report non-local (i.e. actual agent) URLs
+						context.addAgentUrl(agentUrl);
+					}
+
+					OperationManager.getInstance().enter(OPERATION_KEYWORD_CALL, new Object[]{function.getAttributes(), token.getToken(), token.getAgent()},
+							node.getId().toString(), node.getArtefactHash());
+
+					startTime = System.currentTimeMillis();
+					try {
+						output = functionExecutionService.callFunction(token.getID(), function, buildInputResults.input, JsonObject.class, context);
+					} finally {
+						endTime = System.currentTimeMillis();
+						OperationManager.getInstance().exit();
+					}
+					executionCallbacks.afterFunctionExecution(context, node, function, output);
+
+					Error error = output.getError();
+					if (error != null) {
+						node.setError(error);
+						node.setStatus(error.getType() == ErrorType.TECHNICAL ? ReportNodeStatus.TECHNICAL_ERROR : ReportNodeStatus.FAILED);
+					} else {
+						node.setStatus(ReportNodeStatus.PASSED);
+					}
+
+					if (output.getPayload() != null) {
+						Object outputPayload = (useLegacyOutput) ? output.getPayload() : new UserFriendlyJsonObject(output.getPayload());
+						context.getVariablesManager().putVariable(node, "output", outputPayload);
+						node.setOutput(output.getPayload().toString());
+						node.setOutputObject(output.getPayload());
+						ReportNode parentNode = context.getReportNodeCache().get(node.getParentID());
+						if (parentNode != null) {
+							context.getVariablesManager().putVariable(parentNode, "previous", outputPayload);
 						}
 					}
 
-					context.require(StreamingResourceUploadContexts.class).unregisterContext(streamingUploadContext);
+					if (output.getAttachments() != null) {
+						for (Attachment a : output.getAttachments()) {
+							AttachmentMeta attachmentMeta = reportNodeAttachmentManager.createAttachment(AttachmentHelper.hexStringToByteArray(a.getHexContent()), a.getName(), a.getMimeType());
+							node.addAttachment(attachmentMeta);
+						}
+					}
+					if (output.getMeasures() != null) {
+						node.setMeasures(output.getMeasures());
+					}
+
+					String drainOutputValue = testArtefact.getResultMap().get();
+					drainOutput(drainOutputValue, output);
+				} finally {
+					if (closeFunctionGroupSessionAfterExecution) {
+						functionGroupSession.releaseTokens(true);
+					}
+					if (streamingUploadContext != null) {
+						if (!streamingAttachments.isEmpty()) {
+							// Status updates come in an asynchronous fashion, so for uploads that were NOT properly finalized,
+							// the transition message from IN_PROGRESS to FAILED may be received slightly after the call is considered finished (SED-4277).
+							// If this is the case, try to wait a little bit for the message to arrive (will be handled in a different thread),
+							// before unregistering our context listener.
+
+							// Testing shows that we usually need 0, 1, or (rarely) 2, (extremely rarely) 3 or 4 iterations,
+							// and that it's more likely to occur if the KW is run on the controller itself (makes sense, because
+							// when the call is local, the WS streaming overhead is - relatively seen - higher than if both are remote)
+							int max = 30; // x 50 ms = 1.5 seconds, this should be more than enough time
+							for (int i = 0; i <= max; ++i) {
+								boolean unfinished = streamingAttachments.values().stream()
+										.map(StreamingAttachmentMeta::getStatus)
+										.filter(Objects::nonNull)
+										.anyMatch(status -> !(status.equals(StreamingAttachmentMeta.Status.COMPLETED) || status.equals(StreamingAttachmentMeta.Status.FAILED)));
+								if (!unfinished) {
+									break;
+								}
+								if (i == max) {
+									logger.warn("Giving up waiting for streaming uploads to be finalized, reportNode {} may contain inconsistent attachment status metadata", node.getId());
+								} else {
+									if (logger.isDebugEnabled()) {
+										logger.debug("Waiting for all streaming uploads to transition to a final state ({}/{}), rnId={}", (i + 1), max, node.getId());
+									}
+									Thread.sleep(50);
+								}
+							}
+						}
+
+						context.require(StreamingResourceUploadContexts.class).unregisterContext(streamingUploadContext);
+					}
+					callChildrenArtefacts(node, testArtefact);
 				}
-				callChildrenArtefacts(node, testArtefact);
+			} else {
+				output = new Output<>();
+				output.setPayload(JsonProviderCache.createObjectBuilder().build());
+				node.setOutputObject(output.getPayload());
+				node.setOutput(output.getPayload().toString());
+				node.setStatus(ReportNodeStatus.PASSED);
 			}
-		} else {
-			output = new Output<>();
-			output.setPayload(JsonProviderCache.createObjectBuilder().build());
-			node.setOutputObject(output.getPayload());
-			node.setOutput(output.getPayload().toString());
-			node.setStatus(ReportNodeStatus.PASSED);
+		} finally {
+			if (node.getMeasures() == null || node.getMeasures().isEmpty()) {
+				//A Call function shall always have a measure of type "keyword", if the output measure is empty (mostly happen in case the agent call was not completed due to interruption), we create one directly here
+				//Note don't use Map.of, List.of as these could be enriched with more content later
+				Map<String, Object> data = new HashMap<>();
+				data.put(MeasureTypes.ATTRIBUTE_TYPE, MeasureTypes.TYPE_KEYWORD);
+				List<Measure> measures = Objects.requireNonNullElse(node.getMeasures(), new ArrayList<>());
+				long duration = Objects.requireNonNullElse(endTime, System.currentTimeMillis()) - startTime;
+				measures.add(new Measure(node.getName(), duration, startTime, data, null));
+				node.setMeasures(measures);
+			}
 		}
 	}
 
