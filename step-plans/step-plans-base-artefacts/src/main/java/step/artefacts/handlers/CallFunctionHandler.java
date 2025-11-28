@@ -186,11 +186,13 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 		//This try / finally block is meant to ensure that a keyword measurement is always created even in case error like token selection or keyword call timeouts
 		long startTime = System.currentTimeMillis(); //initial value might be updated before the actual Keyword call
 		Long endTime = null; //can be updated right after the keyword call fails, or defined right before creating the error case measurement
+		String measureName = null; //Will be set to the function name (default for KW measure) if it can be resolved or the final node name otherwise
 		try {
 			String argumentStr = testArtefact.getArgument().get();
 			node.setInput(argumentStr);
 
 			Function function = getFunction(testArtefact);
+			measureName = function.getAttributes().get(AbstractOrganizableObject.NAME);
 
 			ExecutionCallbacks executionCallbacks = context.getExecutionCallbacks();
 			executionCallbacks.beforeFunctionExecution(context, node, function);
@@ -397,16 +399,28 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				node.setStatus(ReportNodeStatus.PASSED);
 			}
 		} finally {
-			if (node.getMeasures() == null || node.getMeasures().isEmpty()) {
-				//A Call function shall always have a measure of type "keyword", if the output measure is empty (mostly happen in case the agent call was not completed due to interruption), we create one directly here
-				//Note don't use Map.of, List.of as these could be enriched with more content later
-				Map<String, Object> data = new HashMap<>();
-				data.put(MeasureTypes.ATTRIBUTE_TYPE, MeasureTypes.TYPE_KEYWORD);
-				List<Measure> measures = Objects.requireNonNullElse(node.getMeasures(), new ArrayList<>());
-				long duration = Objects.requireNonNullElse(endTime, System.currentTimeMillis()) - startTime;
-				measures.add(new Measure(node.getName(), duration, startTime, data, null));
-				node.setMeasures(measures);
-			}
+			createKeywordMeasureIfAbsent(node, measureName, endTime, startTime);
+		}
+	}
+
+	/**
+	 * A Call function shall always have a measure of type "keyword", if the output measure is empty (mostly happen in case the agent call was not completed due to interruption), we create one directly here
+	 * Note don't use Map.of(), List.of() as these could be enriched with more content later
+	 * The status is left null to keep the default logic: node status is used when converting Measure to Measurement by the MeasurementPlugin
+	 * @param node the node for which we ensure a keyword measure exists
+	 * @param measureName the name of the measure to be created, fallback to node name if null
+	 * @param endTime the measure endtime, fallback to current time if null
+	 * @param startTime the startTime of the measure
+	 */
+	private static void createKeywordMeasureIfAbsent(CallFunctionReportNode node, String measureName, Long endTime, long startTime) {
+		if (node.getMeasures() == null || node.getMeasures().isEmpty()) {
+			Map<String, Object> data = new HashMap<>();
+			data.put(MeasureTypes.ATTRIBUTE_TYPE, MeasureTypes.TYPE_KEYWORD);
+			List<Measure> measures = Objects.requireNonNullElse(node.getMeasures(), new ArrayList<>());
+			measureName = Objects.requireNonNullElse(measureName, node.getName());
+			long duration = Objects.requireNonNullElse(endTime, System.currentTimeMillis()) - startTime;
+			measures.add(new Measure(measureName, duration, startTime, data, null));
+			node.setMeasures(measures);
 		}
 	}
 
