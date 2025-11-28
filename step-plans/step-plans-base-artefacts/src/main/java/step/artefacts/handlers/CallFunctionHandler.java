@@ -91,6 +91,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 
 	private static final String KEYWORD_OUTPUT_LEGACY_FORMAT = "keywords.output.legacy";
 	public static final String OPERATION_KEYWORD_CALL = "Keyword Call";
+	public static final String UNRESOLVED_KEYWORD_MEASUREMENT_SUFFIX = "_UnresolvedKeyword";
 
 	protected FunctionExecutionService functionExecutionService;
 	protected FunctionAccessor functionAccessor;
@@ -417,7 +418,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 			Map<String, Object> data = new HashMap<>();
 			data.put(MeasureTypes.ATTRIBUTE_TYPE, MeasureTypes.TYPE_KEYWORD);
 			List<Measure> measures = Objects.requireNonNullElse(node.getMeasures(), new ArrayList<>());
-			measureName = Objects.requireNonNullElse(measureName, node.getName());
+			measureName = Objects.requireNonNullElse(measureName, node.getName() + UNRESOLVED_KEYWORD_MEASUREMENT_SUFFIX);
 			long duration = Objects.requireNonNullElse(endTime, System.currentTimeMillis()) - startTime;
 			measures.add(new Measure(measureName, duration, startTime, data, null));
 			node.setMeasures(measures);
