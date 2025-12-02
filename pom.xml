@@ -45,13 +45,13 @@
 		<maven.compiler.target>11</maven.compiler.target>
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
-		<dependencies.version>2025.6.25</dependencies.version>
-		<step-grid.version>2.5.0</step-grid.version>
-		<step-framework.version>2.5.0</step-framework.version>
+		<step-grid.version>2025.12.2-692eba8911ea7b7be5d003f0</step-grid.version>
+		<step-framework.version>2025.12.2-692eb3c011ea7b7be5bc6ea2</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
 		<dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
+		<!-- When updating POI, see where this reference is used and read the comments there! -->
 		<dep.apache-poi.version>5.2.3</dep.apache-poi.version>
 		<dep.aether.version>1.1.0</dep.aether.version>
 
@@ -219,7 +219,14 @@
 			<dependency>
 				<groupId>org.quartz-scheduler</groupId>
 				<artifactId>quartz</artifactId>
-				<version>2.5.0-rc1</version>
+				<version>2.5.1</version>
+				<exclusions>
+					<!-- unneeded, and conflicting, dependency from Quartz to Java EE 10-->
+					<exclusion>
+						<groupId>jakarta.xml.bind</groupId>
+						<artifactId>jakarta.xml.bind-api</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 
 			<dependency>
@@ -282,37 +289,25 @@
 				<artifactId>poi</artifactId>
 				<version>${dep.apache-poi.version}</version>
 			</dependency>
+
 			<dependency>
 				<groupId>org.apache.poi</groupId>
 				<artifactId>poi-ooxml</artifactId>
 				<version>${dep.apache-poi.version}</version>
+				<!-- When updating POI, check if the definition right below is still necessary!!! -->
 			</dependency>
 
+			<!-- For POI: force javaparser-core to the higher version from groovy (POI references 3.24.4) -->
 			<dependency>
-				<groupId>com.google.apis</groupId>
-				<artifactId>google-api-services-sheets</artifactId>
-				<version>v4-rev20250211-2.0.0</version>
+				<groupId>com.github.javaparser</groupId>
+				<artifactId>javaparser-core</artifactId>
+				<version>3.25.6</version>
 			</dependency>
-			<dependency>
-				<groupId>com.google.apis</groupId>
-				<artifactId>google-api-services-drive</artifactId>
-				<version>v3-rev20250216-2.0.0</version>
-			</dependency>
-			<dependency>
-				<groupId>com.google.http-client</groupId>
-				<artifactId>google-http-client-jackson2</artifactId>
-				<version>1.46.1</version>
-			</dependency>
+
 			<dependency>
 				<groupId>org.everit.json</groupId>
 				<artifactId>org.everit.json.schema</artifactId>
 				<version>1.5.1</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.ow2.asm</groupId>
-				<artifactId>asm</artifactId>
-				<version>9.7</version>
 			</dependency>
 
 			<!-- plexus stuff is mostly referred to by maven classes -->
@@ -354,7 +349,7 @@
 			<dependency>
 				<groupId>net.minidev</groupId>
 				<artifactId>accessors-smart</artifactId>
-				<version>2.5.0</version>
+				<version>2.5.2</version>
 			</dependency>
 
 			<dependency>
@@ -383,6 +378,7 @@
 			</dependency>
 
 			<!-- These are not for the maven builds, but for the actual sources implementing maven functionality -->
+			<!-- See SED-4411, these need to be consolidated -->
 			<dependency>
 				<groupId>org.apache.maven</groupId>
 				<artifactId>maven-aether-provider</artifactId>
@@ -392,13 +388,6 @@
 				<groupId>org.apache.maven</groupId>
 				<artifactId>maven-settings-builder</artifactId>
 				<version>3.8.6</version>
-			</dependency>
-
-			<!-- quick-fixes, these should be upstreamed to exense-dependencies -->
-			<dependency>
-				<groupId>org.apache.commons</groupId>
-				<artifactId>commons-compress</artifactId>
-				<version>1.27.1</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -536,7 +525,7 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>enforce-banned-dependencies</id>
+                        <id>enforce-policies</id>
                         <goals>
                             <goal>enforce</goal>
                         </goals>
@@ -549,6 +538,15 @@
                                         <exclude>org.testng</exclude>
                                     </excludes>
                                 </bannedDependencies>
+								<requireUpperBoundDeps>
+									<excludes>
+										<exclude>jakarta.xml.bind:jakarta.xml.bind-api</exclude>
+										<!-- TODO: SED-4411 to consolidate versions, then remove next line -->
+										<exclude>org.apache.maven:maven-builder-support</exclude>
+										<!-- Same idea, different conflict (with POI ooxml, might be solved once POI is upgraded) -->
+										<exclude>org.apache.maven:maven-model</exclude>
+									</excludes>
+								</requireUpperBoundDeps>
                             </rules>
                             <fail>true</fail>
                         </configuration>
