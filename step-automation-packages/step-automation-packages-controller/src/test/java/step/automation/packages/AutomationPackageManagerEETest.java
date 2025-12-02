@@ -279,7 +279,7 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
     }
 
     @Test
-    public void testManagedLibraryInIsolatedProjects() throws IOException {
+    public void testManagedLibraryInIsolatedProjects() throws IOException, InterruptedException {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File anotherAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
 
@@ -403,6 +403,7 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
         );
 
         Instant nowBeforeLib1Update = Instant.now();
+        Thread.sleep(1);
         RefreshResourceResult refreshResourceResult = manager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(
                 projectLibResource1.getId().toHexString(), user1Params, manager
         );
