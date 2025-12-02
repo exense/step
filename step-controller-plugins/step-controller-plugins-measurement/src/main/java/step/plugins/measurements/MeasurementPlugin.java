@@ -267,7 +267,10 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	private Measurement createMeasurement(ExecutionContext executionContext, Measure measure, CallFunctionReportNode functionReport) {
 		Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
 		Measurement measurement = initMeasurement(executionContext);
-		measurement.addCustomFields(functionAttributes);
+		if (functionAttributes != null) {
+			measurement.addCustomFields(functionAttributes);
+			measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
+		}
 		measurement.setName(measure.getName());
 		if (measure.getStatus() != null) {
 			// Note: status should always be set for live measures, but is null unless explicitly set for "output measures".
@@ -275,7 +278,6 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 			measurement.setStatus(measure.getStatus().name());
 		}
 		measurement.setType(getMeasureTypeOrDefault(measure));
-		measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
 		measurement.setValue(measure.getDuration());
 		measurement.setBegin(measure.getBegin());
 		measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
