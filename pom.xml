@@ -45,9 +45,8 @@
 		<maven.compiler.target>11</maven.compiler.target>
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
-		<dependencies.version>2025.11.28-6929b52211ea7b7be588e49c</dependencies.version>
-		<step-grid.version>2025.11.28-6929bdcd11ea7b7be599cf49</step-grid.version>
-		<step-framework.version>2025.11.28-6929bb8111ea7b7be595a9c4</step-framework.version>
+		<step-grid.version>2025.12.2-692eba8911ea7b7be5d003f0</step-grid.version>
+		<step-framework.version>2025.12.2-692eb3c011ea7b7be5bc6ea2</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
@@ -379,6 +378,7 @@
 			</dependency>
 
 			<!-- These are not for the maven builds, but for the actual sources implementing maven functionality -->
+			<!-- See SED-4411, these need to be consolidated -->
 			<dependency>
 				<groupId>org.apache.maven</groupId>
 				<artifactId>maven-aether-provider</artifactId>
@@ -388,13 +388,6 @@
 				<groupId>org.apache.maven</groupId>
 				<artifactId>maven-settings-builder</artifactId>
 				<version>3.8.6</version>
-			</dependency>
-
-			<!-- quick-fixes, these should be upstreamed to exense-dependencies -->
-			<dependency>
-				<groupId>org.apache.commons</groupId>
-				<artifactId>commons-compress</artifactId>
-				<version>1.27.1</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
