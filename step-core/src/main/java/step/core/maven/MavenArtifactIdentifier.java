@@ -22,6 +22,7 @@ import step.resources.ResourceOrigin;
 import step.resources.ResourceOriginType;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class MavenArtifactIdentifier implements ResourceOrigin {
 
@@ -145,7 +146,10 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
     }
     
     public String toShortString() {
-        String res = String.format(MVN_PREFIX + ":%s:%s:%s", getGroupId(),  this.getArtifactId(), getVersion());
+        String res = String.format(MVN_PREFIX + ":%s:%s:%s",
+                Optional.ofNullable(getGroupId()).orElse(""),
+                Optional.ofNullable(getArtifactId()).orElse(""),
+                Optional.ofNullable(getVersion()).orElse(""));
         if (this.getClassifier() != null || this.getType() != null) {
             res += ":";
             if (this.getClassifier() != null) {

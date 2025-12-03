@@ -106,7 +106,7 @@ public class AutomationPackageResourceManager {
             // all these exceptions are technical, so we log the whole stack trace here, but throw the AutomationPackageManagerException
             // to provide the short error message without technical details to the client
             log.error("Unable to upload the automation package library", e);
-            throw new AutomationPackageManagerException("Unable to upload the automation package library: " + apLibProvider, e);
+            throw new AutomationPackageManagerException("Unable to upload the automation package library.", e, true);
         }
 
     }
@@ -176,7 +176,7 @@ public class AutomationPackageResourceManager {
             // all these exceptions are technical, so we log the whole stack trace here, but throw the AutomationPackageManagerException
             // to provide the short error message without technical details to the client
             log.error("Unable to upload the automation package library", e);
-            throw new AutomationPackageManagerException("Unable to upload the automation package library: " + apLibProvider, e);
+            throw new AutomationPackageManagerException("Unable to upload the automation package library.", e, true);
         }
         return uploadedResource;
     }
@@ -223,7 +223,7 @@ public class AutomationPackageResourceManager {
                     );
                 } catch (IOException | InvalidResourceFormatException |
                          AutomationPackageUnsupportedResourceTypeException e) {
-                    throw new AutomationPackageManagerException("Unable to create the resource for automation package", e);
+                    throw new AutomationPackageManagerException("Unable to create the resource for automation package.", e, true);
                 }
             }
         }
@@ -424,7 +424,7 @@ public class AutomationPackageResourceManager {
                 }
             }
         } catch (AutomationPackageReadingException e) {
-            throw new AutomationPackageManagerException("Cannot restore the file from maven artifactory", e);
+            throw new AutomationPackageManagerException("Cannot restore the file from maven artifactory.", e, true);
         }
 
         if (refreshResourceResult.getResultStatus() == RefreshResourceResult.ResultStatus.REFRESHED) {
@@ -452,7 +452,7 @@ public class AutomationPackageResourceManager {
                 resourceManager.saveResource(updated);
             }
         } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
-            throw new AutomationPackageManagerException("Cannot restore the file from maven artifactory", ex);
+            throw new AutomationPackageManagerException("Cannot restore the file from maven artifactory.", ex, true);
         }
     }
 

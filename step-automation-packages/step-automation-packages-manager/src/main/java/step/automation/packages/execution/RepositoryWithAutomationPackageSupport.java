@@ -350,9 +350,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 AutomationPackageLibraryProvider libraryProvider = manager.getAutomationPackageLibraryProvider(libraryFileSource, objectPredicate);
                 return new AutomationPackageFile(libraryProvider.getAutomationPackageLibrary(), null);
             } catch (AutomationPackageReadingException e) {
-                throw new AutomationPackageManagerException("Unable to resolve package library with maven source " + maven_source, e);
+                throw new AutomationPackageManagerException("Unable to resolve package library with maven source " + maven_source + ".", e, true);
             } catch (ManagedLibraryMissingException e) {
-                throw new AutomationPackageManagerException("Unexpected exception while resolving library with maven coordinate " + maven_source, e);
+                throw new AutomationPackageManagerException("Unexpected exception while resolving library with maven coordinate " + maven_source + ".", e, true);
             }
         } else {
             List<Resource> foundResources = resourceManager.findManyByCriteria(
@@ -384,7 +384,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                         return true;
                     }
                 } catch (InvalidResourceFormatException | IOException | AutomationPackageReadingException ex) {
-                    throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory", ex);
+                    throw new AutomationPackageManagerException("Cannot restore the file for from maven artifactory.", ex, true);
                 }
             }
         }
