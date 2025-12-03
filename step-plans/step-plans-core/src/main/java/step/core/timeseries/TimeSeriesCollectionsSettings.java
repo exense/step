@@ -22,6 +22,8 @@ package step.core.timeseries;
 import ch.exense.commons.app.Configuration;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 public class TimeSeriesCollectionsSettings {
@@ -30,14 +32,9 @@ public class TimeSeriesCollectionsSettings {
     public static final String TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE = "{collectionName}.flush.async.queue.size";
     public static final String TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE = "{collectionName}.flush.series.queue.size";
     public static final String TIME_SERIES_MAIN_RESOLUTION = "{collectionName}.resolution";
-    public static final String TIME_SERIES_MINUTE_COLLECTION_ENABLED = "{collectionName}.collections.minute.enabled";
-    public static final String TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD = "{collectionName}.collections.minute.flush.period";
-    public static final String TIME_SERIES_HOUR_COLLECTION_ENABLED = "{collectionName}.collections.hour.enabled";
-    public static final String TIME_SERIES_HOUR_COLLECTION_FLUSH_PERIOD = "{collectionName}.collections.hour.flush.period";
-    public static final String TIME_SERIES_DAY_COLLECTION_ENABLED = "{collectionName}.collections.day.enabled";
-    public static final String TIME_SERIES_DAY_COLLECTION_FLUSH_PERIOD = "{collectionName}.collections.day.flush.period";
-    public static final String TIME_SERIES_WEEK_COLLECTION_ENABLED = "{collectionName}.collections.week.enabled";
-    public static final String TIME_SERIES_WEEK_COLLECTION_FLUSH_PERIOD = "{collectionName}.collections.week.flush.period";
+    public static final String RESOLUTION_PROPERTY_PREFIX = "{collectionName}.collections.";
+    public static final String TIME_SERIES_RESOLUTION_ENABLED_SUFFIX = ".enabled";
+    public static final String TIME_SERIES_RESOLUTION_FLUSH_PERIOD_SUFFIX = ".flush.period";
 
     private long mainResolution;
     //Define the interval of the flushing job for the main ingestion pipeline (highest resolution)
@@ -49,139 +46,74 @@ public class TimeSeriesCollectionsSettings {
     //flushing do not write to DB directly but to a linked blocking queue in memory which is processed by an asynchronous processor, the queue size is limited to prevent excessive memory usage
     //While the queue is full, ingesting new buckets is blocked
     private int flushAsyncQueueSize;
-    private boolean perMinuteEnabled;
-    private long perMinuteFlushInterval;
-    private boolean hourlyEnabled;
-    private long hourlyFlushInterval;
-    private boolean dailyEnabled;
-    private long dailyFlushInterval;
-    private boolean weeklyEnabled;
-    private long weeklyFlushInterval;
+    private final Map<TimeSeriesCollectionsBuilder.Resolution, ResolutionSettings> additionalResolutionSettings = new TreeMap<>();
 
-    public boolean isDailyEnabled() {
-        return dailyEnabled;
-    }
+    public static class ResolutionSettings {
+        public final long flushInterval;
+        public final boolean enabled;
 
-    public boolean isPerMinuteEnabled() {
-        return perMinuteEnabled;
-    }
-
-    public boolean isHourlyEnabled() {
-        return hourlyEnabled;
-    }
-
-    public boolean isWeeklyEnabled() {
-        return weeklyEnabled;
+        public ResolutionSettings(long flushInterval, boolean enabled) {
+            this.flushInterval = flushInterval;
+            this.enabled = enabled;
+        }
     }
 
     public long getMainResolution() {
         return mainResolution;
     }
 
-    public TimeSeriesCollectionsSettings setMainResolution(long mainResolution) {
+    public void setMainResolution(long mainResolution) {
         this.mainResolution = mainResolution;
-        return this;
-    }
-
-    public TimeSeriesCollectionsSettings setPerMinuteEnabled(boolean perMinuteEnabled) {
-        this.perMinuteEnabled = perMinuteEnabled;
-        return this;
-    }
-
-    public TimeSeriesCollectionsSettings setHourlyEnabled(boolean hourlyEnabled) {
-        this.hourlyEnabled = hourlyEnabled;
-        return this;
-    }
-
-    public TimeSeriesCollectionsSettings setDailyEnabled(boolean dailyEnabled) {
-        this.dailyEnabled = dailyEnabled;
-        return this;
-    }
-
-    public TimeSeriesCollectionsSettings setWeeklyEnabled(boolean weeklyEnabled) {
-        this.weeklyEnabled = weeklyEnabled;
-        return this;
     }
 
     public long getMainFlushInterval() {
         return mainFlushInterval;
     }
 
-    public TimeSeriesCollectionsSettings setMainFlushInterval(long mainFlushInterval) {
+    public void setMainFlushInterval(long mainFlushInterval) {
         this.mainFlushInterval = mainFlushInterval;
-        return this;
-    }
-
-    public long getPerMinuteFlushInterval() {
-        return perMinuteFlushInterval;
     }
 
     public int getFlushSeriesQueueSize() {
         return flushSeriesQueueSize;
     }
 
-    public TimeSeriesCollectionsSettings setFlushSeriesQueueSize(int flushSeriesQueueSize) {
+    public void setFlushSeriesQueueSize(int flushSeriesQueueSize) {
         this.flushSeriesQueueSize = flushSeriesQueueSize;
-        return this;
     }
 
-    private TimeSeriesCollectionsSettings setFlushAsyncQueueSize(int flushAsyncQueueSize) {
+    private void setFlushAsyncQueueSize(int flushAsyncQueueSize) {
         this.flushAsyncQueueSize = flushAsyncQueueSize;
-        return this;
     }
 
     public int getFlushAsyncQueueSize() {
         return flushAsyncQueueSize;
     }
 
-    public TimeSeriesCollectionsSettings setPerMinuteFlushInterval(long perMinuteFlushInterval) {
-        this.perMinuteFlushInterval = perMinuteFlushInterval;
-        return this;
+    private void addAdditionalResolutionSettings(TimeSeriesCollectionsBuilder.Resolution resolution, ResolutionSettings resolutionSettings) {
+        additionalResolutionSettings.put(resolution, resolutionSettings);
     }
-
-    public long getHourlyFlushInterval() {
-        return hourlyFlushInterval;
-    }
-
-    public TimeSeriesCollectionsSettings setHourlyFlushInterval(long hourlyFlushInterval) {
-        this.hourlyFlushInterval = hourlyFlushInterval;
-        return this;
-    }
-
-    public long getDailyFlushInterval() {
-        return dailyFlushInterval;
-    }
-
-    public TimeSeriesCollectionsSettings setDailyFlushInterval(long dailyFlushInterval) {
-        this.dailyFlushInterval = dailyFlushInterval;
-        return this;
-    }
-
-    public long getWeeklyFlushInterval() {
-        return weeklyFlushInterval;
-    }
-
-    public TimeSeriesCollectionsSettings setWeeklyFlushInterval(long weeklyFlushInterval) {
-        this.weeklyFlushInterval = weeklyFlushInterval;
-        return this;
+    public ResolutionSettings getResolutionSettings(TimeSeriesCollectionsBuilder.Resolution resolution) {
+        return additionalResolutionSettings.get(resolution);
     }
 
     public static TimeSeriesCollectionsSettings readSettings(Configuration configuration, String collectionName) {
+        // Validate and read main resolution settings
         long mainResolution = getPropertyAsLong(configuration, TIME_SERIES_MAIN_RESOLUTION, collectionName, 5000L);
         validateMainResolutionParam(mainResolution);
-        return new TimeSeriesCollectionsSettings()
-                .setMainResolution(mainResolution)
-                .setMainFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofSeconds(1).toMillis()))
-                .setFlushSeriesQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE, collectionName, 20000))
-                .setFlushAsyncQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE, collectionName, 5000))
-                .setPerMinuteEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_MINUTE_COLLECTION_ENABLED, collectionName, true))
-                .setPerMinuteFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofMinutes(1).toMillis()))
-                .setHourlyEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_HOUR_COLLECTION_ENABLED, collectionName, true))
-                .setHourlyFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_HOUR_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofMinutes(5).toMillis()))
-                .setDailyEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_DAY_COLLECTION_ENABLED, collectionName, true))
-                .setDailyFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_DAY_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofHours(1).toMillis()))
-                .setWeeklyEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_WEEK_COLLECTION_ENABLED, collectionName, true))
-                .setWeeklyFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_WEEK_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofHours(2).toMillis()));
+        TimeSeriesCollectionsSettings settings = new TimeSeriesCollectionsSettings();
+        Long mainResolutionFlushInterval = getPropertyAsLong(configuration, TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofSeconds(1).toMillis());
+        settings.setMainResolution(mainResolution);
+        settings.setMainFlushInterval(mainResolutionFlushInterval);
+        settings.setFlushSeriesQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE, collectionName, 20000));
+        settings.setFlushAsyncQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE, collectionName, 5000));
+        //Read settings for additional resolutions
+        for (TimeSeriesCollectionsBuilder.Resolution resolution: TimeSeriesCollectionsBuilder.Resolution.values()){
+            boolean resolutionEnabled = getPropertyAsBoolean(configuration, RESOLUTION_PROPERTY_PREFIX + resolution.name + TIME_SERIES_RESOLUTION_ENABLED_SUFFIX, collectionName, true);
+            Long resolutionFlushInterval = getPropertyAsLong(configuration, RESOLUTION_PROPERTY_PREFIX + resolution.name + TIME_SERIES_RESOLUTION_FLUSH_PERIOD_SUFFIX, collectionName, resolution.defaultFlushPeriod.toMillis());
+            settings.addAdditionalResolutionSettings(resolution, new ResolutionSettings(resolutionFlushInterval, resolutionEnabled));
+        }
+        return settings;
     }
 
     private static Long getPropertyAsLong(Configuration configuration, String property, String collectionName, long defaultValue) {
@@ -209,10 +141,6 @@ public class TimeSeriesCollectionsSettings {
 
     public static TimeSeriesCollectionsSettings buildSingleResolutionSettings(long mainResolution, long mainFlushInterval) {
         TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = new TimeSeriesCollectionsSettings();
-        timeSeriesCollectionsSettings.setDailyEnabled(false);
-        timeSeriesCollectionsSettings.setHourlyEnabled(false);
-        timeSeriesCollectionsSettings.setPerMinuteEnabled(false);
-        timeSeriesCollectionsSettings.setWeeklyEnabled(false);
         timeSeriesCollectionsSettings.setMainResolution(mainResolution);
         timeSeriesCollectionsSettings.setMainFlushInterval(mainFlushInterval);
         return timeSeriesCollectionsSettings;

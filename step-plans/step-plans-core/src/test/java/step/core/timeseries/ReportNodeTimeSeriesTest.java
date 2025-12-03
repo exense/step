@@ -45,7 +45,7 @@ public class ReportNodeTimeSeriesTest {
         try (ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(collectionFactory, configuration)) {
             TimeSeries timeSeries = reportNodeTimeSeries.getTimeSeries();
             List<TimeSeriesCollection> collections = timeSeries.getCollections();
-            assertEquals(5, collections.size());
+            assertEquals(8, collections.size());
             ReportNode reportNode = new ReportNode();
             reportNode.setStatus(ReportNodeStatus.PASSED);
             reportNode.setExecutionID("executionId");
@@ -66,8 +66,11 @@ public class ReportNodeTimeSeriesTest {
     @Test
     public void reportNodeTimeSeriesDisabled() {
         Configuration configuration = new Configuration();
+        configuration.putProperty("reportNodeTimeSeries.collections.15_seconds.enabled", "false");
         configuration.putProperty("reportNodeTimeSeries.collections.minute.enabled", "false");
+        configuration.putProperty("reportNodeTimeSeries.collections.15_minutes.enabled", "false");
         configuration.putProperty("reportNodeTimeSeries.collections.hour.enabled", "false");
+        configuration.putProperty("reportNodeTimeSeries.collections.6_hours.enabled", "false");
         configuration.putProperty("reportNodeTimeSeries.collections.day.enabled", "false");
         configuration.putProperty("reportNodeTimeSeries.collections.week.enabled", "false");
         CollectionFactory collectionFactory = new InMemoryCollectionFactory(null);
@@ -86,10 +89,10 @@ public class ReportNodeTimeSeriesTest {
         configuration.putProperty("reportNodeTimeSeries.collections.week.flush.period", "14");
 
         TimeSeriesCollectionsSettings settings = TimeSeriesCollectionsSettings.readSettings(configuration, "reportNodeTimeSeries");
-        assertEquals(11, settings.getPerMinuteFlushInterval());
-        assertEquals(12, settings.getHourlyFlushInterval());
-        assertEquals(13, settings.getDailyFlushInterval());
-        assertEquals(14, settings.getWeeklyFlushInterval());
+        assertEquals(11, settings.getResolutionSettings(TimeSeriesCollectionsBuilder.Resolution.ONE_MINUTE).flushInterval);
+        assertEquals(12, settings.getResolutionSettings(TimeSeriesCollectionsBuilder.Resolution.ONE_HOUR).flushInterval);
+        assertEquals(13, settings.getResolutionSettings(TimeSeriesCollectionsBuilder.Resolution.ONE_DAY).flushInterval);
+        assertEquals(14, settings.getResolutionSettings(TimeSeriesCollectionsBuilder.Resolution.ONE_WEEK).flushInterval);
     }
 
 }

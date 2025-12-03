@@ -29,10 +29,29 @@ import java.util.Set;
 
 public class TimeSeriesCollectionsBuilder {
 
-    public static final String TIME_SERIES_SUFFIX_PER_MINUTE = "_minute";
-    public static final String TIME_SERIES_SUFFIX_HOURLY = "_hour";
-    public static final String TIME_SERIES_SUFFIX_DAILY = "_day";
-    public static final String TIME_SERIES_SUFFIX_WEEKLY = "_week";
+    public static final String COLLECTION_NAME_SEPARATOR = "_";
+
+    public enum Resolution {
+        FIFTEEN_SECONDS("15_seconds", Duration.ofSeconds(15), Duration.ofSeconds(5), false),
+        ONE_MINUTE("minute", Duration.ofMinutes(1), Duration.ofSeconds(10), false),
+        FIFTEEN_MINUTES("15_minutes", Duration.ofMinutes(15), Duration.ofMinutes(1), false),
+        ONE_HOUR("hour", Duration.ofHours(1), Duration.ofMinutes(5), true),
+        SIX_HOURS("6_hours", Duration.ofHours(6), Duration.ofMinutes(30), true),
+        ONE_DAY("day", Duration.ofDays(1), Duration.ofHours(1), true),
+        ONE_WEEK("week", Duration.ofDays(7), Duration.ofHours(2), true);
+
+        public final String name;
+        public final Duration resolution;
+        public final Duration defaultFlushPeriod;
+        public final boolean coarseResolution;
+
+        Resolution(String name, Duration resolution, Duration defaultFlushPeriod, boolean coarseResolution) {
+            this.name = name;
+            this.resolution = resolution;
+            this.defaultFlushPeriod = defaultFlushPeriod;
+            this.coarseResolution = coarseResolution;
+        }
+    }
 
     private final CollectionFactory collectionFactory;
 
@@ -44,11 +63,18 @@ public class TimeSeriesCollectionsBuilder {
         List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
         int flushSeriesQueueSize = collectionsSettings.getFlushSeriesQueueSize();
         int flushAsyncQueueSize = collectionsSettings.getFlushAsyncQueueSize();
+        //Add main resolution
         addIfEnabled(enabledCollections, mainCollectionName, Duration.ofMillis(collectionsSettings.getMainResolution()), collectionsSettings.getMainFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize,null, true);
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_PER_MINUTE, Duration.ofMinutes(1), collectionsSettings.getPerMinuteFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize,null, collectionsSettings.isPerMinuteEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_HOURLY, Duration.ofHours(1), collectionsSettings.getHourlyFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isHourlyEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_DAILY, Duration.ofDays(1), collectionsSettings.getDailyFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isDailyEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_WEEKLY, Duration.ofDays(7), collectionsSettings.getWeeklyFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isWeeklyEnabled());
+        //Add additional resolutions
+        for (Resolution resolution: Resolution.values()) {
+            TimeSeriesCollectionsSettings.ResolutionSettings resolutionSettings = collectionsSettings.getResolutionSettings(resolution);
+            if (resolutionSettings != null) {
+                addIfEnabled(enabledCollections, mainCollectionName + COLLECTION_NAME_SEPARATOR + resolution.name,
+                        resolution.resolution, resolutionSettings.flushInterval, flushSeriesQueueSize, flushAsyncQueueSize,
+                        (resolution.coarseResolution ? ignoredAttributesForHighResolution : null), resolutionSettings.enabled);
+
+            }
+        }
         return enabledCollections;
     }
 
