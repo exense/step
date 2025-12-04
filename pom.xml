@@ -832,28 +832,6 @@
 									<append>true</append>
 								</configuration>
 							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-
-
-		<!-- This profile should be activated together with AggregatedJacocoReportEnabled to save the results for each module in 'target/site' folder (mvn validate) -->
-		<profile>
-			<id>AggregatedJacocoReportCreateSingleReports</id>
-			<activation>
-				<property>
-					<name>AggregatedJacocoReportCreateSingleReports</name>
-					<value>true</value>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.jacoco</groupId>
-						<artifactId>jacoco-maven-plugin</artifactId>
-						<executions>
 							<execution>
 								<id>default-report</id>
 								<phase>validate</phase>
