@@ -272,6 +272,8 @@ public class AutomationPackageReaderTest {
         List<Plan> plans = automationPackageContent.getPlans();
         assertEquals(0, plans.size());
 
+        // cleanup temp folder
+        Assert.assertTrue("Temp folder cannot be removed", FileHelper.deleteFolder(tempFolder));
     }
 
 }
