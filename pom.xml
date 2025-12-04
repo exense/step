@@ -814,29 +814,10 @@
 								<!-- destFile and dataFile are overridden to collect overall coverage data in root folder -->
 								<destFile>${jacoco.overall.exec}</destFile>
 								<dataFile>${jacoco.overall.exec}</dataFile>
-								<excludes>
-									<exclude>*.jar</exclude>
-								</excludes>
 							</configuration>
 						</plugin>
 					</plugins>
-
-
 				</pluginManagement>
-			</build>
-		</profile>
-
-		<!-- This profile should be activated together with AggregatedJacocoReportEnabled to run tests and save the coverage into the aggregated report (mvn clean verify) -->
-		<profile>
-			<id>AggregatedJacocoReportRunTests</id>
-			<activation>
-				<property>
-					<name>AggregatedJacocoReportRunTests</name>
-					<value>true</value>
-				</property>
-			</activation>
-			<build>
-
 				<plugins>
 					<plugin>
 						<groupId>org.jacoco</groupId>
@@ -857,8 +838,8 @@
 			</build>
 		</profile>
 
-		<!-- This profile should be activated together with AggregatedJacocoReportEnabled after the overall report is collected (via the AggregatedJacocoReportRunTests) -->
-		<!-- to save the results for each submodule in 'target/site' folder (mvn validate) -->
+
+		<!-- This profile should be activated together with AggregatedJacocoReportEnabled to save the results for each module in 'target/site' folder (mvn validate) -->
 		<profile>
 			<id>AggregatedJacocoReportCreateSingleReports</id>
 			<activation>
