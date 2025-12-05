@@ -31,28 +31,6 @@ public class TimeSeriesCollectionsBuilder {
 
     public static final String COLLECTION_NAME_SEPARATOR = "_";
 
-    public enum Resolution {
-        FIFTEEN_SECONDS("15_seconds", Duration.ofSeconds(15), Duration.ofSeconds(5), false),
-        ONE_MINUTE("minute", Duration.ofMinutes(1), Duration.ofSeconds(10), false),
-        FIFTEEN_MINUTES("15_minutes", Duration.ofMinutes(15), Duration.ofMinutes(1), false),
-        ONE_HOUR("hour", Duration.ofHours(1), Duration.ofMinutes(5), true),
-        SIX_HOURS("6_hours", Duration.ofHours(6), Duration.ofMinutes(30), true),
-        ONE_DAY("day", Duration.ofDays(1), Duration.ofHours(1), true),
-        ONE_WEEK("week", Duration.ofDays(7), Duration.ofHours(2), true);
-
-        public final String name;
-        public final Duration resolution;
-        public final Duration defaultFlushPeriod;
-        public final boolean coarseResolution;
-
-        Resolution(String name, Duration resolution, Duration defaultFlushPeriod, boolean coarseResolution) {
-            this.name = name;
-            this.resolution = resolution;
-            this.defaultFlushPeriod = defaultFlushPeriod;
-            this.coarseResolution = coarseResolution;
-        }
-    }
-
     private final CollectionFactory collectionFactory;
 
     public TimeSeriesCollectionsBuilder(CollectionFactory collectionFactory) {
@@ -63,8 +41,6 @@ public class TimeSeriesCollectionsBuilder {
         List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
         int flushSeriesQueueSize = collectionsSettings.getFlushSeriesQueueSize();
         int flushAsyncQueueSize = collectionsSettings.getFlushAsyncQueueSize();
-        //Add main resolution
-        addIfEnabled(enabledCollections, mainCollectionName, Duration.ofMillis(collectionsSettings.getMainResolution()), collectionsSettings.getMainFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize,null, true);
         //Add additional resolutions
         for (Resolution resolution: Resolution.values()) {
             TimeSeriesCollectionsSettings.ResolutionSettings resolutionSettings = collectionsSettings.getResolutionSettings(resolution);

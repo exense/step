@@ -31,6 +31,7 @@ import step.core.collections.inmemory.InMemoryCollectionFactory;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class ReportNodeTimeSeriesTest {
 
@@ -78,6 +79,14 @@ public class ReportNodeTimeSeriesTest {
         TimeSeries timeSeries = reportNodeTimeSeries.getTimeSeries();
         List<TimeSeriesCollection> collections = timeSeries.getCollections();
         assertEquals(1, collections.size());
+
+        configuration.putProperty("reportNodeTimeSeries.collections.5_seconds.enabled", "false");
+        try {
+            new ReportNodeTimeSeries(collectionFactory, configuration);
+            fail("Disabling all resolutions is not allowed");
+        } catch (Throwable e) {
+            assertEquals("At least one time series collection must be registered.", e.getMessage());
+        }
     }
 
     @Test
@@ -89,10 +98,10 @@ public class ReportNodeTimeSeriesTest {
         configuration.putProperty("reportNodeTimeSeries.collections.week.flush.period", "14");
 
         TimeSeriesCollectionsSettings settings = TimeSeriesCollectionsSettings.readSettings(configuration, "reportNodeTimeSeries");
-        assertEquals(11, settings.getResolutionSettings(TimeSeriesCollectionsBuilder.Resolution.ONE_MINUTE).flushInterval);
-        assertEquals(12, settings.getResolutionSettings(TimeSeriesCollectionsBuilder.Resolution.ONE_HOUR).flushInterval);
-        assertEquals(13, settings.getResolutionSettings(TimeSeriesCollectionsBuilder.Resolution.ONE_DAY).flushInterval);
-        assertEquals(14, settings.getResolutionSettings(TimeSeriesCollectionsBuilder.Resolution.ONE_WEEK).flushInterval);
+        assertEquals(11, settings.getResolutionSettings(Resolution.ONE_MINUTE).flushInterval);
+        assertEquals(12, settings.getResolutionSettings(Resolution.ONE_HOUR).flushInterval);
+        assertEquals(13, settings.getResolutionSettings(Resolution.ONE_DAY).flushInterval);
+        assertEquals(14, settings.getResolutionSettings(Resolution.ONE_WEEK).flushInterval);
     }
 
 }

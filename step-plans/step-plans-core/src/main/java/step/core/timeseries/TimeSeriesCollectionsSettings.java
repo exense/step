@@ -28,50 +28,32 @@ import java.util.concurrent.TimeUnit;
 
 public class TimeSeriesCollectionsSettings {
 
-    public static final String TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD = "{collectionName}.flush.period";
     public static final String TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE = "{collectionName}.flush.async.queue.size";
     public static final String TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE = "{collectionName}.flush.series.queue.size";
-    public static final String TIME_SERIES_MAIN_RESOLUTION = "{collectionName}.resolution";
     public static final String RESOLUTION_PROPERTY_PREFIX = "{collectionName}.collections.";
     public static final String TIME_SERIES_RESOLUTION_ENABLED_SUFFIX = ".enabled";
     public static final String TIME_SERIES_RESOLUTION_FLUSH_PERIOD_SUFFIX = ".flush.period";
 
-    private long mainResolution;
-    //Define the interval of the flushing job for the main ingestion pipeline (highest resolution)
-    //Note that flush is only actually performed by the job if the bucket time interval is complete (i.e. full resolution interval) or
-    //if the max series queue size is reached (to limit and control memory usage)
-    private long mainFlushInterval;
     //Define the max queue size for series, if the usage is over the limit flush is performed even for partial time interval
     private int flushSeriesQueueSize;
     //flushing do not write to DB directly but to a linked blocking queue in memory which is processed by an asynchronous processor, the queue size is limited to prevent excessive memory usage
     //While the queue is full, ingesting new buckets is blocked
     private int flushAsyncQueueSize;
-    private final Map<TimeSeriesCollectionsBuilder.Resolution, ResolutionSettings> additionalResolutionSettings = new TreeMap<>();
+    //Define the Map of supported Resolutions associated to their settings read from the configuration.
+    private final Map<Resolution, ResolutionSettings> additionalResolutionSettings = new TreeMap<>();
 
     public static class ResolutionSettings {
+        //Define the interval of the flushing job for the ingestion pipeline
+        //Note that flush is only actually performed by the job if the bucket time interval is complete (i.e. full resolution interval) or
+        //if the max series queue size is reached (to limit and control memory usage)
         public final long flushInterval;
+        //Flag to completely disable or enable the collection
         public final boolean enabled;
 
         public ResolutionSettings(long flushInterval, boolean enabled) {
             this.flushInterval = flushInterval;
             this.enabled = enabled;
         }
-    }
-
-    public long getMainResolution() {
-        return mainResolution;
-    }
-
-    public void setMainResolution(long mainResolution) {
-        this.mainResolution = mainResolution;
-    }
-
-    public long getMainFlushInterval() {
-        return mainFlushInterval;
-    }
-
-    public void setMainFlushInterval(long mainFlushInterval) {
-        this.mainFlushInterval = mainFlushInterval;
     }
 
     public int getFlushSeriesQueueSize() {
@@ -90,25 +72,19 @@ public class TimeSeriesCollectionsSettings {
         return flushAsyncQueueSize;
     }
 
-    private void addAdditionalResolutionSettings(TimeSeriesCollectionsBuilder.Resolution resolution, ResolutionSettings resolutionSettings) {
+    private void addAdditionalResolutionSettings(Resolution resolution, ResolutionSettings resolutionSettings) {
         additionalResolutionSettings.put(resolution, resolutionSettings);
     }
-    public ResolutionSettings getResolutionSettings(TimeSeriesCollectionsBuilder.Resolution resolution) {
+    public ResolutionSettings getResolutionSettings(Resolution resolution) {
         return additionalResolutionSettings.get(resolution);
     }
 
     public static TimeSeriesCollectionsSettings readSettings(Configuration configuration, String collectionName) {
-        // Validate and read main resolution settings
-        long mainResolution = getPropertyAsLong(configuration, TIME_SERIES_MAIN_RESOLUTION, collectionName, 5000L);
-        validateMainResolutionParam(mainResolution);
         TimeSeriesCollectionsSettings settings = new TimeSeriesCollectionsSettings();
-        Long mainResolutionFlushInterval = getPropertyAsLong(configuration, TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofSeconds(1).toMillis());
-        settings.setMainResolution(mainResolution);
-        settings.setMainFlushInterval(mainResolutionFlushInterval);
         settings.setFlushSeriesQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE, collectionName, 20000));
         settings.setFlushAsyncQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE, collectionName, 5000));
         //Read settings for additional resolutions
-        for (TimeSeriesCollectionsBuilder.Resolution resolution: TimeSeriesCollectionsBuilder.Resolution.values()){
+        for (Resolution resolution: Resolution.values()) {
             boolean resolutionEnabled = getPropertyAsBoolean(configuration, RESOLUTION_PROPERTY_PREFIX + resolution.name + TIME_SERIES_RESOLUTION_ENABLED_SUFFIX, collectionName, true);
             Long resolutionFlushInterval = getPropertyAsLong(configuration, RESOLUTION_PROPERTY_PREFIX + resolution.name + TIME_SERIES_RESOLUTION_FLUSH_PERIOD_SUFFIX, collectionName, resolution.defaultFlushPeriod.toMillis());
             settings.addAdditionalResolutionSettings(resolution, new ResolutionSettings(resolutionFlushInterval, resolutionEnabled));
@@ -132,17 +108,16 @@ public class TimeSeriesCollectionsSettings {
         return propertyValue.replaceAll("\\{collectionName\\}", collectionName);
     }
 
-    private static void validateMainResolutionParam(long resolution) {
-        double msInMinute = TimeUnit.MINUTES.toMillis(1);
-        if (msInMinute % resolution != 0) {
-            throw new IllegalArgumentException("Invalid interval: " + resolution + " seconds. The interval must be a divisor of one minute (60 seconds).");
-        }
-    }
 
-    public static TimeSeriesCollectionsSettings buildSingleResolutionSettings(long mainResolution, long mainFlushInterval) {
+    /**
+     * this method is used to generate settings for a timeSeries with a single resolution
+     * @param resolution the resolution to use
+     * @param flushInterval the custom flush interval as setting
+     * @return the TimeSeriesCollectionsSettings to create the time series
+     */
+    public static TimeSeriesCollectionsSettings buildSingleResolutionSettings(Resolution resolution, long flushInterval) {
         TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = new TimeSeriesCollectionsSettings();
-        timeSeriesCollectionsSettings.setMainResolution(mainResolution);
-        timeSeriesCollectionsSettings.setMainFlushInterval(mainFlushInterval);
+        timeSeriesCollectionsSettings.addAdditionalResolutionSettings(resolution, new ResolutionSettings(flushInterval, true));
         return timeSeriesCollectionsSettings;
     }
 

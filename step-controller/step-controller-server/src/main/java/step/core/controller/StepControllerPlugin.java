@@ -133,7 +133,7 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
 		asyncTaskManager.scheduleAsyncTask((empty) -> {
 			logger.info("ReportNode timeSeries ingestion for empty resolutions has started");
 			reportNodeTimeSeries.getTimeSeries().ingestDataForEmptyCollections();
-			logger.info("TimeSeries ingestion for empty resolutions has finished");
+			logger.info("ReportNode timeSeries ingestion for empty resolutions has finished");
 			return null;
 		});
 

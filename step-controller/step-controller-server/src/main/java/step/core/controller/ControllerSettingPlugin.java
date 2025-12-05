@@ -29,12 +29,13 @@ import step.engine.plugins.ExecutionEnginePlugin;
 @Plugin
 public class ControllerSettingPlugin extends AbstractControllerPlugin {
 
+	public static final String SETTINGS = "settings";
 	private ControllerSettingAccessor controllerSettingAccessor;
 
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 		controllerSettingAccessor = new ControllerSettingAccessorImpl(
-				context.getCollectionFactory().getCollection("settings", ControllerSetting.class));
+				context.getCollectionFactory().getCollection(SETTINGS, ControllerSetting.class));
 		context.put(ControllerSettingAccessor.class, controllerSettingAccessor);
 	}
 
