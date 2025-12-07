@@ -239,9 +239,9 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
-    public void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision) {
+    public void findAndCleanupUnusedRevision(String resourceId, Set<String> usedRevision) {
         for (ResourceManager resourceManager : resourceManagers) {
-            resourceManager.findAndCleanupUnusedRevision(resource, usedRevision);
+            resourceManager.findAndCleanupUnusedRevision(resourceId, usedRevision);
         }
     }
 

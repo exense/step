@@ -436,10 +436,10 @@ public class ResourceManagerImpl implements ResourceManager {
 	}
 
 	@Override
-	public void findAndCleanupUnusedRevision(Resource resource, Set<String> usedRevision) {
-		Objects.requireNonNull(resource, "Resource cannot be null");
+	public void findAndCleanupUnusedRevision(String resourceId, Set<String> usedRevision) {
+		Objects.requireNonNull(resourceId, "Resource cannot be null");
 		Objects.requireNonNull(usedRevision, "usedRevision cannot be null");
-		String resourceId = resource.getId().toHexString();
+		Resource resource = getResource(resourceId);
 		//Always make sure the current resource revision is excluded
 		usedRevision.add(resource.getCurrentRevisionId().toString());
 		Set<ResourceRevision> unusedRevisions = new HashSet<>();

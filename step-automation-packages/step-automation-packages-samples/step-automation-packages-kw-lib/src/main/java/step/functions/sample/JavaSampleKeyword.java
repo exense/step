@@ -20,7 +20,17 @@
  */
 package step.functions.sample;
 
-public interface JavaSampleKeyword {
+import step.handlers.javahandler.AbstractKeyword;
+import step.handlers.javahandler.Keyword;
 
-    public String callMe();
+public abstract class JavaSampleKeyword extends AbstractKeyword {
+
+    @Keyword
+    public void KeywordInLib() {
+
+    }
+
+    protected String callMe() {
+        return "callMe called";
+    }
 }

@@ -107,19 +107,19 @@ public abstract class AbstractAutomationPackageManagerTest {
     @Before
     public void before() {
 
-        this.automationPackageAccessor = new AutomationPackageAccessorImpl(new InMemoryCollection<>());
-        this.functionAccessor = new FunctionAccessorImpl(new InMemoryCollection<>());
-        this.parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
+        this.automationPackageAccessor = new AutomationPackageAccessorImpl(new InMemoryCollection<>(false));
+        this.functionAccessor = new FunctionAccessorImpl(new InMemoryCollection<>(false));
+        this.parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>(false));
         ParameterManager parameterManager = new ParameterManager(this.parameterAccessor, null, "groovy", new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler())));
 
         Configuration configuration = AbstractAutomationPackageManagerTest.createTestConfiguration();
-        this.resourceManager = new LocalResourceManagerImpl();
+        this.resourceManager = new TestResourceManagerImpl();
         FunctionTypeRegistry functionTypeRegistry = AbstractAutomationPackageManagerTest.prepareTestFunctionTypeRegistry(configuration, resourceManager);
 
         this.functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
-        this.planAccessor = new PlanAccessorImpl(new InMemoryCollection<>());
+        this.planAccessor = new PlanAccessorImpl(new InMemoryCollection<>(false));
 
-        this.executionTaskAccessor = new ExecutionTaskAccessorImpl(new InMemoryCollection<>());
+        this.executionTaskAccessor = new ExecutionTaskAccessorImpl(new InMemoryCollection<>(false));
 
         // scheduler with mocked executor
         this.executionScheduler = new ExecutionScheduler(new ControllerSettingAccessorImpl(new InMemoryCollection<>()), executionTaskAccessor, Mockito.mock(Executor.class));
