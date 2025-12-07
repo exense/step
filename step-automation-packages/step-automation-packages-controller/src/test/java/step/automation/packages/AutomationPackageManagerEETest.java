@@ -466,12 +466,10 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
         // ap1 doesn't exist anymore
         Assert.assertNull(automationPackageAccessor.get(ap1.getId()));
 
-        try {
-            resourceManager.getResourceFile(updatedLib1Resource.getId().toString());
-            Assert.fail("Exception should be thrown");
-        } catch (ResourceMissingException ex){
-            log.info("Resource deleted: {}", ex.getMessage());
-        }
+        // resource file and resource for lib are not automatically deleted
+        ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(updatedLib1Resource.getId().toString());
+        Assert.assertNotNull(resourceManager.getResource(updatedLib1Resource.getId().toString()));
+        Assert.assertNotNull(resourceFile);
     }
 
     protected AutomationPackageManager createManager(AutomationPackageHookRegistry automationPackageHookRegistry, AutomationPackageReaderRegistry automationPackageReaderRegistry) {
