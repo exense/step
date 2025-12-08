@@ -54,6 +54,18 @@ public class TimeSeriesCollectionsBuilder {
         return enabledCollections;
     }
 
+    public List<TimeSeriesCollection> getSingleTimeSeriesCollections(String mainCollectionName, TimeSeriesCollectionsSettings collectionsSettings, Duration resolution, Long flushInterval) {
+        List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
+        int flushSeriesQueueSize = collectionsSettings.getFlushSeriesQueueSize();
+        int flushAsyncQueueSize = collectionsSettings.getFlushAsyncQueueSize();
+        addIfEnabled(enabledCollections, mainCollectionName,
+                        resolution, flushInterval, flushSeriesQueueSize, flushAsyncQueueSize,
+                        null, true);
+
+
+        return enabledCollections;
+    }
+
     private void addIfEnabled(List<TimeSeriesCollection> enabledCollections, String collectionName, Duration resolution, long flushInterval, int flushSeriesQueueSizeThreshold, int flushAsyncQueueSize, Set<String> ignoredAttributes, boolean enabled) {
         TimeSeriesCollectionSettings settings = new TimeSeriesCollectionSettings()
                 .setResolution(resolution.toMillis())

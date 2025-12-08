@@ -21,10 +21,8 @@ package step.core.timeseries;
 
 import ch.exense.commons.app.Configuration;
 
-import java.time.Duration;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.TimeUnit;
 
 public class TimeSeriesCollectionsSettings {
 
@@ -40,7 +38,7 @@ public class TimeSeriesCollectionsSettings {
     //While the queue is full, ingesting new buckets is blocked
     private int flushAsyncQueueSize;
     //Define the Map of supported Resolutions associated to their settings read from the configuration.
-    private final Map<Resolution, ResolutionSettings> additionalResolutionSettings = new TreeMap<>();
+    private final Map<Resolution, ResolutionSettings> resolutionSettings = new TreeMap<>();
 
     public static class ResolutionSettings {
         //Define the interval of the flushing job for the ingestion pipeline
@@ -72,11 +70,11 @@ public class TimeSeriesCollectionsSettings {
         return flushAsyncQueueSize;
     }
 
-    private void addAdditionalResolutionSettings(Resolution resolution, ResolutionSettings resolutionSettings) {
-        additionalResolutionSettings.put(resolution, resolutionSettings);
+    private void addResolutionSettings(Resolution resolution, ResolutionSettings resolutionSettings) {
+        this.resolutionSettings.put(resolution, resolutionSettings);
     }
     public ResolutionSettings getResolutionSettings(Resolution resolution) {
-        return additionalResolutionSettings.get(resolution);
+        return resolutionSettings.get(resolution);
     }
 
     public static TimeSeriesCollectionsSettings readSettings(Configuration configuration, String collectionName) {
@@ -87,7 +85,7 @@ public class TimeSeriesCollectionsSettings {
         for (Resolution resolution: Resolution.values()) {
             boolean resolutionEnabled = getPropertyAsBoolean(configuration, RESOLUTION_PROPERTY_PREFIX + resolution.name + TIME_SERIES_RESOLUTION_ENABLED_SUFFIX, collectionName, true);
             Long resolutionFlushInterval = getPropertyAsLong(configuration, RESOLUTION_PROPERTY_PREFIX + resolution.name + TIME_SERIES_RESOLUTION_FLUSH_PERIOD_SUFFIX, collectionName, resolution.defaultFlushPeriod.toMillis());
-            settings.addAdditionalResolutionSettings(resolution, new ResolutionSettings(resolutionFlushInterval, resolutionEnabled));
+            settings.addResolutionSettings(resolution, new ResolutionSettings(resolutionFlushInterval, resolutionEnabled));
         }
         return settings;
     }
@@ -107,18 +105,4 @@ public class TimeSeriesCollectionsSettings {
     private static String property(String propertyValue, String collectionName) {
         return propertyValue.replaceAll("\\{collectionName\\}", collectionName);
     }
-
-
-    /**
-     * this method is used to generate settings for a timeSeries with a single resolution
-     * @param resolution the resolution to use
-     * @param flushInterval the custom flush interval as setting
-     * @return the TimeSeriesCollectionsSettings to create the time series
-     */
-    public static TimeSeriesCollectionsSettings buildSingleResolutionSettings(Resolution resolution, long flushInterval) {
-        TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = new TimeSeriesCollectionsSettings();
-        timeSeriesCollectionsSettings.addAdditionalResolutionSettings(resolution, new ResolutionSettings(flushInterval, true));
-        return timeSeriesCollectionsSettings;
-    }
-
 }
