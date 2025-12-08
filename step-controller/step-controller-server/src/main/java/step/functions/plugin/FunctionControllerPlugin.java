@@ -34,6 +34,7 @@ import step.core.entities.EntityManager;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.table.ActivableEntityTableEnricher;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.functions.Function;
@@ -104,7 +105,8 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
 		Collection<Function> functionCollection = context.getCollectionFactory()
 				.getCollection(EntityConstants.functions, Function.class);
 		tableRegistry.register(EntityConstants.functions, new Table<>(functionCollection, "kw-read", true)
-				.withResultListFactory(()->new ArrayList<>(){}));
+				.withResultListFactory(()->new ArrayList<>(){})
+				.withResultItemEnricher(new ActivableEntityTableEnricher<>()));
 	}
 
 	@Override

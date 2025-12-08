@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.controller.grid.services;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.PostConstruct;
 import jakarta.json.Json;
@@ -27,6 +29,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.UriInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionLocator;
 import step.artefacts.handlers.SelectorHelper;
@@ -59,8 +63,13 @@ import step.grid.TokenWrapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
-public abstract class AbtractFunctionServices extends AbstractEntityServices<Function> {
+import static step.core.table.ActivableEntityTableEnricher.enrichBindingsWithSession;
+
+public abstract class AbstractFunctionServices extends AbstractEntityServices<Function> {
+
+	private static final Logger log = LoggerFactory.getLogger(AbstractFunctionServices.class);
 
 	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
 	
@@ -73,7 +82,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 	protected FunctionLocator functionLocator;
 	protected ObjectPredicateFactory objectPredicateFactory;
 
-	public AbtractFunctionServices() {
+	public AbstractFunctionServices() {
 		super(EntityConstants.functions);
 	}
 
@@ -112,7 +121,7 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 		return functionManager.getFunctionByAttributes(attributes);
 	}
 
-	@Operation(operationId = "lookupCall{Entity}")
+	@Operation(operationId = "lookupCall{Entity}", description = "Returns the function referenced by the given callFunction without applying any binding parameters.")
 	@POST
 	@Path("/lookup")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -123,8 +132,49 @@ public abstract class AbtractFunctionServices extends AbstractEntityServices<Fun
 		try {
 			ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 			function = functionLocator.getFunction(callFunction, objectPredicate, null);
-		} catch (RuntimeException e) {}
+		} catch (RuntimeException e) {
+			logLookupError(callFunction, e);
+		}
 		return function;
+	}
+
+	@Operation(operationId = "lookupCall{Entity}WithBindings", description = "Returns the function referenced by the given callFunction applying the provided binding parameters.")
+	@POST
+	@Path("/lookup-with-bindings")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right="{entity}-read")
+	public Function lookupCallFunctionWithBindings(LookupCallFunctionRequest lookupCallFunctionRequest) {
+		Function function = null;
+		try {
+			ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+			Session<User> session = getSession();
+			Map<String, Object> contextBindings = enrichBindingsWithSession(session, lookupCallFunctionRequest.bindings);
+			function = functionLocator.getFunction(lookupCallFunctionRequest.callFunction, objectPredicate, contextBindings);
+		} catch (RuntimeException e) {
+			logLookupError(lookupCallFunctionRequest.callFunction, e);
+		}
+		return function;
+	}
+
+	public static class LookupCallFunctionRequest {
+		public CallFunction callFunction;
+		public Map<String, Object> bindings;
+
+		@JsonCreator
+		public LookupCallFunctionRequest(@JsonProperty("callFunction")  CallFunction callFunction,
+										 @JsonProperty("bindings") Map<String, Object> bindings) {
+			this.callFunction = callFunction;
+			this.bindings = bindings;
+		}
+	}
+
+	private static void logLookupError(CallFunction callFunction, RuntimeException e) {
+		String selectionCriteria = "unresolved selection criteria";
+		try {
+			selectionCriteria = callFunction.getFunction().get();
+		} catch (Throwable t) {	}
+		log.warn("The referenced keyword with selection criteria '{}' could not be found. Reason: {}", selectionCriteria, e.getMessage());
 	}
 
 	@Operation(operationId = "get{Entity}Editor")
