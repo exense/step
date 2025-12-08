@@ -189,6 +189,10 @@ public class AutomationPackageResourceManager {
         String origin = Optional.ofNullable(apProvider.getOrigin()).map(ResourceOrigin::toStringRepresentation).orElse(null);
         File originalFile = automationPackageArchive.getOriginalFile();
         if (originalFile == null) {
+            // When running an AP locally using the JUnit runner, we do not set the automation package resource
+            // This causes the methods that require it (like AbstractKeyword#retrieveAndExtractAutomationPackage) to fail
+            // In the future we should support this properly. An idea would e to use the ClassLoaderArchiver to create an
+            // archive out of the classloader.
             return null;
         }
 

@@ -485,7 +485,7 @@ public class AutomationPackageManager {
                 );
             }
         } catch (Throwable e) {
-            log.error("Error while updating the automation package with name '{}':{}}.", packageName, packageId);
+            log.error("Error while updating the automation package with name '{}':{}}.", packageName, packageId, e);
             handleAutomationPackageDeploymentErrors(parameters, packageName, packageId, packageResource.get(), libraryResource.get());
             throw (e instanceof AutomationPackageManagerException) ? (AutomationPackageManagerException) e: new AutomationPackageManagerException("Unable to update the automation package '" + packageName + "':" + packageId + ".", e, true);
         } finally {
