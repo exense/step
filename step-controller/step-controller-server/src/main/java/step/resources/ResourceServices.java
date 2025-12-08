@@ -175,8 +175,12 @@ public class ResourceServices extends AbstractStepAsyncServices {
 		Consumer<String> consumer = t -> {
 			try {
 				deleteResource(t);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+			} catch (Throwable e) {
+				if (e instanceof RuntimeException) {
+					throw e;
+				} else {
+					throw new RuntimeException(e);
+				}
 			}
 		};
 		return scheduleAsyncTaskWithinSessionContext(h ->
