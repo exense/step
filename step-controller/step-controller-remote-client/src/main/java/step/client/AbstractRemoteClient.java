@@ -74,8 +74,8 @@ public class AbstractRemoteClient implements Closeable {
 	
 	private void createClient() {
 		client = ClientBuilder.newBuilder()
-				.connectTimeout(5, TimeUnit.SECONDS)
-				.readTimeout(10, TimeUnit.SECONDS)
+				.connectTimeout(10, TimeUnit.SECONDS)
+				.readTimeout(30, TimeUnit.SECONDS)
 				.build();
 		client.register(JacksonMapperProvider.class);
 		client.register(MultiPartFeature.class);
