@@ -254,16 +254,17 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	@Override
 	public void close() throws Exception {
-		// The stop method of the websocket container has to be closed within its own context class loader
-		ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
-		Thread.currentThread().setContextClassLoader(webSocketContainerRef.get().getClass().getClassLoader());
-		try {
-			Object webSocketContainer = webSocketContainerRef.getAndSet(null);
-			if (webSocketContainer != null) {
-				webSocketContainer.getClass().getMethod("stop").invoke(webSocketContainer);
+		Object webSocketContainer = webSocketContainerRef.getAndSet(null);
+		if(webSocketContainer != null) {
+			// The stop method of the websocket container has to be closed within its own context class loader
+			ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
+			Class<?> webSocketContainerClass = webSocketContainer.getClass();
+			Thread.currentThread().setContextClassLoader(webSocketContainerClass.getClassLoader());
+			try {
+				webSocketContainerClass.getMethod("stop").invoke(webSocketContainer);
+			} finally {
+				Thread.currentThread().setContextClassLoader(previousCl);
 			}
-		} finally {
-			Thread.currentThread().setContextClassLoader(previousCl);
 		}
 
 		if (applicationContextBuilder != null) {
