@@ -40,7 +40,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class AbstractRemoteClient implements Closeable {
@@ -73,10 +72,7 @@ public class AbstractRemoteClient implements Closeable {
 	}
 	
 	private void createClient() {
-		client = ClientBuilder.newBuilder()
-				.connectTimeout(10, TimeUnit.SECONDS)
-				.readTimeout(30, TimeUnit.SECONDS)
-				.build();
+		client = ClientBuilder.newClient();
 		client.register(JacksonMapperProvider.class);
 		client.register(MultiPartFeature.class);
 		client.register(JacksonFeature.class);
