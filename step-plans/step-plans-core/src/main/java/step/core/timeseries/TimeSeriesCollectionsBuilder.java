@@ -19,6 +19,8 @@
 
 package step.core.timeseries;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.collections.CollectionFactory;
 import step.core.timeseries.bucket.Bucket;
 
@@ -28,6 +30,8 @@ import java.util.List;
 import java.util.Set;
 
 public class TimeSeriesCollectionsBuilder {
+
+    private static final Logger logger = LoggerFactory.getLogger(TimeSeriesCollectionsBuilder.class);
 
     public static final String COLLECTION_NAME_SEPARATOR = "_";
 
@@ -77,8 +81,8 @@ public class TimeSeriesCollectionsBuilder {
         if (enabled) {
             enabledCollections.add(collection);
         } else {
-            // disabled resolutions will be completely dropped from db
-            collection.drop();
+            // disabled resolutions are not dropped automatically
+            logger.warn("The time-series resolution with name '{}' is disabled. To reclaim space you can delete the corresponding DB table.", collectionName);
         }
     }
 }

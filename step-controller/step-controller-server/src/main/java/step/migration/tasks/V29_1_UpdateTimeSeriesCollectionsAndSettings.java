@@ -65,12 +65,12 @@ public class V29_1_UpdateTimeSeriesCollectionsAndSettings extends MigrationTask 
 
     @Override
     public void runUpgradeScript() {
-        log.info("Renaming time-series 'main' collections to match their resolutions");
-
+        log.info("Renaming the 'main' collection of the response times time-series to include its resolution");
         timeseriesCollection.rename(TIME_SERIES_MAIN_COLLECTION_NEW_NAME);
 
+        log.info("Renaming the 'main' collection of the report nodes time-series to include its resolution");
         reportNodeTimeseriesCollection.rename(TIME_SERIES_MAIN_COLLECTION_REPORTS_NEW_NAME);
-        log.info("Time-series 'main' collections renamed to match their resolutions");
+
 
         log.info("Renaming time-series housekeeping setting keys");
         //use names from enum which will then be aligned with the collection names
@@ -87,6 +87,7 @@ public class V29_1_UpdateTimeSeriesCollectionsAndSettings extends MigrationTask 
         setting.ifPresent(s -> {
             s.put("key", newKey);
             settings.save(s);
+            logger.info("Time-series housekeeping setting key {} renamed to {}", oldKey, newKey);
         });
 
     }
