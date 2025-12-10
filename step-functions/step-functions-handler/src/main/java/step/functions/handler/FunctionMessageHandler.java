@@ -29,7 +29,9 @@ import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.contextbuilder.ApplicationContextBuilder;
+import step.grid.contextbuilder.ApplicationContextControl;
 import step.grid.contextbuilder.LocalResourceApplicationContextFactory;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileVersionId;
@@ -145,7 +147,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			JavaType javaType = mapper.getTypeFactory().constructParametricType(Input.class, functionHandler.getInputPayloadClass());
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 
-			LiveReporting liveReporting = initializeLiveReporting(input.getProperties());
+			LiveReporting liveReporting = initializeLiveReporting(input.getProperties(), token.getTokenReservationSession());
 			functionHandler.setLiveReporting(liveReporting);
 
 			// Handle the input
@@ -176,8 +178,10 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		});
 	}
 
-	private LiveReporting initializeLiveReporting(Map<String, String> properties) throws Exception {
-		applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new LocalResourceApplicationContextFactory(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar"), true);
+	private LiveReporting initializeLiveReporting(Map<String, String> properties, TokenReservationSession tokenReservationSession) throws Exception {
+		ApplicationContextControl applicationContextControl = applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new LocalResourceApplicationContextFactory(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar"), true);
+		// The usage of this application context will be released when the session is closed, underlying registered file won't be cleanable before this release happens
+		tokenReservationSession.registerObjectToBeClosedWithSession(applicationContextControl);
 		return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> {
 			// There's no easy way to do this in the AbstractFunctionHandler itself, because
 			// the only place where the Input properties are guaranteed to be available is in the (abstract)
@@ -250,15 +254,24 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	@Override
 	public void close() throws Exception {
+		Object webSocketContainer = webSocketContainerRef.getAndSet(null);
+		if(webSocketContainer != null) {
+			// The stop method of the websocket container has to be closed within its own context class loader
+			ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
+			Class<?> webSocketContainerClass = webSocketContainer.getClass();
+			Thread.currentThread().setContextClassLoader(webSocketContainerClass.getClassLoader());
+			try {
+				webSocketContainerClass.getMethod("stop").invoke(webSocketContainer);
+			} finally {
+				Thread.currentThread().setContextClassLoader(previousCl);
+			}
+		}
+
 		if (applicationContextBuilder != null) {
 			applicationContextBuilder.close();
 		}
 		if (liveReportingExecutor != null) {
 			liveReportingExecutor.shutdownNow();
-		}
-		Object webSocketContainer = webSocketContainerRef.getAndSet(null);
-		if (webSocketContainer != null) {
-			webSocketContainer.getClass().getMethod("stop").invoke(webSocketContainer);
 		}
 	}
 }
