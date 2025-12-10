@@ -99,7 +99,7 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         Filter filter = Filters.equals("attributes." + EXECUTION_ID, executionId);
         Set<String> groupBy = Set.of(groupLevel1, groupLevel2);
         TimeSeriesAggregationQueryBuilder queryBuilder = new TimeSeriesAggregationQueryBuilder()
-                .withOptimizationType(TimeSeriesOptimizationType.MOST_ACCURATE)
+                .withOptimizationType(TimeSeriesOptimizationType.MOST_EFFICIENT)
                 .withFilter(filter)
                 .withGroupDimensions(groupBy)
                 .split(1);
