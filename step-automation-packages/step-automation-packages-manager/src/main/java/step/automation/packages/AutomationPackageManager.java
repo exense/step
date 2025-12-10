@@ -350,7 +350,7 @@ public class AutomationPackageManager {
                 return createOrUpdateAutomationPackage(provider, apLibProvider, parameters);
             }
         } catch (IOException | AutomationPackageReadingException | ManagedLibraryMissingException ex) {
-            throw new AutomationPackageManagerException("Automation package cannot be created. Caused by: " + ex.getMessage(), ex);
+            throw new AutomationPackageManagerException("Automation package cannot be created.", ex, true);
         }
     }
 
@@ -485,9 +485,9 @@ public class AutomationPackageManager {
                 );
             }
         } catch (Throwable e) {
-            log.error("Error while updating the automation package with name '{}':{}}.", packageName, packageId);
+            log.error("Error while updating the automation package with name '{}':{}}.", packageName, packageId, e);
             handleAutomationPackageDeploymentErrors(parameters, packageName, packageId, packageResource.get(), libraryResource.get());
-            throw (e instanceof AutomationPackageManagerException) ? (AutomationPackageManagerException) e: new AutomationPackageManagerException("Unable to update the automation package '" + packageName + "':" + packageId + ". Cause: " + e.getMessage(), e);
+            throw (e instanceof AutomationPackageManagerException) ? (AutomationPackageManagerException) e: new AutomationPackageManagerException("Unable to update the automation package '" + packageName + "':" + packageId + ".", e, true);
         } finally {
             if (!isRunningAsync.get() && staging.get() != null) {
                 staging.get().getResourceManager().cleanup();
@@ -528,7 +528,7 @@ public class AutomationPackageManager {
                         packageName, packageId, e);
                 handleAutomationPackageDeploymentErrors(parameters, packageName, packageId, packageResource, libraryResource);
                 throw (e instanceof AutomationPackageManagerException) ? (AutomationPackageManagerException) e :
-                        new AutomationPackageManagerException("Unable to update the automation package '" + packageName + "':" + packageId + ". Cause: " + e.getMessage(), e);
+                        new AutomationPackageManagerException("Unable to update the automation package '" + packageName + "':" + packageId + ".", e, true);
             } else {
                 throw e;
             }
@@ -687,7 +687,7 @@ public class AutomationPackageManager {
                                     true);
                         }
                     } catch (IOException | ManagedLibraryMissingException e) {
-                        throw new AutomationPackageManagerException("Automation package library provider exception", e);
+                        throw new AutomationPackageManagerException("Automation package library provider exception.", e, true);
                     }
                 case ResourceManager.RESOURCE_TYPE_AP_LIBRARY:
                     // We upload the new resource for package library. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
@@ -698,7 +698,7 @@ public class AutomationPackageManager {
                                 null, parameters, false,
                                 true);
                     } catch (IOException | ManagedLibraryMissingException e) {
-                        throw new AutomationPackageManagerException("Automation package library provider exception", e);
+                        throw new AutomationPackageManagerException("Automation package library provider exception.", e, true);
                     }
                 case ResourceManager.RESOURCE_TYPE_AP:
                     // We upload the new main resource for AP. Existing resource cannot be reused - to update existing AP resources there is a separate 'refresh' action
@@ -710,13 +710,13 @@ public class AutomationPackageManager {
                                 false,
                                 true);
                     } catch (IOException e) {
-                        throw new AutomationPackageManagerException("Automation package library provider exception", e);
+                        throw new AutomationPackageManagerException("Automation package library provider exception.", e, true);
                     }
                 default:
                     throw new AutomationPackageManagerException("Unsupported resource type: " + resourceType);
             }
         } catch (AutomationPackageReadingException ex) {
-            throw new AutomationPackageManagerException("Cannot create new resource: " + resourceType, ex);
+            throw new AutomationPackageManagerException("Cannot create new resource (" + resourceType + ").", ex, true);
         }
     }
 
@@ -751,10 +751,10 @@ public class AutomationPackageManager {
                             true);
                 }
             } catch (IOException | ManagedLibraryMissingException e) {
-                throw new AutomationPackageManagerException("Automation package library provider exception: " + e.getMessage(), e);
+                throw new AutomationPackageManagerException("Automation package library provider exception.", e, true);
             }
         } catch (AutomationPackageReadingException ex) {
-            throw new AutomationPackageManagerException("Cannot update the managed library with id " + id + "; reason: " + ex.getMessage(), ex);
+            throw new AutomationPackageManagerException("Cannot update the managed library with id " + id + ".", ex, true);
         }
         //Now that we updated the managed library, we trigger the reload of APs using it
         Set<ObjectId> automationPackagesIdsByResourceId = linkedAutomationPackagesFinder.findAutomationPackagesIdsByResourceId(resource.getId().toHexString(), List.of());
@@ -902,7 +902,7 @@ public class AutomationPackageManager {
             } catch (Exception e){
                 String fieldNameStr = hookEntry.fieldName == null ? "" : " for '" + hookEntry.fieldName + "'";
                 // throw AutomationPackageManagerException to be handled as ControllerException in services
-                throw new AutomationPackageManagerException("onPrepareStaging hook invocation failed" + fieldNameStr + " in the automation package '" + packageContent.getName() + "'. " + e.getMessage(), e);
+                throw new AutomationPackageManagerException("onPrepareStaging hook invocation failed" + fieldNameStr + " in the automation package '" + packageContent.getName() + "'.", e, true);
             }
         }
     }
@@ -917,7 +917,7 @@ public class AutomationPackageManager {
                 resourceManager.copyResource(resource, staging.getResourceManager(), actorUser);
             }
         } catch (IOException | InvalidResourceFormatException e) {
-            throw new AutomationPackageManagerException("Unable to persist a resource in automation package", e);
+            throw new AutomationPackageManagerException("Unable to persist a resource in automation package.", e, true);
         }
 
         for (Function completeFunction : staging.getFunctions()) {
@@ -945,7 +945,7 @@ public class AutomationPackageManager {
             } catch (Exception e){
                 String fieldNameStr = hookEntry.fieldName == null ? "" : " for '" + hookEntry.fieldName + "'";
                 // throw AutomationPackageManagerException to be handled as ControllerException in services
-                throw new AutomationPackageManagerException("onCreate hook invocation failed" + fieldNameStr + " in the automation package '" + packageContent.getName() + "'. " + e.getMessage(), e);
+                throw new AutomationPackageManagerException("onCreate hook invocation failed" + fieldNameStr + " in the automation package '" + packageContent.getName() + "'.", e, true);
             }
 
         }
@@ -961,7 +961,7 @@ public class AutomationPackageManager {
             automationPackageHookRegistry.beforeIsolatedExecution(automationPackage, executionContext, apManagerExtensions, importResult);
         } catch (Exception e){
             // throw AutomationPackageManagerException to be handled as ControllerException in services
-            throw new AutomationPackageManagerException("beforeIsolatedExecution hook invocation failed in the automation package '" + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + "'. " + e.getMessage(), e);
+            throw new AutomationPackageManagerException("beforeIsolatedExecution hook invocation failed in the automation package '" + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + "'.", e, true);
         }
     }
 
@@ -1189,7 +1189,7 @@ public class AutomationPackageManager {
             automationPackageHookRegistry.onAutomationPackageDelete(automationPackage, context, null);
         } catch (Exception e){
             // throw AutomationPackageManagerException to be handled as ControllerException in services
-            throw new AutomationPackageManagerException("onAutomationPackageDelete hook invocation failed in the automation package '" + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + "'. " + e.getMessage(), e);
+            throw new AutomationPackageManagerException("onAutomationPackageDelete hook invocation failed in the automation package '" + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + "'.", e, true);
         }
     }
 

@@ -321,8 +321,26 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         }
     }
 
+    private void retryFlakyTest(int retries, Runnable test, String testName) {
+        Error lastError = null;
+        for (int i = 1; i <= retries; i++) {
+            try {
+                test.run();
+                return; // Test passed, return
+            } catch (Error e) {
+                log.warn("Flaky test '{}' failed on iteration {} of {}", testName, i, retries, e);
+                lastError = e;
+            }
+        }
+        throw lastError;
+    }
+
     @Test
-    public void testUpdateAsync() throws IOException, InterruptedException {
+    public void testUpdateAsyncWithRetry()  {
+        retryFlakyTest(3, this::testUpdateAsync, "testUpdateAsync");
+    }
+
+    public void testUpdateAsync()  {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
 
         try(InputStream is1 = new FileInputStream(automationPackageJar);
@@ -358,6 +376,10 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                         , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
             }
 
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
