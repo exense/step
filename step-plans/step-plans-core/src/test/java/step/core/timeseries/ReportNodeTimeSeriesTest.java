@@ -31,6 +31,7 @@ import step.core.collections.inmemory.InMemoryCollectionFactory;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class ReportNodeTimeSeriesTest {
 
@@ -45,7 +46,7 @@ public class ReportNodeTimeSeriesTest {
         try (ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(collectionFactory, configuration)) {
             TimeSeries timeSeries = reportNodeTimeSeries.getTimeSeries();
             List<TimeSeriesCollection> collections = timeSeries.getCollections();
-            assertEquals(5, collections.size());
+            assertEquals(8, collections.size());
             ReportNode reportNode = new ReportNode();
             reportNode.setStatus(ReportNodeStatus.PASSED);
             reportNode.setExecutionID("executionId");
@@ -66,8 +67,11 @@ public class ReportNodeTimeSeriesTest {
     @Test
     public void reportNodeTimeSeriesDisabled() {
         Configuration configuration = new Configuration();
+        configuration.putProperty("reportNodeTimeSeries.collections.15_seconds.enabled", "false");
         configuration.putProperty("reportNodeTimeSeries.collections.minute.enabled", "false");
+        configuration.putProperty("reportNodeTimeSeries.collections.15_minutes.enabled", "false");
         configuration.putProperty("reportNodeTimeSeries.collections.hour.enabled", "false");
+        configuration.putProperty("reportNodeTimeSeries.collections.6_hours.enabled", "false");
         configuration.putProperty("reportNodeTimeSeries.collections.day.enabled", "false");
         configuration.putProperty("reportNodeTimeSeries.collections.week.enabled", "false");
         CollectionFactory collectionFactory = new InMemoryCollectionFactory(null);
@@ -75,6 +79,14 @@ public class ReportNodeTimeSeriesTest {
         TimeSeries timeSeries = reportNodeTimeSeries.getTimeSeries();
         List<TimeSeriesCollection> collections = timeSeries.getCollections();
         assertEquals(1, collections.size());
+
+        configuration.putProperty("reportNodeTimeSeries.collections.5_seconds.enabled", "false");
+        try {
+            new ReportNodeTimeSeries(collectionFactory, configuration);
+            fail("Disabling all resolutions is not allowed");
+        } catch (Throwable e) {
+            assertEquals("At least one time series collection must be registered.", e.getMessage());
+        }
     }
 
     @Test
@@ -86,10 +98,10 @@ public class ReportNodeTimeSeriesTest {
         configuration.putProperty("reportNodeTimeSeries.collections.week.flush.period", "14");
 
         TimeSeriesCollectionsSettings settings = TimeSeriesCollectionsSettings.readSettings(configuration, "reportNodeTimeSeries");
-        assertEquals(11, settings.getPerMinuteFlushInterval());
-        assertEquals(12, settings.getHourlyFlushInterval());
-        assertEquals(13, settings.getDailyFlushInterval());
-        assertEquals(14, settings.getWeeklyFlushInterval());
+        assertEquals(11, settings.getResolutionSettings(Resolution.ONE_MINUTE).flushInterval);
+        assertEquals(12, settings.getResolutionSettings(Resolution.ONE_HOUR).flushInterval);
+        assertEquals(13, settings.getResolutionSettings(Resolution.ONE_DAY).flushInterval);
+        assertEquals(14, settings.getResolutionSettings(Resolution.ONE_WEEK).flushInterval);
     }
 
 }

@@ -52,6 +52,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public static final String PARAM_KEY_ANALYTICS_DASHBOARD_ID = "plugins.timeseries.analytics.dashboard.id";
 	public static final String PARAM_KEY_RESPONSE_IDEAL_INTERVALS = "timeseries.response.intervals.ideal";
 	public static final String PARAM_KEY_RESPONSE_MAX_INTERVALS = "timeseries.response.intervals.max";
+	public static final String RESOLUTION_PERIOD_PROPERTY = "plugins.timeseries.resolution.period";
 
 	public static final String EXECUTION_DASHBOARD_PREPOPULATED_NAME = "Execution Dashboard";
 	public static final String ANALYTICS_DASHBOARD_PREPOPULATED_NAME = "Analytics Dashboard";
@@ -111,7 +112,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
 		WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
 		// Following property is used by the UI. We could align its name with the configuration property in the future
-		configurationManager.registerHook(s -> Map.of("plugins.timeseries.resolution.period", String.valueOf(timeSeries.getDefaultCollection().getResolution())));
+		configurationManager.registerHook(s -> Map.of(RESOLUTION_PERIOD_PROPERTY, String.valueOf(timeSeries.getDefaultCollection().getResolution())));
 	}
 
 	@Override

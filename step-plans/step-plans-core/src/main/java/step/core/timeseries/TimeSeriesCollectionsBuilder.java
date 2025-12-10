@@ -19,6 +19,8 @@
 
 package step.core.timeseries;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.collections.CollectionFactory;
 import step.core.timeseries.bucket.Bucket;
 
@@ -29,10 +31,9 @@ import java.util.Set;
 
 public class TimeSeriesCollectionsBuilder {
 
-    public static final String TIME_SERIES_SUFFIX_PER_MINUTE = "_minute";
-    public static final String TIME_SERIES_SUFFIX_HOURLY = "_hour";
-    public static final String TIME_SERIES_SUFFIX_DAILY = "_day";
-    public static final String TIME_SERIES_SUFFIX_WEEKLY = "_week";
+    private static final Logger logger = LoggerFactory.getLogger(TimeSeriesCollectionsBuilder.class);
+
+    public static final String COLLECTION_NAME_SEPARATOR = "_";
 
     private final CollectionFactory collectionFactory;
 
@@ -44,11 +45,28 @@ public class TimeSeriesCollectionsBuilder {
         List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
         int flushSeriesQueueSize = collectionsSettings.getFlushSeriesQueueSize();
         int flushAsyncQueueSize = collectionsSettings.getFlushAsyncQueueSize();
-        addIfEnabled(enabledCollections, mainCollectionName, Duration.ofSeconds(1), collectionsSettings.getMainFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize,null, true);
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_PER_MINUTE, Duration.ofMinutes(1), collectionsSettings.getPerMinuteFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize,null, collectionsSettings.isPerMinuteEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_HOURLY, Duration.ofHours(1), collectionsSettings.getHourlyFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isHourlyEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_DAILY, Duration.ofDays(1), collectionsSettings.getDailyFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isDailyEnabled());
-        addIfEnabled(enabledCollections, mainCollectionName + TIME_SERIES_SUFFIX_WEEKLY, Duration.ofDays(7), collectionsSettings.getWeeklyFlushInterval(), flushSeriesQueueSize, flushAsyncQueueSize, ignoredAttributesForHighResolution, collectionsSettings.isWeeklyEnabled());
+        //Add additional resolutions
+        for (Resolution resolution: Resolution.values()) {
+            TimeSeriesCollectionsSettings.ResolutionSettings resolutionSettings = collectionsSettings.getResolutionSettings(resolution);
+            if (resolutionSettings != null) {
+                addIfEnabled(enabledCollections, mainCollectionName + COLLECTION_NAME_SEPARATOR + resolution.name,
+                        resolution.resolution, resolutionSettings.flushInterval, flushSeriesQueueSize, flushAsyncQueueSize,
+                        (resolution.coarseResolution ? ignoredAttributesForHighResolution : null), resolutionSettings.enabled);
+
+            }
+        }
+        return enabledCollections;
+    }
+
+    public List<TimeSeriesCollection> getSingleTimeSeriesCollections(String mainCollectionName, TimeSeriesCollectionsSettings collectionsSettings, Duration resolution, Long flushInterval) {
+        List<TimeSeriesCollection> enabledCollections = new ArrayList<>();
+        int flushSeriesQueueSize = collectionsSettings.getFlushSeriesQueueSize();
+        int flushAsyncQueueSize = collectionsSettings.getFlushAsyncQueueSize();
+        addIfEnabled(enabledCollections, mainCollectionName,
+                        resolution, flushInterval, flushSeriesQueueSize, flushAsyncQueueSize,
+                        null, true);
+
+
         return enabledCollections;
     }
 
@@ -63,8 +81,8 @@ public class TimeSeriesCollectionsBuilder {
         if (enabled) {
             enabledCollections.add(collection);
         } else {
-            // disabled resolutions will be completely dropped from db
-            collection.drop();
+            // disabled resolutions are not dropped automatically
+            logger.warn("The time-series resolution with name '{}' is disabled. To reclaim space you can delete the corresponding DB table.", collectionName);
         }
     }
 }

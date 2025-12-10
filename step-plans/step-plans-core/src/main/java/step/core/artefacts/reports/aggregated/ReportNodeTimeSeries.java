@@ -4,6 +4,7 @@ import ch.exense.commons.app.Configuration;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.*;
+import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
 import step.core.timeseries.aggregation.TimeSeriesOptimizationType;
@@ -11,8 +12,10 @@ import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,6 +49,31 @@ public class ReportNodeTimeSeries implements AutoCloseable {
     private List<TimeSeriesCollection> getTimeSeriesCollections(TimeSeriesCollectionsSettings collectionsSettings, CollectionFactory collectionFactory) {
         TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(collectionFactory);
         return timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, collectionsSettings, Set.of(EXECUTION_ID));
+    }
+
+    /**
+     * Create an in memory report tree time-series, with a single resolution
+     * The resolution is coarse to ingest only one time bucket
+     * The flush interval is 0 as we only need to flush once after the ingestion
+     */
+    protected ReportNodeTimeSeries(Duration resolution, long flushInterval) {
+        InMemoryCollectionFactory inMemoryCollectionFactory = new InMemoryCollectionFactory(new Properties());
+        TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(inMemoryCollectionFactory);
+        List<TimeSeriesCollection> timeSeriesCollections = timeSeriesCollectionsBuilder.getSingleTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, new TimeSeriesCollectionsSettings(), resolution, flushInterval);
+        timeSeries = new TimeSeriesBuilder().registerCollections(timeSeriesCollections).build();
+        ingestionPipeline = timeSeries.getIngestionPipeline();
+        timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
+        this.ingestionEnabled = true;
+    }
+
+    /**
+     * Get an in memory report tree time-series, with a single resolution
+     * The resolution is coarse to ingest only one time bucket
+     * The flush interval is 0 as we only need to flush once after the ingestion
+     * @return the in memory report node time-series
+     */
+    public static ReportNodeTimeSeries getPartialTreeReportNodeTimeSeries() {
+        return new ReportNodeTimeSeries(Duration.ofMillis(Long.MAX_VALUE), 0);
     }
 
     public TimeSeries getTimeSeries() {
@@ -99,7 +127,7 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         Filter filter = Filters.equals("attributes." + EXECUTION_ID, executionId);
         Set<String> groupBy = Set.of(groupLevel1, groupLevel2);
         TimeSeriesAggregationQueryBuilder queryBuilder = new TimeSeriesAggregationQueryBuilder()
-                .withOptimizationType(TimeSeriesOptimizationType.MOST_ACCURATE)
+                .withOptimizationType(TimeSeriesOptimizationType.MOST_EFFICIENT)
                 .withFilter(filter)
                 .withGroupDimensions(groupBy)
                 .split(1);

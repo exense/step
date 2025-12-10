@@ -3,8 +3,10 @@ package step.core.controller;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.controller.services.async.AsyncTaskManager;
 import step.core.Controller;
 import step.core.GlobalContext;
+import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.controller.errorhandling.ErrorFilter;
 import step.core.deployment.ControllerServices;
 import step.core.execution.model.Execution;
@@ -124,6 +126,17 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
 	@Override
 	public void finalizeStart(GlobalContext context) throws Exception {
 		context.require(ExecutionScheduler.class).start();
+		//Initialize new empty resolutions after start (require the async task manager)
+		//Because the ReportNodeTimeSeries is created in ControllerServer.init directly and not in a plugin, this the right place to do it
+		ReportNodeTimeSeries reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
+		AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
+		asyncTaskManager.scheduleAsyncTask((empty) -> {
+			logger.info("ReportNode timeSeries ingestion for empty resolutions has started");
+			reportNodeTimeSeries.getTimeSeries().ingestDataForEmptyCollections();
+			logger.info("ReportNode timeSeries ingestion for empty resolutions has finished");
+			return null;
+		});
+
 	}
 
 	@Override
