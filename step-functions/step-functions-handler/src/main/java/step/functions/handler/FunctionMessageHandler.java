@@ -30,9 +30,9 @@ import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
+import step.grid.bootstrap.ResourceExtractor;
 import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.ApplicationContextControl;
-import step.grid.contextbuilder.LocalResourceApplicationContextFactory;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
@@ -41,8 +41,10 @@ import step.grid.threads.NamedThreadFactory;
 import step.livereporting.client.LiveReportingClient;
 import step.reporting.LiveReporting;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +73,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	private ApplicationContextBuilder applicationContextBuilder;
 
 	public FunctionHandlerFactory functionHandlerFactory;
+	private File functionHandlerInitializerJar;
 
 	public FunctionMessageHandler() {
 		super();
@@ -115,6 +118,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		applicationContextBuilder.forkCurrentContext(BRANCH_HANDLER_INITIALIZER);
 
 		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient());
+		functionHandlerInitializerJar = ResourceExtractor.extractResource(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar");
 	}
 
 	@Override
@@ -179,8 +183,9 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	}
 
 	private LiveReporting initializeLiveReporting(Map<String, String> properties, TokenReservationSession tokenReservationSession) throws Exception {
-		// The following context would have to be cleaned-up at agent shutdown. As we don't have any hook in this class to do so, we register it as not cleanable
-		applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new LocalResourceApplicationContextFactory(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar"), false);
+		ApplicationContextControl applicationContextControl = applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new FileApplicationContextFactory(functionHandlerInitializerJar), false);
+		// The usage of this application context will be released when the session is closed
+		tokenReservationSession.registerObjectToBeClosedWithSession(applicationContextControl);
 		return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> {
 			// There's no easy way to do this in the AbstractFunctionHandler itself, because
 			// the only place where the Input properties are guaranteed to be available is in the (abstract)
@@ -271,6 +276,9 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		}
 		if (liveReportingExecutor != null) {
 			liveReportingExecutor.shutdownNow();
+		}
+		if (functionHandlerInitializerJar != null) {
+			Files.deleteIfExists(functionHandlerInitializerJar.toPath());
 		}
 	}
 }
