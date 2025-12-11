@@ -152,6 +152,8 @@ public class ResourceServices extends AbstractStepAsyncServices {
 	@Path("/{id}")
 	@Secured(right = "resource-delete")
 	public void deleteResource(@PathParam("id") String resourceId) {
+		Resource resource = resourceManager.getResource(resourceId);
+		assertEntityIsEditableInContext(resource);
 		resourceManager.deleteResource(resourceId);
 	}
 
@@ -160,6 +162,8 @@ public class ResourceServices extends AbstractStepAsyncServices {
 	@Path("/{id}/revisions")
 	@Secured(right = "resource-delete")
 	public void deleteResourceRevisions(@PathParam("id") String resourceId) {
+		Resource resource = resourceManager.getResource(resourceId);
+		assertEntityIsEditableInContext(resource);
 		resourceManager.deleteResourceRevisionContent(resourceId);
 	}
 
@@ -171,8 +175,12 @@ public class ResourceServices extends AbstractStepAsyncServices {
 		Consumer<String> consumer = t -> {
 			try {
 				deleteResource(t);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+			} catch (Throwable e) {
+				if (e instanceof RuntimeException) {
+					throw e;
+				} else {
+					throw new RuntimeException(e);
+				}
 			}
 		};
 		return scheduleAsyncTaskWithinSessionContext(h ->
