@@ -131,9 +131,7 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
 		ReportNodeTimeSeries reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
 		AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
 		asyncTaskManager.scheduleAsyncTask((empty) -> {
-			logger.info("ReportNode timeSeries ingestion for empty resolutions has started");
 			reportNodeTimeSeries.getTimeSeries().ingestDataForEmptyCollections();
-			logger.info("ReportNode timeSeries ingestion for empty resolutions has finished");
 			return null;
 		});
 	}
