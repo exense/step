@@ -179,9 +179,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	}
 
 	private LiveReporting initializeLiveReporting(Map<String, String> properties, TokenReservationSession tokenReservationSession) throws Exception {
-		ApplicationContextControl applicationContextControl = applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new LocalResourceApplicationContextFactory(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar"), true);
-		// The usage of this application context will be released when the session is closed, underlying registered file won't be cleanable before this release happens
-		tokenReservationSession.registerObjectToBeClosedWithSession(applicationContextControl);
+		// The following context would have to be cleaned-up at agent shutdown. As we don't have any hook in this class to do so, we register it as not cleanable
+		applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new LocalResourceApplicationContextFactory(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar"), false);
 		return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> {
 			// There's no easy way to do this in the AbstractFunctionHandler itself, because
 			// the only place where the Input properties are guaranteed to be available is in the (abstract)
