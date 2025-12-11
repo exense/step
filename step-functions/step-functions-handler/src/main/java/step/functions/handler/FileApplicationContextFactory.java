@@ -47,7 +47,7 @@ public class FileApplicationContextFactory extends ApplicationContextFactory {
         return false;
     }
 
-    public ClassLoader buildClassLoader(ClassLoader parentClassLoader) {
+    public URLClassLoader buildClassLoader(ClassLoader parentClassLoader) {
         if (logger.isDebugEnabled()) {
             logger.debug("Creating URLClassLoader from extracted local file {}", this.jar.getAbsolutePath());
         }
