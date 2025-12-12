@@ -25,6 +25,7 @@ import step.grid.contextbuilder.ApplicationContextFactory;
 import step.grid.contextbuilder.ClassPathHelper;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
@@ -34,6 +35,7 @@ public class FileApplicationContextFactory extends ApplicationContextFactory {
     private static final Logger logger = LoggerFactory.getLogger(FileApplicationContextFactory.class);
 
     private final File jar;
+    private URLClassLoader urlClassLoader;
 
     public FileApplicationContextFactory(File jar) {
         this.jar = jar;
@@ -53,9 +55,17 @@ public class FileApplicationContextFactory extends ApplicationContextFactory {
         }
         List<URL> urls = ClassPathHelper.forSingleFile(this.jar);
         URL[] urlArray = urls.toArray(new URL[urls.size()]);
-        return new URLClassLoader(urlArray, parentClassLoader);
+        urlClassLoader = new URLClassLoader(urlArray, parentClassLoader);
+        return urlClassLoader;
     }
 
     public void onClassLoaderClosed() {
+        if (urlClassLoader != null) {
+            try {
+                urlClassLoader.close();
+            } catch (IOException e) {
+                logger.error("Unable to close the classloader for {}", jar.getAbsolutePath(), e);
+            }
+        }
     }
 }
