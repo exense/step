@@ -128,7 +128,7 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 	}
 
 	private void cleanupFunctionGroupContextFromContext(ReportNode node) {
-		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, null);
+		context.getVariablesManager().removeVariable(node, FUNCTION_GROUP_CONTEXT_KEY);
 	}
 
 	private FunctionGroupContext buildFunctionGroupContext(FunctionExecutionService functionExecutionService, FunctionGroup functionGroup) {
