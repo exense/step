@@ -44,6 +44,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	private ReportNodeStatus result;
 	private List<Error> lifecycleErrors;
 	private String planId;
+	private String canonicalPlanName;
 	private ImportResult importResult;
 	private List<ReportExport> reportExports;
 	private String executionTaskID;
@@ -54,6 +55,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	private ExecutiontTaskParameters executiontTaskParameters;
 	private String resolvedPlanRootNodeId;
 	private String agentsInvolved;
+	private List<ExecutionResultSnapshot> historyResults;
 
 	public Execution() {
 		super();
@@ -146,6 +148,14 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 
 	public void setPlanId(String planId) {
 		this.planId = planId;
+	}
+
+	public String getCanonicalPlanName() {
+		return canonicalPlanName;
+	}
+
+	public void setCanonicalPlanName(String canonicalPlanName) {
+		this.canonicalPlanName = canonicalPlanName;
 	}
 
 	/**
@@ -243,6 +253,15 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 
 	public void setAgentsInvolved(String agentsInvolved) {
 		this.agentsInvolved = agentsInvolved;
+	}
+
+	public List<ExecutionResultSnapshot> getHistoryResults() {
+		return historyResults;
+	}
+
+	public Execution setHistoryResults(List<ExecutionResultSnapshot> historyResults) {
+		this.historyResults = historyResults;
+		return this;
 	}
 
 	@Override
