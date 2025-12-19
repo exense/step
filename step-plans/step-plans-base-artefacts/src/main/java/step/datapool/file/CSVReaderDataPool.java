@@ -75,26 +75,22 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 	 * This is synchronized to ensure thread-safety during initialization.
 	 * If initialization fails, the error is logged and tempFileWriter remains null.
 	 */
-	private synchronized void initializeTempFileWriterIfRequired() {
+	private synchronized void initializeTempFileWriterIfRequired() throws IOException {
 		if (tempFileWriter == null) {
-			try {
-				tempFileWriter = new PrintWriter(new BufferedWriter(new FileWriter(tempFile)));
+			tempFileWriter = new PrintWriter(new BufferedWriter(new FileWriter(tempFile)));
 
-				// write headers to the temporary file
-				if (headers != null) {
-					Iterator<String> iterator = headers.iterator();
-					while (iterator.hasNext()) {
-						String header = iterator.next();
-						tempFileWriter.write(header);
-						if (iterator.hasNext()) {
-							tempFileWriter.write(delimiter);
-						}
+			// write headers to the temporary file
+			if (headers != null) {
+				Iterator<String> iterator = headers.iterator();
+				while (iterator.hasNext()) {
+					String header = iterator.next();
+					tempFileWriter.write(header);
+					if (iterator.hasNext()) {
+						tempFileWriter.write(delimiter);
 					}
 				}
-				tempFileWriter.println();
-			} catch (IOException e) {
-				logger.error("Error while creating temporary file {}", tempFile.getAbsolutePath(), e);
 			}
+			tempFileWriter.println();
 		}
 	}
 
@@ -164,8 +160,7 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 					}
 					tempFileWriter.println();
 				} else {
-					//Silently fail to keep existing behavior
-					logger.error("Cannot write row: temporary file writer could not be initialized for file {}", filePath);
+					throw new RuntimeException("Cannot write row: temporary file writer could not be initialized for file " +  filePath);
 				}
 			}
 		}
