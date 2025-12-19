@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -51,6 +52,8 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 	// written to
 	protected File tempFile;
 	protected PrintWriter tempFileWriter;
+	// unique identifier for this instance to avoid temp file collisions
+	private final String instanceId = UUID.randomUUID().toString();
 
 	public CSVReaderDataPool(CSVDataPool configuration) {
 		super(configuration);
@@ -62,14 +65,22 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 		super.init();
 
 		// Write operations to rows (RowWrapper.put) are written to a temporary file
-		// which
-		// overrides the initial file when the data pool is closed
-		tempFile = new File(filePath + ".tmp");
-		try {
+		// which overrides the initial file when the data pool is closed
+		// Using a unique instance ID to avoid collisions between multiple threads/instances
+		tempFile = new File(filePath + ".tmp." + instanceId);
+	}
+
+	/**
+	 * Lazily initializes the tempFileWriter when first write operation occurs.
+	 * This is synchronized to ensure thread-safety during initialization.
+	 * If initialization fails, the error is logged and tempFileWriter remains null.
+	 */
+	private synchronized void initializeTempFileWriterIfRequired() throws IOException {
+		if (tempFileWriter == null) {
 			tempFileWriter = new PrintWriter(new BufferedWriter(new FileWriter(tempFile)));
 
 			// write headers to the temporary file
-			if (headers!=null) {
+			if (headers != null) {
 				Iterator<String> iterator = headers.iterator();
 				while (iterator.hasNext()) {
 					String header = iterator.next();
@@ -80,8 +91,6 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 				}
 			}
 			tempFileWriter.println();
-		} catch (IOException e) {
-			logger.error("Error while creating temporary file " + tempFile.getAbsolutePath(), e);
 		}
 	}
 
@@ -90,18 +99,35 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 		super.close();
 
 		try {
-			tempFileWriter.close();
-			// persist the changes if necessary
-			if (isWriteEnabled() && hasChanges.get()) {
-				// move the initial file
-				File initialFile = new File(filePath + ".initial");
-				Files.move(new File(filePath), initialFile);
-				// replace the initial file by the temporary file containing the changes
-				Files.move(tempFile, new File(filePath));
-				// delete the initial file
-				initialFile.delete();
+			// Close the temp file writer if it was initialized
+			if (tempFileWriter != null) {
+				tempFileWriter.close();
+
+				// persist the changes if necessary
+				// Only attempt to move files if tempFileWriter was successfully initialized
+				if (isWriteEnabled() && hasChanges.get()) {
+					// Synchronize on the file path to prevent concurrent file operations
+					// from multiple instances using the same file
+					synchronized (filePath.intern()) {
+						// move the initial file
+						File initialFile = new File(filePath + ".initial");
+						Files.move(new File(filePath), initialFile);
+						// replace the initial file by the temporary file containing the changes
+						Files.move(tempFile, new File(filePath));
+						// delete the initial file
+						if (!initialFile.delete()) {
+							logger.error("Could not delete the CSV initial file {}", initialFile.getAbsolutePath());
+						}
+					}
+				}
 			}
-			tempFile.delete();
+
+			// Clean up temp file if it still exists
+			if (tempFile.exists()) {
+				if (!tempFile.delete()) {
+					logger.error("Could not delete the CSV temporary file {}", tempFile.getAbsolutePath());
+				}
+			}
 		} catch (IOException e) {
 			logger.error("Error while closing the CSV dataset", e);
 		}
@@ -114,20 +140,28 @@ public class CSVReaderDataPool extends FileReaderDataPool {
 		if(isWriteEnabled()) {
 			Object value = row.getValue();
 			if (value != null && value instanceof CSVRowWrapper) {
-				CSVRowWrapper csvRow = (CSVRowWrapper) value;
-				
-				Iterator<String> iterator = headers.iterator();
-				while (iterator.hasNext()) {
-					String header = iterator.next();
-					Object object = csvRow.rowData.get(header);
-					if(object != null) {
-						tempFileWriter.print(object.toString());			
+				// Lazily initialize the temp file writer on first write
+				initializeTempFileWriterIfRequired();
+
+				// Only write if initialization succeeded
+				if (tempFileWriter != null) {
+					CSVRowWrapper csvRow = (CSVRowWrapper) value;
+
+					Iterator<String> iterator = headers.iterator();
+					while (iterator.hasNext()) {
+						String header = iterator.next();
+						Object object = csvRow.rowData.get(header);
+						if(object != null) {
+							tempFileWriter.print(object.toString());
+						}
+						if (iterator.hasNext()) {
+							tempFileWriter.print(delimiter);
+						}
 					}
-					if (iterator.hasNext()) {
-						tempFileWriter.print(delimiter);
-					}
+					tempFileWriter.println();
+				} else {
+					throw new RuntimeException("Cannot write row: temporary file writer could not be initialized for file " +  filePath);
 				}
-				tempFileWriter.println();
 			}
 		}
 	}
