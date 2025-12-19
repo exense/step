@@ -114,13 +114,21 @@ public class FunctionGroupHandler extends ArtefactHandler<FunctionGroup, ReportN
 				consumer.accept(functionGroup, node);
 			}
 		} finally {
-			releaseTokens(context, true);
+			try {
+				releaseTokens(context, true);
+			} finally {
+				cleanupFunctionGroupContextFromContext(node);
+			}
 		}	
 	}
 
 	private void addFunctionGroupContextToContext(ReportNode node, FunctionGroupContext functionGroupContext) {
 		context.getVariablesManager().putVariable(node, FUNCTION_GROUP_CONTEXT_KEY, functionGroupContext);
 		context.put(FunctionGroupHandle.class, this);
+	}
+
+	private void cleanupFunctionGroupContextFromContext(ReportNode node) {
+		context.getVariablesManager().removeVariable(node, FUNCTION_GROUP_CONTEXT_KEY);
 	}
 
 	private FunctionGroupContext buildFunctionGroupContext(FunctionExecutionService functionExecutionService, FunctionGroup functionGroup) {
