@@ -28,6 +28,7 @@ public class ImportResult implements Serializable {
 	protected boolean successful = false;;
 	
 	protected String planId;
+	protected String canonicalPlanName;
 	
 	List<String> errors;
 
@@ -45,6 +46,14 @@ public class ImportResult implements Serializable {
 
 	public void setPlanId(String planId) {
 		this.planId = planId;
+	}
+
+	public String getCanonicalPlanName() {
+		return canonicalPlanName;
+	}
+
+	public void setCanonicalPlanName(String canonicalPlanName) {
+		this.canonicalPlanName = canonicalPlanName;
 	}
 
 	public List<String> getErrors() {

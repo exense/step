@@ -86,9 +86,27 @@ public class ExecutionEngineRunner {
 				addImportResultToExecution(importResult);
 				saveFailureReportWithResult(ReportNodeStatus.VETOED);
 			} else {
+				String canonicalPlanName;
 				try {
-					Plan plan = getPlanFromExecutionParametersOrImport();
+					ExecutionParameters executionParameters = executionContext.getExecutionParameters();
+					Plan plan = executionParameters.getPlan();
+					if (plan == null) {
+						ImportResult importResult = importPlan(executionContext);
+						canonicalPlanName = importResult.getCanonicalPlanName();
+						addImportResultToExecution(importResult);
+						if (importResult.isSuccessful()) {
+							PlanAccessor planAccessor = executionContext.getPlanAccessor();
+							plan = planAccessor.get(new ObjectId(importResult.getPlanId()));
+						} else {
+							throw new PlanImportException();
+						}
+					} else {
+						// plan already exists in memory
+						canonicalPlanName = plan.getId().toString();
+					}
+
 					addPlanToContextAndUpdateExecution(plan);
+					addCanonicalPlanNameToExecution(canonicalPlanName);
 
 					logger.info(messageWithId("Starting execution."));
 					updateStatus(ExecutionStatus.ESTIMATING);
@@ -176,6 +194,7 @@ public class ExecutionEngineRunner {
 				.collect(Collectors.toList());
 	}
 
+	// TODO from here we need to extract the importResult, somehow
 	private Plan getPlanFromExecutionParametersOrImport() throws PlanImportException {
 		ExecutionParameters executionParameters = executionContext.getExecutionParameters();
 		Plan executionParametersPlan = executionParameters.getPlan();
@@ -207,6 +226,10 @@ public class ExecutionEngineRunner {
 				execution.setDescription(plan.getAttributes() != null ? plan.getAttributes().get(AbstractOrganizableObject.NAME) : null);
 			}
 		});
+	}
+
+	private void addCanonicalPlanNameToExecution(String canonicalPlanName) {
+		updateExecution(execution -> execution.setCanonicalPlanName(canonicalPlanName));
 	}
 
 	private String messageWithId(String message) {
