@@ -5,10 +5,28 @@ import step.core.timeseries.metric.MetricAttributeType;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MetricsConstants {
-    
-    public static final MetricAttribute STATUS_ATTRIBUTE = new MetricAttribute()
+
+	public static String getAllAttributeNames() {
+		return Stream.of(
+						STATUS_ATTRIBUTE,
+						TYPE_ATRIBUTE,
+						TASK_ATTRIBUTE,
+						EXECUTION_ATTRIBUTE,
+						PLAN_ATTRIBUTE,
+						NAME_ATTRIBUTE,
+						ERROR_CODE_ATTRIBUTE,
+						EXECUTION_BOOLEAN_RESULT,
+						EXECUTION_RESULT
+				)
+				.map(MetricAttribute::getName)
+				.collect(Collectors.joining(","));
+	}
+
+	public static final MetricAttribute STATUS_ATTRIBUTE = new MetricAttribute()
 				.setName("rnStatus")
 				.setType(MetricAttributeType.TEXT)
 				.setMetadata(Map.of("knownValues", Arrays.asList("PASSED", "FAILED", "TECHNICAL_ERROR", "INTERRUPTED")))

@@ -97,4 +97,8 @@ public class MeasurementAccessor {
         document.remove(MeasurementPlugin.PLAN);
         return document;
     }
+
+    public Collection<Document> getCollection() {
+        return coll;
+    }
 }
