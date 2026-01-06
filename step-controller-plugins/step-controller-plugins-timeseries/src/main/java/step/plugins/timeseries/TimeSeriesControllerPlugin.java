@@ -35,6 +35,8 @@ import step.plugins.timeseries.migration.MigrateResolutionsWithIgnoredFieldsTask
 
 import java.util.*;
 
+import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
+import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
 import static step.plugins.measurements.MeasurementPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.plugins.timeseries.MetricsConstants.*;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
@@ -45,7 +47,9 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
 	public static final String TIME_SERIES_MAIN_COLLECTION = "timeseries";
 	public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
-	public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = EXECUTION_ID + "," + TASK_ID + "," + PLAN_ID + ",metricType,origin,name,rnStatus,project,type";
+	//We should review the usage of the following property default value, it is technically possible to set the value in properties: not sure if that really work.
+	//This is used to determine if we fall back to RAW measurement when we filter or group by fields that are not supported by time-series and when reingesting timeseries from RAW measurements
+	public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = MetricsConstants.getAllAttributeNames() + ",metricType,origin,project";
 
 	// Following properties are used by the UI. In the future we could remove the prefix 'plugins.' to align with other properties
 	public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";
@@ -123,10 +127,17 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 	public void initializeData(GlobalContext context) throws Exception {
 		super.initializeData(context);
 		timeSeries.createIndexes(new LinkedHashSet<>(List.of(new IndexField(ATTRIBUTE_EXECUTION_ID, Order.ASC, String.class))));
+		IndexField metricTypeIndexField = new IndexField(ATTRIBUTES_PREFIX + METRIC_TYPE, Order.ASC, String.class);
+		IndexField beginIndexField = new IndexField(TIMESTAMP_ATTRIBUTE, Order.ASC, Long.class);
 		timeSeries.createCompoundIndex(new LinkedHashSet<>(List.of(
-				new IndexField("attributes.taskId", Order.ASC, String.class),
-				new IndexField("attributes.metricType", Order.ASC, String.class),
-				new IndexField("begin", Order.ASC, String.class)
+				new IndexField(ATTRIBUTES_PREFIX + TASK_ATTRIBUTE.getName(), Order.ASC, String.class),
+				metricTypeIndexField,
+				beginIndexField
+		)));
+		timeSeries.createCompoundIndex(new LinkedHashSet<>(List.of(
+				new IndexField(ATTRIBUTES_PREFIX + PLAN_ATTRIBUTE.getName(), Order.ASC, String.class),
+				metricTypeIndexField,
+				beginIndexField
 		)));
 
 		List<MetricType> metrics = createOrUpdateMetrics(context.require(MetricTypeAccessor.class));

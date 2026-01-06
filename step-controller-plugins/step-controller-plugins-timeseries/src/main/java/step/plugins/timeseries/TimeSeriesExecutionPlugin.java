@@ -59,7 +59,10 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 		super.initializeExecutionContext(executionEngineContext, executionContext);
 		TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getIngestionPipeline();
 		TreeMap<String, String> additionalAttributes = executionContext.getObjectEnricher().getAdditionalAttributes();
-		TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null, new TimeSeriesIngestionPipelineSettings()) {
+		//Crete a wrapper of the ingestion pipeline to automatically enrich data with execution attributes
+		//This approach is quite error-prone and should be refactored
+		TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null,
+				new TimeSeriesIngestionPipelineSettings().setResolution(mainIngestionPipeline.getResolution())) {
 			@Override
 			public void ingestPoint(Map<String, Object> attributes, long timestamp, long value) {
 				attributes.putAll(additionalAttributes);
