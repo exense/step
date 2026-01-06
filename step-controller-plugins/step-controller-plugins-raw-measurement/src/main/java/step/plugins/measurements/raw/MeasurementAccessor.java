@@ -4,13 +4,11 @@ import com.mongodb.BasicDBObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.collections.*;
+import step.core.collections.Collection;
 import step.core.entities.EntityManager;
 import step.plugins.measurements.MeasurementPlugin;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class MeasurementAccessor {
@@ -98,7 +96,7 @@ public class MeasurementAccessor {
         return document;
     }
 
-    public Collection<Document> getCollection() {
-        return coll;
+    public void createOrUpdateCompoundIndex(LinkedHashSet<IndexField> indexFields) {
+        coll.createOrUpdateCompoundIndex(indexFields);
     }
 }
