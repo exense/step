@@ -62,9 +62,10 @@ public class ReferenceFinder {
     }
 
     private List<Object> getReferencedObjectsMatchingRequest(String entityType, AbstractOrganizableObject object, FindReferencesRequest request) {
-        List<Object> referencedObjects = getReferencedObjects(entityType, object).stream().filter(o -> (o != null &&  !o.equals(object))).collect(Collectors.toList());
-        //System.err.println("objects referenced from plan: " + planToString(plan) + ": "+ referencedObjects.stream().map(ReferenceFinderServices::objectToString).collect(Collectors.toList()));
-        return referencedObjects.stream().filter(o -> doesRequestMatch(request, o)).collect(Collectors.toList());
+        return getReferencedObjects(entityType, object).stream()
+                .filter(o -> (o != null &&  !o.equals(object)))
+                .filter(o -> doesRequestMatch(request, o))
+                .collect(Collectors.toList());
     }
 
     // returns a (generic) set of objects referenced by a plan
@@ -91,7 +92,7 @@ public class ReferenceFinder {
             Plan p = (Plan) o;
             switch (req.searchType) {
                 case PLAN_NAME:
-                    return p.getAttribute(AbstractOrganizableObject.NAME).equals(req.searchValue);
+                    return req.searchValue.equals(p.getAttribute(AbstractOrganizableObject.NAME));
                 case PLAN_ID:
                     return p.getId().toString().equals(req.searchValue);
                 default:
@@ -101,7 +102,7 @@ public class ReferenceFinder {
             Function f = (Function) o;
             switch (req.searchType) {
                 case KEYWORD_NAME:
-                    return f.getAttribute(AbstractOrganizableObject.NAME).equals(req.searchValue);
+                    return req.searchValue.equals(f.getAttribute(AbstractOrganizableObject.NAME));
                 case KEYWORD_ID:
                     return f.getId().toString().equals(req.searchValue);
                 default:
@@ -111,7 +112,7 @@ public class ReferenceFinder {
             Resource r = (Resource) o;
             switch (req.searchType) {
                 case RESOURCE_NAME:
-                    return r.getAttribute(AbstractOrganizableObject.NAME).equals(req.searchValue);
+                    return req.searchValue.equals(r.getAttribute(AbstractOrganizableObject.NAME));
                 case RESOURCE_ID:
                     return r.getId().toString().equals(req.searchValue);
                 default:
