@@ -73,7 +73,7 @@ public class EntityDependencyTreeVisitorTest {
 			public String onResolvedEntityId(String entityName, String resolvedEntityId) {
 				return null;
 			}
-		}, true);
+		}, EntityDependencyTreeVisitor.VISIT_MODE.RECURSIVE);
 		
 		assertEquals(9, entityIds.size());
 		

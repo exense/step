@@ -45,56 +45,91 @@ public class FunctionLocator {
 	/**
 	 * Resolve a {@link CallFunction} artefact to the underlying {@link Function}
 	 * 
-	 * @param callFunctionArtefact the CallFunction artefact
+	 * @param callFunctionArtefact the CallFunction artifact to be resolved
 	 * @param objectPredicate the predicate to be used to filter the results out
 	 * @param bindings the bindings to be used for the evaluation of dynamic expressions (can be null)
-	 * @return the {@link Function} referenced by this artefact
+	 * @return the {@link Function} referenced by this artifact
 	 */
 	public Function getFunction(CallFunction callFunctionArtefact, ObjectPredicate objectPredicate, Map<String, Object> bindings) {
+		return selectAllFunctionsByPriority(callFunctionArtefact, objectPredicate, bindings, true).get(0);
+	}
+
+	/**
+	 * Resolve a {@link CallFunction} artefact to the underlying list of matching {@link Function}
+	 * @param callFunctionArtefact the {@link CallFunction} artifact to resolve
+	 * @param objectPredicate to filter out results
+	 * @param bindings to be used for evaluation of selection criteria
+	 * @param strictMode whether selection is strict and must find a result or we can ignore unresolvable dynamic selection criteria and bypass activation expression
+	 * @return the list of resolved Keywords, can be empty when strictMode is false
+	 */
+	public List<Function> selectAllFunctionsByPriority(CallFunction callFunctionArtefact, ObjectPredicate objectPredicate, Map<String, Object> bindings, boolean strictMode) {
 		Objects.requireNonNull(callFunctionArtefact, "The artefact must not be null");
 		Objects.requireNonNull(objectPredicate, "The object predicate must not be null");
-		Function function;
+
 		String selectionAttributesJson = callFunctionArtefact.getFunction().get();
 		Map<String, String> attributes;
 		try {
 			attributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, bindings);
 		} catch (Exception e) {
-			throw new NoSuchElementException("Unable to find keyword with attributes "+selectionAttributesJson + ". Cause: " + e.getMessage());
+			//We only throw exception for missing bindings when strictMode is ON
+			if (strictMode) {
+				throw new NoSuchElementException("Unable to find keyword with attributes " + selectionAttributesJson + ". Cause: " + e.getMessage());
+			} else {
+				return List.of();
+			}
 		}
 
-		if(attributes.size()>0) {
-
+		if (!attributes.isEmpty()) {
 			Stream<Function> stream = StreamSupport.stream(functionAccessor.findManyByAttributes(attributes), false);
 			stream = stream.filter(objectPredicate);
 			List<Function> functionsMatchingByAttributes = stream.collect(Collectors.toList());
 
 			// reorder matching functions: the function from current AP has a priority
-			List<Function> orderedFunctions = LocatorHelper.prioritizeAndFilterApEntities(functionsMatchingByAttributes, bindings);
+			List<Function> orderedFunctions = LocatorHelper.prioritizeAndFilterApEntities(functionsMatchingByAttributes, bindings, !strictMode);
+			// In strict mode at least one match is required
+			if (strictMode && orderedFunctions.isEmpty()) {
+				throw new NoSuchElementException("Unable to find keyword with attributes " + selectionAttributesJson);
+			}
 
-			// after prioritization, we check the chosen active keyword version
+			// after prioritization, we either select only the one matching the active version whenever provided or returned all matching ones
 			Set<String> activeKeywordVersions = getActiveKeywordVersions(bindings);
-			if (activeKeywordVersions != null && activeKeywordVersions.size() > 0) {
-				// First try to find a function matching one of the active versions
-				function = orderedFunctions.stream().filter(f -> {
+			if (activeKeywordVersions != null && !activeKeywordVersions.isEmpty()) {
+				// First try to find the functions matching one of the active versions
+				List<Function> activeVersions = orderedFunctions.stream().filter(f -> {
 					String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
 					return version != null && activeKeywordVersions.contains(version);
-				}).findFirst().orElse(null);
-				// if no function has been found with one of the active versions, return the first function WITHOUT version
-				if (function == null) {
-					function = orderedFunctions.stream().filter(f -> {
+				}).collect(Collectors.toList());
+				// if no function has been found with one of the active versions, return the functions WITHOUT versions
+				if (activeVersions.isEmpty()) {
+					activeVersions = orderedFunctions.stream().filter(f -> {
 						String version = f.getAttributes().get(AbstractOrganizableObject.VERSION);
 						return version == null || version.trim().isEmpty();
-					}).findFirst().orElseThrow(() -> new NoSuchElementException("Unable to find keyword with attributes " + selectionAttributesJson + " matching on of the versions: " + activeKeywordVersions));
+					}).collect(Collectors.toList());
+				}
+				if (activeVersions.isEmpty() && strictMode) {
+					throw new NoSuchElementException("Unable to find keyword with attributes " + selectionAttributesJson + " matching on of the versions: " + activeKeywordVersions);
+				} else {
+					return activeVersions;
 				}
 			} else {
-				// No active versions defined. Return the first function
-				function = orderedFunctions.stream().findFirst().orElseThrow(() -> new NoSuchElementException("Unable to find keyword with attributes " + selectionAttributesJson));
+				//No version defined with simply return the ordered function by priorities
+				return orderedFunctions;
 			}
-			return function;
 		} else {
 			throw new NoSuchElementException("No selection attribute defined");
 		}
+	}
 
+	/**
+	 * Resolve a {@link CallFunction} artefact to the underlying list of matching {@link Function}
+	 *
+	 * @param callFunctionArtefact the CallFunction artifact
+	 * @param objectPredicate the predicate to be used to filter the results out
+	 * @param bindings the bindings to be used for the evaluation of dynamic expressions (can be null)
+	 * @return the {@link Function} list referenced by this artifact
+	 */
+	public List<Function> getMatchingFunctions(CallFunction callFunctionArtefact, ObjectPredicate objectPredicate, Map<String, Object> bindings) {
+		return selectAllFunctionsByPriority(callFunctionArtefact, objectPredicate, bindings, false);
 	}
 
 	private Set<String> getActiveKeywordVersions(Map<String, Object> bindings) {
