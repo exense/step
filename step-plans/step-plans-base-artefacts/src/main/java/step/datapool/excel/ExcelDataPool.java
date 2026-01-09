@@ -21,7 +21,8 @@ package step.datapool.excel;
 import step.artefacts.automation.datasource.YamlExcelDataSource;
 
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.dynamicbeans.ProtectedDynamicValue;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.datapool.DataPoolConfiguration;
 import step.core.yaml.YamlModel;
@@ -32,10 +33,12 @@ public class ExcelDataPool extends DataPoolConfiguration {
 	DynamicValue<String> file = new DynamicValue<>();
 	
 	DynamicValue<String> worksheet = new DynamicValue<>();
+
+	ProtectedDynamicValue<String> password = new ProtectedDynamicValue<>();
 	
 	DynamicValue<Boolean> headers = new DynamicValue<>(true);
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getFile() {
 		return file;
 	}
@@ -58,5 +61,13 @@ public class ExcelDataPool extends DataPoolConfiguration {
 
 	public void setWorksheet(DynamicValue<String> worksheet) {
 		this.worksheet = worksheet;
+	}
+
+	public ProtectedDynamicValue<String> getPassword() {
+		return password;
+	}
+
+	public void setPassword(ProtectedDynamicValue<String> password) {
+		this.password = password;
 	}
 }

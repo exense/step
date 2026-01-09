@@ -201,7 +201,7 @@ public class ControllerServices extends AbstractStepServices {
 	@Secured(right="execution-read")
 	public TestSetStatusOverview getReport(RepositoryObjectReference report) throws Exception {
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
-		return getContext().getRepositoryObjectManager().getReport(report, objectPredicate);
+		return getContext().getRepositoryObjectManager().getReport(report, objectPredicate, getSession().getUser().getUsername());
 	}
 
 	@GET

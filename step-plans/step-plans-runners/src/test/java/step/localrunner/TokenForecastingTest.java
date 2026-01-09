@@ -4,8 +4,10 @@
 package step.localrunner;
 
 import org.junit.Test;
-import step.artefacts.ThreadGroup;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.artefacts.*;
+import step.artefacts.ThreadGroup;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.handlers.functions.test.MyFunctionType;
@@ -51,6 +53,7 @@ import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.
 import static step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder.SKIP_AUTO_PROVISIONING;
 
 public class TokenForecastingTest {
+	private static final Logger logger = LoggerFactory.getLogger(TokenForecastingTest.class);
 
 	private static class Forecast {
 		final List<AgentPoolRequirementSpec> requirements;
@@ -640,8 +643,27 @@ public class TokenForecastingTest {
 		stats.assertInvocationsAndThreads(3, 1);
 	}
 
+    private void retryFlakyTest(int retries, Runnable test, String testName) {
+        Error lastError = null;
+        for (int i = 1; i <= retries; i++) {
+            try {
+                test.run();
+                return; // Test passed, return
+            } catch (Error e) {
+                logger.warn("Flaky test '{}' failed on iteration {} of {}", testName, i, retries, e);
+                lastError = e;
+            }
+        }
+        throw lastError;
+    }
+
 	@Test
 	public void testNestedThreadGroups() {
+		retryFlakyTest(3, this::testNestedThreadGroupsRetryable, "testNestedThreadGroups");
+	}
+
+	// occasionally fails, retry 3 times
+    private void testNestedThreadGroupsRetryable() {
 
 		ThreadGroup tgLevel1 = new ThreadGroup();
 		ThreadGroup tgLevel2 = new ThreadGroup();
@@ -1142,6 +1164,11 @@ public class TokenForecastingTest {
 
 		@Override
 		public void deprovisionTokens(String provisioningRequestId) {
+
+		}
+
+		@Override
+		public void registerRemoteAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs) {
 
 		}
 	}

@@ -19,10 +19,10 @@
 package step.core;
 
 public interface Constants {
-    String STEP_API_VERSION_STRING = "3.29.0";
+    String STEP_API_VERSION_STRING = "3.29.1";
     Version STEP_API_VERSION = new Version(STEP_API_VERSION_STRING);
 
-    String STEP_YAML_SCHEMA_VERSION_STRING = "1.1.1";
+    String STEP_YAML_SCHEMA_VERSION_STRING = "1.2.0";
     /**
      * This version is used for both the Yaml plan schema version and the automation package schema version (YamlPlanVersions.class, YamlAutomationPackageVersions.class)
      * It is used by extension for EE too (YamlReaderExtenderEE.class, YamlAutomationPackageVersionsEE.class).

@@ -27,7 +27,7 @@ import jakarta.ws.rs.core.MediaType;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.access.User;
 import step.core.deployment.ControllerServiceException;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.RepositoryObjectReference;
@@ -50,7 +50,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     private ExecutionScheduler scheduler;
 
     public SchedulerServices() {
-        super(EntityManager.tasks);
+        super(EntityConstants.tasks);
     }
 
     @PostConstruct
@@ -152,7 +152,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Override
     @Secured(right = "{entity}-delete")
     public void delete(String id) {
-        assertEntityIsAcceptableInContext(getEntity(id));
+        assertEntityIsEditableInContext(getEntity(id));
         scheduler.removeExecutionTask(id);
     }
 }

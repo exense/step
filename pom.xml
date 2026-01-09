@@ -46,8 +46,8 @@
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
 		<dependencies.version>2025.6.25</dependencies.version>
-		<step-grid.version>2025.9.18-68cbee99c07d327dfe213bce</step-grid.version>
-		<step-framework.version>2025.9.18-68cbed71c07d327dfe2011de</step-framework.version>
+		<step-grid.version>2.5.0</step-grid.version>
+		<step-framework.version>2025.12.11-693aaad2a52e533162cf65cb</step-framework.version>
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
@@ -80,7 +80,7 @@
 		<!-- staging nexus -->
 		<repository>
 			<id>nexus-staging</id>
-			<url>https://nexus-enterprise-staging-new.exense.ch/repository/staging-maven/</url>
+			<url>https://nexus-enterprise.exense.ch/repository/staging-maven/</url>
 		</repository>
 		<!-- private nexus -->
 		<repository>
@@ -92,6 +92,7 @@
 	<modules>
 		<module>step-commons</module>
 		<module>step-agent</module>
+		<module>step-constants</module>
 		<module>step-core-model</module>
 		<module>step-core</module>
 		<module>step-automation-packages</module>
@@ -106,11 +107,13 @@
 		<module>step-libs-maven-client</module>
 		<module>step-json-schema</module>
 		<module>step-cli</module>
+		<module>step-livereporting</module>
 	</modules>
 
 	<!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
 	<dependencyManagement>
 		<dependencies>
+
 			<dependency>
 				<groupId>ch.exense.step</groupId>
 				<artifactId>step-framework</artifactId>

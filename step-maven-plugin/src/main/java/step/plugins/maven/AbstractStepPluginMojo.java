@@ -54,6 +54,12 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 	@Parameter(property = "step.url", required = true)
 	private String url;
 
+	@Parameter(property = "step.step-project-name")
+	private String stepProjectName;
+
+	@Parameter(property = "step.auth-token")
+	private String authToken;
+
 	@Parameter(defaultValue = "${project.build.finalName}", readonly = true)
 	private String buildFinalName;
 
@@ -77,6 +83,22 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
 	public void setUrl(String url) {
 		this.url = url;
+	}
+
+	public String getAuthToken() {
+		return authToken;
+	}
+
+	public void setAuthToken(String authToken) {
+		this.authToken = authToken;
+	}
+
+	public String getStepProjectName() {
+		return stepProjectName;
+	}
+
+	public void setStepProjectName(String stepProjectName) {
+		this.stepProjectName = stepProjectName;
 	}
 
 	public String getBuildFinalName() {

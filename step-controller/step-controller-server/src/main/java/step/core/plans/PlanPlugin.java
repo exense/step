@@ -23,11 +23,12 @@ import step.core.GlobalContext;
 import step.core.artefacts.AbstractArtefact;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.export.ExportContext;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.table.ActivableEntityTableEnricher;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plans.parser.yaml.YamlPlanReader;
@@ -87,12 +88,13 @@ public class PlanPlugin extends AbstractControllerPlugin {
 		});
 		context.put(PlanTypeRegistry.class, planTypeRegistry);
 		context.getServiceRegistrationCallback().registerService(PlanServices.class);
-		Collection<Plan> collection = context.getCollectionFactory().getCollection(EntityManager.plans, Plan.class);
-		context.get(TableRegistry.class).register(EntityManager.plans, new Table<>(collection, "plan-read", true)
-				.withTableFiltersFactory(e-> Filters.equals("visible", true)));
+		Collection<Plan> collection = context.getCollectionFactory().getCollection(EntityConstants.plans, Plan.class);
+		context.get(TableRegistry.class).register(EntityConstants.plans, new Table<>(collection, "plan-read", true)
+				.withTableFiltersFactory(e-> Filters.equals("visible", true))
+				.withResultItemEnricher(new ActivableEntityTableEnricher<>()));
 
 		context.getEntityManager().registerExportHook(new ModifyPlanAtExportHook());
-		context.getEntityManager().registerExportAllFilters(EntityManager.plans, Filters.equals("visible", true));
+		context.getEntityManager().registerExportAllFilters(EntityConstants.plans, Filters.equals("visible", true));
 	}
 
 	@Override
@@ -119,8 +121,8 @@ public class PlanPlugin extends AbstractControllerPlugin {
 
 	private void createTableSettingsIfNecessary(GlobalContext context, ScreenInput nameInput) {
 		TableSettingsAccessor tableSettingsAccessor = context.get(TableSettingsAccessor.class);
-		if (tableSettingsAccessor.findSystemTableSettings(EntityManager.plans).isEmpty()) {
-			TableSettings setting = TableSettingsBuilder.builder().withSettingId(EntityManager.plans)
+		if (tableSettingsAccessor.findSystemTableSettings(EntityConstants.plans).isEmpty()) {
+			TableSettings setting = TableSettingsBuilder.builder().withSettingId(EntityConstants.plans)
 					.addColumn("bulkSelection", true)
 					.addColumn("attributes.project", true)
 					.addColumn("entityLock", true)

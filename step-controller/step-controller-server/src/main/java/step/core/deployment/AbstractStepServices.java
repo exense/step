@@ -33,6 +33,10 @@ import step.framework.server.AbstractServices;
 import step.framework.server.Session;
 import step.framework.server.access.AuthorizationManager;
 
+import java.util.Optional;
+
+import static step.core.deployment.ObjectHookInterceptor.ENTITY_ACCESS_DENIED;
+
 public abstract class AbstractStepServices extends AbstractServices<User> {
 
 	public static final String SESSION = "session";
@@ -111,16 +115,25 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
 
 	/**
 	 * The ObjectHookInterceptor.aroundReadFrom can only be used for POST request passing an entity as request BODY
-	 * This method can be used as helper for all other cases where checking if the entity is acceptable in given context (i.e. DELETE request...(
+	 * This method can be used as helper for all other cases where checking if the entity is editable in given context (i.e. DELETE request...(
 	 * @param entity the entity to be asserted
 	 */
-	protected void assertEntityIsAcceptableInContext(AbstractIdentifiableObject entity) {
-		if(entity instanceof EnricheableObject) {
+	protected void assertEntityIsEditableInContext(AbstractIdentifiableObject entity) {
+		if (entity instanceof EnricheableObject) {
 			EnricheableObject enricheableObject = (EnricheableObject) entity;
-			Session session = getSession();
-			if (!objectHookRegistry.isObjectAcceptableInContext(session, enricheableObject)) {
-				throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, "Authorization error", "You're not allowed to edit this object from within this context");
+			Session<User> session = getSession();
+			Optional<ObjectAccessException> optionalViolations = objectHookRegistry.isObjectEditableInContext(session, enricheableObject);
+			if (optionalViolations.isPresent()) {
+				ObjectAccessException objectAccessException = optionalViolations.get();
+				throw new ControllerServiceException(
+						HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
+						objectAccessException.getMessage(), objectAccessException.getViolations()
+				);
 			}
 		}
+	}
+
+	protected WriteAccessValidator getWriteAccessValidator() {
+		return new WriteAccessValidatorImpl(objectHookRegistry, getSession());
 	}
 }

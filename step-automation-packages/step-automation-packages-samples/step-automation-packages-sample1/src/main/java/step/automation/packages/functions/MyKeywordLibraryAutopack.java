@@ -40,9 +40,30 @@ public class MyKeywordLibraryAutopack extends AbstractKeyword {
 		}
 	}
 
-	@Plan("Echo PARAM_EXEC")
+	@Keyword(timeout=100, routing = {Keyword.ROUTING_EXECUTE_ON_CONTROLLER})
+	public void MyKeywordWithRoutingToController() {
+		output.add("MyKey", "MyValue");
+		if(properties!=null) {
+			properties.forEach((key, value)->{
+				output.add(key, value);
+			});
+		}
+	}
+
+	@Keyword(timeout=100, routing = {"OS","WINDOWS","TYPE","PLAYWRIGHT"})
+	public void MyKeywordWithRoutingCriteria() {
+		output.add("MyKey", "MyValue");
+		if(properties!=null) {
+			properties.forEach((key, value)->{
+				output.add(key, value);
+			});
+		}
+	}
+
+	@Plan("Echo \"before sleep\"\nSleep 1s\nEcho \"after sleep\"\n")
 	@PlanCategories({"InlinePlan","AnnotatedPlan"})
 	@Keyword(name = "Inline Plan")
-	public void inlinePlan() {}
+	public void inlinePlan() throws InterruptedException {
+	}
 
 }

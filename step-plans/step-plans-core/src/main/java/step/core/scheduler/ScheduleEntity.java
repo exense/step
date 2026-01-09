@@ -1,10 +1,7 @@
 package step.core.scheduler;
 
 import step.core.accessors.Accessor;
-import step.core.entities.DependencyTreeVisitorHook;
-import step.core.entities.Entity;
-import step.core.entities.EntityDependencyTreeVisitor;
-import step.core.entities.EntityManager;
+import step.core.entities.*;
 import step.core.repositories.RepositoryObjectReference;
 
 import static step.core.repositories.RepositoryObjectReference.LOCAL_REPOSITORY_ID;
@@ -13,7 +10,7 @@ public class ScheduleEntity extends Entity<ExecutiontTaskParameters, Accessor<Ex
 
 
     public ScheduleEntity(Accessor<ExecutiontTaskParameters> accessor, Class<ExecutiontTaskParameters> entityClass, EntityManager entityManager) {
-        super(EntityManager.tasks, accessor, entityClass);
+        super(EntityConstants.tasks, accessor, entityClass);
         entityManager.addDependencyTreeVisitorHook(scheduleReferencesHook(entityManager));
     }
 
@@ -28,9 +25,9 @@ public class ScheduleEntity extends Entity<ExecutiontTaskParameters, Accessor<Ex
                         String localPlanId = repositoryObject.getRepositoryParameters().get(RepositoryObjectReference.PLAN_ID);
                         if (localPlanId != null) {
                             if (context.isRecursive()) {
-                                context.visitEntity(EntityManager.plans, localPlanId);
+                                context.visitEntity(EntityConstants.plans, localPlanId);
                             }
-                            String newEntityId = context.resolvedEntityId(EntityManager.plans, localPlanId);
+                            String newEntityId = context.resolvedEntityId(EntityConstants.plans, localPlanId);
                             if(newEntityId != null) {
                                 repositoryObject.getRepositoryParameters().put(RepositoryObjectReference.PLAN_ID, newEntityId);
                             }

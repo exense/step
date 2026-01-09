@@ -22,13 +22,15 @@ public class AggregatedReportView extends AbstractAggregatedReportView {
     public AggregatedReportView(@JsonProperty("artefact") AbstractArtefact artefact,
                                 @JsonProperty("artefactHash") String artefactHash,
                                 @JsonProperty("countByStatus") Map<String, Long> countByStatus,
+                                @JsonProperty("countByErrorMessage") Map<String, Long> countByErrorMessage,
+                                @JsonProperty("countByContributingErrorMessage") Map<String, Long> countByChildrenErrorMessage,
                                 @JsonProperty("children") List<AggregatedReportView> children,
                                 @JsonProperty("hasDescendantInvocations") boolean hasDescendantInvocations,
                                 @JsonProperty("parentSource") ParentSource parentSource,
                                 @JsonProperty("singleInstanceReportNode") ReportNode singleInstanceReportNode,
                                 @JsonProperty("bucketsByStatus") Map<String, Bucket> bucketsByStatus,
                                 @JsonProperty("currentOperations") List<Operation> currentOperations) {
-        super(artefact, artefactHash, countByStatus, singleInstanceReportNode, bucketsByStatus, currentOperations);
+        super(artefact, artefactHash, countByStatus, countByErrorMessage, countByChildrenErrorMessage, singleInstanceReportNode, bucketsByStatus, currentOperations);
         this.children = children;
         this.hasDescendantInvocations = hasDescendantInvocations;
         this.parentSource = parentSource;

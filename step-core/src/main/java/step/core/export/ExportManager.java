@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.zip.ZipOutputStream;
 
@@ -37,10 +38,12 @@ import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import ch.exense.commons.io.FileHelper;
 import step.core.entities.Entity;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityManager;
 import step.core.entities.EntityReferencesMap;
 import step.core.objectenricher.ObjectPredicate;
 import step.resources.ResourceManager;
+import step.resources.ResourceRevision;
 
 public class ExportManager {
 
@@ -140,24 +143,28 @@ public class ExportManager {
 		try (ZipOutputStream zos = new ZipOutputStream(exportConfig.getOutputStream())) {
 			FileHelper.zipFile(zos, jsonStream, "export.json");
 			// Export resources (files)
-			List<String> resourceRef = references.getReferencesByType(EntityManager.resources);
-			Entity<?, ?> resourceEntity = entityManager.getEntityByName(EntityManager.resources);
-			if (resourceRef != null && resourceRef.size() > 0 && resourceEntity != null) {
-				exportResources(zos, references, resourceEntity);
+			List<String> resourceRef = references.getReferencesByType(EntityConstants.resourceRevisions);
+			if (resourceRef != null && resourceRef.size() > 0) {
+				exportResources(zos, references);
 			}
 		}
 	}
 
-	private void exportResources(ZipOutputStream zos, EntityReferencesMap references, Entity<?, ?> resourceEntity) {
-		List<String> resourceRef = references.getReferencesByType(EntityManager.resources);
-		resourceRef.forEach(r -> {
-			File file = resourceManager.getResourceFile(r).getResourceFile();
-			if (file.exists()) {
-				FileHelper.zipFile(zos, file, resourceManager.getResourcesRootPath());
-			} else {
-				references.addReferenceNotFoundWarning(
-						"Resource file with id '" + r + "' and name" + file.getName() + "' is missing");
-			}
+	private void exportResources(ZipOutputStream zos, EntityReferencesMap references) {
+		Optional.ofNullable(references.getReferencesByType(EntityConstants.resourceRevisions)).ifPresent(resourceRevisionsRef -> {
+			resourceRevisionsRef.forEach(revisionId -> {
+				ResourceRevision resourceRevision = resourceManager.getResourceRevision(revisionId);
+				String resourceId = resourceRevision.getId().toHexString();
+				File file = resourceManager.getResourceFile(resourceRevision.getResourceId(), resourceId).getResourceFile();
+				if (file.exists()) {
+					FileHelper.zipFile(zos, file, resourceManager.getResourcesRootPath());
+				} else {
+					references.addReferenceNotFoundWarning(
+							"Resource file with id '" + resourceId + "', revision '" + resourceRevisionsRef + "' and name" + file.getName() + "' is missing");
+				}
+			});
 		});
+
+
 	}
 }

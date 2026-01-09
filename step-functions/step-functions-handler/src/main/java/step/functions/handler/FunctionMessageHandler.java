@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -29,46 +29,94 @@ import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.agent.tokenpool.TokenReservationSession;
+import step.grid.bootstrap.ResourceExtractor;
 import step.grid.contextbuilder.ApplicationContextBuilder;
+import step.grid.contextbuilder.ApplicationContextControl;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
 import step.grid.io.OutputMessage;
+import step.grid.threads.NamedThreadFactory;
+import step.livereporting.client.LiveReportingClient;
+import step.reporting.LiveReporting;
 
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	public static final String FUNCTION_HANDLER_PACKAGE_KEY = "$functionhandlerjar";
 	public static final String FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY = "$functionhandlerjarCleanable";
-	
+
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
 	public static final String FUNCTION_TYPE_KEY = "$functionType";
 
 	// Cached object mapper for message payload serialization
-	private ObjectMapper mapper;
-	
+	private final ObjectMapper mapper;
+
+	private ThreadPoolExecutor liveReportingExecutor;
+	// This is actually a Jakarta WebSocketContainer, but instantiated dynamically in a separate class loader
+	private final AtomicReference<Object> webSocketContainerRef = new AtomicReference<>();
 	private ApplicationContextBuilder applicationContextBuilder;
-	
+
 	public FunctionHandlerFactory functionHandlerFactory;
-	
+	private File functionHandlerInitializerJar;
+	private URLClassLoader functionHandlerInitializerClassloader;
+
 	public FunctionMessageHandler() {
 		super();
-		
+
 		mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
+	}
+
+	private int getFromAgentPropsOrDefault(String configKey, int defaultValue) {
+		Optional<String> agentPropsOverridingPoolSize = Optional.ofNullable(agentTokenServices.getAgentProperties())
+				.map(m -> m.get(configKey));
+		if (agentPropsOverridingPoolSize.isPresent()) {
+			try {
+				return Integer.parseInt(agentPropsOverridingPoolSize.get());
+			} catch (NumberFormatException e) {
+				throw new IllegalArgumentException("Invalid agent properties override for " + configKey + ": " + agentPropsOverridingPoolSize.get());
+			}
+		}
+		return defaultValue;
 	}
 
 	@Override
 	public void init(AgentTokenServices agentTokenServices) {
 		super.init(agentTokenServices);
+
+		int liveReportingPoolSize = getFromAgentPropsOrDefault("step.reporting.livereporting.poolsize", 100);
+		int liveReportingQueueSize = getFromAgentPropsOrDefault("step.reporting.livereporting.queuesize", 1000);
+
+		// Behavior: This dynamically scales up/down between 0 and liveReportingPoolSize threads,
+		// and if all threads are occupied, allows to queue a maximum of liveReportingQueueSize tasks before rejecting.
+		liveReportingExecutor = new ThreadPoolExecutor(liveReportingPoolSize, liveReportingPoolSize,
+				30L, TimeUnit.SECONDS,
+				new ArrayBlockingQueue<>(liveReportingQueueSize),
+				NamedThreadFactory.create("livereporting", true)
+		);
+		liveReportingExecutor.allowCoreThreadTimeOut(true);
+
+
 		applicationContextBuilder = new ApplicationContextBuilder(this.getClass().getClassLoader(),
 				agentTokenServices.getApplicationContextBuilder().getApplicationContextConfiguration());
-		
+
 		applicationContextBuilder.forkCurrentContext(AbstractFunctionHandler.FORKED_BRANCH);
-		
+
 		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient());
+		functionHandlerInitializerJar = ResourceExtractor.extractResource(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar");
+		functionHandlerInitializerClassloader = new FileApplicationContextFactory(functionHandlerInitializerJar).buildClassLoader(this.getClass().getClassLoader());
 	}
 
 	@Override
@@ -98,15 +146,21 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 					handlerClass, token.getSession(), token.getTokenReservationSession(), mergedAgentProperties);
 
 			// Deserialize the Input from the message payload
-			JavaType javaType = mapper.getTypeFactory().constructParametrizedType(Input.class, Input.class, functionHandler.getInputPayloadClass());
+			JavaType javaType = mapper.getTypeFactory().constructParametricType(Input.class, functionHandler.getInputPayloadClass());
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
+
+			LiveReporting liveReporting = initializeLiveReporting(input.getProperties(), token.getTokenReservationSession());
+			functionHandler.setLiveReporting(liveReporting);
 
 			// Handle the input
 			MeasurementsBuilder measurementsBuilder = new MeasurementsBuilder();
 			measurementsBuilder.startMeasure(input.getFunction());
+
 			@SuppressWarnings("unchecked")
 			Output<?> output = functionHandler.handle(input);
 			measurementsBuilder.stopMeasure(customMeasureData());
+
+			liveReporting.close();
 
 			List<Measure> outputMeasures = output.getMeasures();
 			// Add type="custom" to all output measures
@@ -116,13 +170,58 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			addAdditionalMeasuresToOutput(output, measurementsBuilder.getMeasures());
 
 			// Serialize the output
-			ObjectNode outputPayload = (ObjectNode) mapper.valueToTree(output);
+			ObjectNode outputPayload = mapper.valueToTree(output);
 
 			// Create and return the output message
 			OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
 			outputMessageBuilder.setPayload(outputPayload);
 			return outputMessageBuilder.build();
 
+		});
+	}
+
+	public <T> T runInContext(ClassLoader classLoader, Callable<T> runnable) throws Exception {
+		ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
+		Thread.currentThread().setContextClassLoader(classLoader);
+
+		Object var4;
+		try {
+			var4 = runnable.call();
+		} finally {
+			Thread.currentThread().setContextClassLoader(previousCl);
+		}
+
+		return (T)var4;
+	}
+
+	private LiveReporting initializeLiveReporting(Map<String, String> properties, TokenReservationSession tokenReservationSession) throws Exception {
+
+		return runInContext(functionHandlerInitializerClassloader, () -> {
+			// There's no easy way to do this in the AbstractFunctionHandler itself, because
+			// the only place where the Input properties are guaranteed to be available is in the (abstract)
+			// handle() method (which would then have to be implemented in all subclasses). So we do it here.
+
+			// Implementation class along with its dependencies is explicitly loaded in a separate classloader
+			Class<?> liveReportingClientClass = Thread.currentThread().getContextClassLoader().loadClass("step.livereporting.client.RemoteLiveReportingClient");
+
+			// This method invocation will also populate the websocketContainer reference if it isn't set yet
+			Object liveReportingClient = liveReportingClientClass.getDeclaredConstructor(Map.class, Map.class, ExecutorService.class, AtomicReference.class)
+					.newInstance(properties, agentTokenServices.getAgentProperties(), liveReportingExecutor, webSocketContainerRef);
+
+			// We still need an additional proxy object to force everything to run in the correct context,
+			// classloader separation alone is not enough.
+			LiveReportingClient liveReportingClientProxy = (LiveReportingClient) Proxy.newProxyInstance(
+					liveReportingClientClass.getClassLoader(), new Class[]{LiveReportingClient.class},
+					(proxy, method, args) -> {
+						try {
+							return runInContext(functionHandlerInitializerClassloader, () -> method.invoke(liveReportingClient, args));
+						} catch (InvocationTargetException ite) {
+							// rethrow the original exception instead of InvocationTargetException, (usually) conforming to the method's throws signature unless it's a RuntimeException or similar
+							throw ite.getCause();
+						}
+					}
+			);
+			return new LiveReporting(liveReportingClientProxy.getStreamingUploadProvider(), liveReportingClientProxy.getLiveMeasureDestination());
 		});
 	}
 
@@ -169,8 +268,30 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	@Override
 	public void close() throws Exception {
+		Object webSocketContainer = webSocketContainerRef.getAndSet(null);
+		if(webSocketContainer != null) {
+			// The stop method of the websocket container has to be closed within its own context class loader
+			ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
+			Class<?> webSocketContainerClass = webSocketContainer.getClass();
+			Thread.currentThread().setContextClassLoader(webSocketContainerClass.getClassLoader());
+			try {
+				webSocketContainerClass.getMethod("stop").invoke(webSocketContainer);
+			} finally {
+				Thread.currentThread().setContextClassLoader(previousCl);
+			}
+		}
+
 		if (applicationContextBuilder != null) {
 			applicationContextBuilder.close();
+		}
+		if (liveReportingExecutor != null) {
+			liveReportingExecutor.shutdownNow();
+		}
+		if (functionHandlerInitializerClassloader != null) {
+			functionHandlerInitializerClassloader.close();
+		}
+		if (functionHandlerInitializerJar != null) {
+			Files.deleteIfExists(functionHandlerInitializerJar.toPath());
 		}
 	}
 }

@@ -69,7 +69,7 @@ public class ImportServices extends AbstractStepServices {
 			if (!importAll) {
 				filter = Arrays.asList(entity);
 			}
-			ImportConfiguration importConfiguration = new ImportConfiguration(file.getFile(), getObjectEnricher(), filter, overwrite);
+			ImportConfiguration importConfiguration = new ImportConfiguration(file.getFile(), getObjectEnricher(), filter, overwrite, getSession().getUser().getUsername());
 			ImportResult importResult = importManager.importAll(importConfiguration);
 			return importResult.getMessages();
 		}

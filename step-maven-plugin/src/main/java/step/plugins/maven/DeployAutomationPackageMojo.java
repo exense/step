@@ -22,8 +22,9 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import step.cli.AbstractDeployAutomationPackageTool;
+import step.cli.DeployAutomationPackageTool;
 import step.cli.StepCliExecutionException;
+import step.cli.parameters.ApDeployParameters;
 import step.client.credentials.ControllerCredentials;
 import step.core.maven.MavenArtifactIdentifier;
 
@@ -32,31 +33,29 @@ import java.io.File;
 @Mojo(name = "deploy-automation-package")
 public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
 
-    @Parameter(property = "step.step-project-name")
-    private String stepProjectName;
-
-    @Parameter(property = "step.auth-token")
-    private String authToken;
 
     @Parameter(property = "step-deploy-automation-package.async")
     private Boolean async;
-
-    @Parameter(property = "step-deploy-automation-package.ap-version")
-    private String apVersion;
-
+    @Parameter(property = "step-deploy-automation-package.version-name")
+    private String versionName;
     @Parameter(property = "step-deploy-automation-package.activation-expression")
     private String activationExpression;
-
     @Parameter(property = "step-deploy-auto-packages.artifact-group-id")
     private String artifactGroupId;
     @Parameter(property = "step-deploy-auto-packages.artifact-id")
     private String artifactId;
     @Parameter(property = "step-deploy-auto-packages.artifact-version")
     private String artifactVersion;
-    @Parameter(property = "step-execute-auto-packages.artifact-classifier", required = false)
+    @Parameter(property = "step-deploy-auto-packages.artifact-classifier", required = false)
     private String artifactClassifier;
-    @Parameter(property = "step-execute-auto-packages.artifact-type", required = false)
+    @Parameter(property = "step-deploy-auto-packages.artifact-type", required = false)
     private String artifactType;
+
+    @Parameter(property = "step-deploy-auto-packages.library")
+    private LibraryConfiguration library;
+
+    @Parameter(property = "step-deploy-auto-packages.force-refresh-snapshots", required = false)
+    private Boolean forceRefreshOfSnapshots;
 
     @Override
     protected ControllerCredentials getControllerCredentials() {
@@ -69,7 +68,10 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getApVersion(), getActivationExpression()).execute();
+            if (library != null) {
+                library.validate();
+            }
+            createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getVersionName(), getActivationExpression(), getForceRefreshOfSnapshots()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
@@ -77,9 +79,29 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    protected AbstractDeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
-                                                             final String apVersion, final String activationExpr) throws MojoExecutionException {
-        return new MavenDeployAutomationPackageTool(url, projectName, authToken, async, apVersion, activationExpr);
+    protected DeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
+                                                     final String apVersion, final String activationExpr, Boolean forceRefreshOfSnapshots) throws MojoExecutionException {
+        MavenArtifactIdentifier remoteApMavenIdentifier = getRemoteMavenIdentifier();
+        File localApFile = remoteApMavenIdentifier != null ? null : DeployAutomationPackageMojo.this.getFileToUpload();
+
+        File libraryFile = library != null ? library.toFile() : null;
+        MavenArtifactIdentifier libraryMavenArtifact = library != null ? library.toMavenArtifactIdentifier() : null;
+        String libraryName = library != null && library.isManagedLibraryNameConfigured() ? library.getManaged() : null;
+
+        return new MavenDeployAutomationPackageTool(
+                url, new ApDeployParameters()
+                .setAutomationPackageMavenArtifact(remoteApMavenIdentifier)
+                .setAutomationPackageFile(localApFile)
+                .setLibraryFile(libraryFile)
+                .setlibraryMavenArtifact(libraryMavenArtifact)
+                .setManagedLibraryName(libraryName)
+                .setStepProjectName(projectName)
+                .setAuthToken(authToken)
+                .setAsync(async)
+                .setForceRefreshOfSnapshots(forceRefreshOfSnapshots)
+                .setVersionName(apVersion)
+                .setActivationExpression(activationExpr)
+        );
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -100,22 +122,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         this.artifactClassifier = artifactClassifier;
     }
 
-    public String getStepProjectName() {
-        return stepProjectName;
-    }
-
-    public void setStepProjectName(String stepProjectName) {
-        this.stepProjectName = stepProjectName;
-    }
-
-    public String getAuthToken() {
-        return authToken;
-    }
-
-    public void setAuthToken(String authToken) {
-        this.authToken = authToken;
-    }
-
     public Boolean getAsync() {
         return async;
     }
@@ -124,12 +130,12 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         this.async = async;
     }
 
-    public String getApVersion() {
-        return apVersion;
+    public String getVersionName() {
+        return versionName;
     }
 
-    public void setApVersion(String apVersion) {
-        this.apVersion = apVersion;
+    public void setVersionName(String versionName) {
+        this.versionName = versionName;
     }
 
     public String getActivationExpression() {
@@ -168,6 +174,26 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         return artifactType;
     }
 
+    public void setArtifactType(String artifactType) {
+        this.artifactType = artifactType;
+    }
+
+    public LibraryConfiguration getLibrary() {
+        return library;
+    }
+
+    public void setLibrary(LibraryConfiguration library) {
+        this.library = library;
+    }
+
+    public Boolean getForceRefreshOfSnapshots() {
+        return forceRefreshOfSnapshots;
+    }
+
+    public void setForceRefreshOfSnapshots(Boolean forceRefreshOfSnapshots) {
+        this.forceRefreshOfSnapshots = forceRefreshOfSnapshots;
+    }
+
     protected boolean isLocalMavenArtifact() {
         return getArtifactId() == null || getArtifactId().isEmpty() || getArtifactGroupId() == null || getArtifactGroupId().isEmpty();
     }
@@ -183,28 +209,10 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         return remoteMavenArtifact;
     }
 
-    protected class MavenDeployAutomationPackageTool extends AbstractDeployAutomationPackageTool {
+    protected class MavenDeployAutomationPackageTool extends DeployAutomationPackageTool {
 
-        public MavenDeployAutomationPackageTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr) {
-            super(url, projectName, authToken, async, apVersion, activationExpr);
-        }
-
-        @Override
-        protected MavenArtifactIdentifier getMavenArtifactIdentifierToUpload() {
-            try {
-                return getRemoteMavenIdentifier();
-            } catch (MojoExecutionException e) {
-                throw new StepCliExecutionException(e);
-            }
-        }
-
-        @Override
-        protected File getLocalFileToUpload() throws StepCliExecutionException {
-            try {
-                return DeployAutomationPackageMojo.this.getFileToUpload();
-            } catch (MojoExecutionException ex) {
-                throw new StepCliExecutionException(ex);
-            }
+        public MavenDeployAutomationPackageTool(String url, ApDeployParameters params) {
+            super(url, params);
         }
 
         @Override

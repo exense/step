@@ -2,6 +2,7 @@ package step.plugins.measurements;
 
 import groovy.transform.Synchronized;
 import io.prometheus.client.Collector;
+import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.reports.CallFunctionReportNode;
@@ -10,6 +11,7 @@ import step.artefacts.reports.ThreadReportNode;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
@@ -19,17 +21,21 @@ import step.core.plugins.Plugin;
 import step.core.reports.Measure;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
-
+import step.functions.Function;
+import step.functions.handler.MeasureTypes;
+import step.functions.io.Output;
+import step.livereporting.LiveReportingPlugin;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static step.plugins.measurements.MeasurementControllerPlugin.ThreadgroupGaugeName;
 
-@Plugin
+@Plugin(dependencies = LiveReportingPlugin.class)
 @IgnoreDuringAutoDiscovery
 public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
@@ -57,6 +63,13 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	private static final List<MeasurementHandler> measurementHandlers = new ArrayList<>();
 	public static final String CTX_GENERATE_EXECUTION_METRICS = "$generateExecutionMetrics";
 	public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
+
+	// These are used by the MeasurementControllerPlugin to "reconstruct" measures from measurements, and indicate the
+	// "internal" fields which should NOT be added to the measure data field. Keep this in sync with the fields defined above.
+	static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", "project", "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
+			ORIGIN, RN_STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
+	// Same use, but for defining which fields SHOULD be directly copied to the top-level fields of a measure.
+	static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE, STATUS);
 
 	private final Map<String, Set<String[]>> labelsByExec = new ConcurrentHashMap<>();
 	private final GaugeCollectorRegistry gaugeCollectorRegistry;
@@ -137,6 +150,19 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		if (generateMetrics(context) && node instanceof ThreadReportNode) {
 			processThreadReportNode(context, (ThreadReportNode) node, true);
 		}
+	}
+
+	@Override
+	public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {
+		LiveReportingPlugin.getLiveReportingContext(context).registerListener(measures -> {
+			List<Measurement> measurements = measures.stream().map(m -> createMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
+			processMeasurements(measurements);
+		});
+	}
+
+	@Override
+	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {
+
 	}
 
 	@Synchronized
@@ -221,18 +247,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
 				if (functionReport.getMeasures() != null) {
 					for (Measure measure : functionReport.getMeasures()) {
-						Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
-						Measurement measurement = initMeasurement(executionContext);
-						measurement.addCustomFields(functionAttributes);
-						measurement.setName(measure.getName());
-						measurement.setType(measure.getData().get(TYPE).toString());
-						measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
-						measurement.setValue(measure.getDuration());
-						measurement.setBegin(measure.getBegin());
-						measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
-						enrichWithNodeAttributes(measurement, node);
-						enrichWithCustomData(measurement, measure.getData());
-						enrichWithAdditionalAttributes(measurement, executionContext);
+						Measurement measurement = createMeasurement(executionContext, measure, functionReport);
 						measurements.add(measurement);
 					}
 				}
@@ -247,6 +262,41 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 		if (node instanceof ThreadReportNode) {
 			processThreadReportNode(executionContext, (ThreadReportNode) node, false);
 		}
+	}
+
+	private Measurement createMeasurement(ExecutionContext executionContext, Measure measure, CallFunctionReportNode functionReport) {
+		Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
+		Measurement measurement = initMeasurement(executionContext);
+		if (functionAttributes != null) {
+			measurement.addCustomFields(functionAttributes);
+			measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
+		}
+		measurement.setName(measure.getName());
+		if (measure.getStatus() != null) {
+			// Note: status should always be set for live measures, but is null unless explicitly set for "output measures".
+			// The final value will always be set in enrichWithNodeAttributes (called below), even in case it was missing.
+			measurement.setStatus(measure.getStatus().name());
+		}
+		measurement.setType(getMeasureTypeOrDefault(measure));
+		measurement.setValue(measure.getDuration());
+		measurement.setBegin(measure.getBegin());
+		measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
+		enrichWithNodeAttributes(measurement, functionReport);
+		enrichWithCustomData(measurement, measure.getData());
+		enrichWithAdditionalAttributes(measurement, executionContext);
+		return measurement;
+	}
+
+	private static String getMeasureTypeOrDefault(Measure measure) {
+		String type = null;
+		Map<String, Object> data = measure.getData();
+		if (data != null) {
+			type = (String) measure.getData().get(MeasureTypes.ATTRIBUTE_TYPE);
+		}
+		if(type == null) {
+			type = MeasureTypes.TYPE_CUSTOM;
+		}
+		return type;
 	}
 
 	protected Measurement initMeasurement(ExecutionContext executionContext) {
@@ -277,7 +327,11 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	private void enrichWithNodeAttributes(Measurement measurement, ReportNode node) {
 		measurement.setExecId(node.getExecutionID());
 		measurement.addCustomField(RN_ID, node.getId().toString());
-		measurement.setStatus(node.getStatus().toString());
+		// If a measurement already has its own status (mandatory for live measures, optional for output measures),
+		// keep it unconditionally, otherwise set the status from the report node.
+		if (measurement.getStatus() == null) {
+			measurement.setStatus(node.getStatus().name());
+		}
 	}
 
 	private void enrichWithCustomData(Measurement measurement, Map<String, Object> data) {

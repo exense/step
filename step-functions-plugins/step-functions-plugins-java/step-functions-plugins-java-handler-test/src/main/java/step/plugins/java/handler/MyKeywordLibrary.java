@@ -18,8 +18,11 @@
  ******************************************************************************/
 package step.plugins.java.handler;
 
+import java.io.File;
 import java.net.URLClassLoader;
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
@@ -44,6 +47,32 @@ public class MyKeywordLibrary extends AbstractKeyword {
 				output.add(key, value);
 			});
 		}
+	}
+
+	@Keyword(timeout=100, routing = {Keyword.ROUTING_EXECUTE_ON_CONTROLLER})
+	public void MyKeywordWithRoutingToController() {
+		output.add("MyKey", "MyValue");
+		if(properties!=null) {
+			properties.forEach((key, value)->{
+				output.add(key, value);
+			});
+		}
+	}
+
+	@Keyword(timeout=100, routing = {"OS","WINDOWS","TYPE","PLAYWRIGHT"})
+	public void MyKeywordWithRoutingCriteria() {
+		output.add("MyKey", "MyValue");
+		if(properties!=null) {
+			properties.forEach((key, value)->{
+				output.add(key, value);
+			});
+		}
+	}
+
+	@Keyword
+	public void MyKeywordUsingAutomationPackageFile() {
+		File automationPackageFile = retrieveAndExtractAutomationPackage();
+		output.add("AutomationPackageContent", String.join("", Objects.requireNonNull(automationPackageFile.list())));
 	}
 	
 	@Keyword

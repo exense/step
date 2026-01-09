@@ -67,6 +67,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 
 	@Override
 	public HandlerProperties getHandlerProperties(T function, AbstractStepContext executionContext) {
+		HandlerProperties handlerProperties = super.getHandlerProperties(function, executionContext);
 		Map<String, String> props = new HashMap<>();
 		List<AutoCloseable> createdCloseables = new ArrayList<>();
 		try {
@@ -80,8 +81,9 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 				props.put(KeywordExecutor.VALIDATE_PROPERTIES, Boolean.TRUE.toString());
 			}
 
-			return new HandlerProperties(props, createdCloseables);
+			return handlerProperties.merge(props, createdCloseables);
 		} catch (Throwable e) {
+			handlerProperties.close();
 			closeRegisteredCloseable(createdCloseables);
 			throw e;
 		}
@@ -202,7 +204,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 		try {
 			objectHookRegistry.rebuildContext(context, function);
 			ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(context);
-			Resource resource = resourceManager.createResource(RESOURCE_TYPE_FUNCTIONS, resourceIS, newScriptFilename, false, objectEnricher);
+			Resource resource = resourceManager.createResource(RESOURCE_TYPE_FUNCTIONS, resourceIS, newScriptFilename, objectEnricher, null);
 			function.getScriptFile().setValue(fileResolver.createPathForResourceId(resource.getId().toHexString()));
 		} catch (Exception e) {
 			throw new SetupFunctionException("Unable to create the default script as resource", e);
@@ -220,7 +222,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 				copy.setScriptFile(new DynamicValue<>(""));//reset script to setup a new one
 				String scriptFileValue = scriptFile.get();
 
-				boolean isResource = fileResolver.isResource(scriptFileValue);
+				boolean isResource = FileResolver.isResource(scriptFileValue);
 				if (isResource) {
 					scriptFileValue = fileResolver.resolve(scriptFileValue).getAbsolutePath();
 					newFile = setupScriptFileAsResource(copy, new FileInputStream(scriptFileValue));

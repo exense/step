@@ -21,14 +21,18 @@ package step.functions.manager;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.AutomationPackageEntity;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
 import step.functions.type.SetupFunctionException;
+import step.handlers.javahandler.Keyword;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class FunctionManagerImpl implements FunctionManager {
 
@@ -76,6 +80,7 @@ public class FunctionManagerImpl implements FunctionManager {
 		if(source!=null) {
 			AbstractFunctionType<Function> type = getFunctionType(source);
 			Function target = type.copyFunction(source);
+			Optional.ofNullable(target.getCustomFields()).ifPresent(fields -> fields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID));
 			functionRepository.save(target);
 			return target;
 		} else {
@@ -115,6 +120,33 @@ public class FunctionManagerImpl implements FunctionManager {
 	@Override
 	public Function getFunctionById(String id) {
 		return functionRepository.get(new ObjectId(id));
+	}
+
+	public static void applyRoutingFromAnnotation(Function function, Keyword annotation) {
+		String[] routing = annotation.routing();
+		if (routing == null || routing.length == 0){
+			//Default routing
+			return;
+		} else if (routing.length == 1) {
+			if (routing[0].equals(Keyword.ROUTING_EXECUTE_ON_CONTROLLER)) {
+				function.setExecuteLocally(true);
+			} else {
+				throw new IllegalArgumentException("Invalid routing value: '" + routing[0] + "'. " +
+						"If a single value is provided, it must be the reserved keyword 'controller'.");
+			}
+		} else if (routing.length % 2 != 0) {
+			throw new IllegalArgumentException("Invalid routing array length: " + routing.length + ". " +
+					"When specifying agent selection criteria as key-value pairs, " +
+					"the array must contain an even number of elements (key1, value1, key2, value2, ...).");
+		} else {
+			Map<String, String> map = new HashMap<>();
+			for (int i = 0; i < routing.length; i += 2) {
+				String key = routing[i];
+				String value = routing[i + 1];
+				map.put(key, value);
+			}
+			function.setTokenSelectionCriteria(map);
+		}
 	}
 	
 }

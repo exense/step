@@ -21,7 +21,7 @@ package step.automation.packages;
 import step.attachments.FileResolver;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
@@ -45,33 +45,35 @@ public class AutomationPackagePlansAttributesApplier {
     private static final String STEP_PACKAGE = "step";
 
     private final ResourceManager resourceManager;
-    private final FileResolver fileResolver;
 
     public AutomationPackagePlansAttributesApplier(ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
-        this.fileResolver = new FileResolver(resourceManager);
     }
 
-    public void applySpecialAttributesToPlans(List<Plan> plans,
+    public void applySpecialAttributesToPlans(AutomationPackage newPackage,
+                                              List<Plan> plans,
                                               AutomationPackageArchive automationPackageArchive,
                                               AutomationPackageContent packageContent,
-                                              ObjectEnricher objectEnricher, Map<String, Object> extensions, AutomationPackageOperationMode operationMode) {
-        AutomationPackageContext apContext = prepareContext(operationMode, automationPackageArchive, packageContent, objectEnricher, extensions);
+                                              String actorUser,
+                                              ObjectEnricher objectEnricher, Map<String, Object> extensions,
+                                              AutomationPackageOperationMode operationMode) {
+        StagingAutomationPackageContext apContext = prepareContext(newPackage, operationMode, automationPackageArchive, packageContent, actorUser, objectEnricher, extensions);
         for (Plan plan : plans) {
             applySpecialValuesForArtifact(plan.getRoot(), apContext);
         }
     }
 
-    protected AutomationPackageContext prepareContext(AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher, Map<String, Object> extensions) {
-        return new AutomationPackageContext(operationMode, resourceManager, automationPackageArchive, packageContent, enricher, extensions);
+    protected StagingAutomationPackageContext prepareContext(AutomationPackage automationPackage, AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
+                                                      String actorUser, ObjectEnricher enricher, Map<String, Object> extensions) {
+        return new StagingAutomationPackageContext(automationPackage, operationMode, resourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
     }
 
-    private void applySpecialValuesForArtifact(AbstractArtefact artifact, AutomationPackageContext apContext) {
+    private void applySpecialValuesForArtifact(AbstractArtefact artifact, StagingAutomationPackageContext apContext) {
         fillResources(artifact, apContext);
         applySpecialValuesForChildren(artifact, apContext);
     }
 
-    private void fillResources(Object object, AutomationPackageContext apContext) {
+    private void fillResources(Object object, StagingAutomationPackageContext apContext) {
         try {
             applyResourcePropertyRecursively(object, apContext);
         } catch (Exception e) {
@@ -88,7 +90,7 @@ public class AutomationPackagePlansAttributesApplier {
                 Method readMethod = pd.getReadMethod();
                 if (readMethod != null) {
                     EntityReference entityReference = readMethod.getAnnotation(EntityReference.class);
-                    if (entityReference != null && EntityManager.resources.equals(entityReference.type())) {
+                    if (entityReference != null && EntityConstants.resources.equals(entityReference.type())) {
                         entityReferenceDescriptors.add(pd);
                     }
                 }
@@ -99,7 +101,7 @@ public class AutomationPackagePlansAttributesApplier {
         }
     }
 
-    private void applyResourcePropertyRecursively(Object object, AutomationPackageContext apContext) throws InvocationTargetException, IllegalAccessException {
+    private void applyResourcePropertyRecursively(Object object, StagingAutomationPackageContext apContext) throws InvocationTargetException, IllegalAccessException {
         if (object == null) {
             return;
         }
@@ -110,13 +112,13 @@ public class AutomationPackagePlansAttributesApplier {
                 Object value = pd.getReadMethod().invoke(object);
                 if (value instanceof String) {
                     String stringValue = (String) value;
-                    if (!fileResolver.isResource(stringValue)) {
+                    if (!FileResolver.isResource(stringValue)) {
                         String uploadedResource = uploadAutomationPackageResource(stringValue, apContext);
                         setter.invoke(object, uploadedResource);
                     }
                 } else if (value instanceof DynamicValue) {
                     DynamicValue<String> dynamicValue = (DynamicValue<String>) value;
-                    if (dynamicValue.getValue() != null && !fileResolver.isResource(dynamicValue.getValue())) {
+                    if (dynamicValue.getValue() != null && !FileResolver.isResource(dynamicValue.getValue())) {
                         String uploadedResource = uploadAutomationPackageResource(dynamicValue.getValue(), apContext);
                         setter.invoke(object, new DynamicValue<>(uploadedResource));
                     }
@@ -145,9 +147,9 @@ public class AutomationPackagePlansAttributesApplier {
         }
     }
 
-    private String uploadAutomationPackageResource(String yamlResourceRef, AutomationPackageContext apContext) {
+    private String uploadAutomationPackageResource(String yamlResourceRef, StagingAutomationPackageContext apContext) {
         AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
-        Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_FUNCTIONS, apContext);
+        Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_DATASOURCE, apContext);
         String result = null;
         if (resource != null) {
             result = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
@@ -155,7 +157,7 @@ public class AutomationPackagePlansAttributesApplier {
         return result;
     }
 
-    private void applySpecialValuesForChildren(AbstractArtefact parent, AutomationPackageContext apContext) {
+    private void applySpecialValuesForChildren(AbstractArtefact parent, StagingAutomationPackageContext apContext) {
         List<AbstractArtefact> children = parent.getChildren();
         if (children != null) {
             for (AbstractArtefact child : children) {

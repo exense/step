@@ -21,7 +21,7 @@ package step.automation.packages;
 import org.bson.types.ObjectId;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.model.AutomationPackageKeyword;
-import step.automation.packages.model.JavaAutomationPackageKeyword;
+import step.automation.packages.model.ScriptAutomationPackageKeyword;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
@@ -49,14 +49,16 @@ public class AutomationPackageTestUtils {
     public static final String GENERAL_SCRIPT_KEYWORD = "GeneralScript keyword from AP";
     public static final String NODE_KEYWORD = "NodeAutomation";
     public static final String ANNOTATED_KEYWORD = "MyKeyword2";
+    public static final String ANNOTATED_KEYWORD_ROUTING_TO_CTRL = "MyKeywordWithRoutingToController";
+    public static final String ANNOTATED_KEYWORD_ROUTING_CRITERIA = "MyKeywordWithRoutingCriteria";
 
     public static final String SCHEDULE_1 = "firstSchedule";
     public static final String SCHEDULE_2 = "secondSchedule";
 
     public static Function findJavaKeywordByClassAndName(List<AutomationPackageKeyword> keywords, Class<?> clazz, String name) throws AssertionError {
         for (AutomationPackageKeyword keyword : keywords) {
-            if (keyword instanceof JavaAutomationPackageKeyword) {
-                Function wrappedKeyword = ((JavaAutomationPackageKeyword) keyword).getKeyword();
+            if (keyword instanceof ScriptAutomationPackageKeyword) {
+                Function wrappedKeyword = ((ScriptAutomationPackageKeyword) keyword).getKeyword();
                 if (clazz.isAssignableFrom(wrappedKeyword.getClass())) {
                     if (wrappedKeyword.getAttribute(AbstractOrganizableObject.NAME).equals(name)) {
                         return wrappedKeyword;

@@ -49,6 +49,16 @@ public class WorkbookFileTest {
 		file.close();
 		Assert.assertEquals("Values", value);	
 	}
+
+	@Test
+	public void testReadWithPassword() {
+		WorkbookFile file = new WorkbookFile(getResourceFile("ExcelWithPassword.xlsx"), null, false, false, "testPassword");
+		Sheet s = file.getWorkbook().getSheetAt(0);
+		Cell c = s.getRow(0).getCell(0);
+		String value = c.getStringCellValue();
+		file.close();
+		Assert.assertEquals("User", value);
+	}
 	
 	@Test
 	public void testWrite() throws IOException {
@@ -84,7 +94,7 @@ public class WorkbookFileTest {
 			file.delete();
 		}
 
-		WorkbookFile workbook = new WorkbookFile(file, null, true, true);
+		WorkbookFile workbook = new WorkbookFile(file, null, true, true, null);
 
 		String sheet = "test";
 		
@@ -115,7 +125,7 @@ public class WorkbookFileTest {
 		try {
 			access = new RandomAccessFile(file,"rw");
 			lock = access.getChannel().lock();
-			try(WorkbookFile wb = new WorkbookFile(file, null, true, true)) {}			
+			try(WorkbookFile wb = new WorkbookFile(file, null, true, true, null)) {}
 		} catch(Exception e) {
 			ex = e;
 			e.printStackTrace();

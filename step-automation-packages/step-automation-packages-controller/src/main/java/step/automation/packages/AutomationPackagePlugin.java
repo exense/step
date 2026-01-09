@@ -27,12 +27,15 @@ import step.automation.packages.execution.AutomationPackageExecutor;
 import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractIdentifiableObject;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
 import step.core.controller.ControllerSettingPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
-import step.core.objectenricher.ObjectPredicate;
+import step.core.imports.ImportContext;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
@@ -45,6 +48,9 @@ import step.repositories.ArtifactRepositoryConstants;
 import step.resources.ResourceManagerControllerPlugin;
 
 import java.io.File;
+import java.time.Duration;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS;
 import static step.automation.packages.AutomationPackageLocks.AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT;
@@ -56,6 +62,12 @@ import static step.repositories.ArtifactRepositoryConstants.MAVEN_EMPTY_SETTINGS
 public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackagePlugin.class);
+    public static final String CONFIGURATION_MAVEN_MAX_AGE = "repository.artifact.maven.max.age.minutes";
+    public static final String CONFIGURATION_MAVEN_CLEANUP_FREQUENCY = "repository.artifact.maven.cleanup.frequency.minutes";
+    public static final Long DEFAULT_MAVEN_MAX_AGE = 1440L;
+    public static final Long DEFAULT_MAVEN_CLEANUP_FREQUENCY = 60L;
+    private static final Integer DEFAULT_MAX_VERSIONS_PER_AP = 0; //quota disabled
+    private static final String CONFIGURATION_MAX_VERSIONS_PER_AP = "automation.packages.max.versions.per.package";
     protected AutomationPackageLocks automationPackageLocks;
 
     @Override
@@ -68,16 +80,18 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         automationPackageLocks = new AutomationPackageLocks(readLockTimeout);
         context.put(AutomationPackageLocks.class, automationPackageLocks);
 
-        AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(
-                context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class)
-        );
+        // for table services we use the extended AutomationPackage object containing more information about linked resources
+        Collection<AutomationPackageTableRecord> extendedCollection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackageTableRecord.class);
+        Collection<AutomationPackage> collection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
+
+        AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(collection);
         context.put(AutomationPackageAccessor.class, packageAccessor);
         context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
+        context.getEntityManager().registerImportHook(new AutomationPackageImportHook());
 
-        Collection<AutomationPackage> automationPackageCollection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
-
-        Table<AutomationPackage> collection = new Table<>(automationPackageCollection, "automation-package-read", true);
-        context.get(TableRegistry.class).register(AutomationPackageEntity.entityName, collection);
+        Table<AutomationPackageTableRecord> table = new Table<>(extendedCollection, "automation-package-read", true)
+                .withResultItemTransformer(new AutomationPackageTableTransformer(context.getResourceManager()));
+        context.get(TableRegistry.class).register(AutomationPackageEntity.entityName, table);
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
 
@@ -87,7 +101,21 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         AutomationPackageSerializationRegistry serRegistry = new AutomationPackageSerializationRegistry();
         context.put(AutomationPackageSerializationRegistry.class, serRegistry);
 
-        context.put(AutomationPackageReader.class, new AutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration()));
+        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry);
+        JavaAutomationPackageReader javaAutomationPackageReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration());
+        automationPackageReaderRegistry.register(javaAutomationPackageReader);
+        context.put(AutomationPackageReaderRegistry.class, automationPackageReaderRegistry);
+    }
+
+    public static class AutomationPackageImportHook implements BiConsumer<Object, ImportContext> {
+
+        @Override
+        public void accept(Object o, ImportContext importContext) {
+            if (o instanceof AbstractIdentifiableObject) {
+                AbstractIdentifiableObject entity = (AbstractIdentifiableObject) o;
+                Optional.ofNullable(entity.getCustomFields()).ifPresent(fields -> fields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID));
+            }
+        }
     }
 
     @Override
@@ -99,8 +127,13 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
             AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider = new MavenConfigProviderImpl(
                     context.require(ControllerSettingAccessor.class),
-                    context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER))
+                    context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER)),
+                    Duration.ofMinutes(context.getConfiguration().getPropertyAsLong(CONFIGURATION_MAVEN_MAX_AGE, DEFAULT_MAVEN_MAX_AGE)),
+                    Duration.ofMinutes(context.getConfiguration().getPropertyAsLong(CONFIGURATION_MAVEN_CLEANUP_FREQUENCY, DEFAULT_MAVEN_CLEANUP_FREQUENCY))
             );
+
+            //Get parallel max version
+            Integer maxVersionPerPackage = context.getConfiguration().getPropertyAsInteger(CONFIGURATION_MAX_VERSIONS_PER_AP, DEFAULT_MAX_VERSIONS_PER_AP);
 
             // moved to 'afterInitializeData' to have the schedule accessor in context
             // here we pass the step.automation.packages.AutomationPackageMavenConfig.ConfigProvider to resolve maven settings dynamically
@@ -113,9 +146,11 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                     context.getPlanAccessor(),
                     context.getResourceManager(),
                     context.require(AutomationPackageHookRegistry.class),
-                    context.require(AutomationPackageReader.class),
+                    context.require(AutomationPackageReaderRegistry.class),
                     automationPackageLocks,
-                    mavenConfigProvider
+                    mavenConfigProvider,
+                    maxVersionPerPackage,
+                    context.get(ObjectHookRegistry.class)
             );
             context.put(AutomationPackageManager.class, packageManager);
         }
@@ -152,33 +187,24 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         private final ControllerSettingAccessor controllerSettingAccessor;
         private final File localFileRepository;
+        private final Duration maxAge;
+        private final Duration cleanupFrequency;
 
-        public MavenConfigProviderImpl(ControllerSettingAccessor controllerSettingAccessor, File localFileRepository) {
+        public MavenConfigProviderImpl(ControllerSettingAccessor controllerSettingAccessor, File localFileRepository, Duration maxAge, Duration cleanupFrequency) {
             this.controllerSettingAccessor = controllerSettingAccessor;
             this.localFileRepository = localFileRepository;
+            this.maxAge = maxAge;
+            this.cleanupFrequency = cleanupFrequency;
         }
 
         @Override
-        public AutomationPackageMavenConfig getConfig(ObjectPredicate objectPredicate) {
+        public AutomationPackageMavenConfig getConfig() {
             // default maven configuration in controller settings
             String mavenSettings;
             String settingsXml;
 
-            // TODO: we indented to apply the user-defined multitenant parameter, but old Step Parameters are only designed for executions, so it will be replaced with special user settings (SED-3921)
-            // the maven settings are used to deploy the automation package, so there no execution engine and bindings here
-//            Map<String, Parameter> allParameters = parameterManager.getAllParameters(new HashMap<>(), objectPredicate);
-
-            // here we take the name of maven settings property alike we do this for repository parameters in MavenArtifactRepository
-            // but here we take this name from Step Parameters, but not from the execution context
-//            Parameter mavenSettingsStepParameter = allParameters.get(ARTIFACT_PARAM_MAVEN_SETTINGS);
-//            if (mavenSettingsStepParameter != null && mavenSettingsStepParameter.getValue().getValue() != null && !mavenSettingsStepParameter.getValue().getValue().isEmpty()) {
-//                settingsXml = mavenSettingsStepParameter.getValue().getValue();
-//            } else {
-                // default maven configuration in controller settings
-                mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
-                ControllerSetting controllerSetting = controllerSettingAccessor.getSettingByKey(mavenSettings);
-//            }
-
+            mavenSettings = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX + ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
+            ControllerSetting controllerSetting = controllerSettingAccessor.getSettingByKey(mavenSettings);
             if (controllerSetting == null || controllerSetting.getValue() == null) {
                 log.warn("No settings found for \"" + mavenSettings + "\", using empty settings instead.");
                 controllerSettingAccessor.updateOrCreateSetting(mavenSettings, MAVEN_EMPTY_SETTINGS);
@@ -188,7 +214,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                 settingsXml = controllerSetting.getValue();
             }
 
-            return new AutomationPackageMavenConfig(settingsXml, localFileRepository);
+            return new AutomationPackageMavenConfig(settingsXml, localFileRepository, maxAge, cleanupFrequency);
         }
     }
 }

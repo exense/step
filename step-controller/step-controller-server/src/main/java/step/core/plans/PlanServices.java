@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.core.plans;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
@@ -29,29 +31,31 @@ import jakarta.ws.rs.core.StreamingOutput;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.artefacts.CallFunction;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
 import step.artefacts.handlers.SelectorHelper;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
+import step.core.access.User;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.deployment.ControllerServiceException;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
+import step.framework.server.Session;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 import step.plans.parser.yaml.YamlPlanReader;
 
 import java.io.ByteArrayInputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static step.core.table.ActivableEntityTableEnricher.enrichBindingsWithSession;
 
 @Singleton
 @Path("plans")
@@ -70,7 +74,7 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	private final YamlPlanReader yamlPlanReader = new YamlPlanReader();
 
 	public PlanServices() {
-		super(EntityManager.plans);
+		super(EntityConstants.plans);
 	}
 
 	@PostConstruct
@@ -221,11 +225,13 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		try {
 			result = planLocator.selectPlan(artefact, objectPredicate, null);
-		} catch (RuntimeException e) {}
+		} catch (RuntimeException e) {
+			logLookupError(artefact, e);
+		}
 		return result;
 	}
 
-	@Operation(description = "Returns the plan referenced by the given CallPlan.")
+	@Operation(description = "Returns the plan referenced by the given CallPlan without applying any binding parameters.")
 	@POST
 	@Path("/lookup")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -233,14 +239,65 @@ public class PlanServices extends AbstractEntityServices<Plan> {
 	@Secured(right="{entity}-read")
 	public Plan lookupCallPlan(CallPlan callPlan) {
 		Plan result = null;
+		Objects.requireNonNull(callPlan);
 		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
 		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
 		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
 		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
 		try {
 			result = planLocator.selectPlan(callPlan, objectPredicate, null);
-		} catch (RuntimeException e) {}
+		} catch (RuntimeException e) {
+			logLookupError(callPlan, e);
+		}
 		return result;
+	}
+
+	public static class LookupCallPlanRequest {
+		public CallPlan callPlan;
+		public Map<String, Object> bindings;
+
+		@JsonCreator
+		public LookupCallPlanRequest(@JsonProperty("callPlan")  CallPlan callPlan,
+									 @JsonProperty("bindings") Map<String, Object> bindings) {
+			this.callPlan = callPlan;
+			this.bindings = bindings;
+		}
+	}
+
+	@Operation(description = "Returns the plan referenced by the given CallPlan applying the provided binding parameters.")
+	@POST
+	@Path("/lookup-with-bindings")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Secured(right="{entity}-read")
+	public Plan lookupCallPlanWithBindings(LookupCallPlanRequest lookupCallPlanRequest) {
+		Plan result = null;
+		Objects.requireNonNull(lookupCallPlanRequest);
+		Objects.requireNonNull(lookupCallPlanRequest.callPlan);
+		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
+		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+		PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
+		Session<User> session = getSession();
+		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(session);
+		Map<String, Object> contextBindings = enrichBindingsWithSession(session, lookupCallPlanRequest.bindings);
+		try {
+			result = planLocator.selectPlan(lookupCallPlanRequest.callPlan, objectPredicate, contextBindings);
+		} catch (RuntimeException e) {
+			logLookupError(lookupCallPlanRequest.callPlan, e);
+		}
+		return result;
+	}
+
+	private static void logLookupError(CallPlan callPlan, RuntimeException e) {
+		String selectionCriteria = callPlan.getPlanId();
+		if (selectionCriteria == null) {
+			try {
+				selectionCriteria = callPlan.getSelectionAttributes().get();
+			} catch (Throwable t) {
+				selectionCriteria = "unresolved selection criteria";
+			}
+		}
+		log.warn("The referenced plan with selection criteria '{}' could not be found. Reason: {}", selectionCriteria, e.getMessage());
 	}
 
 	@Operation(description = "Clones the provided artefact.")

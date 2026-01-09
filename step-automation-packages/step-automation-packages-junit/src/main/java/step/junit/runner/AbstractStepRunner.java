@@ -27,7 +27,7 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 import step.automation.packages.junit.AbstractLocalPlanRunner;
 import step.automation.packages.junit.JUnitExecutionParametersProvider;
-import step.cli.AbstractExecuteAutomationPackageTool;
+import step.cli.ExecuteAutomationPackageTool;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.runner.PlanRunnerResult;
 import step.resources.ResourceManager;
@@ -105,7 +105,7 @@ public abstract class AbstractStepRunner extends ParentRunner<StepClassParserRes
 
     protected void notifyFailure(EachTestNotifier childNotifier, PlanRunnerResult res, String errorMsg,
                                  boolean assertionError) {
-        String executionTree = AbstractExecuteAutomationPackageTool.getExecutionTreeAsString(res);
+        String executionTree = ExecuteAutomationPackageTool.getExecutionTreeAsString(res);
         String detailMessage = errorMsg + "\nExecution tree is:\n" + executionTree;
         if (assertionError) {
             childNotifier.addFailure(new AssertionError(detailMessage));

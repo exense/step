@@ -5,9 +5,10 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import step.automation.packages.AutomationPackageEntity;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
@@ -15,6 +16,7 @@ import step.plugins.timeseries.dashboards.model.DashboardView;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.GENERATION_NAME;
@@ -30,7 +32,7 @@ public class DashboardsService extends AbstractEntityServices<DashboardView> { /
 	private DashboardAccessor accessor;
 
 	public DashboardsService() {
-		super(EntityManager.dashboards);
+		super(EntityConstants.dashboards);
 	}
 
 	@PostConstruct
@@ -55,6 +57,7 @@ public class DashboardsService extends AbstractEntityServices<DashboardView> { /
 		Map<String, Object> customFields = clone.getCustomFields();
 		if (customFields != null) {
 			customFields.remove(GENERATION_NAME);
+			customFields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
 		}
 		save(clone);
 		return  clone;

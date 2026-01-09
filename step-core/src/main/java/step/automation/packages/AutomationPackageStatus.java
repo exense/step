@@ -19,5 +19,7 @@
 package step.automation.packages;
 
 public enum AutomationPackageStatus {
-    DELAYED_UPDATE
+    DELAYED_UPDATE,
+    SCHEDULED_RELOAD,
+    RELOAD_FAILED
 }

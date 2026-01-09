@@ -18,10 +18,15 @@
  ******************************************************************************/
 package step.core.maven;
 
+import step.resources.ResourceOrigin;
+import step.resources.ResourceOriginType;
+
 import java.util.Objects;
+import java.util.Optional;
 
-public class MavenArtifactIdentifier {
+public class MavenArtifactIdentifier implements ResourceOrigin {
 
+    public static final String MVN_PREFIX = "mvn";
     private String groupId;
     private String artifactId;
     private String version;
@@ -84,14 +89,31 @@ public class MavenArtifactIdentifier {
         StringBuilder buffer = new StringBuilder(128);
         buffer.append(getGroupId());
         buffer.append(':').append(getArtifactId());
-        if (getClassifier() != null && !getClassifier().isEmpty()) {
-            buffer.append(':').append(getClassifier());
-        }
         buffer.append(':').append(getVersion());
-        if (getType() != null && !getType().isEmpty()) {
-            buffer.append(':').append(getType());
+        if ((getClassifier() != null && !getClassifier().isEmpty()) || (getType() != null && !getType().isEmpty())) {
+            buffer.append(':');
+            if (getClassifier() != null && !getClassifier().isEmpty()) {
+                buffer.append(getClassifier());
+            }
+            if (getType() != null && !getType().isEmpty()) {
+                buffer.append(':').append(getType());
+            }
         }
+
         return buffer.toString();
+    }
+
+    public boolean isSnapshot(){
+        return getVersion() != null && getVersion().endsWith("-SNAPSHOT");
+    }
+
+    public boolean isModifiable(){
+        return isSnapshot();
+    }
+
+    @Override
+    public boolean isIdentifiable() {
+        return true;
     }
 
     @Override
@@ -105,5 +127,48 @@ public class MavenArtifactIdentifier {
     @Override
     public int hashCode() {
         return Objects.hash(groupId, artifactId, version, classifier, type);
+    }
+
+    /**
+     * @param shortString the maven identifier in string format ('mvn:artifactId:groupId:version:classifier:type'). Classifier and type are optional
+     */
+    public static MavenArtifactIdentifier fromShortString(String shortString){
+        if(isMvnIdentifierShortString(shortString)) {
+            String[] split = shortString.split(":");
+            return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null, split.length >= 6 ? split[5] : null);
+        } else {
+            throw new IllegalArgumentException("Invalid maven identifier: " + shortString);
+        }
+    }
+
+    public static boolean isMvnIdentifierShortString(String shortString){
+        return shortString != null && shortString.startsWith(MVN_PREFIX + ":");
+    }
+    
+    public String toShortString() {
+        String res = String.format(MVN_PREFIX + ":%s:%s:%s",
+                Optional.ofNullable(getGroupId()).orElse(""),
+                Optional.ofNullable(getArtifactId()).orElse(""),
+                Optional.ofNullable(getVersion()).orElse(""));
+        if (this.getClassifier() != null || this.getType() != null) {
+            res += ":";
+            if (this.getClassifier() != null) {
+                res += this.getClassifier();
+            }
+            if (this.getType() != null) {
+                res +=  ":" + this.getType();
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public ResourceOriginType getOriginType() {
+        return ResourceOriginType.mvn;
+    }
+
+    @Override
+    public String toStringRepresentation() {
+        return toShortString();
     }
 }

@@ -19,6 +19,7 @@
 package step.artefacts.automation.datasource;
 
 import step.core.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.ProtectedDynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.datapool.excel.ExcelDataPool;
 import step.plans.parser.yaml.model.YamlResourceReference;
@@ -31,6 +32,8 @@ public class YamlExcelDataSource extends AbstractYamlDataSource<ExcelDataPool> {
     protected DynamicValue<String> worksheet = new DynamicValue<>();
 
     protected DynamicValue<Boolean> headers = new DynamicValue<>(true);
+
+    protected ProtectedDynamicValue<String> password = null;
 
     public YamlExcelDataSource() {
         super("excel");

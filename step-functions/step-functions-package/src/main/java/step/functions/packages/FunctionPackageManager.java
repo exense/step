@@ -49,22 +49,20 @@ public class FunctionPackageManager implements Closeable {
 	private final FunctionPackageAccessor functionPackageAccessor;
 	private final FunctionManager functionRepository;
 	private final ResourceManager resourceManager;
-	private final FileResolver fileResolver;
-	private FunctionPackageChangeWatcher changeWatcher;
+    private FunctionPackageChangeWatcher changeWatcher;
 	private final ObjectHookRegistry objectHookRegistry;
 
 	private final List<FunctionPackageHandler> packageHandlers = new ArrayList<>();
 	private final Map<String, java.util.function.Function<String, String>> attributeResolvers = new ConcurrentHashMap<>();
 
 	public FunctionPackageManager(FunctionPackageAccessor functionPackageAccessor, FunctionManager functionRepository,
-			ResourceManager resourceManager, FileResolver fileResolver, Configuration configuration,
-			ObjectHookRegistry objectHookRegistry) {
+								  ResourceManager resourceManager, Configuration configuration,
+								  ObjectHookRegistry objectHookRegistry) {
 		super();
 		this.functionPackageAccessor = functionPackageAccessor;
 		this.functionRepository = functionRepository;
 		this.resourceManager = resourceManager;
-		this.fileResolver = fileResolver;
-		this.objectHookRegistry = objectHookRegistry;
+        this.objectHookRegistry = objectHookRegistry;
 
 		if (configuration.getPropertyAsBoolean(WATCH_FOR_CHANGE, true)) {
 			int interval = configuration.getPropertyAsInteger(WATCHER_INTERVAL, 60000);
@@ -266,9 +264,20 @@ public class FunctionPackageManager implements Closeable {
 			}
 
 			newFunction.setManaged(true);
-			newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally() ||
-					(newFunction instanceof CompositeFunction));
-			newFunction.setTokenSelectionCriteria(newFunctionPackage.getTokenSelectionCriteria());
+
+			//Execute on controller true has priority whether it is defined at package or keyword level and forced for composite Keywords
+			newFunction.setExecuteLocally(newFunctionPackage.isExecuteLocally() || newFunction.isExecuteLocally() ||
+																			(newFunction instanceof CompositeFunction));
+			//Token selection criteria maps are merged; for keys defined twice, values from the package override the ones from the keyword
+			Map<String, String> tokenSelectionCriteriaFromFunction = newFunction.getTokenSelectionCriteria();
+			Map<String, String> tokenSelectionCriteriaFromPackage = newFunctionPackage.getTokenSelectionCriteria();
+			if (tokenSelectionCriteriaFromFunction == null) {
+				newFunction.setTokenSelectionCriteria(tokenSelectionCriteriaFromPackage);
+			} else if (tokenSelectionCriteriaFromPackage != null) {
+				tokenSelectionCriteriaFromFunction.putAll(tokenSelectionCriteriaFromPackage);
+				newFunction.setTokenSelectionCriteria(tokenSelectionCriteriaFromFunction);
+			}
+
 			newFunction.addCustomField(FunctionPackageEntity.FUNCTION_PACKAGE_ID,
 					newFunctionPackage.getId().toString());
 
@@ -326,14 +335,14 @@ public class FunctionPackageManager implements Closeable {
 	}
 
 	private void registerWatcher(FunctionPackage functionPackage) {
-		if (changeWatcher != null && !fileResolver.isResource(functionPackage.getPackageLocation())) {
+		if (changeWatcher != null && !FileResolver.isResource(functionPackage.getPackageLocation())) {
 			functionPackage.setWatchForChange(true);
 			changeWatcher.registerWatcherForPackage(functionPackage);
 		}
 	}
 
 	private void unregisterWatcher(FunctionPackage functionPackage) {
-		if (changeWatcher != null && !fileResolver.isResource(functionPackage.getPackageLocation())) {
+		if (changeWatcher != null && !FileResolver.isResource(functionPackage.getPackageLocation())) {
 			changeWatcher.unregisterWatcher(functionPackage);
 		}
 	}
@@ -347,7 +356,7 @@ public class FunctionPackageManager implements Closeable {
 	}
 
 	private String resolveResourceId(String resourceLocation) {
-		return fileResolver.resolveResourceId(resourceLocation);
+		return FileResolver.resolveResourceId(resourceLocation);
 	}
 
 	private List<Function> getPackageFunctions(FunctionPackage functionPackage) {
@@ -371,7 +380,7 @@ public class FunctionPackageManager implements Closeable {
 	}
 
 	private void deleteResource(String path) {
-		String resolveResourceId = fileResolver.resolveResourceId(path);
+		String resolveResourceId = FileResolver.resolveResourceId(path);
 		// Is it a resource?
 		if (resolveResourceId != null) {
 			// if yes, delete it

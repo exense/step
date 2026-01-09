@@ -74,10 +74,10 @@ public class EntityReferencesMap {
 		
 		public EntityTypeComparator() {
 			entityWeight = new HashMap<String,Integer>();
-			entityWeight.put(EntityManager.resourceRevisions, 1);
-			entityWeight.put(EntityManager.resources, 2);
-			entityWeight.put(EntityManager.functions, 3);
-			entityWeight.put(EntityManager.plans, 4);
+			entityWeight.put(EntityConstants.resourceRevisions, 1);
+			entityWeight.put(EntityConstants.resources, 2);
+			entityWeight.put(EntityConstants.functions, 3);
+			entityWeight.put(EntityConstants.plans, 4);
 		}
 
 		@Override

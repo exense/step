@@ -19,7 +19,6 @@
 package step.resources;
 
 import ch.exense.commons.io.FileHelper;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
@@ -32,9 +31,8 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepAsyncServices;
-import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.objectenricher.ObjectEnricher;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
@@ -64,32 +62,35 @@ public class ResourceServices extends AbstractStepAsyncServices {
 		resourceManager = globalContext.getResourceManager();
 		tableService = globalContext.require(TableService.class);
 	}
-	
+
 	@POST
 	@Path("/content")
 	@Secured(right = "resource-write")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
-			@FormDataParam("file") FormDataContentDisposition fileDetail, @QueryParam("type") String resourceType,
-												 @QueryParam("duplicateCheck") Boolean checkForDuplicate, @QueryParam("directory") Boolean isDirectory,
-												 @QueryParam("trackingAttribute") String trackingAttribute) throws IOException {
+												 @FormDataParam("file") FormDataContentDisposition fileDetail,
+												 @QueryParam("type") String resourceType,
+												 @QueryParam("directory") Boolean isDirectory,
+												 @QueryParam("trackingAttribute") String trackingAttribute,
+												 @QueryParam("origin") String origin,
+												 @QueryParam("originTimestamp") Long originTimestamp) throws IOException {
 		ObjectEnricher objectEnricher = getObjectEnricher();
-		
-		if(checkForDuplicate == null) {
-			checkForDuplicate = true;
-		}
+
 		if (uploadedInputStream == null || fileDetail == null)
 			throw new RuntimeException("Invalid arguments");
 		if (resourceType == null || resourceType.length() == 0)
 			throw new RuntimeException("Missing resource type query parameter 'type'");
 		
 		try {
-			Resource resource = resourceManager.createResource(resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), checkForDuplicate, objectEnricher, trackingAttribute);
+			Resource resource = resourceManager.createTrackedResource(
+					resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), objectEnricher,
+					trackingAttribute, getSession().getUser().getUsername(),
+					origin == null ? new UploadedResourceOrigin().toStringRepresentation() : origin,
+					originTimestamp
+			);
 			return new ResourceUploadResponse(resource, null);
-		} catch (SimilarResourceExistingException e) {
-			return new ResourceUploadResponse(e.getResource(), e.getSimilarResources());
-		} catch (InvalidResourceFormatException e) {
+		}  catch (InvalidResourceFormatException e) {
 			throw uploadFileNotAnArchive();
 		}
 	}
@@ -117,7 +118,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
 			throw new RuntimeException("Invalid arguments");
 
 		try {
-			Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName() );
+			Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName(), null, getSession().getUser().getUsername());
 			return new ResourceUploadResponse(resource, null);
 		} catch (InvalidResourceFormatException e) {
 			throw uploadFileNotAnArchive();
@@ -151,7 +152,19 @@ public class ResourceServices extends AbstractStepAsyncServices {
 	@Path("/{id}")
 	@Secured(right = "resource-delete")
 	public void deleteResource(@PathParam("id") String resourceId) {
+		Resource resource = resourceManager.getResource(resourceId);
+		assertEntityIsEditableInContext(resource);
 		resourceManager.deleteResource(resourceId);
+	}
+
+	@DELETE
+	@Secured
+	@Path("/{id}/revisions")
+	@Secured(right = "resource-delete")
+	public void deleteResourceRevisions(@PathParam("id") String resourceId) {
+		Resource resource = resourceManager.getResource(resourceId);
+		assertEntityIsEditableInContext(resource);
+		resourceManager.deleteResourceRevisionContent(resourceId);
 	}
 
 	@POST
@@ -162,12 +175,16 @@ public class ResourceServices extends AbstractStepAsyncServices {
 		Consumer<String> consumer = t -> {
 			try {
 				deleteResource(t);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+			} catch (Throwable e) {
+				if (e instanceof RuntimeException) {
+					throw e;
+				} else {
+					throw new RuntimeException(e);
+				}
 			}
 		};
 		return scheduleAsyncTaskWithinSessionContext(h ->
-				tableService.performBulkOperation(EntityManager.resources, request, consumer, getSession()));
+				tableService.performBulkOperation(EntityConstants.resources, request, consumer, getSession()));
 	}
 	
 	@GET

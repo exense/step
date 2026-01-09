@@ -19,7 +19,7 @@
 package step.plugins.jmeter;
 
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.functions.Function;
 
@@ -27,7 +27,7 @@ public class JMeterFunction extends Function {
 
 	private DynamicValue<String> jmeterTestplan = new DynamicValue<>();
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getJmeterTestplan() {
 		return jmeterTestplan;
 	}

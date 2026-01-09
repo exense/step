@@ -18,8 +18,9 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import java.io.Closeable;
 
-public interface AutomationPackageArchiveProvider extends Closeable {
+public interface AutomationPackageArchiveProvider extends AutomationPackageProvider {
+
     AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException;
+
 }

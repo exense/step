@@ -18,22 +18,13 @@
  ******************************************************************************/
 package step.plugins.java;
 
-import step.attachments.FileResolver;
-import step.automation.packages.AutomationPackageContext;
+import step.automation.packages.AutomationPackage;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AutomationPackageContextual;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.functions.Function;
-import step.resources.InvalidResourceFormatException;
-import step.resources.Resource;
-import step.resources.ResourceManager;
-import step.resources.SimilarResourceExistingException;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * This class encapsulates the configuration parameters of functions (aka Keywords)
@@ -50,7 +41,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 	
 	DynamicValue<String> errorHandlerFile = new DynamicValue<>("");
 	
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getScriptFile() {
 		return scriptFile;
 	}
@@ -73,7 +64,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 		this.scriptLanguage = scriptLanguage;
 	}
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getLibrariesFile() {
 		return librariesFile;
 	}
@@ -86,7 +77,7 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 		this.librariesFile = librariesFile;
 	}
 
-	@EntityReference(type=EntityManager.resources)
+	@EntityReference(type= EntityConstants.resources)
 	public DynamicValue<String> getErrorHandlerFile() {
 		return errorHandlerFile;
 	}
@@ -99,27 +90,17 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 	}
 
 	@Override
-	public GeneralScriptFunction applyAutomationPackageContext(AutomationPackageContext context) {
+	public GeneralScriptFunction applyAutomationPackageContext(StagingAutomationPackageContext context) {
 		if (getScriptFile().get() == null || getScriptFile().get().isEmpty()) {
-			String uploadedPackageFileResource = context.getUploadedPackageFileResource();
-			if (uploadedPackageFileResource == null) {
-				File originalFile = context.getAutomationPackageArchive().getOriginalFile();
-				if (originalFile == null) {
-					throw new RuntimeException("General script functions can only be used within automation package archive");
-				}
-				try (InputStream is = new FileInputStream(originalFile)) {
-					Resource resource = context.getResourceManager().createResource(
-							ResourceManager.RESOURCE_TYPE_FUNCTIONS, is, originalFile.getName(), false, context.getEnricher()
-					);
-					uploadedPackageFileResource = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-
-					// fill context with just uploaded resource to upload it only once and reuse it in other general script functions
-					context.setUploadedPackageFileResource(uploadedPackageFileResource);
-				} catch (IOException | SimilarResourceExistingException | InvalidResourceFormatException e) {
-					throw new RuntimeException("General script function cannot be created", e);
-				}
+			AutomationPackage ap = context.getAutomationPackage();
+			if (ap != null && ap.getAutomationPackageResourceRevision() != null && !ap.getAutomationPackageResourceRevision().isEmpty()) {
+				setScriptFile(new DynamicValue<>(ap.getAutomationPackageResourceRevision()));
+			} else {
+                throw new RuntimeException("General script functions can only be used within automation package archive");
+            }
+			if (ap != null && ap.getAutomationPackageLibraryResourceRevision() != null && !ap.getAutomationPackageLibraryResourceRevision().isEmpty()) {
+				setLibrariesFile(new DynamicValue<>(ap.getAutomationPackageLibraryResourceRevision()));
 			}
-			setScriptFile(new DynamicValue<>(uploadedPackageFileResource));
 		}
 		return this;
 	}

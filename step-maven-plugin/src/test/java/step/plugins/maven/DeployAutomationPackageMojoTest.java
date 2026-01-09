@@ -24,7 +24,7 @@ import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import step.cli.AbstractDeployAutomationPackageTool;
+import step.cli.DeployAutomationPackageTool;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -55,6 +55,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         mojo.setStepProjectName(TENANT_1.getName());
         mojo.setAuthToken("dummyToken");
         mojo.setAsync(false);
+        mojo.setForceRefreshOfSnapshots(true);
 
         MavenProject mockedProject = Mockito.mock(MavenProject.class);
         Artifact mainArtifact = createArtifactMock();
@@ -72,22 +73,24 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
 
     private static class DeployAutomationPackageMojoTestable extends DeployAutomationPackageMojo {
 
-        private final AbstractDeployAutomationPackageTool mockedTool = Mockito.mock(AbstractDeployAutomationPackageTool.class);
+        private final DeployAutomationPackageTool mockedTool = Mockito.mock(DeployAutomationPackageTool.class);
 
         private String toolUrl;
         private String toolProjectName;
         private String toolAuthToken;
         private Boolean toolAsync;
+        private Boolean toolforceRefreshOfSnapshots;
 
         public DeployAutomationPackageMojoTestable() {
         }
 
         @Override
-        protected AbstractDeployAutomationPackageTool createTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr) {
+        protected DeployAutomationPackageTool createTool(String url, String projectName, String authToken, Boolean async, String apVersion, String activationExpr,  Boolean forceRefreshOfSnapshots) {
             this.toolAsync = async;
             this.toolUrl = url;
             this.toolProjectName = projectName;
             this.toolAuthToken = authToken;
+            this.toolforceRefreshOfSnapshots = forceRefreshOfSnapshots;
             return mockedTool;
         }
 

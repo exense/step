@@ -19,11 +19,15 @@
 package step.resources;
 
 import step.core.objectenricher.ObjectEnricher;
+import step.core.objectenricher.ObjectPredicate;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface ResourceManager {
 
@@ -35,22 +39,25 @@ public interface ResourceManager {
 	String RESOURCE_TYPE_ATTACHMENT = "attachment";
 	String RESOURCE_TYPE_TEMP = "temp";
 	String RESOURCE_TYPE_ISOLATED_AP = "isolatedAp";
+	String RESOURCE_TYPE_ISOLATED_AP_LIB = "isolatedApLib";
+	String RESOURCE_TYPE_AP = "automationPackage";
+	String RESOURCE_TYPE_AP_LIBRARY = "automationPackageLibrary";
+	String RESOURCE_TYPE_AP_MANAGED_LIBRARY = "automationPackageManagedLibrary";
 
 	/**
-	 * @param resourceType the type of the resource
-	 * @param resourceStream the stream of the resource to be saved
+	 * @param resourceType     the type of the resource
+	 * @param resourceStream   the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename)
-	 * @param checkForDuplicates is duplicate should be checked
-	 * @param objectEnricher the {@link ObjectEnricher} of the context
-	 * @return the created {@link Resource} 
-	 * @throws IOException an IOException occurs during the call
-	 * @throws SimilarResourceExistingException a similar resource exist
+	 * @param objectEnricher   the {@link ObjectEnricher} of the context
+	 * @param actorUser	       the user creating the resource
+	 * @return the created {@link Resource}
+	 * @throws IOException                      an IOException occurs during the call
 	 */
-	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+	Resource createResource(String resourceType, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException;
 
-	Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, boolean checkForDuplicates, ObjectEnricher objectEnricher) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+	Resource createResource(String resourceType, boolean isDirectory, InputStream resourceStream, String resourceFileName, ObjectEnricher objectEnricher, String actorUser) throws IOException, InvalidResourceFormatException;
 
-	ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName) throws IOException;
+	ResourceRevisionContainer createResourceContainer(String resourceType, String resourceFileName, String actorUser) throws IOException;
 
 	/**
 	 * Test if a given resource id exists
@@ -70,7 +77,11 @@ public interface ResourceManager {
 
 	ResourceRevisionFileHandle getResourceFile(String resourceId);
 
+	ResourceRevisionFileHandle getResourceFile(String resourceId, String revisionId);
+
 	Resource getResource(String resourceId);
+
+	Resource getResourceByNameAndType(String resourceName, String resourceType, ObjectPredicate predicate);
 
 	ResourceRevisionContentImpl getResourceRevisionContent(String resourceRevisionId) throws IOException;
 
@@ -78,35 +89,66 @@ public interface ResourceManager {
 
 	String getResourcesRootPath();
 
-	Resource createResource(String resourceType,
-							boolean isDirectory,
-							InputStream resourceStream,
-							String resourceFileName,
-							boolean checkForDuplicates,
-							ObjectEnricher objectEnricher,
-							String trackingAttribute) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+	Resource createTrackedResource(String resourceType,
+								   boolean isDirectory,
+								   InputStream resourceStream,
+								   String resourceFileName,
+								   ObjectEnricher objectEnricher,
+								   String trackingAttribute,
+								   String actorUser, String origin,
+								   Long originTimestamp) throws IOException, InvalidResourceFormatException;
+
+	Resource createTrackedResource(String resourceType,
+								   boolean isDirectory,
+								   InputStream resourceStream,
+								   String resourceFileName,
+								   String optionalResourceName,
+								   ObjectEnricher objectEnricher,
+								   String trackingAttribute,
+								   String actorUser, String origin,
+								   Long originTimestamp) throws IOException, InvalidResourceFormatException;
 
 	/**
 	 * Create a copy of the resource from a source repository
-	 * @param resource the source resource {@link Resource} to be copied
+	 *
+	 * @param resource              the source resource {@link Resource} to be copied
 	 * @param sourceResourceManager the source resource manager to copy from
+	 * @param actorUser
 	 * @return the newly create resource {@link Resource}
 	 * @throws IOException, SimilarResourceExistingException or InvalidResourceFormatException that may occur during the call
 	 */
-	Resource copyResource(Resource resource, ResourceManager sourceResourceManager) throws IOException, SimilarResourceExistingException, InvalidResourceFormatException;
+	Resource copyResource(Resource resource, ResourceManager sourceResourceManager, String actorUser) throws IOException, InvalidResourceFormatException;
 
 	/**
 	 * Save the content provided as stream to an existing resource.
 	 * This creates a new {@link ResourceRevision} for the {@link Resource}
 	 * and saves the content provided as stream under this revision.
 	 *
-	 * @param resourceId the id of the resource to be updated
-	 * @param resourceStream the stream of the resource to be saved
+	 * @param resourceId       the id of the resource to be updated
+	 * @param resourceStream   the stream of the resource to be saved
 	 * @param resourceFileName the name of the resource (filename)
+	 * @param optionalResourceName an optional name for the resource, the filename os used otherwise
+	 * @param actorUser       the user triggering the operation
 	 * @return the updated {@link Resource}
 	 * @throws IOException an IOException occurs during the call
 	 */
-	Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName)
+	Resource saveResourceContent(String resourceId, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser)
+			throws IOException, InvalidResourceFormatException;
+
+	/**
+	 * Save the content provided as stream to an existing resource.
+	 * This creates a new {@link ResourceRevision} for the {@link Resource}
+	 * and saves the content provided as stream under this revision.
+	 *
+	 * @param resource       the resource to be updated
+	 * @param resourceStream   the stream of the resource to be saved
+	 * @param resourceFileName the name of the resource (filename)
+	 * @param optionalResourceName an optional name for the resource, the filename os used otherwise
+	 * @param actorUser       the user triggering the operation
+	 * @return the updated {@link Resource}
+	 * @throws IOException an IOException occurs during the call
+	 */
+	Resource saveResourceContent(Resource resource, InputStream resourceStream, String resourceFileName, String optionalResourceName, String actorUser)
 			throws IOException, InvalidResourceFormatException;
 
 	/**
@@ -119,6 +161,7 @@ public interface ResourceManager {
 
 	ResourceRevision saveResourceRevision(ResourceRevision resourceRevision) throws IOException;
 
+
 	/**
 	 * Delete the resource and all its revisions 
 	 * 
@@ -126,9 +169,17 @@ public interface ResourceManager {
 	 */
 	void deleteResource(String resourceId);
 
+	void deleteResourceRevisionContent(String resourceId);
+
 	List<Resource> findManyByCriteria(Map<String, String> criteria);
 
+	void findAndCleanupUnusedRevision(String resourceId, Set<String> usedRevision);
+
 	default void cleanup() {
+	}
+
+	public static Path getResourceFilePath(String basePath, String resourceType, String resourceId, String revisionId, String fileName) {
+		return Paths.get(basePath, resourceType, resourceId, revisionId, fileName);
 	}
 
 }

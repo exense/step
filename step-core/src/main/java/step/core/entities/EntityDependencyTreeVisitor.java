@@ -146,7 +146,7 @@ public class EntityDependencyTreeVisitor {
 					} catch (IllegalAccessException | InvocationTargetException e) {
 						visitor.onWarning("IllegalAccessException failed for method " + method.getName());
 					}
-					if (entityType.equals(EntityManager.recursive)) {
+					if (entityType.equals(EntityConstants.recursive)) {
 						// No actual references, but need to process the field recursively
 						if (value instanceof Collection) {
 							Collection<?> c = (Collection<?>) value;

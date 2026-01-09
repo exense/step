@@ -44,7 +44,7 @@ public class FunctionPackageManagerTest {
 		resourceManager = new LocalResourceManagerImpl();
 		resolver = new FileResolver(resourceManager);
 		pm = new FunctionPackageManager(p, f, resourceManager,
-				resolver,new Configuration(), new ObjectHookRegistry());
+                new Configuration(), new ObjectHookRegistry());
 	}
 	
 	@After
@@ -177,7 +177,9 @@ public class FunctionPackageManagerTest {
 		String resourceFileName = "java-plugin-handler-test.jar";
 
 		Function f1 = function("f1");
-		registerPackageHandler(List.of(f1));
+		Function myKeywordWithRoutingCriteria1 = function("MyKeywordWithRoutingCriteria");
+		myKeywordWithRoutingCriteria1.setTokenSelectionCriteria(new HashMap<>(Map.of("OS","WINDOWS","TYPE","PLAYWRIGHT")));
+		registerPackageHandler(List.of(f1, myKeywordWithRoutingCriteria1));
 		
 		// Create a package
 		Resource testResource = createTestResource(resourceFileName, resourceManager);
@@ -185,6 +187,7 @@ public class FunctionPackageManagerTest {
 		// Add a library resource
 		Resource libraryResource1 = createTestResource(resourceFileName, resourceManager);
 		testPackage.setPackageLibrariesLocation(resolver.createPathForResourceId(libraryResource1.getId().toString()));
+		testPackage.setTokenSelectionCriteria(Map.of("OS","LINUX"));
 
 		pm.addOrUpdateFunctionPackage(testPackage);
 		
@@ -196,7 +199,13 @@ public class FunctionPackageManagerTest {
 		// Get the first function that should have been generated
 		Function f1Repo = f.getFunctionById(f1.getId().toString());
 		assertNotNull(f1Repo);
-		
+		assertEquals(testPackage.getTokenSelectionCriteria(), f1Repo.getTokenSelectionCriteria());
+
+		Function myKeywordWithRoutingCriteria = f.getFunctionById(myKeywordWithRoutingCriteria1.getId().toString());
+		assertNotNull(myKeywordWithRoutingCriteria);
+		HashMap<Object, Object> expectedTokenCriteria = new HashMap<>(Map.of("OS", "LINUX", "TYPE","PLAYWRIGHT"));
+		assertEquals(expectedTokenCriteria, myKeywordWithRoutingCriteria.getTokenSelectionCriteria());
+
 		// Update the package with a new resource
 		Resource testResource2 = createTestResource(resourceFileName, resourceManager);
 		FunctionPackage testPackage2 = createTestPackage(testResource2,pm,resolver);
@@ -255,7 +264,7 @@ public class FunctionPackageManagerTest {
 
 		// Create a resource
 		Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, fis,
-				resourceFileName, false, null);
+				resourceFileName, null, "testUser");
 		assertNotNull(resource);
 		return resource;
 	}
@@ -280,7 +289,7 @@ public class FunctionPackageManagerTest {
 
 		@Override
 		public Function getFunctionByAttributes(Map<String, String> attributes) {
-			return null;
+			return m.values().stream().filter(f->f.getAttributes().equals(attributes)).findFirst().orElse(null);
 		}
 
 		@Override

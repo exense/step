@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.cli.reports;
 
-import step.cli.AbstractExecuteAutomationPackageTool;
+import step.cli.ExecuteAutomationPackageTool;
 import step.cli.CliToolLogging;
 import step.cli.StepCliExecutionException;
 import step.client.executions.RemoteExecutionManager;
@@ -44,11 +44,11 @@ public class AggregatedReportCreator implements ReportCreator {
     }
 
     @Override
-    public void createReport(Map<String, Execution> executions, List<AbstractExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) {
+    public void createReport(Map<String, Execution> executions, List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes, CliToolLogging logging) {
         for (String executionId : executions.keySet()) {
             AggregatedReportView aggregatedReportView = remoteExecutionManager.getAggregatedReportView(executionId);
 
-            for (AbstractExecuteAutomationPackageTool.ReportOutputMode outputMode : outputModes) {
+            for (ExecuteAutomationPackageTool.ReportOutputMode outputMode : outputModes) {
                 switch (outputMode) {
                     case stdout:
                         logging.logInfo("Aggregated report:\n" + aggregatedReportView.toString(), null);

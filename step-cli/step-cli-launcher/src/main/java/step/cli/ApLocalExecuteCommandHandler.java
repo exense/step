@@ -21,10 +21,11 @@ package step.cli;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.AutomationPackageFromInputStreamProvider;
-import step.automation.packages.AutomationPackageManager;
-import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.*;
 import step.automation.packages.junit.AbstractLocalPlanRunner;
+import step.automation.packages.library.AutomationPackageLibraryProvider;
+import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
+import step.automation.packages.library.NoAutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.ExecutionContext;
@@ -42,13 +43,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static step.cli.AbstractExecuteAutomationPackageTool.getPlanFilters;
+import static step.cli.ExecuteAutomationPackageTool.getPlanFilters;
 
 public class ApLocalExecuteCommandHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApLocalExecuteCommandHandler.class);
 
-    public void execute(File apFile, String includePlans, String excludePlans, String includeCategories,
+    public void execute(File apFile, File libFile, String includePlans, String excludePlans, String includeCategories,
                         String excludeCategories, Map<String, String> executionParameters) throws StepCliExecutionException {
         try (ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
             @Override
@@ -58,12 +59,20 @@ public class ApLocalExecuteCommandHandler {
         }).withPluginsFromClasspath().build()) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
+            InputStream libFileInputStream = null;
             try (InputStream is = new FileInputStream(apFile)) {
-                AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(is, apFile.getName());
+                if (libFile != null) {
+                    libFileInputStream = new FileInputStream(libFile);
+                }
+                AutomationPackageLibraryProvider libFromInputStreamProvider = libFileInputStream == null ?
+                        new NoAutomationPackageLibraryProvider() :
+                        new AutomationPackageLibraryFromInputStreamProvider(libFileInputStream, libFile.getName());
+                AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(automationPackageManager.getAutomationPackageReaderRegistry(),
+                        is, apFile.getName(), libFromInputStreamProvider);
+                AutomationPackageUpdateParameter localCreateParameters = new AutomationPackageUpdateParameterBuilder().withCreateOnly()
+                        .forLocalExecution().build();
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-                        false, true, null, automationPackageProvider, null, null,
-                        true, null, null, false
-                ).getId();
+                        automationPackageProvider, libFromInputStreamProvider, localCreateParameters).getId();
 
                 PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);
                 List<StepClassParserResult> listPlans = automationPackageManager.getPackagePlans(automationPackageId)
@@ -86,7 +95,7 @@ public class ApLocalExecuteCommandHandler {
                         protected void onExecutionError(PlanRunnerResult result, String errorText, boolean assertionError) {
                             log.error("Execution has been failed for plan {}. {}", parserResult.getName(), errorText);
 
-                            String executionTree = AbstractExecuteAutomationPackageTool.getExecutionTreeAsString(result);
+                            String executionTree = ExecuteAutomationPackageTool.getExecutionTreeAsString(result);
                             String detailMessage = errorText + "\n" + executionTree;
                             if(assertionError){
                                 detailMessage += "Assertion error. ";
@@ -122,6 +131,14 @@ public class ApLocalExecuteCommandHandler {
                 throw new RuntimeException("IO exception for " + apFile.getAbsolutePath(), e);
             } catch (AutomationPackageReadingException e) {
                 throw new RuntimeException("AP reading exception", e);
+            } finally {
+                if (libFileInputStream != null) {
+                    try {
+                        libFileInputStream.close();
+                    } catch (IOException e) {
+                        log.error("Input stream for KW file cannot be closed", e);
+                    }
+                }
             }
         }
     }

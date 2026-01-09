@@ -23,13 +23,13 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.bson.types.ObjectId;
+import step.automation.packages.AutomationPackageEntity;
 import step.commons.activation.Expression;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
 import step.core.accessors.Accessor;
 import step.core.deployment.ControllerServiceException;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.encryption.EncryptionManagerException;
 import step.framework.server.access.AuthorizationManager;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
@@ -38,9 +38,9 @@ import step.parameter.ParameterManager;
 import step.parameter.ParameterManagerException;
 import step.parameter.ParameterScope;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -131,17 +131,19 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Override
 	public Parameter clone(String id) {
 		Parameter sourceParameter = parameterAccessor.get(new ObjectId(id));
-		assertEntityIsAcceptableInContext(sourceParameter);
+		assertEntityIsEditableInContext(sourceParameter);
 		// Create a clone of the source parameter
 		Parameter newParameter = parameterAccessor.get(new ObjectId(id));
 		newParameter.setId(new ObjectId());
+		//Remove link to AP
+		Optional.ofNullable(newParameter.getCustomFields()).ifPresent(fields -> fields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID));
 		return save(newParameter, sourceParameter);
 	}
 
 	@Override
 	public void delete(String id) {
 		Parameter parameter = get(id);
-		assertEntityIsAcceptableInContext(parameter);
+		assertEntityIsEditableInContext(parameter);
 		assertRights(parameter);
 
 		parameterAccessor.remove(new ObjectId(id));
@@ -196,7 +198,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	@Override
 	public Parameter restoreVersion(String id, String versionId) {
 		Parameter parameter = parameterAccessor.get(id);
-		assertEntityIsAcceptableInContext(parameter);
+		assertEntityIsEditableInContext(parameter);
 		assertRights(parameter);
 		return super.restoreVersion(id, versionId);
 	}

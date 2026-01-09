@@ -43,25 +43,24 @@ public class TokenForecastingExecutionPlugin extends AbstractExecutionEnginePlug
     private static final Logger logger = LoggerFactory.getLogger(TokenForecastingExecutionPlugin.class);
     public static final String CONTEXT_OBJECT_KEY = "$tokenForecastingContext";
 
-    private Set<AgentPoolSpec> availableAgentPools;
+    private AgentProvisioningDriver agentProvisioningDriver;
 
     public TokenForecastingExecutionPlugin() {
     }
 
     @Override
     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-        if (availableAgentPools == null) {
-            AgentProvisioningDriver agentProvisioningDriver = executionEngineContext.get(AgentProvisioningDriver.class);
-            availableAgentPools = (agentProvisioningDriver != null) ?
-                    agentProvisioningDriver.getConfiguration().availableAgentPools :
-                    Set.of();
-        }
+        agentProvisioningDriver = executionEngineContext.get(AgentProvisioningDriver.class);
     }
 
     @Override
     public void executionStart(ExecutionContext context) {
         super.executionStart(context);
 
+        // The list of available agent pools is dynamic and has to be reloaded for each new execution
+        Set<AgentPoolSpec> availableAgentPools = (agentProvisioningDriver != null) ?
+                agentProvisioningDriver.getConfiguration().availableAgentPools :
+                Set.of();
         // Token forecasting is always calculated, even if the agent provisioning is disabled
         TokenForecastingContext tokenForecastingContext = new TokenForecastingContext(availableAgentPools);
         pushTokenForecastingContext(context, tokenForecastingContext, context.getReport());

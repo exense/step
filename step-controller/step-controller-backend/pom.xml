@@ -79,14 +79,68 @@
 			<artifactId>step-controller-plugins-raw-measurement</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-        <dependency>
-            <groupId>ch.exense.step</groupId>
-            <artifactId>step-controller-plugins-timeseries</artifactId>
-            <version>${project.version}</version>
-        </dependency><dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-controller-plugins-timeseries</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
             <groupId>ch.exense.step</groupId>
             <artifactId>step-repositories-artifact</artifactId>
             <version>${project.version}</version>
         </dependency>
+		<dependency>
+			<groupId>ch.exense.step</groupId>
+			<artifactId>step-automation-packages-controller</artifactId>
+			<version>${project.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.awaitility</groupId>
+			<artifactId>awaitility</artifactId>
+			<version>4.3.0</version>
+			<scope>test</scope>
+			<type>jar</type>
+		</dependency>
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-test-2</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>ch.exense.step</groupId>
+									<artifactId>step-automation-packages-sample1</artifactId>
+									<version>${project.version}</version>
+									<classifier>jar-with-dependencies</classifier>
+									<type>jar</type>
+									<overWrite>false</overWrite>
+									<outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
+									<destFileName>step-automation-packages-sample1.jar</destFileName>
+								</artifactItem>
+							</artifactItems>
+							<overWriteReleases>true</overWriteReleases>
+							<overWriteSnapshots>true</overWriteSnapshots>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>

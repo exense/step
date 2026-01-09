@@ -22,6 +22,8 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 
+import org.bson.types.ObjectId;
+import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionFileHandle;
 
@@ -29,6 +31,7 @@ public class FileResolver {
 
 	public static final String ATTACHMENT_PREFIX = "attachment:";
 	public static final String RESOURCE_PREFIX = "resource:";
+	public static final String RESOURCE_PATH_SEPARATOR = ":";
 	
 	private final ResourceManager resourceManager;
 	
@@ -47,33 +50,64 @@ public class FileResolver {
 			throw new RuntimeException("Attachments have been migrated to the ResourceManager. The reference " + path +
 					" isn't valid anymore. Your attachment should be migrated to the ResourceManager.");
 		} else if(path.startsWith(RESOURCE_PREFIX)) {
-			String resourceId = extractResourceId(path);
-			file = resourceManager.getResourceFile(resourceId).getResourceFile();
+			file = getResourceRevisionFileHandleForPath(path).getResourceFile();
 		} else {
 			file = new File(path);
 		}
 		return file;
 	}
 	
-	public String resolveResourceId(String path) {
+	public static String resolveResourceId(String path) {
 		String resourceId;
 		if(path != null && path.startsWith(RESOURCE_PREFIX)) {
-			resourceId = extractResourceId(path);
+			String subResourcePath = extractResourceSubPath(path);
+			resourceId = subResourcePath.split(RESOURCE_PATH_SEPARATOR)[0];
 		} else {
 			resourceId = null;
 		}
 		return resourceId;
 	}
-	
-	public boolean isResource(String path) {
-		return path != null && path.startsWith(RESOURCE_PREFIX);
+
+	public static String resolveRevisionId(String path) {
+		String revisionId = null;
+		if(path != null && path.startsWith(RESOURCE_PREFIX)) {
+			String subResourcePath = extractResourceSubPath(path);
+			String[] split = subResourcePath.split(RESOURCE_PATH_SEPARATOR);
+			if (split.length == 2){
+				revisionId = split[1];
+			}
+		}
+		if (revisionId == null || !ObjectId.isValid(revisionId)) {
+			throw new RuntimeException("Invalid revision path: "  + path);
+		}
+		return revisionId;
 	}
 	
-	public String createPathForResourceId(String resourceId) {
+	public static boolean isResource(String path) {
+		return path != null && path.startsWith(RESOURCE_PREFIX);
+	}
+
+    public static boolean isResourceRevision(String path) {
+        return path != null && path.startsWith(RESOURCE_PREFIX) && (extractResourceSubPath(path).split(RESOURCE_PATH_SEPARATOR).length == 2);
+    }
+
+	public static String createPathForResource(Resource resource) {
+		return createPathForResourceId(resource.getId().toString());
+	}
+	
+	public static String createPathForResourceId(String resourceId) {
 		return RESOURCE_PREFIX + resourceId;
 	}
 
-	protected String extractResourceId(String path) {
+	public static String createRevisionPathForResource(Resource resource) {
+		return createPathForResourceAndRevisionId(resource.getId().toHexString(), resource.getCurrentRevisionId().toHexString());
+	}
+
+	public static String createPathForResourceAndRevisionId(String resourceId, String revisionId) {
+		return RESOURCE_PREFIX + resourceId + RESOURCE_PATH_SEPARATOR + revisionId;
+	}
+
+	protected static String extractResourceSubPath(String path) {
 		return path.replace(RESOURCE_PREFIX, "");
 	}
 	
@@ -84,17 +118,29 @@ public class FileResolver {
 			throw new RuntimeException("Attachments have been migrated to the ResourceManager. The reference " + path +
 					" isn't valid anymore. Your attachment should be migrated to the ResourceManager.");
 		} else if(path.startsWith(RESOURCE_PREFIX)) {
-			String resourceId = extractResourceId(path);
-			ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(resourceId);
-			resourceRevisionFileHandle = resourceFile;
-			file = resourceFile.getResourceFile();
+			resourceRevisionFileHandle = getResourceRevisionFileHandleForPath(path);
+			file = resourceRevisionFileHandle.getResourceFile();
 		} else {
 			file = new File(path);
 			resourceRevisionFileHandle = null;
 		}
 		return new FileHandle(file, resourceRevisionFileHandle);
 	}
-	
+
+	private ResourceRevisionFileHandle getResourceRevisionFileHandleForPath(String path) {
+		ResourceRevisionFileHandle resourceRevisionFileHandle;
+		String subResourcePath = extractResourceSubPath(path);
+		String[] split = subResourcePath.split(RESOURCE_PATH_SEPARATOR);
+		if (split.length == 1) {
+			resourceRevisionFileHandle = resourceManager.getResourceFile(split[0]);
+		} else if (split.length == 2) {
+			resourceRevisionFileHandle = resourceManager.getResourceFile(split[0], split[1]);
+		} else {
+			throw new RuntimeException("Invalid resource path: "  + path);
+		}
+		return resourceRevisionFileHandle;
+	}
+
 	public class FileHandle implements Closeable {
 		
 		protected final File file;

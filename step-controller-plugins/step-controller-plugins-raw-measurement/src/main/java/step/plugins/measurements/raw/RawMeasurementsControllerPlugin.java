@@ -26,7 +26,7 @@ import step.core.collections.Collection;
 import step.core.collections.Document;
 import step.core.collections.IndexField;
 import step.core.collections.Order;
-import step.core.entities.EntityManager;
+import step.core.entities.EntityConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
@@ -47,12 +47,12 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 	@Override
 	public void serverStart(GlobalContext context) throws Exception {
 
-		collection = context.getCollectionFactory().getCollection(EntityManager.measurements, Document.class);
+		collection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Document.class);
 		accessor = new MeasurementAccessor(collection);
 		context.put(MeasurementAccessor.class, accessor);
 
 		TableRegistry tableRegistry = context.get(TableRegistry.class);
-		tableRegistry.register(EntityManager.measurements, new Table<>(collection, null, false));
+		tableRegistry.register(EntityConstants.measurements, new Table<>(collection, null, false));
 
 		MeasurementPlugin.registerMeasurementHandlers(new RawMeasurementsHandler(accessor));
 	}
@@ -68,10 +68,12 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 		IndexField typeIndex = new IndexField(MeasurementPlugin.TYPE, Order.ASC, String.class);
 		IndexField planIndex = new IndexField(MeasurementPlugin.PLAN_ID, Order.ASC, String.class);
 		IndexField taskIndex = new IndexField(MeasurementPlugin.TASK_ID, Order.ASC, String.class);
+		IndexField rnIdIndex = new IndexField(MeasurementPlugin.RN_ID, Order.ASC, String.class);
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, beginIndex)));
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, typeIndex, beginIndex)));
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(planIndex, beginIndex)));
 		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(taskIndex, beginIndex)));
 		collection.createOrUpdateIndex(beginIndex);
+		collection.createOrUpdateIndex(rnIdIndex);
 	}
 }
