@@ -17,7 +17,7 @@ public class LocatorHelper {
     /**
      * Reorders and filters entities according to the current automation package and activation expression
      */
-    public static <T extends AbstractOrganizableObject> List<T> prioritizeAndFilterApEntities(List<T> entities, Map<String, Object> bindings) {
+    public static <T extends AbstractOrganizableObject> List<T> prioritizeAndFilterApEntities(List<T> entities, Map<String, Object> bindings, boolean bypassActivation) {
         // reorder entities: entities from current AP have a priority
         List<T> entitiesFromSameAP = new ArrayList<>();
         List<T> entitiesActivatedExplicitly = new ArrayList<>();
@@ -34,7 +34,7 @@ public class LocatorHelper {
                     break;
                 }
             }
-            if (evaluationExpressionIsDefined(entity)) {
+            if (!bypassActivation && evaluationExpressionIsDefined(entity)) {
                 if (isActivated(bindings, entity)) {
                     entitiesActivatedExplicitly.add(entity);
                 }
