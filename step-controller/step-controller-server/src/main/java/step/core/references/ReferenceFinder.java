@@ -1,9 +1,15 @@
 package step.core.references;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.core.AbstractContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.entities.EntityConstants;
 import step.core.entities.EntityDependencyTreeVisitor;
 import step.core.entities.EntityManager;
+import step.core.objectenricher.EnricheableObject;
+import step.core.objectenricher.ObjectHookRegistry;
+import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.functions.Function;
@@ -16,10 +22,14 @@ import java.util.stream.Stream;
 
 public class ReferenceFinder {
 
-    private final EntityManager entityManager;
+    private static final Logger logger = LoggerFactory.getLogger(ReferenceFinder.class);
 
-    public ReferenceFinder(EntityManager entityManager) {
+    private final EntityManager entityManager;
+    private final ObjectHookRegistry objectHookRegistry;
+
+    public ReferenceFinder(EntityManager entityManager, ObjectHookRegistry objectHookRegistry) {
         this.entityManager = entityManager;
+        this.objectHookRegistry = objectHookRegistry;
     }
 
     public List<FindReferencesResponse> findReferences(FindReferencesRequest request) {
@@ -39,9 +49,13 @@ public class ReferenceFinder {
 
         try (Stream<Function> functionStream = functionAccessor.streamLazy()) {
             functionStream.forEach(function -> {
-                List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityConstants.functions, function, request);
-                if (!matchingObjects.isEmpty()) {
-                    results.add(new FindReferencesResponse(function));
+                try {
+                    List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityConstants.functions, function, request);
+                    if (!matchingObjects.isEmpty()) {
+                        results.add(new FindReferencesResponse(function));
+                    }
+                } catch (Exception e) {
+                    logger.error("Unable to find references for function {}", function.getId(), e);
                 }
             });
         }
@@ -49,9 +63,13 @@ public class ReferenceFinder {
         // Find plans containing usages
         try (Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.streamLazy() : planAccessor.getVisiblePlans()) {
             stream.forEach(plan -> {
-                List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityConstants.plans, plan, request);
-                if (!matchingObjects.isEmpty()) {
-                    results.add(new FindReferencesResponse(plan));
+                try {
+                    List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityConstants.plans, plan, request);
+                    if (!matchingObjects.isEmpty()) {
+                        results.add(new FindReferencesResponse(plan));
+                    }
+                } catch (Exception e) {
+                    logger.error("Unable to find references for plan {}", plan.getId(), e);
                 }
             });
         }
@@ -61,7 +79,7 @@ public class ReferenceFinder {
         return results;
     }
 
-    private List<Object> getReferencedObjectsMatchingRequest(String entityType, AbstractOrganizableObject object, FindReferencesRequest request) {
+    private List<Object> getReferencedObjectsMatchingRequest(String entityType, AbstractOrganizableObject object, FindReferencesRequest request) throws Exception {
         return getReferencedObjects(entityType, object).stream()
                 .filter(o -> (o != null &&  !o.equals(object)))
                 .filter(o -> doesRequestMatch(request, o))
@@ -69,18 +87,21 @@ public class ReferenceFinder {
     }
 
     // returns a (generic) set of objects referenced by a plan
-    private Set<Object> getReferencedObjects(String entityType, AbstractOrganizableObject object) {
+    private Set<Object> getReferencedObjects(String entityType, AbstractOrganizableObject object) throws Exception {
         Set<Object> referencedObjects = new HashSet<>();
 
         // The references can be filled in two different ways due to the implementation:
         // 1. by (actual object) reference in the tree visitor (onResolvedEntity)
         // 2. by object ID in the tree visitor (onResolvedEntityId)
 
-        // No context predicate is used by the reference finder, since we want to find all entities (i.e. if we search the usages of a  Keyword from the Common project, we should be able
-        // to find plans using it in other projects.
-        // This unfortunately can return incorrect results, i.e. a keyword "MyKeyword" is created in ProjectA and ProjectB, A PlanA is created in ProjectA and is using the KW of the same project.
-        // Searching usage of "MyKeyword" in projectB will return the planA from projectA
-        EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(entityManager, o -> true);
+        // When searching the references of a give entity we must apply the predicate as if we were in the context of this entity
+        ObjectPredicate predicate = o -> true; //default value for non enricheable objects
+        if (object instanceof EnricheableObject) {
+            AbstractContext context = new AbstractContext() {};
+            objectHookRegistry.rebuildContext(context, (EnricheableObject) object);
+            predicate = objectHookRegistry.getObjectPredicate(context);
+        }
+        EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(entityManager, predicate);
         FindReferencesTreeVisitor entityTreeVisitor = new FindReferencesTreeVisitor(entityManager, referencedObjects);
         entityDependencyTreeVisitor.visitEntityDependencyTree(entityType, object.getId().toString(), entityTreeVisitor, EntityDependencyTreeVisitor.VISIT_MODE.RESOLVE_ALL);
 

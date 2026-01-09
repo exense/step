@@ -9,6 +9,7 @@ import step.attachments.FileResolver;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plugins.PluginManager;
@@ -43,7 +44,7 @@ public class ReferenceFinderTest {
     @Before
     public void setup() throws ClassNotFoundException, PluginManager.Builder.CircularDependencyException, InstantiationException, IllegalAccessException {
         context = createGlobalContext();
-        referenceFinder = new ReferenceFinder(context.getEntityManager());
+        referenceFinder = new ReferenceFinder(context.getEntityManager(), new ObjectHookRegistry());
         functionAccessor = context.require(FunctionAccessor.class);
     }
 
