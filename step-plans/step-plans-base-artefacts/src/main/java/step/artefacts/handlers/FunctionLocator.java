@@ -112,7 +112,7 @@ public class FunctionLocator {
 					return activeVersions;
 				}
 			} else {
-				//No version defined with simply return the ordered function by priorities
+				//No active version provided, we simply return the ordered function by priorities
 				return orderedFunctions;
 			}
 		} else {

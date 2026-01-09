@@ -29,8 +29,17 @@ public class EntityDependencyTreeVisitor {
 	private static final Map<Class<?>, BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
 
 	public enum VISIT_MODE {
+		/**
+		 * Visit one entity resolving its references. One reference is resolved to at most one entity. Resolved entities are NOT visited recursively.
+		 */
 		SINGLE,
+		/**
+		 * Visit one entity resolving its references. One reference is resolved to at most one entity. Resolved entities are visited recursively.
+		 */
 		RECURSIVE,
+		/**
+		 * Visit one entity resolving its references. One reference can be resolved to multiple entities. Resolved entities are NOT visited recursively.
+		 */
 		RESOLVE_ALL
 	}
 

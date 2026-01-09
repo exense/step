@@ -72,9 +72,9 @@ public class ReferenceFinder {
     private Set<Object> getReferencedObjects(String entityType, AbstractOrganizableObject object) {
         Set<Object> referencedObjects = new HashSet<>();
 
-        // The references can be filled in three different ways due to the implementation:
-        // 1. through the predicate (just below)
-        // 2. by (actual object) reference in the tree visitor (onResolvedEntity)
+        // The references can be filled in two different ways due to the implementation:
+        // 1. by (actual object) reference in the tree visitor (onResolvedEntity)
+        // 2. by object ID in the tree visitor (onResolvedEntityId)
 
         // No context predicate is used by the reference finder, since we want to find all entities (i.e. if we search the usages of a  Keyword from the Common project, we should be able
         // to find plans using it in other projects.
