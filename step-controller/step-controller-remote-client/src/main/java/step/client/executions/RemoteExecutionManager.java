@@ -19,6 +19,7 @@
 package step.client.executions;
 
 import ch.exense.commons.io.Poller;
+import ch.exense.commons.resilience.RetryHelper;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.core.MediaType;
@@ -239,25 +240,43 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		return get(executionID);
 	}
 
-	public List<Execution> waitForTermination(List<String> executionIds, long timeout) throws TimeoutException, InterruptedException {
+	public List<Execution> waitForTermination(List<String> executionIds, long timeout) throws Exception {
 		Set<String> pendingExecutions = new HashSet<>(executionIds);
+		Map<String, Execution> completedExecutions = new HashMap<>();
 		Poller.waitFor(() -> {
-			Set<String> completed = new HashSet<>();
-			for (String e : pendingExecutions) {
-				if (get(e).getStatus().equals(ExecutionStatus.ENDED)) {
-					completed.add(e);
+			//Local set of completed executions found during this polling iteration
+			Set<String> completedExecutionIDs = new HashSet<>();
+			for (String executionId : pendingExecutions) {
+				try {
+					Execution execution = getExecutionWithRetryOnError(executionId);
+					if (execution.getStatus().equals(ExecutionStatus.ENDED)) {
+						completedExecutionIDs.add(executionId);
+						completedExecutions.put(executionId, execution);
+					}
+				} catch (Exception ex) {
+					throw new RuntimeException("Unable to get execution status for " + executionId, ex);
 				}
 			}
-			pendingExecutions.removeAll(completed);
+			//remove the newly completed executions from the pending ones to only process the remaining execution in next polling
+			pendingExecutions.removeAll(completedExecutionIDs);
 			return pendingExecutions.isEmpty();
 		}, timeout);
 
+		//In case we reached the timeout, we still get the final status for all incomplete executions
 		List<Execution> res = new ArrayList<>();
-		for (String e : executionIds) {
-			Execution executionObj = get(e);
-			res.add(executionObj);
+		for (String executionId : executionIds) {
+			Execution execution = completedExecutions.get(executionId);
+			if (execution ==  null) {
+				execution = getExecutionWithRetryOnError(executionId);
+			}
+			res.add(execution);
 		}
 		return res;
+	}
+
+	private Execution getExecutionWithRetryOnError(String executionId) throws Exception {
+        return RetryHelper.executeWithRetryOnExceptions(() -> get(executionId),
+                3, 1000, RetryHelper.COMMON_NETWORK_EXCEPTIONS, "Getting execution with ID: " + executionId);
 	}
 
 	/**
