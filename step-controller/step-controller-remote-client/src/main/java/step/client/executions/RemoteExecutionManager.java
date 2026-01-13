@@ -240,21 +240,17 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		return get(executionID);
 	}
 
-	public List<Execution> waitForTermination(List<String> executionIds, long timeout) throws Exception {
+	public List<Execution> waitForTermination(List<String> executionIds, long timeout) throws TimeoutException, InterruptedException {
 		Set<String> pendingExecutions = new HashSet<>(executionIds);
 		Map<String, Execution> completedExecutions = new HashMap<>();
 		Poller.waitFor(() -> {
 			//Local set of completed executions found during this polling iteration
 			Set<String> completedExecutionIDs = new HashSet<>();
 			for (String executionId : pendingExecutions) {
-				try {
-					Execution execution = getExecutionWithRetryOnError(executionId);
-					if (execution.getStatus().equals(ExecutionStatus.ENDED)) {
-						completedExecutionIDs.add(executionId);
-						completedExecutions.put(executionId, execution);
-					}
-				} catch (Exception ex) {
-					throw new RuntimeException("Unable to get execution status for " + executionId, ex);
+				Execution execution = getExecutionWithRetryOnError(executionId);
+				if (execution.getStatus().equals(ExecutionStatus.ENDED)) {
+					completedExecutionIDs.add(executionId);
+					completedExecutions.put(executionId, execution);
 				}
 			}
 			//remove the newly completed executions from the pending ones to only process the remaining execution in next polling
@@ -262,7 +258,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 			return pendingExecutions.isEmpty();
 		}, timeout);
 
-		//In case we reached the timeout, we still get the final status for all incomplete executions
+		//final iteration for missing execution results
 		List<Execution> res = new ArrayList<>();
 		for (String executionId : executionIds) {
 			Execution execution = completedExecutions.get(executionId);
@@ -274,10 +270,14 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 		return res;
 	}
 
-	private Execution getExecutionWithRetryOnError(String executionId) throws Exception {
-        return RetryHelper.executeWithRetryOnExceptions(() -> get(executionId),
-                3, 1000, RetryHelper.COMMON_NETWORK_EXCEPTIONS, "Getting execution with ID: " + executionId);
-	}
+	private Execution getExecutionWithRetryOnError(String executionId)  {
+        try {
+            return RetryHelper.executeWithRetryOnExceptions(() -> get(executionId),
+                    3, 1000, RetryHelper.COMMON_NETWORK_EXCEPTIONS, "Getting execution with ID: " + executionId);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to get execution for " + executionId, e);
+        }
+    }
 
 	/**
 	 * @param executionId the ID of the execution

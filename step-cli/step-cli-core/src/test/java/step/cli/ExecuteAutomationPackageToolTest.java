@@ -183,7 +183,7 @@ public class ExecuteAutomationPackageToolTest {
         return execution;
     }
 
-    private RemoteExecutionManager createExecutionManagerMock(List<Execution> executions) throws Exception {
+    private RemoteExecutionManager createExecutionManagerMock(List<Execution> executions) throws InterruptedException, TimeoutException {
         RemoteExecutionManager remoteExecutionManagerMock = Mockito.mock(RemoteExecutionManager.class);
         Mockito.when(remoteExecutionManagerMock.get(Mockito.any())).thenAnswer(invocationOnMock -> executions.stream().filter(e -> e.getId().toString().equals(invocationOnMock.getArgument(0))).findFirst().get());
         Mockito.when(remoteExecutionManagerMock.waitForTermination(Mockito.anyList(), Mockito.anyLong())).thenReturn(executions);
