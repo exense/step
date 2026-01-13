@@ -160,11 +160,9 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Override
     @Secured(right = "{entity}-delete")
     public void delete(String id) {
-        assertEntityIsEditableInContext(getEntity(id));
-        if (AuditLogger.isEntityModificationsLoggingEnabled()) {
-            ExecutiontTaskParameters auditTask = scheduler.get(id);
-            auditLog("delete", auditTask);
-        }
+        ExecutiontTaskParameters task = getEntity(id);
+        assertEntityIsEditableInContext(task);
+        auditLog("delete", task);
         scheduler.removeExecutionTask(id);
     }
 }
