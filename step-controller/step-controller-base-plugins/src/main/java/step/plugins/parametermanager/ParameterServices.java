@@ -139,6 +139,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		newParameter.setId(new ObjectId());
 		//Remove link to AP
 		Optional.ofNullable(newParameter.getCustomFields()).ifPresent(fields -> fields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID));
+		auditLog("clone", newParameter, Map.of("key", newParameter.getKey()));
 		return save(newParameter, sourceParameter);
 	}
 
