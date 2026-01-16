@@ -130,6 +130,10 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 		IndexField metricTypeIndexField = new IndexField(ATTRIBUTES_PREFIX + METRIC_TYPE, Order.ASC, String.class);
 		IndexField beginIndexField = new IndexField(TIMESTAMP_ATTRIBUTE, Order.ASC, Long.class);
 		timeSeries.createCompoundIndex(new LinkedHashSet<>(List.of(
+				metricTypeIndexField,
+				beginIndexField
+		)));
+		timeSeries.createCompoundIndex(new LinkedHashSet<>(List.of(
 				new IndexField(ATTRIBUTES_PREFIX + TASK_ATTRIBUTE.getName(), Order.ASC, String.class),
 				metricTypeIndexField,
 				beginIndexField
