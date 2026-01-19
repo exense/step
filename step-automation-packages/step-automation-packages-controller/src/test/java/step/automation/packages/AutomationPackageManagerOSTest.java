@@ -1370,6 +1370,12 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             if (async && expectedDelay) {
                 //The results of createOrUpdateAutomationPackage must have the status UPDATE_DELAYED, and the AP status set to DELAYED_UPDATE
                 assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
+                //The update being async the change of the AP's status may take some time
+                Awaitility.await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(50)).until(() -> {
+                    AutomationPackage automationPackage = automationPackageAccessor.get(updateResult.getId());
+                    log.info("Current status: {}", automationPackage.getStatus());
+                    return AutomationPackageStatus.DELAYED_UPDATE.equals(automationPackage.getStatus());
+                });
                 assertEquals(AutomationPackageStatus.DELAYED_UPDATE, automationPackageAccessor.get(updateResult.getId()).getStatus());
                 //We then poll until the AP is updated before continuing with the assertion (its status should be reset to null
                 Awaitility.await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(50)).until(() -> {
