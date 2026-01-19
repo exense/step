@@ -101,14 +101,19 @@ public class TimeSeriesService extends AbstractStepServices {
     }
 
     private void enrichRequest(FetchBucketsRequest request) {
-        request.setOqlFilter(enrichOqlFilter(request.getOqlFilter()));
+        request.setOqlFilter(enrichOqlFilter(request.getOqlFilter(), request.isIncludeGlobalEntities()));
         if (request.getMaxNumberOfSeries() <= 0) {
             request.setMaxNumberOfSeries(maxNumberOfSeries);
         }
     }
 
-    private String enrichOqlFilter(String oqlFilter) {
-        String additionalOqlFilter = getObjectFilter().getOQLFilter();
+    private String enrichOqlFilter(String oqlFilter, boolean includeGlobalEntities) {
+        String additionalOqlFilter = "";
+        if (includeGlobalEntities) {
+            additionalOqlFilter = getObjectFilter().getOQLFilter();
+        } else {
+            additionalOqlFilter = getRestrictedObjectFilter().getOQLFilter();
+        }
         if (StringUtils.isNotEmpty(additionalOqlFilter)) {
             return (StringUtils.isNotEmpty(oqlFilter)) ?
                 oqlFilter + " and (" + additionalOqlFilter + ")" :
@@ -155,8 +160,9 @@ public class TimeSeriesService extends AbstractStepServices {
     @Path("/measurements-fields")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Set<String> getMeasurementsAttributes(@QueryParam("filter") String oqlFilter) {
-        oqlFilter = enrichOqlFilter(oqlFilter);
+    public Set<String> getMeasurementsAttributes(@QueryParam("filter") String oqlFilter,
+                                                 @DefaultValue("false") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities) {
+        oqlFilter = enrichOqlFilter(oqlFilter, includeGlobalEntities);
         return handler.getMeasurementsAttributes(oqlFilter);
     }
 
@@ -168,9 +174,10 @@ public class TimeSeriesService extends AbstractStepServices {
     public List<Measurement> discoverMeasurements(
             @QueryParam("filter") String oqlFilter,
             @QueryParam("limit") int limit,
-            @QueryParam("skip") int skip
+            @QueryParam("skip") int skip,
+            @DefaultValue("false") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities
     ) {
-        oqlFilter = enrichOqlFilter(oqlFilter);
+        oqlFilter = enrichOqlFilter(oqlFilter, includeGlobalEntities);
         return handler.getRawMeasurements(oqlFilter, skip, limit);
     }
 
@@ -179,8 +186,9 @@ public class TimeSeriesService extends AbstractStepServices {
     @Path("/raw-measurements/stats")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public MeasurementsStats getRawMeasurementsStats(@QueryParam("filter") String oqlFilter) {
-        oqlFilter = enrichOqlFilter(oqlFilter);
+    public MeasurementsStats getRawMeasurementsStats(@QueryParam("filter") String oqlFilter,
+                                                     @DefaultValue("false") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities) {
+        oqlFilter = enrichOqlFilter(oqlFilter, includeGlobalEntities);
         return handler.getRawMeasurementsStats(oqlFilter);
     }
 

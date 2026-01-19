@@ -215,6 +215,7 @@ public class TimeSeriesCollectionsSettings {
         timeSeriesCollectionsSettings.setWeeklyEnabled(false);
         timeSeriesCollectionsSettings.setMainResolution(mainResolution);
         timeSeriesCollectionsSettings.setMainFlushInterval(mainFlushInterval);
+        timeSeriesCollectionsSettings.setFlushSeriesQueueSize(20000);
         return timeSeriesCollectionsSettings;
     }
 
