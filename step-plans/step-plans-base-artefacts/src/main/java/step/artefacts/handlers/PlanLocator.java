@@ -44,7 +44,7 @@ public class PlanLocator {
 	}
 	
 	/**
-	 * Resolve a {@link CallPlan} artefact to the underlying {@link Plan}. Returns null if plan is not resolved by ID
+	 * Resolve a {@link CallPlan} artefact to the underlying {@link Plan}. If multiple plans are resolved, the first one (ordered by priority) is returned)
 	 * 
 	 * @param artefact the {@link CallPlan} artefact
 	 * @param objectPredicate the predicate to be used to filter the results out
@@ -52,24 +52,69 @@ public class PlanLocator {
 	 * @return the {@link Plan} referenced by the provided artefact
 	 */
 	public Plan selectPlan(CallPlan artefact, ObjectPredicate objectPredicate, Map<String, Object> bindings) {
+		return selectAlPlansByAttributesAndPriority(artefact, objectPredicate, bindings, true).get(0);
+	}
+
+	/**
+	 * Resolve a {@link CallPlan} artefact to the list of underlying matching {@link Plan}.
+	 * @param artefact the {@link CallPlan} artefact
+	 * @param objectPredicate the predicate to be used to filter the results out
+	 * @param bindings the bindings to be used for the evaluation of dynamic expressions (can be null)
+	 * @param strictMode whether selection is strict and must find a result or we can ignore unresolvable dynamic selection criteria and bypass activation expression
+	 * @return the list of resolved Plan, can be empty when strictMode is false
+	 */
+	public List<Plan> selectAlPlansByAttributesAndPriority(CallPlan artefact, ObjectPredicate objectPredicate, Map<String, Object> bindings, boolean strictMode) {
 		Objects.requireNonNull(artefact, "The artefact must not be null");
 		Objects.requireNonNull(objectPredicate, "The object predicate must not be null");
 
-		Plan a;
+		// Handle CallPlan with plan ID reference
 		if(artefact.getPlanId()!=null) {
-			a = Optional.ofNullable(accessor.get(artefact.getPlanId())).orElseThrow(() -> new  NoSuchElementException("Unable to find plan with id: " + artefact.getPlanId()));
+			Plan plan = accessor.get(artefact.getPlanId());
+			if (plan != null && objectPredicate.test(plan)) {
+				return List.of(plan);
+			} else if (strictMode) {
+				throw new NoSuchElementException("Unable to find plan with id: " + artefact.getPlanId());
+			} else {
+				return List.of();
+			}
 		} else {
-			Map<String, String> selectionAttributes = selectorHelper.buildSelectionAttributesMap(artefact.getSelectionAttributes().get(), bindings);
+			// Handle Call Plan with call by attributes
+			String selectionAttributesJson = artefact.getSelectionAttributes().get();
+			Map<String, String> selectionAttributes;
+			try {
+				selectionAttributes = selectorHelper.buildSelectionAttributesMap(selectionAttributesJson, bindings);
+			} catch (Exception e) {
+				//In case bindings are missing, we only throw an exception in strict Mode (used in execution context)
+				if (strictMode) {
+					throw e;
+				} else {
+					return List.of();
+				}
+			}
 			Stream<Plan> stream = StreamSupport.stream(accessor.findManyByAttributes(selectionAttributes), false);
 			stream = stream.filter(objectPredicate);
 			List<Plan> matchingPlans = stream.collect(Collectors.toList());
 
 			// The same logic as for functions - plans from current automation package have priority in 'CallPlan'
 			// We use prioritization by current automation package and filtering by activation expressions
-			List<Plan> orderedPlans = LocatorHelper.prioritizeAndFilterApEntities(matchingPlans, bindings);
-			a = orderedPlans.stream().findFirst().orElseThrow(()->new NoSuchElementException("Unable to find plan with attributes: "+selectionAttributes.toString()));
+			List<Plan> orderedPlans = LocatorHelper.prioritizeAndFilterApEntities(matchingPlans, bindings, !strictMode);
+			if (strictMode && orderedPlans.isEmpty()) {
+				throw new NoSuchElementException("Unable to find plan with attributes: "+ selectionAttributesJson);
+			}
+			return orderedPlans;
 		}
-		return a;
+	}
+
+	/**
+	 * Resolve a {@link CallPlan} artefact to the list of underlying matching {@link Plan}.
+	 *
+	 * @param artefact the {@link CallPlan} artefact
+	 * @param objectPredicate the predicate to be used to filter the results out
+	 * @param bindings the bindings to be used for the evaluation of dynamic expressions (can be null)
+	 * @return the list of {@link Plan} referenced by this artifact
+	 */
+	public List<Plan> getMatchingPlans(CallPlan artefact, ObjectPredicate objectPredicate, Map<String, Object> bindings) {
+		return selectAlPlansByAttributesAndPriority(artefact, objectPredicate, bindings, false);
 	}
 
 	/**
