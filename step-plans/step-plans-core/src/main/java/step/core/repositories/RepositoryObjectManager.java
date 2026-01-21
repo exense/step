@@ -31,6 +31,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static step.core.repositories.AbstractRepository.getCanonicalPlanName;
+
 public class RepositoryObjectManager {
 
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryObjectManager.class);
@@ -48,7 +50,9 @@ public class RepositoryObjectManager {
 	public ImportResult importPlan(ExecutionContext context, RepositoryObjectReference artefact) throws Exception  {
 		String respositoryId = artefact.getRepositoryID();
 		Repository repository = getRepository(respositoryId);
-		return repository.importArtefact(context, artefact.getRepositoryParameters());
+		ImportResult importResult = repository.importArtefact(context, artefact.getRepositoryParameters());
+		importResult.setCanonicalPlanName(getCanonicalPlanName(artefact.getRepositoryParameters()));
+		return importResult;
 	}
 
 	public Repository getRepository(String respositoryId) {
