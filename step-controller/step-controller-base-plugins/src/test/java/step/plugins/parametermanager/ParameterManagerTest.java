@@ -95,9 +95,9 @@ public class ParameterManagerTest {
 		bindings.put("user", "poire");
 
 		Map<String, String> params = m.getAllParameterValues(bindings, null);
-		Assert.assertEquals(params.get("key1"),"poirier");
-		Assert.assertEquals(params.get("key2"),"defaultValue2");
-		Assert.assertEquals(params.get("key3"),"value3");
+		Assert.assertEquals("poirier", params.get("key1"));
+		Assert.assertTrue(params.get("key2").contains("defaultValue")); //same key with no activation expression nor priority set --> any of the param with key2 can be selected
+		Assert.assertEquals("value3", params.get("key3"));
 
 		params = m.getAllParameterValues(bindings, t -> false);
 		Assert.assertEquals(0, params.size());
