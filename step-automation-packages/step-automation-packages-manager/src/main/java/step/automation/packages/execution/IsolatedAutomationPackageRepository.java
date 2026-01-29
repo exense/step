@@ -179,7 +179,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
                     OffsetDateTime lastExecutionTime = OffsetDateTime.parse(lastExecutionTimeStr, DateTimeFormatter.ISO_DATE_TIME);
                     if (lastExecutionTime.isBefore(minExecutionTime)) {
                         log.info("Cleanup the outdated resource for automation package: {} ...", apResourceInfo);
-                        resourceManager.deleteResourceRevisionContent(foundResource.getId().toString());
+                        resourceManager.deleteResource(foundResource.getId().toString());
                         removed++;
                     }
                 } else {
