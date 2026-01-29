@@ -83,7 +83,7 @@ public class ParameterManagerTest {
 
 		accessor.save(new Parameter(null, "key2", "defaultValue", "desc"));
 		accessor.save(new Parameter(null, "key2", "defaultValue2", "desc"));
-		accessor.save(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue2", "desc"));
+		accessor.save(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue3", "desc"));
 
 		accessor.save(new Parameter(null, "key3", "value1", "desc"));
 		accessor.save(new Parameter(new Expression("user=='poire'"), "key3", "value2", "desc"));
@@ -96,7 +96,7 @@ public class ParameterManagerTest {
 
 		Map<String, String> params = m.getAllParameterValues(bindings, null);
 		Assert.assertEquals("poirier", params.get("key1"));
-		Assert.assertTrue(params.get("key2").contains("defaultValue")); //same key with no activation expression nor priority set --> any of the param with key2 can be selected
+		Assert.assertEquals("defaultValue3", params.get("key2"));
 		Assert.assertEquals("value3", params.get("key3"));
 
 		params = m.getAllParameterValues(bindings, t -> false);
