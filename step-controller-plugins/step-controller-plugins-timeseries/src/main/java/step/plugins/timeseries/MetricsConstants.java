@@ -5,10 +5,16 @@ import step.core.timeseries.metric.MetricAttributeType;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MetricsConstants {
-    
-    public static final MetricAttribute STATUS_ATTRIBUTE = new MetricAttribute()
+
+	// The static method getAllAttributeNames is placed at the end of this class (to make sure all constant are initialized).
+	// It is used to register all metric as supported timeseries fields.
+	// WARNING: Do not forget to update this method when adding new constants
+
+	public static final MetricAttribute STATUS_ATTRIBUTE = new MetricAttribute()
 				.setName("rnStatus")
 				.setType(MetricAttributeType.TEXT)
 				.setMetadata(Map.of("knownValues", Arrays.asList("PASSED", "FAILED", "TECHNICAL_ERROR", "INTERRUPTED")))
@@ -49,4 +55,21 @@ public class MetricsConstants {
 				.setName("result")
 				.setType(MetricAttributeType.TEXT)
 				.setDisplayName("Result");
+
+
+	public static String getAllAttributeNames() {
+		return Stream.of(
+						STATUS_ATTRIBUTE,
+						TYPE_ATRIBUTE,
+						TASK_ATTRIBUTE,
+						EXECUTION_ATTRIBUTE,
+						PLAN_ATTRIBUTE,
+						NAME_ATTRIBUTE,
+						ERROR_CODE_ATTRIBUTE,
+						EXECUTION_BOOLEAN_RESULT,
+						EXECUTION_RESULT
+				)
+				.map(MetricAttribute::getName)
+				.collect(Collectors.joining(","));
+	}
 }

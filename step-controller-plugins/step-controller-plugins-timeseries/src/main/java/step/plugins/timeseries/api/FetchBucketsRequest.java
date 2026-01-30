@@ -14,6 +14,7 @@ public class FetchBucketsRequest {
     private Set<String> collectAttributeKeys;
     private int collectAttributesValuesLimit;
     private int maxNumberOfSeries;
+    private boolean includeGlobalEntities; //If not set default is false
 
     public Long getStart() {
         return start;
@@ -103,5 +104,13 @@ public class FetchBucketsRequest {
 
     public void setMaxNumberOfSeries(int maxNumberOfSeries) {
         this.maxNumberOfSeries = maxNumberOfSeries;
+    }
+
+    public boolean isIncludeGlobalEntities() {
+        return includeGlobalEntities;
+    }
+
+    public void setIncludeGlobalEntities(boolean includeGlobalEntities) {
+        this.includeGlobalEntities = includeGlobalEntities;
     }
 }
