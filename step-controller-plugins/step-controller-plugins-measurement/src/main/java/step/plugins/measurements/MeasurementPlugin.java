@@ -56,6 +56,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	public static final String SCHEDULE	= "schedule";
 	public static final String TEST_CASE = "testcase";
 	public static final String EXECUTION_DESCRIPTION = "execution";
+	public static final String PROJECT = "project";
 	public static final String CTX_SCHEDULER_TASK_ID = "$schedulerTaskId";
 	public static final String CTX_SCHEDULE_NAME = "$scheduleName";
 	public static final String CTX_EXECUTION_DESCRIPTION = "$executionDescription";
@@ -66,7 +67,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
 	// These are used by the MeasurementControllerPlugin to "reconstruct" measures from measurements, and indicate the
 	// "internal" fields which should NOT be added to the measure data field. Keep this in sync with the fields defined above.
-	static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", "project", "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
+	static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", PROJECT, "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
 			ORIGIN, RN_STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
 	// Same use, but for defining which fields SHOULD be directly copied to the top-level fields of a measure.
 	static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE, STATUS);
