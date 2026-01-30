@@ -111,7 +111,11 @@ public class Activator {
 			}
 
 			private int getPriority(T o1) {
-				return o1.getActivationExpression()==null?0:(o1.getPriority()==null?1:o1.getPriority());
+				if (o1.getPriority() != null) {
+					return o1.getPriority();
+				} else {
+					return o1.getActivationExpression() != null ? 1 : 0;
+				}
 			}
 		});
 		
