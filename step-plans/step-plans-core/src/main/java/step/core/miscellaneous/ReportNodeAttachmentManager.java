@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
+import step.core.execution.model.ExecutionStatus;
 import step.core.variables.UndefinedVariableException;
 import step.core.variables.VariablesManager;
 import step.resources.*;
@@ -111,10 +112,6 @@ public class ReportNodeAttachmentManager {
 		StringWriter w = new StringWriter();
 		e.printStackTrace(new PrintWriter(w));
 		return w.toString().getBytes();
-	}
-	
-	public AttachmentMeta createAttachment(Throwable e) throws AttachmentQuotaException {
-		return createAttachment(exceptionToAttachment(e), "exception.log");
 	}
 	
 	public void attach(Throwable e, ReportNode node) {
