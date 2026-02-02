@@ -46,7 +46,6 @@ public class ReferenceFinder {
 
         // Find composite keywords containing requested usages; composite KWs are really just plans in disguise :-)
         FunctionAccessor functionAccessor = (FunctionAccessor) entityManager.getEntityByName(EntityConstants.functions).getAccessor();
-
         try (Stream<Function> functionStream = functionAccessor.streamLazy()) {
             functionStream.forEach(function -> {
                 try {
@@ -55,7 +54,7 @@ public class ReferenceFinder {
                         results.add(new FindReferencesResponse(function));
                     }
                 } catch (Exception e) {
-                    logger.error("Unable to find references for function {}", function.getId(), e);
+                    logger.warn("Unable to inspect the keyword {} while searching usages for {}", function.getId(), request.searchValue, e);
                 }
             });
         }
@@ -69,7 +68,7 @@ public class ReferenceFinder {
                         results.add(new FindReferencesResponse(plan));
                     }
                 } catch (Exception e) {
-                    logger.error("Unable to find references for plan {}", plan.getId(), e);
+                    logger.warn("Unable to inspect the plan {} while searching usages for {}", plan.getId(), request.searchValue, e);
                 }
             });
         }
