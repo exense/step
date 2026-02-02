@@ -48,13 +48,9 @@ public class ReferenceFinder {
         FunctionAccessor functionAccessor = (FunctionAccessor) entityManager.getEntityByName(EntityConstants.functions).getAccessor();
         try (Stream<Function> functionStream = functionAccessor.streamLazy()) {
             functionStream.forEach(function -> {
-                try {
-                    List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityConstants.functions, function, request);
-                    if (!matchingObjects.isEmpty()) {
-                        results.add(new FindReferencesResponse(function));
-                    }
-                } catch (Exception e) {
-                    logger.warn("Unable to inspect the keyword {} while searching usages for {}", function.getId(), request.searchValue, e);
+                List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityConstants.functions, function, request);
+                if (!matchingObjects.isEmpty()) {
+                    results.add(new FindReferencesResponse(function));
                 }
             });
         }
@@ -62,13 +58,9 @@ public class ReferenceFinder {
         // Find plans containing usages
         try (Stream<Plan> stream = (request.includeHiddenPlans) ? planAccessor.streamLazy() : planAccessor.getVisiblePlans()) {
             stream.forEach(plan -> {
-                try {
-                    List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityConstants.plans, plan, request);
-                    if (!matchingObjects.isEmpty()) {
-                        results.add(new FindReferencesResponse(plan));
-                    }
-                } catch (Exception e) {
-                    logger.warn("Unable to inspect the plan {} while searching usages for {}", plan.getId(), request.searchValue, e);
+                List<Object> matchingObjects = getReferencedObjectsMatchingRequest(EntityConstants.plans, plan, request);
+                if (!matchingObjects.isEmpty()) {
+                    results.add(new FindReferencesResponse(plan));
                 }
             });
         }
@@ -78,7 +70,7 @@ public class ReferenceFinder {
         return results;
     }
 
-    private List<Object> getReferencedObjectsMatchingRequest(String entityType, AbstractOrganizableObject object, FindReferencesRequest request) throws Exception {
+    private List<Object> getReferencedObjectsMatchingRequest(String entityType, AbstractOrganizableObject object, FindReferencesRequest request) {
         return getReferencedObjects(entityType, object).stream()
                 .filter(o -> (o != null &&  !o.equals(object)))
                 .filter(o -> doesRequestMatch(request, o))
@@ -86,7 +78,7 @@ public class ReferenceFinder {
     }
 
     // returns a (generic) set of objects referenced by a plan
-    private Set<Object> getReferencedObjects(String entityType, AbstractOrganizableObject object) throws Exception {
+    private Set<Object> getReferencedObjects(String entityType, AbstractOrganizableObject object) {
         Set<Object> referencedObjects = new HashSet<>();
 
         // The references can be filled in two different ways due to the implementation:
@@ -97,7 +89,14 @@ public class ReferenceFinder {
         ObjectPredicate predicate = o -> true; //default value for non enricheable objects
         if (object instanceof EnricheableObject) {
             AbstractContext context = new AbstractContext() {};
-            objectHookRegistry.rebuildContext(context, (EnricheableObject) object);
+            try {
+                objectHookRegistry.rebuildContext(context, (EnricheableObject) object);
+            } catch (Exception e) {
+                //The getReferencedObjects method is invoked for all entities found in the system, for some entities (for example plans that belongs to a deleted project), the context cannot be rebuilt.
+                //These expected errors are ignored
+                logger.warn("Unable to inspect the {} with id {}", entityType, object.getId(), e);
+                return referencedObjects;
+            }
             predicate = objectHookRegistry.getObjectPredicate(context);
         }
         EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(entityManager, predicate);
