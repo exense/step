@@ -71,14 +71,14 @@ public class ReferenceFinder {
     }
 
     private List<Object> getReferencedObjectsMatchingRequest(String entityType, AbstractOrganizableObject object, FindReferencesRequest request) {
-        return getReferencedObjects(entityType, object).stream()
+        return getReferencedObjects(entityType, object, request.searchValue).stream()
                 .filter(o -> (o != null &&  !o.equals(object)))
                 .filter(o -> doesRequestMatch(request, o))
                 .collect(Collectors.toList());
     }
 
     // returns a (generic) set of objects referenced by a plan
-    private Set<Object> getReferencedObjects(String entityType, AbstractOrganizableObject object) {
+    private Set<Object> getReferencedObjects(String entityType, AbstractOrganizableObject object, String searchValue) {
         Set<Object> referencedObjects = new HashSet<>();
 
         // The references can be filled in two different ways due to the implementation:
@@ -94,7 +94,7 @@ public class ReferenceFinder {
             } catch (Exception e) {
                 //The getReferencedObjects method is invoked for all entities found in the system, for some entities (for example plans that belongs to a deleted project), the context cannot be rebuilt.
                 //These expected errors are ignored
-                logger.warn("Unable to inspect the {} with id {}", entityType, object.getId(), e);
+                logger.warn("Unable to inspect the {} with id {} while searching for usages of {}", entityType, object.getId(), searchValue, e);
                 return referencedObjects;
             }
             predicate = objectHookRegistry.getObjectPredicate(context);
