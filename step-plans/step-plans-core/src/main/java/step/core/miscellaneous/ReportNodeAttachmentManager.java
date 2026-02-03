@@ -113,10 +113,6 @@ public class ReportNodeAttachmentManager {
 		return w.toString().getBytes();
 	}
 	
-	public AttachmentMeta createAttachment(Throwable e) throws AttachmentQuotaException {
-		return createAttachment(exceptionToAttachment(e), "exception.log");
-	}
-	
 	public void attach(Throwable e, ReportNode node) {
 		attach(exceptionToAttachment(e), "exception.log", node);
 	}
