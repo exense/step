@@ -31,6 +31,7 @@ import java.util.Set;
 
 public interface ResourceManager {
 
+	// TODO (Step 30): These should be converted to a proper enum, e.g. something like 	enum ResourceType {pdfTestScenarioFile, secret, ...}
 	String RESOURCE_TYPE_PDF_TEST_SCENARIO_FILE = "pdfTestScenarioFile";
 	String RESOURCE_TYPE_SECRET = "secret";
 	String RESOURCE_TYPE_DATASOURCE = "datasource";
