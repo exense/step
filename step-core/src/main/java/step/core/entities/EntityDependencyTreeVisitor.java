@@ -28,6 +28,21 @@ public class EntityDependencyTreeVisitor {
 	// TODO declare it as non-static to avoid potential leaks
 	private static final Map<Class<?>, BeanInfo> beanInfoCache = new ConcurrentHashMap<>();
 
+	public enum VISIT_MODE {
+		/**
+		 * Visit one entity resolving its references. One reference is resolved to at most one entity. Resolved entities are NOT visited recursively.
+		 */
+		SINGLE,
+		/**
+		 * Visit one entity resolving its references. One reference is resolved to at most one entity. Resolved entities are visited recursively.
+		 */
+		RECURSIVE,
+		/**
+		 * Visit one entity resolving its references. One reference can be resolved to multiple entities. Resolved entities are NOT visited recursively.
+		 */
+		RESOLVE_ALL
+	}
+
 	public EntityDependencyTreeVisitor(EntityManager entityManager, ObjectPredicate objectPredicate) {
 		super();
 		this.entityManager = entityManager;
@@ -35,27 +50,27 @@ public class EntityDependencyTreeVisitor {
 	}
 
 	public void visitEntityDependencyTree(String entityName, String entityId, EntityTreeVisitor visitor,
-			boolean recursive) {
-		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, recursive, visitor);
+										  VISIT_MODE visitMode) {
+		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, visitMode, visitor);
 		visitEntity(entityName, entityId, context);
 	}
 
 	public void visitSingleObject(Object object, EntityTreeVisitor visitor, Set<String> messageCollector) {
-		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, false, visitor);
+		EntityTreeVisitorContext context = new EntityTreeVisitorContext(objectPredicate, VISIT_MODE.SINGLE, visitor);
 		resolveEntityDependencies(object, context);
 	}
 
 	public class EntityTreeVisitorContext {
 
-		private final boolean recursive;
+		private final VISIT_MODE visitMode;
 		private final ObjectPredicate objectPredicate;
 		private final EntityTreeVisitor visitor;
 		private final Map<String, Object> stack = new HashMap<>();
 
-		public EntityTreeVisitorContext(ObjectPredicate objectPredicate, boolean recursive, EntityTreeVisitor visitor) {
+		public EntityTreeVisitorContext(ObjectPredicate objectPredicate, VISIT_MODE visitMode, EntityTreeVisitor visitor) {
 			super();
 			this.objectPredicate = objectPredicate;
-			this.recursive = recursive;
+			this.visitMode = visitMode;
 			this.visitor = visitor;
 		}
 
@@ -64,11 +79,15 @@ public class EntityDependencyTreeVisitor {
 		}
 
 		public void visitEntity(String entityName, String entityId) {
-			if (recursive) {
+			if (VISIT_MODE.RECURSIVE.equals(visitMode)) {
 				EntityDependencyTreeVisitor.this.visitEntity(entityName, entityId, this);
 			}
 		}
-		
+
+		public void onResolvedEntity(String entityName, String entityId, Object entity) {
+			visitor.onResolvedEntity(entityName, entityId, entity);
+		}
+
 		public String resolvedEntityId(String entityName, String entityId) {
 			return visitor.onResolvedEntityId(entityName, entityId);
 		}
@@ -77,8 +96,8 @@ public class EntityDependencyTreeVisitor {
 			return visitor;
 		}
 
-		public boolean isRecursive() {
-			return recursive;
+		public VISIT_MODE getVisitMode() {
+			return visitMode;
 		}
 
 		protected Map<String, Object> getStack() {
@@ -249,7 +268,7 @@ public class EntityDependencyTreeVisitor {
 		}
 
 		// Visit the resolved entity
-		if (resolvedEntityId != null && visitorContext.isRecursive()) {
+		if (resolvedEntityId != null && VISIT_MODE.RECURSIVE.equals(visitorContext.getVisitMode())) {
 			visitEntity(entityName, resolvedEntityId, visitorContext);
 		}
 
