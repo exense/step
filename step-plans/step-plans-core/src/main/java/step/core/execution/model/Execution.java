@@ -248,7 +248,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 
 	/**
 	 * Returns the version of Step that created this execution. Note that this will be <tt>null</tt>
-	 * for Step versions prior to 3.29.3.
+	 * for Step versions prior to 3.29.2.
 	 * @return the Step version that created this execution
 	 */
 	public String getStepVersion() {
