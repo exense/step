@@ -20,7 +20,7 @@ package step.core;
 
 public interface Constants {
     String STEP_VERSION_STRING = "3.29.2";
-    Version STEP_API_VERSION = new Version(STEP_VERSION_STRING);
+    Version STEP_VERSION = new Version(STEP_VERSION_STRING);
 
     String STEP_YAML_SCHEMA_VERSION_STRING = "1.2.0";
     /**

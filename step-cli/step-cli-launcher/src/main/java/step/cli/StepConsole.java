@@ -190,7 +190,7 @@ public class StepConsole implements Callable<Integer> {
         }
 
         protected Version getVersion() {
-            return Constants.STEP_API_VERSION;
+            return Constants.STEP_VERSION;
         }
 
         @Override

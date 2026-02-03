@@ -34,7 +34,7 @@ public class ExecutionFactory {
 
 	public static Execution createExecution(ExecutionParameters executionParameters, ExecutiontTaskParameters executionTaskParameter, ObjectEnricher objectEnricher, Configuration configuration) {
 		Execution execution = new Execution();
-		execution.setStepVersion(Constants.STEP_VERSION_STRING);
+		execution.setStepVersion(Constants.STEP_VERSION);
 		execution.setStartTime(System.currentTimeMillis());
 		execution.setExecutionParameters(executionParameters);
 		execution.setStatus(ExecutionStatus.INITIALIZING);
