@@ -13,7 +13,7 @@ import static step.cli.ApCommand.AbstractApCommand.prepareFile;
 
 @CommandLine.Command(name = LibraryCommand.LIBRARY_COMMAND,
         mixinStandardHelpOptions = true,
-        version = Constants.STEP_API_VERSION_STRING,
+        version = Constants.STEP_VERSION_STRING,
         description = "The CLI interface to manage automation package libraries in Step",
         usageHelpAutoWidth = true
 )

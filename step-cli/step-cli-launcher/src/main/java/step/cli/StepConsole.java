@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 
 @Command(name = "step",
         mixinStandardHelpOptions = true,
-        version = Constants.STEP_API_VERSION_STRING,
+        version = Constants.STEP_VERSION_STRING,
         description = "The command-line interface (CLI) to interact with Step",
         usageHelpAutoWidth = true
 )
@@ -190,7 +190,7 @@ public class StepConsole implements Callable<Integer> {
         }
 
         protected Version getVersion() {
-            return Constants.STEP_API_VERSION;
+            return Constants.STEP_VERSION;
         }
 
         @Override

@@ -21,6 +21,7 @@ package step.core.execution;
 import java.util.HashMap;
 
 import ch.exense.commons.app.Configuration;
+import step.core.Constants;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
@@ -33,6 +34,7 @@ public class ExecutionFactory {
 
 	public static Execution createExecution(ExecutionParameters executionParameters, ExecutiontTaskParameters executionTaskParameter, ObjectEnricher objectEnricher, Configuration configuration) {
 		Execution execution = new Execution();
+		execution.setStepVersion(Constants.STEP_VERSION);
 		execution.setStartTime(System.currentTimeMillis());
 		execution.setExecutionParameters(executionParameters);
 		execution.setStatus(ExecutionStatus.INITIALIZING);
