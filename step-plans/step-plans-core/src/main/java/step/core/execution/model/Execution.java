@@ -54,6 +54,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	private ExecutiontTaskParameters executiontTaskParameters;
 	private String resolvedPlanRootNodeId;
 	private String agentsInvolved;
+	private String stepVersion;
 
 	public Execution() {
 		super();
@@ -243,6 +244,19 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 
 	public void setAgentsInvolved(String agentsInvolved) {
 		this.agentsInvolved = agentsInvolved;
+	}
+
+	/**
+	 * Returns the version of Step that created this execution. Note that this will be <tt>null</tt>
+	 * for Step versions prior to 3.29.3.
+	 * @return the Step version that created this execution
+	 */
+	public String getStepVersion() {
+		return stepVersion;
+	}
+
+	public void setStepVersion(String stepVersion) {
+		this.stepVersion = stepVersion;
 	}
 
 	@Override
