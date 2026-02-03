@@ -44,6 +44,8 @@ public class Resource extends AbstractTrackedObject implements EnricheableObject
 
 	protected Long originTimestamp;
 
+	protected ObjectId executionId;
+
 	public Resource() {
 		this(null);
 	}
@@ -106,6 +108,14 @@ public class Resource extends AbstractTrackedObject implements EnricheableObject
 
 	public void setOriginTimestamp(Long originTimestamp) {
 		this.originTimestamp = originTimestamp;
+	}
+
+	public ObjectId getExecutionId() {
+		return executionId;
+	}
+
+	public void setExecutionId(ObjectId executionId) {
+		this.executionId = executionId;
 	}
 
 	public void applyNewCreator(String actorUser){

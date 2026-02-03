@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,15 +96,6 @@ public class ReportNodeAttachmentManager {
 		}		
 	}
 	
-	public static class AttachmentQuotaException extends Exception {
-
-		private static final long serialVersionUID = 4089543269056812252L;
-
-		public AttachmentQuotaException(String message) {
-			super(message);
-		}
-	}
-	
 	private static byte[] exceptionToAttachment(Throwable e) {
 		StringWriter w = new StringWriter();
 		e.printStackTrace(new PrintWriter(w));
@@ -140,10 +132,11 @@ public class ReportNodeAttachmentManager {
 				bos.write(content);
 				bos.close();
 			} catch (IOException ex) {
-				logger.error("Unable to write exception.log", ex);
-				throw new RuntimeException("Error while ", ex);
+				logger.error("Unable to write {}", filename, ex);
+				throw new RuntimeException("Error while saving attachment " + filename, ex);
 			} finally {
 				try {
+					container.getResource().setExecutionId(new ObjectId(context.getExecutionId()));
 					container.save();
 				} catch (IOException | InvalidResourceFormatException e) {
 					logger.error("Error while closing resource container", e);
