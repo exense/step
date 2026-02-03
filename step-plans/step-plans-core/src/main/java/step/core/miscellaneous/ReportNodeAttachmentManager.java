@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
-import step.core.execution.model.ExecutionStatus;
 import step.core.variables.UndefinedVariableException;
 import step.core.variables.VariablesManager;
 import step.resources.*;
