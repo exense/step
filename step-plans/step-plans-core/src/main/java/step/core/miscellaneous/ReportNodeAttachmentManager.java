@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,8 +65,9 @@ public class ReportNodeAttachmentManager {
 		}
 	}
 
-	// Warning: only use this constructor if you know that you will only use the method createAttachmentWithoutQuotaCheck. 
-	// The other methods need an ExecutionContext to check the quota usage
+	// Warning: only use this constructor if you know that you will only use the method createResourceWithoutQuotaCheck,
+	// with resource types DIFFERENT from 'attachment' (e.g. 'temp'). Storing attachments, and
+	// the other methods, need an ExecutionContext to link attachments to an execution, and to check the quota usage.
 	public ReportNodeAttachmentManager(ResourceManager resourceManager) {
 		super();
 		this.context = null;
@@ -95,15 +97,6 @@ public class ReportNodeAttachmentManager {
 		}		
 	}
 	
-	public static class AttachmentQuotaException extends Exception {
-
-		private static final long serialVersionUID = 4089543269056812252L;
-
-		public AttachmentQuotaException(String message) {
-			super(message);
-		}
-	}
-	
 	private static byte[] exceptionToAttachment(Throwable e) {
 		StringWriter w = new StringWriter();
 		e.printStackTrace(new PrintWriter(w));
@@ -120,7 +113,7 @@ public class ReportNodeAttachmentManager {
 	
 	public AttachmentMeta createAttachment(byte[] content, String filename, String mimeType) {
 		if(checkAndUpateAttachmentQuota()) {
-			return createAttachmentWithoutQuotaCheck(content, filename, mimeType);
+			return createResourceWithoutQuotaCheck(ResourceManager.RESOURCE_TYPE_ATTACHMENT, content, filename, mimeType);
 		} else {
 			String message = String.format("The attachment %s has been skipped because the execution generated more than" +
 					" the maximum number of attachments permitted. This quota can be changed by setting the variable %s with an higher value.", filename, QUOTA_VARNAME);
@@ -131,20 +124,28 @@ public class ReportNodeAttachmentManager {
 		}
 	}
 
-	public AttachmentMeta createAttachmentWithoutQuotaCheck(byte[] content, String filename, String mimeType) {
+	public AttachmentMeta createResourceWithoutQuotaCheck(String resourceType, byte[] content, String filename, String mimeType) {
 		ResourceRevisionContainer container;
 		try {
-			container = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_ATTACHMENT, filename, null);
+			if (ResourceManager.RESOURCE_TYPE_ATTACHMENT.equals(resourceType) && context == null) {
+				throw new IllegalStateException("No context present, unable to create attachment");
+			}
+			container = resourceManager.createResourceContainer(resourceType, filename, null);
+			if (ResourceManager.RESOURCE_TYPE_ATTACHMENT.equals(resourceType)) {
+				container.getResource().setExecutionId(new ObjectId(context.getExecutionId()));
+			}
 			try {
 				BufferedOutputStream bos = new BufferedOutputStream(container.getOutputStream());
 				bos.write(content);
 				bos.close();
 			} catch (IOException ex) {
-				logger.error("Unable to write exception.log", ex);
-				throw new RuntimeException("Error while ", ex);
+				logger.error("Unable to write {}", filename, ex);
+				throw new RuntimeException("Error while saving attachment " + filename, ex);
 			} finally {
 				try {
-					container.save();
+					if (container != null) {
+						container.save();
+					}
 				} catch (IOException | InvalidResourceFormatException e) {
 					logger.error("Error while closing resource container", e);
 				}
