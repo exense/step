@@ -11,10 +11,14 @@ import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
+import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
 
 public class ReportNodeTimeSeries implements AutoCloseable {
 
@@ -40,6 +44,15 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         timeSeries = new TimeSeriesBuilder().registerCollections(timeSeriesCollections).build();
         ingestionPipeline = timeSeries.getIngestionPipeline();
         timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
+        IndexField beginIndexField = new IndexField(TIMESTAMP_ATTRIBUTE, Order.ASC, Long.class);
+        timeSeries.createCompoundIndex(new LinkedHashSet<>(List.of(
+                new IndexField(ATTRIBUTES_PREFIX + "taskId", Order.ASC, String.class),
+                beginIndexField
+        )));
+        timeSeries.createCompoundIndex(new LinkedHashSet<>(List.of(
+                new IndexField(ATTRIBUTES_PREFIX + "planId", Order.ASC, String.class),
+                beginIndexField
+        )));
         this.ingestionEnabled = ingestionEnabled;
     }
 
@@ -99,7 +112,7 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         Filter filter = Filters.equals("attributes." + EXECUTION_ID, executionId);
         Set<String> groupBy = Set.of(groupLevel1, groupLevel2);
         TimeSeriesAggregationQueryBuilder queryBuilder = new TimeSeriesAggregationQueryBuilder()
-                .withOptimizationType(TimeSeriesOptimizationType.MOST_ACCURATE)
+                .withOptimizationType(TimeSeriesOptimizationType.MOST_EFFICIENT)
                 .withFilter(filter)
                 .withGroupDimensions(groupBy)
                 .split(1);

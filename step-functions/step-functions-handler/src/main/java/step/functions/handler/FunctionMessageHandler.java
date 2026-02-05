@@ -29,8 +29,10 @@ import step.grid.agent.AgentTokenServices;
 import step.grid.agent.handler.AbstractMessageHandler;
 import step.grid.agent.handler.context.OutputMessageBuilder;
 import step.grid.agent.tokenpool.AgentTokenWrapper;
+import step.grid.agent.tokenpool.TokenReservationSession;
+import step.grid.bootstrap.ResourceExtractor;
 import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.contextbuilder.LocalResourceApplicationContextFactory;
+import step.grid.contextbuilder.ApplicationContextControl;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
@@ -39,16 +41,16 @@ import step.grid.threads.NamedThreadFactory;
 import step.livereporting.client.LiveReportingClient;
 import step.reporting.LiveReporting;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
@@ -58,7 +60,6 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	public static final String FUNCTION_HANDLER_KEY = "$functionhandler";
 	public static final String FUNCTION_TYPE_KEY = "$functionType";
-	public static final String BRANCH_HANDLER_INITIALIZER = "handler-initializer";
 
 	// Cached object mapper for message payload serialization
 	private final ObjectMapper mapper;
@@ -69,6 +70,8 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 	private ApplicationContextBuilder applicationContextBuilder;
 
 	public FunctionHandlerFactory functionHandlerFactory;
+	private File functionHandlerInitializerJar;
+	private URLClassLoader functionHandlerInitializerClassloader;
 
 	public FunctionMessageHandler() {
 		super();
@@ -110,9 +113,10 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 				agentTokenServices.getApplicationContextBuilder().getApplicationContextConfiguration());
 
 		applicationContextBuilder.forkCurrentContext(AbstractFunctionHandler.FORKED_BRANCH);
-		applicationContextBuilder.forkCurrentContext(BRANCH_HANDLER_INITIALIZER);
 
 		functionHandlerFactory = new FunctionHandlerFactory(applicationContextBuilder, agentTokenServices.getFileManagerClient());
+		functionHandlerInitializerJar = ResourceExtractor.extractResource(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar");
+		functionHandlerInitializerClassloader = new FileApplicationContextFactory(functionHandlerInitializerJar).buildClassLoader(this.getClass().getClassLoader());
 	}
 
 	@Override
@@ -145,7 +149,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 			JavaType javaType = mapper.getTypeFactory().constructParametricType(Input.class, functionHandler.getInputPayloadClass());
 			Input<?> input = mapper.readValue(mapper.treeAsTokens(inputMessage.getPayload()), javaType);
 
-			LiveReporting liveReporting = initializeLiveReporting(input.getProperties());
+			LiveReporting liveReporting = initializeLiveReporting(input.getProperties(), token.getTokenReservationSession());
 			functionHandler.setLiveReporting(liveReporting);
 
 			// Handle the input
@@ -176,9 +180,23 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 		});
 	}
 
-	private LiveReporting initializeLiveReporting(Map<String, String> properties) throws Exception {
-		applicationContextBuilder.pushContext(BRANCH_HANDLER_INITIALIZER, new LocalResourceApplicationContextFactory(this.getClass().getClassLoader(), "step-functions-handler-initializer.jar"), true);
-		return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> {
+	public <T> T runInContext(ClassLoader classLoader, Callable<T> runnable) throws Exception {
+		ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
+		Thread.currentThread().setContextClassLoader(classLoader);
+
+		Object var4;
+		try {
+			var4 = runnable.call();
+		} finally {
+			Thread.currentThread().setContextClassLoader(previousCl);
+		}
+
+		return (T)var4;
+	}
+
+	private LiveReporting initializeLiveReporting(Map<String, String> properties, TokenReservationSession tokenReservationSession) throws Exception {
+
+		return runInContext(functionHandlerInitializerClassloader, () -> {
 			// There's no easy way to do this in the AbstractFunctionHandler itself, because
 			// the only place where the Input properties are guaranteed to be available is in the (abstract)
 			// handle() method (which would then have to be implemented in all subclasses). So we do it here.
@@ -196,7 +214,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 					liveReportingClientClass.getClassLoader(), new Class[]{LiveReportingClient.class},
 					(proxy, method, args) -> {
 						try {
-							return applicationContextBuilder.runInContext(BRANCH_HANDLER_INITIALIZER, () -> method.invoke(liveReportingClient, args));
+							return runInContext(functionHandlerInitializerClassloader, () -> method.invoke(liveReportingClient, args));
 						} catch (InvocationTargetException ite) {
 							// rethrow the original exception instead of InvocationTargetException, (usually) conforming to the method's throws signature unless it's a RuntimeException or similar
 							throw ite.getCause();
@@ -250,15 +268,30 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
 
 	@Override
 	public void close() throws Exception {
+		Object webSocketContainer = webSocketContainerRef.getAndSet(null);
+		if(webSocketContainer != null) {
+			// The stop method of the websocket container has to be closed within its own context class loader
+			ClassLoader previousCl = Thread.currentThread().getContextClassLoader();
+			Class<?> webSocketContainerClass = webSocketContainer.getClass();
+			Thread.currentThread().setContextClassLoader(webSocketContainerClass.getClassLoader());
+			try {
+				webSocketContainerClass.getMethod("stop").invoke(webSocketContainer);
+			} finally {
+				Thread.currentThread().setContextClassLoader(previousCl);
+			}
+		}
+
 		if (applicationContextBuilder != null) {
 			applicationContextBuilder.close();
 		}
 		if (liveReportingExecutor != null) {
 			liveReportingExecutor.shutdownNow();
 		}
-		Object webSocketContainer = webSocketContainerRef.getAndSet(null);
-		if (webSocketContainer != null) {
-			webSocketContainer.getClass().getMethod("stop").invoke(webSocketContainer);
+		if (functionHandlerInitializerClassloader != null) {
+			functionHandlerInitializerClassloader.close();
+		}
+		if (functionHandlerInitializerJar != null) {
+			Files.deleteIfExists(functionHandlerInitializerJar.toPath());
 		}
 	}
 }
