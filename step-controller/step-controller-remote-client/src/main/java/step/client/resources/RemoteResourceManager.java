@@ -188,6 +188,21 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
 	}
 
 	@Override
+	public void deleteAttachmentsForExecutionId(String executionId) {
+		Map<String, String> criteria = Map.of(
+				"resourceType", ResourceManager.RESOURCE_TYPE_ATTACHMENT,
+				"executionId", executionId
+		);
+		for (Resource resource: this.findManyByCriteria(criteria)) {
+			try {
+				deleteResource(resource.getId().toHexString());
+			} catch (Exception e) {
+				logger.warn("Error while cleaning attachments for execution {}: unable to delete attachment {}", executionId, resource.getId().toHexString(), e);
+			}
+		}
+	}
+
+	@Override
 	public List<Resource> findManyByCriteria(Map<String, String> criteria) {
 		Builder b = requestBuilder("/rest/resources/find");
 		Entity<Map<String, String>> entity = Entity.entity(criteria, MediaType.APPLICATION_JSON);

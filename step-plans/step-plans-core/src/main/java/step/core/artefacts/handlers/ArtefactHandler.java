@@ -39,6 +39,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.execution.ReportNodeCache;
 import step.core.execution.ReportNodeEventListener;
+import step.core.execution.model.ExecutionStatus;
 import step.core.functions.FunctionGroupHandle;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
@@ -135,7 +136,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 			}
 		} catch (Throwable e) {
 			getListOfArtefactsNotInitialized().add(artefact.getId().toString());
-			failWithException(reportNode, e, false);
+			failWithException(reportNode, e);
 		}
 		
 		if(artefact.isCreateSkeleton() && !reportNode.isOrphan()) {
@@ -631,21 +632,14 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 	}
 	
 	protected void failWithException(ReportNode result, Throwable e) {
-		failWithException(result, e, true);
-	}
-	
-	protected void failWithException(ReportNode result, Throwable e, boolean generateAttachment) {
-		failWithException(result, null, e, generateAttachment);
-	}
-	
-	protected void failWithException(ReportNode result, String errorMsg, Throwable e, boolean generateAttachment) {
 		if(logger.isDebugEnabled()) {
 			logger.debug("Error in node", e);
 		}
-		if(generateAttachment && !(e instanceof ValidationException)) {			
+		// Skip attachment creation in skeleton phase and for validation exceptions
+		if(context.getStatus() != ExecutionStatus.ESTIMATING && !(e instanceof ValidationException)) {
 			reportNodeAttachmentManager.attach(e, result);
 		}
-		result.setError(errorMsg!=null?errorMsg+":"+e.getMessage():e.getMessage(), 0, true);	
+		result.setError(e.getMessage(), 0, true);
 		result.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
 	}
 	

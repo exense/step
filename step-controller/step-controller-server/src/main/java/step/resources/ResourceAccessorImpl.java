@@ -29,6 +29,7 @@ public class ResourceAccessorImpl extends AbstractResourceAccessor implements Re
 
 	protected void createIndexesIfNeeded() {
 		createOrUpdateIndex("resourceType");
+		createOrUpdateCompoundIndex("executionId", "resourceType");
 	}
 
 }

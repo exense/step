@@ -249,7 +249,7 @@ public class StepConsoleTest {
 
         Histories histories = new Histories(deployExecuteHistory, deployLibraryExecRegistry, remoteExecuteHistory, localExecuteHistory);
 
-        Version actualVersion = Constants.STEP_API_VERSION;
+        Version actualVersion = Constants.STEP_VERSION;
         Version outdatedMajorVersion = new Version(actualVersion.getMajor() - 1, actualVersion.getMinor(), 0);
         Version outdatedMinorVersion = new Version(actualVersion.getMajor(), actualVersion.getMinor() == 0 ? 1 : actualVersion.getMinor() - 1, 0);
 
@@ -477,7 +477,7 @@ public class StepConsoleTest {
         @Override
         protected ControllerServicesClient createControllerServicesClient() {
             ControllerServicesClient mockedClient = Mockito.mock(ControllerServicesClient.class);
-            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_API_VERSION);
+            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_VERSION);
             return mockedClient;
         }
     }
@@ -520,7 +520,7 @@ public class StepConsoleTest {
         @Override
         protected ControllerServicesClient createControllerServicesClient() {
             ControllerServicesClient mockedClient = Mockito.mock(ControllerServicesClient.class);
-            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_API_VERSION);
+            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_VERSION);
             return mockedClient;
         }
     }
@@ -591,7 +591,7 @@ public class StepConsoleTest {
         @Override
         protected ControllerServicesClient createControllerServicesClient() {
             ControllerServicesClient mockedClient = Mockito.mock(ControllerServicesClient.class);
-            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_API_VERSION);
+            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_VERSION);
             return mockedClient;
         }
     }
