@@ -262,7 +262,7 @@ public class ResourceManagerImplTest {
 			// We add a spurious execution id here (NOT normally present on non-attachment resources).
 			// This is just to check that non-attachment resources will NOT be deleted even if they happen to
 			// have an executionId for whichever reason.
-			r.executionId = executionId;
+			r.setExecutionId(executionId);
 			resourceManager.saveResource(r);
 		}
 		// create 5 attachment resources WITHOUT execution id
@@ -272,7 +272,7 @@ public class ResourceManagerImplTest {
 		// create 7 attachment resources WITH execution id -- these are the ones that should be deleted.
 		for (int i = 0; i < 7; i++) {
 			Resource r = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_ATTACHMENT, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, "testUser");
-			r.executionId = executionId;
+			r.setExecutionId(executionId);
 			resourceManager.saveResource(r);
 		}
 		assertEquals(15, resourceManager.resourceAccessor.stream().count());
