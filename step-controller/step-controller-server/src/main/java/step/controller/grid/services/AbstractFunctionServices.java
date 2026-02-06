@@ -41,7 +41,6 @@ import step.core.deployment.ControllerServiceException;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.entities.EntityConstants;
-import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.framework.server.Session;
@@ -63,7 +62,6 @@ import step.grid.TokenWrapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static step.core.table.ActivableEntityTableEnricher.enrichBindingsWithSession;
 
@@ -71,8 +69,6 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
 
 	private static final Logger log = LoggerFactory.getLogger(AbstractFunctionServices.class);
 
-	protected ReportNodeAttachmentManager reportNodeAttachmentManager;
-	
 	protected FunctionAccessor functionAccessor;
 	protected FunctionManager functionManager;
 
@@ -89,7 +85,6 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
 	@PostConstruct
 	public void init() throws Exception {
 		super.init();
-		reportNodeAttachmentManager = new ReportNodeAttachmentManager(getContext().getResourceManager());
 		functionAccessor = getContext().get(FunctionAccessor.class);
 		functionManager = getContext().get(FunctionManager.class);
 		functionExecutionService = getContext().get(FunctionExecutionService.class);

@@ -23,6 +23,8 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.collections.Filter;
+import step.core.collections.Filters;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 
@@ -466,5 +468,24 @@ public class ResourceManagerImpl implements ResourceManager {
 	@Override
 	public String getResourcesRootPath() {
 		return resourceRootFolder.getPath();
+	}
+
+	@Override
+	public void deleteAttachmentsForExecutionId(String executionId) {
+		// This implementation is more efficient than findByManyCriteria + deleteResource
+		// (as the RemoteResourceManager needs to do) because it avoids an in-memory list
+		Filter filter = Filters.and(List.of(
+				Filters.equals("resourceType", ResourceManager.RESOURCE_TYPE_ATTACHMENT),
+				Filters.equals("executionId", executionId)
+		));
+		try (Stream<Resource> attachments = resourceAccessor.getCollectionDriver().findLazy(filter, null, null, null, 0)) {
+			attachments.forEach(resource -> {
+				try {
+					deleteResource(resource.getId().toHexString());
+				} catch (Exception e) {
+					logger.warn("Error while cleaning attachments for execution {}: unable to delete attachment {}", executionId, resource.getId().toHexString(), e);
+				}
+			});
+		}
 	}
 }
