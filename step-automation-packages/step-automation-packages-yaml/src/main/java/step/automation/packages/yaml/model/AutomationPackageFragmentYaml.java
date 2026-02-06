@@ -22,6 +22,7 @@ import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -40,4 +41,14 @@ public interface AutomationPackageFragmentYaml {
     default <T> List<T> getAdditionalField(String k) {
         return (List<T>) getAdditionalFields().get(k);
     }
+
+    URL getFragmentUrl();
+
+    void setFragmentUrl(URL url);
+
+    List<AutomationPackageFragmentYaml> getChildren();
+
+    AutomationPackageFragmentYaml getParent();
+
+    void setParent(AutomationPackageFragmentYaml parent);
 }

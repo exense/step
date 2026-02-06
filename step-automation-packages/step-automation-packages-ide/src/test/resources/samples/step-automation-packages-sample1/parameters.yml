@@ -1,0 +1,14 @@
+parameters:
+  - key: myKey
+    value: myValue
+    description: some description
+    activationScript: abc
+    priority: 10
+    protectedValue: true
+    scope: APPLICATION
+    scopeEntity: entity
+  - key: mySimpleKey
+    value: mySimpleValue
+  - key: myDynamicParam
+    value:
+      expression: "mySimpleKey"
