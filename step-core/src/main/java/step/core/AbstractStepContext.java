@@ -112,10 +112,13 @@ public abstract class AbstractStepContext extends AbstractContext {
 
 	@Override
 	public void close() throws IOException {
-		super.close();
-		// Cleanup the default resource manager
-		if(localResourceManager != null) {
-			localResourceManager.cleanup();
+		try {
+			super.close();
+		} finally {
+			// Cleanup the default resource manager
+			if (localResourceManager != null) {
+				localResourceManager.cleanup();
+			}
 		}
 	}
 }
