@@ -183,4 +183,5 @@ public interface ResourceManager {
 		return Paths.get(basePath, resourceType, resourceId, revisionId, fileName);
 	}
 
+	void deleteAttachmentsForExecutionId(String executionId);
 }

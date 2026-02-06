@@ -44,7 +44,7 @@ public class Resource extends AbstractTrackedObject implements EnricheableObject
 
 	protected Long originTimestamp;
 
-	protected ObjectId executionId;
+	protected String executionId;
 
 	public Resource() {
 		this(null);
@@ -110,11 +110,11 @@ public class Resource extends AbstractTrackedObject implements EnricheableObject
 		this.originTimestamp = originTimestamp;
 	}
 
-	public ObjectId getExecutionId() {
+	public String getExecutionId() {
 		return executionId;
 	}
 
-	public void setExecutionId(ObjectId executionId) {
+	public void setExecutionId(String executionId) {
 		this.executionId = executionId;
 	}
 

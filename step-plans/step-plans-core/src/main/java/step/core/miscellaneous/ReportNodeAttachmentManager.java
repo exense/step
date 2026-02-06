@@ -132,7 +132,7 @@ public class ReportNodeAttachmentManager {
 			}
 			container = resourceManager.createResourceContainer(resourceType, filename, null);
 			if (ResourceManager.RESOURCE_TYPE_ATTACHMENT.equals(resourceType)) {
-				container.getResource().setExecutionId(new ObjectId(context.getExecutionId()));
+				container.getResource().setExecutionId(context.getExecutionId());
 			}
 			try {
 				BufferedOutputStream bos = new BufferedOutputStream(container.getOutputStream());
