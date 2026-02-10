@@ -201,8 +201,11 @@ public class StepConsole implements Callable<Integer> {
     }
 
     public static void main(String... args) {
-        int exitCode = executeMain(ApCommand.ApDeployCommand::new, ApCommand.ApExecuteCommand::new, LibraryCommand.DeployLibraryCommand::new, true, args);
-        System.exit(exitCode);
+        System.exit(executeMain(args));
+    }
+
+    static int executeMain(String... args) {
+        return executeMain(ApCommand.ApDeployCommand::new, ApCommand.ApExecuteCommand::new, LibraryCommand.DeployLibraryCommand::new, true, args);
     }
 
     static int executeMain(Supplier<ApCommand.ApDeployCommand> deployCommandSupplier,

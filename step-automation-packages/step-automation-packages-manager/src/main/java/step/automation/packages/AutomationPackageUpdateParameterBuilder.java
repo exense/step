@@ -188,10 +188,17 @@ public class AutomationPackageUpdateParameterBuilder {
     }
 
     /**
-     * helper setting automatically the properties to match local use cases
+     * helper setting automatically the properties to match local Junit Runner executions
      */
     public AutomationPackageUpdateParameterBuilder forLocalExecution() {
         this.isLocalPackage = true;
+        return this.forCLILocalExecution();
+    }
+
+    /**
+     * helper setting automatically the properties to match CLI local executions
+     */
+    public AutomationPackageUpdateParameterBuilder forCLILocalExecution() {
         this.objectPredicate = o -> true;
         this.writeAccessValidator = NO_CHECKS_VALIDATOR;
         this.explicitOldId = null;
