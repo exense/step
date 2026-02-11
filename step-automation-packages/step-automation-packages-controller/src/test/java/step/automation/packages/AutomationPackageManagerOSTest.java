@@ -44,6 +44,7 @@ import step.plugins.node.NodeFunction;
 import step.repositories.artifact.ResolvedMavenArtifact;
 import step.repositories.artifact.SnapshotMetadata;
 import step.resources.*;
+import step.threadpool.ThreadPoolPlugin;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -1589,8 +1590,10 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
     }
 
     protected ExecutionEngine.Builder newExecutionEngineBuilder() {
-        ExecutionEngine.Builder builder = ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(), new FunctionPlugin(),
+        ExecutionEngine.Builder builder = ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(),
+                new FunctionPlugin(),
                 new GeneralScriptFunctionPlugin(),
+                new ThreadPoolPlugin(),
                 new AutomationPackageExecutionPlugin(automationPackageLocks)));
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.put(FunctionAccessor.class, functionAccessor);

@@ -20,6 +20,10 @@ plans:
                 excel:
                   file: "excel/excel1.xlsx"
                   worksheet: "myWorksheet"
+              children:
+                - echo:
+                    text:
+                      expression: "row"
   - name: "Test excel plan in before section"
     root:
       sequence:
