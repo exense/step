@@ -10,6 +10,7 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
+import step.artefacts.DataSetArtefact;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
 import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
@@ -28,6 +29,7 @@ import step.core.maven.MavenArtifactIdentifier;
 import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.*;
+import step.datapool.DataSet;
 import step.datapool.excel.ExcelDataPool;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.Function;
@@ -280,7 +282,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             result = manager.createOrUpdateAutomationPackage(parameters).getId();
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(1, storedPlans.size());
+            Assert.assertEquals(2, storedPlans.size());
             Plan forEachExcelPlan = storedPlans.get(0);
             Assert.assertEquals("Test excel plan", forEachExcelPlan.getAttribute(AbstractOrganizableObject.NAME));
             ForEachBlock forEachArtefact = (ForEachBlock) forEachExcelPlan.getRoot().getChildren().get(0);
@@ -292,6 +294,23 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             JMeterFunction jMeterFunction = (JMeterFunction) storedFunctions.get(0);
             DynamicValue<String> jmeterTestplanRef = jMeterFunction.getJmeterTestplan();
             checkUploadedResource(jmeterTestplanRef, "jmeterProject1.xml");
+
+            try (ExecutionEngine executionEngine = newExecutionEngineBuilder().build()) {
+                PlanRunnerResult execute = executionEngine.execute(forEachExcelPlan);
+                assertEquals(ReportNodeStatus.PASSED, execute.getResult());
+            }
+
+            //Validate second plan with dataset in before section
+            Plan planWithDatasetInBefore = storedPlans.get(1);
+            Assert.assertEquals("Test excel plan in before section", planWithDatasetInBefore.getAttribute(AbstractOrganizableObject.NAME));
+            DataSetArtefact dataSet = (DataSetArtefact) planWithDatasetInBefore.getRoot().getBefore().getSteps().get(0);
+            ExcelDataPool excelDataPool2 = (ExcelDataPool) dataSet.getDataSource();
+            checkUploadedResource(excelDataPool2.getFile(), "excel1.xlsx");
+
+            try (ExecutionEngine executionEngine = newExecutionEngineBuilder().build()) {
+                PlanRunnerResult execute = executionEngine.execute(planWithDatasetInBefore);
+                assertEquals(ReportNodeStatus.PASSED, execute.getResult());
+            }
         }
     }
 
@@ -1322,7 +1341,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
     private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
         FileResolver fileResolver = new FileResolver(resourceManager);
         String resourceReferenceString = fileResourceReference.get();
-        Assert.assertTrue(resourceReferenceString.startsWith(FileResolver.RESOURCE_PREFIX));
+        Assert.assertTrue("Uploaded resources does not have the RESOURCE_PREFIX", resourceReferenceString.startsWith(FileResolver.RESOURCE_PREFIX));
         String resourceId = FileResolver.resolveResourceId(resourceReferenceString);
         File excelFile = fileResolver.resolve(resourceId);
         Assert.assertNotNull(excelFile);
