@@ -98,6 +98,7 @@ public class EntityManager  {
 	 */
 	public void getEntitiesReferences(String entityName, String entityId, ObjectPredicate objectPredicate, EntityReferencesMap references, boolean recursive) {
 		EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
+		EntityDependencyTreeVisitor.VISIT_MODE visitMode = recursive ? EntityDependencyTreeVisitor.VISIT_MODE.RECURSIVE : EntityDependencyTreeVisitor.VISIT_MODE.SINGLE;
 		entityDependencyTreeVisitor.visitEntityDependencyTree(entityName, entityId, new EntityTreeVisitor() {
 			
 			@Override
@@ -114,7 +115,7 @@ public class EntityManager  {
 			public String onResolvedEntityId(String entityName, String resolvedEntityId) {
 				return null;
 			}
-		}, recursive);
+		}, visitMode);
 	}
 
 	public void updateReferences(Object entity, Map<String, String> references, ObjectPredicate objectPredicate, Set<String> messageCollector) {
