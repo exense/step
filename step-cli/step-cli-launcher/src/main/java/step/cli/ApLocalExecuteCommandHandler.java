@@ -70,7 +70,7 @@ public class ApLocalExecuteCommandHandler {
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(automationPackageManager.getAutomationPackageReaderRegistry(),
                         is, apFile.getName(), libFromInputStreamProvider);
                 AutomationPackageUpdateParameter localCreateParameters = new AutomationPackageUpdateParameterBuilder().withCreateOnly()
-                        .forCLILocalExecution().build();
+                        .forLocalExecution().build();
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                         automationPackageProvider, libFromInputStreamProvider, localCreateParameters).getId();
 
