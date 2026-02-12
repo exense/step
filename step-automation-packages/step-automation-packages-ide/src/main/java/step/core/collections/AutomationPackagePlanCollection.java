@@ -47,7 +47,7 @@ public class AutomationPackagePlanCollection extends InMemoryCollection<Plan> im
 
     @Override
     public void remove(Filter filter) {
-        find(filter, null, null, null, 100).forEach(fragmentManager::removePlan);
+        find(filter, null, null, null, Integer.MAX_VALUE).forEach(fragmentManager::removePlan);
         super.remove(filter);
     }
 }
