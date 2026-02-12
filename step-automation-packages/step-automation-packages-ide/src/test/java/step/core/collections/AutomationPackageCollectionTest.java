@@ -31,14 +31,10 @@ import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.scheduler.AutomationPackageSchedulerHook;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
-import step.core.scheduler.ExecutionScheduler;
-import step.core.scheduler.automation.AutomationPackageSchedule;
-import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
 import step.parameter.ParameterManager;
 import step.parameter.automation.AutomationPackageParametersRegistration;
 
@@ -56,8 +52,6 @@ import static org.junit.Assert.*;
 
 public class AutomationPackageCollectionTest {
 
-
-
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageCollectionTest.class);
 
     private final JavaAutomationPackageReader reader;
@@ -70,10 +64,6 @@ public class AutomationPackageCollectionTest {
     public AutomationPackageCollectionTest() throws AutomationPackageReadingException {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
-
-        AutomationPackageScheduleRegistration.registerSerialization(serializationRegistry);
-
-        hookRegistry.register(AutomationPackageSchedule.FIELD_NAME_IN_AP, new AutomationPackageSchedulerHook(Mockito.mock(ExecutionScheduler.class)));
 
         // accessor is not required in this test - we only read the yaml and don't store the result anywhere
         AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, Mockito.mock(ParameterManager.class));
