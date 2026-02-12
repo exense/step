@@ -161,8 +161,8 @@ public class AutomationPackagePlansAttributesApplier {
 
     private void applySpecialValuesForChildrenAndBeforeAfterSections(AbstractArtefact parent, StagingAutomationPackageContext apContext) {
         applySpecialValuesForSteps(parent.getChildren(), apContext);
-        applySpecialValuesForSteps(Optional.ofNullable(parent.getBefore()).map(ChildrenBlock::getSteps).orElse(null), apContext);
-        applySpecialValuesForSteps(Optional.ofNullable(parent.getAfter()).map(ChildrenBlock::getSteps).orElse(null), apContext);
+        Optional.ofNullable(parent.getBefore()).ifPresent(b -> applySpecialValuesForSteps(b.getSteps(), apContext));
+        Optional.ofNullable(parent.getAfter()).ifPresent(a -> applySpecialValuesForSteps(a.getSteps(), apContext));
     }
 
     private void applySpecialValuesForSteps(List<AbstractArtefact> steps, StagingAutomationPackageContext apContext) {

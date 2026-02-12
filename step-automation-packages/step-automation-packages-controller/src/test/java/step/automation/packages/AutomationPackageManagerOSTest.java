@@ -296,10 +296,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             DynamicValue<String> jmeterTestplanRef = jMeterFunction.getJmeterTestplan();
             checkUploadedResource(jmeterTestplanRef, "jmeterProject1.xml");
 
-            try (ExecutionEngine executionEngine = newExecutionEngineBuilder().build()) {
-                PlanRunnerResult execute = executionEngine.execute(forEachExcelPlan);
-                assertEquals(ReportNodeStatus.PASSED, execute.getResult());
-            }
+            executePlanWithAssertion(forEachExcelPlan);
 
             //Validate second plan with dataset in before section
             Plan planWithDatasetInBefore = storedPlans.get(1);
@@ -308,10 +305,14 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             ExcelDataPool excelDataPool2 = (ExcelDataPool) dataSet.getDataSource();
             checkUploadedResource(excelDataPool2.getFile(), "excel1.xlsx");
 
-            try (ExecutionEngine executionEngine = newExecutionEngineBuilder().build()) {
-                PlanRunnerResult execute = executionEngine.execute(planWithDatasetInBefore);
-                assertEquals(ReportNodeStatus.PASSED, execute.getResult());
-            }
+            executePlanWithAssertion(planWithDatasetInBefore);
+        }
+    }
+
+    private void executePlanWithAssertion(Plan planWithDatasetInBefore) {
+        try (ExecutionEngine executionEngine = newExecutionEngineBuilder().build()) {
+            PlanRunnerResult execute = executionEngine.execute(planWithDatasetInBefore);
+            assertEquals(ReportNodeStatus.PASSED, execute.getResult());
         }
     }
 
