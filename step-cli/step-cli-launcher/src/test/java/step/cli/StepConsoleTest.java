@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static step.cli.StepConsole.executeMain;
+
 public class StepConsoleTest {
 
     private static final Logger log = LoggerFactory.getLogger(StepConsoleTest.class);
@@ -344,6 +346,12 @@ public class StepConsoleTest {
     }
 
     @Test
+    public void testLocalExecutionNoMock(){
+        int res = executeMain("ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local");
+        Assert.assertEquals(0, res);
+    }
+
+    @Test
     public void testPrepareApFile() throws IOException {
         List<TestApDeployCommand.ExecutionParams> deployExecRegistry = new ArrayList<>();
         List<TestLibraryDeployCommand.ExecutionParams> deployLibraryExecRegistry = new ArrayList<>();
@@ -398,7 +406,7 @@ public class StepConsoleTest {
 
     private int runMain(Histories histories, String... args) {
         log.info("--- Run CLI - BEGIN ---");
-        int res = StepConsole.executeMain(
+        int res = executeMain(
                 () -> new TestApDeployCommand(histories.deployHistory),
                 () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory),
                 () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
@@ -411,7 +419,7 @@ public class StepConsoleTest {
 
     private int runMainWithVersion(Histories histories, Version version, String... args) {
         log.info("--- Run CLI - BEGIN ---");
-        int res = StepConsole.executeMain(
+        int res = executeMain(
                 () -> new TestApDeployCommand(histories.deployHistory, version),
                 () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version),
                 () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),

@@ -53,12 +53,12 @@ public class EmbeddedFunctionPackageImporterTest {
 		assertEquals(2, ids.size());
 
 		FunctionPackage functionPackage = functionPackageManager.getFunctionPackage(ids.get(0));
-		boolean isLocalPackage = functionPackage.getPackageLocation().contains("local");
-		assertPackage(functionPackage, isLocalPackage);
+		boolean isClasspathBased = functionPackage.getPackageLocation().contains("local");
+		assertPackage(functionPackage, isClasspathBased);
 
 		functionPackage = functionPackageManager.getFunctionPackage(ids.get(1));
-		isLocalPackage = functionPackage.getPackageLocation().contains("local");
-		assertPackage(functionPackage, isLocalPackage);
+		isClasspathBased = functionPackage.getPackageLocation().contains("local");
+		assertPackage(functionPackage, isClasspathBased);
 
 
 		List<String> ids2 = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());

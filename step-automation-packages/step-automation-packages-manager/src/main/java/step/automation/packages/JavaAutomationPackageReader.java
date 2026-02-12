@@ -60,11 +60,11 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
     }
 
     @Override
-    protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(JavaAutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException {
+    protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(JavaAutomationPackageArchive archive, boolean isClasspathBased, AutomationPackageContent res) throws AutomationPackageReadingException {
         try (AnnotationScanner annotationScanner = archive.createAnnotationScanner()) {
             // this code duplicates the StepJarParser, but here we don't set the scriptFile and librariesFile to GeneralScriptFunctions
             // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
-            List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, isLocalPackage, null, null);
+            List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, isClasspathBased, null, null);
             if (!scannedKeywords.isEmpty()) {
                 log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getOriginalFileName()));
             }
@@ -169,7 +169,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
         return result;
     }
 
-    private static List<ScriptAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
+    private static List<ScriptAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isClasspathBased, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
         List<ScriptAutomationPackageKeyword> scannedKeywords = new ArrayList<>();
         Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
         if(!methods.isEmpty()) {
@@ -185,7 +185,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
                 if (isCompositeFunction(annotation)) {
                     f = createCompositeFunction(m, annotation);
                 } else {
-                    if (!isLocalPackage) {
+                    if (!isClasspathBased) {
                         String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
                         GeneralScriptFunction function = new GeneralScriptFunction();

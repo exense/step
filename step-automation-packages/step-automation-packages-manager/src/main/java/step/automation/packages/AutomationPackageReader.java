@@ -87,24 +87,24 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     abstract public List<String> getSupportedFileTypes();
 
     /**
-     * @param isLocalPackage true if the automation package is located in current classloader (i.e. all annotated keywords
+     * @param isClasspathBased true if the automation package is located in current classloader (i.e. all annotated keywords
      *                       can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      */
-    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
-        return this.readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage, true);
+    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean isClasspathBased) throws AutomationPackageReadingException {
+        return this.readAutomationPackage(automationPackageArchive, apVersion, isClasspathBased, true);
     }
 
     /**
-     * @param isLocalPackage  true if the automation package is located in current classloader (i.e. all annotated keywords
+     * @param isClasspathBased  true if the automation package is located in current classloader (i.e. all annotated keywords
      *                        can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      * @param scanAnnotations true if it is required to include annotated java keywords and plans as well as located in yaml descriptor
      */
-    public AutomationPackageContent readAutomationPackage(T archive, String apVersion, boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackage(T archive, String apVersion, boolean isClasspathBased, boolean scanAnnotations) throws AutomationPackageReadingException {
         if (archive.hasAutomationPackageDescriptor()) {
             AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(archive.getDescriptorYamlUrl(), archive.getOriginalFileName());
-            return buildAutomationPackage(descriptorYaml, archive, apVersion, isLocalPackage, scanAnnotations);
+            return buildAutomationPackage(descriptorYaml, archive, apVersion, isClasspathBased, scanAnnotations);
         } else if (scanAnnotations) {
-            return buildAutomationPackage(null, archive, apVersion, isLocalPackage, scanAnnotations);
+            return buildAutomationPackage(null, archive, apVersion, isClasspathBased, scanAnnotations);
         } else {
             return null;
         }
@@ -112,14 +112,14 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
 
     protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, T archive, String apVersion,
-                                                              boolean isLocalPackage, boolean scanAnnotations) throws AutomationPackageReadingException {
+                                                              boolean isClasspathBased, boolean scanAnnotations) throws AutomationPackageReadingException {
         AutomationPackageContent res = newContentInstance();
         String baseName = resolveName(descriptor, archive);
         res.setBaseName(baseName);
         res.setName(resolveUniqueName(baseName, apVersion));
 
         if (scanAnnotations) {
-            fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, isLocalPackage, res);
+            fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, isClasspathBased, res);
         }
 
         // apply imported fragments recursively
@@ -175,7 +175,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         return new AutomationPackageContent();
     }
 
-    abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException;
+    abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, boolean isClasspathBased, AutomationPackageContent res) throws AutomationPackageReadingException;
 
 
     public AutomationPackageYamlFragmentManager provideAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
