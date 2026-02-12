@@ -20,6 +20,7 @@ package step.core.execution.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.objectenricher.EnricheableObject;
@@ -54,6 +55,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	private ExecutiontTaskParameters executiontTaskParameters;
 	private String resolvedPlanRootNodeId;
 	private String agentsInvolved;
+	private Version stepVersion;
 
 	public Execution() {
 		super();
@@ -243,6 +245,19 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 
 	public void setAgentsInvolved(String agentsInvolved) {
 		this.agentsInvolved = agentsInvolved;
+	}
+
+	/**
+	 * Returns the version of Step that created this execution. Note that this will be <tt>null</tt>
+	 * for Step versions prior to 3.29.2.
+	 * @return the Step version that created this execution
+	 */
+	public Version getStepVersion() {
+		return stepVersion;
+	}
+
+	public void setStepVersion(Version stepVersion) {
+		this.stepVersion = stepVersion;
 	}
 
 	@Override
