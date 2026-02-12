@@ -35,9 +35,9 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
      */
     public final boolean allowCreate;
     /**
-     * Whether the package is local i.e. for the Java Step runner and CLI local executions
+     * Whether the package is embedded in the classpath of the runner (i.e. Step Junit runner)
      */
-    public final boolean isLocalPackage;
+    public final boolean isClasspathBased;
     /**
      * Id of the existing package that has to be updated, should be combined with allowUpdate true and allowCreate false
      */
@@ -94,7 +94,7 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
      */
     public final boolean reloading;
 
-    public AutomationPackageUpdateParameter(boolean allowUpdate, boolean allowCreate, boolean isLocalPackage, ObjectId explicitOldId,
+    public AutomationPackageUpdateParameter(boolean allowUpdate, boolean allowCreate, boolean isClasspathBased, ObjectId explicitOldId,
                                             AutomationPackageFileSource apSource, AutomationPackageFileSource apLibrarySource,
                                             String versionName, String activationExpression, ObjectEnricher enricher,
                                             ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator, boolean async,
@@ -105,7 +105,7 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
         super(enricher, objectPredicate, writeAccessValidator, actorUser);
         this.allowUpdate = allowUpdate;
         this.allowCreate = allowCreate;
-        this.isLocalPackage = isLocalPackage;
+        this.isClasspathBased = isClasspathBased;
         this.explicitOldId = explicitOldId;
         this.apSource = apSource;
         this.apLibrarySource = apLibrarySource;
