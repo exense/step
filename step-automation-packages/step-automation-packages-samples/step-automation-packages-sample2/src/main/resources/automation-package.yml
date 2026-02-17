@@ -20,3 +20,24 @@ plans:
                 excel:
                   file: "excel/excel1.xlsx"
                   worksheet: "myWorksheet"
+              children:
+                - echo:
+                    text:
+                      expression: "row"
+  - name: "Test excel plan in before section"
+    root:
+      sequence:
+        name: Sequence
+        before:
+          steps:
+            - dataSet:
+                dataSource:
+                  excel:
+                    file: "excel/excel1.xlsx"
+                    worksheet: "myWorksheet"
+                item: "dataSet"
+        children:
+          - echo:
+              description: "test excel"
+              text:
+                expression: "dataSet.next()"
