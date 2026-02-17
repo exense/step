@@ -51,8 +51,23 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-deploy-auto-packages.artifact-type", required = false)
     private String artifactType;
 
-    @Parameter(property = "step-deploy-auto-packages.library")
+    @Parameter
     private LibraryConfiguration library;
+    //Individual property required to override values via system properties
+    @Parameter(property = "step-deploy-auto-packages.library.groupId")
+    private String libraryGroupId;
+    @Parameter(property = "step-deploy-auto-packages.library.artifactId")
+    private String libraryArtifactId;
+    @Parameter(property = "step-deploy-auto-packages.library.version")
+    private String libraryVersion;
+    @Parameter(property = "step-deploy-auto-packages.library.classifier")
+    private String libraryClassifier;
+    @Parameter(property = "step-deploy-auto-packages.library.type")
+    private String libraryType;
+    @Parameter(property = "step-deploy-auto-packages.library.path")
+    private String libraryPath;
+    @Parameter(property = "step-deploy-auto-packages.library.managed")
+    private String libraryManaged;
 
     @Parameter(property = "step-deploy-auto-packages.force-refresh-snapshots", required = false)
     private Boolean forceRefreshOfSnapshots;
@@ -68,7 +83,8 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            if (library != null) {
+            library = prepareLibrary();
+            if (library.isSet()) {
                 library.validate();
             }
             createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getVersionName(), getActivationExpression(), getForceRefreshOfSnapshots()).execute();
@@ -77,6 +93,22 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         } catch (Exception e) {
             throw logAndThrow("Unexpected error while uploading automation package to Step", e);
         }
+    }
+
+    private LibraryConfiguration prepareLibrary() {
+        // Merge flat properties into the library object,
+        // letting the structured XML config take precedence
+        if (library == null) {
+            library = new LibraryConfiguration();
+        }
+        if (libraryGroupId != null)    library.setGroupId(libraryGroupId);
+        if (libraryArtifactId != null) library.setArtifactId(libraryArtifactId);
+        if (libraryVersion != null)    library.setVersion(libraryVersion);
+        if (libraryClassifier != null) library.setClassifier(libraryClassifier);
+        if (libraryType != null)       library.setType(libraryType);
+        if (libraryPath != null)       library.setPath(libraryPath);
+        if (libraryManaged != null)    library.setManaged(libraryManaged);
+        return library;
     }
 
     protected DeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,

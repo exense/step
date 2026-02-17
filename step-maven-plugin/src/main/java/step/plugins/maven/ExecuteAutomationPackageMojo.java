@@ -50,8 +50,23 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.artifact-type", required = false)
     private String artifactType;
 
-    @Parameter(property = "step-execute-auto-packages.library")
+    @Parameter
     private LibraryConfiguration library;
+    //Individual property required to override values via system properties
+    @Parameter(property = "step-execute-auto-packages.library.groupId")
+    private String libraryGroupId;
+    @Parameter(property = "step-execute-auto-packages.library.artifactId")
+    private String libraryArtifactId;
+    @Parameter(property = "step-execute-auto-packages.library.version")
+    private String libraryVersion;
+    @Parameter(property = "step-execute-auto-packages.library.classifier")
+    private String libraryClassifier;
+    @Parameter(property = "step-execute-auto-packages.library.type")
+    private String libraryType;
+    @Parameter(property = "step-execute-auto-packages.library.path")
+    private String libraryPath;
+    @Parameter(property = "step-execute-auto-packages.library.managed")
+    private String libraryManaged;
 
     @Parameter(property = "step-execute-auto-packages.execution-parameters", required = false)
     private Map<String, String> executionParameters;
@@ -77,8 +92,11 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.number-of-threads")
     private Integer numberOfThreads;
 
-    @Parameter(property = "step-execute-auto-packages.reports")
+    @Parameter
     private List<ReportParam> reports;
+
+    @Parameter(property = "step-execute-auto-packages.reports")
+    private String reportsRaw;
 
     @Parameter(property = "step-execute-auto-packages.report-dir")
     private String reportDir;
@@ -104,12 +122,30 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
+    //TODO refactoring required as duplicated in Deploy Mojo, but as we need to duplicate the class's fields for the property annotation this was postponed for now
+    private LibraryConfiguration prepareLibrary() {
+        // Merge flat properties into the library object,
+        // letting the structured XML config take precedence
+        if (library == null) {
+            library = new LibraryConfiguration();
+        }
+        if (libraryGroupId != null)    library.setGroupId(libraryGroupId);
+        if (libraryArtifactId != null) library.setArtifactId(libraryArtifactId);
+        if (libraryVersion != null)    library.setVersion(libraryVersion);
+        if (libraryClassifier != null) library.setClassifier(libraryClassifier);
+        if (libraryType != null)       library.setType(libraryType);
+        if (libraryPath != null)       library.setPath(libraryPath);
+        if (libraryManaged != null)    library.setManaged(libraryManaged);
+        return library;
+    }
+
     @Override
     public void execute() throws MojoExecutionException {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            if (library != null) {
+            library = prepareLibrary();
+            if (library.isSet()) {
                 library.validate();
             }
 
@@ -180,9 +216,11 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     }
 
     private List<ExecuteAutomationPackageTool.Report> parseReports() {
-        if (getReports() != null) {
+        List<ReportParam> resolvedReports = getReports();
+        resolvedReports = (resolvedReports == null || resolvedReports.isEmpty()) ? parseReports(reportsRaw) : resolvedReports;
+        if (resolvedReports != null) {
             List<ExecuteAutomationPackageTool.Report> result = new ArrayList<>();
-            for (ReportParam report : getReports()) {
+            for (ReportParam report : resolvedReports) {
                 if (report.getOutput() == null || report.getOutput().isEmpty()) {
                     result.add(new ExecuteAutomationPackageTool.Report(report.getType()));
                 } else {
@@ -196,6 +234,25 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         } else {
             return null;
         }
+    }
+
+    protected List<ReportParam> parseReports(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+
+        return Arrays.stream(raw.split(","))
+                .map(String::trim)
+                .map(entry -> {
+                    String[] parts = entry.split(":", 2);
+                    if (parts.length != 2) {
+                        throw new IllegalArgumentException(
+                                "Invalid report format '" + entry + "', expected 'type:outputPath'");
+                    }
+                    ReportParam report = new ReportParam();
+                    report.setType(ExecuteAutomationPackageTool.ReportType.valueOf(parts[0].trim()));
+                    report.setOutput(parts[1].trim());
+                    return report;
+                })
+                .collect(Collectors.toList());
     }
 
     protected ExecuteAutomationPackageTool createTool(final String url, ApExecuteParameters params) {
