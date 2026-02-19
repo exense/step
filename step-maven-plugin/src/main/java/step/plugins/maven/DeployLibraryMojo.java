@@ -177,5 +177,14 @@ public class DeployLibraryMojo extends AbstractStepPluginMojo {
                 DeployLibraryMojo.this.getLog().info(infoText);
             }
         }
+
+        @Override
+        public void logDebug(String infoText, Throwable e) {
+            if (e != null) {
+                DeployLibraryMojo.this.getLog().debug(infoText, e);
+            } else {
+                DeployLibraryMojo.this.getLog().debug(infoText);
+            }
+        }
     }
 }

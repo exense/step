@@ -79,6 +79,15 @@ public abstract class AbstractCliTool<T extends Parameters> implements CliToolLo
         }
     }
 
+    @Override
+    public void logDebug(String infoText, Throwable e) {
+        if (e != null) {
+            log.debug(infoText, e);
+        } else {
+            log.debug(infoText);
+        }
+    }
+
     protected ControllerCredentials getControllerCredentials() {
         String authToken = parameters.getAuthToken();
         return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);

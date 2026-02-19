@@ -22,4 +22,6 @@ public interface CliToolLogging {
     void logError(String errorText, Throwable e);
 
     void logInfo(String infoText, Throwable e);
+
+    void logDebug(String infoText, Throwable e);
 }

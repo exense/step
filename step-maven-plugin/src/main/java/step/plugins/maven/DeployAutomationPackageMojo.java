@@ -31,7 +31,7 @@ import step.core.maven.MavenArtifactIdentifier;
 import java.io.File;
 
 @Mojo(name = "deploy-automation-package")
-public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
+public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
 
 
     @Parameter(property = "step-deploy-automation-package.async")
@@ -84,9 +84,6 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
             library = prepareLibrary();
-            if (library.isSet()) {
-                library.validate();
-            }
             createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getVersionName(), getActivationExpression(), getForceRefreshOfSnapshots()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
@@ -95,27 +92,12 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    private LibraryConfiguration prepareLibrary() {
-        // Merge flat properties into the library object,
-        // letting the structured XML config take precedence
-        if (library == null) {
-            library = new LibraryConfiguration();
-        }
-        if (libraryGroupId != null)    library.setGroupId(libraryGroupId);
-        if (libraryArtifactId != null) library.setArtifactId(libraryArtifactId);
-        if (libraryVersion != null)    library.setVersion(libraryVersion);
-        if (libraryClassifier != null) library.setClassifier(libraryClassifier);
-        if (libraryType != null)       library.setType(libraryType);
-        if (libraryPath != null)       library.setPath(libraryPath);
-        if (libraryManaged != null)    library.setManaged(libraryManaged);
-        return library;
-    }
-
     protected DeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
                                                      final String apVersion, final String activationExpr, Boolean forceRefreshOfSnapshots) throws MojoExecutionException {
         MavenArtifactIdentifier remoteApMavenIdentifier = getRemoteMavenIdentifier();
         File localApFile = remoteApMavenIdentifier != null ? null : DeployAutomationPackageMojo.this.getFileToUpload();
 
+        LibraryConfiguration library = getLibrary();
         File libraryFile = library != null ? library.toFile() : null;
         MavenArtifactIdentifier libraryMavenArtifact = library != null ? library.toMavenArtifactIdentifier() : null;
         String libraryName = library != null && library.isManagedLibraryNameConfigured() ? library.getManaged() : null;
@@ -210,12 +192,44 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         this.artifactType = artifactType;
     }
 
+    @Override
     public LibraryConfiguration getLibrary() {
         return library;
     }
 
-    public void setLibrary(LibraryConfiguration library) {
-        this.library = library;
+    @Override
+    public String getLibraryGroupId() {
+        return libraryGroupId;
+    }
+
+    @Override
+    public String getLibraryArtifactId() {
+        return libraryArtifactId;
+    }
+
+    @Override
+    public String getLibraryVersion() {
+        return libraryVersion;
+    }
+
+    @Override
+    public String getLibraryClassifier() {
+        return libraryClassifier;
+    }
+
+    @Override
+    public String getLibraryType() {
+        return libraryType;
+    }
+
+    @Override
+    public String getLibraryPath() {
+        return libraryPath;
+    }
+
+    @Override
+    public String getLibraryManaged() {
+        return libraryManaged;
     }
 
     public Boolean getForceRefreshOfSnapshots() {
@@ -262,6 +276,15 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
                 DeployAutomationPackageMojo.this.getLog().info(infoText, e);
             } else {
                 DeployAutomationPackageMojo.this.getLog().info(infoText);
+            }
+        }
+
+        @Override
+        public void logDebug(String infoText, Throwable e) {
+            if (e != null) {
+                DeployAutomationPackageMojo.this.getLog().debug(infoText, e);
+            } else {
+                DeployAutomationPackageMojo.this.getLog().debug(infoText);
             }
         }
     }

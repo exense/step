@@ -20,3 +20,4 @@ step-controller/step-controller-base-plugins/resources/
 /step-cli/step-cli-launcher/src/test/resources/samples/
 work/
 /step-cli/step-cli-core/src/test/resources/testReports/
+**/.claude

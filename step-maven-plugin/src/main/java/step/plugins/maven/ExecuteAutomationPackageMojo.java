@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Mojo(name = "execute-automation-package")
-public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
+public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo {
 
     @Parameter(property = "step-execute-auto-packages.user-id", required = false)
     private String userId;
@@ -122,33 +122,12 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         }
     }
 
-    //TODO refactoring required as duplicated in Deploy Mojo, but as we need to duplicate the class's fields for the property annotation this was postponed for now
-    private LibraryConfiguration prepareLibrary() {
-        // Merge flat properties into the library object,
-        // letting the structured XML config take precedence
-        if (library == null) {
-            library = new LibraryConfiguration();
-        }
-        if (libraryGroupId != null)    library.setGroupId(libraryGroupId);
-        if (libraryArtifactId != null) library.setArtifactId(libraryArtifactId);
-        if (libraryVersion != null)    library.setVersion(libraryVersion);
-        if (libraryClassifier != null) library.setClassifier(libraryClassifier);
-        if (libraryType != null)       library.setType(libraryType);
-        if (libraryPath != null)       library.setPath(libraryPath);
-        if (libraryManaged != null)    library.setManaged(libraryManaged);
-        return library;
-    }
-
     @Override
     public void execute() throws MojoExecutionException {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
             library = prepareLibrary();
-            if (library.isSet()) {
-                library.validate();
-            }
-
             MavenArtifactIdentifier remoteMavenArtifact = null;
             if (!isLocalMavenArtifact()) {
                 remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier(), getArtifactType());
@@ -211,13 +190,13 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
-            throw logAndThrow("Unexpected error while uploading automation package to Step", e);
+            throw logAndThrow("Unexpected error while executing automation package", e);
         }
     }
 
     private List<ExecuteAutomationPackageTool.Report> parseReports() {
-        List<ReportParam> resolvedReports = getReports();
-        resolvedReports = (resolvedReports == null || resolvedReports.isEmpty()) ? parseReports(reportsRaw) : resolvedReports;
+        // System property (reportsRaw) takes precedence over the XML-configured reports list
+        List<ReportParam> resolvedReports = (reportsRaw != null && !reportsRaw.isBlank()) ? parseReports(reportsRaw) : reports;
         if (resolvedReports != null) {
             List<ExecuteAutomationPackageTool.Report> result = new ArrayList<>();
             for (ReportParam report : resolvedReports) {
@@ -239,13 +218,15 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     protected List<ReportParam> parseReports(String raw) {
         if (raw == null || raw.isBlank()) return null;
 
-        return Arrays.stream(raw.split(","))
+
+        return Arrays.stream(raw.split(";"))
                 .map(String::trim)
+                .filter(s -> !s.isEmpty())
                 .map(entry -> {
                     String[] parts = entry.split(":", 2);
                     if (parts.length != 2) {
                         throw new IllegalArgumentException(
-                                "Invalid report format '" + entry + "', expected 'type:outputPath'");
+                                "Invalid report format '" + entry + "', expected 'type:outputModes'. Multiple reports should be separated by a semicolon ';', multiple output modes can be separated by a comma ',' (ex: junit:file,stdout;aggregated:stdout).");
                     }
                     ReportParam report = new ReportParam();
                     report.setType(ExecuteAutomationPackageTool.ReportType.valueOf(parts[0].trim()));
@@ -409,11 +390,51 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.artifactType = artifactType;
     }
 
+    @Override
     public LibraryConfiguration getLibrary() {
         return library;
     }
 
-    public void setLibrary(LibraryConfiguration library) {
-        this.library = library;
+    public String getReportsRaw() {
+        return reportsRaw;
+    }
+
+    public void setReportsRaw(String reportsRaw) {
+        this.reportsRaw = reportsRaw;
+    }
+
+    @Override
+    public String getLibraryGroupId() {
+        return libraryGroupId;
+    }
+
+    @Override
+    public String getLibraryArtifactId() {
+        return libraryArtifactId;
+    }
+
+    @Override
+    public String getLibraryVersion() {
+        return libraryVersion;
+    }
+
+    @Override
+    public String getLibraryClassifier() {
+        return libraryClassifier;
+    }
+
+    @Override
+    public String getLibraryType() {
+        return libraryType;
+    }
+
+    @Override
+    public String getLibraryPath() {
+        return libraryPath;
+    }
+
+    @Override
+    public String getLibraryManaged() {
+        return libraryManaged;
     }
 }
