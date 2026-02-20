@@ -31,7 +31,7 @@ import step.core.maven.MavenArtifactIdentifier;
 import java.io.File;
 
 @Mojo(name = "deploy-automation-package")
-public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
+public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
 
 
     @Parameter(property = "step-deploy-automation-package.async")
@@ -51,8 +51,23 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-deploy-auto-packages.artifact-type", required = false)
     private String artifactType;
 
-    @Parameter(property = "step-deploy-auto-packages.library")
+    @Parameter
     private LibraryConfiguration library;
+    //Individual property required to override values via system properties
+    @Parameter(property = "step-deploy-auto-packages.library.groupId")
+    private String libraryGroupId;
+    @Parameter(property = "step-deploy-auto-packages.library.artifactId")
+    private String libraryArtifactId;
+    @Parameter(property = "step-deploy-auto-packages.library.version")
+    private String libraryVersion;
+    @Parameter(property = "step-deploy-auto-packages.library.classifier")
+    private String libraryClassifier;
+    @Parameter(property = "step-deploy-auto-packages.library.type")
+    private String libraryType;
+    @Parameter(property = "step-deploy-auto-packages.library.path")
+    private String libraryPath;
+    @Parameter(property = "step-deploy-auto-packages.library.managed")
+    private String libraryManaged;
 
     @Parameter(property = "step-deploy-auto-packages.force-refresh-snapshots", required = false)
     private Boolean forceRefreshOfSnapshots;
@@ -68,9 +83,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            if (library != null) {
-                library.validate();
-            }
+            library = prepareLibrary();
             createTool(getUrl(), getStepProjectName(), getAuthToken(), getAsync(), getVersionName(), getActivationExpression(), getForceRefreshOfSnapshots()).execute();
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
@@ -84,6 +97,7 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         MavenArtifactIdentifier remoteApMavenIdentifier = getRemoteMavenIdentifier();
         File localApFile = remoteApMavenIdentifier != null ? null : DeployAutomationPackageMojo.this.getFileToUpload();
 
+        LibraryConfiguration library = getLibrary();
         File libraryFile = library != null ? library.toFile() : null;
         MavenArtifactIdentifier libraryMavenArtifact = library != null ? library.toMavenArtifactIdentifier() : null;
         String libraryName = library != null && library.isManagedLibraryNameConfigured() ? library.getManaged() : null;
@@ -178,12 +192,44 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
         this.artifactType = artifactType;
     }
 
+    @Override
     public LibraryConfiguration getLibrary() {
         return library;
     }
 
-    public void setLibrary(LibraryConfiguration library) {
-        this.library = library;
+    @Override
+    public String getLibraryGroupId() {
+        return libraryGroupId;
+    }
+
+    @Override
+    public String getLibraryArtifactId() {
+        return libraryArtifactId;
+    }
+
+    @Override
+    public String getLibraryVersion() {
+        return libraryVersion;
+    }
+
+    @Override
+    public String getLibraryClassifier() {
+        return libraryClassifier;
+    }
+
+    @Override
+    public String getLibraryType() {
+        return libraryType;
+    }
+
+    @Override
+    public String getLibraryPath() {
+        return libraryPath;
+    }
+
+    @Override
+    public String getLibraryManaged() {
+        return libraryManaged;
     }
 
     public Boolean getForceRefreshOfSnapshots() {
@@ -230,6 +276,15 @@ public class DeployAutomationPackageMojo extends AbstractStepPluginMojo {
                 DeployAutomationPackageMojo.this.getLog().info(infoText, e);
             } else {
                 DeployAutomationPackageMojo.this.getLog().info(infoText);
+            }
+        }
+
+        @Override
+        public void logDebug(String infoText, Throwable e) {
+            if (e != null) {
+                DeployAutomationPackageMojo.this.getLog().debug(infoText, e);
+            } else {
+                DeployAutomationPackageMojo.this.getLog().debug(infoText);
             }
         }
     }

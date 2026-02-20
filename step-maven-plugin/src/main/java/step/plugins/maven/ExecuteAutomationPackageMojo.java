@@ -35,7 +35,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Mojo(name = "execute-automation-package")
-public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
+public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo {
 
     @Parameter(property = "step-execute-auto-packages.user-id", required = false)
     private String userId;
@@ -50,8 +50,23 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.artifact-type", required = false)
     private String artifactType;
 
-    @Parameter(property = "step-execute-auto-packages.library")
+    @Parameter
     private LibraryConfiguration library;
+    //Individual property required to override values via system properties
+    @Parameter(property = "step-execute-auto-packages.library.groupId")
+    private String libraryGroupId;
+    @Parameter(property = "step-execute-auto-packages.library.artifactId")
+    private String libraryArtifactId;
+    @Parameter(property = "step-execute-auto-packages.library.version")
+    private String libraryVersion;
+    @Parameter(property = "step-execute-auto-packages.library.classifier")
+    private String libraryClassifier;
+    @Parameter(property = "step-execute-auto-packages.library.type")
+    private String libraryType;
+    @Parameter(property = "step-execute-auto-packages.library.path")
+    private String libraryPath;
+    @Parameter(property = "step-execute-auto-packages.library.managed")
+    private String libraryManaged;
 
     @Parameter(property = "step-execute-auto-packages.execution-parameters", required = false)
     private Map<String, String> executionParameters;
@@ -77,8 +92,11 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
     @Parameter(property = "step-execute-auto-packages.number-of-threads")
     private Integer numberOfThreads;
 
-    @Parameter(property = "step-execute-auto-packages.reports")
+    @Parameter
     private List<ReportParam> reports;
+
+    @Parameter(property = "step-execute-auto-packages.reports")
+    private String reportsRaw;
 
     @Parameter(property = "step-execute-auto-packages.report-dir")
     private String reportDir;
@@ -109,10 +127,7 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         try {
             validateEEConfiguration(getStepProjectName(), getAuthToken());
             checkStepControllerVersion();
-            if (library != null) {
-                library.validate();
-            }
-
+            library = prepareLibrary();
             MavenArtifactIdentifier remoteMavenArtifact = null;
             if (!isLocalMavenArtifact()) {
                 remoteMavenArtifact = new MavenArtifactIdentifier(getArtifactGroupId(), getArtifactId(), getArtifactVersion(), getArtifactClassifier(), getArtifactType());
@@ -175,14 +190,16 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         } catch (StepCliExecutionException e) {
             throw new MojoExecutionException("Execution exception", e);
         } catch (Exception e) {
-            throw logAndThrow("Unexpected error while uploading automation package to Step", e);
+            throw logAndThrow("Unexpected error while executing automation package", e);
         }
     }
 
     private List<ExecuteAutomationPackageTool.Report> parseReports() {
-        if (getReports() != null) {
+        // System property (reportsRaw) takes precedence over the XML-configured reports list
+        List<ReportParam> resolvedReports = (reportsRaw != null && !reportsRaw.isBlank()) ? parseReports(reportsRaw) : reports;
+        if (resolvedReports != null) {
             List<ExecuteAutomationPackageTool.Report> result = new ArrayList<>();
-            for (ReportParam report : getReports()) {
+            for (ReportParam report : resolvedReports) {
                 if (report.getOutput() == null || report.getOutput().isEmpty()) {
                     result.add(new ExecuteAutomationPackageTool.Report(report.getType()));
                 } else {
@@ -196,6 +213,27 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         } else {
             return null;
         }
+    }
+
+    protected List<ReportParam> parseReports(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+
+
+        return Arrays.stream(raw.split(";"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(entry -> {
+                    String[] parts = entry.split(":", 2);
+                    if (parts.length != 2) {
+                        throw new IllegalArgumentException(
+                                "Invalid report format '" + entry + "', expected 'type:outputModes'. Multiple reports should be separated by a semicolon ';', multiple output modes can be separated by a comma ',' (ex: junit:file,stdout;aggregated:stdout).");
+                    }
+                    ReportParam report = new ReportParam();
+                    report.setType(ExecuteAutomationPackageTool.ReportType.valueOf(parts[0].trim()));
+                    report.setOutput(parts[1].trim());
+                    return report;
+                })
+                .collect(Collectors.toList());
     }
 
     protected ExecuteAutomationPackageTool createTool(final String url, ApExecuteParameters params) {
@@ -352,11 +390,51 @@ public class ExecuteAutomationPackageMojo extends AbstractStepPluginMojo {
         this.artifactType = artifactType;
     }
 
+    @Override
     public LibraryConfiguration getLibrary() {
         return library;
     }
 
-    public void setLibrary(LibraryConfiguration library) {
-        this.library = library;
+    public String getReportsRaw() {
+        return reportsRaw;
+    }
+
+    public void setReportsRaw(String reportsRaw) {
+        this.reportsRaw = reportsRaw;
+    }
+
+    @Override
+    public String getLibraryGroupId() {
+        return libraryGroupId;
+    }
+
+    @Override
+    public String getLibraryArtifactId() {
+        return libraryArtifactId;
+    }
+
+    @Override
+    public String getLibraryVersion() {
+        return libraryVersion;
+    }
+
+    @Override
+    public String getLibraryClassifier() {
+        return libraryClassifier;
+    }
+
+    @Override
+    public String getLibraryType() {
+        return libraryType;
+    }
+
+    @Override
+    public String getLibraryPath() {
+        return libraryPath;
+    }
+
+    @Override
+    public String getLibraryManaged() {
+        return libraryManaged;
     }
 }
