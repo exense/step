@@ -25,7 +25,9 @@ import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +39,15 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
 
     @JsonIgnore
     private Map<String, List<?>> additionalFields;
+
+    @JsonIgnore
+    private URL url;
+
+    @JsonIgnore
+    private List<AutomationPackageFragmentYaml> children = new LinkedList<>();
+
+    @JsonIgnore
+    private AutomationPackageFragmentYaml parent;
 
     @Override
     public List<YamlAutomationPackageKeyword> getKeywords() {
@@ -85,5 +96,30 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     public void setPlansPlainText(List<YamlPlainTextPlan> plansPlainText) {
         this.plansPlainText = plansPlainText;
+    }
+
+    @JsonIgnore
+    public void setFragmentUrl(URL url) {
+        this.url = url;
+    }
+
+    @JsonIgnore
+    public URL getFragmentUrl() {
+        return url;
+    }
+
+    @JsonIgnore
+    public List<AutomationPackageFragmentYaml> getChildren() {
+        return children;
+    }
+
+    @JsonIgnore
+    public AutomationPackageFragmentYaml getParent() {
+        return parent;
+    }
+
+    @JsonIgnore
+    public void setParent(AutomationPackageFragmentYaml parent) {
+        this.parent = parent;
     }
 }

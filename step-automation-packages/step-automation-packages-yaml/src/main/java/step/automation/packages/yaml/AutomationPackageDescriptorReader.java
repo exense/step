@@ -42,6 +42,7 @@ import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -70,25 +71,35 @@ public class AutomationPackageDescriptorReader {
         }
     }
 
-    public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor, String packageFileName) throws AutomationPackageReadingException {
+    public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(URL resource, String packageFileName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor...");
-        return readAutomationPackageYamlFile(yamlDescriptor, getDescriptorClass(), packageFileName);
+        return readAutomationPackageYamlFile(resource, getDescriptorClass(), packageFileName);
+    }
+
+    public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yaml, String packageFileName) throws AutomationPackageReadingException {
+        log.info("Reading automation package descriptor...");
+        return readAutomationPackageYamlFile(yaml, getDescriptorClass(), packageFileName);
     }
 
     protected Class<? extends AutomationPackageDescriptorYaml> getDescriptorClass() {
         return AutomationPackageDescriptorYamlImpl.class;
     }
 
-    public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageFileName) throws AutomationPackageReadingException {
+    public AutomationPackageFragmentYaml readAutomationPackageFragment(URL resource, String packageFileName) throws AutomationPackageReadingException {
+        log.info("Reading automation package descriptor fragment ({})...", resource);
+        return readAutomationPackageYamlFile(resource, getFragmentClass(), packageFileName);
+    }
+
+    public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yaml, String fragmentName, String packageFileName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor fragment ({})...", fragmentName);
-        return readAutomationPackageYamlFile(yamlFragment, getFragmentClass(), packageFileName);
+        return readAutomationPackageYamlFile(yaml, getFragmentClass(), packageFileName);
     }
 
     protected Class<? extends AutomationPackageFragmentYaml> getFragmentClass() {
         return AutomationPackageFragmentYamlImpl.class;
     }
 
-    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageFileName) throws AutomationPackageReadingException {
+    private <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageFileName) throws AutomationPackageReadingException {
         try {
             String yamlDescriptorString = new String(yaml.readAllBytes(), StandardCharsets.UTF_8);
             String version = null;
@@ -108,6 +119,17 @@ public class AutomationPackageDescriptorReader {
             T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(yamlDescriptorString, targetClass);
 
             logAfterRead(packageFileName, res);
+
+            return res;
+        } catch (IOException | YamlPlanValidationException e) {
+            throw new AutomationPackageReadingException("Unable to read the automation package yaml. Caused by: " + e.getMessage(), e);
+        }
+    }
+
+    private <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(URL resource, Class<T> targetClass, String packageFileName) throws AutomationPackageReadingException {
+        try (InputStream yaml = resource.openStream()) {
+            T res = readAutomationPackageYamlFile(yaml, targetClass, packageFileName);
+            res.setFragmentUrl(resource);
             return res;
         } catch (IOException | YamlPlanValidationException e) {
             throw new AutomationPackageReadingException("Unable to read the automation package yaml. Caused by: " + e.getMessage(), e);
@@ -143,7 +165,7 @@ public class AutomationPackageDescriptorReader {
         }
     }
 
-    protected ObjectMapper createYamlObjectMapper() {
+    private ObjectMapper createYamlObjectMapper() {
         YAMLFactory yamlFactory = new YAMLFactory();
 
         // Disable native type id to enable conversion to generic Documents
@@ -169,7 +191,11 @@ public class AutomationPackageDescriptorReader {
         return yamlMapper;
     }
 
-    public YamlPlanReader getPlanReader(){
+    public ObjectMapper getYamlObjectMapper() {
+        return yamlObjectMapper;
+    }
+
+    public YamlPlanReader getPlanReader() {
         return this.planReader;
     }
 
