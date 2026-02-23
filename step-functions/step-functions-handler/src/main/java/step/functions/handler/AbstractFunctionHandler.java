@@ -352,7 +352,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 				TemporaryDirectory workingDirectoryFolder = tokenReservationSession.getOrDefault(automationPackageFile.getAbsolutePath(), u -> {
 					try {
 						File tempFolder = FileHelper.createTempFolder();
-						FileHelper.unzipParallel(automationPackageFile, tempFolder, true);
+						FileHelper.unzip(automationPackageFile, tempFolder, true);
 						return new TemporaryDirectory(tempFolder);
 					} catch (IOException e) {
 						throw new RuntimeException("Error while extracting automation package file " + automationPackageFile.getAbsolutePath(), e);
