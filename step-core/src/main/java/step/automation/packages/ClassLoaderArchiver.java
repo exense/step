@@ -278,14 +278,40 @@ public class ClassLoaderArchiver {
             JarEntry entry;
             while ((entry = jis.getNextJarEntry()) != null) {
                 String entryName = entry.getName();
-                if (entryName.equalsIgnoreCase("META-INF/MANIFEST.MF")) {
-                    continue;
-                }
-                if (addedEntries.add(entryName)) {
+                if (!shouldExcludeFromJar(entryName) && addedEntries.add(entryName)) {
                     addEntryToJar(jos, entryName, jis.readAllBytes());
                 }
                 jis.closeEntry();
             }
         }
+    }
+
+    /**
+     * Filter out META-INF files of existing JAR when unpacking and building a single fatJAR
+     * <ul>
+     *     <li>MANIFEST.MF: manifest files of existing JARs, we create our own</li>
+     *     <li>.SF, .DSA, .RSA, .EC: signature files that would not be valid for the fatJAR</li>
+     * </ul>
+     * @param entryName the entry to be checked
+     * @return whether the entry should be excluded
+     */
+    private static boolean shouldExcludeFromJar(String entryName) {
+        // Skip manifest — we generate our own
+        if (entryName.equalsIgnoreCase("META-INF/MANIFEST.MF")) {
+            return true;
+        }
+        // Skip JAR signing files — merging signed JARs into a fat JAR invalidates
+        // the signatures and causes SecurityException at runtime when the JVM
+        // tries to verify them against the new merged manifest
+        if (entryName.startsWith("META-INF/") ) {
+            String upperName = entryName.toUpperCase();
+            if (upperName.endsWith(".SF")   // signature file
+                    || upperName.endsWith(".DSA")  // DSA signature block
+                    || upperName.endsWith(".RSA")  // RSA signature block
+                    || upperName.endsWith(".EC")) {// EC signature block
+                return true;
+            }
+        }
+        return false;
     }
 }
