@@ -56,19 +56,19 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
     }
 
     @Override
-    protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(JavaAutomationPackageArchive archive, boolean isLocalPackage, AutomationPackageContent res) throws AutomationPackageReadingException {
+    protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(JavaAutomationPackageArchive archive, AutomationPackageContent res) throws AutomationPackageReadingException {
         try (AnnotationScanner annotationScanner = archive.createAnnotationScanner()) {
             // this code duplicates the StepJarParser, but here we don't set the scriptFile and librariesFile to GeneralScriptFunctions
             // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
-            List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, isLocalPackage, null, null);
+            List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, null, null);
             if (!scannedKeywords.isEmpty()) {
-                log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getOriginalFileName()));
+                log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
             }
             res.getKeywords().addAll(scannedKeywords);
 
             List<Plan> annotatedPlans = extractAnnotatedPlans(archive, annotationScanner, stepClassParser);
             if (!annotatedPlans.isEmpty()) {
-                log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
+                log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
             }
             res.getPlans().addAll(annotatedPlans);
         } catch (JsonSchemaPreparationException e) {
@@ -165,7 +165,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
         return result;
     }
 
-    private static List<ScriptAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isLocalPackage, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
+    private static List<ScriptAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
         List<ScriptAutomationPackageKeyword> scannedKeywords = new ArrayList<>();
         Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
         if(!methods.isEmpty()) {
@@ -181,30 +181,26 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
                 if (isCompositeFunction(annotation)) {
                     f = createCompositeFunction(m, annotation);
                 } else {
-                    if (!isLocalPackage) {
-                        String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+                    String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
-                        GeneralScriptFunction function = new GeneralScriptFunction();
-                        function.setAttributes(new HashMap<>());
-                        function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+                    GeneralScriptFunction function = new GeneralScriptFunction();
+                    function.setAttributes(new HashMap<>());
+                    function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
 
-                        // to be filled by AutomationPackageKeywordsAttributesApplier
-                        if (scriptFile != null) {
-                            function.setScriptFile(new DynamicValue<>(scriptFile));
-                        }
-
-                        if (librariesFile != null) {
-                            function.setLibrariesFile(new DynamicValue<>(librariesFile));
-                        }
-
-                        function.getCallTimeout().setValue(annotation.timeout());
-                        FunctionManagerImpl.applyRoutingFromAnnotation(function, annotation);
-
-                        function.setScriptLanguage(new DynamicValue<>("java"));
-                        f = function;
-                    } else {
-                        f = LocalFunctionPlugin.createLocalFunction(m, annotation);
+                    // to be filled by AutomationPackageKeywordsAttributesApplier
+                    if (scriptFile != null) {
+                        function.setScriptFile(new DynamicValue<>(scriptFile));
                     }
+
+                    if (librariesFile != null) {
+                        function.setLibrariesFile(new DynamicValue<>(librariesFile));
+                    }
+
+                    function.getCallTimeout().setValue(annotation.timeout());
+                    FunctionManagerImpl.applyRoutingFromAnnotation(function, annotation);
+
+                    function.setScriptLanguage(new DynamicValue<>("java"));
+                    f = function;
                 }
 
                 f.setDescription(annotation.description());
@@ -248,7 +244,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
      */
     public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {
         try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, keywordLib, null)) {
-            return readAutomationPackage(automationPackageArchive, apVersion, false);
+            return readAutomationPackage(automationPackageArchive, apVersion);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
         }

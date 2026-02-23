@@ -21,6 +21,18 @@ package step.core.execution;
 public enum OperationMode {
 
 	CONTROLLER,
-	
-	LOCAL;
+
+	LOCAL, //Used for our Junit tests, LocalPlanRunner
+
+	LOCAL_AUTOMATION_PACKAGE; //Used for Local AP execution (external class loader)
+
+	/**
+	 * Returns {@code true} for any local execution mode, regardless of which classloader
+	 * strategy is used. Use this wherever the distinction between {@link #LOCAL} and
+	 * {@link #LOCAL_AUTOMATION_PACKAGE} does not matter (e.g. forcing local token
+	 * selection, skipping controller-only setup).
+	 */
+	public boolean isLocal() {
+		return this == LOCAL || this == LOCAL_AUTOMATION_PACKAGE;
+	}
 }

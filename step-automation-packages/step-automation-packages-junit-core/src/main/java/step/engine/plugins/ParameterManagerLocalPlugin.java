@@ -42,7 +42,7 @@ public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
-        if (executionEngineContext.getOperationMode() != OperationMode.LOCAL) {
+        if (!executionEngineContext.getOperationMode().isLocal()) {
             return;
         }
 

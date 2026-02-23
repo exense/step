@@ -39,7 +39,7 @@ public class AutomationPackageLocalOSPlugin extends AbstractExecutionEnginePlugi
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-        if (context.getOperationMode() == OperationMode.LOCAL) {
+        if (context.getOperationMode().isLocal()) {
             FunctionAccessor functionAccessor = context.require(FunctionAccessor.class);
             ResourceManager resourceManager = context.getResourceManager();
 

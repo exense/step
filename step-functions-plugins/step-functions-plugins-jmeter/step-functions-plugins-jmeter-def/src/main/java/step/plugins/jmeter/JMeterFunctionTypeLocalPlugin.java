@@ -35,7 +35,7 @@ public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-        if (context.getOperationMode() == OperationMode.LOCAL) {
+        if (context.getOperationMode().isLocal()) {
             Configuration config = context.getConfiguration();
 
             String jMeterHome = System.getenv().get(JMETER_HOME_ENV_VAR);

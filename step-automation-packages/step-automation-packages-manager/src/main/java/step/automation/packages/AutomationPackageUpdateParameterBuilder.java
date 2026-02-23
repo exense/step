@@ -11,7 +11,6 @@ import static step.core.objectenricher.WriteAccessValidator.NO_CHECKS_VALIDATOR;
 public class AutomationPackageUpdateParameterBuilder {
     private boolean allowUpdate = true;
     private boolean allowCreate = true;
-    private boolean isLocalPackage = false;
     private ObjectId explicitOldId = null;
     private AutomationPackageFileSource apSource;
     private AutomationPackageFileSource apLibrarySource;
@@ -39,12 +38,6 @@ public class AutomationPackageUpdateParameterBuilder {
         this.allowCreate = allowCreate;
         return this;
     }
-
-    public AutomationPackageUpdateParameterBuilder withIsLocalPackage(boolean isLocalPackage) {
-        this.isLocalPackage = isLocalPackage;
-        return this;
-    }
-
 
     public AutomationPackageUpdateParameterBuilder withExplicitOldId(ObjectId explicitOldId) {
         this.explicitOldId = explicitOldId;
@@ -130,7 +123,6 @@ public class AutomationPackageUpdateParameterBuilder {
         this.allowUpdate = true;
         this.allowCreate = false;
         this.explicitOldId = oldPackage.getId();
-        this.isLocalPackage = parentParameters.isLocalPackage;
         String automationPackageResource = oldPackage.getAutomationPackageResource();
         if (FileResolver.isResource(automationPackageResource)) {
             this.apSource = AutomationPackageFileSource.withResourceId(FileResolver.resolveResourceId(automationPackageResource));
@@ -191,7 +183,6 @@ public class AutomationPackageUpdateParameterBuilder {
      * helper setting automatically the properties to match local use cases
      */
     public AutomationPackageUpdateParameterBuilder forLocalExecution() {
-        this.isLocalPackage = true;
         this.objectPredicate = o -> true;
         this.writeAccessValidator = NO_CHECKS_VALIDATOR;
         this.explicitOldId = null;
@@ -205,7 +196,7 @@ public class AutomationPackageUpdateParameterBuilder {
     }
 
     public AutomationPackageUpdateParameter build() {
-        return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isLocalPackage, explicitOldId, apSource,
+        return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, explicitOldId, apSource,
                 apLibrarySource, versionName, activationExpression, enricher, objectPredicate, writeAccessValidator,
                 async, actorUser, forceRefreshOfSnapshots, checkForSameOrigin, functionsAttributes, plansAttributes,
                 tokenSelectionCriteria, executeFunctionsLocally, reloading);

@@ -45,13 +45,16 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-		if(context.getOperationMode() == OperationMode.LOCAL) {
+		OperationMode operationMode = context.getOperationMode();
+		if(operationMode.isLocal()) {
 			functionAccessor = context.require(FunctionAccessor.class);
 			functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 			
 			functionTypeRegistry.registerFunctionType(new LocalFunctionType());
-			List<Function> localFunctions = getLocalFunctions();
-			functionAccessor.save(localFunctions);
+			if (!OperationMode.LOCAL_AUTOMATION_PACKAGE.equals(operationMode)) {
+				List<Function> localFunctions = getLocalFunctions();
+				functionAccessor.save(localFunctions);
+			}
 		}
 	}
 

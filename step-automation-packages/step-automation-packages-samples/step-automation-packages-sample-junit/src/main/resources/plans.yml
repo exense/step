@@ -7,3 +7,5 @@ plans:
               text: "Just echo"
           - callKeyword:
               keyword: "MyKeyword2"
+          - callKeyword:
+              keyword: "MyKeywordUsingAutomationPackageFile"

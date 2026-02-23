@@ -33,7 +33,7 @@ public class GeneralScriptFunctionPlugin extends AbstractExecutionEnginePlugin {
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-        if (context.getOperationMode() == OperationMode.LOCAL) {
+        if (context.getOperationMode().isLocal()) {
             functionTypeRegistry = context.require(FunctionTypeRegistry.class);
             functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(context.getConfiguration()));
         }

@@ -47,7 +47,8 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-		if (context.getOperationMode() == OperationMode.LOCAL) {
+		OperationMode operationMode = context.getOperationMode();
+		if (operationMode.isLocal()) {
 			functionAccessor = context.require(FunctionAccessor.class);
 			planAccessor = context.getPlanAccessor();
 			functionTypeRegistry = context.require(FunctionTypeRegistry.class);
@@ -57,7 +58,9 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 							context.inheritFromParentOrComputeIfAbsent(parentContext, ObjectHookRegistry.class, objectHookRegistryClass -> new ObjectHookRegistry())
 					)
 			);
-			saveLocalFunctions();
+			if (!OperationMode.LOCAL_AUTOMATION_PACKAGE.equals(operationMode)) {
+				saveLocalFunctions();
+			}
 		}
 	}
 

@@ -222,7 +222,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionExecutionService, functionGroupContext);
 
 				// Force local token selection for local plan executions
-				boolean forceLocalToken = context.getOperationMode() == OperationMode.LOCAL;
+				boolean forceLocalToken = context.getOperationMode().isLocal();
 				TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
 				StreamingResourceUploadContext streamingUploadContext = null;
