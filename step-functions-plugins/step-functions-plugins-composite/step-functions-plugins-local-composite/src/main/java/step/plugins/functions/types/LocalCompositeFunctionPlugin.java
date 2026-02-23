@@ -58,6 +58,9 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 							context.inheritFromParentOrComputeIfAbsent(parentContext, ObjectHookRegistry.class, objectHookRegistryClass -> new ObjectHookRegistry())
 					)
 			);
+
+			// Scanning and saving the local composite keywords here is only required for the LocalPlanRunner
+			// In the context of Automation Package, the Automation Package manager is responsible to read the AP (including annotations)
 			if (!OperationMode.LOCAL_AUTOMATION_PACKAGE.equals(operationMode)) {
 				saveLocalFunctions();
 			}

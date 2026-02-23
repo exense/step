@@ -45,10 +45,10 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     private final ResourcePathMatchingResolver pathMatchingResourceResolver;
 
     public JavaAutomationPackageArchive(ClassLoader classLoader) throws AutomationPackageReadingException {
-        this(getClasLoaderArchiveFile(classLoader), null, "ClassLoaderArchiver");
+        this(getClassLoaderArchiveFile(classLoader), null, "ClassLoaderArchiver");
     }
 
-    private static File getClasLoaderArchiveFile(ClassLoader classLoader) throws AutomationPackageReadingException {
+    private static File getClassLoaderArchiveFile(ClassLoader classLoader) throws AutomationPackageReadingException {
         try {
             log.debug("Creation of archive from classloader");
             File tempFile = FileHelper.createTempFile();
