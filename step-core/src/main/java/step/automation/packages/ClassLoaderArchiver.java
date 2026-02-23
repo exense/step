@@ -1,5 +1,8 @@
 package step.automation.packages;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.net.URLClassLoader;
 import java.nio.file.*;
@@ -24,6 +27,8 @@ import java.util.zip.*;
  * JARs.</p>
  */
 public class ClassLoaderArchiver {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClassLoaderArchiver.class);
 
     private static final int BUFFER_SIZE = 64 * 1024; // 64KB
 
@@ -134,9 +139,19 @@ public class ClassLoaderArchiver {
         ClassLoader current = classLoader;
         while (current != null) {
             if (current instanceof URLClassLoader) {
+                // Classpath URLs are expected to be local files in this context (JUnit/Surefire/Gradle),
+                // but we guard against edge cases such as: non-existent speculative entries added by IDEs
+                // or build tools before compilation, remote URLs (http://) used by custom classloaders,
+                // or nested JAR URLs (jar:file:/.../outer.jar!/inner) that cannot be mapped to a File.
                 for (java.net.URL url : ((URLClassLoader) current).getURLs()) {
-                    File f = new File(url.getPath());
-                    if (f.exists()) files.add(f);
+                    try {
+                        File f = new File(url.toURI());
+                        if (f.exists()) files.add(f);
+                    } catch (java.net.URISyntaxException e) {
+                        // Fallback to getPath() for malformed URLs that aren't valid URIs
+                        File f = new File(url.getPath());
+                        if (f.exists()) files.add(f);
+                    }
                 }
             }
             current = current.getParent();

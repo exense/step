@@ -42,7 +42,6 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
 
     private final ClassLoader classLoaderForMainApFile;
     private final ClassLoader classLoaderForApAndLibraries;
-    private boolean internalClassLoader = false;
     private final ResourcePathMatchingResolver pathMatchingResourceResolver;
 
     public JavaAutomationPackageArchive(ClassLoader classLoader) throws AutomationPackageReadingException {
@@ -63,7 +62,6 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
 
     public JavaAutomationPackageArchive(File automationPackageFile, File keywordLibFile, String defaultName) throws AutomationPackageReadingException {
         super(automationPackageFile, keywordLibFile, TYPE, defaultName);
-        this.internalClassLoader = true;
         if (!isValidForFile(automationPackageFile)) {
             throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " is neither zip archive nor jar file nor directory");
         }
@@ -159,10 +157,10 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
 
     @Override
     public void close() throws IOException {
-        if (internalClassLoader && this.classLoaderForMainApFile instanceof Closeable) {
+        if (this.classLoaderForMainApFile instanceof Closeable) {
             IOUtils.closeQuietly(((Closeable) this.classLoaderForMainApFile), e -> log.warn("Unable to close the classloader for AP file", e));
         }
-        if (internalClassLoader && this.classLoaderForApAndLibraries instanceof Closeable) {
+        if (this.classLoaderForApAndLibraries instanceof Closeable) {
             IOUtils.closeQuietly(((Closeable) this.classLoaderForApAndLibraries), e -> log.warn("Unable to close the classloader for keyword lib", e));
         }
     }
