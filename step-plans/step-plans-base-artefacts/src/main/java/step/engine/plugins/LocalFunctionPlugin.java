@@ -115,7 +115,7 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 
 		@Override
 		public String getHandlerChain(LocalFunction function) {
-			return KeywordHandler.class.getName();
+			return LocalFunctionHandler.class.getName();
 		}
 
 		@Override

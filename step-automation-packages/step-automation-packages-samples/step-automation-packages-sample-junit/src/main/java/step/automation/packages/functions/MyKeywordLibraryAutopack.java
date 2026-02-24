@@ -58,8 +58,8 @@ public class MyKeywordLibraryAutopack extends AbstractKeyword {
 				output.setError("Retrieved Automation Package content is empty");
 			} else {
 				output.add("AutomationPackageContent", String.join(", ", list));
-				if (!Arrays.asList(list).contains("plan.plan")) {
-					output.setError("Retrieved Automation Package content missing file plan.plan");
+				if (!Arrays.asList(list).contains("plan.plan") && ! Arrays.asList(list).contains("jmeterProject1/jmeterProject1.xml")) {
+					output.setError("Retrieved Automation Package content missing file plan.plan or jmeterProject1/jmeterProject1.xml");
 				}
 			}
 		}

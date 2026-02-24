@@ -38,6 +38,14 @@ public abstract class AutomationPackageArchive implements Closeable {
     private final String type;
     private final String archiveName;
 
+    protected AutomationPackageArchive(String type) {
+        this.originalFile = null;
+        this.keywordLibFile = null;
+        Objects.requireNonNull(type, NULL_TYPE_ERROR_MSG);
+        this.type = type;
+        this.archiveName = null;
+    }
+
     public AutomationPackageArchive(File automationPackageFile, File keywordLibFile, String type, String archiveName) throws AutomationPackageReadingException {
         Objects.requireNonNull(automationPackageFile, "The automationPackageFile must not be null");
         Objects.requireNonNull(automationPackageFile, NULL_TYPE_ERROR_MSG);

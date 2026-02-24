@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import ch.exense.commons.io.FileHelper;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +30,6 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
-import static step.automation.packages.ClassLoaderArchiver.createArchive;
-
 public class JavaAutomationPackageArchive extends AutomationPackageArchive {
 
     public static String TYPE = "JAVA";
@@ -42,26 +39,19 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
 
     private final ClassLoader classLoaderForMainApFile;
     private final ClassLoader classLoaderForApAndLibraries;
+    private boolean internalClassLoader = false;
     private final ResourcePathMatchingResolver pathMatchingResourceResolver;
 
     public JavaAutomationPackageArchive(ClassLoader classLoader) throws AutomationPackageReadingException {
-        this(getClassLoaderArchiveFile(classLoader), null, "ClassLoaderArchiver");
-    }
-
-    private static File getClassLoaderArchiveFile(ClassLoader classLoader) throws AutomationPackageReadingException {
-        try {
-            log.debug("Creation of archive from classloader");
-            File tempFile = FileHelper.createTempFile();
-            createArchive(classLoader, tempFile);
-            log.debug("Creation of archive from classloader completed");
-            return tempFile;
-        } catch (IOException e) {
-            throw new AutomationPackageReadingException("Unable to create temporary archive file for the classloader", e);
-        }
+        super(TYPE);
+        this.classLoaderForMainApFile = classLoader;
+        this.classLoaderForApAndLibraries = classLoader;
+        this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
     }
 
     public JavaAutomationPackageArchive(File automationPackageFile, File keywordLibFile, String defaultName) throws AutomationPackageReadingException {
         super(automationPackageFile, keywordLibFile, TYPE, defaultName);
+        this.internalClassLoader = true;
         if (!isValidForFile(automationPackageFile)) {
             throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " is neither zip archive nor jar file nor directory");
         }
@@ -152,15 +142,20 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     }
 
     public AnnotationScanner createAnnotationScanner(){
-        return AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) getClassLoaderForApAndLibraries());
+        // for file-based packages we create class loader for file, otherwise we just use class loader from archive
+        if (getOriginalFile() != null) {
+            return AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) getClassLoaderForApAndLibraries());
+        } else {
+            return AnnotationScanner.forAllClassesFromClassLoader(getClassLoaderForApAndLibraries());
+        }
     }
 
     @Override
     public void close() throws IOException {
-        if (this.classLoaderForMainApFile instanceof Closeable) {
+        if (internalClassLoader && this.classLoaderForMainApFile instanceof Closeable) {
             IOUtils.closeQuietly(((Closeable) this.classLoaderForMainApFile), e -> log.warn("Unable to close the classloader for AP file", e));
         }
-        if (this.classLoaderForApAndLibraries instanceof Closeable) {
+        if (internalClassLoader && this.classLoaderForApAndLibraries instanceof Closeable) {
             IOUtils.closeQuietly(((Closeable) this.classLoaderForApAndLibraries), e -> log.warn("Unable to close the classloader for keyword lib", e));
         }
     }
