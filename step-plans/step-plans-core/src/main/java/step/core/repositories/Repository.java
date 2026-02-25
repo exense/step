@@ -19,6 +19,7 @@
 package step.core.repositories;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,4 +55,8 @@ public interface Repository {
 	boolean compareCanonicalRepositoryParameters(Map<String, String> repositoryParameters1, Map<String, String> repositoryParameters2);
 
 	Set<String> getCanonicalRepositoryParameters();
+
+	default ArtefactLinks getArtefactLinks(Map<String, String> repositoryParameters) throws Exception {
+		return new ArtefactLinks(List.of());
+	}
 }

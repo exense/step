@@ -42,6 +42,7 @@ import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.ArtefactInfo;
+import step.core.repositories.ArtefactLinks;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.repositories.TestSetStatusOverview;
 import step.core.scheduler.ExecutionScheduler;
@@ -180,7 +181,7 @@ public class ControllerServices extends AbstractStepServices {
 		}
 		return result;
 	}
-	
+
 	@POST
 	@Path("/repository/artefact/info")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -193,7 +194,20 @@ public class ControllerServices extends AbstractStepServices {
 			throw new WebApplicationException(Response.status(500).entity("Unable to retrieve artefact."+e.getMessage()).type("text/plain").build());
 		}
 	}
-	
+
+	@POST
+	@Path("/repository/artefact/links")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right = "execution-read")
+	public ArtefactLinks getArtefactLinks(RepositoryObjectReference ref) {
+		try {
+			return getContext().getRepositoryObjectManager().getArtefactLinks(ref);
+		} catch (Exception e) {
+			throw new WebApplicationException(Response.status(500).entity("Unable to retrieve artefact." + e.getMessage()).type("text/plain").build());
+		}
+	}
+
 	@POST
 	@Path("/repository/report")
 	@Consumes(MediaType.APPLICATION_JSON)
