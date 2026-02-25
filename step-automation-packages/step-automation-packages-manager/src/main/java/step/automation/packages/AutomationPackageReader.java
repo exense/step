@@ -102,7 +102,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         try {
             if (automationPackageArchive.hasAutomationPackageDescriptor()) {
                 try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
-                    AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getOriginalFileName());
+                    AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getAutomationPackageName());
                     return buildAutomationPackage(descriptorYaml, automationPackageArchive, apVersion, isLocalPackage, scanAnnotations);
                 }
             } else if (scanAnnotations) {
@@ -187,7 +187,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = resource.openStream()) {
-                        fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getOriginalFileName());
+                        fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getAutomationPackageName());
                         fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive);
                     } catch (IOException e) {
                         throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);

@@ -62,13 +62,13 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
             // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
             List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, isLocalPackage, null, null);
             if (!scannedKeywords.isEmpty()) {
-                log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getOriginalFileName()));
+                log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
             }
             res.getKeywords().addAll(scannedKeywords);
 
             List<Plan> annotatedPlans = extractAnnotatedPlans(archive, annotationScanner, stepClassParser);
             if (!annotatedPlans.isEmpty()) {
-                log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getOriginalFileName()));
+                log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
             }
             res.getPlans().addAll(annotatedPlans);
         } catch (JsonSchemaPreparationException e) {

@@ -22,6 +22,7 @@ import org.junit.runners.model.InitializationError;
 import step.automation.packages.junit.*;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.OperationMode;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
 public class Step extends AbstractStepRunner {
@@ -30,7 +31,9 @@ public class Step extends AbstractStepRunner {
 		super(klass, klass);
 
 		try {
-			executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
+			executionEngine = ExecutionEngine.builder()
+					.withOperationMode(OperationMode.LOCAL_AUTOMATION_PACKAGE)
+					.withPlugin(new AbstractExecutionEnginePlugin() {
 				@Override
 				public void afterExecutionEnd(ExecutionContext context) {
 					resourceManager = context.getResourceManager();
