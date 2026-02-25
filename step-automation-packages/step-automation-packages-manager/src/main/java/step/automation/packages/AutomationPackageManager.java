@@ -47,7 +47,6 @@ import step.functions.manager.FunctionManager;
 import step.functions.manager.FunctionManagerImpl;
 import step.functions.type.FunctionTypeException;
 import step.functions.type.FunctionTypeRegistry;
-import step.functions.type.SetupFunctionException;
 import step.plugins.functions.types.CompositeFunction;
 import step.repositories.artifact.ResolvedMavenArtifact;
 import step.repositories.artifact.SnapshotMetadata;
@@ -374,7 +373,7 @@ public class AutomationPackageManager {
         AtomicReference<AutomationPackageStaging> staging = new AtomicReference<>(null);
         try (AutomationPackageArchive automationPackageArchive = automationPackageProvider.getAutomationPackageArchive()) {
             AutomationPackage newPackage;
-            AutomationPackageContent packageContent = readAutomationPackage(automationPackageArchive, parameters.versionName, parameters.isLocalPackage);
+            AutomationPackageContent packageContent = readAutomationPackage(automationPackageArchive, parameters.versionName, parameters.isClasspathBased);
 
             AutomationPackage oldPackage = findOldPackage(parameters.explicitOldId, parameters.objectPredicate, packageContent);
 
@@ -1078,10 +1077,10 @@ public class AutomationPackageManager {
         return newPackage;
     }
 
-    protected <A extends AutomationPackageArchive> AutomationPackageContent readAutomationPackage(A automationPackageArchive, String apVersion, boolean isLocalPackage) throws AutomationPackageReadingException {
+    protected <A extends AutomationPackageArchive> AutomationPackageContent readAutomationPackage(A automationPackageArchive, String apVersion, boolean isClasspathBased) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
         AutomationPackageReader<A> reader = automationPackageReaderRegistry.getReader(automationPackageArchive);
-        packageContent = reader.readAutomationPackage(automationPackageArchive, apVersion, isLocalPackage);
+        packageContent = reader.readAutomationPackage(automationPackageArchive, apVersion, isClasspathBased);
         if (packageContent == null) {
             throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);
         } else if (packageContent.getName() == null || packageContent.getName().isEmpty()) {

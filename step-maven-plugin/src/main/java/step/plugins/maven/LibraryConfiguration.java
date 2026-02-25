@@ -50,6 +50,12 @@ public class LibraryConfiguration {
     // Managed library name configuration
     private String managed;
 
+    public boolean isSet() {
+        return groupId != null || artifactId != null || version != null
+                || classifier != null || type != null
+                || path != null || managed != null;
+    }
+
     /**
      * Validates that only one configuration method is specified.
      *
