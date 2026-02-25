@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 
 import ch.exense.commons.io.FileHelper;
+import jakarta.annotation.Nullable;
 import step.functions.io.Input;
 import step.functions.io.Output;
 import step.grid.agent.tokenpool.TokenReservationSession;
@@ -346,6 +347,11 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 	 */
 	public File retrieveAndExtractAutomationPackageFile(Map<String, String> properties) throws FileManagerException {
 		File automationPackageFile = retrieveFileVersion(AUTOMATION_PACKAGE_FILE, properties);
+		return extractAutomationPackageFile(automationPackageFile);
+	}
+
+	@Nullable
+	protected File extractAutomationPackageFile(File automationPackageFile) {
 		if (automationPackageFile != null) {
 			if (FileHelper.isArchive(automationPackageFile)) {
 				// Store the extracted automation package in the session. This will be deleted when the session is closed
