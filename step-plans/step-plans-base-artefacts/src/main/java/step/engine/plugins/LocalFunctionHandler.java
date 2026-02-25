@@ -10,20 +10,45 @@ import java.util.Map;
 
 public class LocalFunctionHandler extends KeywordHandler {
 
+    public static String TOKEN_RESERVATION_AUTOMATION_PACKAGE_FILE = "TOKEN_RESERVATION_AUTOMATION_PACKAGE_FILE";
+
     @Override
     public File retrieveAndExtractAutomationPackageFile(Map<String, String> properties) throws FileManagerException {
+        // For local Function we artificially create an archive using the application classloader defined as system property
+        TemporaryFile temporaryFile = getTokenReservationSession().getOrDefault(TOKEN_RESERVATION_AUTOMATION_PACKAGE_FILE, u ->
+        {
+            try {
+                return new TemporaryFile(FileHelper.createTempFile());
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to create temporary archive file", e);
+            }
+        }, null);
         try {
-            // For local Function we artificially create an archive using the application classloader defined as system property
-            File tempFile = FileHelper.createTempFile();
-            ClassLoaderArchiver.createArchive(tempFile, true);
-            return extractAutomationPackageFile(tempFile);
+            ClassLoaderArchiver.createArchive(temporaryFile.temporaryFile, true);
+            return extractAutomationPackageFile(temporaryFile.temporaryFile);
         } catch (IOException e) {
-            throw new RuntimeException("Unable to create temporary archive file for the classloader", e);
+            throw new RuntimeException("Unable to create temporary archive file from the classloader", e);
+        }
+    }
+
+    private static class TemporaryFile implements AutoCloseable {
+
+        private final File temporaryFile;
+
+        public TemporaryFile(File temporaryFile) {
+            this.temporaryFile = temporaryFile;
+        }
+
+        @Override
+        public void close() {
+            if (temporaryFile != null && temporaryFile.exists()) {
+                temporaryFile.delete();
+            }
         }
     }
 
     @Override
     public boolean containsAutomationPackageFileReference(Map<String, String> properties) {
-        //for local Keyword we always consider that we hare in the context of an AP
+        //for local Keyword we always consider that we are in the context of an AP
         return true;
     }}

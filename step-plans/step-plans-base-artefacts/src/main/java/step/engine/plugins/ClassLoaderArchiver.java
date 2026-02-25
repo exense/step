@@ -1,8 +1,5 @@
 package step.engine.plugins;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -28,13 +25,11 @@ import java.util.zip.*;
  */
 public class ClassLoaderArchiver {
 
-    private static final Logger logger = LoggerFactory.getLogger(ClassLoaderArchiver.class);
-
     private static final int BUFFER_SIZE = 64 * 1024; // 64KB
 
     /**
      * Creates a JAR archive at {@code outputFile} that contains all classes and
-     * resources reachable from {@code classLoader}.
+     * resources reachable from the application classloader.
      *
      * <p>The method collects every classpath root (directories and JAR files) from the
      * {@code java.class.path} system property and merges them into one flat JAR.
@@ -141,19 +136,6 @@ public class ClassLoaderArchiver {
         }
 
         return files;
-    }
-
-    /**
-     * Returns {@code true} if {@code files} contains at least one directory
-     * whose path includes the token {@code classes} or {@code resources}.
-     *
-     * @param files the set of classpath roots to inspect
-     * @return {@code true} if a classes/resources directory is present,
-     *         {@code false} otherwise
-     */
-    private static boolean containsClassesDirectory(Set<File> files) {
-        return files.stream().anyMatch(f -> f.isDirectory() &&
-                (f.getPath().contains("classes") || f.getPath().contains("resources")));
     }
 
     /**
