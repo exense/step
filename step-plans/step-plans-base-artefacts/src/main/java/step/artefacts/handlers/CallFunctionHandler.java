@@ -86,6 +86,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
+import static step.core.execution.OperationMode.isLocal;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -222,7 +223,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
 				FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionExecutionService, functionGroupContext);
 
 				// Force local token selection for local plan executions
-				boolean forceLocalToken = context.getOperationMode().isLocal();
+				boolean forceLocalToken = isLocal(context.getOperationMode());
 				TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
 				StreamingResourceUploadContext streamingUploadContext = null;

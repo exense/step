@@ -32,7 +32,7 @@ public enum OperationMode {
 	 * {@link #LOCAL_AUTOMATION_PACKAGE} does not matter (e.g. forcing local token
 	 * selection, skipping controller-only setup).
 	 */
-	public boolean isLocal() {
-		return this == LOCAL || this == LOCAL_AUTOMATION_PACKAGE;
+	public static boolean isLocal(OperationMode operationMode) {
+		return (operationMode == LOCAL || operationMode == LOCAL_AUTOMATION_PACKAGE);
 	}
 }

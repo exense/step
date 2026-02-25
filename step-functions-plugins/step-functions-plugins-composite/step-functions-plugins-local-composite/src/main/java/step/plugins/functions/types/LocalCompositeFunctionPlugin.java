@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static step.core.execution.OperationMode.isLocal;
+
 @Plugin(dependencies= {FunctionPlugin.class})
 public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin {
 
@@ -48,7 +50,7 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
 		OperationMode operationMode = context.getOperationMode();
-		if (operationMode.isLocal()) {
+		if (isLocal(operationMode)) {
 			functionAccessor = context.require(FunctionAccessor.class);
 			planAccessor = context.getPlanAccessor();
 			functionTypeRegistry = context.require(FunctionTypeRegistry.class);

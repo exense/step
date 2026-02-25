@@ -21,12 +21,13 @@ package step.plugins.jmeter;
 import ch.exense.commons.app.Configuration;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
-import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
+
+import static step.core.execution.OperationMode.isLocal;
 
 @Plugin(dependencies= {FunctionPlugin.class})
 public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin {
@@ -35,7 +36,7 @@ public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-        if (context.getOperationMode().isLocal()) {
+        if (isLocal(context.getOperationMode())) {
             Configuration config = context.getConfiguration();
 
             String jMeterHome = System.getenv().get(JMETER_HOME_ENV_VAR);

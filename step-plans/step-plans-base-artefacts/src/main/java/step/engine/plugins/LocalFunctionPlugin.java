@@ -32,10 +32,12 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.KeywordExecutor;
-import step.plugins.java.handler.KeywordHandler;
+
 
 import java.lang.reflect.Method;
 import java.util.*;
+
+import static step.core.execution.OperationMode.isLocal;
 
 @Plugin(dependencies= {FunctionPlugin.class})
 public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
@@ -46,7 +48,7 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 	@Override
 	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
 		OperationMode operationMode = context.getOperationMode();
-		if(operationMode.isLocal()) {
+		if(isLocal(operationMode)) {
 			functionAccessor = context.require(FunctionAccessor.class);
 			functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 			
