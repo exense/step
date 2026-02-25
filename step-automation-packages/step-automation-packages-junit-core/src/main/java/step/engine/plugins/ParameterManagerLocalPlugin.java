@@ -30,6 +30,8 @@ import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 
+import static step.core.execution.OperationMode.isLocal;
+
 @Plugin(dependencies= {BasePlugin.class})
 public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
 
@@ -42,7 +44,7 @@ public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
-        if (executionEngineContext.getOperationMode() != OperationMode.LOCAL) {
+        if (!isLocal(executionEngineContext.getOperationMode())) {
             return;
         }
 

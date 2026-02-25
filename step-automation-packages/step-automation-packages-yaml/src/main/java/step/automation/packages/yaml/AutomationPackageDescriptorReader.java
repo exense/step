@@ -70,25 +70,25 @@ public class AutomationPackageDescriptorReader {
         }
     }
 
-    public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor, String packageFileName) throws AutomationPackageReadingException {
+    public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor, String packageName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor...");
-        return readAutomationPackageYamlFile(yamlDescriptor, getDescriptorClass(), packageFileName);
+        return readAutomationPackageYamlFile(yamlDescriptor, getDescriptorClass(), packageName);
     }
 
     protected Class<? extends AutomationPackageDescriptorYaml> getDescriptorClass() {
         return AutomationPackageDescriptorYamlImpl.class;
     }
 
-    public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageFileName) throws AutomationPackageReadingException {
+    public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor fragment ({})...", fragmentName);
-        return readAutomationPackageYamlFile(yamlFragment, getFragmentClass(), packageFileName);
+        return readAutomationPackageYamlFile(yamlFragment, getFragmentClass(), packageName);
     }
 
     protected Class<? extends AutomationPackageFragmentYaml> getFragmentClass() {
         return AutomationPackageFragmentYamlImpl.class;
     }
 
-    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageFileName) throws AutomationPackageReadingException {
+    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageName) throws AutomationPackageReadingException {
         try {
             String yamlDescriptorString = new String(yaml.readAllBytes(), StandardCharsets.UTF_8);
             String version = null;
@@ -107,28 +107,28 @@ public class AutomationPackageDescriptorReader {
 
             T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(yamlDescriptorString, targetClass);
 
-            logAfterRead(packageFileName, res);
+            logAfterRead(packageName, res);
             return res;
         } catch (IOException | YamlPlanValidationException e) {
             throw new AutomationPackageReadingException("Unable to read the automation package yaml. Caused by: " + e.getMessage(), e);
         }
     }
 
-    protected <T extends AutomationPackageFragmentYaml> void logAfterRead(String packageFileName, T res) {
+    protected <T extends AutomationPackageFragmentYaml> void logAfterRead(String packageName, T res) {
         if (!res.getKeywords().isEmpty()) {
-            log.info("{} keyword(s) found in automation package {}", res.getKeywords().size(), StringUtils.defaultString(packageFileName));
+            log.info("{} keyword(s) found in automation package {}", res.getKeywords().size(), StringUtils.defaultString(packageName));
         }
         if (!res.getPlans().isEmpty()) {
-            log.info("{} plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageFileName));
+            log.info("{} plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageName));
         }
         if (!res.getPlansPlainText().isEmpty()) {
-            log.info("{} plain text plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageFileName));
+            log.info("{} plain text plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageName));
         }
         for (Map.Entry<String, List<?>> additionalEntry : res.getAdditionalFields().entrySet()) {
-            log.info("{} {} found in automation package {}", additionalEntry.getValue().size(), additionalEntry.getKey(), StringUtils.defaultString(packageFileName));
+            log.info("{} {} found in automation package {}", additionalEntry.getValue().size(), additionalEntry.getKey(), StringUtils.defaultString(packageName));
         }
         if (!res.getFragments().isEmpty()) {
-            log.info("{} imported fragment(s) found in automation package {}", res.getFragments().size(), StringUtils.defaultString(packageFileName));
+            log.info("{} imported fragment(s) found in automation package {}", res.getFragments().size(), StringUtils.defaultString(packageName));
         }
     }
 
