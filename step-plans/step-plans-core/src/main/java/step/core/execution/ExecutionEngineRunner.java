@@ -196,10 +196,7 @@ public class ExecutionEngineRunner {
 	}
 
 	private void addImportResultToExecution(ImportResult importResult) {
-		updateExecution(e -> {
-			e.setImportResult(importResult);
-			e.setCanonicalPlanName(importResult.getCanonicalPlanName());
-		});
+		updateExecution(e -> e.setImportResult(importResult));
 	}
 
 	private void addPlanToContextAndUpdateExecution(Plan plan) {
@@ -210,10 +207,6 @@ public class ExecutionEngineRunner {
 				execution.setDescription(plan.getAttributes() != null ? plan.getAttributes().get(AbstractOrganizableObject.NAME) : null);
 			}
 		});
-	}
-
-	private void addCanonicalPlanNameToExecution(String canonicalPlanName) {
-		updateExecution(execution -> execution.setCanonicalPlanName(canonicalPlanName));
 	}
 
 	private String messageWithId(String message) {

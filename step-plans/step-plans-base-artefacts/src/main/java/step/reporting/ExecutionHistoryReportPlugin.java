@@ -8,6 +8,7 @@ import step.core.execution.model.ExecutionResultSnapshot;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,9 +23,8 @@ public class ExecutionHistoryReportPlugin extends AbstractExecutionEnginePlugin 
         Integer countItems = configuration.getPropertyAsInteger(EXECUTIONS_HISTORY_COLLECT_COUNT, 10);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         Execution execution = context.getExecutionManager().getExecution();
-        // endTime is not set here
-        long searchBeforeTimestamp = execution.getEndTime() != null ? execution.getEndTime() : System.currentTimeMillis() - 1;
-        List<ExecutionResultSnapshot> pastExecutionsSnapshots = executionAccessor.getLastEndedExecutionsByCanonicalPlanName(execution.getCanonicalPlanName(), countItems, searchBeforeTimestamp)
+        long searchBeforeTimestamp = execution.getEndTime() != null ? execution.getEndTime() : System.currentTimeMillis();
+        List<ExecutionResultSnapshot> pastExecutionsSnapshots = executionAccessor.getLastEndedExecutionsByCanonicalPlanName(execution.getImportResult().getCanonicalPlanName(), countItems, searchBeforeTimestamp, List.of(execution.getId().toString()))
                 .map(e -> {
                     ExecutionResultSnapshot snapshot = new ExecutionResultSnapshot();
                     snapshot.setId(e.getId().toString());

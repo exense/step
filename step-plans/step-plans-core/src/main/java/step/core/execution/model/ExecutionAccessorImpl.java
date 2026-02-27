@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.collections.CollectionUtils;
 import step.commons.iterators.SkipLimitIterator;
 import step.commons.iterators.SkipLimitProvider;
 import step.core.accessors.AbstractAccessor;
@@ -179,16 +180,19 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 	}
 
 	@Override
-	public Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long from) {
+	public Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long searchBeforeTimestamp, List<String> excludeExecutionsIds) {
 		SearchOrder order = new SearchOrder("endTime", -1);
 
 		List<Filter> filters = new ArrayList<>(List.of(
-				Filters.equals("canonicalPlanName", canonicalPlanName),
+				Filters.equals("importResult.canonicalPlanName", canonicalPlanName),
 				Filters.equals("status", ExecutionStatus.ENDED.name())
 		));
 
-		if (from != null) {
-			filters.add(Filters.lte("endTime", from));
+		if (searchBeforeTimestamp != null) {
+			filters.add(Filters.lte("endTime", searchBeforeTimestamp));
+		}
+		if (CollectionUtils.isNotEmpty(excludeExecutionsIds)) {
+			filters.add(Filters.not(Filters.in("_id", excludeExecutionsIds)));
 		}
 
 		return collectionDriver

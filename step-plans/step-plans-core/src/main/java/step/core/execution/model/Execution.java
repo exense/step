@@ -45,7 +45,6 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	private ReportNodeStatus result;
 	private List<Error> lifecycleErrors;
 	private String planId;
-	private String canonicalPlanName;
 	private ImportResult importResult;
 	private List<ReportExport> reportExports;
 	private String executionTaskID;
@@ -150,14 +149,6 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 
 	public void setPlanId(String planId) {
 		this.planId = planId;
-	}
-
-	public String getCanonicalPlanName() {
-		return canonicalPlanName;
-	}
-
-	public void setCanonicalPlanName(String canonicalPlanName) {
-		this.canonicalPlanName = canonicalPlanName;
 	}
 
 	/**
