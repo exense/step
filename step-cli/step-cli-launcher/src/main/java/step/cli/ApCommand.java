@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 @CommandLine.Command(name = ApCommand.AP_COMMAND,
         mixinStandardHelpOptions = true,
-        version = Constants.STEP_API_VERSION_STRING,
+        version = Constants.STEP_VERSION_STRING,
         description = "The CLI interface to manage automation packages in Step",
         usageHelpAutoWidth = true
 )
@@ -106,7 +106,7 @@ public class ApCommand implements Callable<Integer> {
 
     @CommandLine.Command(name = "deploy",
             mixinStandardHelpOptions = true,
-            version = Constants.STEP_API_VERSION_STRING,
+            version = Constants.STEP_VERSION_STRING,
             description = "The CLI interface to deploy automation packages in Step",
             usageHelpAutoWidth = true,
             subcommands = {CommandLine.HelpCommand.class})
@@ -265,9 +265,7 @@ public class ApCommand implements Callable<Integer> {
 
             File packageLibraryFile = null;
             if (library != null && !library.isEmpty()) {
-                // TODO: SED-4035 - classloader issue for local execution with library - should be fixed later
-                throw new StepCliExecutionException("Libraries are not supported for local execution");
-//                packageLibraryFile = preparePackageLibraryFile(library);
+                packageLibraryFile = preparePackageLibraryFile(library);
             }
 
             executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);

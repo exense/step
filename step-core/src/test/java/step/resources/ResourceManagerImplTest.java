@@ -20,6 +20,8 @@ package step.resources;
 
 import ch.exense.commons.io.FileHelper;
 import com.google.common.io.ByteStreams;
+import org.bson.types.ObjectId;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import step.core.accessors.AbstractOrganizableObject;
@@ -37,7 +39,7 @@ import static org.junit.Assert.*;
 public class ResourceManagerImplTest {
 
 	private File rootFolder;
-	private ResourceManager resourceManager;
+	private ResourceManagerImpl resourceManager;
 	private ResourceAccessor resourceAccessor;
 	private ResourceRevisionAccessor resourceRevisionAccessor;
 
@@ -248,6 +250,34 @@ public class ResourceManagerImplTest {
 
 		resourceRevision = resourceManager.getResourceRevision(updatedResource.getCurrentRevisionId().toString());
 		assertEquals("newName", resourceRevision.getResourceFileName());
+	}
+
+	@Test
+	public void testAttachmentDeletionByExecutionId() throws Exception {
+		Assert.assertEquals(0, resourceManager.resourceAccessor.stream().count());
+		String executionId = new ObjectId().toString();
+		// create 3 non-attachment resources
+		for (int i = 0; i < 3; i++) {
+			Resource r = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, "testUser");
+			// We add a spurious execution id here (NOT normally present on non-attachment resources).
+			// This is just to check that non-attachment resources will NOT be deleted even if they happen to
+			// have an executionId for whichever reason.
+			r.setExecutionId(executionId);
+			resourceManager.saveResource(r);
+		}
+		// create 5 attachment resources WITHOUT execution id
+		for (int i = 0; i < 5; i++) {
+			resourceManager.createResource(ResourceManager.RESOURCE_TYPE_ATTACHMENT, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, "testUser");
+		}
+		// create 7 attachment resources WITH execution id -- these are the ones that should be deleted.
+		for (int i = 0; i < 7; i++) {
+			Resource r = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_ATTACHMENT, this.getClass().getResourceAsStream("TestResource.txt"), "TestResource.txt", null, "testUser");
+			r.setExecutionId(executionId);
+			resourceManager.saveResource(r);
+		}
+		assertEquals(15, resourceManager.resourceAccessor.stream().count());
+		resourceManager.deleteAttachmentsForExecutionId(executionId.toString());
+		assertEquals(8, resourceManager.resourceAccessor.stream().count());
 	}
 
 }

@@ -203,6 +203,13 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
+    public void deleteAttachmentsForExecutionId(String executionId) {
+        for (ResourceManager resourceManager : resourceManagers) {
+            resourceManager.deleteAttachmentsForExecutionId(executionId);
+        }
+    }
+
+    @Override
     public List<Resource> findManyByCriteria(Map<String, String> criteria) {
         return layeredSearch(resourceManager -> resourceManager.findManyByCriteria(criteria));
     }
