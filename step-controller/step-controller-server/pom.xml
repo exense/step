@@ -102,12 +102,12 @@
 			<artifactId>commons-codec</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
+			<groupId>org.apache.groovy</groupId>
 			<artifactId>groovy-all</artifactId>
 			<type>pom</type>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
+			<groupId>org.apache.groovy</groupId>
 			<artifactId>groovy-dateutil</artifactId>
 		</dependency>
 		<dependency>
