@@ -12,14 +12,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Plugin
-public class ExecutionHistoryReportPlugin  extends AbstractExecutionEnginePlugin {
+public class ExecutionHistoryReportPlugin extends AbstractExecutionEnginePlugin {
 
     public static final String EXECUTIONS_HISTORY_COLLECT_COUNT = "executions.history.collectCount";
-
-    @Override
-    public void executionStart(ExecutionContext context) {
-        // TOOD collect the executions here too
-    }
 
     @Override
     public void afterExecutionEnd(ExecutionContext context) {
@@ -30,12 +25,15 @@ public class ExecutionHistoryReportPlugin  extends AbstractExecutionEnginePlugin
         // endTime is not set here
         long searchBeforeTimestamp = execution.getEndTime() != null ? execution.getEndTime() : System.currentTimeMillis() - 1;
         List<ExecutionResultSnapshot> pastExecutionsSnapshots = executionAccessor.getLastEndedExecutionsByCanonicalPlanName(execution.getCanonicalPlanName(), countItems, searchBeforeTimestamp)
-                                .map(e -> new ExecutionResultSnapshot()
-                                        .setId(e.getId().toString())
-                                        .setResult(e.getResult())
-                                        .setStatus(e.getStatus())
-                                        .setStartTime(e.getStartTime()))
-                                .collect(Collectors.toList());
+                .map(e -> {
+                    ExecutionResultSnapshot snapshot = new ExecutionResultSnapshot();
+                    snapshot.setId(e.getId().toString());
+                    snapshot.setResult(e.getResult());
+                    snapshot.setStatus(e.getStatus());
+                    snapshot.setStartTime(e.getStartTime());
+                    return snapshot;
+                })
+                .collect(Collectors.toList());
         execution.setHistoryResults(pastExecutionsSnapshots);
         executionAccessor.save(execution);
     }
