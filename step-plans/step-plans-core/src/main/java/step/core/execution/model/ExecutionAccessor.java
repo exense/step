@@ -21,6 +21,7 @@ package step.core.execution.model;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import step.core.accessors.Accessor;
 import step.core.collections.SearchOrder;
@@ -51,5 +52,5 @@ public interface ExecutionAccessor extends Accessor<Execution>, ExecutionProvide
 
 	List<Execution> getLastEndedExecutionsBySchedulerTaskID(String schedulerTaskID, int limit, Long from, Long to);
 
-	List<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long from);
+	Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long from);
 }

@@ -39,15 +39,17 @@ public abstract class AbstractRepository implements Repository {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)) : null;
     }
 
-    public static String getCanonicalPlanName(Map<String, String> repositoryParameters) {
+    @Override
+    public String getCanonicalPlanName(Map<String, String> repositoryParameters) {
         if (repositoryParameters == null || repositoryParameters.isEmpty()) {
-            return "";
+            return null;
         }
 
         return repositoryParameters.entrySet().stream()
+                .filter(entry -> this.canonicalRepositoryParameters.contains(entry.getKey()))
                 .sorted(Map.Entry.comparingByKey())
                 .map(e -> e.getKey() + "=" + e.getValue())
-                .collect(java.util.stream.Collectors.joining("&"));
+                .collect(Collectors.joining("&"));
     }
 
 

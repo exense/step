@@ -55,4 +55,6 @@ public interface Repository {
 
 	Set<String> getCanonicalRepositoryParameters();
 
+	String getCanonicalPlanName(Map<String, String> repositoryParameters);
+
 }

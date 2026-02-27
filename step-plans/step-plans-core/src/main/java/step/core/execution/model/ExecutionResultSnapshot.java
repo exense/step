@@ -7,6 +7,7 @@ public class ExecutionResultSnapshot {
     private String id;
     private ExecutionStatus status;
     private ReportNodeStatus result;
+    private long startTime;
 
     public String getId() {
         return id;
@@ -32,6 +33,15 @@ public class ExecutionResultSnapshot {
 
     public ExecutionResultSnapshot setResult(ReportNodeStatus result) {
         this.result = result;
+        return this;
+    }
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public ExecutionResultSnapshot setStartTime(long startTime) {
+        this.startTime = startTime;
         return this;
     }
 }

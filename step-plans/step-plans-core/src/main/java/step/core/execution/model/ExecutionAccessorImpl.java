@@ -20,6 +20,7 @@ package step.core.execution.model;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import step.commons.iterators.SkipLimitIterator;
 import step.commons.iterators.SkipLimitProvider;
@@ -178,7 +179,7 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 	}
 
 	@Override
-	public List<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long from) {
+	public Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long from) {
 		SearchOrder order = new SearchOrder("endTime", -1);
 
 		List<Filter> filters = new ArrayList<>(List.of(
@@ -191,7 +192,6 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 		}
 
 		return collectionDriver
-				.find(Filters.and(filters), order, 0, limit, 0)
-				.collect(Collectors.toList());
+				.find(Filters.and(filters), order, 0, limit, 0);
 	}
 }

@@ -259,9 +259,8 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 		return historyResults;
 	}
 
-	public Execution setHistoryResults(List<ExecutionResultSnapshot> historyResults) {
+	public void setHistoryResults(List<ExecutionResultSnapshot> historyResults) {
 		this.historyResults = historyResults;
-		return this;
 	}
 
 	@Override
