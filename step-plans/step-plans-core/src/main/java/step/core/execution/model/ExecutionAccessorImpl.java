@@ -180,7 +180,7 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 	}
 
 	@Override
-	public Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long searchBeforeTimestamp, List<String> excludeExecutionsIds) {
+	public Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long searchBeforeTimestamp, Set<String> excludeExecutionsIds) {
 		SearchOrder order = new SearchOrder("endTime", -1);
 
 		List<Filter> filters = new ArrayList<>(List.of(
@@ -192,7 +192,8 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 			filters.add(Filters.lte("endTime", searchBeforeTimestamp));
 		}
 		if (CollectionUtils.isNotEmpty(excludeExecutionsIds)) {
-			filters.add(Filters.not(Filters.in("_id", excludeExecutionsIds)));
+			Filter ignoreExecutionsFilter = Filters.in("_id", new ArrayList<>(excludeExecutionsIds));
+			filters.add(Filters.not(ignoreExecutionsFilter));
 		}
 
 		return collectionDriver
