@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import ch.exense.commons.classloader.ClassLoaderArchiver;
+import ch.exense.commons.io.FileHelper;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +44,19 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     private boolean internalClassLoader = false;
     private final ResourcePathMatchingResolver pathMatchingResourceResolver;
 
-    public JavaAutomationPackageArchive(ClassLoader classLoader) throws AutomationPackageReadingException {
-        super(TYPE);
-        this.classLoaderForMainApFile = classLoader;
-        this.classLoaderForApAndLibraries = classLoader;
-        this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
+    public JavaAutomationPackageArchive() throws AutomationPackageReadingException {
+        this(createArchiveFromClassLoader(), null, null);
+    }
+
+    private static File createArchiveFromClassLoader() throws AutomationPackageReadingException {
+        //Create a temporary file that will be deleted on exit
+        try {
+            File tempFile = FileHelper.createTempFile();
+            ClassLoaderArchiver.createArchive(tempFile);
+            return tempFile;
+        } catch (IOException e) {
+            throw new AutomationPackageReadingException("Unable to create the Automation Package Archive from the current application classloader", e);
+        }
     }
 
     public JavaAutomationPackageArchive(File automationPackageFile, File keywordLibFile, String defaultName) throws AutomationPackageReadingException {
@@ -142,12 +152,7 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     }
 
     public AnnotationScanner createAnnotationScanner(){
-        // for file-based packages we create class loader for file, otherwise we just use class loader from archive
-        if (getOriginalFile() != null) {
-            return AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) getClassLoaderForApAndLibraries());
-        } else {
-            return AnnotationScanner.forAllClassesFromClassLoader(getClassLoaderForApAndLibraries());
-        }
+        return AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) getClassLoaderForApAndLibraries());
     }
 
     @Override

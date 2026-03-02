@@ -56,11 +56,11 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
     }
 
     @Override
-    protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(JavaAutomationPackageArchive archive, boolean isClasspathBased, AutomationPackageContent res) throws AutomationPackageReadingException {
+    protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(JavaAutomationPackageArchive archive, AutomationPackageContent res) throws AutomationPackageReadingException {
         try (AnnotationScanner annotationScanner = archive.createAnnotationScanner()) {
             // this code duplicates the StepJarParser, but here we don't set the scriptFile and librariesFile to GeneralScriptFunctions
             // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
-            List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, isClasspathBased, null, null);
+            List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, null, null);
             if (!scannedKeywords.isEmpty()) {
                 log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
             }
@@ -165,7 +165,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
         return result;
     }
 
-    private static List<ScriptAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, boolean isClasspathBased, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
+    private static List<ScriptAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
         List<ScriptAutomationPackageKeyword> scannedKeywords = new ArrayList<>();
         Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
         if(!methods.isEmpty()) {
@@ -181,30 +181,26 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
                 if (isCompositeFunction(annotation)) {
                     f = createCompositeFunction(m, annotation);
                 } else {
-                    if (!isClasspathBased) {
-                        String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+                    String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
-                        GeneralScriptFunction function = new GeneralScriptFunction();
-                        function.setAttributes(new HashMap<>());
-                        function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+                    GeneralScriptFunction function = new GeneralScriptFunction();
+                    function.setAttributes(new HashMap<>());
+                    function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
 
-                        // to be filled by AutomationPackageKeywordsAttributesApplier
-                        if (scriptFile != null) {
-                            function.setScriptFile(new DynamicValue<>(scriptFile));
-                        }
-
-                        if (librariesFile != null) {
-                            function.setLibrariesFile(new DynamicValue<>(librariesFile));
-                        }
-
-                        function.getCallTimeout().setValue(annotation.timeout());
-                        FunctionManagerImpl.applyRoutingFromAnnotation(function, annotation);
-
-                        function.setScriptLanguage(new DynamicValue<>("java"));
-                        f = function;
-                    } else {
-                        f = LocalFunctionPlugin.createLocalFunction(m, annotation);
+                    // to be filled by AutomationPackageKeywordsAttributesApplier
+                    if (scriptFile != null) {
+                        function.setScriptFile(new DynamicValue<>(scriptFile));
                     }
+
+                    if (librariesFile != null) {
+                        function.setLibrariesFile(new DynamicValue<>(librariesFile));
+                    }
+
+                    function.getCallTimeout().setValue(annotation.timeout());
+                    FunctionManagerImpl.applyRoutingFromAnnotation(function, annotation);
+
+                    function.setScriptLanguage(new DynamicValue<>("java"));
+                    f = function;
                 }
 
                 f.setDescription(annotation.description());

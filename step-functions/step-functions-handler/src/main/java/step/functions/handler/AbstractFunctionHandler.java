@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 
+import ch.exense.commons.classloader.ClassLoaderArchiver;
 import ch.exense.commons.io.FileHelper;
 import jakarta.annotation.Nullable;
 import step.functions.io.Input;
@@ -358,7 +359,7 @@ public abstract class AbstractFunctionHandler<IN, OUT> {
 				TemporaryDirectory workingDirectoryFolder = tokenReservationSession.getOrDefault(automationPackageFile.getAbsolutePath(), u -> {
 					try {
 						File tempFolder = FileHelper.createTempFolder();
-						FileHelper.unzip(automationPackageFile, tempFolder);
+						FileHelper.unzip(automationPackageFile, tempFolder, ClassLoaderArchiver.getResourceFilter());
 						return new TemporaryDirectory(tempFolder);
 					} catch (IOException e) {
 						throw new RuntimeException("Error while extracting automation package file " + automationPackageFile.getAbsolutePath(), e);

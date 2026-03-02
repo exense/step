@@ -1,5 +1,6 @@
 package step.engine.plugins;
 
+import ch.exense.commons.classloader.ClassLoaderArchiver;
 import ch.exense.commons.io.FileHelper;
 import step.grid.filemanager.FileManagerException;
 import step.plugins.java.handler.KeywordHandler;
@@ -24,7 +25,7 @@ public class LocalFunctionHandler extends KeywordHandler {
             }
         }, null);
         try {
-            ClassLoaderArchiver.createArchive(temporaryFile.temporaryFile, true);
+            ClassLoaderArchiver.createArchive(temporaryFile.temporaryFile, ClassLoaderArchiver.getResourceFilter());
             return extractAutomationPackageFile(temporaryFile.temporaryFile);
         } catch (IOException e) {
             throw new RuntimeException("Unable to create temporary archive file from the classloader", e);
