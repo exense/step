@@ -244,7 +244,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
      */
     public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {
         try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, keywordLib, null)) {
-            return readAutomationPackage(automationPackageArchive, apVersion, false);
+            return readAutomationPackage(automationPackageArchive, apVersion);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
         }
