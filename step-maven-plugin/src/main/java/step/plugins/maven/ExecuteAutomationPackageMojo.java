@@ -30,6 +30,7 @@ import step.cli.StepCliExecutionException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -68,8 +69,13 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
     @Parameter(property = "step-execute-auto-packages.library.managed")
     private String libraryManaged;
 
-    @Parameter(property = "step-execute-auto-packages.execution-parameters", required = false)
+    @Parameter
     private Map<String, String> executionParameters;
+    // Individual string property to support passing execution parameters as a system property.
+    // Format: key1=value1;key2=value2 (semicolons between pairs, first '=' separates key from value)
+    // When set, these values are merged with (and override) any 'executionParameters' from pom.xml.
+    @Parameter(property = "step-execute-auto-packages.execution-parameters")
+    private String executionParametersRaw;
     @Parameter(property = "step-execute-auto-packages.exec-result-timeout-s", defaultValue = "3600")
     private Integer executionResultTimeoutS;
     @Parameter(property = "step-execute-auto-packages.wait-for-exec", defaultValue = "true")
@@ -287,11 +293,45 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
     }
 
     public Map<String, String> getExecutionParameters() {
-        return executionParameters;
+        // Start with XML-configured parameters, then let raw string (system property) values override them
+        Map<String, String> merged = new LinkedHashMap<>();
+        if (executionParameters != null) {
+            merged.putAll(executionParameters);
+        }
+        if (executionParametersRaw != null && !executionParametersRaw.isBlank()) {
+            merged.putAll(parseExecutionParameters(executionParametersRaw));
+        }
+        return merged.isEmpty() ? null : merged;
     }
 
     public void setExecutionParameters(Map<String, String> executionParameters) {
         this.executionParameters = executionParameters;
+    }
+
+    public String getExecutionParametersRaw() {
+        return executionParametersRaw;
+    }
+
+    public void setExecutionParametersRaw(String executionParametersRaw) {
+        this.executionParametersRaw = executionParametersRaw;
+    }
+
+    protected Map<String, String> parseExecutionParameters(String raw) {
+        if (raw == null || raw.isBlank()) return new LinkedHashMap<>();
+
+        Map<String, String> result = new LinkedHashMap<>();
+        for (String entry : raw.split(";")) {
+            entry = entry.trim();
+            if (entry.isEmpty()) continue;
+            String[] parts = entry.split("=", 2);
+            if (parts.length != 2) {
+                throw new IllegalArgumentException(
+                        "Invalid execution parameter format '" + entry + "', expected 'key=value'. " +
+                        "Multiple parameters should be separated by a semicolon ';' (ex: key1=value1;key2=value2).");
+            }
+            result.put(parts[0].trim(), parts[1]);
+        }
+        return result;
     }
 
     public Integer getExecutionResultTimeoutS() {

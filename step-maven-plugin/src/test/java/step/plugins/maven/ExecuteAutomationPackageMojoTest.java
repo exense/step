@@ -117,6 +117,93 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 		return params;
 	}
 
+	// --- parseExecutionParameters(String raw) tests ---
+
+	@Test
+	public void parseExecutionParameters_withNull_returnsEmptyMap() {
+		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+		assertEquals(Collections.emptyMap(), mojo.parseExecutionParameters(null));
+	}
+
+	@Test
+	public void parseExecutionParameters_withBlankString_returnsEmptyMap() {
+		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+		assertEquals(Collections.emptyMap(), mojo.parseExecutionParameters("   "));
+	}
+
+	@Test
+	public void parseExecutionParameters_withSingleEntry_returnsOneEntry() {
+		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+		Map<String, String> result = mojo.parseExecutionParameters("key1=value1");
+		assertEquals(1, result.size());
+		assertEquals("value1", result.get("key1"));
+	}
+
+	@Test
+	public void parseExecutionParameters_withMultipleEntries_returnsAllEntries() {
+		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+		Map<String, String> result = mojo.parseExecutionParameters("key1=value1;key2=value2");
+		assertEquals(2, result.size());
+		assertEquals("value1", result.get("key1"));
+		assertEquals("value2", result.get("key2"));
+	}
+
+	@Test
+	public void parseExecutionParameters_withValueContainingEquals_preservesEntireValue() {
+		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+		Map<String, String> result = mojo.parseExecutionParameters("key1=val=ue1");
+		assertEquals(1, result.size());
+		assertEquals("val=ue1", result.get("key1"));
+	}
+
+	@Test
+	public void parseExecutionParameters_withInvalidFormat_throwsIllegalArgumentException() {
+		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+		IllegalArgumentException e = Assert.assertThrows(IllegalArgumentException.class,
+				() -> mojo.parseExecutionParameters("keyWithoutValue"));
+		assertEquals("Invalid execution parameter format 'keyWithoutValue', expected 'key=value'. " +
+				"Multiple parameters should be separated by a semicolon ';' (ex: key1=value1;key2=value2).", e.getMessage());
+	}
+
+	// --- executionParametersRaw merge tests via getExecutionParameters() ---
+
+	@Test
+	public void getExecutionParameters_withOnlyXml_returnsXmlParams() {
+		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+		mojo.setExecutionParameters(Map.of("key1", "xml-value1"));
+		Map<String, String> result = mojo.getExecutionParameters();
+		assertEquals(Map.of("key1", "xml-value1"), result);
+	}
+
+	@Test
+	public void getExecutionParameters_withOnlyRaw_returnsRawParams() {
+		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+		mojo.setExecutionParametersRaw("key1=raw-value1");
+		Map<String, String> result = mojo.getExecutionParameters();
+		assertEquals(Map.of("key1", "raw-value1"), result);
+	}
+
+	@Test
+	public void getExecutionParameters_withBothXmlAndRaw_rawOverridesXmlForSameKey() {
+		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+		Map<String, String> xmlParams = new HashMap<>();
+		xmlParams.put("key1", "xml-value1");
+		xmlParams.put("key2", "xml-value2");
+		mojo.setExecutionParameters(xmlParams);
+		mojo.setExecutionParametersRaw("key1=raw-value1;key3=raw-value3");
+		Map<String, String> result = mojo.getExecutionParameters();
+		assertEquals(3, result.size());
+		assertEquals("raw-value1", result.get("key1")); // raw overrides xml
+		assertEquals("xml-value2", result.get("key2")); // xml-only key preserved
+		assertEquals("raw-value3", result.get("key3")); // raw-only key added
+	}
+
+	@Test
+	public void getExecutionParameters_withBothNull_returnsNull() {
+		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+		Assert.assertNull(mojo.getExecutionParameters());
+	}
+
 	// --- parseReports(String raw) tests ---
 
 	@Test
