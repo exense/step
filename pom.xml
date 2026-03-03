@@ -164,6 +164,13 @@
 				</exclusions>
 			</dependency>
 
+			<!-- This one is pulled by groovy and others (like mockito); force highest requested version: -->
+			<dependency>
+				<groupId>net.java.dev.jna</groupId>
+				<artifactId>jna</artifactId>
+				<version>5.18.1</version>
+			</dependency>
+
 			<dependency>
 				<groupId>com.thoughtworks.xstream</groupId>
 				<artifactId>xstream</artifactId>
@@ -301,7 +308,7 @@
 			<dependency>
 				<groupId>com.github.javaparser</groupId>
 				<artifactId>javaparser-core</artifactId>
-				<version>3.25.6</version>
+				<version>3.28.0</version>
 			</dependency>
 
 			<dependency>
