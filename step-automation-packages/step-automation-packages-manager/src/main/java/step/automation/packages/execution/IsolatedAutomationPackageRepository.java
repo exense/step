@@ -179,7 +179,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
                     OffsetDateTime lastExecutionTime = OffsetDateTime.parse(lastExecutionTimeStr, DateTimeFormatter.ISO_DATE_TIME);
                     if (lastExecutionTime.isBefore(minExecutionTime)) {
                         log.info("Cleanup the outdated resource for automation package: {} ...", apResourceInfo);
-                        resourceManager.deleteResourceRevisionContent(foundResource.getId().toString());
+                        resourceManager.deleteResource(foundResource.getId().toString());
                         removed++;
                     }
                 } else {
@@ -269,7 +269,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
             return resource;
         } catch (IOException | InvalidResourceFormatException ex) {
-            throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName, ex);
+            throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName + ".", ex, true);
         }
     }
 
@@ -283,7 +283,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
             resource.addCustomField(AP_NAME_CUSTOM_FIELD, apName);
             resourceManager.saveResource(resource);
         } catch (IOException ex) {
-            throw new AutomationPackageManagerException("Cannot update the automation package name in resource: " + resource.getId(), ex);
+            throw new AutomationPackageManagerException("Cannot update the automation package name in resource: " + resource.getId() + ".", ex, true);
         }
     }
 

@@ -33,7 +33,7 @@ public abstract class AbstractAutomationPackageFromInputStreamProvider implement
         try {
             tempFile = InputStreamToTempFileDownloader.copyStreamToTempFile(packageStream, fileName);
         } catch (Exception ex) {
-            throw new AutomationPackageManagerException("Unable to store automation package file", ex);
+            throw new AutomationPackageManagerException("Unable to store automation package file", ex, true);
         }
 
     }

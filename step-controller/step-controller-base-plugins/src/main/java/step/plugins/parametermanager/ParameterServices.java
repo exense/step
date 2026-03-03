@@ -106,7 +106,9 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 	private Parameter save(Parameter newParameter, Parameter sourceParameter) {
 		assertRights(newParameter);
 		try {
-			return maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername()));
+			Parameter result = maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername()));
+			auditLog("save", result, Map.of("key", result.getKey()));
+			return result;
 		} catch (ParameterManagerException e) {
 			throw new ControllerServiceException(e.getMessage());
 		}
@@ -137,6 +139,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		newParameter.setId(new ObjectId());
 		//Remove link to AP
 		Optional.ofNullable(newParameter.getCustomFields()).ifPresent(fields -> fields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID));
+		auditLog("clone", newParameter, Map.of("key", newParameter.getKey()));
 		return save(newParameter, sourceParameter);
 	}
 
@@ -145,7 +148,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 		Parameter parameter = get(id);
 		assertEntityIsEditableInContext(parameter);
 		assertRights(parameter);
-
+		auditLog("delete", parameter, Map.of("key", parameter.getKey()));
 		parameterAccessor.remove(new ObjectId(id));
 	}
 

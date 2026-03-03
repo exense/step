@@ -1,10 +1,7 @@
 package step.functions.packages;
 
-import step.core.entities.Entity;
+import step.core.entities.*;
 import step.core.entities.EntityDependencyTreeVisitor.EntityTreeVisitorContext;
-import step.core.entities.EntityManager;
-import step.core.entities.DependencyTreeVisitorHook;
-import step.core.entities.EntityManagerSupplier;
 import step.functions.Function;
 
 public class FunctionPackageEntity extends Entity<FunctionPackage,FunctionPackageAccessor> {
@@ -28,7 +25,7 @@ public class FunctionPackageEntity extends Entity<FunctionPackage,FunctionPackag
 					Function f = (Function) o;
 					String id = (String) f.getCustomField(FUNCTION_PACKAGE_ID);
 					if (id != null) {
-						if(context.isRecursive()) {
+						if(EntityDependencyTreeVisitor.VISIT_MODE.RECURSIVE.equals(context.getVisitMode())) {
 							context.visitEntity(entityName, id);
 						}
 						

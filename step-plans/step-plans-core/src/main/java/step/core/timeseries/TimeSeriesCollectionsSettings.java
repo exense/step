@@ -167,7 +167,7 @@ public class TimeSeriesCollectionsSettings {
     }
 
     public static TimeSeriesCollectionsSettings readSettings(Configuration configuration, String collectionName) {
-        long mainResolution = getPropertyAsLong(configuration, TIME_SERIES_MAIN_RESOLUTION, collectionName, 1000L);
+        long mainResolution = getPropertyAsLong(configuration, TIME_SERIES_MAIN_RESOLUTION, collectionName, 5000L);
         validateMainResolutionParam(mainResolution);
         return new TimeSeriesCollectionsSettings()
                 .setMainResolution(mainResolution)
@@ -215,6 +215,7 @@ public class TimeSeriesCollectionsSettings {
         timeSeriesCollectionsSettings.setWeeklyEnabled(false);
         timeSeriesCollectionsSettings.setMainResolution(mainResolution);
         timeSeriesCollectionsSettings.setMainFlushInterval(mainFlushInterval);
+        timeSeriesCollectionsSettings.setFlushSeriesQueueSize(20000);
         return timeSeriesCollectionsSettings;
     }
 

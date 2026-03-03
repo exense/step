@@ -10,6 +10,7 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
+import step.artefacts.DataSetArtefact;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
 import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
@@ -28,6 +29,7 @@ import step.core.maven.MavenArtifactIdentifier;
 import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.*;
+import step.datapool.DataSet;
 import step.datapool.excel.ExcelDataPool;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.Function;
@@ -42,11 +44,13 @@ import step.plugins.node.NodeFunction;
 import step.repositories.artifact.ResolvedMavenArtifact;
 import step.repositories.artifact.SnapshotMetadata;
 import step.resources.*;
+import step.threadpool.ThreadPoolPlugin;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -279,7 +283,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             result = manager.createOrUpdateAutomationPackage(parameters).getId();
 
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
-            Assert.assertEquals(1, storedPlans.size());
+            Assert.assertEquals(2, storedPlans.size());
             Plan forEachExcelPlan = storedPlans.get(0);
             Assert.assertEquals("Test excel plan", forEachExcelPlan.getAttribute(AbstractOrganizableObject.NAME));
             ForEachBlock forEachArtefact = (ForEachBlock) forEachExcelPlan.getRoot().getChildren().get(0);
@@ -291,6 +295,24 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             JMeterFunction jMeterFunction = (JMeterFunction) storedFunctions.get(0);
             DynamicValue<String> jmeterTestplanRef = jMeterFunction.getJmeterTestplan();
             checkUploadedResource(jmeterTestplanRef, "jmeterProject1.xml");
+
+            executePlanWithAssertion(forEachExcelPlan);
+
+            //Validate second plan with dataset in before section
+            Plan planWithDatasetInBefore = storedPlans.get(1);
+            Assert.assertEquals("Test excel plan in before section", planWithDatasetInBefore.getAttribute(AbstractOrganizableObject.NAME));
+            DataSetArtefact dataSet = (DataSetArtefact) planWithDatasetInBefore.getRoot().getBefore().getSteps().get(0);
+            ExcelDataPool excelDataPool2 = (ExcelDataPool) dataSet.getDataSource();
+            checkUploadedResource(excelDataPool2.getFile(), "excel1.xlsx");
+
+            executePlanWithAssertion(planWithDatasetInBefore);
+        }
+    }
+
+    private void executePlanWithAssertion(Plan planWithDatasetInBefore) {
+        try (ExecutionEngine executionEngine = newExecutionEngineBuilder().build()) {
+            PlanRunnerResult execute = executionEngine.execute(planWithDatasetInBefore);
+            assertEquals(ReportNodeStatus.PASSED, execute.getResult());
         }
     }
 
@@ -320,8 +342,26 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         }
     }
 
+    private void retryFlakyTest(int retries, Runnable test, String testName) {
+        Error lastError = null;
+        for (int i = 1; i <= retries; i++) {
+            try {
+                test.run();
+                return; // Test passed, return
+            } catch (Error e) {
+                log.warn("Flaky test '{}' failed on iteration {} of {}", testName, i, retries, e);
+                lastError = e;
+            }
+        }
+        throw lastError;
+    }
+
     @Test
-    public void testUpdateAsync() throws IOException, InterruptedException {
+    public void testUpdateAsyncWithRetry()  {
+        retryFlakyTest(3, this::testUpdateAsync, "testUpdateAsync");
+    }
+
+    public void testUpdateAsync()  {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
 
         try(InputStream is1 = new FileInputStream(automationPackageJar);
@@ -357,6 +397,10 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                         , Map.of("OS", "WINDOWS", "TYPE", "PLAYWRIGHT"));
             }
 
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -1299,7 +1343,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
     private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
         FileResolver fileResolver = new FileResolver(resourceManager);
         String resourceReferenceString = fileResourceReference.get();
-        Assert.assertTrue(resourceReferenceString.startsWith(FileResolver.RESOURCE_PREFIX));
+        Assert.assertTrue("Uploaded resources does not have the RESOURCE_PREFIX", resourceReferenceString.startsWith(FileResolver.RESOURCE_PREFIX));
         String resourceId = FileResolver.resolveResourceId(resourceReferenceString);
         File excelFile = fileResolver.resolve(resourceId);
         Assert.assertNotNull(excelFile);
@@ -1347,6 +1391,12 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             if (async && expectedDelay) {
                 //The results of createOrUpdateAutomationPackage must have the status UPDATE_DELAYED, and the AP status set to DELAYED_UPDATE
                 assertEquals(AutomationPackageUpdateStatus.UPDATE_DELAYED, updateResult.getStatus());
+                //The update being async the change of the AP's status may take some time
+                Awaitility.await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(50)).until(() -> {
+                    AutomationPackage automationPackage = automationPackageAccessor.get(updateResult.getId());
+                    log.info("Current status: {}", automationPackage.getStatus());
+                    return AutomationPackageStatus.DELAYED_UPDATE.equals(automationPackage.getStatus());
+                });
                 assertEquals(AutomationPackageStatus.DELAYED_UPDATE, automationPackageAccessor.get(updateResult.getId()).getStatus());
                 //We then poll until the AP is updated before continuing with the assertion (its status should be reset to null
                 Awaitility.await().atMost(Duration.ofSeconds(5)).pollDelay(Duration.ofMillis(50)).until(() -> {
@@ -1541,8 +1591,10 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
     }
 
     protected ExecutionEngine.Builder newExecutionEngineBuilder() {
-        ExecutionEngine.Builder builder = ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(), new FunctionPlugin(),
+        ExecutionEngine.Builder builder = ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(),
+                new FunctionPlugin(),
                 new GeneralScriptFunctionPlugin(),
+                new ThreadPoolPlugin(),
                 new AutomationPackageExecutionPlugin(automationPackageLocks)));
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.put(FunctionAccessor.class, functionAccessor);

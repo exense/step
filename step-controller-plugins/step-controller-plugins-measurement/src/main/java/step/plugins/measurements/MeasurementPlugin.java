@@ -56,6 +56,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	public static final String SCHEDULE	= "schedule";
 	public static final String TEST_CASE = "testcase";
 	public static final String EXECUTION_DESCRIPTION = "execution";
+	public static final String PROJECT = "project";
 	public static final String CTX_SCHEDULER_TASK_ID = "$schedulerTaskId";
 	public static final String CTX_SCHEDULE_NAME = "$scheduleName";
 	public static final String CTX_EXECUTION_DESCRIPTION = "$executionDescription";
@@ -66,7 +67,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
 	// These are used by the MeasurementControllerPlugin to "reconstruct" measures from measurements, and indicate the
 	// "internal" fields which should NOT be added to the measure data field. Keep this in sync with the fields defined above.
-	static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", "project", "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
+	static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", PROJECT, "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
 			ORIGIN, RN_STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
 	// Same use, but for defining which fields SHOULD be directly copied to the top-level fields of a measure.
 	static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE, STATUS);
@@ -267,7 +268,10 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 	private Measurement createMeasurement(ExecutionContext executionContext, Measure measure, CallFunctionReportNode functionReport) {
 		Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
 		Measurement measurement = initMeasurement(executionContext);
-		measurement.addCustomFields(functionAttributes);
+		if (functionAttributes != null) {
+			measurement.addCustomFields(functionAttributes);
+			measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
+		}
 		measurement.setName(measure.getName());
 		if (measure.getStatus() != null) {
 			// Note: status should always be set for live measures, but is null unless explicitly set for "output measures".
@@ -275,7 +279,6 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 			measurement.setStatus(measure.getStatus().name());
 		}
 		measurement.setType(getMeasureTypeOrDefault(measure));
-		measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
 		measurement.setValue(measure.getDuration());
 		measurement.setBegin(measure.getBegin());
 		measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());

@@ -52,8 +52,10 @@ import step.core.reports.Measure;
 import step.datapool.DataSetHandle;
 import step.engine.plugins.FunctionPlugin;
 import step.expressions.ExpressionHandler;
+import step.functions.handler.MeasureTypes;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
+import step.grid.client.AbstractGridClientImpl;
 import step.grid.io.Attachment;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -196,6 +198,51 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 		CallFunctionReportNode node = getCallFunctionReportNode(result);
 		
 		assertEquals("My Error", node.getError().getMsg());
+		assertEquals(1, node.getMeasures().size());
+		assertEquals("MyFunction", node.getMeasures().get(0).getName());
+		assertEquals(MeasureTypes.TYPE_KEYWORD, node.getMeasures().get(0).getData().get(MeasureTypes.ATTRIBUTE_TYPE));
+	}
+
+	@Test
+	public void testKeywordNotFoundError() {
+		MyFunction function = newFailingFunction();
+		Plan plan = newCallFunctionPlan(function);
+		plan.setFunctions(List.of());
+
+		PlanRunnerResult result = executionEngine.execute(plan);
+		CallFunctionReportNode node = getCallFunctionReportNode(result);
+
+		assertEquals("Unable to find keyword with attributes {\"name\":\"MyFunction\"}", node.getError().getMsg());
+		assertEquals(1, node.getMeasures().size());
+		assertEquals("MyFunction_UnresolvedKeyword", node.getMeasures().get(0).getName());
+		assertEquals(MeasureTypes.TYPE_KEYWORD, node.getMeasures().get(0).getData().get(MeasureTypes.ATTRIBUTE_TYPE));
+	}
+
+	@Test
+	public void testTimeoutError() {
+		MyFunction function = newPassingFunction();
+		function.setCallTimeout(new DynamicValue<>(1));
+		Plan plan = newCallFunctionPlan(function);
+
+		PlanRunnerResult result = executionEngine.execute(plan);
+		CallFunctionReportNode node = getCallFunctionReportNode(result);
+
+		assertEquals("Unexpected error while calling keyword: java.lang.RuntimeException The defined call timeout of the function should be higher than 100ms", node.getError().getMsg());
+		assertEquals(1, node.getMeasures().size());
+		assertEquals("MyFunction", node.getMeasures().get(0).getName());
+		assertEquals(MeasureTypes.TYPE_KEYWORD, node.getMeasures().get(0).getData().get(MeasureTypes.ATTRIBUTE_TYPE));
+
+		//Cannot directly test the call timeout here since we're using a local token which doesn't apply it
+		function = newFunctionThrowingException();
+		function.setCallTimeout(new DynamicValue<>(100));
+		plan = newCallFunctionPlan(function);
+		result = executionEngine.execute(plan);
+		node = getCallFunctionReportNode(result);
+
+		assertEquals("Unexpected error while calling keyword: java.lang.RuntimeException Runtime Exception thrown", node.getError().getMsg());
+		assertEquals(1, node.getMeasures().size());
+		assertEquals("MyFunction", node.getMeasures().get(0).getName());
+		assertEquals(MeasureTypes.TYPE_KEYWORD, node.getMeasures().get(0).getData().get(MeasureTypes.ATTRIBUTE_TYPE));
 	}
 	
 	@Test
@@ -384,6 +431,21 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 
 			output.setPayload(Json.createObjectBuilder().add("Output1", "Value1").build());
 			return output;
+		});
+		function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
+		return function;
+	}
+
+	private static MyFunction newFunctionThrowingException() {
+		MyFunction function = new MyFunction(input -> {
+			Output<JsonObject> output = new Output<>();
+
+
+			List<Measure> measures = new ArrayList<>();
+			measures.add(new Measure("Measure1", 1, 1, null));
+			output.setMeasures(measures);
+
+            throw new RuntimeException("Runtime Exception thrown");
 		});
 		function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
 		return function;

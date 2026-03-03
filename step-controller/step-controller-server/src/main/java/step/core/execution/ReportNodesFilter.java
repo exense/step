@@ -39,8 +39,9 @@ public class ReportNodesFilter {
 				fragments.add(Filters.equals("executionID", eid));
 			}
 
-			List<String> testcases = parameters.getTestcases();
-			if(testcases != null) {
+			List<String> testcasesParam = parameters.getTestcases();
+			if(testcasesParam != null && !testcasesParam.isEmpty()) {
+				List<Object> testcases = new ArrayList<>(testcasesParam);
 				fragments.add(Filters.in("customAttributes.TestCase", testcases));
 			}
 		}

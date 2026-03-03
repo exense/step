@@ -184,4 +184,28 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
         assertEquals(REMOTE_URL, executionRef.get().getAgentsInvolved());
     }
 
+
+    /**
+     * this test verifies that the session group context of a session control is cleaned up before executing its after section
+     * @throws IOException
+     * @throws ExecutionEngineException
+     */
+    @Test
+    public void testSessionAfterSection() throws IOException, ExecutionEngineException {
+        Plan plan = PlanBuilder.create().startBlock(new FunctionGroup()).withAfter(new CheckArtefact(FunctionGroupHandlerTest::validateIsInSession)).add(new CheckArtefact(FunctionGroupHandlerTest::getLocalAndRemoteTokenFromSession)).add(new Echo()).endBlock().build();
+
+        StringWriter writer = new StringWriter();
+        try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(this::markTokenAsReleased, null)) {
+            engine.execute(plan).printTree(writer);
+        }
+
+        // Assert that the token have been returned after Session execution
+        assertThatLocalAndRemoteTokenHaveBeenReleased();
+        assertEquals("Session:TECHNICAL_ERROR:\n" +
+                " CheckArtefact:PASSED:\n" +
+                " Echo:PASSED:\n" +
+                " [AFTER]\n" +
+                "  CheckArtefact:TECHNICAL_ERROR:Not is a session\n", writer.toString());
+    }
+
 }

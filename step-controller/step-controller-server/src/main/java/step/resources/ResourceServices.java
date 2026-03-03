@@ -30,10 +30,12 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.EntityConstants;
 import step.core.objectenricher.ObjectEnricher;
+import step.framework.server.audit.AuditLogger;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
@@ -41,8 +43,7 @@ import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 @Path("/resources")
@@ -62,6 +63,17 @@ public class ResourceServices extends AbstractStepAsyncServices {
 		resourceManager = globalContext.getResourceManager();
 		tableService = globalContext.require(TableService.class);
 	}
+
+	private void auditLog(String operation, Resource resource) {
+		if (resource == null || !AuditLogger.isEntityModificationsLoggingEnabled()) {
+			return;
+		}
+		String entityName = resource.getAttribute(AbstractOrganizableObject.NAME);
+		Map<String, String> attributes = new LinkedHashMap<>(Objects.requireNonNullElse(getObjectEnricher().getAdditionalAttributes(), Map.of()));
+		attributes.put("resourceType", resource.getResourceType());
+		AuditLogger.logEntityModification(getSession(), operation, "resources", resource.getId().toHexString(), entityName, attributes);
+	}
+
 
 	@POST
 	@Path("/content")
@@ -89,6 +101,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
 					origin == null ? new UploadedResourceOrigin().toStringRepresentation() : origin,
 					originTimestamp
 			);
+			auditLog("create", resource);
 			return new ResourceUploadResponse(resource, null);
 		}  catch (InvalidResourceFormatException e) {
 			throw uploadFileNotAnArchive();
@@ -104,6 +117,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Resource saveResource(Resource resource) throws IOException {
+		auditLog("save", resource);
 		return resourceManager.saveResource(resource);
 	}
 	
@@ -119,6 +133,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
 
 		try {
 			Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName(), null, getSession().getUser().getUsername());
+			auditLog("save-content", resource);
 			return new ResourceUploadResponse(resource, null);
 		} catch (InvalidResourceFormatException e) {
 			throw uploadFileNotAnArchive();
@@ -152,6 +167,9 @@ public class ResourceServices extends AbstractStepAsyncServices {
 	@Path("/{id}")
 	@Secured(right = "resource-delete")
 	public void deleteResource(@PathParam("id") String resourceId) {
+		Resource resource = resourceManager.getResource(resourceId);
+		assertEntityIsEditableInContext(resource);
+		auditLog("delete", resource);
 		resourceManager.deleteResource(resourceId);
 	}
 
@@ -160,6 +178,9 @@ public class ResourceServices extends AbstractStepAsyncServices {
 	@Path("/{id}/revisions")
 	@Secured(right = "resource-delete")
 	public void deleteResourceRevisions(@PathParam("id") String resourceId) {
+		Resource resource = resourceManager.getResource(resourceId);
+		assertEntityIsEditableInContext(resource);
+		auditLog("delete-revisions", resource);
 		resourceManager.deleteResourceRevisionContent(resourceId);
 	}
 
@@ -171,8 +192,12 @@ public class ResourceServices extends AbstractStepAsyncServices {
 		Consumer<String> consumer = t -> {
 			try {
 				deleteResource(t);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+			} catch (Throwable e) {
+				if (e instanceof RuntimeException) {
+					throw e;
+				} else {
+					throw new RuntimeException(e);
+				}
 			}
 		};
 		return scheduleAsyncTaskWithinSessionContext(h ->

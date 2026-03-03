@@ -83,7 +83,7 @@ public class ParameterManagerTest {
 
 		accessor.save(new Parameter(null, "key2", "defaultValue", "desc"));
 		accessor.save(new Parameter(null, "key2", "defaultValue2", "desc"));
-		accessor.save(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue2", "desc"));
+		accessor.save(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue3", "desc"));
 
 		accessor.save(new Parameter(null, "key3", "value1", "desc"));
 		accessor.save(new Parameter(new Expression("user=='poire'"), "key3", "value2", "desc"));
@@ -95,9 +95,9 @@ public class ParameterManagerTest {
 		bindings.put("user", "poire");
 
 		Map<String, String> params = m.getAllParameterValues(bindings, null);
-		Assert.assertEquals(params.get("key1"),"poirier");
-		Assert.assertEquals(params.get("key2"),"defaultValue2");
-		Assert.assertEquals(params.get("key3"),"value3");
+		Assert.assertEquals("poirier", params.get("key1"));
+		Assert.assertEquals("defaultValue3", params.get("key2"));
+		Assert.assertEquals("value3", params.get("key3"));
 
 		params = m.getAllParameterValues(bindings, t -> false);
 		Assert.assertEquals(0, params.size());

@@ -10,12 +10,12 @@
 			"PARAMETERS": [
 				{
 					"NAME": "DEVELOPMENT",
-					"URL": "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/",
+					"URL": "nexus-staging::https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-maven/",
 					"CONFIG": "SkipJavadoc"
 				},
 				{
 					"NAME": "INTEGRATION",
-					"URL": "nexus-staging::https://nexus-enterprise.exense.ch/repository/staging-maven/",
+					"URL": "nexus-staging::https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-maven/",
 					"CONFIG": "PerformanceTest"
 				},
 				{
@@ -32,11 +32,11 @@
 			"PARAMETERS": [
 				{
 					"NAME": "DEVELOPMENT",
-					"URL": "nexus-staging https://nexus-enterprise-staging.exense.ch/repository/staging-npm/"
+					"URL": "nexus-staging https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-npm/"
 				},
 				{
 					"NAME": "INTEGRATION",
-					"URL": "nexus-staging https://nexus-enterprise-staging.exense.ch/repository/staging-npm/"
+					"URL": "nexus-staging https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-npm/"
 				},
 				{
 					"NAME": "PRODUCTION",

@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static step.cli.StepConsole.executeMain;
+
 public class StepConsoleTest {
 
     private static final Logger log = LoggerFactory.getLogger(StepConsoleTest.class);
@@ -249,7 +251,7 @@ public class StepConsoleTest {
 
         Histories histories = new Histories(deployExecuteHistory, deployLibraryExecRegistry, remoteExecuteHistory, localExecuteHistory);
 
-        Version actualVersion = Constants.STEP_API_VERSION;
+        Version actualVersion = Constants.STEP_VERSION;
         Version outdatedMajorVersion = new Version(actualVersion.getMajor() - 1, actualVersion.getMinor(), 0);
         Version outdatedMinorVersion = new Version(actualVersion.getMajor(), actualVersion.getMinor() == 0 ? 1 : actualVersion.getMinor() - 1, 0);
 
@@ -344,6 +346,12 @@ public class StepConsoleTest {
     }
 
     @Test
+    public void testLocalExecutionNoMock(){
+        int res = executeMain("ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local");
+        Assert.assertEquals(0, res);
+    }
+
+    @Test
     public void testPrepareApFile() throws IOException {
         List<TestApDeployCommand.ExecutionParams> deployExecRegistry = new ArrayList<>();
         List<TestLibraryDeployCommand.ExecutionParams> deployLibraryExecRegistry = new ArrayList<>();
@@ -398,7 +406,7 @@ public class StepConsoleTest {
 
     private int runMain(Histories histories, String... args) {
         log.info("--- Run CLI - BEGIN ---");
-        int res = StepConsole.executeMain(
+        int res = executeMain(
                 () -> new TestApDeployCommand(histories.deployHistory),
                 () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory),
                 () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
@@ -411,7 +419,7 @@ public class StepConsoleTest {
 
     private int runMainWithVersion(Histories histories, Version version, String... args) {
         log.info("--- Run CLI - BEGIN ---");
-        int res = StepConsole.executeMain(
+        int res = executeMain(
                 () -> new TestApDeployCommand(histories.deployHistory, version),
                 () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version),
                 () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
@@ -477,7 +485,7 @@ public class StepConsoleTest {
         @Override
         protected ControllerServicesClient createControllerServicesClient() {
             ControllerServicesClient mockedClient = Mockito.mock(ControllerServicesClient.class);
-            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_API_VERSION);
+            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_VERSION);
             return mockedClient;
         }
     }
@@ -520,7 +528,7 @@ public class StepConsoleTest {
         @Override
         protected ControllerServicesClient createControllerServicesClient() {
             ControllerServicesClient mockedClient = Mockito.mock(ControllerServicesClient.class);
-            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_API_VERSION);
+            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_VERSION);
             return mockedClient;
         }
     }
@@ -591,7 +599,7 @@ public class StepConsoleTest {
         @Override
         protected ControllerServicesClient createControllerServicesClient() {
             ControllerServicesClient mockedClient = Mockito.mock(ControllerServicesClient.class);
-            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_API_VERSION);
+            Mockito.when(mockedClient.getControllerVersion()).thenReturn(Constants.STEP_VERSION);
             return mockedClient;
         }
     }

@@ -58,7 +58,7 @@ public class JUnitReportCreator implements ReportCreator {
                     if (!folderToUnzip.exists()) {
                         folderToUnzip.mkdir();
                     }
-                    logging.logInfo("Unzip the report into " + folderToUnzip, null);
+                    logging.logInfo("Saving the report into " + folderToUnzip, null);
                     FileHelper.unzip(preparedReport, folderToUnzip);
                     break;
                 case stdout:
@@ -106,7 +106,7 @@ public class JUnitReportCreator implements ReportCreator {
             customReport = remoteExecutionManager.getCustomReport(executionIds.get(0), CustomReportType.JUNITZIP, includeAttachments, relativePathToOutputDir.toFile().getPath());
             outputFile = new File(outputFolder, customReport.getFileName());
         }
-        logging.logInfo("Saving execution report (" + ExecuteAutomationPackageTool.ReportType.junit + ") into " + outputFile.getAbsolutePath(), null);
+        logging.logDebug("Saving execution report (" + ExecuteAutomationPackageTool.ReportType.junit + ") into " + outputFile.getAbsolutePath(), null);
 
         try (FileOutputStream fos = new FileOutputStream(outputFile)) {
             fos.write(customReport.getContent());

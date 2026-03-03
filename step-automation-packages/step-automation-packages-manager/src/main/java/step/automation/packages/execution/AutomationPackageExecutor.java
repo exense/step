@@ -139,7 +139,7 @@ public class AutomationPackageExecutor {
                 }
             }
         } catch (IOException | AutomationPackageReadingException | ManagedLibraryMissingException e) {
-            throw new AutomationPackageManagerException("Unable to read the provided package library. Reason: " + e.getMessage(), e);
+            throw new AutomationPackageManagerException("Unable to read the provided package library.", e, true);
         }
 
         // and then we read the ap from just stored file

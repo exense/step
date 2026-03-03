@@ -171,7 +171,7 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
 	}
 
 	protected Version getStepVersion() {
-		return Constants.STEP_API_VERSION;
+		return Constants.STEP_VERSION;
 	}
 
 	protected org.eclipse.aether.artifact.Artifact getRemoteArtifact(String groupId, String artifactId, String artifactVersion, String classifier, String extension) throws MojoExecutionException {

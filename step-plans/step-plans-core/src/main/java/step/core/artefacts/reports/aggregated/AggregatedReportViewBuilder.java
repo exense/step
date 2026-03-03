@@ -25,6 +25,7 @@ import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketBuilder;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -112,9 +113,17 @@ public class AggregatedReportViewBuilder {
                 }
             }
             // Generate complete aggregated report tree
-            //First aggregate time series data for the given execution context grouped by artefactHash
-            Map<String, Map<String, Bucket>> countByHashAndStatus = mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, STATUS);
-            Map<String, Map<String, Bucket>> countByHashAndErrorMessage = mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, ERROR_MESSAGE);
+            //First aggregate time series data for the given execution context grouped by artefactHash and status as wells as artefactHash and error message
+            CompletableFuture<Map<String, Map<String, Bucket>>> countByHashAndStatusFuture =
+                    CompletableFuture.supplyAsync(() ->
+                            mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, STATUS)
+                    );
+            CompletableFuture<Map<String, Map<String, Bucket>>> countByHashAndErrorMessageFuture =
+                    CompletableFuture.supplyAsync(() ->
+                            mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, ERROR_MESSAGE)
+                    );
+            Map<String, Map<String, Bucket>> countByHashAndStatus = countByHashAndStatusFuture.join();
+            Map<String, Map<String, Bucket>> countByHashAndErrorMessage = countByHashAndErrorMessageFuture.join();
             //Because the time series time range extends to the time series resolution we need to use the same range when querying the report nodes
             Range resolvedRange = getResolvedRange(request, countByHashAndStatus);
             return new AggregatedReport(recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, countByHashAndStatus, countByHashAndErrorMessage, mainReportNodeAccessor, null, runningCountByArtefactHash, operationsByArtefactHash, resolvedRange));
@@ -130,9 +139,17 @@ public class AggregatedReportViewBuilder {
                 Set<String> reportArtefactHashSet = buildPartialReportNodeTimeSeries(aggregatedReport, request.selectedReportNodeId, partialReportNodesTimeSeries, inMemoryReportNodeAccessor, runningCountByArtefactHash, operationsByArtefactHash, request.fetchCurrentOperations);
                 // Only pass the reportArtefactHashSet if aggregate view filtering is enabled
                 reportArtefactHashSet = (request.filterResolvedPlanNodes) ? reportArtefactHashSet : null;
-                //Aggregate time series data for the given execution reporting context grouped by artefactHash
-                Map<String, Map<String, Bucket>> countByHashAndStatus = partialReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range,  ARTEFACT_HASH, STATUS);
-                Map<String, Map<String, Bucket>> countByHashAndErrorMessage = mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, ERROR_MESSAGE);
+                //Aggregate time series data for the given execution reporting context grouped by artefactHash and status ans artefactHash and error messages
+                CompletableFuture<Map<String, Map<String, Bucket>>> countByHashAndStatusFuture =
+                        CompletableFuture.supplyAsync(() ->
+                                partialReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range,  ARTEFACT_HASH, STATUS)
+                        );
+                CompletableFuture<Map<String, Map<String, Bucket>>> countByHashAndErrorMessageFuture =
+                        CompletableFuture.supplyAsync(() ->
+                                mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, ERROR_MESSAGE)
+                        );
+                Map<String, Map<String, Bucket>> countByHashAndStatus = countByHashAndStatusFuture.join();
+                Map<String, Map<String, Bucket>> countByHashAndErrorMessage = countByHashAndErrorMessageFuture.join();
                 //Because the time series time range extends to the time series resolution we need to use the same range when querying the report nodes
                 Range resolvedRange = getResolvedRange(request, countByHashAndStatus);
                 aggregatedReport.aggregatedReportView = recursivelyBuildAggregatedReportTree(rootResolvedPlanNode, request, countByHashAndStatus, countByHashAndErrorMessage, inMemoryReportNodeAccessor, reportArtefactHashSet, runningCountByArtefactHash, operationsByArtefactHash, resolvedRange);
