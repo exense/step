@@ -2,6 +2,8 @@ package step.engine.plugins;
 
 import ch.exense.commons.classloader.ClassLoaderArchiver;
 import ch.exense.commons.io.FileHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.grid.filemanager.FileManagerException;
 import step.plugins.java.handler.KeywordHandler;
 
@@ -10,6 +12,9 @@ import java.io.IOException;
 import java.util.Map;
 
 public class LocalFunctionHandler extends KeywordHandler {
+
+    protected static Logger logger = LoggerFactory.getLogger(LocalFunctionHandler.class);
+
 
     public static String TOKEN_RESERVATION_AUTOMATION_PACKAGE_FILE = "TOKEN_RESERVATION_AUTOMATION_PACKAGE_FILE";
 
@@ -43,7 +48,9 @@ public class LocalFunctionHandler extends KeywordHandler {
         @Override
         public void close() {
             if (temporaryFile != null && temporaryFile.exists()) {
-                temporaryFile.delete();
+                if (!temporaryFile.delete()) {
+                    logger.warn("Unable to delete temporary file {}", temporaryFile.getAbsolutePath());
+                }
             }
         }
     }
