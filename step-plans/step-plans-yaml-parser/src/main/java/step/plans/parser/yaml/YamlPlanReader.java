@@ -271,7 +271,7 @@ public class YamlPlanReader {
 		return plan;
 	}
 
-	protected YamlPlan planToYamlPlan(Plan plan){
+	public YamlPlan planToYamlPlan(Plan plan){
 		YamlPlan yamlPlan = new YamlPlan();
 		yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
 		yamlPlan.setVersion(currentVersion.toString());

@@ -4,6 +4,7 @@ import ch.exense.commons.app.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.ScriptAutomationPackageKeyword;
+import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
@@ -22,7 +23,10 @@ import step.plans.parser.yaml.YamlPlanReader;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -249,6 +253,19 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
     public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {
         try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, keywordLib, null)) {
             return readAutomationPackage(automationPackageArchive, apVersion, false);
+        } catch (IOException e) {
+            throw new AutomationPackageReadingException("IO Exception", e);
+        }
+    }
+
+    /** Convenient method for test
+     * @param automationPackage the JAR file to be read
+     * @return the automation package content raed from the provided files
+     * @throws AutomationPackageReadingException in case of error
+     */
+    public AutomationPackageYamlFragmentManager provideAutomationPackageYamlFragmentManager(File automationPackage) throws AutomationPackageReadingException {
+        try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, null, null)) {
+            return provideAutomationPackageYamlFragmentManager(automationPackageArchive);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
         }
