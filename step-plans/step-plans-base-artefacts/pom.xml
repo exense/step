@@ -70,13 +70,18 @@
 
 		<!-- ATTENTION: Apache POI declares a dependency to an old version of commons-io (2.11)
 		that even POI itself is not entirely functional with. Because this is the "outermost"
-		place where that dependency is defined, it would actually fix an OLD (incomplete, and
-		vulnerable) version as the preferred one. We therefore manually define the correct
-		preferred dependency here (the version to use is automatically correctly determined)
+		place where that dependency is defined, it would actually establish an OLD (incomplete, and
+		vulnerable) version as the preferred one. We therefore manually override the
+		dependency here (the version to use is automatically determined from the imported dependencies);
+		similarly, we include up-to-date versions of other commons libraries like commons-compress.
 		-->
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-compress</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.poi</groupId>
