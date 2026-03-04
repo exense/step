@@ -56,6 +56,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 	private String resolvedPlanRootNodeId;
 	private String agentsInvolved;
 	private Version stepVersion;
+	private List<ExecutionResultSnapshot> historyResults;
 
 	public Execution() {
 		super();
@@ -245,6 +246,14 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
 
 	public void setAgentsInvolved(String agentsInvolved) {
 		this.agentsInvolved = agentsInvolved;
+	}
+
+	public List<ExecutionResultSnapshot> getHistoryResults() {
+		return historyResults;
+	}
+
+	public void setHistoryResults(List<ExecutionResultSnapshot> historyResults) {
+		this.historyResults = historyResults;
 	}
 
 	/**

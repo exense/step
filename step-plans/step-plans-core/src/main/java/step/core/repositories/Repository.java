@@ -54,4 +54,7 @@ public interface Repository {
 	boolean compareCanonicalRepositoryParameters(Map<String, String> repositoryParameters1, Map<String, String> repositoryParameters2);
 
 	Set<String> getCanonicalRepositoryParameters();
+
+	String getCanonicalPlanName(Map<String, String> repositoryParameters);
+
 }
