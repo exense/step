@@ -50,17 +50,20 @@
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>enforce-banned-dependencies</id>
+                        <id>enforce-policies</id>
                         <goals>
                             <goal>enforce</goal>
                         </goals>
-                        <configuration>
+                        <configuration combine.self="override">
                             <rules>
-                                <bannedDependencies>
-                                    <excludes></excludes>
-                                </bannedDependencies>
+                                <!-- no bannedDependencies here -->
+                                <requireUpperBoundDeps>
+                                    <excludes>
+                                        <exclude>jakarta.xml.bind:jakarta.xml.bind-api</exclude>
+                                    </excludes>
+                                </requireUpperBoundDeps>
                             </rules>
-                            <fail>false</fail>
+                            <fail>true</fail>
                         </configuration>
                     </execution>
                 </executions>
