@@ -44,15 +44,25 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     private boolean internalClassLoader = false;
     private final ResourcePathMatchingResolver pathMatchingResourceResolver;
 
+    /**
+     * Creates a {@link JavaAutomationPackageArchive} from the current application classloader.
+     * <p>
+     * This constructor is intended exclusively for use by the Step JUnit runner via
+     * {@link step.automation.packages.AutomationPackageFromClassLoaderProvider}. It packages the application
+     * classloader's content into a temporary archive file. The temporary file is registered for deletion on JVM exit
+     * and will not be cleaned up earlier.
+     *
+     * @throws AutomationPackageReadingException if the temporary archive cannot be created from the classloader
+     */
     public JavaAutomationPackageArchive() throws AutomationPackageReadingException {
-        this(createArchiveFromClassLoader(), null, null);
+        this(createFarJarFromClassLoader(), null, null);
     }
 
-    private static File createArchiveFromClassLoader() throws AutomationPackageReadingException {
+    private static File createFarJarFromClassLoader() throws AutomationPackageReadingException {
         //Create a temporary file that will be deleted on exit
         try {
             File tempFile = FileHelper.createTempFile();
-            ClassLoaderArchiver.createArchive(tempFile);
+            ClassLoaderArchiver.createFatJar(tempFile);
             return tempFile;
         } catch (IOException e) {
             throw new AutomationPackageReadingException("Unable to create the Automation Package Archive from the current application classloader", e);

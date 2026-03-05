@@ -32,7 +32,7 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.KeywordExecutor;
-
+import step.plugins.java.handler.KeywordHandler;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -117,7 +117,7 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 
 		@Override
 		public String getHandlerChain(LocalFunction function) {
-			return LocalFunctionHandler.class.getName();
+			return KeywordHandler.class.getName();
 		}
 
 		@Override
