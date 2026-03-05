@@ -373,7 +373,7 @@ public class AutomationPackageManager {
         AtomicReference<AutomationPackageStaging> staging = new AtomicReference<>(null);
         try (AutomationPackageArchive automationPackageArchive = automationPackageProvider.getAutomationPackageArchive()) {
             AutomationPackage newPackage;
-            AutomationPackageContent packageContent = readAutomationPackage(automationPackageArchive, parameters.versionName, parameters.isClasspathBased);
+            AutomationPackageContent packageContent = readAutomationPackage(automationPackageArchive, parameters.versionName);
 
             AutomationPackage oldPackage = findOldPackage(parameters.explicitOldId, parameters.objectPredicate, packageContent);
 
@@ -1077,10 +1077,10 @@ public class AutomationPackageManager {
         return newPackage;
     }
 
-    protected <A extends AutomationPackageArchive> AutomationPackageContent readAutomationPackage(A automationPackageArchive, String apVersion, boolean isClasspathBased) throws AutomationPackageReadingException {
+    protected <A extends AutomationPackageArchive> AutomationPackageContent readAutomationPackage(A automationPackageArchive, String apVersion) throws AutomationPackageReadingException {
         AutomationPackageContent packageContent;
         AutomationPackageReader<A> reader = automationPackageReaderRegistry.getReader(automationPackageArchive);
-        packageContent = reader.readAutomationPackage(automationPackageArchive, apVersion, isClasspathBased);
+        packageContent = reader.readAutomationPackage(automationPackageArchive, apVersion);
         if (packageContent == null) {
             throw new AutomationPackageManagerException("Automation package descriptor is missing, allowed names: " + METADATA_FILES);
         } else if (packageContent.getName() == null || packageContent.getName().isEmpty()) {

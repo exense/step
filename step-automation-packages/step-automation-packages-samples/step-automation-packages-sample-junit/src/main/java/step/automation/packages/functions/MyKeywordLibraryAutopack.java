@@ -23,6 +23,10 @@ import step.handlers.javahandler.Keyword;
 import step.junit.runners.annotations.Plan;
 import step.junit.runners.annotations.Plans;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.Objects;
+
 @Plans({"plan.plan"})
 public class MyKeywordLibraryAutopack extends AbstractKeyword {
 
@@ -40,5 +44,25 @@ public class MyKeywordLibraryAutopack extends AbstractKeyword {
 	@Plan("Echo 'hello'")
 	@Keyword
 	public void inlinePlan() {}
+
+	@Keyword
+	public void MyKeywordUsingAutomationPackageFile() {
+		if (!isInAutomationPackage()) {
+			output.setError("Not in an Automation Package");
+		} else {
+			output.startMeasure("retrieving AP content");
+			File automationPackageFile = retrieveAndExtractAutomationPackage();
+			output.stopMeasure();
+			String[] list = Objects.requireNonNull(automationPackageFile.list());
+			if (list.length == 0) {
+				output.setError("Retrieved Automation Package content is empty");
+			} else {
+				output.add("AutomationPackageContent", String.join(", ", list));
+				if (!Arrays.asList(list).contains("plan.plan") && ! Arrays.asList(list).contains("jmeterProject1/jmeterProject1.xml")) {
+					output.setError("Retrieved Automation Package content missing file plan.plan or jmeterProject1/jmeterProject1.xml");
+				}
+			}
+		}
+	}
 
 }

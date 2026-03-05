@@ -47,9 +47,9 @@ public class JUnitPlansProvider {
     public List<StepClassParserResult> getTestPlans(ExecutionEngine executionEngine) {
         try {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
-            AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider(testClass.getClassLoader());
+            AutomationPackageFromClassLoaderProvider automationPackageProvider = new AutomationPackageFromClassLoaderProvider();
             AutomationPackageUpdateParameter localCreateParameters = new AutomationPackageUpdateParameterBuilder().withCreateOnly()
-                    .forLocalExecution().withClasspathBased(true).build();
+                    .forLocalExecution().build();
             ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
                    automationPackageProvider, new NoAutomationPackageLibraryProvider(), localCreateParameters).getId();
 

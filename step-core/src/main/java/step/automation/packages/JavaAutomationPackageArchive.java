@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import ch.exense.commons.classloader.ClassLoaderArchiver;
+import ch.exense.commons.io.FileHelper;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +44,29 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     private boolean internalClassLoader = false;
     private final ResourcePathMatchingResolver pathMatchingResourceResolver;
 
-    public JavaAutomationPackageArchive(ClassLoader classLoader) throws AutomationPackageReadingException {
-        super(TYPE);
-        this.classLoaderForMainApFile = classLoader;
-        this.classLoaderForApAndLibraries = classLoader;
-        this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoader);
+    /**
+     * Creates a {@link JavaAutomationPackageArchive} from the current application classloader.
+     * <p>
+     * This constructor is intended exclusively for use by the Step JUnit runner via
+     * {@link step.automation.packages.AutomationPackageFromClassLoaderProvider}. It packages the application
+     * classloader's content into a temporary archive file. The temporary file is registered for deletion on JVM exit
+     * and will not be cleaned up earlier.
+     *
+     * @throws AutomationPackageReadingException if the temporary archive cannot be created from the classloader
+     */
+    public JavaAutomationPackageArchive() throws AutomationPackageReadingException {
+        this(createFarJarFromClassLoader(), null, null);
+    }
+
+    private static File createFarJarFromClassLoader() throws AutomationPackageReadingException {
+        //Create a temporary file that will be deleted on exit
+        try {
+            File tempFile = FileHelper.createTempFile();
+            ClassLoaderArchiver.createFatJar(tempFile);
+            return tempFile;
+        } catch (IOException e) {
+            throw new AutomationPackageReadingException("Unable to create the Automation Package Archive from the current application classloader", e);
+        }
     }
 
     public JavaAutomationPackageArchive(File automationPackageFile, File keywordLibFile, String defaultName) throws AutomationPackageReadingException {
@@ -142,12 +162,7 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     }
 
     public AnnotationScanner createAnnotationScanner(){
-        // for file-based packages we create class loader for file, otherwise we just use class loader from archive
-        if (getOriginalFile() != null) {
-            return AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) getClassLoaderForApAndLibraries());
-        } else {
-            return AnnotationScanner.forAllClassesFromClassLoader(getClassLoaderForApAndLibraries());
-        }
+        return AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) getClassLoaderForApAndLibraries());
     }
 
     @Override

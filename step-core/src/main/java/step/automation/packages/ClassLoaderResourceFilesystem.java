@@ -116,7 +116,12 @@ public class ClassLoaderResourceFilesystem {
                 try (Stream<Path> walk = Files.walk(resourcePath)) {
                     walk.forEach(path -> {
                         try {
-                            Files.copy(path, extractedDirectory.resolve(resourcePath.relativize(path).toString()));
+                            Path target = extractedDirectory.resolve(resourcePath.relativize(path).toString());
+                            if (Files.isDirectory(path)) {
+                                Files.createDirectories(target);
+                            } else {
+                                Files.copy(path, target);
+                            }
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
