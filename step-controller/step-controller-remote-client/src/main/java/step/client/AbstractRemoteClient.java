@@ -30,6 +30,7 @@ import org.glassfish.jersey.apache5.connector.Apache5ClientProperties;
 import org.glassfish.jersey.apache5.connector.Apache5ConnectorProvider;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
+import org.glassfish.jersey.client.RequestEntityProcessing;
 import org.glassfish.jersey.client.oauth2.OAuth2ClientSupport;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -84,6 +85,7 @@ public class AbstractRemoteClient implements Closeable {
 						.build());
 		config.property(ClientProperties.CONNECT_TIMEOUT, 10_000);
 		config.property(ClientProperties.READ_TIMEOUT, 30_000);
+		config.property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED);
 		client = ClientBuilder.newClient(config);
 		client.register(JacksonMapperProvider.class);
 		client.register(MultiPartFeature.class);
