@@ -146,13 +146,9 @@ module.exports = function Controller (agentContext, fileManager) {
   }
 
   function createForkedAgent(keywordProjectPath) {
-    const parentCwd = process.cwd();
-    const fileName = './worker-wrapper.js';
-
-    fs.copyFileSync(path.join(parentCwd, fileName), path.join(keywordProjectPath, fileName));
-    fs.copyFileSync(path.join(parentCwd, './api/controllers/output.js'), path.join(keywordProjectPath, './output.js'));
-    fs.copyFileSync(path.join(parentCwd, './api/controllers/session.js'), path.join(keywordProjectPath, './session.js'));
-
+    fs.copyFileSync(path.resolve(__dirname, '../../worker-wrapper.js'), path.join(keywordProjectPath, './worker-wrapper.js'));
+    fs.copyFileSync(path.join(__dirname, 'output.js'), path.join(keywordProjectPath, './output.js'));
+    fs.copyFileSync(path.join(__dirname, 'session.js'), path.join(keywordProjectPath, './session.js'));
     return fork('./worker-wrapper.js', [], {cwd: keywordProjectPath});
   }
 
