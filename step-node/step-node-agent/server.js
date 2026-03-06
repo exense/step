@@ -25,12 +25,11 @@ if(agentConfFileExt === '.yaml') {
 
 console.log('[Agent] Creating agent context and tokens')
 const uuid = require('uuid/v4')
-const _ = require('underscore')
 const jwtUtils = require('./utils/jwtUtils')
 const agentType = 'node'
 const agent = {id: uuid()}
 let agentContext = { tokens: [], tokenSessions: [], tokenProperties: [], properties: agentConf.properties, controllerUrl: agentConf.gridHost, gridSecurity: agentConf.gridSecurity }
-_.each(agentConf.tokenGroups, function (tokenGroup) {
+agentConf.tokenGroups.forEach(function (tokenGroup) {
   const tokenConf = tokenGroup.tokenConf
   let attributes = tokenConf.attributes
   // Transform the selectionPatterns map <String, String> to <String, Interest>
@@ -46,7 +45,7 @@ _.each(agentConf.tokenGroups, function (tokenGroup) {
   for (let i = 0; i < tokenGroup.capacity; i++) {
     const token = { id: uuid(), agentid: agent.id, attributes: attributes, selectionPatterns: tokenSelectionPatterns }
     agentContext.tokens.push(token)
-    agentContext.tokenSessions[token.id] = {}
+    agentContext.tokenSessions[token.id] = null
     agentContext.tokenProperties[token.id] = additionalProperties
   }
 })
@@ -56,10 +55,8 @@ const express = require('express')
 const app = express()
 const port = agentConf.agentPort || 3000
 const timeout = agentConf.agentServerTimeout || 600000
-const bodyParser = require('body-parser')
-
-app.use(bodyParser.urlencoded({extended: true}))
-app.use(bodyParser.json())
+app.use(express.urlencoded({extended: true}))
+app.use(express.json())
 
 // Apply JWT authentication middleware
 const createJwtAuthMiddleware = require('./middleware/jwtAuth')

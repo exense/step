@@ -10,6 +10,13 @@ module.exports = function OutputBuilder (callback) {
     }
   }
 
+  exports.merge = function (output) {
+    exports.builder.payload = output;
+    if (callback) {
+      callback(exports.builder)
+    }
+  }
+
   function buildDefaultTechnicalError (message) {
     return { msg: message, type: 'TECHNICAL', root: true, code: 0 }
   }

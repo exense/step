@@ -45,6 +45,6 @@ exports.ErrorUncaughtExceptionTestKW = async (input, output, session, properties
 
 exports.onError = async (exception, input, output, session, properties) => {
   console.log('[onError] Exception is: \'' + exception + '\'')
-  global.isOnErrorCalled = true
+  output.builder.payload.payload.onErrorCalled = true
   return input['rethrow_error']
 }

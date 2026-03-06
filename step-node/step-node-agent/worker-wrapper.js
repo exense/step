@@ -1,0 +1,95 @@
+/*
+ * Copyright (C) 2026, exense GmbH
+ *
+ * This file is part of Step
+ *
+ * Step is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Step is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Step.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+const OutputBuilder = require("./output");
+const Session = require("./session");
+const fs = require("fs");
+const path = require('path')
+const session = new Session();
+
+process.on('message', async ({ projectPath, functionName, input, properties }) => {
+  console.log("[Agent fork] Calling keyword " + functionName)
+  const kwModules = await importAllKeywords(projectPath);
+
+  const outputBuilder = new OutputBuilder(function (output) {
+    console.log(`[Agent fork] Keyword ${functionName} successfully executed`)
+    process.send(output);
+  })
+
+  let keyword = searchKeyword(kwModules, functionName);
+  if(!keyword) {
+    outputBuilder.fail("Unable to find Keyword '" + functionName + "'");
+  } else {
+    try {
+      await keyword(input, outputBuilder, session, properties);
+    } catch (e) {
+      let onError = searchKeyword(kwModules, 'onError');
+      if (onError) {
+        if (await onError(e, input, outputBuilder, session, properties)) {
+          console.log('[Agent fork] Keyword execution marked as failed: onError function returned \'true\'')
+          outputBuilder.fail(e)
+        } else {
+          console.log('[Agent fork] Keyword execution marked as successful: execution failed but the onError function returned \'false\'')
+          outputBuilder.send()
+        }
+      } else {
+        console.log('[Agent fork] Keyword execution marked as failed: Keyword execution failed and no onError function found')
+        outputBuilder.fail(e)
+      }
+    }
+  }
+
+  async function importAllKeywords(projectPath) {
+    const kwModules = [];
+    const kwDir = path.resolve(projectPath, "./keywords");
+    console.log("[Agent fork] Search for keywords in: " + kwDir)
+    const kwFiles = fs.readdirSync(kwDir);
+    for (const kwFile of kwFiles) {
+      if (kwFile.endsWith('.js')) {
+        let kwModule = "file://" + path.resolve(kwDir, kwFile);
+        console.log("[Agent fork] Importing keywords from: " + kwModule)
+        let module = await import(kwModule);
+        kwModules.push(module);
+      }
+    }
+    return kwModules;
+  }
+
+  function searchKeyword (kwModules, keywordName) {
+    let keywordFunction;
+    kwModules.forEach(function (kwModule) {
+      if (kwModule[keywordName]) {
+        keywordFunction = kwModule[keywordName]
+      }
+    })
+    return keywordFunction
+  }
+});
+
+process.on('exit', () => {
+  session[Symbol.dispose]();
+})
+
+process.on('unhandledRejection', error => {
+  console.log('[Agent fork] Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported', error)
+})
+
+process.on('uncaughtException', error => {
+  console.log('[Agent fork] Critical: an unhandled error (uncaught exception) occurred and might not have been reported', error)
+})

@@ -1,16 +1,18 @@
+const fs = require("fs");
+const path = require("path");
+const {fork, execSync} = require("child_process");
+const Session = require('./session');
 module.exports = function Controller (agentContext, fileManager) {
   process.on('unhandledRejection', error => {
-    console.log('[Controller] Critical: an unhandled error (unhandled promise rejection) occured and might not have been reported', error)
+    console.log('[Controller] Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported', error)
   })
 
   process.on('uncaughtException', error => {
-    console.log('[Controller] Critical: an unhandled error (uncaught exception) occured and might not have been reported', error)
+    console.log('[Controller] Critical: an unhandled error (uncaught exception) occurred and might not have been reported', error)
   })
 
   let exports = {}
 
-  const fs = require('fs')
-  const path = require('path')
   const OutputBuilder = require('./output')
 
   exports.filemanager = fileManager
@@ -38,14 +40,9 @@ module.exports = function Controller (agentContext, fileManager) {
 
     let session = agentContext.tokenSessions[tokenId]
     if (session) {
-      // call close() for each closeable object in the session:
-      Object.entries(session).forEach(function (element) {
-        if (typeof element[1]['close'] === 'function') {
-          console.log('[Controller] Closing closeable object \'' + element[0] + '\' for token: ' + tokenId)
-          element[1].close()
-        }
-      })
-      agentContext.tokenSessions[tokenId] = {}
+      // Close the session and all objects it contains
+      session[Symbol.dispose]();
+      agentContext.tokenSessions[tokenId] = null;
     } else {
       console.log('[Controller] No session founds for token: ' + tokenId)
     }
@@ -104,70 +101,75 @@ module.exports = function Controller (agentContext, fileManager) {
 
   exports.executeKeyword = async function (keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder, agentContext) {
     try {
-      var kwDir
-
+      let npmProjectPath;
       if (keywordPackageFile.toUpperCase().endsWith('ZIP')) {
         if (exports.filemanager.isFirstLevelKeywordFolder(keywordPackageFile)) {
-          kwDir = path.resolve(keywordPackageFile + '/keywords')
+          npmProjectPath = path.resolve(keywordPackageFile);
         } else {
-          kwDir = path.resolve(keywordPackageFile + '/' + exports.filemanager.getFolderName(keywordPackageFile) + '/keywords')
+          npmProjectPath = path.resolve(keywordPackageFile, exports.filemanager.getFolderName(keywordPackageFile))
         }
       } else {
         // Local execution with KeywordRunner
-        kwDir = path.resolve(keywordPackageFile + '/keywords')
+        npmProjectPath = path.resolve(keywordPackageFile)
       }
 
-      console.log('[Controller] Search keyword file in ' + kwDir + ' for token ' + tokenId)
+      console.log('[Controller] Executing keyword in project ' + npmProjectPath + ' for token ' + tokenId)
 
-      var keywordFunction = searchAndRequireKeyword(kwDir, keywordName)
-
-      if (keywordFunction) {
-        console.log('[Controller] Found keyword for token ' + tokenId)
-        let session = agentContext.tokenSessions[tokenId]
-
-        if (!session) session = {}
-
-        console.log('[Controller] Executing keyword ' + keywordName + ' on token ' + tokenId)
-
-        try {
-          await keywordFunction(argument, outputBuilder, session, properties)
-        } catch (e) {
-          var onError = searchAndRequireKeyword(kwDir, 'onError')
-          if (onError) {
-            if (await onError(e, argument, outputBuilder, session, properties)) {
-              console.log('[Controller] Keyword execution marked as failed: onError function returned \'true\' on token ' + tokenId)
-              outputBuilder.fail(e)
-            } else {
-              console.log('[Controller] Keyword execution marked as successful: execution failed but the onError function returned \'false\' on token ' + tokenId)
-              outputBuilder.send()
-            }
-          } else {
-            console.log('[Controller] Keyword execution marked as failed: Keyword execution failed and no onError function found on token ' + tokenId)
-            outputBuilder.fail(e)
-          }
-        }
-      } else {
-        outputBuilder.fail('Unable to find keyword ' + keywordName)
+      let session = agentContext.tokenSessions[tokenId]
+      if (!session) {
+        session = new Session();
+        agentContext.tokenSessions[tokenId] = session;
       }
+
+      let forkedAgent = session.get('forkedAgent');
+
+      let project = session.get('npmProjectPath');
+      if(!project && forkedAgent) {
+        throw new Error("Multiple projects not supported within the same session");
+      }
+
+      if(!forkedAgent) {
+        console.log('[Controller] Starting agent fork in ' + npmProjectPath + ' for token ' + tokenId)
+        forkedAgent = createForkedAgent(npmProjectPath);
+        console.log('[Controller] Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
+        execSync('npm install', { cwd: npmProjectPath, stdio: 'inherit' });
+        session.set('forkedAgent', forkedAgent);
+        session.set('npmProjectPath', npmProjectPath);
+      }
+
+      const output = await runKeywordTask(forkedAgent, npmProjectPath, keywordName, argument, properties);
+      outputBuilder.merge(output.payload)
     } catch (e) {
-      outputBuilder.fail('An error occured while attempting to execute the keyword ' + keywordName, e)
+      console.log("[Controller] Unexpected error occurred while executing keyword ", e)
+      outputBuilder.fail('An error occurred while attempting to execute the keyword ' + keywordName, e)
     }
   }
 
-  function searchAndRequireKeyword (kwDir, keywordName) {
-    var keywordFunction
-    var kwFiles = fs.readdirSync(kwDir)
-    kwFiles.every(function (kwFile) {
-      if (kwFile.endsWith('.js')) {
-        const kwMod = require(kwDir + '/' + kwFile)
-        if (kwMod[keywordName]) {
-          keywordFunction = kwMod[keywordName]
-          return false
-        }
-      }
-      return true
-    })
-    return keywordFunction
+  function createForkedAgent(keywordProjectPath) {
+    const parentCwd = process.cwd();
+    const fileName = './worker-wrapper.js';
+
+    fs.copyFileSync(path.join(parentCwd, fileName), path.join(keywordProjectPath, fileName));
+    fs.copyFileSync(path.join(parentCwd, './api/controllers/output.js'), path.join(keywordProjectPath, './output.js'));
+    fs.copyFileSync(path.join(parentCwd, './api/controllers/session.js'), path.join(keywordProjectPath, './session.js'));
+
+    return fork('./worker-wrapper.js', [], {cwd: keywordProjectPath});
+  }
+
+  function runKeywordTask(forkedAgent, keywordProjectPath, functionName, input, properties) {
+    return new Promise((resolve, reject) => {
+      forkedAgent.send({ projectPath: keywordProjectPath, functionName: functionName, input: input, properties: properties });
+
+      forkedAgent.removeAllListeners('message');
+      forkedAgent.on('message', (result) => {
+        resolve(result);
+      });
+
+      forkedAgent.removeAllListeners('error');
+      forkedAgent.on('error', (err) => {
+        console.error('Error while calling forked agent:', err);
+      });
+    });
   }
 
   return exports

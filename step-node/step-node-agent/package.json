@@ -28,33 +28,26 @@
     "nodemon": "^1.18.7"
   },
   "dependencies": {
-    "body-parser": "^1.19.1",
     "express": "^4.17.1",
     "get-fqdn": "^1.0.0",
-    "http": "0.0.0",
     "jsonwebtoken": "^9.0.2",
     "minimist": "^1.2.5",
-    "npm": "^6.14.15",
     "request": "^2.88.0",
     "shelljs": "^0.8.4",
-    "underscore": "^1.13.1",
     "unzip-stream": "^0.3.1",
     "uuid": "^3.4.0",
     "yaml": "^2.4.2"
   },
   "bundledDependencies": [
-    "body-parser",
     "express",
-    "http",
+    "get-fqdn",
+    "jsonwebtoken",
     "minimist",
-    "npm",
     "request",
     "shelljs",
-    "underscore",
     "unzip-stream",
     "uuid",
-    "yaml",
-    "get-fqdn"
+    "yaml"
   ],
   "bin": {
     "step-node-agent": "./bin/step-node-agent"
