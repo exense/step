@@ -25,6 +25,11 @@ import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.client.Invocation.Builder;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.*;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.glassfish.jersey.apache5.connector.Apache5ClientProperties;
+import org.glassfish.jersey.apache5.connector.Apache5ConnectorProvider;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.oauth2.OAuth2ClientSupport;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -40,7 +45,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class AbstractRemoteClient implements Closeable {
@@ -48,8 +52,6 @@ public class AbstractRemoteClient implements Closeable {
 	private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteClient.class);
 	
 	protected Client client;
-
-	protected Map<String, NewCookie> cookies;
 
 	protected AdditionalHeaders headers = new AdditionalHeaders();
 	
@@ -73,15 +75,19 @@ public class AbstractRemoteClient implements Closeable {
 	}
 	
 	private void createClient() {
-		client = ClientBuilder.newBuilder()
-				.connectTimeout(10, TimeUnit.SECONDS)
-				.readTimeout(30, TimeUnit.SECONDS)
-				.build();
+		ClientConfig config = new ClientConfig();
+		config.connectorProvider(new Apache5ConnectorProvider());
+		config.property(Apache5ClientProperties.CONNECTION_MANAGER,
+				PoolingHttpClientConnectionManagerBuilder.create()
+						.setMaxConnTotal(100)
+						.setMaxConnPerRoute(20)
+						.build());
+		config.property(ClientProperties.CONNECT_TIMEOUT, 10_000);
+		config.property(ClientProperties.READ_TIMEOUT, 30_000);
+		client = ClientBuilder.newClient(config);
 		client.register(JacksonMapperProvider.class);
 		client.register(MultiPartFeature.class);
 		client.register(JacksonFeature.class);
-		//client.register(ObjectMapperResolver.class);
-		//client.register(JacksonJsonProvider.class);
 	}
 
 	private void login() {
@@ -90,7 +96,7 @@ public class AbstractRemoteClient implements Closeable {
 		c.setPassword(credentials.getPassword());
 		Entity<Credentials> entity = Entity.entity(c, MediaType.APPLICATION_JSON);
 		logger.info("Logging into:" + credentials.getServerUrl() + " with user " + credentials.getUsername());
-		cookies = client.target(credentials.getServerUrl() + "/rest/access/login").request().post(entity).getCookies();
+		client.target(credentials.getServerUrl() + "/rest/access/login").request().post(entity).close();
 	}
 	
 	public Builder requestBuilder(String path) {
@@ -107,11 +113,6 @@ public class AbstractRemoteClient implements Closeable {
 		Builder b = target.request();
 		b.accept(MediaType.APPLICATION_JSON);
 		b.accept(MediaType.TEXT_PLAIN);
-		if(cookies!=null) {
-			for(NewCookie c:cookies.values()) {
-				b.cookie(c);
-			}			
-		}
 		if(!headers.getAllHeaders().isEmpty()){
 			b.headers(headers.getAllHeaders());
 		}
