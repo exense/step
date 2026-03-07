@@ -13,8 +13,7 @@ function assertValidStatus(status) {
 }
 
 class OutputBuilder {
-  constructor(callback) {
-    this.callback = callback;
+  constructor() {
     this.builder = { payload: { attachments: [], payload: {} }, attachments: [] }
     this._currentMeasure = null;
   }
@@ -40,23 +39,18 @@ class OutputBuilder {
     if (payload !== undefined) {
       this.builder.payload.payload = payload;
     }
-    if (this.callback) {
-      this.callback(this.builder)
-    }
   }
 
   merge(output) {
     this.builder.payload = output;
-    if (this.callback) {
-      this.callback(this.builder)
-    }
   }
 
   fail(arg1, arg2) {
     this.setError(arg1, arg2)
-    if (this.callback) {
-      this.callback(this.builder)
-    }
+  }
+
+  build() {
+    return this.builder;
   }
 
   /**

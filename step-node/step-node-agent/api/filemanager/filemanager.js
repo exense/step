@@ -33,7 +33,7 @@ class FileManager {
     }
   }
 
-  loadOrGetKeywordFile(controllerUrl, fileId, fileVersionId) {
+  async loadOrGetKeywordFile(controllerUrl, fileId, fileVersionId) {
     return new Promise((resolve, reject) => {
       const filePath = this.workingDir + fileId + '/' + fileVersionId
 

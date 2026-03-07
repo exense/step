@@ -75,38 +75,28 @@ class Controller {
       const payload = await this.process_(tokenId, keywordName, argument, properties)
       res.json(payload)
     } else {
-      const outputBuilder = new OutputBuilder(payload => res.json(payload));
+      const outputBuilder = new OutputBuilder();
       outputBuilder.fail("The token '" + tokenId + " doesn't exist on this agent. This usually means that the agent crashed and restarted.");
     }
 
   }
 
-  process_(tokenId, keywordName, argument, properties) {
-    return new Promise((resolve) => {
-      const outputBuilder = new OutputBuilder((output) => {
-        console.log(`[Controller] Keyword ${keywordName} successfully executed on token ${tokenId}`)
-        resolve(output)
-      })
+  async process_(tokenId, keywordName, argument, properties) {
+    const outputBuilder = new OutputBuilder();
+    try {
+      const keywordPackageFile = await this.filemanager.loadOrGetKeywordFile(
+        this.agentContext.controllerUrl + '/grid/file/',
+        properties['$node.js.file.id'],
+        properties['$node.js.file.version'],
+        keywordName
+      )
 
-      try {
-        const filepathPromise = this.filemanager.loadOrGetKeywordFile(
-          this.agentContext.controllerUrl + '/grid/file/',
-          properties['$node.js.file.id'],
-          properties['$node.js.file.version'],
-          keywordName
-        )
-
-        filepathPromise.then((keywordPackageFile) => {
-          console.log('[Controller] Executing keyword ' + keywordName + ' using filepath ' + keywordPackageFile)
-          this.executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder)
-        }, (err) => {
-          console.log('[Controller] Error while attempting to run keyword ' + keywordName + ' :' + err)
-          outputBuilder.fail('Error while attempting to run keyword', err)
-        })
-      } catch (e) {
-        outputBuilder.fail(e)
-      }
-    })
+      await this.executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder)
+    } catch (e) {
+      console.log('[Controller] Unexpected error while executing keyword ' + keywordName + ' :' + err)
+      outputBuilder.fail('Unexpected error while executing keyword', err)
+    }
+    return outputBuilder.build();
   }
 
   async executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder) {
@@ -164,17 +154,21 @@ function createForkedAgent(keywordProjectPath) {
 
 function runKeywordTask(forkedAgent, keywordProjectPath, functionName, input, properties) {
   return new Promise((resolve) => {
-    forkedAgent.send({ projectPath: keywordProjectPath, functionName, input, properties });
+    try {
+      forkedAgent.send({ projectPath: keywordProjectPath, functionName, input, properties });
 
-    forkedAgent.removeAllListeners('message');
-    forkedAgent.on('message', (result) => {
-      resolve(result);
-    });
+      forkedAgent.removeAllListeners('message');
+      forkedAgent.on('message', (result) => {
+        resolve(result);
+      });
 
-    forkedAgent.removeAllListeners('error');
-    forkedAgent.on('error', (err) => {
-      console.error('Error while calling forked agent:', err);
-    });
+      forkedAgent.removeAllListeners('error');
+      forkedAgent.on('error', (err) => {
+        console.error('Error while calling forked agent:', err);
+      });
+    } catch (e) {
+      console.log('[Controller] Unexpected error while calling forked agent', e);
+    }
   });
 }
 

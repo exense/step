@@ -18,7 +18,7 @@
  */
 class Session extends Map {
   [Symbol.dispose]() {
-    console.log(`Disposing Session: Cleaning up ${this.size} resources...`);
+    console.log(`[Session] Disposing Session: Cleaning up ${this.size} resources...`);
 
     for (const [key, resource] of this) {
       try {
@@ -35,9 +35,9 @@ class Session extends Map {
           resource.close();
         }
 
-        console.log(`Successfully closed resource: ${key}`);
+        console.log(`[Session] Successfully closed resource: ${key}`);
       } catch (err) {
-        console.error(`Failed to close resource ${key}:`, err);
+        console.error(`[Session] Failed to close resource ${key}:`, err);
       }
     }
 
