@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const {fork, execSync} = require("child_process");
 const Session = require('./session');
-const OutputBuilder = require('./output');
+const { OutputBuilder } = require('./output');
 
 process.on('unhandledRejection', error => {
   console.log('[Controller] Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported', error)

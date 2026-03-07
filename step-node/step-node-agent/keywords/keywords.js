@@ -48,3 +48,55 @@ exports.onError = async (exception, input, output, session, properties) => {
   output.builder.payload.payload.onErrorCalled = true
   return input['rethrow_error']
 }
+
+// --- output.add ---
+
+exports.AddKW = async (input, output, session, properties) => {
+  output.add('name', 'Alice').add('score', 42).add('active', true).send()
+}
+
+// --- output.appendError ---
+
+exports.AppendErrorToExistingKW = async (input, output, session, properties) => {
+  output.setError('base error').appendError(' + extra detail').send()
+}
+
+exports.AppendErrorToNoneKW = async (input, output, session, properties) => {
+  output.appendError('fresh error').send()
+}
+
+// --- output.attach ---
+
+exports.AttachKW = async (input, output, session, properties) => {
+  output.attach({ name: 'report.txt', isDirectory: false, description: 'test attachment', hexContent: Buffer.from('hello').toString('base64') })
+  output.send()
+}
+
+// --- measurement methods ---
+
+exports.StartStopMeasureKW = async (input, output, session, properties) => {
+  output.startMeasure('step1')
+  await new Promise(r => setTimeout(r, 10))
+  output.stopMeasure()
+  output.send()
+}
+
+exports.StartStopMeasureWithStatusKW = async (input, output, session, properties) => {
+  output.startMeasure('failing-step')
+  output.stopMeasure({ status: 'FAILED', data: { reason: 'assertion failed' } })
+  output.send()
+}
+
+exports.AddMeasureKW = async (input, output, session, properties) => {
+  output.addMeasure('pre-timed', 150, { status: 'TECHNICAL_ERROR', begin: Date.now() - 150, data: { info: 'test' } })
+  output.send()
+}
+
+exports.MultipleMeasuresKW = async (input, output, session, properties) => {
+  output.startMeasure('first')
+  output.stopMeasure()
+  output.startMeasure('second')
+  output.stopMeasure({ status: 'FAILED' })
+  output.addMeasure('third', 50)
+  output.send()
+}

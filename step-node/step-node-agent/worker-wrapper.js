@@ -17,7 +17,7 @@
  * along with Step.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const OutputBuilder = require("./output");
+const { OutputBuilder } = require("./output");
 const Session = require("./session");
 const fs = require("fs");
 const path = require('path')
