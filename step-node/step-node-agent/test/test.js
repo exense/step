@@ -4,12 +4,12 @@ const assert = require('assert')
 ;(async () => {
   try {
     // Test the happy path
-    var output = await runner.run('Echo', {Param1: 'Val1'})
+    let output = await runner.run('Echo', {Param1: 'Val1'})
     assert.equal(output.payload.Param1, 'Val1')
     assert.equal(output.payload.properties.Property1, 'Prop1')
 
     // Test the method output.setError
-    var errorMsg = 'MyError'
+    let errorMsg = 'MyError'
     output = await runner.run('SetErrorTestKW', {ErrorMsg: errorMsg, rethrow_error: true})
     assert.equal(output.error.msg, errorMsg)
     assert.equal(output.error.type, 'TECHNICAL')

@@ -71,14 +71,9 @@ process.on('message', async ({ projectPath, functionName, input, properties }) =
     return kwModules;
   }
 
-  function searchKeyword (kwModules, keywordName) {
-    let keywordFunction;
-    kwModules.forEach(function (kwModule) {
-      if (kwModule[keywordName]) {
-        keywordFunction = kwModule[keywordName]
-      }
-    })
-    return keywordFunction
+  function searchKeyword(kwModules, keywordName) {
+    const kwModule = kwModules.find(m => m[keywordName]);
+    return kwModule ? kwModule[keywordName] : undefined;
   }
 });
 

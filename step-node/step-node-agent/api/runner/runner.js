@@ -3,15 +3,11 @@ module.exports = function (properties = {}) {
   const tokenId = 'local'
 
   const agentContext = {tokens: [], tokenSessions: {}, properties: properties}
-  let tokenSession = new Session();
+  const tokenSession = new Session();
   agentContext.tokenSessions[tokenId] = tokenSession
 
-  var fileManager = {
-    loadOrGetKeywordFile: function (url, fileId, fileVersion, keywordName) {
-      return new Promise(function (resolve, reject) {
-        resolve('.')
-      })
-    }
+  const fileManager = {
+    loadOrGetKeywordFile: () => Promise.resolve('.')
   }
 
   const Controller = require('../controllers/controller')
@@ -19,10 +15,9 @@ module.exports = function (properties = {}) {
 
   const api = {}
 
-  api.run = function (keywordName, input) {
-    return new Promise(resolve => {
-      controller.process_(tokenId, keywordName, input, properties, function (output) { resolve(output.payload) })
-    })
+  api.run = async function (keywordName, input) {
+    const output = await controller.process_(tokenId, keywordName, input, properties)
+    return output.payload
   }
 
   api.close = function () {

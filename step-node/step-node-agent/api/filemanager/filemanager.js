@@ -1,46 +1,43 @@
-module.exports = function FileManager (agentContext) {
-  const fs = require('fs')
-  const shell = require('shelljs')
-  const http = require('http')
-  const https = require('https')
-  const url = require('url')
-  const unzip = require('unzip-stream')
-  const jwtUtils = require('../../utils/jwtUtils')
+const fs = require('fs')
+const http = require('http')
+const https = require('https')
+const url = require('url')
+const unzip = require('unzip-stream')
+const jwtUtils = require('../../utils/jwtUtils')
 
-  let exports = {}
-  const filemanagerPath = agentContext.properties['filemanagerPath'] ? agentContext.properties['filemanagerPath'] : 'filemanager'
-  const workingDir = filemanagerPath + '/work/'
-  console.log('[FileManager] Starting file manager using working directory: ' + workingDir)
+class FileManager {
+  constructor(agentContext) {
+    this.agentContext = agentContext;
+    const filemanagerPath = agentContext.properties['filemanagerPath'] || 'filemanager'
+    this.workingDir = filemanagerPath + '/work/'
+    console.log('[FileManager] Starting file manager using working directory: ' + this.workingDir)
 
-  console.log('[FileManager] Clearing working dir: ' + workingDir)
-  shell.rm('-rf', workingDir)
-  shell.mkdir('-p', workingDir)
+    console.log('[FileManager] Clearing working dir: ' + this.workingDir)
+    fs.rmSync(this.workingDir, { recursive: true, force: true })
+    fs.mkdirSync(this.workingDir, { recursive: true })
 
-  let filemanagerMap = {}
-
-  exports.isFirstLevelKeywordFolder = function (path) {
-    if (fs.existsSync(path + '/keywords')) {
-      return true
-    }
-    return false
+    this.filemanagerMap = {}
   }
 
-  exports.getFolderName = function (keywordPackageFile) {
+  isFirstLevelKeywordFolder(filePath) {
+    return fs.existsSync(filePath + '/keywords')
+  }
+
+  getFolderName(keywordPackageFile) {
     try {
-      let splitNodes = keywordPackageFile.split('/')
-      let lastNode = splitNodes[splitNodes.length - 1]
-      let splitExt = lastNode.split('.')
-      return splitExt[0]
+      const splitNodes = keywordPackageFile.split('/')
+      const lastNode = splitNodes[splitNodes.length - 1]
+      return lastNode.split('.')[0]
     } catch (e) {
       throw new Error('A problem occured while attempting to retrieve subfolder name from zipped project:' + keywordPackageFile)
     }
   }
 
-  exports.loadOrGetKeywordFile = function (controllerUrl, fileId, fileVersionId) {
-    return new Promise(function (resolve, reject) {
-      const filePath = workingDir + fileId + '/' + fileVersionId
+  loadOrGetKeywordFile(controllerUrl, fileId, fileVersionId) {
+    return new Promise((resolve, reject) => {
+      const filePath = this.workingDir + fileId + '/' + fileVersionId
 
-      const cacheEntry = getCacheEntry(fileId, fileVersionId)
+      const cacheEntry = this.#getCacheEntry(fileId, fileVersionId)
       if (cacheEntry) {
         if (!cacheEntry.loading) {
           console.log('[FileManager] Entry found for fileId ' + fileId + ': ' + cacheEntry.name)
@@ -59,24 +56,22 @@ module.exports = function FileManager (agentContext) {
           })
         }
       } else {
-        putCacheEntry(fileId, fileVersionId, {'loading': true, 'promises': []})
+        this.#putCacheEntry(fileId, fileVersionId, { loading: true, promises: [] })
 
         console.log('[FileManager] No entry found for fileId ' + fileId + '. Loading...')
-        shell.mkdir('-p', filePath)
+        fs.mkdirSync(filePath, { recursive: true })
         console.log('[FileManager] Created file path: ' + filePath + ' for fileId ' + fileId)
 
-        var fileVersionUrl = controllerUrl + fileId + '/' + fileVersionId
+        const fileVersionUrl = controllerUrl + fileId + '/' + fileVersionId
         console.log('[FileManager] Requesting file from: ' + fileVersionUrl)
-        const filenamePromise = getKeywordFile(fileVersionUrl, filePath)
-
-        filenamePromise.then(function (result) {
+        this.#getKeywordFile(fileVersionUrl, filePath).then((result) => {
           console.log('[FileManager] Transfered file ' + result + ' from ' + fileVersionUrl)
 
-          let cacheEntry = getCacheEntry(fileId, fileVersionId)
+          const cacheEntry = this.#getCacheEntry(fileId, fileVersionId)
           cacheEntry.name = result
           cacheEntry.loading = false
 
-          putCacheEntry(fileId, fileVersionId, cacheEntry)
+          this.#putCacheEntry(fileId, fileVersionId, cacheEntry)
 
           if (cacheEntry.promises) {
             cacheEntry.promises.forEach(callback => callback(filePath + '/' + result)) // eslint-disable-line
@@ -84,7 +79,7 @@ module.exports = function FileManager (agentContext) {
           delete cacheEntry.promises
 
           resolve(filePath + '/' + result)
-        }, function (err) {
+        }, (err) => {
           console.log('Error :' + err)
           reject(err)
         })
@@ -92,16 +87,16 @@ module.exports = function FileManager (agentContext) {
     })
   }
 
-  function getCacheEntry (fileId, fileVersion) {
-    return filemanagerMap[fileId + fileVersion]
+  #getCacheEntry(fileId, fileVersion) {
+    return this.filemanagerMap[fileId + fileVersion]
   }
 
-  function putCacheEntry (fileId, fileVersion, entry) {
-    filemanagerMap[fileId + fileVersion] = entry
+  #putCacheEntry(fileId, fileVersion, entry) {
+    this.filemanagerMap[fileId + fileVersion] = entry
   }
 
-  function getKeywordFile (controllerFileUrl, targetDir) {
-    return new Promise(function (resolve, reject) {
+  #getKeywordFile(controllerFileUrl, targetDir) {
+    return new Promise((resolve, reject) => {
       const parsedUrl = url.parse(controllerFileUrl)
       const httpModule = parsedUrl.protocol === 'https:' ? https : http
 
@@ -113,17 +108,15 @@ module.exports = function FileManager (agentContext) {
       }
 
       // Add bearer token if gridSecurity is configured
-      const token = jwtUtils.generateJwtToken(agentContext.gridSecurity, 300); // 5 minutes expiration
+      const token = jwtUtils.generateJwtToken(this.agentContext.gridSecurity, 300); // 5 minutes expiration
       if (token) {
-        requestOptions.headers = {
-          'Authorization': 'Bearer ' + token
-        };
+        requestOptions.headers = { 'Authorization': 'Bearer ' + token };
       }
 
       const req = httpModule.request(requestOptions, (resp) => {
-        const filename = parseName(resp.headers)
+        const filename = this.#parseName(resp.headers)
         const filepath = targetDir + '/' + filename
-        if (isDir(resp.headers) || filename.toUpperCase().endsWith('ZIP')) {
+        if (this.#isDir(resp.headers) || filename.toUpperCase().endsWith('ZIP')) {
           resp.pipe(unzip.Extract({path: filepath})).on('close', () => resolve(filename))
         } else {
           const myFile = fs.createWriteStream(filepath)
@@ -138,14 +131,17 @@ module.exports = function FileManager (agentContext) {
     })
   }
 
-  function parseName (headers) {
-    const contentDisposition = JSON.stringify(headers['content-disposition'])
-    return contentDisposition.split('filename = ')[1].split(';')[0]
+  #parseName(headers) {
+    const contentDisposition = headers['content-disposition'] || ''
+    const match = contentDisposition.match(/filename\s*=\s*([^;]+)/)
+    return match ? match[1].trim() : ''
   }
 
-  function isDir (headers) {
-    const contentDisposition = JSON.stringify(headers['content-disposition'])
-    return contentDisposition.split('type = ')[1].split(';')[0].startsWith('dir')
+  #isDir(headers) {
+    const contentDisposition = headers['content-disposition'] || ''
+    const match = contentDisposition.match(/type\s*=\s*([^;]+)/)
+    return match ? match[1].trim().startsWith('dir') : false
   }
-  return exports
 }
+
+module.exports = FileManager;
