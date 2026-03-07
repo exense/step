@@ -17,6 +17,10 @@ module.exports = function (properties = {}) {
 
   api.run = async function (keywordName, input) {
     const output = await controller.process_(tokenId, keywordName, input, properties)
+    const payload = output.payload;
+    if (payload.error) {
+      console.log("[Runner] The keyword execution returned an error", payload.error);
+    }
     return output.payload
   }
 

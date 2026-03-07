@@ -136,7 +136,7 @@ class Controller {
         session.set('npmProjectPath', npmProjectPath);
       }
 
-      const output = await runKeywordTask(forkedAgent, npmProjectPath, keywordName, argument, properties);
+      const output = await forkedAgent.runKeywordTask(forkedAgent, npmProjectPath, keywordName, argument, properties);
       outputBuilder.merge(output.payload)
     } catch (e) {
       console.log("[Controller] Unexpected error occurred while executing keyword ", e)
@@ -149,27 +149,42 @@ function createForkedAgent(keywordProjectPath) {
   fs.copyFileSync(path.resolve(__dirname, '../../worker-wrapper.js'), path.join(keywordProjectPath, './worker-wrapper.js'));
   fs.copyFileSync(path.join(__dirname, 'output.js'), path.join(keywordProjectPath, './output.js'));
   fs.copyFileSync(path.join(__dirname, 'session.js'), path.join(keywordProjectPath, './session.js'));
-  return fork('./worker-wrapper.js', [], {cwd: keywordProjectPath});
+  return new ForkedAgent(fork('./worker-wrapper.js', [], {cwd: keywordProjectPath}));
 }
 
-function runKeywordTask(forkedAgent, keywordProjectPath, functionName, input, properties) {
-  return new Promise((resolve) => {
+class ForkedAgent {
+
+  constructor(process) {
+    this.process = process;
+  }
+
+  runKeywordTask(forkedAgent, keywordProjectPath, functionName, input, properties) {
+    return new Promise((resolve) => {
+      try {
+        this.process.send({ type: "KEYWORD", projectPath: keywordProjectPath, functionName, input, properties });
+
+        this.process.removeAllListeners('message');
+        this.process.on('message', (result) => {
+          resolve(result);
+        });
+
+        this.process.removeAllListeners('error');
+        this.process.on('error', (err) => {
+          console.error('Error while calling forked agent:', err);
+        });
+      } catch (e) {
+        console.log('[Controller] Unexpected error while calling forked agent', e);
+      }
+    });
+  }
+
+  close() {
     try {
-      forkedAgent.send({ projectPath: keywordProjectPath, functionName, input, properties });
-
-      forkedAgent.removeAllListeners('message');
-      forkedAgent.on('message', (result) => {
-        resolve(result);
-      });
-
-      forkedAgent.removeAllListeners('error');
-      forkedAgent.on('error', (err) => {
-        console.error('Error while calling forked agent:', err);
-      });
+      this.process.send({ type: "KILL" });
     } catch (e) {
-      console.log('[Controller] Unexpected error while calling forked agent', e);
+      this.process.kill();
     }
-  });
-}
 
+  }
+}
 module.exports = Controller;

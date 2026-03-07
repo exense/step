@@ -23,37 +23,44 @@ const fs = require("fs");
 const path = require('path')
 const session = new Session();
 
-process.on('message', async ({ projectPath, functionName, input, properties }) => {
-  console.log("[Agent fork] Calling keyword " + functionName)
-  const kwModules = await importAllKeywords(projectPath);
+process.on('message', async ({ type, projectPath, functionName, input, properties }) => {
+  if (type === 'KEYWORD') {
+    console.log("[Agent fork] Calling keyword " + functionName)
+    const kwModules = await importAllKeywords(projectPath);
 
-  const outputBuilder = new OutputBuilder();
+    const outputBuilder = new OutputBuilder();
 
-  try {
-    let keyword = searchKeyword(kwModules, functionName);
-    if (!keyword) {
-      outputBuilder.fail("Unable to find Keyword '" + functionName + "'");
-    } else {
-      try {
-        await keyword(input, outputBuilder, session, properties);
-      } catch (e) {
-        let onError = searchKeyword(kwModules, 'onError');
-        if (onError) {
-          if (await onError(e, input, outputBuilder, session, properties)) {
-            console.log('[Agent fork] Keyword execution failed and onError hook returned \'true\'')
-            outputBuilder.fail(e)
+    try {
+      let keyword = searchKeyword(kwModules, functionName);
+      if (!keyword) {
+        console.log('[Agent fork] Unable to find Keyword ' + functionName + "'");
+        outputBuilder.fail("Unable to find Keyword '" + functionName + "'");
+      } else {
+        try {
+          await keyword(input, outputBuilder, session, properties);
+        } catch (e) {
+          let onError = searchKeyword(kwModules, 'onError');
+          if (onError) {
+            if (await onError(e, input, outputBuilder, session, properties)) {
+              console.log('[Agent fork] Keyword execution failed and onError hook returned \'true\'')
+              outputBuilder.fail(e)
+            } else {
+              console.log('[Agent fork] Keyword execution failed and onError hook returned \'false\'')
+            }
           } else {
-            console.log('[Agent fork] Keyword execution failed and onError hook returned \'false\'')
+            console.log('[Agent fork] Keyword execution failed. No onError hook defined')
+            outputBuilder.fail(e)
           }
-        } else {
-          console.log('[Agent fork] Keyword execution failed. No onError hook defined')
-          outputBuilder.fail(e)
         }
       }
+    } finally {
+      console.log("[Agent fork] Returning output")
+      process.send(outputBuilder.build());
     }
-  } finally {
-    console.log("[Agent fork] Returning output")
-    process.send(outputBuilder.build());
+  } else if (type === 'KILL') {
+    console.log("[Agent fork] Exiting...")
+    session[Symbol.dispose]();
+    process.exit(1)
   }
 
   async function importAllKeywords(projectPath) {
@@ -78,10 +85,6 @@ process.on('message', async ({ projectPath, functionName, input, properties }) =
   }
 });
 
-process.on('exit', () => {
-  session[Symbol.dispose]();
-})
-
 process.on('unhandledRejection', error => {
   console.log('[Agent fork] Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported', error)
 })
@@ -89,3 +92,8 @@ process.on('unhandledRejection', error => {
 process.on('uncaughtException', error => {
   console.log('[Agent fork] Critical: an unhandled error (uncaught exception) occurred and might not have been reported', error)
 })
+
+process.on('SIGTERM', () => {
+  console.log("[Agent fork] Received SIGTERM. Exiting...")
+  process.exit(1);
+});
