@@ -28,7 +28,7 @@ process.on('message', async ({ projectPath, functionName, input, properties }) =
   const kwModules = await importAllKeywords(projectPath);
 
   const outputBuilder = new OutputBuilder(function (output) {
-    console.log(`[Agent fork] Keyword ${functionName} successfully executed`)
+    console.log(`[Agent fork] Keyword ${functionName} output sent`, output)
     process.send(output);
   })
 
@@ -39,6 +39,7 @@ process.on('message', async ({ projectPath, functionName, input, properties }) =
     try {
       await keyword(input, outputBuilder, session, properties);
     } catch (e) {
+      console.log("[Agent fork] Keyword execution failed", e)
       let onError = searchKeyword(kwModules, 'onError');
       if (onError) {
         if (await onError(e, input, outputBuilder, session, properties)) {
