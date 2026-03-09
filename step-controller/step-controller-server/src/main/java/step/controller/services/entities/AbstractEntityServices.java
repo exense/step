@@ -8,6 +8,7 @@ import org.bson.types.ObjectId;
 import step.automation.packages.AutomationPackageEntity;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
+import step.core.access.User;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.AbstractTrackedObject;
@@ -153,14 +154,18 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             AbstractTrackedObject newTrackedEntity = (AbstractTrackedObject) entity;
             ObjectId sourceId = entity.getId();
             T sourceEntity = (sourceId != null) ? accessor.get(sourceId) : null;
-            String username = getSession().getUser().getUsername();
+            User user = getSession().getUser();
+            String username = user.getUsername();
+            ObjectId userId = user.getId();
             Date lastModificationDate = new Date();
             if (sourceEntity == null) {
                 newTrackedEntity.setCreationDate(lastModificationDate);
                 newTrackedEntity.setCreationUser(username);
+                newTrackedEntity.setCreationUserId(userId);
             }
             newTrackedEntity.setLastModificationDate(lastModificationDate);
             newTrackedEntity.setLastModificationUser(username);
+            newTrackedEntity.setLastModificationUserId(userId);
         }
     }
 

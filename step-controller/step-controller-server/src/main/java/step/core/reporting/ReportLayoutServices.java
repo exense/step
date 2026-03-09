@@ -8,6 +8,7 @@ import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import step.controller.services.entities.AbstractEntityServices;
+import step.core.access.User;
 import step.core.deployment.AuthorizationException;
 import step.core.entities.EntityConstants;
 import step.framework.server.security.Secured;
@@ -59,9 +60,8 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
 
     private void checkLayoutRight(ReportLayout reportLayout, String right) {
         //If user is the owner, he is always allowed (if he has the base access right role)
-        //TODO user name could be modified, using ID will be required but we first need to add the ID to the tracked info, or introduce a dedicated attribute
-        String username = this.getSession().getUser().getUsername();
-        if (!username.equals(reportLayout.getCreationUser())) {
+        User currentUser = this.getSession().getUser();
+        if (!reportLayout.getCreationUserId().equals(currentUser.getId())) {
             if (reportLayout.shared) {
                 //Check specific access right for shared layouts
                 checkRights(REPORT_LAYOUT_RIGHT + "-" + right + "-" + SHARED_RIGHT_SUFFIX);
