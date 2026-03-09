@@ -146,10 +146,10 @@ class Controller {
 }
 
 function createForkedAgent(keywordProjectPath) {
-  fs.copyFileSync(path.resolve(__dirname, '../../worker-wrapper.js'), path.join(keywordProjectPath, './worker-wrapper.js'));
+  fs.copyFileSync(path.resolve(__dirname, '../../agent-fork.js'), path.join(keywordProjectPath, './agent-fork.js'));
   fs.copyFileSync(path.join(__dirname, 'output.js'), path.join(keywordProjectPath, './output.js'));
   fs.copyFileSync(path.join(__dirname, 'session.js'), path.join(keywordProjectPath, './session.js'));
-  return new ForkedAgent(fork('./worker-wrapper.js', [], {cwd: keywordProjectPath}));
+  return new ForkedAgent(fork('./agent-fork.js', [], {cwd: keywordProjectPath}));
 }
 
 class ForkedAgent {
