@@ -11,7 +11,6 @@ import static step.core.objectenricher.WriteAccessValidator.NO_CHECKS_VALIDATOR;
 public class AutomationPackageUpdateParameterBuilder {
     private boolean allowUpdate = true;
     private boolean allowCreate = true;
-    private boolean isClasspathBased = false;
     private ObjectId explicitOldId = null;
     private AutomationPackageFileSource apSource;
     private AutomationPackageFileSource apLibrarySource;
@@ -39,12 +38,6 @@ public class AutomationPackageUpdateParameterBuilder {
         this.allowCreate = allowCreate;
         return this;
     }
-
-    public AutomationPackageUpdateParameterBuilder withClasspathBased(boolean isClasspathBased) {
-        this.isClasspathBased = isClasspathBased;
-        return this;
-    }
-
 
     public AutomationPackageUpdateParameterBuilder withExplicitOldId(ObjectId explicitOldId) {
         this.explicitOldId = explicitOldId;
@@ -130,7 +123,6 @@ public class AutomationPackageUpdateParameterBuilder {
         this.allowUpdate = true;
         this.allowCreate = false;
         this.explicitOldId = oldPackage.getId();
-        this.isClasspathBased = parentParameters.isClasspathBased;
         String automationPackageResource = oldPackage.getAutomationPackageResource();
         if (FileResolver.isResource(automationPackageResource)) {
             this.apSource = AutomationPackageFileSource.withResourceId(FileResolver.resolveResourceId(automationPackageResource));
@@ -204,7 +196,7 @@ public class AutomationPackageUpdateParameterBuilder {
     }
 
     public AutomationPackageUpdateParameter build() {
-        return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, isClasspathBased, explicitOldId, apSource,
+        return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, explicitOldId, apSource,
                 apLibrarySource, versionName, activationExpression, enricher, objectPredicate, writeAccessValidator,
                 async, actorUser, forceRefreshOfSnapshots, checkForSameOrigin, functionsAttributes, plansAttributes,
                 tokenSelectionCriteria, executeFunctionsLocally, reloading);
