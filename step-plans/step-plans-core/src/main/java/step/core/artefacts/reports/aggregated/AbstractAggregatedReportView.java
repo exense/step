@@ -68,9 +68,10 @@ public abstract class AbstractAggregatedReportView {
         long totalCount = node.countTotal();
         if (totalCount == 0 && node instanceof AggregatedReportView) {
             AggregatedReportView aggregatedReportView = (AggregatedReportView) node;
-            stringBuffer.append((aggregatedReportView.hasDescendantInvocations) ? "*x": "-");
+            stringBuffer.append((aggregatedReportView.hasDescendantInvocations) ? "*x" : "-");
         } else {
-            stringBuffer.append(totalCount).append("x");;
+            stringBuffer.append(totalCount).append("x");
+            ;
         }
         if (totalCount > 0) {
             stringBuffer.append(": ");

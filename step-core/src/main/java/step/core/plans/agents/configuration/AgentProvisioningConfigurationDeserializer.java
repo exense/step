@@ -34,7 +34,8 @@ public class AgentProvisioningConfigurationDeserializer extends JsonDeserializer
         JsonToken currentToken = jsonParser.currentToken();
         if (currentToken == JsonToken.START_ARRAY) {
             ManualAgentProvisioningConfiguration manualAgentProvisioningConfiguration = new ManualAgentProvisioningConfiguration();
-            manualAgentProvisioningConfiguration.configuredAgentPools = jsonParser.readValueAs(new TypeReference<List<AgentPoolProvisioningConfiguration>>() {});
+            manualAgentProvisioningConfiguration.configuredAgentPools = jsonParser.readValueAs(new TypeReference<List<AgentPoolProvisioningConfiguration>>() {
+            });
             return manualAgentProvisioningConfiguration;
         } else {
             return new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.valueOf(jsonParser.readValueAs(String.class)));

@@ -1,6 +1,6 @@
 keywords:
   - JMeter:
-      name: "JMeter keyword from automation package"  
+      name: "JMeter keyword from automation package"
       description: "JMeter keyword 1"
       executeLocally: false
       useCustomTemplate: true
@@ -31,4 +31,3 @@ keywords:
   - Node:
       name: "NodeAutomation"
       jsfile: "nodeProject/nodeSample.ts"
-      

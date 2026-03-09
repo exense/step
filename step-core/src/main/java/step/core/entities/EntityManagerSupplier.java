@@ -20,5 +20,6 @@ package step.core.entities;
 
 public interface EntityManagerSupplier {
     EntityManager getEntityManager();
+
     void setEntityManager(EntityManager entityManager);
 }

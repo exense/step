@@ -92,7 +92,7 @@ public class LayeredResourceManager implements ResourceManager {
     @Override
     public boolean resourceExists(String resourceId) {
         for (ResourceManager resourceManager : resourceManagers) {
-            if(resourceManager.resourceExists(resourceId)){
+            if (resourceManager.resourceExists(resourceId)) {
                 return true;
             }
         }

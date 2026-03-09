@@ -49,16 +49,20 @@ public class QuotaCheckers {
         } catch (Exception e) {
             // Again, this should not normally happen, it would indicate some kind of serious bug
             logger.error("Unexpected error while determining quotas for execution id {}, refusing upload", executionId, e);
-            throw new QuotaExceededException("UNEXPECTED error when determining quotas: " + e.getMessage() );
+            throw new QuotaExceededException("UNEXPECTED error when determining quotas: " + e.getMessage());
         }
     }
 
     // Required because we can't throw checked exceptions in closures
     private static final class QuotaExceededUnchecked extends RuntimeException {
-        QuotaExceededUnchecked(QuotaExceededException cause) { super(cause); }
+        QuotaExceededUnchecked(QuotaExceededException cause) {
+            super(cause);
+        }
+
         // That synchronized modifier is present in super.getCause() anyway, so we just cleanly override the existing signature.
         // This doesn't add any additional overhead.
-        @Override public synchronized QuotaExceededException getCause() {
+        @Override
+        public synchronized QuotaExceededException getCause() {
             return (QuotaExceededException) super.getCause();
         }
     }

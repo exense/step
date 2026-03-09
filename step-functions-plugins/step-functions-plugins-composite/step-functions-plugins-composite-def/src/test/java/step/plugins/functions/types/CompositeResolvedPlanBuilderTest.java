@@ -49,18 +49,18 @@ public class CompositeResolvedPlanBuilderTest {
     @Before
     public void before() {
         engine = new ExecutionEngine.Builder()
-                .withPlugin(new BaseArtefactPlugin())
-                .withPlugin(new ThreadPoolPlugin())
-                .withPlugin(new FunctionPlugin())
-                .withPlugin(new AbstractExecutionEnginePlugin() {
-                    @Override
-                    public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-                        super.initializeExecutionContext(executionEngineContext, executionContext);
-                        FunctionTypeRegistry functionTypeRegistry = executionContext.require(FunctionTypeRegistry.class);
-                        functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
-                        functionTypeRegistry.registerFunctionType(new CustomFunctionType());
-                    }
-                }).withPlugin(new TokenForecastingExecutionPlugin()).build();
+            .withPlugin(new BaseArtefactPlugin())
+            .withPlugin(new ThreadPoolPlugin())
+            .withPlugin(new FunctionPlugin())
+            .withPlugin(new AbstractExecutionEnginePlugin() {
+                @Override
+                public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+                    super.initializeExecutionContext(executionEngineContext, executionContext);
+                    FunctionTypeRegistry functionTypeRegistry = executionContext.require(FunctionTypeRegistry.class);
+                    functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
+                    functionTypeRegistry.registerFunctionType(new CustomFunctionType());
+                }
+            }).withPlugin(new TokenForecastingExecutionPlugin()).build();
     }
 
     @After
@@ -75,9 +75,9 @@ public class CompositeResolvedPlanBuilderTest {
         aReturn.setOutput(new DynamicValue<>("{\"myOut\":\"test\"}"));
 
         Plan compositePlan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.sequence()).withBefore(BaseArtefacts.echo("'before in composite plan'")).withAfter(BaseArtefacts.echo("'after in composite plan'"))
-                .add(aReturn)
-                .endBlock().build();
+            .startBlock(BaseArtefacts.sequence()).withBefore(BaseArtefacts.echo("'before in composite plan'")).withAfter(BaseArtefacts.echo("'after in composite plan'"))
+            .add(aReturn)
+            .endBlock().build();
 
         CompositeFunction compositeFunction = new CompositeFunction();
         compositeFunction.addAttribute(AbstractOrganizableObject.NAME, "MyComposite");
@@ -87,9 +87,9 @@ public class CompositeResolvedPlanBuilderTest {
         myComposite.addChild(BaseArtefacts.check("output.myOut == 'test'"));
 
         Plan plan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.sequence()).withBefore(BaseArtefacts.echo("'before in main plan'")).withAfter(BaseArtefacts.echo("'after in main plan'"))
-                .add(myComposite)
-                .endBlock().build();
+            .startBlock(BaseArtefacts.sequence()).withBefore(BaseArtefacts.echo("'before in main plan'")).withAfter(BaseArtefacts.echo("'after in main plan'"))
+            .add(myComposite)
+            .endBlock().build();
 
         plan.setFunctions(List.of(compositeFunction));
 
@@ -102,19 +102,19 @@ public class CompositeResolvedPlanBuilderTest {
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
         assertEquals("Sequence: 1x: PASSED\n" +
-                        " [BEFORE]\n" +
-                        "  Echo: 1x: PASSED > before in main plan\n" +
-                        " MyComposite: 1x: PASSED > Input={}, Output={\"myOut\":\"test\"}\n" +
-                        "  Sequence: 1x: PASSED\n" +
-                        "   [BEFORE]\n" +
-                        "    Echo: 1x: PASSED > before in composite plan\n" +
-                        "   Return: 1x: PASSED\n" +
-                        "   [AFTER]\n" +
-                        "    Echo: 1x: PASSED > after in composite plan\n" +
-                        "  Check: 1x: PASSED > output.myOut == 'test'\n" +
-                        " [AFTER]\n" +
-                        "  Echo: 1x: PASSED > after in main plan\n",
-                node.toString());
+                " [BEFORE]\n" +
+                "  Echo: 1x: PASSED > before in main plan\n" +
+                " MyComposite: 1x: PASSED > Input={}, Output={\"myOut\":\"test\"}\n" +
+                "  Sequence: 1x: PASSED\n" +
+                "   [BEFORE]\n" +
+                "    Echo: 1x: PASSED > before in composite plan\n" +
+                "   Return: 1x: PASSED\n" +
+                "   [AFTER]\n" +
+                "    Echo: 1x: PASSED > after in composite plan\n" +
+                "  Check: 1x: PASSED > output.myOut == 'test'\n" +
+                " [AFTER]\n" +
+                "  Echo: 1x: PASSED > after in main plan\n",
+            node.toString());
     }
 
     @Test
@@ -123,8 +123,8 @@ public class CompositeResolvedPlanBuilderTest {
         myFunction.addAttribute(AbstractOrganizableObject.NAME, "My function call");
 
         Plan plan = PlanBuilder.create()
-                .startBlock(FunctionArtefacts.keyword("My function call")).withBefore(BaseArtefacts.echo("'test'")).add(BaseArtefacts.check("true"))
-                .endBlock().build();
+            .startBlock(FunctionArtefacts.keyword("My function call")).withBefore(BaseArtefacts.echo("'test'")).add(BaseArtefacts.check("true"))
+            .endBlock().build();
 
 
         plan.setFunctions(List.of(myFunction));
@@ -138,10 +138,10 @@ public class CompositeResolvedPlanBuilderTest {
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
         Assert.assertEquals("My function call: 1x: PASSED > Input={}, Output={}\n" +
-                        " [BEFORE]\n" +
-                        "  Echo: 1x: PASSED > test\n" +
-                        " Check: 1x: PASSED > true\n",
-                node.toString());
+                " [BEFORE]\n" +
+                "  Echo: 1x: PASSED > test\n" +
+                " Check: 1x: PASSED > true\n",
+            node.toString());
     }
 
     @Test
@@ -150,11 +150,11 @@ public class CompositeResolvedPlanBuilderTest {
         myFunction.addAttribute(AbstractOrganizableObject.NAME, "My function call");
 
         Plan plan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.sequence())
-                .add(BaseArtefacts.set("keywordName","'My function call'"))
-                .add(FunctionArtefacts.keywordWithDynamicSelection(Map.of("name","keywordName")))
-                .add(BaseArtefacts.check("true"))
-                .endBlock().build();
+            .startBlock(BaseArtefacts.sequence())
+            .add(BaseArtefacts.set("keywordName", "'My function call'"))
+            .add(FunctionArtefacts.keywordWithDynamicSelection(Map.of("name", "keywordName")))
+            .add(BaseArtefacts.check("true"))
+            .endBlock().build();
 
 
         plan.setFunctions(List.of(myFunction));
@@ -169,10 +169,10 @@ public class CompositeResolvedPlanBuilderTest {
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView();
         logger.info(node.toString());
         assertEquals("Sequence: 1x: PASSED\n" +
-                        " Set: 1x: PASSED > keywordName = My function call\n" +
-                        " CallKeyword: 1x: PASSED > Input={}, Output={}\n" +
-                        " Check: 1x: PASSED > true\n",
-                node.toString());
+                " Set: 1x: PASSED > keywordName = My function call\n" +
+                " CallKeyword: 1x: PASSED > Input={}, Output={}\n" +
+                " Check: 1x: PASSED > true\n",
+            node.toString());
     }
 
     public static class CustomFunction extends Function {

@@ -161,7 +161,7 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
         return classLoaderForApAndLibraries;
     }
 
-    public AnnotationScanner createAnnotationScanner(){
+    public AnnotationScanner createAnnotationScanner() {
         return AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) getClassLoaderForApAndLibraries());
     }
 

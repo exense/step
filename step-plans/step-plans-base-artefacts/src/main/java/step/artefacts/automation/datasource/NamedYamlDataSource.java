@@ -66,12 +66,12 @@ public class NamedYamlDataSource {
                         JsonObject properties2 = (JsonObject) propertiesContainer.get("properties");
 
                         dataPoolBuilder.addAll(schemaCreator.getJsonProvider().createObjectBuilder(namedEntityObject))
-                                .add("properties", schemaCreator.getJsonProvider().createObjectBuilder(properties1)
-                                        .add(entityName, schemaCreator.getJsonProvider().createObjectBuilder(propertiesContainer)
-                                                .add("properties", schemaCreator.getJsonProvider().createObjectBuilder(properties2)
-                                                        .remove(AbstractYamlDataSource.FOR_WRITE_FIELD))
-                                        )
-                                );
+                            .add("properties", schemaCreator.getJsonProvider().createObjectBuilder(properties1)
+                                .add(entityName, schemaCreator.getJsonProvider().createObjectBuilder(propertiesContainer)
+                                    .add("properties", schemaCreator.getJsonProvider().createObjectBuilder(properties2)
+                                        .remove(AbstractYamlDataSource.FOR_WRITE_FIELD))
+                                )
+                            );
                     }
                     arrayBuilder.add(dataPoolBuilder.build());
                 }
@@ -82,7 +82,7 @@ public class NamedYamlDataSource {
             }
         }
 
-        protected boolean isForWriteEditable(){
+        protected boolean isForWriteEditable() {
             return false;
         }
     }
@@ -90,7 +90,7 @@ public class NamedYamlDataSource {
     public static class WithForWriteSchemaProcessor extends SchemaProcessor {
 
         @Override
-        protected boolean isForWriteEditable(){
+        protected boolean isForWriteEditable() {
             return true;
         }
     }

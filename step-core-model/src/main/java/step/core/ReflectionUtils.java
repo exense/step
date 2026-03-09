@@ -30,6 +30,7 @@ public class ReflectionUtils {
 
     /**
      * Analyzes the class hierarchy and writes all applicable fields to the json schema (output)
+     *
      * @param untilParentClassIs ignores all fields of this parent class and all it's parent classes
      */
     public static List<Field> getAllFieldsInHierarchy(Class<?> clazz, Class<?> untilParentClassIs) {

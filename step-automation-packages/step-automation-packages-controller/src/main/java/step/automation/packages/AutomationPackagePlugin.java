@@ -76,7 +76,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         //Might be used by EE plugin creating AP manager EE
         Integer readLockTimeout = context.getConfiguration().getPropertyAsInteger(AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS,
-                AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT);
+            AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT);
         automationPackageLocks = new AutomationPackageLocks(readLockTimeout);
         context.put(AutomationPackageLocks.class, automationPackageLocks);
 
@@ -90,7 +90,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         context.getEntityManager().registerImportHook(new AutomationPackageImportHook());
 
         Table<AutomationPackageTableRecord> table = new Table<>(extendedCollection, "automation-package-read", true)
-                .withResultItemTransformer(new AutomationPackageTableTransformer(context.getResourceManager()));
+            .withResultItemTransformer(new AutomationPackageTableTransformer(context.getResourceManager()));
         context.get(TableRegistry.class).register(AutomationPackageEntity.entityName, table);
 
         context.getServiceRegistrationCallback().registerService(AutomationPackageServices.class);
@@ -126,10 +126,10 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
             log.info("Using the OS implementation of automation package manager");
 
             AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider = new MavenConfigProviderImpl(
-                    context.require(ControllerSettingAccessor.class),
-                    context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER)),
-                    Duration.ofMinutes(context.getConfiguration().getPropertyAsLong(CONFIGURATION_MAVEN_MAX_AGE, DEFAULT_MAVEN_MAX_AGE)),
-                    Duration.ofMinutes(context.getConfiguration().getPropertyAsLong(CONFIGURATION_MAVEN_CLEANUP_FREQUENCY, DEFAULT_MAVEN_CLEANUP_FREQUENCY))
+                context.require(ControllerSettingAccessor.class),
+                context.getConfiguration().getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER)),
+                Duration.ofMinutes(context.getConfiguration().getPropertyAsLong(CONFIGURATION_MAVEN_MAX_AGE, DEFAULT_MAVEN_MAX_AGE)),
+                Duration.ofMinutes(context.getConfiguration().getPropertyAsLong(CONFIGURATION_MAVEN_CLEANUP_FREQUENCY, DEFAULT_MAVEN_CLEANUP_FREQUENCY))
             );
 
             //Get parallel max version
@@ -140,17 +140,17 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
             // when we upload (deploy) the automation package from artifactory (the maven configuration can be changed either
             // via Step Parameters or via Controller settings)
             AutomationPackageManager packageManager = AutomationPackageManager.createMainAutomationPackageManager(
-                    context.require(AutomationPackageAccessor.class),
-                    context.require(FunctionManager.class),
-                    context.require(FunctionAccessor.class),
-                    context.getPlanAccessor(),
-                    context.getResourceManager(),
-                    context.require(AutomationPackageHookRegistry.class),
-                    context.require(AutomationPackageReaderRegistry.class),
-                    automationPackageLocks,
-                    mavenConfigProvider,
-                    maxVersionPerPackage,
-                    context.get(ObjectHookRegistry.class)
+                context.require(AutomationPackageAccessor.class),
+                context.require(FunctionManager.class),
+                context.require(FunctionAccessor.class),
+                context.getPlanAccessor(),
+                context.getResourceManager(),
+                context.require(AutomationPackageHookRegistry.class),
+                context.require(AutomationPackageReaderRegistry.class),
+                automationPackageLocks,
+                mavenConfigProvider,
+                maxVersionPerPackage,
+                context.get(ObjectHookRegistry.class)
             );
             context.put(AutomationPackageManager.class, packageManager);
         }

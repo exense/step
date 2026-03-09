@@ -48,217 +48,217 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractStepPluginMojo extends AbstractMojo {
 
-	@Parameter(defaultValue = "${project}", readonly = true, required = true)
-	protected MavenProject project;
+    @Parameter(defaultValue = "${project}", readonly = true, required = true)
+    protected MavenProject project;
 
-	@Parameter(property = "step.url", required = true)
-	private String url;
+    @Parameter(property = "step.url", required = true)
+    private String url;
 
-	@Parameter(property = "step.step-project-name")
-	private String stepProjectName;
+    @Parameter(property = "step.step-project-name")
+    private String stepProjectName;
 
-	@Parameter(property = "step.auth-token")
-	private String authToken;
+    @Parameter(property = "step.auth-token")
+    private String authToken;
 
-	@Parameter(defaultValue = "${project.build.finalName}", readonly = true)
-	private String buildFinalName;
+    @Parameter(defaultValue = "${project.build.finalName}", readonly = true)
+    private String buildFinalName;
 
-	@Parameter(defaultValue = "${project.version}", readonly = true)
-	private String projectVersion;
+    @Parameter(defaultValue = "${project.version}", readonly = true)
+    private String projectVersion;
 
-	@Parameter(defaultValue = "${session}", readonly = true, required = true)
-	protected MavenSession session;
+    @Parameter(defaultValue = "${session}", readonly = true, required = true)
+    protected MavenSession session;
 
-	@Parameter(defaultValue = "false")
-	protected Boolean force;
+    @Parameter(defaultValue = "false")
+    protected Boolean force;
 
-	@Component
-	protected RepositorySystem repositorySystem;
+    @Component
+    protected RepositorySystem repositorySystem;
 
-	protected static final String ID_FIELD = AbstractIdentifiableObject.ID;
+    protected static final String ID_FIELD = AbstractIdentifiableObject.ID;
 
-	public String getUrl() {
-		return url;
-	}
+    public String getUrl() {
+        return url;
+    }
 
-	public void setUrl(String url) {
-		this.url = url;
-	}
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
-	public String getAuthToken() {
-		return authToken;
-	}
+    public String getAuthToken() {
+        return authToken;
+    }
 
-	public void setAuthToken(String authToken) {
-		this.authToken = authToken;
-	}
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
 
-	public String getStepProjectName() {
-		return stepProjectName;
-	}
+    public String getStepProjectName() {
+        return stepProjectName;
+    }
 
-	public void setStepProjectName(String stepProjectName) {
-		this.stepProjectName = stepProjectName;
-	}
+    public void setStepProjectName(String stepProjectName) {
+        this.stepProjectName = stepProjectName;
+    }
 
-	public String getBuildFinalName() {
-		return buildFinalName;
-	}
+    public String getBuildFinalName() {
+        return buildFinalName;
+    }
 
-	public void setBuildFinalName(String buildFinalName) {
-		this.buildFinalName = buildFinalName;
-	}
+    public void setBuildFinalName(String buildFinalName) {
+        this.buildFinalName = buildFinalName;
+    }
 
-	public String getProjectVersion() {
-		return projectVersion;
-	}
+    public String getProjectVersion() {
+        return projectVersion;
+    }
 
-	public void setProjectVersion(String projectVersion) {
-		this.projectVersion = projectVersion;
-	}
+    public void setProjectVersion(String projectVersion) {
+        this.projectVersion = projectVersion;
+    }
 
-	public MavenProject getProject() {
-		return project;
-	}
+    public MavenProject getProject() {
+        return project;
+    }
 
-	public void setProject(MavenProject project) {
-		this.project = project;
-	}
+    public void setProject(MavenProject project) {
+        this.project = project;
+    }
 
-	public Boolean getForce() {
-		return force;
-	}
+    public Boolean getForce() {
+        return force;
+    }
 
-	public void setForce(Boolean force) {
-		this.force = force;
-	}
+    public void setForce(Boolean force) {
+        this.force = force;
+    }
 
-	protected MojoExecutionException logAndThrow(String errorText, Throwable e) {
-		getLog().error(errorText, e);
-		return new MojoExecutionException(errorText, e);
-	}
+    protected MojoExecutionException logAndThrow(String errorText, Throwable e) {
+        getLog().error(errorText, e);
+        return new MojoExecutionException(errorText, e);
+    }
 
-	protected MojoExecutionException logAndThrow(String errorText) {
-		getLog().error(errorText);
-		return new MojoExecutionException(errorText);
-	}
+    protected MojoExecutionException logAndThrow(String errorText) {
+        getLog().error(errorText);
+        return new MojoExecutionException(errorText);
+    }
 
-	protected ControllerCredentials getControllerCredentials() {
-		return new ControllerCredentials(getUrl(), null);
-	}
+    protected ControllerCredentials getControllerCredentials() {
+        return new ControllerCredentials(getUrl(), null);
+    }
 
-	protected ControllerServicesClient createControllerServicesClient(){
-		return new ControllerServicesClient(getControllerCredentials());
-	}
+    protected ControllerServicesClient createControllerServicesClient() {
+        return new ControllerServicesClient(getControllerCredentials());
+    }
 
-	protected void checkStepControllerVersion() throws MojoExecutionException {
-		try {
-			new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getStepVersion());
-		} catch (ControllerVersionValidator.ValidationException e) {
-			if (e.getResult().getStatus() == ControllerVersionValidator.Status.MINOR_MISMATCH) {
-				String warn = "The maven plugin version (" + e.getResult().getClientVersion() + ") does not exactly match the server version (" +  e.getResult().getServerVersion() + "), but they are considered compatible. It's recommended to use matching versions.";
-				getLog().warn(warn);
-			} else {
-				String err = "Version mismatch. The server version (" + e.getResult().getServerVersion() + ") is incompatible with the current maven plugin version (" + e.getResult().getClientVersion() + "). Please ensure both the CLI and server are running compatible versions.";
-				if (!force) {
-					err += " You can use the \"force\" parameter to ignore this validation.";
-					throw new MojoExecutionException(err, e);
-				} else {
-					getLog().warn(err);
-				}
-			}
-		}
-	}
+    protected void checkStepControllerVersion() throws MojoExecutionException {
+        try {
+            new ControllerVersionValidator(createControllerServicesClient()).validateVersions(getStepVersion());
+        } catch (ControllerVersionValidator.ValidationException e) {
+            if (e.getResult().getStatus() == ControllerVersionValidator.Status.MINOR_MISMATCH) {
+                String warn = "The maven plugin version (" + e.getResult().getClientVersion() + ") does not exactly match the server version (" + e.getResult().getServerVersion() + "), but they are considered compatible. It's recommended to use matching versions.";
+                getLog().warn(warn);
+            } else {
+                String err = "Version mismatch. The server version (" + e.getResult().getServerVersion() + ") is incompatible with the current maven plugin version (" + e.getResult().getClientVersion() + "). Please ensure both the CLI and server are running compatible versions.";
+                if (!force) {
+                    err += " You can use the \"force\" parameter to ignore this validation.";
+                    throw new MojoExecutionException(err, e);
+                } else {
+                    getLog().warn(err);
+                }
+            }
+        }
+    }
 
-	protected Version getStepVersion() {
-		return Constants.STEP_VERSION;
-	}
+    protected Version getStepVersion() {
+        return Constants.STEP_VERSION;
+    }
 
-	protected org.eclipse.aether.artifact.Artifact getRemoteArtifact(String groupId, String artifactId, String artifactVersion, String classifier, String extension) throws MojoExecutionException {
-		ArtifactResult artifactResult;
-		try {
-			List<RemoteRepository> repositories = getProject().getRemoteProjectRepositories();
-			artifactResult = repositorySystem.resolveArtifact(
-					session.getRepositorySession(),
-					new ArtifactRequest(new DefaultArtifact(groupId, artifactId, classifier, extension, artifactVersion), repositories, null)
-			);
-		} catch (ArtifactResolutionException e) {
-			throw logAndThrow("unable to resolve artefact", e);
-		}
+    protected org.eclipse.aether.artifact.Artifact getRemoteArtifact(String groupId, String artifactId, String artifactVersion, String classifier, String extension) throws MojoExecutionException {
+        ArtifactResult artifactResult;
+        try {
+            List<RemoteRepository> repositories = getProject().getRemoteProjectRepositories();
+            artifactResult = repositorySystem.resolveArtifact(
+                session.getRepositorySession(),
+                new ArtifactRequest(new DefaultArtifact(groupId, artifactId, classifier, extension, artifactVersion), repositories, null)
+            );
+        } catch (ArtifactResolutionException e) {
+            throw logAndThrow("unable to resolve artefact", e);
+        }
 
-		if (artifactResult != null) {
-			return artifactResult.getArtifact();
-		} else {
-			return null;
-		}
-	}
+        if (artifactResult != null) {
+            return artifactResult.getArtifact();
+        } else {
+            return null;
+        }
+    }
 
-	protected Artifact getProjectArtifact(String artifactClassifier) {
-		Set<Artifact> allProjectArtifacts = new HashSet<>(getProject().getArtifacts());
-		allProjectArtifacts.add(getProject().getArtifact());
-		allProjectArtifacts.addAll(getProject().getAttachedArtifacts());
-		Artifact applicableArtifact = null;
+    protected Artifact getProjectArtifact(String artifactClassifier) {
+        Set<Artifact> allProjectArtifacts = new HashSet<>(getProject().getArtifacts());
+        allProjectArtifacts.add(getProject().getArtifact());
+        allProjectArtifacts.addAll(getProject().getAttachedArtifacts());
+        Artifact applicableArtifact = null;
 
-		List<String> artifactStrings = allProjectArtifacts.stream().map(this::artifactToString).collect(Collectors.toList());
-		getLog().info("All detected project artifacts: " + artifactStrings);
+        List<String> artifactStrings = allProjectArtifacts.stream().map(this::artifactToString).collect(Collectors.toList());
+        getLog().info("All detected project artifacts: " + artifactStrings);
 
-		for (Artifact a : allProjectArtifacts) {
-			if (Objects.equals(a.getGroupId(), project.getGroupId()) && Objects.equals(a.getArtifactId(), project.getArtifactId()) && Objects.equals(a.getVersion(), project.getVersion())) {
-				if (artifactClassifier != null && !artifactClassifier.isEmpty()) {
-					if (Objects.equals(a.getClassifier(), artifactClassifier)) {
-						applicableArtifact = a;
-					}
-				} else if (a.getClassifier() == null || a.getClassifier().equals("jar")) {
-					applicableArtifact = a;
-				}
-			}
-			if (applicableArtifact != null) {
-				break;
-			}
-		}
+        for (Artifact a : allProjectArtifacts) {
+            if (Objects.equals(a.getGroupId(), project.getGroupId()) && Objects.equals(a.getArtifactId(), project.getArtifactId()) && Objects.equals(a.getVersion(), project.getVersion())) {
+                if (artifactClassifier != null && !artifactClassifier.isEmpty()) {
+                    if (Objects.equals(a.getClassifier(), artifactClassifier)) {
+                        applicableArtifact = a;
+                    }
+                } else if (a.getClassifier() == null || a.getClassifier().equals("jar")) {
+                    applicableArtifact = a;
+                }
+            }
+            if (applicableArtifact != null) {
+                break;
+            }
+        }
 
-		if (applicableArtifact != null) {
-			getLog().info("Resolved artifact: " + artifactToString(applicableArtifact));
-		}
+        if (applicableArtifact != null) {
+            getLog().info("Resolved artifact: " + artifactToString(applicableArtifact));
+        }
 
-		return applicableArtifact;
-	}
+        return applicableArtifact;
+    }
 
-	protected RemoteResourceManager createResourceManager() {
-		return new RemoteResourceManager(getControllerCredentials());
-	}
+    protected RemoteResourceManager createResourceManager() {
+        return new RemoteResourceManager(getControllerCredentials());
+    }
 
-	protected String artifactToString(Artifact artifact) {
-		return artifactToString(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifact.getVersion());
-	}
+    protected String artifactToString(Artifact artifact) {
+        return artifactToString(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifact.getVersion());
+    }
 
-	protected String artifactToString(org.eclipse.aether.artifact.Artifact artifact) {
-		return artifactToString(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifact.getVersion());
-	}
+    protected String artifactToString(org.eclipse.aether.artifact.Artifact artifact) {
+        return artifactToString(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifact.getVersion());
+    }
 
-	protected String artifactToString(String groupId, String artifactId, String classifier, String version){
-		String s = groupId + ":" + artifactId;
-		if (classifier != null && !classifier.isEmpty()) {
-			s = s + ":" + classifier;
-		}
-		s = s + ":" + version;
-		return s;
-	}
+    protected String artifactToString(String groupId, String artifactId, String classifier, String version) {
+        String s = groupId + ":" + artifactId;
+        if (classifier != null && !classifier.isEmpty()) {
+            s = s + ":" + classifier;
+        }
+        s = s + ":" + version;
+        return s;
+    }
 
-	protected void addProjectHeaderToRemoteClient(String stepProjectName, AbstractRemoteClient remoteClient) {
-		if (stepProjectName != null && !stepProjectName.isEmpty()) {
-			remoteClient.getHeaders().addProjectName(stepProjectName);
-		}
-	}
+    protected void addProjectHeaderToRemoteClient(String stepProjectName, AbstractRemoteClient remoteClient) {
+        if (stepProjectName != null && !stepProjectName.isEmpty()) {
+            remoteClient.getHeaders().addProjectName(stepProjectName);
+        }
+    }
 
-	protected static void validateEEConfiguration(String paramProjectName, String paramAuthToken) throws MojoExecutionException {
-		if (paramProjectName != null && !paramProjectName.isBlank()) {
-			if (paramAuthToken == null || paramAuthToken.isBlank()) {
-				throw new MojoExecutionException("Both 'authToken' and 'stepProjectName' must be configured for EE edition or omitted for OS edition.");
-			}
-		} else if (paramAuthToken != null && !paramAuthToken.isBlank()) {
-			throw new MojoExecutionException("Both 'authToken' and 'stepProjectName' must be configured for EE edition or omitted for OS edition.");
-		}
-	}
+    protected static void validateEEConfiguration(String paramProjectName, String paramAuthToken) throws MojoExecutionException {
+        if (paramProjectName != null && !paramProjectName.isBlank()) {
+            if (paramAuthToken == null || paramAuthToken.isBlank()) {
+                throw new MojoExecutionException("Both 'authToken' and 'stepProjectName' must be configured for EE edition or omitted for OS edition.");
+            }
+        } else if (paramAuthToken != null && !paramAuthToken.isBlank()) {
+            throw new MojoExecutionException("Both 'authToken' and 'stepProjectName' must be configured for EE edition or omitted for OS edition.");
+        }
+    }
 
 }

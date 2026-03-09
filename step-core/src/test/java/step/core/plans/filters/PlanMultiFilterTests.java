@@ -39,23 +39,23 @@ public class PlanMultiFilterTests {
         assertEquals(List.of(), allPlans.stream().filter(planMultiFilter::isSelected).collect(Collectors.toList()));
 
         //exclude one plans, all others are executes
-        planMultiFilter = new PlanMultiFilter(List.of( planByExcludeNameFilter));
+        planMultiFilter = new PlanMultiFilter(List.of(planByExcludeNameFilter));
         assertEquals(List.of(plan2, plan3, plan4), allPlans.stream().filter(planMultiFilter::isSelected).collect(Collectors.toList()));
 
         //exclude one category, other plan without that category are executed (including plans with no categories at all
         PlanByExcludedCategoriesFilter excludedCategoriesFilter = new PlanByExcludedCategoriesFilter(List.of("CatC"));
-        planMultiFilter = new PlanMultiFilter(List.of( excludedCategoriesFilter));
+        planMultiFilter = new PlanMultiFilter(List.of(excludedCategoriesFilter));
         assertEquals(List.of(plan1, plan3, plan4), allPlans.stream().filter(planMultiFilter::isSelected).collect(Collectors.toList()));
 
         //Exclude cat B common to plan 1 and plan 4
         excludedCategoriesFilter = new PlanByExcludedCategoriesFilter(List.of("CatB"));
-        planMultiFilter = new PlanMultiFilter(List.of( excludedCategoriesFilter));
+        planMultiFilter = new PlanMultiFilter(List.of(excludedCategoriesFilter));
         assertEquals(List.of(plan2, plan3), allPlans.stream().filter(planMultiFilter::isSelected).collect(Collectors.toList()));
 
         //Include Category B common to plan 1 and 4, but exclude Cat D also assigned to plan 4
         PlanByIncludedCategoriesFilter includedCategoriesFilter = new PlanByIncludedCategoriesFilter(List.of("CatB"));
         excludedCategoriesFilter = new PlanByExcludedCategoriesFilter(List.of("CatD"));
-        planMultiFilter = new PlanMultiFilter(List.of( includedCategoriesFilter, excludedCategoriesFilter));
+        planMultiFilter = new PlanMultiFilter(List.of(includedCategoriesFilter, excludedCategoriesFilter));
         assertEquals(List.of(plan1), allPlans.stream().filter(planMultiFilter::isSelected).collect(Collectors.toList()));
     }
 }

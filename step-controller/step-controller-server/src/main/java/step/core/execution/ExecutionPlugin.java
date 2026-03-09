@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -33,42 +33,44 @@ import step.plugins.screentemplating.ScreenTemplatePlugin;
 import java.util.ArrayList;
 import java.util.Map;
 
-@Plugin(dependencies= {ExecutionTypeControllerPlugin.class, ScreenTemplatePlugin.class})
+@Plugin(dependencies = {ExecutionTypeControllerPlugin.class, ScreenTemplatePlugin.class})
 public class ExecutionPlugin extends AbstractControllerPlugin {
 
-	@Override
-	public void serverStart(GlobalContext context) throws Exception {
-		TableRegistry tableRegistry = context.get(TableRegistry.class);
-		
-		Collection<ExecutionWrapper> collection = context.getCollectionFactory().getCollection("executions",
-				ExecutionWrapper.class);
-		Collection<ReportNode> reportsCollection = context.getCollectionFactory().getCollection("reports",
-				ReportNode.class);
+    @Override
+    public void serverStart(GlobalContext context) throws Exception {
+        TableRegistry tableRegistry = context.get(TableRegistry.class);
 
-		RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
-		ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
-		tableRegistry.register("executions", new Table<>(collection, "execution-read", true).withResultItemTransformer((execution, session) -> {
-			Map<String, Object> customFields = execution.getCustomFields();
-			if (customFields != null) {
-				customFields.remove(AgentProvisioningStatus.class.getName());
-			}
-			// replace parameters by empty map to prevent excessive result sizes
-			if (execution.getParameters() != null && !execution.getParameters().isEmpty()) {
-				execution.setParameters(Map.of());
-			}
-			return execution;
-		}).withResultItemEnricher(execution->{
-			execution.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
-			Object executionSummary = executionSummaryFormatter.format(execution);
-			execution.setExecutionSummary(executionSummary);
-			return execution;
-		}));
+        Collection<ExecutionWrapper> collection = context.getCollectionFactory().getCollection("executions",
+            ExecutionWrapper.class);
+        Collection<ReportNode> reportsCollection = context.getCollectionFactory().getCollection("reports",
+            ReportNode.class);
+
+        RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
+        ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
+        tableRegistry.register("executions", new Table<>(collection, "execution-read", true).withResultItemTransformer((execution, session) -> {
+            Map<String, Object> customFields = execution.getCustomFields();
+            if (customFields != null) {
+                customFields.remove(AgentProvisioningStatus.class.getName());
+            }
+            // replace parameters by empty map to prevent excessive result sizes
+            if (execution.getParameters() != null && !execution.getParameters().isEmpty()) {
+                execution.setParameters(Map.of());
+            }
+            return execution;
+        }).withResultItemEnricher(execution -> {
+            execution.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
+            Object executionSummary = executionSummaryFormatter.format(execution);
+            execution.setExecutionSummary(executionSummary);
+            return execution;
+        }));
 
 
-		tableRegistry.register("leafReports", new Table<>(reportsCollection, "execution-read", false)
-				.withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context)).withResultListFactory(()->new ArrayList<>(){}));
-		tableRegistry.register("reports", new Table<>(reportsCollection, "execution-read", false)
-				.withTableFiltersFactory(new ReportNodeTableFilterFactory()).withResultListFactory(()->new ArrayList<>(){}));
-		context.getServiceRegistrationCallback().registerService(ExecutionServices.class);
-	}
+        tableRegistry.register("leafReports", new Table<>(reportsCollection, "execution-read", false)
+            .withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context)).withResultListFactory(() -> new ArrayList<>() {
+            }));
+        tableRegistry.register("reports", new Table<>(reportsCollection, "execution-read", false)
+            .withTableFiltersFactory(new ReportNodeTableFilterFactory()).withResultListFactory(() -> new ArrayList<>() {
+            }));
+        context.getServiceRegistrationCallback().registerService(ExecutionServices.class);
+    }
 }

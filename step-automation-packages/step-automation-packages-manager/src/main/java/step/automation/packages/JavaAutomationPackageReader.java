@@ -52,7 +52,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
 
     @Override
     public List<String> getSupportedFileTypes() {
-        return List.of("ZIP archive","JAR file","Directory");
+        return List.of("ZIP archive", "JAR file", "Directory");
     }
 
     @Override
@@ -82,7 +82,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
         List<Plan> result = getPlans(annotationScanner, archive, stepClassParser);
         // replace null with empty collections to avoid NPEs
         result.forEach(plan -> {
-            if(plan.getFunctions() == null){
+            if (plan.getFunctions() == null) {
                 plan.setFunctions(new ArrayList<>());
             }
         });
@@ -99,7 +99,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
             plans.addAll(getPlanFromPlansAnnotation(annotationScanner, archive, stepClassParser));
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Unhandled exception when searching for plans", e);
+                "Unhandled exception when searching for plans", e);
         }
         plans.forEach(p -> {
             Exception e = p.getInitializingException();
@@ -168,7 +168,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
     private static List<ScriptAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
         List<ScriptAutomationPackageKeyword> scannedKeywords = new ArrayList<>();
         Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
-        if(!methods.isEmpty()) {
+        if (!methods.isEmpty()) {
             KeywordJsonSchemaCreator annotatedKeywordJsonSchemaCreator = new KeywordJsonSchemaCreator();
             for (Method m : methods) {
                 Keyword annotation = m.getAnnotation(Keyword.class);
@@ -222,8 +222,8 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
         Function f;
         try {
             f = CompositeFunctionUtils.createCompositeFunction(
-                    annotation, m,
-                    new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
+                annotation, m,
+                new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())
             );
         } catch (Exception ex) {
             throw new RuntimeException("Unable to parse plan from reference", ex);
@@ -235,10 +235,12 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
         return annotation.planReference() != null && !annotation.planReference().isBlank();
     }
 
-    /** Convenient method for test
+    /**
+     * Convenient method for test
+     *
      * @param automationPackage the JAR file to be read
-     * @param apVersion the automation package version
-     * @param keywordLib the package library file
+     * @param apVersion         the automation package version
+     * @param keywordLib        the package library file
      * @return the automation package content raed from the provided files
      * @throws AutomationPackageReadingException in case of error
      */

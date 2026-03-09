@@ -6,7 +6,7 @@ import org.junit.Test;
 public class LessThanOperatorHandlerTest {
 
     @Test
-    public void testInputTypesWithStringExpected(){
+    public void testInputTypesWithStringExpected() {
         LessThanOperatorHandler handler = new LessThanOperatorHandler();
         AssertResult result;
 
@@ -24,7 +24,7 @@ public class LessThanOperatorHandlerTest {
     }
 
     @Test
-    public void testInputTypesWithNumericExpected(){
+    public void testInputTypesWithNumericExpected() {
         LessThanOperatorHandler handler = new LessThanOperatorHandler();
         AssertResult result;
 

@@ -36,7 +36,7 @@ public class TableSettingsPlugin extends AbstractControllerPlugin {
     public void serverStart(GlobalContext context) {
         ObjectScopeRegistry objectScopeRegistry = context.require(ObjectScopeRegistry.class);
         TableSettingsAccessor tableSettingsAccessor = new TableSettingsAccessor(context.getCollectionFactory().getCollection(TableSettings.TABLE_NAME, TableSettings.class),
-                objectScopeRegistry);
+            objectScopeRegistry);
         context.put(TableSettingsAccessor.class, tableSettingsAccessor);
     }
 

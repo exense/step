@@ -41,11 +41,11 @@ public class QuotaLimits {
     @Override
     public String toString() {
         return "QuotaLimits{" +
-                "maxBytesPerResource=" + maxBytesPerResource +
-                ", maxBytesPerExecution=" + maxBytesPerExecution +
-                ", maxResourcesPerExecution=" + maxResourcesPerExecution +
-                ", runtimeOverridable=" + runtimeOverridable +
-                '}';
+            "maxBytesPerResource=" + maxBytesPerResource +
+            ", maxBytesPerExecution=" + maxBytesPerExecution +
+            ", maxResourcesPerExecution=" + maxResourcesPerExecution +
+            ", runtimeOverridable=" + runtimeOverridable +
+            '}';
     }
 
     private static Long negativeToNull(Long value) {
@@ -85,8 +85,8 @@ public class QuotaLimits {
     // (that's why it wasn't implemented as .equals(...), it would be slightly misleading)
     public static boolean areSame(QuotaLimits l1, QuotaLimits l2) {
         return Objects.equals(l1.maxBytesPerResource, l2.maxBytesPerResource)
-                && Objects.equals(l1.maxBytesPerExecution, l2.maxBytesPerExecution)
-                && Objects.equals(l1.maxResourcesPerExecution, l2.maxResourcesPerExecution);
+            && Objects.equals(l1.maxBytesPerExecution, l2.maxBytesPerExecution)
+            && Objects.equals(l1.maxResourcesPerExecution, l2.maxResourcesPerExecution);
     }
 
 

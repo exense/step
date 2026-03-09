@@ -52,6 +52,7 @@ public abstract class AutomationPackageArchive implements Closeable {
 
     /**
      * this method should be called in case the automation package does not contain any YAML descriptor with a name set in it
+     *
      * @return the name of the automation package
      */
     public String getAutomationPackageName() {
@@ -64,11 +65,11 @@ public abstract class AutomationPackageArchive implements Closeable {
 
     abstract public InputStream getResourceAsStream(String resourcePath) throws IOException;
 
-    abstract public URL getResource(String resourcePath) ;
+    abstract public URL getResource(String resourcePath);
 
     abstract public List<URL> getResourcesByPattern(String resourcePathPattern);
 
-    public File getKeywordLibFile(){
+    public File getKeywordLibFile() {
         return keywordLibFile;
     }
 

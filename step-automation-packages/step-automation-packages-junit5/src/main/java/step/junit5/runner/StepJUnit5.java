@@ -39,8 +39,8 @@ public abstract class StepJUnit5 {
     @BeforeAll
     public static void setupExecutionEngine() {
         executionEngine = ExecutionEngine.builder()
-                .withOperationMode(OperationMode.LOCAL_AUTOMATION_PACKAGE)
-                .withPluginsFromClasspath().build();
+            .withOperationMode(OperationMode.LOCAL_AUTOMATION_PACKAGE)
+            .withPluginsFromClasspath().build();
     }
 
     @AfterAll

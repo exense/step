@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -33,89 +33,89 @@ import step.core.dynamicbeans.DynamicValueResolver;
 
 public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 
-	@Override
-	protected void createReportSkeleton_(WhileReportNode parentNode, While testArtefact) {
-		//stop creating skeleton for while artefact as it may end up in infinite loop
-		//evaluateExpressionAndDelegate(parentNode, testArtefact, false);
-	}
+    @Override
+    protected void createReportSkeleton_(WhileReportNode parentNode, While testArtefact) {
+        //stop creating skeleton for while artefact as it may end up in infinite loop
+        //evaluateExpressionAndDelegate(parentNode, testArtefact, false);
+    }
 
-	@Override
-	protected void execute_(WhileReportNode node, While testArtefact) {
-		evaluateExpressionAndDelegate(node, testArtefact, true);
-	}
+    @Override
+    protected void execute_(WhileReportNode node, While testArtefact) {
+        evaluateExpressionAndDelegate(node, testArtefact, true);
+    }
 
-	private void evaluateExpressionAndDelegate(WhileReportNode node, While testArtefact, boolean execution) {
-		long timeout = testArtefact.getTimeout().getOrDefault(Long.class, 0l);
-		long maxTime = System.currentTimeMillis() + timeout;
+    private void evaluateExpressionAndDelegate(WhileReportNode node, While testArtefact, boolean execution) {
+        long timeout = testArtefact.getTimeout().getOrDefault(Long.class, 0l);
+        long maxTime = System.currentTimeMillis() + timeout;
 
-		Integer maxIterationsValue = testArtefact.getMaxIterations().get();
-		int maxIterations = maxIterationsValue==null?0:maxIterationsValue;
-		int currIterationsCount = 0;
+        Integer maxIterationsValue = testArtefact.getMaxIterations().get();
+        int maxIterations = maxIterationsValue == null ? 0 : maxIterationsValue;
+        int currIterationsCount = 0;
 
-		int failedLoops = 0;
-		
-		long pacing = testArtefact.getPacing().getOrDefault(Long.class, 0l);
+        int failedLoops = 0;
 
-		List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
+        long pacing = testArtefact.getPacing().getOrDefault(Long.class, 0l);
 
-		DynamicValueResolver resolver = new DynamicValueResolver(context.getExpressionHandler());
-		DynamicValue<Boolean> condition = testArtefact.getCondition(); 
-		DynamicValue<Boolean> postCondition = testArtefact.getPostCondition();
+        List<AbstractArtefact> selectedChildren = getChildren(testArtefact);
 
-		try {
-			while(reevaluateCondition(resolver, condition) && (condition.get()==null || condition.get()) 														// expression is true
-					&& 		  (timeout == 0 || System.currentTimeMillis() < maxTime)	// infinite Timeout or timeout not reached
-					&&  (maxIterations == 0 || currIterationsCount < maxIterations)){	// maxIterations infinite or not reached
+        DynamicValueResolver resolver = new DynamicValueResolver(context.getExpressionHandler());
+        DynamicValue<Boolean> condition = testArtefact.getCondition();
+        DynamicValue<Boolean> postCondition = testArtefact.getPostCondition();
 
-				if(context.isInterrupted()) {
-					break;
-				}
-				
-				Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration_"+currIterationsCount);
-				iterationTestCase.setPacing(new DynamicValue<Long>(pacing));
-				for(AbstractArtefact child:selectedChildren)
-					iterationTestCase.addChild(child);
+        try {
+            while (reevaluateCondition(resolver, condition) && (condition.get() == null || condition.get())                                                        // expression is true
+                && (timeout == 0 || System.currentTimeMillis() < maxTime)    // infinite Timeout or timeout not reached
+                && (maxIterations == 0 || currIterationsCount < maxIterations)) {    // maxIterations infinite or not reached
 
-				if(execution) {
-					ReportNode iterationReportNode = delegateExecute(iterationTestCase, node, new HashMap<>());
+                if (context.isInterrupted()) {
+                    break;
+                }
 
-					if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
-						failedLoops++;
-					}
-				} else {
-					delegateCreateReportSkeleton(iterationTestCase, node);
-				}
-				
-				currIterationsCount++;
+                Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration_" + currIterationsCount);
+                iterationTestCase.setPacing(new DynamicValue<Long>(pacing));
+                for (AbstractArtefact child : selectedChildren)
+                    iterationTestCase.addChild(child);
 
-				reevaluateCondition(resolver, postCondition);
-				Boolean postConditionValue = postCondition.get();
-				if(postConditionValue != null && !postConditionValue) {
-					break;
-				}
-			}
-			
-			node.setErrorCount(failedLoops);
-			node.setCount(currIterationsCount);
-			if(failedLoops>0) {
-				node.setStatus(ReportNodeStatus.FAILED);
-			} else {
-				node.setStatus(ReportNodeStatus.PASSED);
-			}
-			
-		} catch (Throwable e) {
-			failWithException(node, e);
-		}
-	}
-	
-	protected boolean reevaluateCondition(DynamicValueResolver resolver, DynamicValue<Boolean> condition) {
-		resolver.evaluate(condition, getBindings());
-		return true;
-	}
+                if (execution) {
+                    ReportNode iterationReportNode = delegateExecute(iterationTestCase, node, new HashMap<>());
 
-	@Override
-	public WhileReportNode createReportNode_(ReportNode parentNode, While testArtefact) {
-		return new WhileReportNode();
-	}
+                    if (iterationReportNode.getStatus() == ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus() == ReportNodeStatus.FAILED) {
+                        failedLoops++;
+                    }
+                } else {
+                    delegateCreateReportSkeleton(iterationTestCase, node);
+                }
+
+                currIterationsCount++;
+
+                reevaluateCondition(resolver, postCondition);
+                Boolean postConditionValue = postCondition.get();
+                if (postConditionValue != null && !postConditionValue) {
+                    break;
+                }
+            }
+
+            node.setErrorCount(failedLoops);
+            node.setCount(currIterationsCount);
+            if (failedLoops > 0) {
+                node.setStatus(ReportNodeStatus.FAILED);
+            } else {
+                node.setStatus(ReportNodeStatus.PASSED);
+            }
+
+        } catch (Throwable e) {
+            failWithException(node, e);
+        }
+    }
+
+    protected boolean reevaluateCondition(DynamicValueResolver resolver, DynamicValue<Boolean> condition) {
+        resolver.evaluate(condition, getBindings());
+        return true;
+    }
+
+    @Override
+    public WhileReportNode createReportNode_(ReportNode parentNode, While testArtefact) {
+        return new WhileReportNode();
+    }
 
 }

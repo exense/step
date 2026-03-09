@@ -30,7 +30,8 @@ public class TestPlansAndKeywords extends AbstractKeyword {
 
     @Plan
     @Keyword(name = "My custom keyword name")
-    public void implicitPlanWithWithCustomKeywordName() {}
+    public void implicitPlanWithWithCustomKeywordName() {
+    }
 
 //	Negative test: Commented out as this test is failing per design.
 // 	Uncomment it out to perform the negative test manually
@@ -47,7 +48,7 @@ public class TestPlansAndKeywords extends AbstractKeyword {
     @Plan("planWithAssert\nAssert key = \"value\"")
     @Keyword
     public void planWithAssert() {
-        output.add("key","value");
+        output.add("key", "value");
         output.add("intKey", 77);
         output.add("boolKey", true);
     }
@@ -76,5 +77,6 @@ public class TestPlansAndKeywords extends AbstractKeyword {
 
     @Plan("Echo PARAM_EXEC")
     @Keyword(name = "Inline Plan")
-    public void inlinePlan() {}
+    public void inlinePlan() {
+    }
 }

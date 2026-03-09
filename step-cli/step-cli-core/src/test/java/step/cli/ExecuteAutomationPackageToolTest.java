@@ -146,7 +146,7 @@ public class ExecuteAutomationPackageToolTest {
         ArgumentCaptor<AutomationPackageSource> libraryFileCaptor = ArgumentCaptor.forClass(AutomationPackageSource.class);
         ArgumentCaptor<IsolatedAutomationPackageExecutionParameters> executionParamsCaptor = ArgumentCaptor.forClass(IsolatedAutomationPackageExecutionParameters.class);
         Mockito.verify(remoteAutomationPackageClientMock, Mockito.times(1)).executeAutomationPackage(
-                fileCaptor.capture(), executionParamsCaptor.capture(), libraryFileCaptor.capture());
+            fileCaptor.capture(), executionParamsCaptor.capture(), libraryFileCaptor.capture());
         AutomationPackageSource capturedFile = fileCaptor.getValue();
         Assert.assertEquals("test-file-jar-with-dependencies.jar", capturedFile.getFile().getName());
 
@@ -155,8 +155,8 @@ public class ExecuteAutomationPackageToolTest {
         Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
         PlanMultiFilter planFilter = (PlanMultiFilter) captured.getPlanFilter();
         PlanMultiFilter expectedFilter = new PlanMultiFilter(List.of(new PlanByIncludedNamesFilter(Arrays.asList(TEST_INCLUDE_PLANS.split(","))),
-                new PlanByIncludedCategoriesFilter(Arrays.asList(TEST_INCLUDE_CATEGORIES.split(","))),
-                new PlanByExcludedCategoriesFilter(Arrays.asList(TEST_EXCLUDE_CATEGORIES.split(",")))));
+            new PlanByIncludedCategoriesFilter(Arrays.asList(TEST_INCLUDE_CATEGORIES.split(","))),
+            new PlanByExcludedCategoriesFilter(Arrays.asList(TEST_EXCLUDE_CATEGORIES.split(",")))));
         Assert.assertEquals(expectedFilter, planFilter);
         Assert.assertEquals(createTestCustomParams(), captured.getCustomParameters());
     }
@@ -173,7 +173,7 @@ public class ExecuteAutomationPackageToolTest {
         Mockito.when(execution.getResult()).thenReturn(resultStatus);
 
         ImportResult t = new ImportResult();
-        if(importError != null) {
+        if (importError != null) {
             t.setErrors(List.of(importError));
             t.setSuccessful(false);
         } else {
@@ -192,7 +192,7 @@ public class ExecuteAutomationPackageToolTest {
         Mockito.when((remoteExecutionManagerMock.getFuture(Mockito.anyString()))).thenReturn(futureMock);
         EchoReportNode echoReportNode = new EchoReportNode();
         echoReportNode.setEcho("Hello");
-        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED",1L), Map.of(), Map.of(), List.of(), false, ParentSource.MAIN, echoReportNode, Map.of("PASSED",new Bucket(), "ALL" , new Bucket()), null));
+        Mockito.when(remoteExecutionManagerMock.getAggregatedReportView(Mockito.anyString())).thenReturn(new AggregatedReportView(new Echo(), "hash", Map.of("PASSED", 1L), Map.of(), Map.of(), List.of(), false, ParentSource.MAIN, echoReportNode, Map.of("PASSED", new Bucket(), "ALL", new Bucket()), null));
         return remoteExecutionManagerMock;
     }
 
@@ -200,29 +200,29 @@ public class ExecuteAutomationPackageToolTest {
                                                             RemoteExecutionManager executionManagerMock,
                                                             RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) throws URISyntaxException {
         return new ExecuteAutomationPackageToolTestable(
-                "http://localhost:8080",
-                new ApExecuteParameters()
-                        .setAutomationPackageFile(new File("test-file-jar-with-dependencies.jar"))
-                        .setStepProjectName(TENANT_1.getName())
-                        .setUserId("testUser")
-                        .setAuthToken("abc")
-                        .setExecutionParameters(createTestCustomParams())
-                        .setExecutionResultTimeoutS(2)
-                        .setWaitForExecution(true)
-                        .setEnsureExecutionSuccess(ensureExecutionSuccess)
-                        .setReports(List.of(
-                                new ExecuteAutomationPackageTool.Report(
-                                        ExecuteAutomationPackageTool.ReportType.aggregated,
-                                        List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout, ExecuteAutomationPackageTool.ReportOutputMode.file)))
-                        )
-                        .setReportOutputDir(tempReportFolder)
-                        .setIncludePlans(TEST_INCLUDE_PLANS)
-                        .setExcludePlans(null)
-                        .setIncludeCategories(TEST_INCLUDE_CATEGORIES)
-                        .setExcludeCategories(TEST_EXCLUDE_CATEGORIES)
-                        .setWrapIntoTestSet(false)
-                        .setNumberOfThreads(0),
-                executionManagerMock, remoteAutomationPackageClientMock
+            "http://localhost:8080",
+            new ApExecuteParameters()
+                .setAutomationPackageFile(new File("test-file-jar-with-dependencies.jar"))
+                .setStepProjectName(TENANT_1.getName())
+                .setUserId("testUser")
+                .setAuthToken("abc")
+                .setExecutionParameters(createTestCustomParams())
+                .setExecutionResultTimeoutS(2)
+                .setWaitForExecution(true)
+                .setEnsureExecutionSuccess(ensureExecutionSuccess)
+                .setReports(List.of(
+                    new ExecuteAutomationPackageTool.Report(
+                        ExecuteAutomationPackageTool.ReportType.aggregated,
+                        List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout, ExecuteAutomationPackageTool.ReportOutputMode.file)))
+                )
+                .setReportOutputDir(tempReportFolder)
+                .setIncludePlans(TEST_INCLUDE_PLANS)
+                .setExcludePlans(null)
+                .setIncludeCategories(TEST_INCLUDE_CATEGORIES)
+                .setExcludeCategories(TEST_EXCLUDE_CATEGORIES)
+                .setWrapIntoTestSet(false)
+                .setNumberOfThreads(0),
+            executionManagerMock, remoteAutomationPackageClientMock
         );
     }
 

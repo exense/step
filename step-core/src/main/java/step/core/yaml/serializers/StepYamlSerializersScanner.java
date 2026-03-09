@@ -57,7 +57,7 @@ public class StepYamlSerializersScanner {
         return result;
     }
 
-    public static SimpleModule addAllSerializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper){
+    public static SimpleModule addAllSerializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper) {
         SimpleModule res = module;
         for (SerializerBind<?> ser : scanSerializerAddons(yamlObjectMapper)) {
             res = module.addSerializer(ser.clazz, (JsonSerializer<Object>) ser.serializer);

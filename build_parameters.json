@@ -1,49 +1,48 @@
 {
-	"NAME": "Step OSS backend",
-
-	"ACTIONS": [
-		{
-			"ACTION": "COMPILE",
-			"TYPE": "POM",
-			"FOLDER": ".",
-			"PARALLELISM": "2C",
-			"PARAMETERS": [
-				{
-					"NAME": "DEVELOPMENT",
-					"URL": "nexus-staging::https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-maven/",
-					"CONFIG": "SkipJavadoc"
-				},
-				{
-					"NAME": "INTEGRATION",
-					"URL": "nexus-staging::https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-maven/",
-					"CONFIG": "PerformanceTest"
-				},
-				{
-					"NAME": "PRODUCTION",
-					"URL": "sonatype::https://obsolete",
-					"CONFIG": "SignedBuild"
-				}
-			]
-		},
-		{
-			"ACTION": "COMPILE",
-			"TYPE": "NPM",
-			"FOLDER": "step-node/step-node-agent/",
-			"PARAMETERS": [
-				{
-					"NAME": "DEVELOPMENT",
-					"URL": "nexus-staging https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-npm/"
-				},
-				{
-					"NAME": "INTEGRATION",
-					"URL": "nexus-staging https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-npm/"
-				},
-				{
-					"NAME": "PRODUCTION",
-					"URL": "exense https://registry.npmjs.org/"
-				}
-			]
-		}
-	]
+  "NAME": "Step OSS backend",
+  "ACTIONS": [
+    {
+      "ACTION": "COMPILE",
+      "TYPE": "POM",
+      "FOLDER": ".",
+      "PARALLELISM": "2C",
+      "PARAMETERS": [
+        {
+          "NAME": "DEVELOPMENT",
+          "URL": "nexus-staging::https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-maven/",
+          "CONFIG": "SkipJavadoc"
+        },
+        {
+          "NAME": "INTEGRATION",
+          "URL": "nexus-staging::https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-maven/",
+          "CONFIG": "PerformanceTest"
+        },
+        {
+          "NAME": "PRODUCTION",
+          "URL": "sonatype::https://obsolete",
+          "CONFIG": "SignedBuild"
+        }
+      ]
+    },
+    {
+      "ACTION": "COMPILE",
+      "TYPE": "NPM",
+      "FOLDER": "step-node/step-node-agent/",
+      "PARAMETERS": [
+        {
+          "NAME": "DEVELOPMENT",
+          "URL": "nexus-staging https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-npm/"
+        },
+        {
+          "NAME": "INTEGRATION",
+          "URL": "nexus-staging https://nexus-enterprise-staging.stepcloud-test.ch/repository/staging-npm/"
+        },
+        {
+          "NAME": "PRODUCTION",
+          "URL": "exense https://registry.npmjs.org/"
+        }
+      ]
+    }
+  ]
 }
 

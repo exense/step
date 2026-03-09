@@ -29,7 +29,7 @@ import step.functions.type.FunctionTypeRegistry;
 
 import static step.core.execution.OperationMode.isLocal;
 
-@Plugin(dependencies= {FunctionPlugin.class})
+@Plugin(dependencies = {FunctionPlugin.class})
 public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin {
     public static final String JMETER_HOME_ENV_VAR = "JMETER_HOME";
     private FunctionTypeRegistry functionTypeRegistry;
@@ -44,8 +44,8 @@ public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin
                 config.putProperty(JMeterFunctionType.JMETER_HOME_CONFIG_PROPERTY, jMeterHome);
             }
             config.putProperty(
-                    JMeterFunctionType.MISSING_JMETER_HOME_MESSAGE_PROPERTY,
-                    String.format(AbstractFunctionType.MISSING_ENV_VARIABLE_MESSAGE, JMETER_HOME_ENV_VAR)
+                JMeterFunctionType.MISSING_JMETER_HOME_MESSAGE_PROPERTY,
+                String.format(AbstractFunctionType.MISSING_ENV_VARIABLE_MESSAGE, JMETER_HOME_ENV_VAR)
             );
 
             functionTypeRegistry = context.require(FunctionTypeRegistry.class);

@@ -38,17 +38,17 @@ public class AutomationPackageTableTransformer implements BiFunction<AutomationP
 
     @Override
     public AutomationPackageTableRecord apply(AutomationPackageTableRecord automationPackage, Session<?> session) {
-        if(automationPackage == null){
+        if (automationPackage == null) {
             return null;
         }
 
         // extend the original object with information about linked resources
-        if(FileResolver.isResource(automationPackage.getAutomationPackageResource())){
+        if (FileResolver.isResource(automationPackage.getAutomationPackageResource())) {
             String resourceId = FileResolver.resolveResourceId(automationPackage.getAutomationPackageResource());
             automationPackage.setAutomationPackageResourceObj(resourceManager.getResource(resourceId));
         }
 
-        if(FileResolver.isResource(automationPackage.getAutomationPackageLibraryResource())){
+        if (FileResolver.isResource(automationPackage.getAutomationPackageLibraryResource())) {
             String resourceId = FileResolver.resolveResourceId(automationPackage.getAutomationPackageLibraryResource());
             automationPackage.setAutomationPackageLibraryResourceObj(resourceManager.getResource(resourceId));
         }

@@ -36,7 +36,7 @@ public class ResourcePathMatchingResolver {
 
     public List<URL> getResourcesByPattern(String resourcePathPattern) {
         List<URL> res = new ArrayList<>();
-        if(!containsWildcard(resourcePathPattern)){
+        if (!containsWildcard(resourcePathPattern)) {
             res.add(classLoader.getResource(resourcePathPattern));
         } else {
             for (URL resource : findPathMatchingResources(resourcePathPattern)) {
@@ -58,7 +58,7 @@ public class ResourcePathMatchingResolver {
         String[] pathArray = locationPattern.split(getPathSeparator());
         List<URL> result = new ArrayList<>();
         String rootPath = pathArray[0];
-        if(containsWildcard(rootPath)) {
+        if (containsWildcard(rootPath)) {
             throw new RuntimeException("Wildcards are currently not supported for the root element of the path: " + rootPath + ". You should put all the fragments into a folder and reference them as follow: myFolder/*");
         } else {
             URL resource = classLoader.getResource(rootPath);
@@ -81,7 +81,7 @@ public class ResourcePathMatchingResolver {
                     Pattern pattern = Pattern.compile(nextPath.replaceAll("\\*", ".*"));
                     for (URL url : urls) {
                         String file = url.getFile();
-                        if(file.endsWith(getPathSeparator())) {
+                        if (file.endsWith(getPathSeparator())) {
                             file = file.substring(0, file.length() - 1);
                         }
                         int lastIndexOf = file.lastIndexOf(getPathSeparator());

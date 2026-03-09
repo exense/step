@@ -151,8 +151,8 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         // Check for characters that could break Groovy expressions
         if (name.contains("'") || name.contains("\\")) {
             throw new AutomationPackageReadingException(
-                    "Package name contains unsafe characters: " + name +
-                            ". Simple quote and backslash characters are not allowed."
+                "Package name contains unsafe characters: " + name +
+                    ". Simple quote and backslash characters are not allowed."
             );
         }
         return name;
@@ -167,7 +167,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         return finalName;
     }
 
-    protected AutomationPackageContent newContentInstance(){
+    protected AutomationPackageContent newContentInstance() {
         return new AutomationPackageContent();
     }
 
@@ -268,7 +268,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         return descriptorReader;
     }
 
-    public synchronized void updateJsonSchema(String jsonSchemaPath){
+    public synchronized void updateJsonSchema(String jsonSchemaPath) {
         log.info("Change json schema for automation package to {}", jsonSchemaPath);
         this.jsonSchemaPath = jsonSchemaPath;
         this.descriptorReader = null;

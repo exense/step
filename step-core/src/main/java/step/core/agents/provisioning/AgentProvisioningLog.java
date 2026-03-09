@@ -29,8 +29,8 @@ public class AgentProvisioningLog {
     @Override
     public String toString() {
         return "AgentProvisioningLog{" +
-                "events=" + events +
-                ", logs=" + logs +
-                '}';
+            "events=" + events +
+            ", logs=" + logs +
+            '}';
     }
 }

@@ -8,9 +8,12 @@ import java.util.List;
 public interface MeasurementHandler {
 
 
-	void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext);
-	void processMeasurements(List<Measurement> measurements);
-	void processGauges( List<Measurement> measurements);
-	void afterExecutionEnd(ExecutionContext context);
+    void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext);
+
+    void processMeasurements(List<Measurement> measurements);
+
+    void processGauges(List<Measurement> measurements);
+
+    void afterExecutionEnd(ExecutionContext context);
 
 }

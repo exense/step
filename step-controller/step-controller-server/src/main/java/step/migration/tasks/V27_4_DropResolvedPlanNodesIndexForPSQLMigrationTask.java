@@ -17,7 +17,7 @@ public class V27_4_DropResolvedPlanNodesIndexForPSQLMigrationTask extends Migrat
     public static final String RESOLVED_PLAN_COLLECTION_PROPERTY = "resolvedPlans";
 
     public V27_4_DropResolvedPlanNodesIndexForPSQLMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-        super(new Version(3,27,4), collectionFactory, migrationContext);
+        super(new Version(3, 27, 4), collectionFactory, migrationContext);
     }
 
     @Override

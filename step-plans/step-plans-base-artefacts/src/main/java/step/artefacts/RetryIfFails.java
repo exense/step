@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -27,55 +27,55 @@ import step.core.yaml.YamlModel;
 @YamlModel(name = "retryIfFails")
 @Artefact()
 public class RetryIfFails extends AbstractArtefact {
-	
-	DynamicValue<Integer> maxRetries = new DynamicValue<Integer>(1);
-		
-	DynamicValue<Integer> gracePeriod = new DynamicValue<Integer>(1000);
 
-	DynamicValue<Integer> timeout = new DynamicValue<Integer>(0);
-	
-	private DynamicValue<Boolean> releaseTokens = new DynamicValue<>(false);
-	
-	private DynamicValue<Boolean> reportLastTryOnly = new DynamicValue<>(false);
-	
-	public DynamicValue<Integer> getMaxRetries() {
-		return maxRetries;
-	}
+    DynamicValue<Integer> maxRetries = new DynamicValue<Integer>(1);
 
-	public void setMaxRetries(DynamicValue<Integer> maxRetries) {
-		this.maxRetries = maxRetries;
-	}
+    DynamicValue<Integer> gracePeriod = new DynamicValue<Integer>(1000);
 
-	public DynamicValue<Integer> getGracePeriod() {
-		return gracePeriod;
-	}
+    DynamicValue<Integer> timeout = new DynamicValue<Integer>(0);
 
-	public void setGracePeriod(DynamicValue<Integer> gracePeriod) {
-		this.gracePeriod = gracePeriod;
-	}
+    private DynamicValue<Boolean> releaseTokens = new DynamicValue<>(false);
 
-	public DynamicValue<Integer> getTimeout() {
-		return timeout;
-	}
+    private DynamicValue<Boolean> reportLastTryOnly = new DynamicValue<>(false);
 
-	public void setTimeout(DynamicValue<Integer> timeout) {
-		this.timeout = timeout;
-	}
+    public DynamicValue<Integer> getMaxRetries() {
+        return maxRetries;
+    }
 
-	public DynamicValue<Boolean> getReleaseTokens() {
-		return releaseTokens;
-	}
+    public void setMaxRetries(DynamicValue<Integer> maxRetries) {
+        this.maxRetries = maxRetries;
+    }
 
-	public void setReleaseTokens(DynamicValue<Boolean> releaseTokens) {
-		this.releaseTokens = releaseTokens;
-	}
+    public DynamicValue<Integer> getGracePeriod() {
+        return gracePeriod;
+    }
 
-	public DynamicValue<Boolean> getReportLastTryOnly() {
-		return reportLastTryOnly;
-	}
+    public void setGracePeriod(DynamicValue<Integer> gracePeriod) {
+        this.gracePeriod = gracePeriod;
+    }
 
-	public void setReportLastTryOnly(DynamicValue<Boolean> reportLastTryOnly) {
-		this.reportLastTryOnly = reportLastTryOnly;
-	}
+    public DynamicValue<Integer> getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(DynamicValue<Integer> timeout) {
+        this.timeout = timeout;
+    }
+
+    public DynamicValue<Boolean> getReleaseTokens() {
+        return releaseTokens;
+    }
+
+    public void setReleaseTokens(DynamicValue<Boolean> releaseTokens) {
+        this.releaseTokens = releaseTokens;
+    }
+
+    public DynamicValue<Boolean> getReportLastTryOnly() {
+        return reportLastTryOnly;
+    }
+
+    public void setReportLastTryOnly(DynamicValue<Boolean> reportLastTryOnly) {
+        this.reportLastTryOnly = reportLastTryOnly;
+    }
 
 }

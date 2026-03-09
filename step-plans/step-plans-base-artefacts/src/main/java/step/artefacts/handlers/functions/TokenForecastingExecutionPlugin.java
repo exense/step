@@ -59,8 +59,8 @@ public class TokenForecastingExecutionPlugin extends AbstractExecutionEnginePlug
 
         // The list of available agent pools is dynamic and has to be reloaded for each new execution
         Set<AgentPoolSpec> availableAgentPools = (agentProvisioningDriver != null) ?
-                agentProvisioningDriver.getConfiguration().availableAgentPools :
-                Set.of();
+            agentProvisioningDriver.getConfiguration().availableAgentPools :
+            Set.of();
         // Token forecasting is always calculated, even if the agent provisioning is disabled
         TokenForecastingContext tokenForecastingContext = new TokenForecastingContext(availableAgentPools);
         pushTokenForecastingContext(context, tokenForecastingContext, context.getReport());

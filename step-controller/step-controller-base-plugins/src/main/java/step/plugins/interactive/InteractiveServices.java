@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -71,6 +71,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -81,204 +82,204 @@ import java.util.concurrent.*;
 @Tag(name = "Interactive plan execution")
 public class InteractiveServices extends AbstractStepServices {
 
-	private final Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
-	private final Timer sessionExpirationTimer;
-	private ExecutionEngine executionEngine;
-	private final ExecutorService executorService;
-	private PlanAccessor planAccessor;
-	private FunctionManager functionManager;
+    private final Map<String, InteractiveSession> sessions = new ConcurrentHashMap<>();
+    private final Timer sessionExpirationTimer;
+    private ExecutionEngine executionEngine;
+    private final ExecutorService executorService;
+    private PlanAccessor planAccessor;
+    private FunctionManager functionManager;
 
-	private static class InteractiveSession {
-		
-		long lasttouch;
-		private final ArtefactQueue artefactQueue;
-		private final Future<PlanRunnerResult> future;
-		
-		public InteractiveSession(ArtefactQueue artefactQueue, Future<PlanRunnerResult> future) {
-			super();
-			this.artefactQueue = artefactQueue;
-			this.future = future;
-			this.lasttouch = System.currentTimeMillis();
-		}
-		
-		protected ArtefactQueue getArtefactQueue() {
-			return artefactQueue;
-		}
-		
-		protected Future<PlanRunnerResult> getFuture() {
-			return future;
-		}
-	}
-	
-	public InteractiveServices() {
-		super();
-		
-		executorService = Executors.newCachedThreadPool();
-		
-		sessionExpirationTimer = new Timer("Session expiration timer");
-		sessionExpirationTimer.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				final int sessionTimeout = configuration.getPropertyAsInteger("ui.artefacteditor.interactive.sessiontimeout.minutes", 10)*60000;
-				long time = System.currentTimeMillis();
-				
-				sessions.forEach((sessionId,session)->{
-					if((session.lasttouch+sessionTimeout)<time) {
-						try {
-							closeSession(session);
-						} catch (FunctionExecutionServiceException e) {
-							
-						}
-						sessions.remove(sessionId);
-					}
-				});
-			}
-		}, 60000, 60000);
-	}
-	
-	@PostConstruct
-	public void init() throws Exception {
-		super.init();
-		GlobalContext context = getContext();
-		planAccessor = context.getPlanAccessor();
-		ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
-		// the encryption manager might be null
-		executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
-				.withParentContext(context).withPluginsFromClasspath().withPlugin(new AbstractExecutionEnginePlugin() {
+    private static class InteractiveSession {
 
-					@Override
-					public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext,
-							ExecutionEngineContext executionEngineContext) {
-						executionEngineContext.setExecutionAccessor(new InMemoryExecutionAccessor());
-					}
-                }).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class))).withObjectHookRegistry(objectHookRegistry).build();
-		functionManager = getContext().get(FunctionManager.class);
-	}
-	
-	@PreDestroy
-	public void close() {
-		if(sessionExpirationTimer != null) {
-			sessionExpirationTimer.cancel();
-		}
-		executorService.shutdown();
-	}
+        long lasttouch;
+        private final ArtefactQueue artefactQueue;
+        private final Future<PlanRunnerResult> future;
 
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.TEXT_PLAIN)
-	@Path("/start")
-	@Secured(right="interactive")
-	public String startInteractiveSession(ExecutionParameters executionParameters) throws AgentCommunicationException {
-		StreamingArtefact streamingArtefact = new StreamingArtefact();
-		Plan plan = PlanBuilder.create()
-						.startBlock(FunctionArtefacts.session())
-							.add(streamingArtefact)
-						.endBlock()
-					.build();
-		
-		executionParameters.setPlan(plan);
-		String executionId = executionEngine.initializeExecution(executionParameters);
-		Future<PlanRunnerResult> future = executorService.submit(()->executionEngine.execute(executionId));
-		InteractiveSession session = new InteractiveSession(streamingArtefact.getQueue(), future);
-		
-		// the session id has to match the execution id as it used in the client to find the report nodes
-		sessions.put(executionId, session);
-		return executionId;
-	}
-	
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Path("/{id}/stop")
-	@Secured(right="interactive")
-	public void stopInteractiveSession(@PathParam("id") String sessionId) throws FunctionExecutionServiceException, InterruptedException, ExecutionException {
-		InteractiveSession session = getAndTouchSession(sessionId);
-		if(session!=null) {
-			closeSession(session);		
-			session.getFuture().get();
-		}
-	}
+        public InteractiveSession(ArtefactQueue artefactQueue, Future<PlanRunnerResult> future) {
+            super();
+            this.artefactQueue = artefactQueue;
+            this.future = future;
+            this.lasttouch = System.currentTimeMillis();
+        }
 
-	private void closeSession(InteractiveSession session) throws FunctionExecutionServiceException {
-		session.getArtefactQueue().stop();
-	}
-	
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/{id}/execute/{planid}/{artefactid}")
-	@Secured(right="interactive")
-	public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("planid") String planId, @PathParam("artefactid") String artefactId, @Context ContainerRequestContext crc) throws InterruptedException, ExecutionException {
-		InteractiveSession session = getAndTouchSession(sessionId);
-		if(session!=null) {
-			AbstractArtefact artefact = findArtefactInPlan(planId, artefactId);
-			Future<ReportNode> future = session.getArtefactQueue().add(artefact);
-			return future.get();
-		} else {
-			 throw new RuntimeException("Session doesn't exist or expired.");
-		}
-	}
+        protected ArtefactQueue getArtefactQueue() {
+            return artefactQueue;
+        }
 
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/{id}/executefunction/{functionid}/{artefactid}")
-	@Secured(right="interactive")
-	public ReportNode executeCompositeFunction(@PathParam("id") String sessionId, @PathParam("functionid") String functionId, @PathParam("artefactid") String artefactId, @Context ContainerRequestContext crc) throws InterruptedException, ExecutionException {
-		InteractiveSession session = getAndTouchSession(sessionId);
-		if(session!=null) {
-			AbstractArtefact artefact = findArtefactInCompositeFunction(functionId, artefactId);
-			Future<ReportNode> future = session.getArtefactQueue().add(artefact);
-			return future.get();
-		} else {
-			 throw new RuntimeException("Session doesn't exist or expired.");
-		}
-	}
+        protected Future<PlanRunnerResult> getFuture() {
+            return future;
+        }
+    }
 
-	protected AbstractArtefact findArtefactInCompositeFunction(String functionId, String artefactId) {
-		Function function = functionManager.getFunctionById(functionId);
-		if (!(function instanceof ArtefactFunction)) {
-			throw new RuntimeException("Only composite functions can be executed");
-		}
-		return new PlanNavigator(((ArtefactFunction) function).getPlan()).findArtefactById(artefactId);
-	}
+    public InteractiveServices() {
+        super();
 
-	protected AbstractArtefact findArtefactInPlan(String planId, String artefactId) {
-		Plan plan = planAccessor.get(planId);
-		return new PlanNavigator(plan).findArtefactById(artefactId);
-	}
-	
-	public static class FunctionTestingSession {
-		
-		private String planId;
-		private String callFunctionId;
+        executorService = Executors.newCachedThreadPool();
 
-		public FunctionTestingSession() {
-			super();
-		}
+        sessionExpirationTimer = new Timer("Session expiration timer");
+        sessionExpirationTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                final int sessionTimeout = configuration.getPropertyAsInteger("ui.artefacteditor.interactive.sessiontimeout.minutes", 10) * 60000;
+                long time = System.currentTimeMillis();
 
-		public String getPlanId() {
-			return planId;
-		}
+                sessions.forEach((sessionId, session) -> {
+                    if ((session.lasttouch + sessionTimeout) < time) {
+                        try {
+                            closeSession(session);
+                        } catch (FunctionExecutionServiceException e) {
 
-		public void setPlanId(String planId) {
-			this.planId = planId;
-		}
+                        }
+                        sessions.remove(sessionId);
+                    }
+                });
+            }
+        }, 60000, 60000);
+    }
 
-		public String getCallFunctionId() {
-			return callFunctionId;
-		}
+    @PostConstruct
+    public void init() throws Exception {
+        super.init();
+        GlobalContext context = getContext();
+        planAccessor = context.getPlanAccessor();
+        ObjectHookRegistry objectHookRegistry = context.require(ObjectHookRegistry.class);
+        // the encryption manager might be null
+        executionEngine = ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
+            .withParentContext(context).withPluginsFromClasspath().withPlugin(new AbstractExecutionEnginePlugin() {
 
-		public void setCallFunctionId(String callFunctionId) {
-			this.callFunctionId = callFunctionId;
-		}
+                @Override
+                public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext,
+                                                             ExecutionEngineContext executionEngineContext) {
+                    executionEngineContext.setExecutionAccessor(new InMemoryExecutionAccessor());
+                }
+            }).withPlugin(new ParameterManagerPlugin(context.get(ParameterManager.class))).withObjectHookRegistry(objectHookRegistry).build();
+        functionManager = getContext().get(FunctionManager.class);
+    }
 
-	}
+    @PreDestroy
+    public void close() {
+        if (sessionExpirationTimer != null) {
+            sessionExpirationTimer.cancel();
+        }
+        executorService.shutdown();
+    }
 
-	private InteractiveSession getAndTouchSession(String sessionId) {
-		InteractiveSession session = sessions.get(sessionId);
-		if(session!=null) {
-			session.lasttouch = System.currentTimeMillis();			
-		}
-		return session;
-	}
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("/start")
+    @Secured(right = "interactive")
+    public String startInteractiveSession(ExecutionParameters executionParameters) throws AgentCommunicationException {
+        StreamingArtefact streamingArtefact = new StreamingArtefact();
+        Plan plan = PlanBuilder.create()
+            .startBlock(FunctionArtefacts.session())
+            .add(streamingArtefact)
+            .endBlock()
+            .build();
+
+        executionParameters.setPlan(plan);
+        String executionId = executionEngine.initializeExecution(executionParameters);
+        Future<PlanRunnerResult> future = executorService.submit(() -> executionEngine.execute(executionId));
+        InteractiveSession session = new InteractiveSession(streamingArtefact.getQueue(), future);
+
+        // the session id has to match the execution id as it used in the client to find the report nodes
+        sessions.put(executionId, session);
+        return executionId;
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}/stop")
+    @Secured(right = "interactive")
+    public void stopInteractiveSession(@PathParam("id") String sessionId) throws FunctionExecutionServiceException, InterruptedException, ExecutionException {
+        InteractiveSession session = getAndTouchSession(sessionId);
+        if (session != null) {
+            closeSession(session);
+            session.getFuture().get();
+        }
+    }
+
+    private void closeSession(InteractiveSession session) throws FunctionExecutionServiceException {
+        session.getArtefactQueue().stop();
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/execute/{planid}/{artefactid}")
+    @Secured(right = "interactive")
+    public ReportNode executeArtefact(@PathParam("id") String sessionId, @PathParam("planid") String planId, @PathParam("artefactid") String artefactId, @Context ContainerRequestContext crc) throws InterruptedException, ExecutionException {
+        InteractiveSession session = getAndTouchSession(sessionId);
+        if (session != null) {
+            AbstractArtefact artefact = findArtefactInPlan(planId, artefactId);
+            Future<ReportNode> future = session.getArtefactQueue().add(artefact);
+            return future.get();
+        } else {
+            throw new RuntimeException("Session doesn't exist or expired.");
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/executefunction/{functionid}/{artefactid}")
+    @Secured(right = "interactive")
+    public ReportNode executeCompositeFunction(@PathParam("id") String sessionId, @PathParam("functionid") String functionId, @PathParam("artefactid") String artefactId, @Context ContainerRequestContext crc) throws InterruptedException, ExecutionException {
+        InteractiveSession session = getAndTouchSession(sessionId);
+        if (session != null) {
+            AbstractArtefact artefact = findArtefactInCompositeFunction(functionId, artefactId);
+            Future<ReportNode> future = session.getArtefactQueue().add(artefact);
+            return future.get();
+        } else {
+            throw new RuntimeException("Session doesn't exist or expired.");
+        }
+    }
+
+    protected AbstractArtefact findArtefactInCompositeFunction(String functionId, String artefactId) {
+        Function function = functionManager.getFunctionById(functionId);
+        if (!(function instanceof ArtefactFunction)) {
+            throw new RuntimeException("Only composite functions can be executed");
+        }
+        return new PlanNavigator(((ArtefactFunction) function).getPlan()).findArtefactById(artefactId);
+    }
+
+    protected AbstractArtefact findArtefactInPlan(String planId, String artefactId) {
+        Plan plan = planAccessor.get(planId);
+        return new PlanNavigator(plan).findArtefactById(artefactId);
+    }
+
+    public static class FunctionTestingSession {
+
+        private String planId;
+        private String callFunctionId;
+
+        public FunctionTestingSession() {
+            super();
+        }
+
+        public String getPlanId() {
+            return planId;
+        }
+
+        public void setPlanId(String planId) {
+            this.planId = planId;
+        }
+
+        public String getCallFunctionId() {
+            return callFunctionId;
+        }
+
+        public void setCallFunctionId(String callFunctionId) {
+            this.callFunctionId = callFunctionId;
+        }
+
+    }
+
+    private InteractiveSession getAndTouchSession(String sessionId) {
+        InteractiveSession session = sessions.get(sessionId);
+        if (session != null) {
+            session.lasttouch = System.currentTimeMillis();
+        }
+        return session;
+    }
 }

@@ -19,7 +19,7 @@ public class V29_2_TimeSeriesNewIndexes extends MigrationTask {
     private static final Logger log = LoggerFactory.getLogger(V29_2_TimeSeriesNewIndexes.class);
 
     public V29_2_TimeSeriesNewIndexes(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-        super(new Version(3,29,2), collectionFactory, migrationContext);
+        super(new Version(3, 29, 2), collectionFactory, migrationContext);
     }
 
     @Override

@@ -48,11 +48,11 @@ public class ConflictingAutomationPackages {
         this.apWithSameLibrary = apWithSameLibrary;
     }
 
-    public boolean apWithSameOriginExists(){
+    public boolean apWithSameOriginExists() {
         return apWithSameOrigin != null && !apWithSameOrigin.isEmpty();
     }
 
-    public boolean apWithSameLibraryExists(){
+    public boolean apWithSameLibraryExists() {
         return apWithSameLibrary != null && !apWithSameLibrary.isEmpty();
     }
 
