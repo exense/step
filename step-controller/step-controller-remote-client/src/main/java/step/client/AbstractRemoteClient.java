@@ -46,11 +46,17 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 public class AbstractRemoteClient implements Closeable {
 
 	private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteClient.class);
+
+	private static final int CONNECT_TIMEOUT_SECONDS = 10;
+	private static final int READ_TIMEOUT_SECONDS = 30;
+	private static final int MAX_CONNECTIONS_TOTAL = 100;
+	private static final int MAX_CONNECTIONS_PER_ROUTE = 20;
 	
 	protected Client client;
 
@@ -80,13 +86,16 @@ public class AbstractRemoteClient implements Closeable {
 		config.connectorProvider(new Apache5ConnectorProvider());
 		config.property(Apache5ClientProperties.CONNECTION_MANAGER,
 				PoolingHttpClientConnectionManagerBuilder.create()
-						.setMaxConnTotal(100)
-						.setMaxConnPerRoute(20)
+						.setMaxConnTotal(MAX_CONNECTIONS_TOTAL)
+						.setMaxConnPerRoute(MAX_CONNECTIONS_PER_ROUTE)
 						.build());
-		config.property(ClientProperties.CONNECT_TIMEOUT, 10_000);
-		config.property(ClientProperties.READ_TIMEOUT, 30_000);
+		// Buffered processing is required for correct Content-Length header handling, especially with multipart requests
 		config.property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED);
-		client = ClientBuilder.newClient(config);
+		client = ClientBuilder.newBuilder()
+				.withConfig(config)
+				.connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+				.readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+				.build();
 		client.register(JacksonMapperProvider.class);
 		client.register(MultiPartFeature.class);
 		client.register(JacksonFeature.class);
