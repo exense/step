@@ -18,7 +18,7 @@ import java.io.InputStream;
 @Plugin
 public class ReportLayoutPlugin extends AbstractControllerPlugin {
 
-    public static final String DEFAULT_REPORT_LAYOUT = "Default Report Layout";
+    public static final String DEFAULT_REPORT_LAYOUT = "Default";
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
