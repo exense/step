@@ -11,7 +11,7 @@ Step focuses on providing a unique platform for the orchestration of multi-purpo
 
 ## How to start with Step?
 
-The simplest and most efficient way to start using Step is to [get a SaaS instance](https://portal.stepcloud.ch) and follow one of the **[getting started tutorials](https://step.dev/all-resources?tab=tutorials-tab)**. Simply select the one that best fits your use-case. 
+The simplest and most efficient way to start using Step is to [get a SaaS instance](https://portal.stepcloud.ch) and follow one of the **[getting started tutorials](https://step.dev/all-resources?tab=tutorials-tab)**. Simply select the one that best fits your use-case.
 
 If you prefer installing your own cluster, follow the [Quick setup guide](https://step.dev/knowledgebase/setup/installation/binaries/quick-setup), alternatively you can use our OpenSource code to build your own version of Step.
 

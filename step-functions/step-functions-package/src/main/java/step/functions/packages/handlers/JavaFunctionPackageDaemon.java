@@ -28,110 +28,110 @@ import step.resources.LocalResourceManagerImpl;
 
 public class JavaFunctionPackageDaemon extends FunctionPackageUtils {
 
-	private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
+    private final KeywordJsonSchemaCreator schemaCreator = new KeywordJsonSchemaCreator();
 
-	public JavaFunctionPackageDaemon() {
-		super(new FileResolver(new LocalResourceManagerImpl()));
-	}
+    public JavaFunctionPackageDaemon() {
+        super(new FileResolver(new LocalResourceManagerImpl()));
+    }
 
-	public static void main(String[] args) throws Exception {
-		ObjectMapper objectMapper = new ObjectMapperResolver().getContext(FunctionList.class);
-		
-		try {
-			JavaFunctionPackageDaemon daemon = new JavaFunctionPackageDaemon();
-		
-			DiscovererParameters parameter;
-			try (InputStreamReader reader = new InputStreamReader(System.in)) {
-				parameter = objectMapper.readValue(reader, DiscovererParameters.class);
-			}
-			FunctionList list = daemon.getFunctions(parameter);
-			try (OutputStreamWriter writer = new OutputStreamWriter(System.out, StandardCharsets.UTF_8)) {
-				writer.write(READY_STRING+"\n");
-				writer.write(objectMapper.writeValueAsString(list));
-			}
-		} catch (Exception e) {
-			FunctionList list = new FunctionList();
-			list.exception = e.getMessage();
-			try (OutputStreamWriter writer = new OutputStreamWriter(System.out, StandardCharsets.UTF_8)) {
-				writer.write(READY_STRING);
-				writer.write(objectMapper.writeValueAsString(list));
-			}
-		}
-	}
+    public static void main(String[] args) throws Exception {
+        ObjectMapper objectMapper = new ObjectMapperResolver().getContext(FunctionList.class);
 
-	protected FunctionList getFunctions(DiscovererParameters parameters) {
-		FunctionList functions = new FunctionList();
-		try {
-			File packageLibrariesFile = resolveFile(parameters.getPackageLibrariesLocation());
-			File packageFile = resolveMandatoryFile(parameters.getPackageLocation());
+        try {
+            JavaFunctionPackageDaemon daemon = new JavaFunctionPackageDaemon();
 
-			// Build classloader
-			ExecutionContextCacheConfiguration executionContextCacheConfiguration = new ExecutionContextCacheConfiguration();
-			executionContextCacheConfiguration.setEnableCleanup(false); //not required since the builder is closed directly
-			try (ApplicationContextBuilder applicationContextBuilder = new ApplicationContextBuilder(ClassLoader.getSystemClassLoader(), executionContextCacheConfiguration)) {
-				if (packageLibrariesFile != null) {
-					applicationContextBuilder.pushContext(new LocalFolderApplicationContextFactory(packageLibrariesFile), true);
-				}
-				applicationContextBuilder.pushContext(new LocalFileApplicationContextFactory(packageFile), true);
-				ClassLoader cl = applicationContextBuilder.getCurrentContext().getClassLoader();
+            DiscovererParameters parameter;
+            try (InputStreamReader reader = new InputStreamReader(System.in)) {
+                parameter = objectMapper.readValue(reader, DiscovererParameters.class);
+            }
+            FunctionList list = daemon.getFunctions(parameter);
+            try (OutputStreamWriter writer = new OutputStreamWriter(System.out, StandardCharsets.UTF_8)) {
+                writer.write(READY_STRING + "\n");
+                writer.write(objectMapper.writeValueAsString(list));
+            }
+        } catch (Exception e) {
+            FunctionList list = new FunctionList();
+            list.exception = e.getMessage();
+            try (OutputStreamWriter writer = new OutputStreamWriter(System.out, StandardCharsets.UTF_8)) {
+                writer.write(READY_STRING);
+                writer.write(objectMapper.writeValueAsString(list));
+            }
+        }
+    }
 
-				// Scan package File for Keyword annotations
-				try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(packageFile, cl)) {
-					Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
-					for (Method m : methods) {
-						Keyword annotation = m.getAnnotation(Keyword.class);
-						Function res;
-						if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
-							res = CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference()));
-						} else {
-							String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+    protected FunctionList getFunctions(DiscovererParameters parameters) {
+        FunctionList functions = new FunctionList();
+        try {
+            File packageLibrariesFile = resolveFile(parameters.getPackageLibrariesLocation());
+            File packageFile = resolveMandatoryFile(parameters.getPackageLocation());
 
-							GeneralScriptFunction function = new GeneralScriptFunction();
-							function.setAttributes(new HashMap<>());
-							function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+            // Build classloader
+            ExecutionContextCacheConfiguration executionContextCacheConfiguration = new ExecutionContextCacheConfiguration();
+            executionContextCacheConfiguration.setEnableCleanup(false); //not required since the builder is closed directly
+            try (ApplicationContextBuilder applicationContextBuilder = new ApplicationContextBuilder(ClassLoader.getSystemClassLoader(), executionContextCacheConfiguration)) {
+                if (packageLibrariesFile != null) {
+                    applicationContextBuilder.pushContext(new LocalFolderApplicationContextFactory(packageLibrariesFile), true);
+                }
+                applicationContextBuilder.pushContext(new LocalFileApplicationContextFactory(packageFile), true);
+                ClassLoader cl = applicationContextBuilder.getCurrentContext().getClassLoader();
 
-							function.getCallTimeout().setValue(annotation.timeout());
-							try {
-								FunctionManagerImpl.applyRoutingFromAnnotation(function, annotation);
-							} catch (Exception e) {
-								return handleError(functions, e);
-							}
+                // Scan package File for Keyword annotations
+                try (AnnotationScanner annotationScanner = AnnotationScanner.forSpecificJar(packageFile, cl)) {
+                    Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
+                    for (Method m : methods) {
+                        Keyword annotation = m.getAnnotation(Keyword.class);
+                        Function res;
+                        if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
+                            res = CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference()));
+                        } else {
+                            String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
-							if (packageLibrariesFile != null) {
-								function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
-							}
+                            GeneralScriptFunction function = new GeneralScriptFunction();
+                            function.setAttributes(new HashMap<>());
+                            function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
 
-							function.getScriptFile().setValue(parameters.getPackageLocation());
-							function.getScriptLanguage().setValue("java");
-							res = function;
-						}
-						res.setDescription(annotation.description());
-						try {
-							res.setSchema(schemaCreator.createJsonSchemaForKeyword(m));
-						} catch (JsonSchemaPreparationException ex) {
-							return handleError(functions, ex);
-						}
+                            function.getCallTimeout().setValue(annotation.timeout());
+                            try {
+                                FunctionManagerImpl.applyRoutingFromAnnotation(function, annotation);
+                            } catch (Exception e) {
+                                return handleError(functions, e);
+                            }
 
-						String htmlTemplate = res.getAttributes().remove("htmlTemplate");
-						if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
-							res.setHtmlTemplate(htmlTemplate);
-							res.setUseCustomTemplate(true);
-						}
+                            if (packageLibrariesFile != null) {
+                                function.getLibrariesFile().setValue(parameters.getPackageLibrariesLocation());
+                            }
 
-						functions.functions.add(res);
-					}
-				}
-			}
-		} catch (Throwable e) {
-			functions.exception = e.getClass().getName() + ": " + e.getMessage();
-		}
-		return functions;
-	}
+                            function.getScriptFile().setValue(parameters.getPackageLocation());
+                            function.getScriptLanguage().setValue("java");
+                            res = function;
+                        }
+                        res.setDescription(annotation.description());
+                        try {
+                            res.setSchema(schemaCreator.createJsonSchemaForKeyword(m));
+                        } catch (JsonSchemaPreparationException ex) {
+                            return handleError(functions, ex);
+                        }
 
-	private FunctionList handleError(FunctionList functions, Exception ex) {
-		functions.exception = ex.getMessage();
-		functions.functions.clear();
-		return functions;
-	}
+                        String htmlTemplate = res.getAttributes().remove("htmlTemplate");
+                        if (htmlTemplate != null && !htmlTemplate.isEmpty()) {
+                            res.setHtmlTemplate(htmlTemplate);
+                            res.setUseCustomTemplate(true);
+                        }
+
+                        functions.functions.add(res);
+                    }
+                }
+            }
+        } catch (Throwable e) {
+            functions.exception = e.getClass().getName() + ": " + e.getMessage();
+        }
+        return functions;
+    }
+
+    private FunctionList handleError(FunctionList functions, Exception ex) {
+        functions.exception = ex.getMessage();
+        functions.functions.clear();
+        return functions;
+    }
 
 }

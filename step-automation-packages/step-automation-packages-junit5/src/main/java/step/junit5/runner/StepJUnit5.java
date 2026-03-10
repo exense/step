@@ -24,6 +24,7 @@ import step.automation.packages.junit.JUnitExecutionParametersProvider;
 import step.automation.packages.junit.JUnitPlansProvider;
 import step.cli.ExecuteAutomationPackageTool;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.OperationMode;
 import step.core.plans.runner.PlanRunnerResult;
 import step.junit.runner.StepClassParserResult;
 
@@ -37,7 +38,9 @@ public abstract class StepJUnit5 {
 
     @BeforeAll
     public static void setupExecutionEngine() {
-        executionEngine = ExecutionEngine.builder().withPluginsFromClasspath().build();
+        executionEngine = ExecutionEngine.builder()
+            .withOperationMode(OperationMode.LOCAL_AUTOMATION_PACKAGE)
+            .withPluginsFromClasspath().build();
     }
 
     @AfterAll

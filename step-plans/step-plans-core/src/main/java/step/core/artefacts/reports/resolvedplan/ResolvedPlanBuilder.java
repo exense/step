@@ -63,7 +63,7 @@ public class ResolvedPlanBuilder {
         resolvedChildrenBySource.forEach(resolvedChildren -> {
             //filter node that were already processed to avoid stack overflow for plans calling themselves
             resolvedChildren.children.stream().filter(c -> (currentArtefactPath == null || !currentArtefactPath.contains(resolvedChildren.artefactPath)))
-                    .forEach(child -> buildTreeRecursively(executionId, resolvedPlanNode.getId().toString(), child, resolvedChildren.artefactPath, plan, resolvedChildren.parentSource, localPosition.getAndIncrement()));
+                .forEach(child -> buildTreeRecursively(executionId, resolvedPlanNode.getId().toString(), child, resolvedChildren.artefactPath, plan, resolvedChildren.parentSource, localPosition.getAndIncrement()));
         });
         return resolvedPlanNode;
     }

@@ -27,7 +27,7 @@ import step.junit.runner.Step;
 import step.junit.runners.annotations.ExecutionParameters;
 
 @RunWith(Step.class)
-@ExecutionParameters({"PARAM_EXEC","Value","PARAM_EXEC2","Value","PARAM_EXEC3","Value"})
+@ExecutionParameters({"PARAM_EXEC", "Value", "PARAM_EXEC2", "Value", "PARAM_EXEC3", "Value"})
 @IncludePlans({"JMeter Plan", "testAutomation.plan"})
 @Category(LocalJMeter.class)
 public class StepRunnerWithJMeterPlanTest extends AbstractKeyword {

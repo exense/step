@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -22,37 +22,37 @@ import java.util.Iterator;
 
 public class TreeIterator<T> implements Iterator<T> {
 
-	final Iterator<T> it;
-	
-	final TreeIteratorFactory<T> factory; 
+    final Iterator<T> it;
 
-	Iterator<T> childrenIt = null;
+    final TreeIteratorFactory<T> factory;
 
-	public TreeIterator(Iterator<T> it, TreeIteratorFactory<T> factory) {
-		super();
-		this.it = it;
-		this.factory = factory;
-	}
+    Iterator<T> childrenIt = null;
 
-	@Override
-	public boolean hasNext() {
-		return it.hasNext() || (childrenIt != null && childrenIt.hasNext());
-	}
+    public TreeIterator(Iterator<T> it, TreeIteratorFactory<T> factory) {
+        super();
+        this.it = it;
+        this.factory = factory;
+    }
 
-	@Override
-	public T next() {
-		if (childrenIt == null || !childrenIt.hasNext()) {
-			T nextParent = it.next();
-			childrenIt = new TreeIterator<T>(factory.getChildrenIterator(nextParent), factory);
-			return nextParent;
-		} else {
-			return childrenIt.next();
-		}
-	}
+    @Override
+    public boolean hasNext() {
+        return it.hasNext() || (childrenIt != null && childrenIt.hasNext());
+    }
 
-	@Override
-	public void remove() {
-		throw new RuntimeException("Remove method not supported!");
-	}
-	
+    @Override
+    public T next() {
+        if (childrenIt == null || !childrenIt.hasNext()) {
+            T nextParent = it.next();
+            childrenIt = new TreeIterator<T>(factory.getChildrenIterator(nextParent), factory);
+            return nextParent;
+        } else {
+            return childrenIt.next();
+        }
+    }
+
+    @Override
+    public void remove() {
+        throw new RuntimeException("Remove method not supported!");
+    }
+
 }

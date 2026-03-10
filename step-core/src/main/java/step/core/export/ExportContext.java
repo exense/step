@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -26,33 +26,33 @@ import step.core.entities.EntityReferencesMap;
 
 public class ExportContext {
 
-	private final ExportConfiguration exportConfig;
-	private final Set<String> messages = new HashSet<>();
-	private final EntityReferencesMap references = new EntityReferencesMap();
+    private final ExportConfiguration exportConfig;
+    private final Set<String> messages = new HashSet<>();
+    private final EntityReferencesMap references = new EntityReferencesMap();
 
-	public ExportContext(ExportConfiguration exportConfig) {
-		super();
-		this.exportConfig = exportConfig;
-	}
+    public ExportContext(ExportConfiguration exportConfig) {
+        super();
+        this.exportConfig = exportConfig;
+    }
 
-	public boolean addMessage(String e) {
-		return messages.add(e);
-	}
+    public boolean addMessage(String e) {
+        return messages.add(e);
+    }
 
-	public boolean addMessages(Collection<? extends String> c) {
-		return messages.addAll(c);
-	}
+    public boolean addMessages(Collection<? extends String> c) {
+        return messages.addAll(c);
+    }
 
-	public Set<String> getMessages() {
-		return messages;
-	}
+    public Set<String> getMessages() {
+        return messages;
+    }
 
-	public ExportConfiguration getExportConfig() {
-		return exportConfig;
-	}
+    public ExportConfiguration getExportConfig() {
+        return exportConfig;
+    }
 
-	public EntityReferencesMap getReferences() {
-		return references;
-	}
+    public EntityReferencesMap getReferences() {
+        return references;
+    }
 
 }

@@ -35,12 +35,12 @@ public class AutomationPackageFromMavenProvider extends AbstractAutomationPackag
         super(mavenConfig, mavenArtifactIdentifier, resourceManager, objectPredicate);
         AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(resolvedMavenArtefact.artifactFile);
         this.archive = reader.createAutomationPackageArchive(resolvedMavenArtefact.artifactFile,
-                packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
-                mavenArtifactIdentifier.getArtifactId());
+            packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
+            mavenArtifactIdentifier.getArtifactId());
     }
 
     @Override
-    public AutomationPackageArchive getAutomationPackageArchive()  {
+    public AutomationPackageArchive getAutomationPackageArchive() {
         return archive;
     }
 

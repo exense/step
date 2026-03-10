@@ -41,7 +41,7 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
 
     abstract protected ProcessConfiguration getProcessCommand(Input<JsonObject> input) throws Exception;
 
-    public static class ProcessConfiguration{
+    public static class ProcessConfiguration {
         public final String processName;
         public final List<String> commands;
 
@@ -120,7 +120,7 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
     protected static void createProcessInputMessageAsJson(ManagedProcess process, Input<?> input) throws IOException {
         //Create input properties file from keyword properties and keyword arguments
         JsonObjectBuilder outputMessageBuilder = Json.createObjectBuilder();
-        outputMessageBuilder.add("inputs", (JsonObject)  input.getPayload());
+        outputMessageBuilder.add("inputs", (JsonObject) input.getPayload());
         JsonObjectBuilder propertiesJsonObject = Json.createObjectBuilder();
         input.getProperties().forEach(propertiesJsonObject::add);
         outputMessageBuilder.add("properties", propertiesJsonObject);
@@ -152,7 +152,7 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
             try (FileInputStream fis = new FileInputStream(stepKeywordPropertiesFile)) {
                 Properties outputProperties = new Properties();
                 outputProperties.load(fis);
-                outputProperties.keySet().stream().map(Object::toString).forEach(k -> outputBuilder.add(k,outputProperties.getProperty(k)));
+                outputProperties.keySet().stream().map(Object::toString).forEach(k -> outputBuilder.add(k, outputProperties.getProperty(k)));
             } catch (IOException e) {
                 logger.error("Error while reading file " + KEYWORD_OUTPUT_PROPERTIES_FILE, e);
                 outputBuilder.addAttachment(AttachmentHelper.generateAttachmentForException(e));
@@ -166,7 +166,8 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
         OutputBuilder outputBuilder = new OutputBuilder();
         if (stepKeywordJsonFile.exists() && stepKeywordJsonFile.isFile()) {
             try (FileInputStream fis = new FileInputStream(stepKeywordJsonFile)) {
-                TypeReference<Output<JsonObject>> typeRef = new TypeReference<>() {};
+                TypeReference<Output<JsonObject>> typeRef = new TypeReference<>() {
+                };
                 Output<JsonObject> output = JsonObjectDeserializer.getObjectMapper().readValue(stepKeywordJsonFile, typeRef);
                 //while we deserialize directly as Output we still return an output builder so that the caller can still enrich it with more data
                 if (output.getError() != null) {
@@ -208,7 +209,7 @@ public abstract class ProcessBasedFunctionHandler extends JsonBasedFunctionHandl
         if (executionDirectory.exists() && executionDirectory.isDirectory()) {
             try {
                 FileHelper.zip(executionDirectory, outputStream);
-                outputBuilder.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(outputStream.toByteArray(),"workFolder.zip"));
+                outputBuilder.addAttachment(AttachmentHelper.generateAttachmentFromByteArray(outputStream.toByteArray(), "workFolder.zip"));
             } catch (IOException e) {
                 logger.error("Error while reading creating an archive of the work folder", e);
                 outputBuilder.addAttachment(AttachmentHelper.generateAttachmentForException(e));

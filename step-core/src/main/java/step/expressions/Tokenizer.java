@@ -13,29 +13,29 @@ import java.util.regex.Pattern;
  * operations while maintaining the ability to produce both secure (obfuscated) and internal
  * (clear) representations.
  * </p>
- * 
+ *
  * <h3>Token Format:</h3>
  * <p>Tokens follow the pattern: {@code ⟦PB:uuid⟧} where the UUID uniquely identifies the
  * protected value pair (clear and obfuscated versions).</p>
- * 
+ *
  * <h3>Usage Pattern:</h3>
  * <pre>{@code
  * Tokenizer tokenizer = new Tokenizer();
- * 
+ *
  * // Create a token for a protected value
  * String token = tokenizer.tokenFor("sensitive", "***key***");
- * 
+ *
  * // Use token in string operations
  * String result = "prefix " + token + " suffix";
- * 
+ *
  * // Render back to desired form
  * String clearResult = tokenizer.render(result, true);     // "prefix sensitive suffix"
  * String obfResult = tokenizer.render(result, false);      // "prefix ***key*** suffix"
- * 
+ *
  * // Or get both forms as ProtectedVariable
  * Object both = tokenizer.renderBoth(result);              // ProtectedVariable instance
  * }</pre>
- * 
+ *
  * @see ProtectedVariable
  * @see ProtectionContext
  * @since 1.0
@@ -45,12 +45,12 @@ final class Tokenizer {
      * Token prefix used in the tokenization format.
      */
     private static final String PREFIX = "⟦PB:";
-    
+
     /**
      * Token suffix used in the tokenization format.
      */
     private static final String SUFFIX = "⟧";
-    
+
     /**
      * Regular expression pattern for matching tokens in strings.
      * Captures the UUID portion of the token for replacement operations.
@@ -70,21 +70,21 @@ final class Tokenizer {
          * The clear (unobfuscated) value.
          */
         final String clear;
-        
+
         /**
          * The obfuscated value.
          */
         final String obf;
-        
+
         /**
          * Creates a new pair with clear and obfuscated values.
-         * 
+         *
          * @param c the clear value
          * @param o the obfuscated value
          */
-        Pair(String c, String o) { 
-            clear = c; 
-            obf = o; 
+        Pair(String c, String o) {
+            clear = c;
+            obf = o;
         }
     }
 
@@ -95,11 +95,10 @@ final class Tokenizer {
      * in string operations. The token maintains the association between the clear and obfuscated
      * forms of the value for later rendering.
      * </p>
-     * 
+     *
      * @param clear the clear (unobfuscated) value
-     * @param obf the obfuscated value
+     * @param obf   the obfuscated value
      * @return a unique token in the format {@code ⟦PB:uuid⟧}
-     * 
      * @see #render(String, boolean)
      * @see #renderBoth(String)
      */
@@ -116,12 +115,11 @@ final class Tokenizer {
      * clear or obfuscated forms based on the {@code asClear} parameter. If no tokens
      * are registered, the original string is returned unchanged.
      * </p>
-     * 
-     * @param token the string potentially containing tokens to be replaced
+     *
+     * @param token   the string potentially containing tokens to be replaced
      * @param asClear {@code true} to render clear values, {@code false} for obfuscated values
      * @return the string with all tokens replaced by their corresponding values
      * @throws ProtectedPropertyException if token integrity validation fails
-     * 
      * @see #tokenFor(String, String)
      * @see #renderBoth(String)
      */
@@ -148,7 +146,7 @@ final class Tokenizer {
      * This security measure ensures that tokens haven't been tampered with or removed
      * during string operations, which could indicate malicious manipulation of protected values.
      * </p>
-     * 
+     *
      * @param token the string to validate for token integrity
      * @throws ProtectedPropertyException if any registered tokens are missing from the string
      */
@@ -156,7 +154,7 @@ final class Tokenizer {
         boolean valid = map.keySet().stream().map(t -> PREFIX + t + SUFFIX).allMatch(token::contains);
         if (!valid) {
             throw new ProtectedPropertyException("Protected bindings have been tempered. This may indicate that unauthorized string manipulation methods (like substring, replace, or trim) " +
-                        "were used on protected variables.");
+                "were used on protected variables.");
         }
     }
 
@@ -168,12 +166,11 @@ final class Tokenizer {
      * {@link ProtectedVariable} containing both the clear and obfuscated versions. If no tokens
      * are present, the original string is returned unchanged.
      * </p>
-     * 
+     *
      * @param token the string potentially containing tokens to be rendered
      * @return a {@link ProtectedVariable} containing both clear and obfuscated forms if tokens were processed,
-     *         or the original string if no token processing was needed
+     * or the original string if no token processing was needed
      * @throws ProtectedPropertyException if token integrity validation fails
-     * 
      * @see #render(String, boolean)
      * @see #tokenFor(String, String)
      * @see ProtectedVariable

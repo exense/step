@@ -6,55 +6,55 @@ import java.io.FileNotFoundException;
 import step.attachments.FileResolver;
 
 public class FunctionPackageUtils {
-	protected static final String READY_STRING = "READY";
-	
-	protected final FileResolver fileResolver;
+    protected static final String READY_STRING = "READY";
 
-	public FunctionPackageUtils(FileResolver fileResolver) {
-		this.fileResolver = fileResolver;
-	}
-	
-	protected File resolveMandatoryFile(String resource) throws FileNotFoundException {
-		File file = resolveFile(resource);
-		if (file == null) {
-			throw new FileNotFoundException("The resource " + resource + " doesn't exist");
-		} else {
-			if (!file.exists()) {
-				throw new FileNotFoundException("The file " + file + " doesn't exist");
-			}
-		}
-		return file;
-	}
+    protected final FileResolver fileResolver;
 
-	protected File resolveFile(String resource) {
-		File file = null;
-		if (resource != null && !resource.isBlank()) {
-			file = fileResolver.resolve(resource);
-		}
-		return file;
-	}
+    public FunctionPackageUtils(FileResolver fileResolver) {
+        this.fileResolver = fileResolver;
+    }
 
-	public static class DiscovererParameters {
-		public String packageLibrariesLocation;
-		public String packageLocation;
+    protected File resolveMandatoryFile(String resource) throws FileNotFoundException {
+        File file = resolveFile(resource);
+        if (file == null) {
+            throw new FileNotFoundException("The resource " + resource + " doesn't exist");
+        } else {
+            if (!file.exists()) {
+                throw new FileNotFoundException("The file " + file + " doesn't exist");
+            }
+        }
+        return file;
+    }
 
-		public DiscovererParameters() {
-		}
+    protected File resolveFile(String resource) {
+        File file = null;
+        if (resource != null && !resource.isBlank()) {
+            file = fileResolver.resolve(resource);
+        }
+        return file;
+    }
 
-		public String getPackageLibrariesLocation() {
-			return packageLibrariesLocation;
-		}
+    public static class DiscovererParameters {
+        public String packageLibrariesLocation;
+        public String packageLocation;
 
-		public void setPackageLibrariesLocation(String packageLibrariesLocation) {
-			this.packageLibrariesLocation = packageLibrariesLocation;
-		}
+        public DiscovererParameters() {
+        }
 
-		public String getPackageLocation() {
-			return packageLocation;
-		}
+        public String getPackageLibrariesLocation() {
+            return packageLibrariesLocation;
+        }
 
-		public void setPackageLocation(String packageLocation) {
-			this.packageLocation = packageLocation;
-		}
-	}
+        public void setPackageLibrariesLocation(String packageLibrariesLocation) {
+            this.packageLibrariesLocation = packageLibrariesLocation;
+        }
+
+        public String getPackageLocation() {
+            return packageLocation;
+        }
+
+        public void setPackageLocation(String packageLocation) {
+            this.packageLocation = packageLocation;
+        }
+    }
 }

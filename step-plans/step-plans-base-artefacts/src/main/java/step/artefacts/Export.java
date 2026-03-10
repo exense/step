@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -25,46 +25,46 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
 @YamlModel(name = "export")
-@Artefact(report = ReportNode.class, block=false)
+@Artefact(report = ReportNode.class, block = false)
 public class Export extends AbstractArtefact {
 
-	private DynamicValue<String> value = new DynamicValue<>("");
-	
-	private DynamicValue<String> file = new DynamicValue<>("");
+    private DynamicValue<String> value = new DynamicValue<>("");
 
-	private DynamicValue<String> prefix = new DynamicValue<>("");
-	
-	private DynamicValue<String> filter = new DynamicValue<>("");
-	
-	public DynamicValue<String> getValue() {
-		return value;
-	}
+    private DynamicValue<String> file = new DynamicValue<>("");
 
-	public void setValue(DynamicValue<String> value) {
-		this.value = value;
-	}
+    private DynamicValue<String> prefix = new DynamicValue<>("");
 
-	public DynamicValue<String> getFile() {
-		return file;
-	}
+    private DynamicValue<String> filter = new DynamicValue<>("");
 
-	public void setFile(DynamicValue<String> file) {
-		this.file = file;
-	}
+    public DynamicValue<String> getValue() {
+        return value;
+    }
 
-	public DynamicValue<String> getPrefix() {
-		return prefix;
-	}
+    public void setValue(DynamicValue<String> value) {
+        this.value = value;
+    }
 
-	public void setPrefix(DynamicValue<String> prefix) {
-		this.prefix = prefix;
-	}
+    public DynamicValue<String> getFile() {
+        return file;
+    }
 
-	public DynamicValue<String> getFilter() {
-		return filter;
-	}
+    public void setFile(DynamicValue<String> file) {
+        this.file = file;
+    }
 
-	public void setFilter(DynamicValue<String> filter) {
-		this.filter = filter;
-	}
+    public DynamicValue<String> getPrefix() {
+        return prefix;
+    }
+
+    public void setPrefix(DynamicValue<String> prefix) {
+        this.prefix = prefix;
+    }
+
+    public DynamicValue<String> getFilter() {
+        return filter;
+    }
+
+    public void setFilter(DynamicValue<String> filter) {
+        this.filter = filter;
+    }
 }

@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -26,41 +26,41 @@ import org.junit.Test;
 
 public class SkipLimitIteratorTest {
 
-	@Test
-	public void testMultipleBatches() {
-		// sequence [0-22]
-		List<Integer> sequence = new ArrayList<>();
-		for(int i=0;i<22;i++) {
-			sequence.add( i);
-		}
-		
-		testSequence(sequence);
-	}
-	
-	@Test
-	public void testSingleElement() {
-		List<Integer> sequence = new ArrayList<>();
-		sequence.add(1);
-		testSequence(sequence);
-	}
-	
-	@Test
-	public void testEmptySequence() {
-		List<Integer> sequence = new ArrayList<>();		
-		testSequence(sequence);
-	}
+    @Test
+    public void testMultipleBatches() {
+        // sequence [0-22]
+        List<Integer> sequence = new ArrayList<>();
+        for (int i = 0; i < 22; i++) {
+            sequence.add(i);
+        }
 
-	protected void testSequence(List<Integer> sequence) {
-		SkipLimitIterator<Integer> it = new SkipLimitIterator<Integer>(new SkipLimitProvider<Integer>() {
-			@Override
-			public List<Integer> getBatch(int skip, int limit) {
-				return sequence.subList(skip, Math.min(skip+limit, sequence.size()));
-			}
-		}, 10); 
-		
-		List<Integer> newSequence = new ArrayList<>();
-		it.forEachRemaining(e->newSequence.add(e));
-		
-		Assert.assertArrayEquals(sequence.toArray(), newSequence.toArray());
-	}
+        testSequence(sequence);
+    }
+
+    @Test
+    public void testSingleElement() {
+        List<Integer> sequence = new ArrayList<>();
+        sequence.add(1);
+        testSequence(sequence);
+    }
+
+    @Test
+    public void testEmptySequence() {
+        List<Integer> sequence = new ArrayList<>();
+        testSequence(sequence);
+    }
+
+    protected void testSequence(List<Integer> sequence) {
+        SkipLimitIterator<Integer> it = new SkipLimitIterator<Integer>(new SkipLimitProvider<Integer>() {
+            @Override
+            public List<Integer> getBatch(int skip, int limit) {
+                return sequence.subList(skip, Math.min(skip + limit, sequence.size()));
+            }
+        }, 10);
+
+        List<Integer> newSequence = new ArrayList<>();
+        it.forEachRemaining(e -> newSequence.add(e));
+
+        Assert.assertArrayEquals(sequence.toArray(), newSequence.toArray());
+    }
 }

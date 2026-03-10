@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -31,97 +31,97 @@ import step.core.reports.Measure;
 
 public class CallFunctionReportNode extends ReportNode {
 
-	protected String functionId;
-	
-	protected Map<String, String> functionAttributes;
+    protected String functionId;
 
-	protected String agentUrl;
-	
-	protected String tokenId;
-	
-	protected String input;
-	
-	protected String output;
-	
-	@JsonIgnore
-	protected JsonObject outputObject;
-	
-	private List<Measure> measures;
+    protected Map<String, String> functionAttributes;
 
-	public CallFunctionReportNode() {
-		super();
-	}
+    protected String agentUrl;
 
-	public String getAgentUrl() {
-		return agentUrl;
-	}
+    protected String tokenId;
 
-	public void setAgentUrl(String agentUrl) {
-		this.agentUrl = agentUrl;
-	}
+    protected String input;
 
-	public String getTokenId() {
-		return tokenId;
-	}
+    protected String output;
 
-	public void setTokenId(String tokenId) {
-		this.tokenId = tokenId;
-	}
+    @JsonIgnore
+    protected JsonObject outputObject;
 
-	public String getInput() {
-		return input;
-	}
+    private List<Measure> measures;
 
-	public void setInput(String input) {
-		this.input = input;
-	}
+    public CallFunctionReportNode() {
+        super();
+    }
 
-	public String getOutput() {
-		return output;
-	}
+    public String getAgentUrl() {
+        return agentUrl;
+    }
 
-	public void setOutput(String output) {
-		this.output = output;
-	}
+    public void setAgentUrl(String agentUrl) {
+        this.agentUrl = agentUrl;
+    }
 
-	public JsonObject getOutputObject() {
-		return outputObject;
-	}
+    public String getTokenId() {
+        return tokenId;
+    }
 
-	public void setOutputObject(JsonObject outputObject) {
-		this.outputObject = outputObject;
-	}
+    public void setTokenId(String tokenId) {
+        this.tokenId = tokenId;
+    }
 
-	public String getFunctionId() {
-		return functionId;
-	}
+    public String getInput() {
+        return input;
+    }
 
-	public void setFunctionId(String functionId) {
-		this.functionId = functionId;
-	}
+    public void setInput(String input) {
+        this.input = input;
+    }
 
-	public Map<String, String> getFunctionAttributes() {
-		return functionAttributes;
-	}
+    public String getOutput() {
+        return output;
+    }
 
-	public void setFunctionAttributes(Map<String, String> functionAttributes) {
-		this.functionAttributes = functionAttributes;
-	}
+    public void setOutput(String output) {
+        this.output = output;
+    }
 
-	public List<Measure> getMeasures() {
-		return measures;
-	}
+    public JsonObject getOutputObject() {
+        return outputObject;
+    }
 
-	public void setMeasures(List<Measure> measures) {
-		this.measures = measures;
-	}
+    public void setOutputObject(JsonObject outputObject) {
+        this.outputObject = outputObject;
+    }
 
-	@Override
-	public String getReportAsString() {
-		String report = "Input=" + input + ", Output=" + output;
-		String kwName = (functionAttributes != null) ? functionAttributes.get(AbstractOrganizableObject.NAME) : "Keyword not resolved";
-		return (this.getName().equals(kwName)) ?
-				report :
-				"Keyword name=" + kwName + ", " + report;
-	}
+    public String getFunctionId() {
+        return functionId;
+    }
+
+    public void setFunctionId(String functionId) {
+        this.functionId = functionId;
+    }
+
+    public Map<String, String> getFunctionAttributes() {
+        return functionAttributes;
+    }
+
+    public void setFunctionAttributes(Map<String, String> functionAttributes) {
+        this.functionAttributes = functionAttributes;
+    }
+
+    public List<Measure> getMeasures() {
+        return measures;
+    }
+
+    public void setMeasures(List<Measure> measures) {
+        this.measures = measures;
+    }
+
+    @Override
+    public String getReportAsString() {
+        String report = "Input=" + input + ", Output=" + output;
+        String kwName = (functionAttributes != null) ? functionAttributes.get(AbstractOrganizableObject.NAME) : "Keyword not resolved";
+        return (this.getName().equals(kwName)) ?
+            report :
+            "Keyword name=" + kwName + ", " + report;
+    }
 }

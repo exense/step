@@ -19,44 +19,44 @@ import step.plugins.java.GeneralScriptFunction;
 
 public class JavaFunctionPackageHandler extends AbstractFunctionPackageHandler {
 
-	private final File processLogFolder;
-	private final String javaPath;
-	private final List<String> vmargs;
+    private final File processLogFolder;
+    private final String javaPath;
+    private final List<String> vmargs;
 
-	public JavaFunctionPackageHandler(FileResolver fileResolver, Configuration config) {
-		super(fileResolver);
+    public JavaFunctionPackageHandler(FileResolver fileResolver, Configuration config) {
+        super(fileResolver);
 
-		javaPath = System.getProperty("java.home") + "/bin/java";
+        javaPath = System.getProperty("java.home") + "/bin/java";
 
-		String logs = "../log/functionDiscoverer_java";
-		processLogFolder = new File(logs);
+        String logs = "../log/functionDiscoverer_java";
+        processLogFolder = new File(logs);
 
-		String vmargsConfiguration = config.getProperty("plugins.FunctionPackagePlugin.discoverer.java.vmargs");
-		vmargs = vmargsConfiguration != null ? Arrays.asList(vmargsConfiguration.split(" ")) : List.of();
-	}
+        String vmargsConfiguration = config.getProperty("plugins.FunctionPackagePlugin.discoverer.java.vmargs");
+        vmargs = vmargsConfiguration != null ? Arrays.asList(vmargsConfiguration.split(" ")) : List.of();
+    }
 
-	@Override
-	public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception {
-		ExternalJVMLauncher launcher = new ExternalJVMLauncher(javaPath, processLogFolder);
-		try (ManagedProcess process = launcher.launchExternalJVM("Java Function Discoverer", JavaFunctionPackageDaemon.class, vmargs, List.of(), false)){
-			return getFunctionsFromDaemon(functionPackage, process);
-		}
-	}
+    @Override
+    public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception {
+        ExternalJVMLauncher launcher = new ExternalJVMLauncher(javaPath, processLogFolder);
+        try (ManagedProcess process = launcher.launchExternalJVM("Java Function Discoverer", JavaFunctionPackageDaemon.class, vmargs, List.of(), false)) {
+            return getFunctionsFromDaemon(functionPackage, process);
+        }
+    }
 
-	@Override
-	protected void configureFunction(Function f, FunctionPackage functionPackage) {
-		if (f instanceof GeneralScriptFunction) {
-			GeneralScriptFunction function = (GeneralScriptFunction) f;
-			function.setScriptLanguage(new DynamicValue<>("java"));
-			function.setScriptFile(new DynamicValue<>(functionPackage.getPackageLocation()));
-			function.setLibrariesFile(new DynamicValue<>(functionPackage.getPackageLibrariesLocation()));
-		}
-	}
+    @Override
+    protected void configureFunction(Function f, FunctionPackage functionPackage) {
+        if (f instanceof GeneralScriptFunction) {
+            GeneralScriptFunction function = (GeneralScriptFunction) f;
+            function.setScriptLanguage(new DynamicValue<>("java"));
+            function.setScriptFile(new DynamicValue<>(functionPackage.getPackageLocation()));
+            function.setLibrariesFile(new DynamicValue<>(functionPackage.getPackageLibrariesLocation()));
+        }
+    }
 
-	@Override
-	public boolean isValidForPackage(FunctionPackage functionPackage) {
-		File file = resolveFile(functionPackage.getPackageLocation());
-		String extension = FilenameUtils.getExtension(file.getName()).toLowerCase();
-		return extension.equals("jar");
-	}
+    @Override
+    public boolean isValidForPackage(FunctionPackage functionPackage) {
+        File file = resolveFile(functionPackage.getPackageLocation());
+        String extension = FilenameUtils.getExtension(file.getName()).toLowerCase();
+        return extension.equals("jar");
+    }
 }

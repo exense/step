@@ -58,9 +58,9 @@ public abstract class CommonAutomationPackageJsonSchemaExtension implements Auto
     @Override
     public List<JsonSchemaExtension> getAdditionalAutomationPackageFields() {
         return List.of((jsonSchemaBuilder, jsonProvider) -> jsonSchemaBuilder.add(fieldName,
-                jsonProvider.createObjectBuilder()
-                        .add("type", "array")
-                        .add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), defName))
+            jsonProvider.createObjectBuilder()
+                .add("type", "array")
+                .add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), defName))
         ));
     }
 

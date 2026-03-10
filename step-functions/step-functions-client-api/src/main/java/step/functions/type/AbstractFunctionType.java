@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -49,333 +49,334 @@ import java.util.regex.Pattern;
 
 public abstract class AbstractFunctionType<T extends Function> {
 
-	protected static final Logger logger = LoggerFactory.getLogger(AbstractFunctionType.class);
+    protected static final Logger logger = LoggerFactory.getLogger(AbstractFunctionType.class);
 
-	public static final String MISSING_ENV_VARIABLE_MESSAGE = "The '%s' environment variable is not set.";
-	// This constant duplicates step.functions.handler.AbstractFunctionHandler.AUTOMATION_PACKAGE_FILE
-	// Unfortunately there's currently no common project between AbstractFunctionType and AbstractFunctionHandler
-	public static final String AUTOMATION_PACKAGE_FILE = "$automationPackageFile";
+    public static final String MISSING_ENV_VARIABLE_MESSAGE = "The '%s' environment variable is not set.";
+    // This constant duplicates step.functions.handler.AbstractFunctionHandler.AUTOMATION_PACKAGE_FILE
+    // Unfortunately there's currently no common project between AbstractFunctionType and AbstractFunctionHandler
+    public static final String AUTOMATION_PACKAGE_FILE = "$automationPackageFile";
 
-	protected FileResolver fileResolver;
-	protected LoadingCache<String, File> fileResolverCache;
-	
-	protected GridFileService gridFileServices;
-	
-	protected FunctionTypeConfiguration functionTypeConfiguration;
+    protected FileResolver fileResolver;
+    protected LoadingCache<String, File> fileResolverCache;
 
-	protected FileVersion handlerPackageVersion = null;
+    protected GridFileService gridFileServices;
 
-	protected ObjectHookRegistry objectHookRegistry;
+    protected FunctionTypeConfiguration functionTypeConfiguration;
 
-	protected void setFunctionTypeConfiguration(FunctionTypeConfiguration functionTypeConfiguration) {
-		this.functionTypeConfiguration = functionTypeConfiguration;
-	}
+    protected FileVersion handlerPackageVersion = null;
 
-	protected void setFileResolver(FileResolver fileResolver) {
-		this.fileResolver = fileResolver;
-		
-		fileResolverCache = CacheBuilder.newBuilder().concurrencyLevel(functionTypeConfiguration.getFileResolverCacheConcurrencyLevel())
-				.maximumSize(functionTypeConfiguration.getFileResolverCacheMaximumsize())
-				.expireAfterWrite(functionTypeConfiguration.getFileResolverCacheExpireAfter(), TimeUnit.MILLISECONDS)
-				.build(new CacheLoader<String, File>() {
-					public File load(String filepath) {
-						return fileResolver.resolve(filepath);
-					}
-				});
-		
-	}
-	
-	protected void setGridFileServices(GridFileService gridFileServices) {
-		this.gridFileServices = gridFileServices;
-	}
+    protected ObjectHookRegistry objectHookRegistry;
 
-	protected void setObjectHookRegistry(ObjectHookRegistry objectHookRegistry) {
-		this.objectHookRegistry = objectHookRegistry;
-	}
+    protected void setFunctionTypeConfiguration(FunctionTypeConfiguration functionTypeConfiguration) {
+        this.functionTypeConfiguration = functionTypeConfiguration;
+    }
 
-	protected void init() {}
+    protected void setFileResolver(FileResolver fileResolver) {
+        this.fileResolver = fileResolver;
 
-	public Map<String, Interest> getTokenSelectionCriteria(T function) {
-		Map<String, Interest> criteria = new HashMap<>();
-		criteria.put(AgentTypes.AGENT_TYPE_KEY, new Interest(Pattern.compile("default"), true));
-		return criteria;
-	}
-	
-	public abstract String getHandlerChain(T function);
-	
-	public FileVersionId getHandlerPackage(T function) {
-		return (handlerPackageVersion != null) ? handlerPackageVersion.getVersionId() : null;
-	}
+        fileResolverCache = CacheBuilder.newBuilder().concurrencyLevel(functionTypeConfiguration.getFileResolverCacheConcurrencyLevel())
+            .maximumSize(functionTypeConfiguration.getFileResolverCacheMaximumsize())
+            .expireAfterWrite(functionTypeConfiguration.getFileResolverCacheExpireAfter(), TimeUnit.MILLISECONDS)
+            .build(new CacheLoader<String, File>() {
+                public File load(String filepath) {
+                    return fileResolver.resolve(filepath);
+                }
+            });
 
-	public String isHandlerCleanable() {
-		return Boolean.toString(true);
-	}
+    }
 
-	public static class HandlerProperties implements AutoCloseable {
-		public final Map<String, String> properties = new HashMap<>();
-		private final List<AutoCloseable> registeredCloseable = new ArrayList<>();
+    protected void setGridFileServices(GridFileService gridFileServices) {
+        this.gridFileServices = gridFileServices;
+    }
 
-		public HandlerProperties(Map<String, String> properties) {
-			merge(properties);
-		}
+    protected void setObjectHookRegistry(ObjectHookRegistry objectHookRegistry) {
+        this.objectHookRegistry = objectHookRegistry;
+    }
+
+    protected void init() {
+    }
+
+    public Map<String, Interest> getTokenSelectionCriteria(T function) {
+        Map<String, Interest> criteria = new HashMap<>();
+        criteria.put(AgentTypes.AGENT_TYPE_KEY, new Interest(Pattern.compile("default"), true));
+        return criteria;
+    }
+
+    public abstract String getHandlerChain(T function);
+
+    public FileVersionId getHandlerPackage(T function) {
+        return (handlerPackageVersion != null) ? handlerPackageVersion.getVersionId() : null;
+    }
+
+    public String isHandlerCleanable() {
+        return Boolean.toString(true);
+    }
+
+    public static class HandlerProperties implements AutoCloseable {
+        public final Map<String, String> properties = new HashMap<>();
+        private final List<AutoCloseable> registeredCloseable = new ArrayList<>();
+
+        public HandlerProperties(Map<String, String> properties) {
+            merge(properties);
+        }
 
         public HandlerProperties(Map<String, String> properties, List<AutoCloseable> registeredCloseable) {
             merge(properties, registeredCloseable);
         }
 
-		public HandlerProperties merge(Map<String, String> properties) {
-			if(properties != null) {
-				this.properties.putAll(properties);
-			}
-			return this;
-		}
+        public HandlerProperties merge(Map<String, String> properties) {
+            if (properties != null) {
+                this.properties.putAll(properties);
+            }
+            return this;
+        }
 
-		public HandlerProperties merge(List<AutoCloseable> registeredCloseable) {
-			if(registeredCloseable != null) {
-				this.registeredCloseable.addAll(registeredCloseable);
-			}
-			return this;
-		}
+        public HandlerProperties merge(List<AutoCloseable> registeredCloseable) {
+            if (registeredCloseable != null) {
+                this.registeredCloseable.addAll(registeredCloseable);
+            }
+            return this;
+        }
 
-		public HandlerProperties merge(Map<String, String> properties, List<AutoCloseable> registeredCloseable) {
-			merge(properties);
-			merge(registeredCloseable);
-			return this;
-		}
+        public HandlerProperties merge(Map<String, String> properties, List<AutoCloseable> registeredCloseable) {
+            merge(properties);
+            merge(registeredCloseable);
+            return this;
+        }
 
-		@Override
-		public void close() {
-			closeRegisteredCloseable(registeredCloseable);
-		}
-	}
+        @Override
+        public void close() {
+            closeRegisteredCloseable(registeredCloseable);
+        }
+    }
 
-	protected static void closeRegisteredCloseable(List<AutoCloseable> registeredCloseable) {
-		registeredCloseable.forEach(c -> {
-			if (c != null) {
-				try {
-					c.close();
-				} catch (Exception e) {
-					logger.error("Unable to close object {}", c, e);
-				}
-			}
-		});
-	}
+    protected static void closeRegisteredCloseable(List<AutoCloseable> registeredCloseable) {
+        registeredCloseable.forEach(c -> {
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (Exception e) {
+                    logger.error("Unable to close object {}", c, e);
+                }
+            }
+        });
+    }
 
-	public HandlerProperties getHandlerProperties(T function, AbstractStepContext executionContext) {
-		HashMap<String, String> props = new HashMap<>();
-		ArrayList<AutoCloseable> autoCloseables = new ArrayList<>();
-		String automationPackageFile = function.getAutomationPackageFile();
-		if(automationPackageFile != null) {
-			autoCloseables.add(registerFile(new DynamicValue<>(automationPackageFile), AUTOMATION_PACKAGE_FILE, props, true,
-					executionContext));
-		}
-		return new HandlerProperties(props, autoCloseables);
-	}
+    public HandlerProperties getHandlerProperties(T function, AbstractStepContext executionContext) {
+        HashMap<String, String> props = new HashMap<>();
+        ArrayList<AutoCloseable> autoCloseables = new ArrayList<>();
+        String automationPackageFile = function.getAutomationPackageFile();
+        if (automationPackageFile != null) {
+            autoCloseables.add(registerFile(new DynamicValue<>(automationPackageFile), AUTOMATION_PACKAGE_FILE, props, true,
+                executionContext));
+        }
+        return new HandlerProperties(props, autoCloseables);
+    }
 
-	public void beforeFunctionCall(T function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
-		
-	}
+    public void beforeFunctionCall(T function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
 
-	public void afterFunctionCall(T function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
+    }
 
-	}
-	
-	public abstract T newFunction();
+    public void afterFunctionCall(T function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
 
-	public T newFunction(Map<String, String> configuration) {
-		return null;
-	}
+    }
 
-	public void setupFunction(T function) throws SetupFunctionException {
-		
-	}
-	
-	public T updateFunction(T function) throws FunctionTypeException {
-		return function;
-	}
-	
-	public T copyFunction(T function) throws FunctionTypeException {
-		function.setId(null);
-		function.getAttributes().put(AbstractOrganizableObject.NAME,function.getAttributes().get(AbstractOrganizableObject.NAME)+"_Copy");
-		return function;
-	}
+    public abstract T newFunction();
 
-	/**
-	 * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
-	 *
-	 * @param dynamicValue     the {@link DynamicValue} of the file's path to be registered
-	 * @param propertyName     the name of the property for which we register the file
-	 * @param props            the map will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
-	 * @param cleanable        whether this version of the file can be cleaned-up at runtime
-	 * @param executionContext the current execution context (should be defined if the function is executing via ExecutionEngine with
-	 *                         execution-scope resource manager)
-	 * @return a FileVersionCloseable wrapping the {@link FileVersion} of the registered file. Closing the wrapper, release the usage on this file version. The {@link FileVersion} can be used for later retrieval of this version
-	 * @throws RuntimeException
-	 */
-	protected FileVersionCloseable registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props, boolean cleanable, AbstractStepContext executionContext) {
-		if(dynamicValue!=null) {
-			String filepath = dynamicValue.get();
-			if(filepath!=null && filepath.trim().length()>0) {
-				File file = null;
-				try {
-					// in case of isolated execution, the execution context contains temporary in-memory resource manager
-					// we have to use this manager instead of the global one from fileResolver
-					if (executionContext != null) {
-						boolean resolvedFromExecutionContext = false;
-						ResourceManager executionContextResourceManager = getResourceManager(executionContext);
-						if (executionContextResourceManager == getResourceManager(null)) {
-							// if resource manager is the global one, it is better to use fileResolverCache for performance reason
-							file = fileResolverCache.get(filepath);
-						} else if (executionContextResourceManager instanceof LayeredResourceManager) {
-							// performance hack - if the resource manager is layered, but contains the only one resource manager
-							// and this resource manager equals to the global one, we can use cached file resolver
-							ResourceManager unwrappedManager = unwrapResourceManager((LayeredResourceManager) executionContextResourceManager);
-							if (unwrappedManager == getResourceManager(null)) {
-								file = fileResolverCache.get(filepath);
-							} else {
-								resolvedFromExecutionContext = true;
-								file = executionContext.getFileResolverCache().get(filepath);
-							}
-						} else {
-							resolvedFromExecutionContext = true;
-							file = executionContext.getFileResolverCache().get(filepath);
-						}
+    public T newFunction(Map<String, String> configuration) {
+        return null;
+    }
 
-						// just a fallback - if the file is not found in execution context, try to use global file resolver
-						if (resolvedFromExecutionContext && file == null) {
-							file = fileResolverCache.get(filepath);
-						}
-					} else {
-						// Using the file resolver cache here to avoid performance issues
-						// This method might be called at every function execution
-						file = fileResolverCache.get(filepath);
-					}
-				} catch (ExecutionException e) {
-					throw new RuntimeException("Error while resolving path "+filepath, e);
-				}
-				return registerFile(file, propertyName, props, cleanable);
-			}
-		}
-		return null;
-	}
+    public void setupFunction(T function) throws SetupFunctionException {
 
-	/**
-	 * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
-	 *
-	 * @param file the {@link File} of the resource to be registered
-	 * @param propertyName the name of the property for which we register the file
-	 * @param props the {@link Map}  will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
-	 * @param cleanable whether this version of the file can be cleaned-up at runtime
-	 * @return a FileVersionCloseable wrapping the {@link FileVersion} of the registered file. Closing the wrapper, release the usage on this file version. The {@link FileVersion} can be used for later retrieval of this version
-	 * @throws RuntimeException
-	 */
-	protected FileVersionCloseable registerFile(File file, String propertyName, Map<String, String> props, boolean cleanable) {
-		FileVersion fileVersion = registerFile(file, cleanable);
-		registerFileVersionId(propertyName, props, fileVersion.getVersionId());
-		return new FileVersionCloseable(fileVersion, gridFileServices);
-	}
+    }
 
-	protected static class FileVersionCloseable implements AutoCloseable {
+    public T updateFunction(T function) throws FunctionTypeException {
+        return function;
+    }
 
-		protected final FileVersion fileVersion;
-		protected final GridFileService gridFileServices;
+    public T copyFunction(T function) throws FunctionTypeException {
+        function.setId(null);
+        function.getAttributes().put(AbstractOrganizableObject.NAME, function.getAttributes().get(AbstractOrganizableObject.NAME) + "_Copy");
+        return function;
+    }
 
-		private FileVersionCloseable(FileVersion fileVersion, GridFileService gridFileServices) {
-			this.fileVersion = Objects.requireNonNull(fileVersion);
-			this.gridFileServices = Objects.requireNonNull(gridFileServices);
-		}
+    /**
+     * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
+     *
+     * @param dynamicValue     the {@link DynamicValue} of the file's path to be registered
+     * @param propertyName     the name of the property for which we register the file
+     * @param props            the map will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
+     * @param cleanable        whether this version of the file can be cleaned-up at runtime
+     * @param executionContext the current execution context (should be defined if the function is executing via ExecutionEngine with
+     *                         execution-scope resource manager)
+     * @return a FileVersionCloseable wrapping the {@link FileVersion} of the registered file. Closing the wrapper, release the usage on this file version. The {@link FileVersion} can be used for later retrieval of this version
+     * @throws RuntimeException
+     */
+    protected FileVersionCloseable registerFile(DynamicValue<String> dynamicValue, String propertyName, Map<String, String> props, boolean cleanable, AbstractStepContext executionContext) {
+        if (dynamicValue != null) {
+            String filepath = dynamicValue.get();
+            if (filepath != null && filepath.trim().length() > 0) {
+                File file = null;
+                try {
+                    // in case of isolated execution, the execution context contains temporary in-memory resource manager
+                    // we have to use this manager instead of the global one from fileResolver
+                    if (executionContext != null) {
+                        boolean resolvedFromExecutionContext = false;
+                        ResourceManager executionContextResourceManager = getResourceManager(executionContext);
+                        if (executionContextResourceManager == getResourceManager(null)) {
+                            // if resource manager is the global one, it is better to use fileResolverCache for performance reason
+                            file = fileResolverCache.get(filepath);
+                        } else if (executionContextResourceManager instanceof LayeredResourceManager) {
+                            // performance hack - if the resource manager is layered, but contains the only one resource manager
+                            // and this resource manager equals to the global one, we can use cached file resolver
+                            ResourceManager unwrappedManager = unwrapResourceManager((LayeredResourceManager) executionContextResourceManager);
+                            if (unwrappedManager == getResourceManager(null)) {
+                                file = fileResolverCache.get(filepath);
+                            } else {
+                                resolvedFromExecutionContext = true;
+                                file = executionContext.getFileResolverCache().get(filepath);
+                            }
+                        } else {
+                            resolvedFromExecutionContext = true;
+                            file = executionContext.getFileResolverCache().get(filepath);
+                        }
 
-		@Override
-		public void close() throws Exception {
-			gridFileServices.releaseFile(fileVersion);
-		}
-	}
+                        // just a fallback - if the file is not found in execution context, try to use global file resolver
+                        if (resolvedFromExecutionContext && file == null) {
+                            file = fileResolverCache.get(filepath);
+                        }
+                    } else {
+                        // Using the file resolver cache here to avoid performance issues
+                        // This method might be called at every function execution
+                        file = fileResolverCache.get(filepath);
+                    }
+                } catch (ExecutionException e) {
+                    throw new RuntimeException("Error while resolving path " + filepath, e);
+                }
+                return registerFile(file, propertyName, props, cleanable);
+            }
+        }
+        return null;
+    }
 
-	private ResourceManager unwrapResourceManager(LayeredResourceManager layeredResourceManager) {
-		List<ResourceManager> resourceManagers = layeredResourceManager.getResourceManagers();
-		if (resourceManagers.size() != 1) {
-			return null;
-		} else if (resourceManagers.get(0) instanceof LayeredResourceManager) {
-			return unwrapResourceManager((LayeredResourceManager) resourceManagers.get(0));
-		} else {
-			return resourceManagers.get(0);
-		}
-	}
+    /**
+     * Register the provided file in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
+     *
+     * @param file         the {@link File} of the resource to be registered
+     * @param propertyName the name of the property for which we register the file
+     * @param props        the {@link Map}  will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
+     * @param cleanable    whether this version of the file can be cleaned-up at runtime
+     * @return a FileVersionCloseable wrapping the {@link FileVersion} of the registered file. Closing the wrapper, release the usage on this file version. The {@link FileVersion} can be used for later retrieval of this version
+     * @throws RuntimeException
+     */
+    protected FileVersionCloseable registerFile(File file, String propertyName, Map<String, String> props, boolean cleanable) {
+        FileVersion fileVersion = registerFile(file, cleanable);
+        registerFileVersionId(propertyName, props, fileVersion.getVersionId());
+        return new FileVersionCloseable(fileVersion, gridFileServices);
+    }
+
+    protected static class FileVersionCloseable implements AutoCloseable {
+
+        protected final FileVersion fileVersion;
+        protected final GridFileService gridFileServices;
+
+        private FileVersionCloseable(FileVersion fileVersion, GridFileService gridFileServices) {
+            this.fileVersion = Objects.requireNonNull(fileVersion);
+            this.gridFileServices = Objects.requireNonNull(gridFileServices);
+        }
+
+        @Override
+        public void close() throws Exception {
+            gridFileServices.releaseFile(fileVersion);
+        }
+    }
+
+    private ResourceManager unwrapResourceManager(LayeredResourceManager layeredResourceManager) {
+        List<ResourceManager> resourceManagers = layeredResourceManager.getResourceManagers();
+        if (resourceManagers.size() != 1) {
+            return null;
+        } else if (resourceManagers.get(0) instanceof LayeredResourceManager) {
+            return unwrapResourceManager((LayeredResourceManager) resourceManagers.get(0));
+        } else {
+            return resourceManagers.get(0);
+        }
+    }
 
 
-	private void registerFileVersionId(String properyName, Map<String, String> props, FileVersionId fileVersionId) {
-		props.put(properyName +".id", fileVersionId.getFileId());
-		props.put(properyName +".version", fileVersionId.getVersion());
-	}
+    private void registerFileVersionId(String properyName, Map<String, String> props, FileVersionId fileVersionId) {
+        props.put(properyName + ".id", fileVersionId.getFileId());
+        props.put(properyName + ".version", fileVersionId.getVersion());
+    }
 
-	/**
-	 * Register the provided file in the grid's file manager
-	 *
-	 * @param file the {@link File} of the resource to be registered
-	 * @param cleanable whether this version of the file can be cleaned-up at runtime
-	 * @return the {@link FileVersionId} of the registered file. The {@link FileVersionId} can be used for later retrieval of this version
-	 * @throws RuntimeException
-	 */
-	private FileVersion registerFile(File file, boolean cleanable) {
-		FileVersion fileVersion;
-		try {
-			fileVersion = gridFileServices.registerFile(file, cleanable);
-			return fileVersion;
-		} catch (FileManagerException e) {
-			throw new RuntimeException("Error while registering file "+file.getAbsolutePath(), e);
-		}
-	}
+    /**
+     * Register the provided file in the grid's file manager
+     *
+     * @param file      the {@link File} of the resource to be registered
+     * @param cleanable whether this version of the file can be cleaned-up at runtime
+     * @return the {@link FileVersionId} of the registered file. The {@link FileVersionId} can be used for later retrieval of this version
+     * @throws RuntimeException
+     */
+    private FileVersion registerFile(File file, boolean cleanable) {
+        FileVersion fileVersion;
+        try {
+            fileVersion = gridFileServices.registerFile(file, cleanable);
+            return fileVersion;
+        } catch (FileManagerException e) {
+            throw new RuntimeException("Error while registering file " + file.getAbsolutePath(), e);
+        }
+    }
 
-	/**
-	 * Register the provided file as resource in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
-	 *
-	 * @param cl the {@link ClassLoader} containing the file as resource
-	 * @param resourceName the name of the file's resource
-	 * @param isDirectory whether this resource is a directory
-	 * @param propertyName the name of the property for which we register the file
-	 * @param props the {@link Map}  will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
-	 * @param cleanable whether this version of the file can be cleaned-up at runtime
-	 * @return the {@link FileVersion} of the registered file. The {@link FileVersion} can be used for later retrieval of this version
-	 * @throws RuntimeException
-	 */
-	protected FileVersionCloseable registerResource(ClassLoader cl, String resourceName, boolean isDirectory, String propertyName, Map<String, String> props, boolean cleanable) {
-		FileVersion fileVersion = registerResource(cl, resourceName, isDirectory, cleanable);
-		registerFileVersionId(propertyName, props, fileVersion.getVersionId());
-		return new FileVersionCloseable(fileVersion, gridFileServices);
-	}
+    /**
+     * Register the provided file as resource in the grid's file manager for a given property. Enrich the map with the resulting file and version ids.
+     *
+     * @param cl           the {@link ClassLoader} containing the file as resource
+     * @param resourceName the name of the file's resource
+     * @param isDirectory  whether this resource is a directory
+     * @param propertyName the name of the property for which we register the file
+     * @param props        the {@link Map}  will be enriched with the propertyName id and version of the registered file that can be later used to retrieve the file
+     * @param cleanable    whether this version of the file can be cleaned-up at runtime
+     * @return the {@link FileVersion} of the registered file. The {@link FileVersion} can be used for later retrieval of this version
+     * @throws RuntimeException
+     */
+    protected FileVersionCloseable registerResource(ClassLoader cl, String resourceName, boolean isDirectory, String propertyName, Map<String, String> props, boolean cleanable) {
+        FileVersion fileVersion = registerResource(cl, resourceName, isDirectory, cleanable);
+        registerFileVersionId(propertyName, props, fileVersion.getVersionId());
+        return new FileVersionCloseable(fileVersion, gridFileServices);
+    }
 
-	/**
-	 * Register the provided file as resource in the grid's file manager.
-	 *
-	 * @param cl the {@link ClassLoader} containing the file as resource
-	 * @param resourceName the name of the file's resource
-	 * @param isDirectory whether this resource is a directory
-	 * @param cleanable whether this version of the file can be cleaned-up at runtime
-	 * @return the {@link FileVersion} of the registered file. The {@link FileVersion} can be used for later retrieval of this version
-	 * @throws RuntimeException
-	 */
-	protected FileVersion registerResource(ClassLoader cl, String resourceName, boolean isDirectory, boolean cleanable) {
-		try {
-			try (InputStream is = cl.getResourceAsStream(resourceName)) {
-				return gridFileServices.registerFile(is, resourceName, isDirectory, cleanable);
-			}
-		} catch (FileManagerException | IOException e) {
-			throw new RuntimeException("Error while registering resource "+resourceName, e);
-		}
-	}
+    /**
+     * Register the provided file as resource in the grid's file manager.
+     *
+     * @param cl           the {@link ClassLoader} containing the file as resource
+     * @param resourceName the name of the file's resource
+     * @param isDirectory  whether this resource is a directory
+     * @param cleanable    whether this version of the file can be cleaned-up at runtime
+     * @return the {@link FileVersion} of the registered file. The {@link FileVersion} can be used for later retrieval of this version
+     * @throws RuntimeException
+     */
+    protected FileVersion registerResource(ClassLoader cl, String resourceName, boolean isDirectory, boolean cleanable) {
+        try {
+            try (InputStream is = cl.getResourceAsStream(resourceName)) {
+                return gridFileServices.registerFile(is, resourceName, isDirectory, cleanable);
+            }
+        } catch (FileManagerException | IOException e) {
+            throw new RuntimeException("Error while registering resource " + resourceName, e);
+        }
+    }
 
-	protected ResourceManager getResourceManager(AbstractStepContext executionContext) {
-		if (executionContext != null && executionContext.getResourceManager() != null) {
-			return executionContext.getResourceManager();
-		} else if (fileResolver != null) {
-			return fileResolver.getResourceManager();
-		} else {
-			return null;
-		}
-	}
-	
-	public void deleteFunction(T function) throws FunctionTypeException {
+    protected ResourceManager getResourceManager(AbstractStepContext executionContext) {
+        if (executionContext != null && executionContext.getResourceManager() != null) {
+            return executionContext.getResourceManager();
+        } else if (fileResolver != null) {
+            return fileResolver.getResourceManager();
+        } else {
+            return null;
+        }
+    }
 
-	}
+    public void deleteFunction(T function) throws FunctionTypeException {
+
+    }
 
 }

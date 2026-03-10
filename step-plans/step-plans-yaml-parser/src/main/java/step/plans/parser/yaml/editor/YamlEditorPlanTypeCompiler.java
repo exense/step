@@ -71,9 +71,9 @@ class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
                 if (causingExceptions != null && !causingExceptions.isEmpty()) {
                     // sometimes the validator provides the causing exceptions, in this case we can collect several error messages with source lines
                     List<LineNumberByJsonPointerResolver.JsonPointerSourceLine> allPointerSourceLines =
-                            lineNumberResolver.findLineNumbers(
-                                    causingExceptions.stream().map(ValidationException::getPointerToViolation).filter(p -> p != null && !p.isEmpty()).collect(Collectors.toList()), source
-                            );
+                        lineNumberResolver.findLineNumbers(
+                            causingExceptions.stream().map(ValidationException::getPointerToViolation).filter(p -> p != null && !p.isEmpty()).collect(Collectors.toList()), source
+                        );
 
                     for (ValidationException causingException : causingExceptions) {
                         YamlEditorPlanCompilationError compilationError = new YamlEditorPlanCompilationError();
@@ -156,9 +156,9 @@ class YamlEditorPlanTypeCompiler implements PlanCompiler<YamlEditorPlan> {
         @Override
         public String toString() {
             return "YamlEditorPlanCompilationError{" +
-                    "message=" + getMessage() + "; " +
-                    "line=" + line +
-                    '}';
+                "message=" + getMessage() + "; " +
+                "line=" + line +
+                '}';
         }
     }
 

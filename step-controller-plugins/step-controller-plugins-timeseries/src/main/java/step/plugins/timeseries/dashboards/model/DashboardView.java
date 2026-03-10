@@ -10,90 +10,90 @@ import java.util.Map;
 
 public class DashboardView extends AbstractOrganizableObject implements EnricheableObject {
 
-	private String description;
-	private Long resolution;
-	private long refreshInterval;
-	@NotNull
-	private TimeRangeSelection timeRange;
-	@NotNull
-	private List<String> grouping;
-	@NotNull
-	private List<TimeSeriesFilterItem> filters;
-	@NotNull
-	private List<DashboardItem> dashlets;
-	
-	private Map<String, Object> metadata = new HashMap<>();
+    private String description;
+    private Long resolution;
+    private long refreshInterval;
+    @NotNull
+    private TimeRangeSelection timeRange;
+    @NotNull
+    private List<String> grouping;
+    @NotNull
+    private List<TimeSeriesFilterItem> filters;
+    @NotNull
+    private List<DashboardItem> dashlets;
 
-	public Long getResolution() {
-		return resolution;
-	}
+    private Map<String, Object> metadata = new HashMap<>();
 
-	public DashboardView setResolution(Long resolution) {
-		this.resolution = resolution;
-		return this;
-	}
+    public Long getResolution() {
+        return resolution;
+    }
 
-	public TimeRangeSelection getTimeRange() {
-		return timeRange;
-	}
+    public DashboardView setResolution(Long resolution) {
+        this.resolution = resolution;
+        return this;
+    }
 
-	public DashboardView setTimeRange(TimeRangeSelection timeRange) {
-		this.timeRange = timeRange;
-		return this;
-	}
+    public TimeRangeSelection getTimeRange() {
+        return timeRange;
+    }
 
-	public List<String> getGrouping() {
-		return grouping;
-	}
+    public DashboardView setTimeRange(TimeRangeSelection timeRange) {
+        this.timeRange = timeRange;
+        return this;
+    }
 
-	public DashboardView setGrouping(List<String> grouping) {
-		this.grouping = grouping;
-		return this;
-	}
+    public List<String> getGrouping() {
+        return grouping;
+    }
 
-	public List<TimeSeriesFilterItem> getFilters() {
-		return filters;
-	}
+    public DashboardView setGrouping(List<String> grouping) {
+        this.grouping = grouping;
+        return this;
+    }
 
-	public DashboardView setFilters(List<TimeSeriesFilterItem> filters) {
-		this.filters = filters;
-		return this;
-	}
+    public List<TimeSeriesFilterItem> getFilters() {
+        return filters;
+    }
 
-	public List<DashboardItem> getDashlets() {
-		return dashlets;
-	}
+    public DashboardView setFilters(List<TimeSeriesFilterItem> filters) {
+        this.filters = filters;
+        return this;
+    }
 
-	public DashboardView setDashlets(List<DashboardItem> dashlets) {
-		this.dashlets = dashlets;
-		return this;
-	}
+    public List<DashboardItem> getDashlets() {
+        return dashlets;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public DashboardView setDashlets(List<DashboardItem> dashlets) {
+        this.dashlets = dashlets;
+        return this;
+    }
 
-	public DashboardView setDescription(String description) {
-		this.description = description;
-		return this;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public Map<String, Object> getMetadata() {
-		return metadata;
-	}
+    public DashboardView setDescription(String description) {
+        this.description = description;
+        return this;
+    }
 
-	public DashboardView setMetadata(Map<String, Object> metadata) {
-		this.metadata = metadata;
-		return this;
-	}
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
 
-	public long getRefreshInterval() {
-		return refreshInterval;
-	}
+    public DashboardView setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+        return this;
+    }
 
-	public DashboardView setRefreshInterval(long refreshInterval) {
-		this.refreshInterval = refreshInterval;
-		return this;
-	}
+    public long getRefreshInterval() {
+        return refreshInterval;
+    }
+
+    public DashboardView setRefreshInterval(long refreshInterval) {
+        this.refreshInterval = refreshInterval;
+        return this;
+    }
 
 }

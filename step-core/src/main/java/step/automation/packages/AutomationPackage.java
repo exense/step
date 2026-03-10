@@ -131,7 +131,7 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
     /**
      * @return the resource path to the package libraries. Package libraries are either a folder of jar or DLLs
      */
-    @EntityReference(type= EntityConstants.resources)
+    @EntityReference(type = EntityConstants.resources)
     public String getAutomationPackageLibraryResource() {
         return automationPackageLibraryResource;
     }
@@ -140,7 +140,7 @@ public class AutomationPackage extends AbstractTrackedObject implements Enrichea
         this.automationPackageLibraryResource = automationPackageLibraryResource;
     }
 
-    @EntityReference(type= EntityConstants.resources)
+    @EntityReference(type = EntityConstants.resources)
     public String getAutomationPackageResource() {
         return automationPackageResource;
     }

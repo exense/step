@@ -21,12 +21,13 @@ package step.artefacts.reports;
 import step.core.artefacts.reports.ReportNode;
 
 public class ThreadReportNode extends ReportNode {
-	private String threadGroupName;
-	public void setThreadGroupName(String threadGroupName) {
-		this.threadGroupName = threadGroupName;
-	}
+    private String threadGroupName;
 
-	public String getThreadGroupName() {
-		return threadGroupName;
-	}
+    public void setThreadGroupName(String threadGroupName) {
+        this.threadGroupName = threadGroupName;
+    }
+
+    public String getThreadGroupName() {
+        return threadGroupName;
+    }
 }

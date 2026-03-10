@@ -31,50 +31,50 @@ import java.io.IOException;
 @StepYamlDeserializerAddOn(targetClasses = {DynamicValue.class})
 public class YamlDynamicValueDeserializer extends StepYamlDeserializer<DynamicValue<?>> implements ContextualDeserializer {
 
-	protected JavaType type;
+    protected JavaType type;
 
-	public YamlDynamicValueDeserializer() {
-	}
+    public YamlDynamicValueDeserializer() {
+    }
 
-	public YamlDynamicValueDeserializer(ObjectMapper yamlObjectMapper) {
-		super(yamlObjectMapper);
-	}
+    public YamlDynamicValueDeserializer(ObjectMapper yamlObjectMapper) {
+        super(yamlObjectMapper);
+    }
 
-	@Override
-	public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {
-		this.type = property.getType().containedType(0);
-		YamlDynamicValueDeserializer deserializer = new YamlDynamicValueDeserializer();
-		deserializer.type = type;
-		return deserializer;
-	}
+    @Override
+    public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {
+        this.type = property.getType().containedType(0);
+        YamlDynamicValueDeserializer deserializer = new YamlDynamicValueDeserializer();
+        deserializer.type = type;
+        return deserializer;
+    }
 
-	@Override
-	public DynamicValue<?> deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JacksonException {
-		JsonNode node = jp.getCodec().readTree(jp);
+    @Override
+    public DynamicValue<?> deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JacksonException {
+        JsonNode node = jp.getCodec().readTree(jp);
 
-		if (node.isContainerNode()) {
-			JsonNode expressionNode = node.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD);
-			String expression = expressionNode == null ? null : expressionNode.asText();
+        if (node.isContainerNode()) {
+            JsonNode expressionNode = node.get(YamlFields.DYN_VALUE_EXPRESSION_FIELD);
+            String expression = expressionNode == null ? null : expressionNode.asText();
 
-			if (expression != null) {
-				// dynamic value
-				return getDynamicValueWithExpresion(expression);
-			} else {
-				throw new IllegalStateException("Expression should be defined for dynamic value " + node.toPrettyString());
-			}
-		} else {
-			// 'smart' mode - we can use the value explicitly without nested 'value' node
-			return getDynamicValue(jp.getCodec().treeToValue(node, type.getRawClass()));
-		}
+            if (expression != null) {
+                // dynamic value
+                return getDynamicValueWithExpresion(expression);
+            } else {
+                throw new IllegalStateException("Expression should be defined for dynamic value " + node.toPrettyString());
+            }
+        } else {
+            // 'smart' mode - we can use the value explicitly without nested 'value' node
+            return getDynamicValue(jp.getCodec().treeToValue(node, type.getRawClass()));
+        }
 
-	}
+    }
 
-	protected DynamicValue<?> getDynamicValue(Object o) {
-		return new DynamicValue<>(o);
-	}
+    protected DynamicValue<?> getDynamicValue(Object o) {
+        return new DynamicValue<>(o);
+    }
 
-	protected DynamicValue<Object> getDynamicValueWithExpresion(String expression) {
-		return new DynamicValue<>(expression, "");
-	}
+    protected DynamicValue<Object> getDynamicValueWithExpresion(String expression) {
+        return new DynamicValue<>(expression, "");
+    }
 
 }

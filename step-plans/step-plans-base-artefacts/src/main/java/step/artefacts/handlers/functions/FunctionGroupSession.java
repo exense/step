@@ -70,7 +70,7 @@ public class FunctionGroupSession implements AutoCloseable {
 
         // Find a token matching the selection criteria in the context
         TokenWrapper matchingToken = tokens.stream().filter(t ->
-                affinityEvaluator.getAffinityScore(new TokenPretender(Map.of(), tokenSelectionCriteria), new TokenPretender(t.getAttributes(), Map.of())) > 0).findFirst().orElse(null);
+            affinityEvaluator.getAffinityScore(new TokenPretender(Map.of(), tokenSelectionCriteria), new TokenPretender(t.getAttributes(), Map.of())) > 0).findFirst().orElse(null);
 
         TokenWrapper token;
         if (matchingToken != null) {
@@ -131,7 +131,7 @@ public class FunctionGroupSession implements AutoCloseable {
                 throw releaseExceptions.get(0);
             } else {
                 throw new Exception("Multiple errors occurred when releasing agent tokens: " +
-                        releaseExceptions.stream().map(Throwable::getMessage).collect(Collectors.joining(", ")));
+                    releaseExceptions.stream().map(Throwable::getMessage).collect(Collectors.joining(", ")));
             }
         }
     }

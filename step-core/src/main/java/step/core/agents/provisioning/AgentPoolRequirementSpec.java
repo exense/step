@@ -36,6 +36,7 @@ public class AgentPoolRequirementSpec {
     public AgentPoolRequirementSpec(String agentPoolTemplateName, int numberOfAgents) {
         this(agentPoolTemplateName, Map.of(), numberOfAgents);
     }
+
     public AgentPoolRequirementSpec(String agentPoolTemplateName, Map<String, String> provisioningParameters, int numberOfAgents) {
         this.numberOfAgents = numberOfAgents;
         this.agentPoolTemplateName = agentPoolTemplateName;
@@ -58,9 +59,9 @@ public class AgentPoolRequirementSpec {
     @Override
     public String toString() {
         return "AgentPoolRequirementSpec{" +
-                "numberOfAgents=" + numberOfAgents +
-                ", agentPoolTemplateName='" + agentPoolTemplateName + '\'' +
-                ", provisioningParameters=" + provisioningParameters +
-                '}';
+            "numberOfAgents=" + numberOfAgents +
+            ", agentPoolTemplateName='" + agentPoolTemplateName + '\'' +
+            ", provisioningParameters=" + provisioningParameters +
+            '}';
     }
 }

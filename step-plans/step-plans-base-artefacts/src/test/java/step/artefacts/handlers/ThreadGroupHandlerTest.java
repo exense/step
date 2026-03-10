@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -44,269 +44,269 @@ import step.core.plans.runner.PlanRunnerResult;
 
 public class ThreadGroupHandlerTest extends AbstractArtefactHandlerTest {
 
-	@Test
-	public void testStatusReportingFailed() throws Exception {
-		ThreadGroup artefact = new ThreadGroup();
-		
-		Plan plan = PlanBuilder.create().startBlock(artefact).add(passedCheck()).add(failedCheck()).endBlock().build();
-		
-		StringWriter writer = new StringWriter();
-		executionEngine.execute(plan).printTree(writer);
-		
-		assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.FAILED));
-	}
-	
-	@Test
-	public void testStatusReportingPassed() throws Exception {
-		ThreadGroup artefact = new ThreadGroup();
-		artefact.getIterations().setValue(3);
-		
-		Plan plan = PlanBuilder.create().startBlock(artefact).add(passedCheck()).add(passedCheck()).endBlock().build();
-		
-		StringWriter writer = new StringWriter();
-		executionEngine.execute(plan).printTree(writer);
-		
-		assertEquals("ThreadGroup:PASSED:\n" + 
-				" Thread 1:PASSED:\n" + 
-				"  Session:PASSED:\n" + 
-				"   Iteration 1:PASSED:\n" + 
-				"    Check:PASSED:\n" + 
-				"    Check:PASSED:\n" + 
-				"   Iteration 2:PASSED:\n" + 
-				"    Check:PASSED:\n" + 
-				"    Check:PASSED:\n" + 
-				"   Iteration 3:PASSED:\n" + 
-				"    Check:PASSED:\n" + 
-				"    Check:PASSED:\n", writer.toString());
-	}
-	
-	@Test
-	public void testStatusReportingError() throws Exception {
-		Plan plan = PlanBuilder.create().startBlock(new ThreadGroup()).add(passedCheck()).add(errorCheck()).add(passedCheck()).endBlock().build();
-		
-		StringWriter writer = new StringWriter();
-		executionEngine.execute(plan).printTree(writer);
-		
-		assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.TECHNICAL_ERROR));
-	}
+    @Test
+    public void testStatusReportingFailed() throws Exception {
+        ThreadGroup artefact = new ThreadGroup();
 
-	private Check passedCheck() {
-		Check passedCheck = new Check();
-		passedCheck.setExpression(new DynamicValue<Boolean>(true));
-		return passedCheck;
-	}
-	
-	private Check failedCheck() {
-		Check failedCheck = new Check();
-		failedCheck.setExpression(new DynamicValue<Boolean>(false));
-		return failedCheck;
-	}
-	
-	private Check errorCheck() {
-		Check errorCheck = new Check();
-		return errorCheck;
-	}
-	
-	@Test
-	public void testMaxDurationExceeded() throws Exception {
-		AtomicInteger count = new AtomicInteger(0);
+        Plan plan = PlanBuilder.create().startBlock(artefact).add(passedCheck()).add(failedCheck()).endBlock().build();
 
-		StringWriter writer = testMaxDuration(50, 100, count);
-		
-		assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
-		assertTrue(count.get()<10);
-	}
-	
-	@Test
-	public void testMaxDurationDefault() throws Exception {
-		AtomicInteger count = new AtomicInteger(0);
+        StringWriter writer = new StringWriter();
+        executionEngine.execute(plan).printTree(writer);
 
-		StringWriter writer = testMaxDuration(0, 1000, count);
-		
-		assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
-		assertEquals(10, count.get());
-	}
-	
-	@Test
-	public void testMaxDurationWithoutMaxIterationCountDefault() throws Exception {
-		AtomicInteger count = new AtomicInteger(0);
+        assertTrue(writer.toString().startsWith("ThreadGroup:" + ReportNodeStatus.FAILED));
+    }
 
-		StringWriter writer = testMaxDuration(50, 100, 0, count);
-		
-		assertTrue(writer.toString().startsWith("ThreadGroup:"+ReportNodeStatus.PASSED));
-		assertTrue(count.get()<10);
-	}
+    @Test
+    public void testStatusReportingPassed() throws Exception {
+        ThreadGroup artefact = new ThreadGroup();
+        artefact.getIterations().setValue(3);
 
-	@Test
-	public void testPacing() throws IOException, TimeoutException, InterruptedException {
-		int nIterations = 50;
-		int pacingMs = 100;
+        Plan plan = PlanBuilder.create().startBlock(artefact).add(passedCheck()).add(passedCheck()).endBlock().build();
 
-		ThreadGroup artefact = new ThreadGroup();
-		artefact.setPacing(new DynamicValue<Integer>(pacingMs));
-		artefact.setIterations(new DynamicValue<Integer>(nIterations));
+        StringWriter writer = new StringWriter();
+        executionEngine.execute(plan).printTree(writer);
 
-		long t1 = System.currentTimeMillis();
-		AtomicInteger count = new AtomicInteger();
-		CheckArtefact check = new CheckArtefact(c-> {
-			count.incrementAndGet();
-			c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
-		});
-		
-		Plan plan = PlanBuilder.create().startBlock(artefact).add(check).endBlock().build();
-		
-		ReportNodeStatus result = executionEngine.execute(plan).waitForExecutionToTerminate().getResult();
-		assertEquals(ReportNodeStatus.PASSED, result);
-		assertEquals(nIterations, count.get());
-		long duration = System.currentTimeMillis()-t1;
-		// Assert that the duration is higher than pacing x number of iterations
-		// and thus that the pacing has been taken into account
-		assertTrue(duration>=pacingMs*nIterations);
-	}
+        assertEquals("ThreadGroup:PASSED:\n" +
+            " Thread 1:PASSED:\n" +
+            "  Session:PASSED:\n" +
+            "   Iteration 1:PASSED:\n" +
+            "    Check:PASSED:\n" +
+            "    Check:PASSED:\n" +
+            "   Iteration 2:PASSED:\n" +
+            "    Check:PASSED:\n" +
+            "    Check:PASSED:\n" +
+            "   Iteration 3:PASSED:\n" +
+            "    Check:PASSED:\n" +
+            "    Check:PASSED:\n", writer.toString());
+    }
 
-	public StringWriter testMaxDuration(long sleepTime, int maxDuration, AtomicInteger count) throws IOException {
-		return testMaxDuration(sleepTime, maxDuration, 10, count);
-	}
-	
-	public StringWriter testMaxDuration(long sleepTime, int maxDuration, int maxIterations, AtomicInteger count) throws IOException {
-		ThreadGroup artefact = new ThreadGroup();
-		artefact.setMaxDuration(new DynamicValue<Integer>(maxDuration));
-		artefact.setIterations(new DynamicValue<Integer>(maxIterations));
-		
-		Sleep sleep = new Sleep();
-		sleep.setDuration(new DynamicValue<Long>(sleepTime));
-		
-		CheckArtefact check = new CheckArtefact(c-> {
-			count.incrementAndGet();
-		});
-		
-		Plan plan = PlanBuilder.create().startBlock(artefact).add(sleep).add(check).endBlock().build();
-		
-		StringWriter writer = new StringWriter();
-		executionEngine.execute(plan).printTree(writer);
-		return writer;
-	}
-	
-	@Test
-	public void testBeforeAndAfterThread() throws Exception {
-		final AtomicInteger globalCounterActual = new AtomicInteger();
-		final List<String> userIds = new ArrayList<>();
-		// Create a plan with an empty sequence block
-		Plan plan = PlanBuilder.create()
-				.startBlock(threadGroup(1, 2,
-						childrenBlock(echo("'Before...'+userId")),
-						childrenBlock(echo("'After...'+userId"))))
-					// the variables userId, literationId, gcounter should be available in the beforeThread
-					.add(echo("'Iteration'+userId+literationId+gcounter"))
-					.add(runnable(c->globalCounterActual.addAndGet(c.getVariablesManager().getVariableAsInteger("gcounter"))))
-					.add(runnable(c->userIds.add(c.getVariablesManager().getVariableAsString("userId"))))
-				.endBlock()
-				.build();
-		
-		// Run the plan
-		PlanRunnerResult result = executionEngine.execute(plan);	
-		
-		result.waitForExecutionToTerminate();
-		
-		StringWriter writer = new StringWriter();
-		result.printTree(writer);
-		
-		assertEquals("ThreadGroup:PASSED:\n" +
-				" Thread 1:PASSED:\n" +
-				"  Session:PASSED:\n" +
-				"   [BEFORE_THREAD]\n" +
-				"    Echo:PASSED:\n" +
-				"   Iteration 1:PASSED:\n" +
-				"    Echo:PASSED:\n" +
-				"    CheckArtefact:RUNNING:\n" +
-				"    CheckArtefact:RUNNING:\n" +
-				"   Iteration 2:PASSED:\n" +
-				"    Echo:PASSED:\n" +
-				"    CheckArtefact:RUNNING:\n" +
-				"    CheckArtefact:RUNNING:\n" +
-				"   [AFTER_THREAD]\n" +
-				"    Echo:PASSED:\n" +
-				"" , writer.toString());	
-		
-		assertEquals(3, globalCounterActual.get());
-		assertArrayEquals(new String[] {"1","1"}, userIds.toArray());
-	}
+    @Test
+    public void testStatusReportingError() throws Exception {
+        Plan plan = PlanBuilder.create().startBlock(new ThreadGroup()).add(passedCheck()).add(errorCheck()).add(passedCheck()).endBlock().build();
 
-	@Test
-	public void testSetInBeforeThread() throws Exception {
-		final String value = "Value123";
-		final String tastVarname = "testVar";
+        StringWriter writer = new StringWriter();
+        executionEngine.execute(plan).printTree(writer);
 
-		final List<String> testVar = new ArrayList<>();
-		final List<String> testVarWithinAfter = new ArrayList<>();
-		// Create a plan with an empty sequence block
-		Plan plan = PlanBuilder.create()
-				.startBlock(threadGroup(1, 1,
-						childrenBlock(set(tastVarname,"\""+value+"\"")),
-						childrenBlock(runnable(c -> testVarWithinAfter.add(c.getVariablesManager().getVariableAsString(tastVarname))))))
-					// the variable testVar should be available within the thread
-					.add(runnable(c -> {
-						testVar.add(c.getVariablesManager().getVariableAsString(tastVarname));
-					}))
-				.endBlock()
-				.build();
+        assertTrue(writer.toString().startsWith("ThreadGroup:" + ReportNodeStatus.TECHNICAL_ERROR));
+    }
 
-		// Run the plan
-		PlanRunnerResult result = executionEngine.execute(plan);
+    private Check passedCheck() {
+        Check passedCheck = new Check();
+        passedCheck.setExpression(new DynamicValue<Boolean>(true));
+        return passedCheck;
+    }
 
-		result.waitForExecutionToTerminate();
-		result.printTree();
+    private Check failedCheck() {
+        Check failedCheck = new Check();
+        failedCheck.setExpression(new DynamicValue<Boolean>(false));
+        return failedCheck;
+    }
 
-		assertEquals(List.of(value), testVar);
-		assertEquals(List.of(value), testVarWithinAfter);
-	}
-	
-	@Test
-	public void testBeforeAndAfterThreadCombinedWithBeforeAndAfterSequence() throws Exception {
-		// Create a plan with an empty sequence block
-		Plan plan = PlanBuilder.create()
-				.startBlock(threadGroup(1, 2,
-						childrenBlock(echo("'Before...'+userId")),
-						childrenBlock(echo("'After...'"))))
-					.startBlock(sequence()).withBefore(echo("'Before...'+literationId"))
-						.withAfter(echo("'After...'"))
-						.add(echo("'Iteration'"))
-						.add(check("false"))
-					.endBlock()
-				.endBlock()
-				.build();
-		
-		// Run the plan
-		PlanRunnerResult result = executionEngine.execute(plan);	
-		
-		result.waitForExecutionToTerminate();
-		
-		StringWriter writer = new StringWriter();
-		result.printTree(writer);
-		
-		assertEquals("ThreadGroup:FAILED:\n" +
-				" Thread 1:FAILED:\n" +
-				"  Session:FAILED:\n" +
-				"   [BEFORE_THREAD]\n" +
-				"    Echo:PASSED:\n" +
-				"   Iteration 1:FAILED:\n" +
-				"    Sequence:FAILED:\n" +
-				"     [BEFORE]\n" +
-				"      Echo:PASSED:\n" +
-				"     Echo:PASSED:\n" +
-				"     Check:FAILED:The expression 'false' returned false\n" +
-				"     [AFTER]\n" +
-				"      Echo:PASSED:\n" +
-				"   Iteration 2:FAILED:\n" +
-				"    Sequence:FAILED:\n" +
-				"     [BEFORE]\n" +
-				"      Echo:PASSED:\n" +
-				"     Echo:PASSED:\n" +
-				"     Check:FAILED:The expression 'false' returned false\n" +
-				"     [AFTER]\n" +
-				"      Echo:PASSED:\n" +
-				"   [AFTER_THREAD]\n" +
-				"    Echo:PASSED:\n" , writer.toString());
-	}
+    private Check errorCheck() {
+        Check errorCheck = new Check();
+        return errorCheck;
+    }
+
+    @Test
+    public void testMaxDurationExceeded() throws Exception {
+        AtomicInteger count = new AtomicInteger(0);
+
+        StringWriter writer = testMaxDuration(50, 100, count);
+
+        assertTrue(writer.toString().startsWith("ThreadGroup:" + ReportNodeStatus.PASSED));
+        assertTrue(count.get() < 10);
+    }
+
+    @Test
+    public void testMaxDurationDefault() throws Exception {
+        AtomicInteger count = new AtomicInteger(0);
+
+        StringWriter writer = testMaxDuration(0, 1000, count);
+
+        assertTrue(writer.toString().startsWith("ThreadGroup:" + ReportNodeStatus.PASSED));
+        assertEquals(10, count.get());
+    }
+
+    @Test
+    public void testMaxDurationWithoutMaxIterationCountDefault() throws Exception {
+        AtomicInteger count = new AtomicInteger(0);
+
+        StringWriter writer = testMaxDuration(50, 100, 0, count);
+
+        assertTrue(writer.toString().startsWith("ThreadGroup:" + ReportNodeStatus.PASSED));
+        assertTrue(count.get() < 10);
+    }
+
+    @Test
+    public void testPacing() throws IOException, TimeoutException, InterruptedException {
+        int nIterations = 50;
+        int pacingMs = 100;
+
+        ThreadGroup artefact = new ThreadGroup();
+        artefact.setPacing(new DynamicValue<Integer>(pacingMs));
+        artefact.setIterations(new DynamicValue<Integer>(nIterations));
+
+        long t1 = System.currentTimeMillis();
+        AtomicInteger count = new AtomicInteger();
+        CheckArtefact check = new CheckArtefact(c -> {
+            count.incrementAndGet();
+            c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+        });
+
+        Plan plan = PlanBuilder.create().startBlock(artefact).add(check).endBlock().build();
+
+        ReportNodeStatus result = executionEngine.execute(plan).waitForExecutionToTerminate().getResult();
+        assertEquals(ReportNodeStatus.PASSED, result);
+        assertEquals(nIterations, count.get());
+        long duration = System.currentTimeMillis() - t1;
+        // Assert that the duration is higher than pacing x number of iterations
+        // and thus that the pacing has been taken into account
+        assertTrue(duration >= pacingMs * nIterations);
+    }
+
+    public StringWriter testMaxDuration(long sleepTime, int maxDuration, AtomicInteger count) throws IOException {
+        return testMaxDuration(sleepTime, maxDuration, 10, count);
+    }
+
+    public StringWriter testMaxDuration(long sleepTime, int maxDuration, int maxIterations, AtomicInteger count) throws IOException {
+        ThreadGroup artefact = new ThreadGroup();
+        artefact.setMaxDuration(new DynamicValue<Integer>(maxDuration));
+        artefact.setIterations(new DynamicValue<Integer>(maxIterations));
+
+        Sleep sleep = new Sleep();
+        sleep.setDuration(new DynamicValue<Long>(sleepTime));
+
+        CheckArtefact check = new CheckArtefact(c -> {
+            count.incrementAndGet();
+        });
+
+        Plan plan = PlanBuilder.create().startBlock(artefact).add(sleep).add(check).endBlock().build();
+
+        StringWriter writer = new StringWriter();
+        executionEngine.execute(plan).printTree(writer);
+        return writer;
+    }
+
+    @Test
+    public void testBeforeAndAfterThread() throws Exception {
+        final AtomicInteger globalCounterActual = new AtomicInteger();
+        final List<String> userIds = new ArrayList<>();
+        // Create a plan with an empty sequence block
+        Plan plan = PlanBuilder.create()
+            .startBlock(threadGroup(1, 2,
+                childrenBlock(echo("'Before...'+userId")),
+                childrenBlock(echo("'After...'+userId"))))
+            // the variables userId, literationId, gcounter should be available in the beforeThread
+            .add(echo("'Iteration'+userId+literationId+gcounter"))
+            .add(runnable(c -> globalCounterActual.addAndGet(c.getVariablesManager().getVariableAsInteger("gcounter"))))
+            .add(runnable(c -> userIds.add(c.getVariablesManager().getVariableAsString("userId"))))
+            .endBlock()
+            .build();
+
+        // Run the plan
+        PlanRunnerResult result = executionEngine.execute(plan);
+
+        result.waitForExecutionToTerminate();
+
+        StringWriter writer = new StringWriter();
+        result.printTree(writer);
+
+        assertEquals("ThreadGroup:PASSED:\n" +
+            " Thread 1:PASSED:\n" +
+            "  Session:PASSED:\n" +
+            "   [BEFORE_THREAD]\n" +
+            "    Echo:PASSED:\n" +
+            "   Iteration 1:PASSED:\n" +
+            "    Echo:PASSED:\n" +
+            "    CheckArtefact:RUNNING:\n" +
+            "    CheckArtefact:RUNNING:\n" +
+            "   Iteration 2:PASSED:\n" +
+            "    Echo:PASSED:\n" +
+            "    CheckArtefact:RUNNING:\n" +
+            "    CheckArtefact:RUNNING:\n" +
+            "   [AFTER_THREAD]\n" +
+            "    Echo:PASSED:\n" +
+            "", writer.toString());
+
+        assertEquals(3, globalCounterActual.get());
+        assertArrayEquals(new String[]{"1", "1"}, userIds.toArray());
+    }
+
+    @Test
+    public void testSetInBeforeThread() throws Exception {
+        final String value = "Value123";
+        final String tastVarname = "testVar";
+
+        final List<String> testVar = new ArrayList<>();
+        final List<String> testVarWithinAfter = new ArrayList<>();
+        // Create a plan with an empty sequence block
+        Plan plan = PlanBuilder.create()
+            .startBlock(threadGroup(1, 1,
+                childrenBlock(set(tastVarname, "\"" + value + "\"")),
+                childrenBlock(runnable(c -> testVarWithinAfter.add(c.getVariablesManager().getVariableAsString(tastVarname))))))
+            // the variable testVar should be available within the thread
+            .add(runnable(c -> {
+                testVar.add(c.getVariablesManager().getVariableAsString(tastVarname));
+            }))
+            .endBlock()
+            .build();
+
+        // Run the plan
+        PlanRunnerResult result = executionEngine.execute(plan);
+
+        result.waitForExecutionToTerminate();
+        result.printTree();
+
+        assertEquals(List.of(value), testVar);
+        assertEquals(List.of(value), testVarWithinAfter);
+    }
+
+    @Test
+    public void testBeforeAndAfterThreadCombinedWithBeforeAndAfterSequence() throws Exception {
+        // Create a plan with an empty sequence block
+        Plan plan = PlanBuilder.create()
+            .startBlock(threadGroup(1, 2,
+                childrenBlock(echo("'Before...'+userId")),
+                childrenBlock(echo("'After...'"))))
+            .startBlock(sequence()).withBefore(echo("'Before...'+literationId"))
+            .withAfter(echo("'After...'"))
+            .add(echo("'Iteration'"))
+            .add(check("false"))
+            .endBlock()
+            .endBlock()
+            .build();
+
+        // Run the plan
+        PlanRunnerResult result = executionEngine.execute(plan);
+
+        result.waitForExecutionToTerminate();
+
+        StringWriter writer = new StringWriter();
+        result.printTree(writer);
+
+        assertEquals("ThreadGroup:FAILED:\n" +
+            " Thread 1:FAILED:\n" +
+            "  Session:FAILED:\n" +
+            "   [BEFORE_THREAD]\n" +
+            "    Echo:PASSED:\n" +
+            "   Iteration 1:FAILED:\n" +
+            "    Sequence:FAILED:\n" +
+            "     [BEFORE]\n" +
+            "      Echo:PASSED:\n" +
+            "     Echo:PASSED:\n" +
+            "     Check:FAILED:The expression 'false' returned false\n" +
+            "     [AFTER]\n" +
+            "      Echo:PASSED:\n" +
+            "   Iteration 2:FAILED:\n" +
+            "    Sequence:FAILED:\n" +
+            "     [BEFORE]\n" +
+            "      Echo:PASSED:\n" +
+            "     Echo:PASSED:\n" +
+            "     Check:FAILED:The expression 'false' returned false\n" +
+            "     [AFTER]\n" +
+            "      Echo:PASSED:\n" +
+            "   [AFTER_THREAD]\n" +
+            "    Echo:PASSED:\n", writer.toString());
+    }
 }
 

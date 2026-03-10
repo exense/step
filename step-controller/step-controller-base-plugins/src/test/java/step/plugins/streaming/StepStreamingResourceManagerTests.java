@@ -41,9 +41,9 @@ public class StepStreamingResourceManagerTests {
 
         try (var stream = Files.walk(rootDir.toPath())) {
             stream
-                    .filter(Files::isRegularFile)
-                    .filter(path -> pattern.matcher(path.getFileName().toString()).matches())
-                    .forEach(matchingFiles::add);
+                .filter(Files::isRegularFile)
+                .filter(path -> pattern.matcher(path.getFileName().toString()).matches())
+                .forEach(matchingFiles::add);
         }
 
         return matchingFiles;

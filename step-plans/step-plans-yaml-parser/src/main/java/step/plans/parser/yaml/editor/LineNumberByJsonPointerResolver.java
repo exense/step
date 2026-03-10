@@ -54,10 +54,10 @@ public class LineNumberByJsonPointerResolver {
         jsonNodeFactory = new CustomJsonNodeFactory(om.getDeserializationConfig().getNodeFactory(), customParserFactory);
         om.setConfig(om.getDeserializationConfig().with(jsonNodeFactory));
         jsonConfig = Configuration.builder()
-                .mappingProvider(new JacksonMappingProvider(om))
-                .jsonProvider(new JacksonJsonNodeJsonProvider(om))
-                .options(Option.ALWAYS_RETURN_LIST)
-                .build();
+            .mappingProvider(new JacksonMappingProvider(om))
+            .jsonProvider(new JacksonJsonNodeJsonProvider(om))
+            .options(Option.ALWAYS_RETURN_LIST)
+            .build();
     }
 
     /**
@@ -242,7 +242,7 @@ public class LineNumberByJsonPointerResolver {
          */
         public JsonLocation getLocationForNode(JsonNode jsonNode) {
             return this.locationMapping.stream().filter(e -> e.getKey().equals(jsonNode))
-                    .map(Map.Entry::getValue).findAny().orElse(null);
+                .map(Map.Entry::getValue).findAny().orElse(null);
         }
 
         /**

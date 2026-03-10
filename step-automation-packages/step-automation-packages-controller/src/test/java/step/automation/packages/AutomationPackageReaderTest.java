@@ -45,8 +45,8 @@ import static step.automation.packages.AutomationPackageTestUtils.*;
 public class AutomationPackageReaderTest {
 
     private static final String KEYWORD_SCHEMA_FROM_SAMPLE = "{\"type\":\"object\", \"properties\": { "
-            + "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
-            + "}, \"required\" : []}";
+        + "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
+        + "}, \"required\" : []}";
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageReaderTest.class);
 
@@ -79,34 +79,34 @@ public class AutomationPackageReaderTest {
 
         YamlJMeterFunction jmeterKeyword = (YamlJMeterFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlJMeterFunction.class, J_METER_KEYWORD_1);
         assertEquals(
-                "jmeterProject1/jmeterProject1.xml",
-                jmeterKeyword.getJmeterTestplan().get()
+            "jmeterProject1/jmeterProject1.xml",
+            jmeterKeyword.getJmeterTestplan().get()
         );
 
         YamlCompositeFunction compositeKeyword = (YamlCompositeFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlCompositeFunction.class, COMPOSITE_KEYWORD);
         assertEquals(
-                "Composite keyword from AP",
-                compositeKeyword.getName()
+            "Composite keyword from AP",
+            compositeKeyword.getName()
         );
 
         YamlGeneralScriptFunction generalScriptKeyword = (YamlGeneralScriptFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlGeneralScriptFunction.class, GENERAL_SCRIPT_KEYWORD);
         assertEquals(
-                GeneralFunctionScriptLanguage.javascript,
-                generalScriptKeyword.getScriptLanguage()
+            GeneralFunctionScriptLanguage.javascript,
+            generalScriptKeyword.getScriptLanguage()
         );
         assertEquals(
-                "jsProject/jsSample.js",
-                generalScriptKeyword.getScriptFile().get()
+            "jsProject/jsSample.js",
+            generalScriptKeyword.getScriptFile().get()
         );
         assertEquals(
-                "lib/fakeLib.jar",
-                generalScriptKeyword.getLibrariesFile().get()
+            "lib/fakeLib.jar",
+            generalScriptKeyword.getLibrariesFile().get()
         );
 
         YamlNodeFunction nodeFunction = (YamlNodeFunction) AutomationPackageTestUtils.findYamlKeywordByClassAndName(keywords, YamlNodeFunction.class, NODE_KEYWORD);
         assertEquals(
-                "nodeProject/nodeSample.ts",
-                nodeFunction.getJsfile().get()
+            "nodeProject/nodeSample.ts",
+            nodeFunction.getJsfile().get()
         );
 
         GeneralScriptFunction myKeyword2 = (GeneralScriptFunction) findJavaKeywordByClassAndName(keywords, GeneralScriptFunction.class, ANNOTATED_KEYWORD);
@@ -125,7 +125,7 @@ public class AutomationPackageReaderTest {
         // 2 annotated plans and 5 plans in yaml descriptor
         List<Plan> plans = automationPackageContent.getPlans();
         assertEquals("Detected plans: " + plans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()),
-                7, plans.size());
+            7, plans.size());
 
         Plan testPlan = findPlanByName(plans, PLAN_NAME_FROM_DESCRIPTOR);
         assertEquals(TestCase.class, testPlan.getRoot().getClass());
@@ -137,21 +137,21 @@ public class AutomationPackageReaderTest {
         assertEquals(Sequence.class, plainTextPlan.getRoot().getClass());
 
         // plain text plans resolved by wildcards
-        plainTextPlan =  findPlanByName(plans, PLAN_NAME_PLAIN_TEXT_2);
+        plainTextPlan = findPlanByName(plans, PLAN_NAME_PLAIN_TEXT_2);
         assertEquals(Sequence.class, plainTextPlan.getRoot().getClass());
 
-        plainTextPlan =  findPlanByName(plans, PLAN_NAME_PLAIN_TEXT_3);
+        plainTextPlan = findPlanByName(plans, PLAN_NAME_PLAIN_TEXT_3);
         assertEquals(Sequence.class, plainTextPlan.getRoot().getClass());
 
         //Assert all categories
         Map<String, List<String>> expectedCategoriesByPlan = Map.of(
-                PLAN_NAME_FROM_DESCRIPTOR, List.of("Yaml Plan"),
-                PLAN_NAME_WITH_COMPOSITE, List.of("Yaml Plan", "Composite"),
-                PLAN_FROM_PLANS_ANNOTATION, List.of("PlainTextPlan", "AnnotatedPlan"),
-                PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT, List.of("PlainTextPlan"),
-                PLAN_NAME_PLAIN_TEXT_2, List.of("PlainTextPlan"),
-                PLAN_NAME_PLAIN_TEXT_3, List.of("PlainTextPlan"),
-                INLINE_PLAN, List.of("InlinePlan", "AnnotatedPlan")
+            PLAN_NAME_FROM_DESCRIPTOR, List.of("Yaml Plan"),
+            PLAN_NAME_WITH_COMPOSITE, List.of("Yaml Plan", "Composite"),
+            PLAN_FROM_PLANS_ANNOTATION, List.of("PlainTextPlan", "AnnotatedPlan"),
+            PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT, List.of("PlainTextPlan"),
+            PLAN_NAME_PLAIN_TEXT_2, List.of("PlainTextPlan"),
+            PLAN_NAME_PLAIN_TEXT_3, List.of("PlainTextPlan"),
+            INLINE_PLAN, List.of("InlinePlan", "AnnotatedPlan")
         );
         for (Plan plan : plans) {
             String planName = plan.getAttribute(AbstractOrganizableObject.NAME);
@@ -161,10 +161,10 @@ public class AutomationPackageReaderTest {
 
         // check how keyword inputs from test plan are parsed
         CallFunction callKeyword = (CallFunction) testPlan.getRoot().getChildren()
-                .stream()
-                .filter(a -> a.getAttribute(AbstractOrganizableObject.NAME).equals("CallMyKeyword2"))
-                .findFirst()
-                .orElse(null);
+            .stream()
+            .filter(a -> a.getAttribute(AbstractOrganizableObject.NAME).equals("CallMyKeyword2"))
+            .findFirst()
+            .orElse(null);
         assertNotNull(callKeyword);
         assertFalse(callKeyword.getArgument().isDynamic());
         assertEquals("{\"myInput\":{\"dynamic\":false,\"value\":\"myValue\"}}", callKeyword.getArgument().get());

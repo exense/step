@@ -36,7 +36,7 @@ public abstract class AbstractLocalPlanRunner {
         this.executionEngine = executionEngine;
     }
 
-    public void runPlan(){
+    public void runPlan() {
         onExecutionStart();
 
         try {
@@ -58,7 +58,7 @@ public abstract class AbstractLocalPlanRunner {
                     onExecutionError(result, "The plan execution returned an unexpected status\" + result", false);
                 }
             } else {
-               onInitializingException(initializingException);
+                onInitializingException(initializingException);
             }
         } catch (Exception e) {
             onExecutionException(e);

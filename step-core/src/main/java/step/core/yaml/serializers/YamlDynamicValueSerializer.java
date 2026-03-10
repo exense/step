@@ -38,7 +38,7 @@ public class YamlDynamicValueSerializer extends StepYamlSerializer<DynamicValue<
 
     @Override
     public void serialize(DynamicValue value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        if(value.isDynamic()){
+        if (value.isDynamic()) {
             gen.writeStartObject();
             gen.writeStringField(YamlFields.DYN_VALUE_EXPRESSION_FIELD, value.getExpression());
             gen.writeEndObject();

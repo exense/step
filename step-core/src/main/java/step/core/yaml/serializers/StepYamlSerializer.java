@@ -36,7 +36,7 @@ public abstract class StepYamlSerializer<T> extends JsonSerializer<T> {
     public StepYamlSerializer() {
     }
 
-    public StepYamlSerializer(ObjectMapper yamlObjectMapper){
+    public StepYamlSerializer(ObjectMapper yamlObjectMapper) {
         this.yamlObjectMapper = yamlObjectMapper;
     }
 

@@ -41,85 +41,85 @@ import java.util.Set;
 
 public class LocalRepository extends AbstractRepository {
 
-	private final PlanAccessor planAccessor;
-	private final PlanLocator planLocator;
+    private final PlanAccessor planAccessor;
+    private final PlanLocator planLocator;
 
-	public LocalRepository(PlanAccessor planAccessor, ExpressionHandler expressionHandler) {
-		super(Set.of(RepositoryObjectReference.PLAN_ID));
-		this.planAccessor = planAccessor;
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
-		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		planLocator = new PlanLocator(planAccessor, selectorHelper);
-	}
+    public LocalRepository(PlanAccessor planAccessor, ExpressionHandler expressionHandler) {
+        super(Set.of(RepositoryObjectReference.PLAN_ID));
+        this.planAccessor = planAccessor;
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
+        SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+        planLocator = new PlanLocator(planAccessor, selectorHelper);
+    }
 
-	@Override
-	public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception {
-		String planId = getPlanId(repositoryParameters);
-		Plan plan = planAccessor.get(planId);
+    @Override
+    public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) throws Exception {
+        String planId = getPlanId(repositoryParameters);
+        Plan plan = planAccessor.get(planId);
 
-		ArtefactInfo info = new ArtefactInfo();
-		info.setName(plan.getAttributes()!=null?plan.getAttributes().get(AbstractOrganizableObject.NAME):null);
-		info.setType(AbstractArtefact.getArtefactName(plan.getRoot().getClass()));
-		return info;
-	}
+        ArtefactInfo info = new ArtefactInfo();
+        info.setName(plan.getAttributes() != null ? plan.getAttributes().get(AbstractOrganizableObject.NAME) : null);
+        info.setType(AbstractArtefact.getArtefactName(plan.getRoot().getClass()));
+        return info;
+    }
 
-	@Override
-	public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate, String actorUser) throws Exception {
-		TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
+    @Override
+    public TestSetStatusOverview getTestSetStatusOverview(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate, String actorUser) throws Exception {
+        TestSetStatusOverview testSetStatusOverview = new TestSetStatusOverview();
 
-		String planId = getPlanId(repositoryParameters);
-		Plan plan = planAccessor.get(planId);
+        String planId = getPlanId(repositoryParameters);
+        Plan plan = planAccessor.get(planId);
 
-		AbstractArtefact rootArtefact = plan.getRoot();
+        AbstractArtefact rootArtefact = plan.getRoot();
 
-		if(rootArtefact instanceof TestSet) {
-			// Perform a very basic parsing of the artefact tree to get a list of test cases referenced
-			// in this test set. Only direct children of the root node are considered
-			List<AbstractArtefact> children = rootArtefact.getChildren();
-			children.forEach(child->{
-				if(child instanceof TestCase) {
-					addTestRunStatus(testSetStatusOverview.getRuns(), child);
-				} else if(child instanceof CallPlan) {
-					Plan referencedPlan = planLocator.selectPlan((CallPlan)child, objectPredicate, null);
-					if (referencedPlan != null) {
-						AbstractArtefact root = referencedPlan.getRoot();
-						if (root instanceof TestCase) {
-							addTestRunStatus(testSetStatusOverview.getRuns(), root);
-						}
-					}
-				}
-			});
-		}
-		return testSetStatusOverview;
-	}
+        if (rootArtefact instanceof TestSet) {
+            // Perform a very basic parsing of the artefact tree to get a list of test cases referenced
+            // in this test set. Only direct children of the root node are considered
+            List<AbstractArtefact> children = rootArtefact.getChildren();
+            children.forEach(child -> {
+                if (child instanceof TestCase) {
+                    addTestRunStatus(testSetStatusOverview.getRuns(), child);
+                } else if (child instanceof CallPlan) {
+                    Plan referencedPlan = planLocator.selectPlan((CallPlan) child, objectPredicate, null);
+                    if (referencedPlan != null) {
+                        AbstractArtefact root = referencedPlan.getRoot();
+                        if (root instanceof TestCase) {
+                            addTestRunStatus(testSetStatusOverview.getRuns(), root);
+                        }
+                    }
+                }
+            });
+        }
+        return testSetStatusOverview;
+    }
 
-	public static String getPlanId(Map<String, String> repositoryParameters) {
-		return repositoryParameters.get(RepositoryObjectReference.PLAN_ID);
-	}
+    public static String getPlanId(Map<String, String> repositoryParameters) {
+        return repositoryParameters.get(RepositoryObjectReference.PLAN_ID);
+    }
 
-	private void addTestRunStatus(List<TestRunStatus> testRunStatusList, AbstractArtefact abstractArtefact) {
-		testRunStatusList.add(new TestRunStatus(abstractArtefact.getId().toString(),
-				abstractArtefact.getAttributes().get(AbstractOrganizableObject.NAME), ReportNodeStatus.NORUN));
-	}
+    private void addTestRunStatus(List<TestRunStatus> testRunStatusList, AbstractArtefact abstractArtefact) {
+        testRunStatusList.add(new TestRunStatus(abstractArtefact.getId().toString(),
+            abstractArtefact.getAttributes().get(AbstractOrganizableObject.NAME), ReportNodeStatus.NORUN));
+    }
 
-	@Override
-	public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters)
-			throws Exception {
-		ImportResult importResult = new ImportResult();
-		String planId = getPlanId(context.getExecutionParameters().getRepositoryObject().getRepositoryParameters());
-		Plan plan = context.getPlanAccessor().get(planId);
-		if(plan == null) {
-			importResult.setErrors(List.of("The plan with id '" + planId + "' does not exist. It may have been deleted."));
-			importResult.setSuccessful(false);
-		} else {
-			importResult.setPlanId(planId);
-			importResult.setSuccessful(true);
-		}
-		return importResult;
-	}
+    @Override
+    public ImportResult importArtefact(ExecutionContext context, Map<String, String> repositoryParameters)
+        throws Exception {
+        ImportResult importResult = new ImportResult();
+        String planId = getPlanId(context.getExecutionParameters().getRepositoryObject().getRepositoryParameters());
+        Plan plan = context.getPlanAccessor().get(planId);
+        if (plan == null) {
+            importResult.setErrors(List.of("The plan with id '" + planId + "' does not exist. It may have been deleted."));
+            importResult.setSuccessful(false);
+        } else {
+            importResult.setPlanId(planId);
+            importResult.setSuccessful(true);
+        }
+        return importResult;
+    }
 
-	@Override
-	public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception {
-		// The local repository doesn't perform any export
-	}
+    @Override
+    public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) throws Exception {
+        // The local repository doesn't perform any export
+    }
 }

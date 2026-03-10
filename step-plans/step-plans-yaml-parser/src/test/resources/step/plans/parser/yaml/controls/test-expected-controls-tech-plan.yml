@@ -24,7 +24,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -59,7 +59,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -86,7 +86,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -131,7 +131,7 @@ root:
             expression: ""
           useDynamicName: false
           workArtefact: false
-          children: []
+          children: [ ]
           skipNode:
             dynamic: false
             value: false
@@ -189,7 +189,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -215,7 +215,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -239,7 +239,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -294,7 +294,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -317,7 +317,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: true
@@ -349,7 +349,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -401,7 +401,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -453,7 +453,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -477,7 +477,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -497,7 +497,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -532,7 +532,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -555,7 +555,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -576,7 +576,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -601,7 +601,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -627,7 +627,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -653,7 +653,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -692,7 +692,7 @@ root:
             expression: ""
           useDynamicName: false
           workArtefact: false
-          children: []
+          children: [ ]
           skipNode:
             dynamic: false
             value: false
@@ -729,7 +729,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -760,7 +760,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -780,7 +780,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -800,7 +800,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -823,7 +823,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -870,7 +870,7 @@ root:
         expression: ""
       useDynamicName: false
       workArtefact: false
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false

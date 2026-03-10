@@ -51,7 +51,7 @@ public class MavenArtifactClient {
     public MavenArtifactClient(String settingsXml, File localRepository, Duration maxAge, Duration cleanupFrequency) throws SettingsBuildingException {
         // SNAPSHOT jar files cannot be read without this property
         // let the user a chance to still override it
-        if (System.getProperty(AETHER_SNAPSHOT_PROPERTY)==null) {
+        if (System.getProperty(AETHER_SNAPSHOT_PROPERTY) == null) {
             System.setProperty(AETHER_SNAPSHOT_PROPERTY, "false");
         }
 
@@ -88,7 +88,7 @@ public class MavenArtifactClient {
         org.eclipse.aether.repository.Proxy result = null;
         if (proxy != null) {
             Authentication auth = new AuthenticationBuilder().addUsername(proxy.getUsername())
-                    .addPassword(proxy.getPassword()).build();
+                .addPassword(proxy.getPassword()).build();
             result = new org.eclipse.aether.repository.Proxy(proxy.getProtocol(), proxy.getHost(), proxy.getPort(), auth);
         }
         return result;
@@ -135,11 +135,11 @@ public class MavenArtifactClient {
             try {
                 // Use the correct DefaultMetadata constructor
                 Metadata metadata = new DefaultMetadata(
-                        artifact.getGroupId(),
-                        artifact.getArtifactId(),
-                        artifact.getVersion(),
-                        "maven-metadata.xml",
-                        Metadata.Nature.RELEASE_OR_SNAPSHOT
+                    artifact.getGroupId(),
+                    artifact.getArtifactId(),
+                    artifact.getVersion(),
+                    "maven-metadata.xml",
+                    Metadata.Nature.RELEASE_OR_SNAPSHOT
                 );
 
                 MetadataRequest metadataRequest = new MetadataRequest();
@@ -147,7 +147,7 @@ public class MavenArtifactClient {
                 metadataRequest.setRepository(repository); // Singular!
 
                 List<MetadataResult> results = repositorySystem.resolveMetadata(
-                        session, Collections.singletonList(metadataRequest));
+                    session, Collections.singletonList(metadataRequest));
 
                 if (!results.isEmpty() && !results.get(0).isMissing()) {
                     File metadataFile = results.get(0).getMetadata().getFile();
@@ -157,7 +157,7 @@ public class MavenArtifactClient {
                 }
             } catch (Exception e) {
                 logger.warn("Failed to fetch metadata from repository {}: {}",
-                        repository.getId(), e.getMessage());
+                    repository.getId(), e.getMessage());
             }
         }
         logger.warn("Failed to find metadata for artifact {}:{}:{}", artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
@@ -196,7 +196,6 @@ public class MavenArtifactClient {
                     logger.warn("Invalid build number in metadata: {}", buildNumberStr);
                 }
             }
-
 
 
             long snapshotRemoteTimestamp = timestampToEpochMillis(timestamp);
@@ -298,7 +297,7 @@ public class MavenArtifactClient {
                 List<org.apache.maven.settings.Repository> repositories = profile.getRepositories();
                 for (org.apache.maven.settings.Repository repository : repositories) {
                     settingsRepos.add(new RemoteRepository.Builder(repository.getId(), repository.getLayout(), repository
-                            .getUrl()).build());
+                        .getUrl()).build());
                 }
             }
         }
@@ -335,9 +334,9 @@ public class MavenArtifactClient {
         LazyAuthenticationSelector authSelector = new LazyAuthenticationSelector(mirrorSelector);
         for (Server server : settings.getServers()) {
             authSelector.add(
-                    server.getId(),
-                    new AuthenticationBuilder().addUsername(server.getUsername()).addPassword(server.getPassword())
-                            .addPrivateKey(server.getPrivateKey(), server.getPassphrase()).build());
+                server.getId(),
+                new AuthenticationBuilder().addUsername(server.getUsername()).addPassword(server.getPassword())
+                    .addPrivateKey(server.getPrivateKey(), server.getPassphrase()).build());
         }
         return authSelector;
     }
@@ -348,7 +347,7 @@ public class MavenArtifactClient {
         if (mirrors != null) {
             for (Mirror mirror : mirrors) {
                 mirrorSelector.add(mirror.getId(), mirror.getUrl(), mirror.getLayout(), false, mirror.getMirrorOf(),
-                        mirror.getMirrorOfLayouts());
+                    mirror.getMirrorOfLayouts());
             }
         }
         return mirrorSelector;

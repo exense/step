@@ -38,9 +38,9 @@ public class CommonFilteredFieldProcessor implements JsonSchemaFieldProcessor {
 
     private boolean isIgnoredField(Field field) {
         return field.isSynthetic()
-                || field.isAnnotationPresent(JsonIgnore.class)
-                || field.getType().equals(Object.class)
-                || Exception.class.isAssignableFrom(field.getType())
-                || Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers());
+            || field.isAnnotationPresent(JsonIgnore.class)
+            || field.getType().equals(Object.class)
+            || Exception.class.isAssignableFrom(field.getType())
+            || Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers());
     }
 }

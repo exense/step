@@ -69,7 +69,7 @@ public class JUnitReportCreator implements ReportCreator {
 
                     // according to the structure of zipped report, the main junit report is called like {timestamp}-junit.xml
                     File[] xmlReports = tempFolderToUnzip.listFiles((dir, name) -> name.matches(".*-junit.xml"));
-                    if(xmlReports != null) {
+                    if (xmlReports != null) {
                         for (File xmlReport : xmlReports) {
                             logging.logInfo("Junit report:\n" + new String(java.nio.file.Files.readAllBytes(xmlReport.toPath())), null);
                         }

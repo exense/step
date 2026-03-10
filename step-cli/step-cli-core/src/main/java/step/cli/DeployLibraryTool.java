@@ -41,16 +41,16 @@ public class DeployLibraryTool extends AbstractCliTool<LibraryDeployParameters> 
 
             try {
                 updateResult = automationPackageClient.createOrUpdateAutomationPackageLibrary(
-                        createLibrarySource(parameters.getLibraryFile(), mavenPackageLibraryXml, null), parameters.getManagedLibraryName());
+                    createLibrarySource(parameters.getLibraryFile(), mavenPackageLibraryXml, null), parameters.getManagedLibraryName());
 
                 if (updateResult != null && updateResult.getId() != null) {
                     logInfo("Library successfully uploaded. With status " + updateResult.getStatus() + ". Id: " + updateResult.getId() +
-                            (updateResult.getWarnings().isEmpty() ? "" : ". Warnings: " + updateResult.getWarnings()), null);
+                        (updateResult.getWarnings().isEmpty() ? "" : ". Warnings: " + updateResult.getWarnings()), null);
                 } else {
                     throw new StepCliExecutionException("Unexpected response from Step. The returned library id is null. Please check the controller logs.");
                 }
-            } catch (AutomationPackageClientException e){
-               throw new StepCliExecutionException("Error while uploading the library to Step: " + e.getMessage());
+            } catch (AutomationPackageClientException e) {
+                throw new StepCliExecutionException("Error while uploading the library to Step: " + e.getMessage());
             }
         } catch (StepCliExecutionException e) {
             throw e;

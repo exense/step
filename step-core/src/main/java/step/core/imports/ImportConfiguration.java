@@ -25,44 +25,44 @@ import step.core.objectenricher.ObjectEnricher;
 
 public class ImportConfiguration {
 
-	private final File file;
-	private final ObjectEnricher objectEnricher;
-	private final List<String> entitiesFilter;
-	private final boolean overwrite;
-	private final String username;
+    private final File file;
+    private final ObjectEnricher objectEnricher;
+    private final List<String> entitiesFilter;
+    private final boolean overwrite;
+    private final String username;
 
-	public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
-							   boolean overwrite) {
-		this(file, objectEnricher, entitiesFilter, overwrite, null);
-	}
+    public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
+                               boolean overwrite) {
+        this(file, objectEnricher, entitiesFilter, overwrite, null);
+    }
 
-	public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
-							   boolean overwrite, String username) {
-		super();
-		this.file = file;
-		this.objectEnricher = objectEnricher;
-		this.entitiesFilter = entitiesFilter;
-		this.overwrite = overwrite;
-		this.username = username;
-	}
+    public ImportConfiguration(File file, ObjectEnricher objectEnricher, List<String> entitiesFilter,
+                               boolean overwrite, String username) {
+        super();
+        this.file = file;
+        this.objectEnricher = objectEnricher;
+        this.entitiesFilter = entitiesFilter;
+        this.overwrite = overwrite;
+        this.username = username;
+    }
 
-	public File getFile() {
-		return file;
-	}
+    public File getFile() {
+        return file;
+    }
 
-	public ObjectEnricher getObjectEnricher() {
-		return objectEnricher;
-	}
+    public ObjectEnricher getObjectEnricher() {
+        return objectEnricher;
+    }
 
-	public List<String> getEntitiesFilter() {
-		return entitiesFilter;
-	}
+    public List<String> getEntitiesFilter() {
+        return entitiesFilter;
+    }
 
-	public boolean isOverwrite() {
-		return overwrite;
-	}
+    public boolean isOverwrite() {
+        return overwrite;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public String getUsername() {
+        return username;
+    }
 }

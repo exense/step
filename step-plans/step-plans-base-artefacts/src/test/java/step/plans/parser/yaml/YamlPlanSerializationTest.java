@@ -22,7 +22,7 @@ public class YamlPlanSerializationTest {
         ObjectMapper objectMapper = DefaultJacksonMapperProvider.getObjectMapper(new YAMLFactory());
 
         YamlPlan yamlPlan = objectMapper.readValue(
-                "agents:\n" +
+            "agents:\n" +
                 "- replicas: 0\n" +
                 "  pool: \"hhh\"\n" +
                 "  image: null\n", YamlPlan.class);
@@ -30,7 +30,7 @@ public class YamlPlanSerializationTest {
         objectMapper.writeValueAsString(yamlPlan);
 
         yamlPlan = objectMapper.readValue(
-                "agents: auto_detect\n", YamlPlan.class);
+            "agents: auto_detect\n", YamlPlan.class);
 
         objectMapper.writeValueAsString(yamlPlan);
 

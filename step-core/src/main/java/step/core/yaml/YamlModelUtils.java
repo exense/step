@@ -30,11 +30,11 @@ public class YamlModelUtils {
 
     public static <T> List<Class<? extends T>> scanYamlModels(Class<T> applicableClass) {
         return CachedAnnotationScanner.getClassesWithAnnotation(YamlModel.LOCATION, YamlModel.class, Thread.currentThread().getContextClassLoader())
-                .stream()
-                .filter(applicableClass::isAssignableFrom)
-                .map(c -> (Class<? extends T>) c)
-                .sorted(Comparator.comparing(Class::getSimpleName))
-                .collect(Collectors.toList());
+            .stream()
+            .filter(applicableClass::isAssignableFrom)
+            .map(c -> (Class<? extends T>) c)
+            .sorted(Comparator.comparing(Class::getSimpleName))
+            .collect(Collectors.toList());
     }
 
     public static <T> List<Class<? extends T>> scanNamedYamlModels(Class<T> applicableClass) {
@@ -45,7 +45,7 @@ public class YamlModelUtils {
         boolean annotationPresent = yamlModelClass.isAnnotationPresent(YamlModel.class);
         String nameFromAnnotation = null;
         if (annotationPresent) {
-            if(!yamlModelClass.getAnnotation(YamlModel.class).named()){
+            if (!yamlModelClass.getAnnotation(YamlModel.class).named()) {
                 return null;
             }
             nameFromAnnotation = yamlModelClass.getAnnotation(YamlModel.class).name();
