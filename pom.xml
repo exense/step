@@ -45,14 +45,14 @@
     <maven.compiler.target>11</maven.compiler.target>
     <maven.compiler.release>11</maven.compiler.release>
     <!-- internal dependencies -->
-    <step-grid.version>0.0.0-MASTER-SNAPSHOT</step-grid.version>
-    <step-framework.version>0.0.0-MASTER-SNAPSHOT</step-framework.version>
+    <step-grid.version>0.0.0-SED-4606-SNAPSHOT</step-grid.version>
+    <step-framework.version>0.0.0-SED-4606-SNAPSHOT</step-framework.version>
 
     <!-- external, non-transitive, dependencies -->
     <dep.groovy.version>5.0.4</dep.groovy.version>
     <dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
     <!-- When updating POI, see where this reference is used and read the comments there! -->
-    <dep.apache-poi.version>5.2.3</dep.apache-poi.version>
+    <dep.apache-poi.version>5.5.1</dep.apache-poi.version>
     <dep.aether.version>1.1.0</dep.aether.version>
 
     <!-- maven build dependencies -->
@@ -304,7 +304,7 @@
         <!-- When updating POI, check if the definition right below is still necessary!!! -->
       </dependency>
 
-      <!-- For POI: force javaparser-core to the higher version from groovy (POI references 3.24.4) -->
+      <!-- For POI: force javaparser-core to the higher version from groovy (POI references 3.26.2) -->
       <dependency>
         <groupId>com.github.javaparser</groupId>
         <artifactId>javaparser-core</artifactId>
