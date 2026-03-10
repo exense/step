@@ -1,0 +1,8 @@
+{
+  "keyString": "valueString",
+  "nested": {
+    "nestedKey": "nestedValue"
+  },
+  "booleanKey": true,
+  "numberKey": 1
+}

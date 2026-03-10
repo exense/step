@@ -156,12 +156,19 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             T sourceEntity = (sourceId != null) ? accessor.get(sourceId) : null;
             User user = getSession().getUser();
             String username = user.getUsername();
-            ObjectId userId = user.getId();
+            String userId = user.getId().toHexString();
             Date lastModificationDate = new Date();
-            if (sourceEntity == null) {
+            //If source is null or not an instance of AbstractTrackedObject, we set creation metadata
+            if (!(sourceEntity instanceof AbstractTrackedObject)) {
                 newTrackedEntity.setCreationDate(lastModificationDate);
                 newTrackedEntity.setCreationUser(username);
                 newTrackedEntity.setCreationUserId(userId);
+            } else {
+                //In case of update we make sure we keep the creation metadata from the DB info
+                AbstractTrackedObject sourceTrackedEntity = (AbstractTrackedObject) sourceEntity;
+                newTrackedEntity.setCreationDate(sourceTrackedEntity.getCreationDate());
+                newTrackedEntity.setCreationUser(sourceTrackedEntity.getCreationUser());
+                newTrackedEntity.setCreationUserId(sourceTrackedEntity.getCreationUserId());
             }
             newTrackedEntity.setLastModificationDate(lastModificationDate);
             newTrackedEntity.setLastModificationUser(username);

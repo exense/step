@@ -8,14 +8,16 @@ import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import step.controller.services.entities.AbstractEntityServices;
-import step.core.access.User;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AuthorizationException;
 import step.core.entities.EntityConstants;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Singleton
@@ -26,6 +28,7 @@ import java.util.Optional;
 public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
 
     private static final String SHARED_RIGHT_SUFFIX = "shared";
+    public static final String READ_RIGHT = "read";
     public static final String DELETE_RIGHT = "delete";
     public static final String WRITE_RIGHT = "write";
     public static final String REPORT_LAYOUT_RIGHT = "reportLayout";
@@ -42,32 +45,76 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
         reportLayoutAccessor = getContext().require(ReportLayoutAccessor.class);
     }
 
+    @Override
+    public ReportLayout get(String id) {
+        ReportLayout reportLayout = super.get(id);
+        checkLayoutRight(reportLayout, READ_RIGHT);
+        return reportLayout;
+    }
+
+    @Override
+    public List<ReportLayout> findByIds(List<String> ids) {
+        List<ReportLayout> byIds = super.findByIds(ids);
+        byIds.forEach(r -> checkLayoutRight(r, READ_RIGHT));
+        return byIds;
+    }
+
+    @Override
+    public Map<String, String> findNamesByIds(List<String> ids) {
+        return reportLayoutAccessor.findByIds(ids).peek(l -> checkLayoutRight(l, READ_RIGHT)).collect(Collectors.toMap(a -> a.getId().toHexString(), a ->
+                a.getAttribute(AbstractOrganizableObject.NAME)
+        ));
+    }
+
+    @Override
+    public List<ReportLayout> findManyByAttributes(Map<String, String> attributes) {
+        return super.findManyByAttributes(attributes).stream().filter(this::canReadLayout).collect(Collectors.toList());
+    }
+
+    private boolean canReadLayout(ReportLayout r) {
+        try {
+            checkLayoutRight(r, READ_RIGHT);
+            return true;
+        } catch (AuthorizationException e) {
+            return false;
+        }
+    }
+
     @Operation(description = "Returns all accessible report layouts.")
     @GET
     @Path("/list")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right="{entity}-read")
     public List<ReportLayout> getAllReportLayouts() {
-        return reportLayoutAccessor.getAccessibleReportLayoutsDefinitions(getSession().getUser().getUsername());
+        return reportLayoutAccessor.getAccessibleReportLayoutsDefinitions(getSession().getUser().getId().toHexString());
     }
 
     @Override
     public ReportLayout save(ReportLayout reportLayout) {
         //Only check additional specific rights when updating layout
-        Optional.ofNullable(get(reportLayout.getId().toHexString())).ifPresent(entity -> checkLayoutRight(entity, WRITE_RIGHT));
+        Optional.ofNullable(super.get(reportLayout.getId().toHexString())).ifPresent(entity -> checkLayoutRight(entity, WRITE_RIGHT));
         return super.save(reportLayout);
     }
 
     private void checkLayoutRight(ReportLayout reportLayout, String right) {
-        //If user is the owner, he is always allowed (if he has the base access right role)
-        User currentUser = this.getSession().getUser();
-        if (!reportLayout.getCreationUserId().equals(currentUser.getId())) {
-            if (reportLayout.shared) {
-                //Check specific access right for shared layouts
-                checkRights(REPORT_LAYOUT_RIGHT + "-" + right + "-" + SHARED_RIGHT_SUFFIX);
-            } else {
-                //The layout isn't shared and the current user is not the owner, forbid access
-                throw new AuthorizationException("This is a private layout owned by " + reportLayout.getCreationUser() + ", you have no permission to modify it.");
+        if (ReportLayout.ReportLayoutVisibility.Preset.equals(reportLayout.visibility)) {
+            //Preset layouts can be read by any user with the base right, modifications are never allowed
+            if (!READ_RIGHT.equals(right)) {
+                throw new AuthorizationException("Modifying a preset layout is not allowed.");
+            }
+        } else {
+            //If the current user is the owner, he is always allowed (if he has the base access right role)
+            if (!reportLayout.getCreationUserId().equals(this.getSession().getUser().getId().toHexString())) {
+                if (ReportLayout.ReportLayoutVisibility.Shared.equals(reportLayout.visibility)) {
+                    //Base read right automatically grant access to reading shared dashboard, write and delete require specific rights
+                    if (!READ_RIGHT.equals(right)) {
+                        //Check specific access right for shared layouts
+                        checkRights(REPORT_LAYOUT_RIGHT + "-" + SHARED_RIGHT_SUFFIX + "-" + right);
+                    }
+                } else {
+                    //The layout isn't shared, the current user is not the owner, and he doesn't have the "all" right
+                    throw new AuthorizationException("This is a private layout owned by " + reportLayout.getCreationUser() + ", you have no permission to " + right + " it.");
+                }
             }
         }
     }
@@ -82,7 +129,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     @Override
     protected ReportLayout cloneEntity(ReportLayout entity) {
         ReportLayout clone = super.cloneEntity(entity);
-        clone.setShared(false);
+        clone.visibility = ReportLayout.ReportLayoutVisibility.Private;
         return clone;
     }
 
@@ -106,12 +153,12 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     @Secured(right = "{entity}-write")
     @Path("{id}/share")
     public void shareReportLayout(@PathParam("id") String id) {
-        changeSharedState(id, true);
+        changeLayoutVisibility(id, ReportLayout.ReportLayoutVisibility.Shared);
     }
 
-    private void changeSharedState(String id, boolean share) {
+    private void changeLayoutVisibility(String id, ReportLayout.ReportLayoutVisibility visibility) {
         ReportLayout reportLayout = getEntity(id);
-        reportLayout.setShared(share);
+        reportLayout.visibility = visibility;
         save(reportLayout);
     }
 
@@ -121,6 +168,6 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     @Secured(right = "{entity}-write")
     @Path("{id}/unshare")
     public void unshareReportLayout(@PathParam("id") String id) {
-        changeSharedState(id, false);
+        changeLayoutVisibility(id, ReportLayout.ReportLayoutVisibility.Private);
     }
 }

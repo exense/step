@@ -1,34 +1,24 @@
 package step.core.reporting;
 
-import java.util.Map;
-
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.json.JsonObject;
 import step.core.accessors.AbstractTrackedObject;
 
 public class ReportLayout extends AbstractTrackedObject {
 
-    public static final String FIELD_IS_SHARED = "shared";
-
-    @NotNull
-    Map<String, Object> layout;
-    boolean shared = false;
-
-    public ReportLayout() {
+    public enum ReportLayoutVisibility {
+        Preset, Private, Shared
     }
 
-    public Map<String, Object> getLayout() {
-        return layout;
-    }
+    public static final String FIELD_VISIBILITY = "visibility";
 
-    public void setLayout(Map<String, Object> layout) {
+    public JsonObject layout;
+    public ReportLayoutVisibility visibility;
+
+    @JsonCreator
+    public ReportLayout(@JsonProperty("layout") JsonObject layout, @JsonProperty(value = "visibility", defaultValue = "Private") ReportLayoutVisibility visibility) {
         this.layout = layout;
-    }
-
-    public boolean isShared() {
-        return shared;
-    }
-
-    public void setShared(boolean shared) {
-        this.shared = shared;
+        this.visibility = visibility != null ? visibility : ReportLayoutVisibility.Private;
     }
 }
