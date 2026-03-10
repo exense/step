@@ -204,7 +204,7 @@ public class ControllerServices extends AbstractStepServices {
         try {
             return getContext().getRepositoryObjectManager().getArtefactLinks(ref);
         } catch (Exception e) {
-            throw new WebApplicationException(Response.status(500).entity("Unable to retrieve artefact." + e.getMessage()).type("text/plain").build());
+            throw new WebApplicationException(Response.status(500).entity("Unable to retrieve artefact links:" + e.getMessage()).type("text/plain").build());
         }
     }
 
