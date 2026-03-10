@@ -37,20 +37,20 @@ public class ReportTableTest {
     @Before
     public void before() {
         engine = new ExecutionEngine.Builder().withPlugin(new BaseArtefactPlugin()).withPlugin(new ThreadPoolPlugin())
-                .withPlugin(new FunctionPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build();
+            .withPlugin(new FunctionPlugin()).withPlugin(new TokenForecastingExecutionPlugin()).build();
     }
 
     @Test
     public void testReportTable() throws TableServiceException {
         Plan plan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.for_(1, 10 ,3))
-                .add(echo("'test'"))
-                .startBlock(BaseArtefacts.for_(1, 5))
-                .add(set("key","'value'"))
-                .add(echo("'Echo 2'"))
-                .add(echo("'Echo 3'"))
-                .endBlock()
-                .endBlock().build();
+            .startBlock(BaseArtefacts.for_(1, 10, 3))
+            .add(echo("'test'"))
+            .startBlock(BaseArtefacts.for_(1, 5))
+            .add(set("key", "'value'"))
+            .add(echo("'Echo 2'"))
+            .add(echo("'Echo 3'"))
+            .endBlock()
+            .endBlock().build();
         PlanRunnerResult result = engine.execute(plan);
 
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
@@ -61,12 +61,12 @@ public class ReportTableTest {
         assertEquals(50, aggregatedReportView.children.get(1).children.get(0).countTotal());
         assertEquals(50, aggregatedReportView.children.get(1).children.get(1).countTotal());
         assertEquals("For: 1x: PASSED\n" +
-                        " Echo: 10x: PASSED\n" +
-                        " For: 10x: PASSED\n" +
-                        "  Set: 50x: PASSED\n" +
-                        "  Echo: 50x: PASSED\n" +
-                        "  Echo: 50x: PASSED\n",
-                aggregatedReportView.toString());
+                " Echo: 10x: PASSED\n" +
+                " For: 10x: PASSED\n" +
+                "  Set: 50x: PASSED\n" +
+                "  Echo: 50x: PASSED\n" +
+                "  Echo: 50x: PASSED\n",
+            aggregatedReportView.toString());
 
         // Test partial aggregated tree for single Echo (echo in the outer for loop)
         ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.EchoReportNode").findFirst().orElseThrow(() -> new RuntimeException("No echo report aggregatedReportView found"));
@@ -74,17 +74,18 @@ public class ReportTableTest {
         AggregatedReport aggregatedReport = aggregatedReportViewBuilder.buildAggregatedReport(aggregatedReportViewRequest);
 
         assertEquals("For: *x\n" +
-                        " Echo: 1x: PASSED > test\n" +
-                        " For: 1x: PASSED\n" +
-                        "  Set: 5x: PASSED\n" +
-                        "  Echo: 5x: PASSED\n" +
-                        "  Echo: 5x: PASSED\n",
-                aggregatedReport.aggregatedReportView.toString());
+                " Echo: 1x: PASSED > test\n" +
+                " For: 1x: PASSED\n" +
+                "  Set: 5x: PASSED\n" +
+                "  Echo: 5x: PASSED\n" +
+                "  Echo: 5x: PASSED\n",
+            aggregatedReport.aggregatedReportView.toString());
 
         //Test table services
         TableRegistry tableRegistry = new TableRegistry();
         tableRegistry.register("reports", new Table<>(engine.getExecutionEngineContext().getReportAccessor().getCollectionDriver(), "execution-read", false)
-                .withTableFiltersFactory(new ReportNodeTableFilterFactory()).withResultListFactory(()->new ArrayList<>(){}));
+            .withTableFiltersFactory(new ReportNodeTableFilterFactory()).withResultListFactory(() -> new ArrayList<>() {
+            }));
         TableService tableService = new TableService(tableRegistry, null, new NoAuthorizationManager());
         TableRequest tableRequest = new TableRequest();
         tableRequest.setFilters(List.of(new OQLFilter()));

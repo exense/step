@@ -12,12 +12,12 @@ public class MavenArtifactIdentifierFromXmlParserTest {
     public void parse() throws JsonProcessingException {
         MavenArtifactIdentifierFromXmlParser parser = new MavenArtifactIdentifierFromXmlParser();
         String xml = "<dependency>\n" +
-                "<groupId>org.junit.jupiter</groupId>\n" +
-                "<artifactId>junit-jupiter-api</artifactId>\n" +
-                "<version>5.12.1</version>\n" +
-                "<scope>test</scope>\n" +
-                "<classifier>tests</classifier>\n" +
-                "</dependency>";
+            "<groupId>org.junit.jupiter</groupId>\n" +
+            "<artifactId>junit-jupiter-api</artifactId>\n" +
+            "<version>5.12.1</version>\n" +
+            "<scope>test</scope>\n" +
+            "<classifier>tests</classifier>\n" +
+            "</dependency>";
         MavenArtifactIdentifier result = parser.parse(xml);
 
         Assert.assertEquals("org.junit.jupiter", result.getGroupId());

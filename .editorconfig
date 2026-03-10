@@ -1,0 +1,77 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = off
+
+########################################
+# Java
+########################################
+[*.java]
+indent_style = space
+indent_size = 4
+max_line_length = off
+
+########################################
+# XML (POM files, Spring XML, misc)
+########################################
+[*.xml]
+indent_style = space
+indent_size = 2
+
+########################################
+# JSON
+########################################
+[*.json]
+indent_style = space
+indent_size = 2
+
+########################################
+# YAML (docker-compose, GitHub actions, configs)
+# YAML SHOULD NEVER USE TABS — many parsers reject them
+########################################
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+
+########################################
+# Markdown
+# Keep indentation small; used mainly for lists and fenced blocks.
+########################################
+[*.md]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = false
+
+# IntelliJ-specific settings, fixing some reformatting quirks
+ij_markdown_wrap_text_if_long = false
+ij_markdown_keep_line_breaks_inside_text_blocks = true
+ij_markdown_keep_indents_on_empty_lines = true
+
+ij_formatter_tags_enabled = true
+ij_formatter_off_tag = @formatter:off
+ij_formatter_on_tag = @formatter:on
+# If IntelliJ still keeps wrongly reformatting something, use these tags as a last resort, like so:
+# <!--@formatter:off-->
+# Anything between these tags is not reformatted at all.
+# <!--@formatter:on-->
+
+
+########################################
+# Properties files
+# Key-value pairs; indenting rarely matters but 2 spaces is common.
+########################################
+[*.properties]
+indent_style = space
+indent_size = 2
+
+########################################
+# HTML (simple default)
+########################################
+[*.html]
+indent_style = space
+indent_size = 2

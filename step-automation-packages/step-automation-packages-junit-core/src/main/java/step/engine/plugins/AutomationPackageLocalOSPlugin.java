@@ -57,15 +57,15 @@ public class AutomationPackageLocalOSPlugin extends AbstractExecutionEnginePlugi
             });
 
             context.computeIfAbsent(
-                    AutomationPackageManager.class,
-                    automationPackageManagerClass -> AutomationPackageManager.createLocalAutomationPackageManager(
-                            context.require(FunctionTypeRegistry.class),
-                            functionAccessor,
-                            context.getPlanAccessor(),
-                            resourceManager,
-                            automationPackageReaderRegistry,
-                            hookRegistry
-                    )
+                AutomationPackageManager.class,
+                automationPackageManagerClass -> AutomationPackageManager.createLocalAutomationPackageManager(
+                    context.require(FunctionTypeRegistry.class),
+                    functionAccessor,
+                    context.getPlanAccessor(),
+                    resourceManager,
+                    automationPackageReaderRegistry,
+                    hookRegistry
+                )
             );
         }
     }

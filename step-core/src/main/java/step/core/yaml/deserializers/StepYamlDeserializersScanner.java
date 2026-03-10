@@ -45,7 +45,7 @@ public class StepYamlDeserializersScanner {
                 Arrays.stream(annotation.targetClasses()).forEach(aClass -> {
                     try {
                         StepYamlDeserializer<Object> newDeserializer = (StepYamlDeserializer<Object>) annotatedClass.getConstructor(ObjectMapper.class).newInstance(yamlObjectMapper);
-                        if(configurators != null) {
+                        if (configurators != null) {
                             for (Consumer<StepYamlDeserializer<?>> configurator : configurators) {
                                 configurator.accept(newDeserializer);
                             }
@@ -68,11 +68,11 @@ public class StepYamlDeserializersScanner {
         return scanDeserializerAddons(yamlObjectMapper, null);
     }
 
-    public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper){
+    public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper) {
         return addAllDeserializerAddonsToModule(module, yamlObjectMapper, null);
     }
 
-    public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper, List<Consumer<StepYamlDeserializer<?>>> configurators){
+    public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper, List<Consumer<StepYamlDeserializer<?>>> configurators) {
         SimpleModule res = module;
         for (StepYamlDeserializersScanner.DeserializerBind<?> deser : StepYamlDeserializersScanner.scanDeserializerAddons(yamlObjectMapper, configurators)) {
             res = module.addDeserializer((Class<Object>) deser.clazz, deser.deserializer);

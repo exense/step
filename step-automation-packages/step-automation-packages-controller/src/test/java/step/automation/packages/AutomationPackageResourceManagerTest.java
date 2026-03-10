@@ -57,7 +57,7 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
         MockedAutomationPackageProvidersResolver providersResolver = (MockedAutomationPackageProvidersResolver) manager.getProvidersResolver();
         Long firstTimestamp = System.currentTimeMillis();
         providersResolver.getMavenArtifactMocks().put(sampleSnapshot, new ResolvedMavenArtifact(automationPackageJar, new SnapshotMetadata("some timestamp", firstTimestamp, 1, true)));
-        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot,new ResolvedMavenArtifact( kwLibSnapshotJar, new SnapshotMetadata("some timestamp", firstTimestamp, 1, true)));
+        providersResolver.getMavenArtifactMocks().put(kwLibSnapshot, new ResolvedMavenArtifact(kwLibSnapshotJar, new SnapshotMetadata("some timestamp", firstTimestamp, 1, true)));
 
         AutomationPackageUpdateParameter apUpdateParams = new AutomationPackageUpdateParameterBuilder().forJunit().build();
 
@@ -66,10 +66,10 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
 
         // 1. UPLOAD LIB RESOURCE
         Resource uploadedResource = manager.getAutomationPackageResourceManager().uploadOrReuseAutomationPackageLibrary(
-                manager.getAutomationPackageLibraryProvider(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot), o -> true),
-                null,
-                apUpdateParams,
-                false, false
+            manager.getAutomationPackageLibraryProvider(AutomationPackageFileSource.withMavenIdentifier(kwLibSnapshot), o -> true),
+            null,
+            apUpdateParams,
+            false, false
         );
         ResourceRevisionFileHandle resourceFileHandleBeforeRefresh = resourceManager.getResourceFile(uploadedResource.getId().toHexString());
         log.info("Resource after the first upload: {}", resourceFileHandleBeforeRefresh.getResourceFile().getAbsolutePath());
@@ -83,10 +83,10 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
 
         // 2. CREATE LINKED AUTOMATION PACKAGE
         AutomationPackageUpdateResult createdPackage = manager.createOrUpdateAutomationPackage(
-                new AutomationPackageUpdateParameterBuilder().forJunit()
-                        .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
-                        .withApLibrarySource(AutomationPackageFileSource.withResourceId(uploadedResource.getId().toString()))
-                        .build()
+            new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(AutomationPackageFileSource.withMavenIdentifier(sampleSnapshot))
+                .withApLibrarySource(AutomationPackageFileSource.withResourceId(uploadedResource.getId().toString()))
+                .build()
         );
         assertEquals(CREATED, createdPackage.getStatus());
         AutomationPackage apBeforeRefresh = manager.getAutomationPackageById(createdPackage.getId(), o -> true);
@@ -128,7 +128,7 @@ public class AutomationPackageResourceManagerTest extends AbstractAutomationPack
         try {
             manager.getAutomationPackageResourceManager().deleteResource(uploadedResource.getId().toHexString(), apUpdateParams.writeAccessValidator);
             Assert.fail("Automation package exception should be thrown");
-        } catch (AutomationPackageAccessException ex){
+        } catch (AutomationPackageAccessException ex) {
             log.info("Caught exception: {}", ex.getMessage());
         }
 

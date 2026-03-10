@@ -66,7 +66,7 @@ public class AutomationPackagePlansAttributesApplier {
     }
 
     protected StagingAutomationPackageContext prepareContext(AutomationPackage automationPackage, AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
-                                                      String actorUser, ObjectEnricher enricher, Map<String, Object> extensions) {
+                                                             String actorUser, ObjectEnricher enricher, Map<String, Object> extensions) {
         return new StagingAutomationPackageContext(automationPackage, operationMode, resourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
     }
 
@@ -137,9 +137,9 @@ public class AutomationPackagePlansAttributesApplier {
         Class<?> currentClass = object.getClass();
         while (currentClass != null && currentClass.getPackageName().startsWith(STEP_PACKAGE + ".")) {
             allFieldsInHierarchy.addAll(Stream.of(currentClass.getDeclaredFields())
-                    .filter(f -> !java.lang.reflect.Modifier.isStatic(f.getModifiers()))
-                    .filter(f -> f.getType().getPackageName().startsWith(STEP_PACKAGE + "."))
-                    .collect(Collectors.toList()));
+                .filter(f -> !java.lang.reflect.Modifier.isStatic(f.getModifiers()))
+                .filter(f -> f.getType().getPackageName().startsWith(STEP_PACKAGE + "."))
+                .collect(Collectors.toList()));
             currentClass = currentClass.getSuperclass();
         }
 

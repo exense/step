@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -25,72 +25,72 @@ import step.core.views.ViewModel;
 
 public class ReportNodeStatusDistribution extends ViewModel {
 
-	Map<ReportNodeStatus, Entry> distribution;
-	
-	long countForecast = 0;
-	
-	long count = 0;
-	
-	String label;
+    Map<ReportNodeStatus, Entry> distribution;
 
-	public long getCountForecast() {
-		return countForecast;
-	}
+    long countForecast = 0;
 
-	public long getCount() {
-		return count;
-	}
+    long count = 0;
 
-	public ReportNodeStatusDistribution() {
-		super();
-	}
-	
-	public ReportNodeStatusDistribution(Map<ReportNodeStatus, Entry> progress) {
-		super();
-		this.distribution = progress;
-	}
+    String label;
 
-	public Map<ReportNodeStatus, Entry> getDistribution() {
-		return distribution;
-	}
+    public long getCountForecast() {
+        return countForecast;
+    }
 
-	public void setDistribution(Map<ReportNodeStatus, Entry> progress) {
-		this.distribution = progress;
-	}
+    public long getCount() {
+        return count;
+    }
 
-	public String getLabel() {
-		return label;
-	}
+    public ReportNodeStatusDistribution() {
+        super();
+    }
 
-	public void setLabel(String label) {
-		this.label = label;
-	}
+    public ReportNodeStatusDistribution(Map<ReportNodeStatus, Entry> progress) {
+        super();
+        this.distribution = progress;
+    }
 
-	public static class Entry {
-		
-		ReportNodeStatus status;
-		
-		long count = 0;
+    public Map<ReportNodeStatus, Entry> getDistribution() {
+        return distribution;
+    }
 
-		public Entry() {
-			super();
-		}
+    public void setDistribution(Map<ReportNodeStatus, Entry> progress) {
+        this.distribution = progress;
+    }
 
-		public Entry(ReportNodeStatus status) {
-			super();
-			this.status = status;
-		}
+    public String getLabel() {
+        return label;
+    }
 
-		public ReportNodeStatus getStatus() {
-			return status;
-		}
+    public void setLabel(String label) {
+        this.label = label;
+    }
 
-		public void setStatus(ReportNodeStatus status) {
-			this.status = status;
-		}
+    public static class Entry {
 
-		public long getCount() {
-			return count;
-		}
-	}
+        ReportNodeStatus status;
+
+        long count = 0;
+
+        public Entry() {
+            super();
+        }
+
+        public Entry(ReportNodeStatus status) {
+            super();
+            this.status = status;
+        }
+
+        public ReportNodeStatus getStatus() {
+            return status;
+        }
+
+        public void setStatus(ReportNodeStatus status) {
+            this.status = status;
+        }
+
+        public long getCount() {
+            return count;
+        }
+    }
 }

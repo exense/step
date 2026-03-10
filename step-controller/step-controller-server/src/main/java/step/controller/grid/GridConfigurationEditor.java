@@ -7,5 +7,6 @@ import java.util.LinkedList;
 public interface GridConfigurationEditor {
     void editConfiguration(GridImpl.GridImplConfig config);
 
-    class List extends LinkedList<GridConfigurationEditor> {}
+    class List extends LinkedList<GridConfigurationEditor> {
+    }
 }

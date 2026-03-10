@@ -50,7 +50,6 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     }
 
 
-
     @Operation(operationId = "get{Entity}ById", description = "Retrieves an entity by its Id")
     @GET
     @Path("/{id}")
@@ -59,7 +58,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     public T get(@PathParam("id") String id) {
         return accessor.get(id);
     }
-    
+
     @Operation(operationId = "find{Entity}sByIds", description = "Returns the list of entities for the provided list of IDs")
     @POST
     @Path("/find/by/ids")
@@ -76,11 +75,11 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-read")
-    public Map<String, String>  findNamesByIds(List<String> ids) {
+    public Map<String, String> findNamesByIds(List<String> ids) {
         return accessor.findByIds(ids).collect(Collectors.toMap(a -> a.getId().toHexString(), a ->
             (a instanceof AbstractOrganizableObject) ?
-                    ((AbstractOrganizableObject) a).getAttribute(AbstractOrganizableObject.NAME) :
-                    "unresolved"
+                ((AbstractOrganizableObject) a).getAttribute(AbstractOrganizableObject.NAME) :
+                "unresolved"
         ));
     }
 
@@ -113,7 +112,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-write")
     public AsyncTaskStatus<TableBulkOperationReport> cloneEntities(TableBulkOperationRequest request) {
         return scheduleAsyncTaskWithinSessionContext(h ->
-                tableService.performBulkOperation(entityName, request, this::clone, getSession()));
+            tableService.performBulkOperation(entityName, request, this::clone, getSession()));
     }
 
     @Operation(operationId = "save{Entity}", description = "Saves the provided entity")
@@ -216,7 +215,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             }
         };
         return scheduleAsyncTaskWithinSessionContext(h ->
-                tableService.performBulkOperation(entityName, request, consumer, getSession()));
+            tableService.performBulkOperation(entityName, request, consumer, getSession()));
     }
 
     @Operation(operationId = "get{Entity}Table", description = "Get the table view according to provided request")
@@ -236,8 +235,8 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-read")
     public List<History> getVersions(@PathParam("id") String id) {
         return accessor.getHistory(new ObjectId(id), 0, 1000)
-                .map(v->new History(v.getId().toHexString(), v.getUpdateTime()))
-                .collect(Collectors.toList());
+            .map(v -> new History(v.getId().toHexString(), v.getUpdateTime()))
+            .collect(Collectors.toList());
     }
 
     public static class History {

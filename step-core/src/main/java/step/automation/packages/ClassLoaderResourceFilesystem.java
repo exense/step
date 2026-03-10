@@ -135,7 +135,7 @@ public class ClassLoaderResourceFilesystem {
     }
 
     public static List<URL> listDirectory(URL resourceUrl) throws IOException, URISyntaxException {
-        if(ClassLoaderResourceFilesystem.isDirectory(resourceUrl)) {
+        if (ClassLoaderResourceFilesystem.isDirectory(resourceUrl)) {
             String protocol = resourceUrl.getProtocol();
             if (protocol.equals(FILE)) {
                 File directory = new File(resourceUrl.getPath());

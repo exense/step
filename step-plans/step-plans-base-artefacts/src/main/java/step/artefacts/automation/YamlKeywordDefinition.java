@@ -59,17 +59,17 @@ public class YamlKeywordDefinition {
                 throw new UnsupportedOperationException("Dynamic arguments are not supported");
             }
             return new YamlKeywordDefinition(
-                    YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, false),
-                    YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, true),
-                    dynamicValue.getValue()
+                YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, false),
+                YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, true),
+                dynamicValue.getValue()
             );
         } catch (Exception ex) {
             throw new RuntimeException("Unable to parse keyword definition", ex);
         }
     }
 
-    public String getKeywordName(){
-       return this.keywordName;
+    public String getKeywordName() {
+        return this.keywordName;
     }
 
     public String getSimpleKeywordName() {
@@ -97,8 +97,8 @@ public class YamlKeywordDefinition {
             JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
             JsonArrayBuilder oneOfArrayBuilder = jsonProvider.createArrayBuilder();
             oneOfArrayBuilder
-                    .add(jsonProvider.createObjectBuilder().add("type", "string"))
-                    .add(jsonSchemaHelper.createPatternPropertiesWithDynamicValues());
+                .add(jsonProvider.createObjectBuilder().add("type", "string"))
+                .add(jsonSchemaHelper.createPatternPropertiesWithDynamicValues());
             nestedPropertyParamsBuilder.add("oneOf", oneOfArrayBuilder);
             propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
             return true;

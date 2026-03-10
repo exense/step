@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -22,114 +22,114 @@ import java.util.List;
 import java.util.Map;
 
 public class ApplicationConfiguration {
-	
-	boolean authentication;
 
-	private String authenticatorName;
+    boolean authentication;
 
-	boolean demo;
+    private String authenticatorName;
 
-	boolean debug;
-	
-	boolean noLoginMask;
+    boolean demo;
 
-	boolean passwordManagement;
+    boolean debug;
 
-	boolean userManagement;
-	boolean roleManagement;
-	boolean projectMembershipManagement;
-	
-	List<String> roles;
-	
-	Map<String,String> miscParams;
-	
-	String defaultUrl;
-	
-	String title;
+    boolean noLoginMask;
 
-	String contextRoot;
+    boolean passwordManagement;
 
-	boolean forceLegacyReporting;
+    boolean userManagement;
+    boolean roleManagement;
+    boolean projectMembershipManagement;
 
-	public ApplicationConfiguration(boolean authentication, String authenticatorName, boolean demo, boolean debug,
-									boolean noLoginMask, boolean passwordManagement, boolean userManagement,
-									boolean roleManagement, boolean projectMembershipManagement,
-									List<String> roles, Map<String, String> miscParams, String defaultUrl, String title,
-									String contextRoot, boolean forceLegacyReporting) {
-		this.authentication = authentication;
-		this.authenticatorName = authenticatorName;
-		this.demo = demo;
-		this.debug = debug;
-		this.noLoginMask = noLoginMask;
-		this.userManagement = userManagement;
-		this.roleManagement = roleManagement;
-		this.projectMembershipManagement = projectMembershipManagement;
-		this.passwordManagement = passwordManagement;
-		this.roles = roles;
-		this.miscParams = miscParams;
-		this.defaultUrl = defaultUrl;
-		this.title = title;
-		this.contextRoot = contextRoot;
-		this.forceLegacyReporting = forceLegacyReporting;
-	}
+    List<String> roles;
 
-	public boolean isDemo() {
-		return demo;
-	}
+    Map<String, String> miscParams;
 
-	public boolean isNoLoginMask() {
-		return noLoginMask;
-	}
+    String defaultUrl;
 
-	public boolean isPasswordManagement() {
-		return passwordManagement;
-	}
+    String title;
 
-	public boolean isUserManagement() {
-		return userManagement;
-	}
+    String contextRoot;
 
-	public boolean isRoleManagement() {
-		return roleManagement;
-	}
+    boolean forceLegacyReporting;
 
-	public boolean isProjectMembershipManagement() {
-		return projectMembershipManagement;
-	}
+    public ApplicationConfiguration(boolean authentication, String authenticatorName, boolean demo, boolean debug,
+                                    boolean noLoginMask, boolean passwordManagement, boolean userManagement,
+                                    boolean roleManagement, boolean projectMembershipManagement,
+                                    List<String> roles, Map<String, String> miscParams, String defaultUrl, String title,
+                                    String contextRoot, boolean forceLegacyReporting) {
+        this.authentication = authentication;
+        this.authenticatorName = authenticatorName;
+        this.demo = demo;
+        this.debug = debug;
+        this.noLoginMask = noLoginMask;
+        this.userManagement = userManagement;
+        this.roleManagement = roleManagement;
+        this.projectMembershipManagement = projectMembershipManagement;
+        this.passwordManagement = passwordManagement;
+        this.roles = roles;
+        this.miscParams = miscParams;
+        this.defaultUrl = defaultUrl;
+        this.title = title;
+        this.contextRoot = contextRoot;
+        this.forceLegacyReporting = forceLegacyReporting;
+    }
 
-	public boolean isDebug() {
-		return debug;
-	}
+    public boolean isDemo() {
+        return demo;
+    }
 
-	public boolean isAuthentication() {
-		return authentication;
-	}
+    public boolean isNoLoginMask() {
+        return noLoginMask;
+    }
 
-	public List<String> getRoles() {
-		return roles;
-	}
+    public boolean isPasswordManagement() {
+        return passwordManagement;
+    }
 
-	public Map<String, String> getMiscParams() {
-		return miscParams;
-	}
+    public boolean isUserManagement() {
+        return userManagement;
+    }
 
-	public String getDefaultUrl() {
-		return defaultUrl;
-	}
+    public boolean isRoleManagement() {
+        return roleManagement;
+    }
 
-	public String getTitle() {
-		return title;
-	}
+    public boolean isProjectMembershipManagement() {
+        return projectMembershipManagement;
+    }
 
-	public String getContextRoot() {
-		return contextRoot;
-	}
+    public boolean isDebug() {
+        return debug;
+    }
 
-	public String getAuthenticatorName() {
-		return authenticatorName;
-	}
+    public boolean isAuthentication() {
+        return authentication;
+    }
 
-	public boolean isForceLegacyReporting() {
-		return forceLegacyReporting;
-	}
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public Map<String, String> getMiscParams() {
+        return miscParams;
+    }
+
+    public String getDefaultUrl() {
+        return defaultUrl;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getContextRoot() {
+        return contextRoot;
+    }
+
+    public String getAuthenticatorName() {
+        return authenticatorName;
+    }
+
+    public boolean isForceLegacyReporting() {
+        return forceLegacyReporting;
+    }
 }

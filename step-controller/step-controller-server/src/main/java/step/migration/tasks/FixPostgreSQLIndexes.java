@@ -20,7 +20,7 @@ public class FixPostgreSQLIndexes extends MigrationTask {
     public static final String TASKS_COLLECTION_PROPERTY = "tasks";
 
     public FixPostgreSQLIndexes(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-        super(new Version(3,24,3), collectionFactory, migrationContext);
+        super(new Version(3, 24, 3), collectionFactory, migrationContext);
     }
 
     @Override

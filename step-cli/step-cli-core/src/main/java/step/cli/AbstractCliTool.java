@@ -118,19 +118,19 @@ public abstract class AbstractCliTool<T extends Parameters> implements CliToolLo
         builder.append("<dependency>");
 
         builder.append("<groupId>");
-        if(identifier.getGroupId() != null){
+        if (identifier.getGroupId() != null) {
             builder.append(identifier.getGroupId());
         }
         builder.append("</groupId>");
 
         builder.append("<artifactId>");
-        if(identifier.getArtifactId() != null){
+        if (identifier.getArtifactId() != null) {
             builder.append(identifier.getArtifactId());
         }
         builder.append("</artifactId>");
 
         builder.append("<version>");
-        if(identifier.getVersion() != null){
+        if (identifier.getVersion() != null) {
             builder.append(identifier.getVersion());
         }
         builder.append("</version>");

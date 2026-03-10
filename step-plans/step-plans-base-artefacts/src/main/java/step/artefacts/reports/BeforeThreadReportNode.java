@@ -9,8 +9,8 @@ import step.core.artefacts.reports.ReportNode;
 @Deprecated
 public class BeforeThreadReportNode extends ReportNode {
 
-	@Override
-	public boolean setVariableInParentScope() {
-		return true;
-	}
+    @Override
+    public boolean setVariableInParentScope() {
+        return true;
+    }
 }

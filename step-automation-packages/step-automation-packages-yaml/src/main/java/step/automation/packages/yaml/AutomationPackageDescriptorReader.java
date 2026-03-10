@@ -169,7 +169,7 @@ public class AutomationPackageDescriptorReader {
         return yamlMapper;
     }
 
-    public YamlPlanReader getPlanReader(){
+    public YamlPlanReader getPlanReader() {
         return this.planReader;
     }
 

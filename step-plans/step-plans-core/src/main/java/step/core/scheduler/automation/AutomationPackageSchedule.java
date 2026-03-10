@@ -104,13 +104,13 @@ public class AutomationPackageSchedule {
     @Override
     public String toString() {
         return "AutomationPackageSchedule{" +
-                "name='" + name + '\'' +
-                ", active=" + active +
-                ", cron='" + cron + '\'' +
-                ", cronExclusions=" + cronExclusions +
-                ", planName='" + planName + '\'' +
-                ", assertionPlanName='" + assertionPlanName + '\'' +
-                ", executionParameters=" + executionParameters +
-                '}';
+            "name='" + name + '\'' +
+            ", active=" + active +
+            ", cron='" + cron + '\'' +
+            ", cronExclusions=" + cronExclusions +
+            ", planName='" + planName + '\'' +
+            ", assertionPlanName='" + assertionPlanName + '\'' +
+            ", executionParameters=" + executionParameters +
+            '}';
     }
 }

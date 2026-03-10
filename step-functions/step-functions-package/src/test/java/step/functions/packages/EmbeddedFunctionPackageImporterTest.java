@@ -28,58 +28,58 @@ import step.resources.ResourceManager;
 
 public class EmbeddedFunctionPackageImporterTest {
 
-	private FunctionAccessor functionAccessor;
+    private FunctionAccessor functionAccessor;
 
-	@Test
-	public void test() {
-		Configuration configuration = new Configuration();
-		ResourceManager resourceManager = new LocalResourceManagerImpl();
-		FileResolver fileResolver = new FileResolver(resourceManager);
+    @Test
+    public void test() {
+        Configuration configuration = new Configuration();
+        ResourceManager resourceManager = new LocalResourceManagerImpl();
+        FileResolver fileResolver = new FileResolver(resourceManager);
 
-		functionAccessor = new InMemoryFunctionAccessorImpl();
-		FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, new MockedGridClientImpl(), new ObjectHookRegistry());
-		functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(configuration));
-		FunctionManagerImpl functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
-		
-		FunctionPackageAccessor functionPackageAccessor = new InMemoryFunctionPackageAccessorImpl();
-		FunctionPackageManager functionPackageManager = new FunctionPackageManager(functionPackageAccessor,
-				functionManager, resourceManager, configuration, new ObjectHookRegistry());
-		functionPackageManager.registerFunctionPackageHandler(new JavaFunctionPackageHandler(fileResolver, configuration));
-		functionPackageManager.registerAttributeResolver("attribute1", v -> "value1");
-		
-		EmbeddedFunctionPackageImporter embeddedFunctionPackageImporter = new EmbeddedFunctionPackageImporter(functionPackageAccessor, functionPackageManager);
-		File folder = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "");
-		List<String> ids = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());
-		assertEquals(2, ids.size());
+        functionAccessor = new InMemoryFunctionAccessorImpl();
+        FunctionTypeRegistry functionTypeRegistry = new FunctionTypeRegistryImpl(fileResolver, new MockedGridClientImpl(), new ObjectHookRegistry());
+        functionTypeRegistry.registerFunctionType(new GeneralScriptFunctionType(configuration));
+        FunctionManagerImpl functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
 
-		FunctionPackage functionPackage = functionPackageManager.getFunctionPackage(ids.get(0));
-		boolean isClasspathBased = functionPackage.getPackageLocation().contains("local");
-		assertPackage(functionPackage, isClasspathBased);
+        FunctionPackageAccessor functionPackageAccessor = new InMemoryFunctionPackageAccessorImpl();
+        FunctionPackageManager functionPackageManager = new FunctionPackageManager(functionPackageAccessor,
+            functionManager, resourceManager, configuration, new ObjectHookRegistry());
+        functionPackageManager.registerFunctionPackageHandler(new JavaFunctionPackageHandler(fileResolver, configuration));
+        functionPackageManager.registerAttributeResolver("attribute1", v -> "value1");
 
-		functionPackage = functionPackageManager.getFunctionPackage(ids.get(1));
-		isClasspathBased = functionPackage.getPackageLocation().contains("local");
-		assertPackage(functionPackage, isClasspathBased);
+        EmbeddedFunctionPackageImporter embeddedFunctionPackageImporter = new EmbeddedFunctionPackageImporter(functionPackageAccessor, functionPackageManager);
+        File folder = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "");
+        List<String> ids = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());
+        assertEquals(2, ids.size());
+
+        FunctionPackage functionPackage = functionPackageManager.getFunctionPackage(ids.get(0));
+        boolean isClasspathBased = functionPackage.getPackageLocation().contains("local");
+        assertPackage(functionPackage, isClasspathBased);
+
+        functionPackage = functionPackageManager.getFunctionPackage(ids.get(1));
+        isClasspathBased = functionPackage.getPackageLocation().contains("local");
+        assertPackage(functionPackage, isClasspathBased);
 
 
-		List<String> ids2 = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());
-		// assert that the function package has been updated and thus the id kept
-		assertEquals(ids, ids2);
-	}
+        List<String> ids2 = embeddedFunctionPackageImporter.importEmbeddedFunctionPackages(folder.getAbsolutePath());
+        // assert that the function package has been updated and thus the id kept
+        assertEquals(ids, ids2);
+    }
 
-	private void assertPackage(FunctionPackage functionPackage, boolean isLocal) {
-		// Assert that the function package contains the attributes defined in the meta file
-		assertEquals("value1", functionPackage.getAttribute("attribute1"));
-		assertEquals("value2", functionPackage.getAttribute("attribute2"));
-		assertEquals("Äöüßêï", functionPackage.getAttribute("attributeI18n"));
+    private void assertPackage(FunctionPackage functionPackage, boolean isLocal) {
+        // Assert that the function package contains the attributes defined in the meta file
+        assertEquals("value1", functionPackage.getAttribute("attribute1"));
+        assertEquals("value2", functionPackage.getAttribute("attribute2"));
+        assertEquals("Äöüßêï", functionPackage.getAttribute("attributeI18n"));
 
-		List<ObjectId> functionIDs = functionPackage.getFunctions();
-		Assert.assertEquals(6, functionIDs.size());
-		functionIDs.forEach(f->{
-			GeneralScriptFunction function = (GeneralScriptFunction) functionAccessor.get(f);
-			//Routing to controller defined at keyword level as the priority
-			boolean localExpected = (isLocal || "MyKeywordWithRoutingToController".equals(function.getAttribute(AbstractOrganizableObject.NAME)));
-			assertEquals(localExpected, function.isExecuteLocally());
-		});
-	}
+        List<ObjectId> functionIDs = functionPackage.getFunctions();
+        Assert.assertEquals(6, functionIDs.size());
+        functionIDs.forEach(f -> {
+            GeneralScriptFunction function = (GeneralScriptFunction) functionAccessor.get(f);
+            //Routing to controller defined at keyword level as the priority
+            boolean localExpected = (isLocal || "MyKeywordWithRoutingToController".equals(function.getAttribute(AbstractOrganizableObject.NAME)));
+            assertEquals(localExpected, function.isExecuteLocally());
+        });
+    }
 
 }

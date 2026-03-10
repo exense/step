@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -40,59 +40,59 @@ import java.util.Set;
 
 import static step.core.execution.OperationMode.isLocal;
 
-@Plugin(dependencies= {FunctionPlugin.class})
+@Plugin(dependencies = {FunctionPlugin.class})
 public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin {
 
-	private FunctionAccessor functionAccessor;
-	private FunctionTypeRegistry functionTypeRegistry;
-	private PlanAccessor planAccessor;
+    private FunctionAccessor functionAccessor;
+    private FunctionTypeRegistry functionTypeRegistry;
+    private PlanAccessor planAccessor;
 
-	@Override
-	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-		OperationMode operationMode = context.getOperationMode();
-		if (isLocal(operationMode)) {
-			functionAccessor = context.require(FunctionAccessor.class);
-			planAccessor = context.getPlanAccessor();
-			functionTypeRegistry = context.require(FunctionTypeRegistry.class);
+    @Override
+    public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
+        OperationMode operationMode = context.getOperationMode();
+        if (isLocal(operationMode)) {
+            functionAccessor = context.require(FunctionAccessor.class);
+            planAccessor = context.getPlanAccessor();
+            functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 
-			functionTypeRegistry.registerFunctionType(
-					new CompositeFunctionType(
-							context.inheritFromParentOrComputeIfAbsent(parentContext, ObjectHookRegistry.class, objectHookRegistryClass -> new ObjectHookRegistry())
-					)
-			);
+            functionTypeRegistry.registerFunctionType(
+                new CompositeFunctionType(
+                    context.inheritFromParentOrComputeIfAbsent(parentContext, ObjectHookRegistry.class, objectHookRegistryClass -> new ObjectHookRegistry())
+                )
+            );
 
-			// Scanning and saving the local composite keywords here is only required for the LocalPlanRunner
-			// In the context of Automation Package, the Automation Package manager is responsible to read the AP (including annotations)
-			if (!OperationMode.LOCAL_AUTOMATION_PACKAGE.equals(operationMode)) {
-				saveLocalFunctions();
-			}
-		}
-	}
+            // Scanning and saving the local composite keywords here is only required for the LocalPlanRunner
+            // In the context of Automation Package, the Automation Package manager is responsible to read the AP (including annotations)
+            if (!OperationMode.LOCAL_AUTOMATION_PACKAGE.equals(operationMode)) {
+                saveLocalFunctions();
+            }
+        }
+    }
 
-	public void saveLocalFunctions() {
-		Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class);
-		List<Function> functions = getLocalCompositeFunctions(methods);
-		for (Function function : functions) {
-			functionAccessor.save(function);
-		}
-	}
+    public void saveLocalFunctions() {
+        Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class);
+        List<Function> functions = getLocalCompositeFunctions(methods);
+        for (Function function : functions) {
+            functionAccessor.save(function);
+        }
+    }
 
-	public static List<Function> getLocalCompositeFunctions(Set<Method> methods) {
-		List<Function> functions = new ArrayList<>();
-		for (Method m : methods) {
-			Keyword annotation = m.getAnnotation(Keyword.class);
+    public static List<Function> getLocalCompositeFunctions(Set<Method> methods) {
+        List<Function> functions = new ArrayList<>();
+        for (Method m : methods) {
+            Keyword annotation = m.getAnnotation(Keyword.class);
 
-			// keywords with plan reference are not local functions but composite functions linked with plan
-			if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
-				try {
-					functions.add(CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())));
-				} catch (Exception ex) {
-					throw new RuntimeException("Unable to prepare local composite", ex);
-				}
-			}
-		}
-		return functions;
-	}
+            // keywords with plan reference are not local functions but composite functions linked with plan
+            if (annotation.planReference() != null && !annotation.planReference().isBlank()) {
+                try {
+                    functions.add(CompositeFunctionUtils.createCompositeFunction(annotation, m, new PlanParser().parseCompositePlanFromPlanReference(m, annotation.planReference())));
+                } catch (Exception ex) {
+                    throw new RuntimeException("Unable to prepare local composite", ex);
+                }
+            }
+        }
+        return functions;
+    }
 
 
 }

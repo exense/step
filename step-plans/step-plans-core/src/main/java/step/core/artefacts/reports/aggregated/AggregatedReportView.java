@@ -59,7 +59,7 @@ public class AggregatedReportView extends AbstractAggregatedReportView {
         stringBuilder.append("\n");
         //Process children considering parent source
         ParentSource previousParentSource = null;
-        for (AggregatedReportView childReportView: node.children) {
+        for (AggregatedReportView childReportView : node.children) {
             int newLevel = level + 1;
             ParentSource parentSource = childReportView.parentSource;
             //print [ParentSource] once per source type if required

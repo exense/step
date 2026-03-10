@@ -32,7 +32,7 @@ import step.plugins.parametermanager.ParameterManagerPlugin;
 
 import static step.core.execution.OperationMode.isLocal;
 
-@Plugin(dependencies= {BasePlugin.class})
+@Plugin(dependencies = {BasePlugin.class})
 public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
 
     public static final String STEP_PARAMTER_SCRIPT_ENGINE = "StepParamterScriptEngine";
@@ -68,7 +68,7 @@ public class ParameterManagerLocalPlugin extends ParameterManagerPlugin {
             scriptEngine = propertyVar;
         } else {
             String envVar = System.getenv(STEP_PARAMTER_SCRIPT_ENGINE);
-            if (envVar != null && ! envVar.isBlank()) {
+            if (envVar != null && !envVar.isBlank()) {
                 scriptEngine = envVar;
             }
         }

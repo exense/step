@@ -28,15 +28,15 @@ import step.parameter.ParameterManager;
 import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plugins.parametermanager.ParameterManagerControllerPlugin;
 
-@Plugin(dependencies= {AutomationPackagePlugin.class, ParameterManagerControllerPlugin.class})
+@Plugin(dependencies = {AutomationPackagePlugin.class, ParameterManagerControllerPlugin.class})
 public class AutomationPackageParameterPlugin extends AbstractControllerPlugin {
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         AutomationPackageParametersRegistration.registerParametersHooks(
-                context.require(AutomationPackageHookRegistry.class),
-                context.require(AutomationPackageSerializationRegistry.class),
-                context.require(ParameterManager.class)
+            context.require(AutomationPackageHookRegistry.class),
+            context.require(AutomationPackageSerializationRegistry.class),
+            context.require(ParameterManager.class)
         );
     }
 

@@ -32,20 +32,20 @@ import java.util.List;
  */
 public class AggregatedJsonSchemaFieldProcessor implements JsonSchemaFieldProcessor {
 
-	private final List<JsonSchemaFieldProcessor> processingRules;
+    private final List<JsonSchemaFieldProcessor> processingRules;
 
-	public AggregatedJsonSchemaFieldProcessor(List<JsonSchemaFieldProcessor> processingRules) {
-		this.processingRules = processingRules;
-	}
+    public AggregatedJsonSchemaFieldProcessor(List<JsonSchemaFieldProcessor> processingRules) {
+        this.processingRules = processingRules;
+    }
 
-	@Override
-	public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput, JsonSchemaCreator schemaCreator) throws JsonSchemaFieldProcessingException, JsonSchemaPreparationException {
-		for (JsonSchemaFieldProcessor processingRule : processingRules) {
-			if (processingRule.applyCustomProcessing(objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, schemaCreator)) {
-				return true;
-			}
-		}
-		return false;
-	}
+    @Override
+    public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput, JsonSchemaCreator schemaCreator) throws JsonSchemaFieldProcessingException, JsonSchemaPreparationException {
+        for (JsonSchemaFieldProcessor processingRule : processingRules) {
+            if (processingRule.applyCustomProcessing(objectClass, field, fieldMetadata, propertiesBuilder, requiredPropertiesOutput, schemaCreator)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }

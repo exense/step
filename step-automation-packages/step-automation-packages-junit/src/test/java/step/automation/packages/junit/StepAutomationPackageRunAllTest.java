@@ -8,8 +8,9 @@ import step.junit.runners.annotations.ExecutionParameters;
 
 @Category(LocalJMeter.class)
 @RunWith(Step.class)
-@ExecutionParameters({"PARAM_EXEC","Value","PARAM_EXEC2","Value","PARAM_EXEC3","Value"})
+@ExecutionParameters({"PARAM_EXEC", "Value", "PARAM_EXEC2", "Value", "PARAM_EXEC3", "Value"})
 public class StepAutomationPackageRunAllTest {
 
-    public void test() {}
+    public void test() {
+    }
 }

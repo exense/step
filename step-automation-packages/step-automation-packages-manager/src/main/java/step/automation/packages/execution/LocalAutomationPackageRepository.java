@@ -80,7 +80,7 @@ public class LocalAutomationPackageRepository extends RepositoryWithAutomationPa
                 ctx = getOrRestorePackageExecutionContext(repositoryParameters, null, objectPredicate, actorUser);
                 //If wrap we return all plans of the AP
                 List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
-                        .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
+                    .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
                 testSetStatusOverview.setRuns(runs);
                 return testSetStatusOverview;
             } finally {

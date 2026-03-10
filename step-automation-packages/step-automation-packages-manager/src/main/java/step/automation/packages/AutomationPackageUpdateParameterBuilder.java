@@ -6,6 +6,7 @@ import step.core.AbstractContext;
 import step.core.objectenricher.*;
 
 import java.util.Map;
+
 import static step.core.objectenricher.WriteAccessValidator.NO_CHECKS_VALIDATOR;
 
 public class AutomationPackageUpdateParameterBuilder {
@@ -115,7 +116,7 @@ public class AutomationPackageUpdateParameterBuilder {
     }
 
     public AutomationPackageUpdateParameterBuilder withExecuteFunctionsLocally(boolean executeFunctionsLocally) {
-        this.executeFunctionsLocally =  executeFunctionsLocally;
+        this.executeFunctionsLocally = executeFunctionsLocally;
         return this;
     }
 
@@ -135,7 +136,8 @@ public class AutomationPackageUpdateParameterBuilder {
         this.activationExpression = oldPackage.getActivationExpression() != null ? oldPackage.getActivationExpression().getScript() : null;
 
         //We need to rebuild the context to get the proper object enricher of the provided package
-        AbstractContext context = new AbstractContext() { };
+        AbstractContext context = new AbstractContext() {
+        };
         try {
             objectHookRegistry.rebuildContext(context, oldPackage);
         } catch (Exception e) {
@@ -144,7 +146,7 @@ public class AutomationPackageUpdateParameterBuilder {
         }
         this.enricher = objectHookRegistry.getObjectEnricher(context);
         //The access checks ensure that we can modify the resources used by automation packages. Reloading automation package that chose to use these resources is always allowed
-        this.objectPredicate =  o -> true;
+        this.objectPredicate = o -> true;
         this.writeAccessValidator = NO_CHECKS_VALIDATOR;
         this.async = false;
         this.actorUser = parentParameters.actorUser;
@@ -170,6 +172,7 @@ public class AutomationPackageUpdateParameterBuilder {
 
     /**
      * helper method for junit test, use dummy predicate and enricher
+     *
      * @return the builder
      */
     public AutomationPackageUpdateParameterBuilder forJunit() {
@@ -197,11 +200,10 @@ public class AutomationPackageUpdateParameterBuilder {
 
     public AutomationPackageUpdateParameter build() {
         return new AutomationPackageUpdateParameter(allowUpdate, allowCreate, explicitOldId, apSource,
-                apLibrarySource, versionName, activationExpression, enricher, objectPredicate, writeAccessValidator,
-                async, actorUser, forceRefreshOfSnapshots, checkForSameOrigin, functionsAttributes, plansAttributes,
-                tokenSelectionCriteria, executeFunctionsLocally, reloading);
+            apLibrarySource, versionName, activationExpression, enricher, objectPredicate, writeAccessValidator,
+            async, actorUser, forceRefreshOfSnapshots, checkForSameOrigin, functionsAttributes, plansAttributes,
+            tokenSelectionCriteria, executeFunctionsLocally, reloading);
     }
-
 
 
 }

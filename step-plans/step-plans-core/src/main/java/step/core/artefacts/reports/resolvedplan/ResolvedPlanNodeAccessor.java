@@ -18,7 +18,7 @@ public class ResolvedPlanNodeAccessor extends AbstractAccessor<ResolvedPlanNode>
     }
 
     public Stream<ResolvedPlanNode> getByExecutionId(String executionId) {
-        return this.collectionDriver.find(getFilterByExecutionId(executionId), null, (Integer)null, (Integer)null, 0);
+        return this.collectionDriver.find(getFilterByExecutionId(executionId), null, (Integer) null, (Integer) null, 0);
     }
 
     private Filter getFilterByExecutionId(String executionId) {
@@ -27,7 +27,7 @@ public class ResolvedPlanNodeAccessor extends AbstractAccessor<ResolvedPlanNode>
 
     public Stream<ResolvedPlanNode> getByParentId(String parentId) {
         Equals parentIdFilter = Filters.equals(PARENT_ID, parentId);
-        return this.collectionDriver.find(parentIdFilter, new SearchOrder("position", 1), (Integer)null, (Integer)null, 0);
+        return this.collectionDriver.find(parentIdFilter, new SearchOrder("position", 1), (Integer) null, (Integer) null, 0);
     }
 
     public void deleteByExecutionId(String executionId) {

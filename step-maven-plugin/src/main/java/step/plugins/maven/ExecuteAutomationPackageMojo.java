@@ -171,26 +171,26 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
             String libraryName = library != null && library.isManagedLibraryNameConfigured() ? library.getManaged() : null;
 
             ApExecuteParameters params = new ApExecuteParameters()
-                    .setAutomationPackageFile(localApFile)
-                    .setAutomationPackageMavenArtifact(remoteMavenArtifact)
-                    .setLibraryFile(libraryFile)
-                    .setlibraryMavenArtifact(libraryMavenArtifact)
-                    .setManagedLibraryName(libraryName)
-                    .setStepProjectName(getStepProjectName())
-                    .setUserId(getUserId())
-                    .setAuthToken(getAuthToken())
-                    .setExecutionParameters(getExecutionParameters())
-                    .setExecutionResultTimeoutS(getExecutionResultTimeoutS())
-                    .setWaitForExecution(getWaitForExecution())
-                    .setEnsureExecutionSuccess(getEnsureExecutionSuccess())
-                    .setReports(parsedReports)
-                    .setIncludePlans(getIncludePlans())
-                    .setExcludePlans(getExcludePlans())
-                    .setIncludeCategories(getIncludeCategories())
-                    .setExcludeCategories(getExcludeCategories())
-                    .setWrapIntoTestSet(getWrapIntoTestSet())
-                    .setNumberOfThreads(getNumberOfThreads())
-                    .setReportOutputDir(reportOutputDir);
+                .setAutomationPackageFile(localApFile)
+                .setAutomationPackageMavenArtifact(remoteMavenArtifact)
+                .setLibraryFile(libraryFile)
+                .setlibraryMavenArtifact(libraryMavenArtifact)
+                .setManagedLibraryName(libraryName)
+                .setStepProjectName(getStepProjectName())
+                .setUserId(getUserId())
+                .setAuthToken(getAuthToken())
+                .setExecutionParameters(getExecutionParameters())
+                .setExecutionResultTimeoutS(getExecutionResultTimeoutS())
+                .setWaitForExecution(getWaitForExecution())
+                .setEnsureExecutionSuccess(getEnsureExecutionSuccess())
+                .setReports(parsedReports)
+                .setIncludePlans(getIncludePlans())
+                .setExcludePlans(getExcludePlans())
+                .setIncludeCategories(getIncludeCategories())
+                .setExcludeCategories(getExcludeCategories())
+                .setWrapIntoTestSet(getWrapIntoTestSet())
+                .setNumberOfThreads(getNumberOfThreads())
+                .setReportOutputDir(reportOutputDir);
 
             createTool(getUrl(), params).execute();
         } catch (StepCliExecutionException e) {
@@ -210,8 +210,8 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
                     result.add(new ExecuteAutomationPackageTool.Report(report.getType()));
                 } else {
                     List<ExecuteAutomationPackageTool.ReportOutputMode> outputModes = Arrays.stream(report.getOutput().split(","))
-                            .map(ExecuteAutomationPackageTool.ReportOutputMode::valueOf)
-                            .collect(Collectors.toList());
+                        .map(ExecuteAutomationPackageTool.ReportOutputMode::valueOf)
+                        .collect(Collectors.toList());
                     result.add(new ExecuteAutomationPackageTool.Report(report.getType(), outputModes));
                 }
             }
@@ -226,20 +226,20 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
 
 
         return Arrays.stream(raw.split(";"))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .map(entry -> {
-                    String[] parts = entry.split(":", 2);
-                    if (parts.length != 2) {
-                        throw new IllegalArgumentException(
-                                "Invalid report format '" + entry + "', expected 'type:outputModes'. Multiple reports should be separated by a semicolon ';', multiple output modes can be separated by a comma ',' (ex: junit:file,stdout;aggregated:stdout).");
-                    }
-                    ReportParam report = new ReportParam();
-                    report.setType(ExecuteAutomationPackageTool.ReportType.valueOf(parts[0].trim()));
-                    report.setOutput(parts[1].trim());
-                    return report;
-                })
-                .collect(Collectors.toList());
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .map(entry -> {
+                String[] parts = entry.split(":", 2);
+                if (parts.length != 2) {
+                    throw new IllegalArgumentException(
+                        "Invalid report format '" + entry + "', expected 'type:outputModes'. Multiple reports should be separated by a semicolon ';', multiple output modes can be separated by a comma ',' (ex: junit:file,stdout;aggregated:stdout).");
+                }
+                ReportParam report = new ReportParam();
+                report.setType(ExecuteAutomationPackageTool.ReportType.valueOf(parts[0].trim()));
+                report.setOutput(parts[1].trim());
+                return report;
+            })
+            .collect(Collectors.toList());
     }
 
     protected ExecuteAutomationPackageTool createTool(final String url, ApExecuteParameters params) {
@@ -326,7 +326,7 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
             String[] parts = entry.split("=", 2);
             if (parts.length != 2) {
                 throw new IllegalArgumentException(
-                        "Invalid execution parameter format '" + entry + "', expected 'key=value'. " +
+                    "Invalid execution parameter format '" + entry + "', expected 'key=value'. " +
                         "Multiple parameters should be separated by a semicolon ';' (ex: key1=value1;key2=value2).");
             }
             result.put(parts[0].trim(), parts[1]);

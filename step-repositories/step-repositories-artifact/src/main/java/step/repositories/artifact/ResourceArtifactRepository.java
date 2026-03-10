@@ -35,42 +35,42 @@ import java.util.Set;
 
 public class ResourceArtifactRepository extends AbstractArtifactRepository {
 
-	protected static final String PARAM_RESOURCE_ID = ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID;
+    protected static final String PARAM_RESOURCE_ID = ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID;
 
-	public ResourceArtifactRepository(ResourceManager resourceManager, AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor) {
-		super(Set.of(PARAM_RESOURCE_ID), manager, functionTypeRegistry, functionAccessor, resourceManager); // artifact_id = resource_id
-	}
+    public ResourceArtifactRepository(ResourceManager resourceManager, AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor) {
+        super(Set.of(PARAM_RESOURCE_ID), manager, functionTypeRegistry, functionAccessor, resourceManager); // artifact_id = resource_id
+    }
 
     @Override
-	public File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
-		String resourceId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
-		return getResourceFile(resourceId);
-	}
+    public File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
+        String resourceId = AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
+        return getResourceFile(resourceId);
+    }
 
-	@Override
-	protected String resolveArtifactName(Map<String, String> repositoryParameters) {
-		return AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
-	}
+    @Override
+    protected String resolveArtifactName(Map<String, String> repositoryParameters) {
+        return AbstractArtifactRepository.getMandatoryRepositoryParameter(repositoryParameters, PARAM_RESOURCE_ID);
+    }
 
-	private File getResourceFile(String resourceId) {
-		ResourceRevisionFileHandle resourceContent = resourceManager.getResourceFile(resourceId);
-		if(resourceContent == null){
-			throw new RuntimeException("Resource not found by id: " + resourceId);
-		}
-		return resourceContent.getResourceFile();
-	}
+    private File getResourceFile(String resourceId) {
+        ResourceRevisionFileHandle resourceContent = resourceManager.getResourceFile(resourceId);
+        if (resourceContent == null) {
+            throw new RuntimeException("Resource not found by id: " + resourceId);
+        }
+        return resourceContent.getResourceFile();
+    }
 
-	@Override
-	public void postExecution(ExecutionContext context, RepositoryObjectReference repositoryObjectReference) throws Exception {
-		if (repositoryObjectReference != null) {
-			String resourceId = repositoryObjectReference.getRepositoryParameters().get(ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID);
-			if (resourceId != null) {
-				Resource resource = resourceManager.getResource(resourceId);
-				if (ResourceManager.RESOURCE_TYPE_TEMP.equals(resource.getResourceType())) {
-					resourceManager.deleteResource(resourceId);
-				}
-			}
-		}
-		super.postExecution(context, repositoryObjectReference);
-	}
+    @Override
+    public void postExecution(ExecutionContext context, RepositoryObjectReference repositoryObjectReference) throws Exception {
+        if (repositoryObjectReference != null) {
+            String resourceId = repositoryObjectReference.getRepositoryParameters().get(ArtifactRepositoryConstants.RESOURCE_PARAM_RESOURCE_ID);
+            if (resourceId != null) {
+                Resource resource = resourceManager.getResource(resourceId);
+                if (ResourceManager.RESOURCE_TYPE_TEMP.equals(resource.getResourceType())) {
+                    resourceManager.deleteResource(resourceId);
+                }
+            }
+        }
+        super.postExecution(context, repositoryObjectReference);
+    }
 }

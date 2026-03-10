@@ -28,8 +28,8 @@ public class AutomationPackageParametersRegistration {
                                                AutomationPackageSerializationRegistry serRegistry,
                                                ParameterManager parameterManager) {
         hookRegistry.register(
-                AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
-                new AutomationPackageParameterHook(parameterManager)
+            AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
+            new AutomationPackageParameterHook(parameterManager)
         );
         serRegistry.register(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP, AutomationPackageParameter.class);
     }

@@ -10,7 +10,7 @@ import static step.expressions.GroovyProtectedBinding.obfuscate;
  * data handling in Groovy expressions, ensuring that sensitive information is properly
  * protected while maintaining usability.
  * </p>
- * 
+ *
  * <h3>System Integration:</h3>
  * <p>
  * ProtectedVariable instances are typically created from protected {@link step.parameter.Parameter}
@@ -20,12 +20,12 @@ import static step.expressions.GroovyProtectedBinding.obfuscate;
  *   <li><strong>Creation:</strong> Protected Parameters are converted to ProtectedVariable instances</li>
  *   <li><strong>Groovy Binding:</strong> ProtectedVariables are converted to {@link GroovyProtectedBinding}
  *       objects and added to the Groovy evaluation bindings</li>
- *   <li><strong>Expression Evaluation:</strong> Groovy expressions can safely reference and manipulate 
+ *   <li><strong>Expression Evaluation:</strong> Groovy expressions can safely reference and manipulate
  *       these protected bindings</li>
- *   <li><strong>Result Processing:</strong> If the evaluation result uses any protected bindings, 
+ *   <li><strong>Result Processing:</strong> If the evaluation result uses any protected bindings,
  *       it is wrapped back into a ProtectedVariable for safe handling</li>
  * </ol>
- * 
+ *
  * <h3>Key Features:</h3>
  * <ul>
  *   <li><strong>Dual Representation:</strong> Maintains both clear and obfuscated forms</li>
@@ -42,7 +42,7 @@ import static step.expressions.GroovyProtectedBinding.obfuscate;
  * will still expose the clear data, so care must be taken to control access to ProtectedVariable
  * instances and to avoid inadvertently accessing the value field in unsafe contexts.
  * </p>
- * 
+ *
  * @see GroovyProtectedBinding
  * @see Tokenizer
  * @see ProtectionContext
@@ -57,14 +57,14 @@ public class ProtectedVariable {
      * May be {@code null} for anonymous protected values.
      */
     public final String key;
-    
+
     /**
      * The actual (clear) value being protected.
      * This field contains the real data and should be accessed with caution
      * to prevent accidental exposure in logs, error messages, or user interfaces.
      */
     public final Object value;
-    
+
     /**
      * The obfuscated representation of the value.
      * This is the safe version that can be displayed in logs, error messages,
@@ -78,10 +78,9 @@ public class ProtectedVariable {
      * The obfuscated value is automatically generated using the pattern {@code ***key***}.
      * If the key is {@code null}, a default obfuscation pattern will be used.
      * </p>
-     * 
-     * @param key the identifier for this protected value
+     *
+     * @param key   the identifier for this protected value
      * @param value the actual value to be protected
-     * 
      * @see #ProtectedVariable(String, Object, String)
      * @see GroovyProtectedBinding#obfuscate(String)
      */
@@ -96,11 +95,10 @@ public class ProtectedVariable {
      * obfuscated representation, enabling custom obfuscation patterns beyond
      * the default {@code ***key***} format.
      * </p>
-     * 
-     * @param key the identifier for this protected value
-     * @param value the actual value to be protected
+     *
+     * @param key             the identifier for this protected value
+     * @param value           the actual value to be protected
      * @param obfuscatedValue the custom obfuscated representation
-     * 
      * @see #ProtectedVariable(String, Object)
      */
     public ProtectedVariable(String key, Object value, String obfuscatedValue) {
@@ -117,9 +115,8 @@ public class ProtectedVariable {
      * or debugging output), only the safe, obfuscated value is exposed, never the
      * actual sensitive data.
      * </p>
-     * 
+     *
      * @return the obfuscated value, safe for display in logs and user interfaces
-     * 
      * @see #obfuscatedValue
      */
     @Override
