@@ -48,8 +48,8 @@ public class TimeSeriesHandlerTest {
         bucketsCollection = new InMemoryCollection<>();
         TimeSeriesCollection tsCollection = new TimeSeriesCollection(bucketsCollection, BUCKET_RESOLUTION);
         TimeSeries timeSeries = new TimeSeriesBuilder()
-                .registerCollection(tsCollection)
-                .build();
+            .registerCollection(tsCollection)
+            .build();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
         ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(new InMemoryCollectionFactory(null), new Configuration());
         handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT);

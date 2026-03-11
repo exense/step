@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -51,37 +51,37 @@ import java.util.function.Supplier;
 
 public class AbstractRemoteClient implements Closeable {
 
-	private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteClient.class);
+    private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteClient.class);
 
 	private static final int CONNECT_TIMEOUT_SECONDS = 10;
 	private static final int READ_TIMEOUT_SECONDS = 30;
 	private static final int MAX_CONNECTIONS_TOTAL = 100;
 	private static final int MAX_CONNECTIONS_PER_ROUTE = 20;
-	
-	protected Client client;
 
-	protected AdditionalHeaders headers = new AdditionalHeaders();
-	
-	protected ControllerCredentials credentials;
+    protected Client client;
 
-	public AbstractRemoteClient(ControllerCredentials credentials){
-		this.credentials = credentials;
-		createClient();
-		if (credentials.getToken() != null) {
-			Feature feature = OAuth2ClientSupport.feature(credentials.getToken());
-			client.register(feature);
-		}
-		if(credentials.getUsername()!=null && !credentials.getUsername().trim().isEmpty()) {
-			login();
-		}
-	}
-	
-	// Default = Sysprop for build
-	public AbstractRemoteClient(){
-		this(SyspropCredendialsBuilder.build());
-	}
-	
-	private void createClient() {
+    protected AdditionalHeaders headers = new AdditionalHeaders();
+
+    protected ControllerCredentials credentials;
+
+    public AbstractRemoteClient(ControllerCredentials credentials) {
+        this.credentials = credentials;
+        createClient();
+        if (credentials.getToken() != null) {
+            Feature feature = OAuth2ClientSupport.feature(credentials.getToken());
+            client.register(feature);
+        }
+        if (credentials.getUsername() != null && !credentials.getUsername().trim().isEmpty()) {
+            login();
+        }
+    }
+
+    // Default = Sysprop for build
+    public AbstractRemoteClient() {
+        this(SyspropCredendialsBuilder.build());
+    }
+
+    private void createClient() {
 		ClientConfig config = new ClientConfig();
 		config.connectorProvider(new Apache5ConnectorProvider());
 		config.property(Apache5ClientProperties.CONNECTION_MANAGER,
@@ -91,137 +91,137 @@ public class AbstractRemoteClient implements Closeable {
 						.build());
 		// Buffered processing is required for correct Content-Length header handling, especially with multipart requests
 		config.property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED);
-		client = ClientBuilder.newBuilder()
+        client = ClientBuilder.newBuilder()
 				.withConfig(config)
 				.connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
 				.readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-				.build();
-		client.register(JacksonMapperProvider.class);
-		client.register(MultiPartFeature.class);
-		client.register(JacksonFeature.class);
-	}
+            .build();
+        client.register(JacksonMapperProvider.class);
+        client.register(MultiPartFeature.class);
+        client.register(JacksonFeature.class);
+    }
 
-	private void login() {
-		Credentials c = new Credentials();
-		c.setUsername(credentials.getUsername());
-		c.setPassword(credentials.getPassword());
-		Entity<Credentials> entity = Entity.entity(c, MediaType.APPLICATION_JSON);
-		logger.info("Logging into:" + credentials.getServerUrl() + " with user " + credentials.getUsername());
+    private void login() {
+        Credentials c = new Credentials();
+        c.setUsername(credentials.getUsername());
+        c.setPassword(credentials.getPassword());
+        Entity<Credentials> entity = Entity.entity(c, MediaType.APPLICATION_JSON);
+        logger.info("Logging into:" + credentials.getServerUrl() + " with user " + credentials.getUsername());
 		client.target(credentials.getServerUrl() + "/rest/access/login").request().post(entity).close();
-	}
-	
-	public Builder requestBuilder(String path) {
-		return requestBuilder(path, null);
-	}
+    }
 
-	public Builder requestBuilder(String path, Map<String, String> queryParams) {
-		WebTarget target = client.target(credentials.getServerUrl() + path);
-		if(queryParams!=null) {
-			for(String key:queryParams.keySet()) {
-				target=target.queryParam(key, queryParams.get(key));
-			}
-		}
-		Builder b = target.request();
-		b.accept(MediaType.APPLICATION_JSON);
-		b.accept(MediaType.TEXT_PLAIN);
-		if(!headers.getAllHeaders().isEmpty()){
-			b.headers(headers.getAllHeaders());
-		}
-		return b;
-	}
+    public Builder requestBuilder(String path) {
+        return requestBuilder(path, null);
+    }
 
-	public static class ControllerServiceExceptionContent {
-		public String errorName;
-		public String errorMessage;
-	}
+    public Builder requestBuilder(String path, Map<String, String> queryParams) {
+        WebTarget target = client.target(credentials.getServerUrl() + path);
+        if (queryParams != null) {
+            for (String key : queryParams.keySet()) {
+                target = target.queryParam(key, queryParams.get(key));
+            }
+        }
+        Builder b = target.request();
+        b.accept(MediaType.APPLICATION_JSON);
+        b.accept(MediaType.TEXT_PLAIN);
+        if (!headers.getAllHeaders().isEmpty()) {
+            b.headers(headers.getAllHeaders());
+        }
+        return b;
+    }
 
-	public static class ControllerServiceException extends RuntimeException {
-		public String errorName;
-		public String errorMessage;
+    public static class ControllerServiceExceptionContent {
+        public String errorName;
+        public String errorMessage;
+    }
 
-		public ControllerServiceException(ControllerServiceExceptionContent content) {
-			super(content.errorMessage);
-			this.errorName = content.errorName;
-			this.errorMessage = content.errorMessage;
-		}
-	}
+    public static class ControllerServiceException extends RuntimeException {
+        public String errorName;
+        public String errorMessage;
 
-	public <T> T executeRequest(Supplier<T> provider) throws ControllerClientException, ControllerServiceException {
-		try {
-			T r = provider.get();
-			// Todo: not sure if this path still makes sense. It seems that a WebApplicationException is always thrown in case of error
-			if(r instanceof Response) {
-				Response response = (Response) r;
-				if(!(response.getStatus()==204||response.getStatus()==200)) {
-					String error = response.readEntity(String.class);
-					throw new ControllerClientException("Error while calling controller "+
-							credentials.getServerUrl()+". The server returned following error: "+error);
-				} else {
-					return r;
-				}
-			} else {
-				return r;
-			}
-		} catch(WebApplicationException e) {
-			Response response = e.getResponse();
-			try {
-				// Try to parse the response as ControllerServiceException
-				ControllerServiceExceptionContent controllerServiceExceptionContent = response.readEntity(ControllerServiceExceptionContent.class);
-				throw new ControllerServiceException(controllerServiceExceptionContent);
-			} catch (Exception e2) {
-				// Fallback to string
-				String errorMessage = response.readEntity(String.class);
-				if (errorMessage == null || errorMessage.isEmpty()) {
-					// for 401 the response is empty and in this case error message has to be taken from the exception
-					errorMessage = e.getMessage();
-				}
-				throw new ControllerClientException("Error while calling controller "+
-						credentials.getServerUrl()+". The server returned following error: "+ errorMessage, e);
-			}
-		}
-	}
+        public ControllerServiceException(ControllerServiceExceptionContent content) {
+            super(content.errorMessage);
+            this.errorName = content.errorName;
+            this.errorMessage = content.errorMessage;
+        }
+    }
 
-	public AdditionalHeaders getHeaders() {
-		return headers;
-	}
+    public <T> T executeRequest(Supplier<T> provider) throws ControllerClientException, ControllerServiceException {
+        try {
+            T r = provider.get();
+            // Todo: not sure if this path still makes sense. It seems that a WebApplicationException is always thrown in case of error
+            if (r instanceof Response) {
+                Response response = (Response) r;
+                if (!(response.getStatus() == 204 || response.getStatus() == 200)) {
+                    String error = response.readEntity(String.class);
+                    throw new ControllerClientException("Error while calling controller " +
+                        credentials.getServerUrl() + ". The server returned following error: " + error);
+                } else {
+                    return r;
+                }
+            } else {
+                return r;
+            }
+        } catch (WebApplicationException e) {
+            Response response = e.getResponse();
+            try {
+                // Try to parse the response as ControllerServiceException
+                ControllerServiceExceptionContent controllerServiceExceptionContent = response.readEntity(ControllerServiceExceptionContent.class);
+                throw new ControllerServiceException(controllerServiceExceptionContent);
+            } catch (Exception e2) {
+                // Fallback to string
+                String errorMessage = response.readEntity(String.class);
+                if (errorMessage == null || errorMessage.isEmpty()) {
+                    // for 401 the response is empty and in this case error message has to be taken from the exception
+                    errorMessage = e.getMessage();
+                }
+                throw new ControllerClientException("Error while calling controller " +
+                    credentials.getServerUrl() + ". The server returned following error: " + errorMessage, e);
+            }
+        }
+    }
 
-	public void setHeaders(AdditionalHeaders headers) {
-		this.headers = headers;
-	}
+    public AdditionalHeaders getHeaders() {
+        return headers;
+    }
 
-	@Override
-	public void close() throws IOException {
-		if(client!=null) {
-			client.close();
-		}
-	}
+    public void setHeaders(AdditionalHeaders headers) {
+        this.headers = headers;
+    }
 
-	protected UnsupportedOperationException notImplemented()  {
-		return new UnsupportedOperationException("This method is currently not implemented");
-	}
+    @Override
+    public void close() throws IOException {
+        if (client != null) {
+            client.close();
+        }
+    }
 
-	public static class AdditionalHeaders {
-		private MultivaluedMap<String, Object> map = new MultivaluedHashMap<>();
+    protected UnsupportedOperationException notImplemented() {
+        return new UnsupportedOperationException("This method is currently not implemented");
+    }
 
-		public AdditionalHeaders addProjectName(String projectName) {
-			return addCustomHeader(Constants.TENANT_HEADER, projectName);
-		}
+    public static class AdditionalHeaders {
+        private MultivaluedMap<String, Object> map = new MultivaluedHashMap<>();
 
-		public AdditionalHeaders addCustomHeader(String name, Object value) {
-			map.add(name, value);
-			return this;
-		}
+        public AdditionalHeaders addProjectName(String projectName) {
+            return addCustomHeader(Constants.TENANT_HEADER, projectName);
+        }
 
-		public List<Object> getHeaders(String key) {
-			return map.get(key);
-		}
+        public AdditionalHeaders addCustomHeader(String name, Object value) {
+            map.add(name, value);
+            return this;
+        }
 
-		public boolean removeHeader(String key){
-			return map.remove(key) != null;
-		}
+        public List<Object> getHeaders(String key) {
+            return map.get(key);
+        }
 
-		public MultivaluedMap<String, Object> getAllHeaders() {
-			return map;
-		}
-	}
+        public boolean removeHeader(String key) {
+            return map.remove(key) != null;
+        }
+
+        public MultivaluedMap<String, Object> getAllHeaders() {
+            return map;
+        }
+    }
 }

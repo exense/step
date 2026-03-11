@@ -46,7 +46,7 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
     @YamlFieldCustomCopy
     private Map<String, String> routing;
 
-    private boolean useCustomTemplate=false;
+    private boolean useCustomTemplate = false;
 
     private String description;
 
@@ -106,7 +106,7 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
         this.name = name;
     }
 
-    protected void fillDeclaredFields(T res, StagingAutomationPackageContext context){
+    protected void fillDeclaredFields(T res, StagingAutomationPackageContext context) {
         res.addAttribute(AbstractOrganizableObject.NAME, this.getName());
         copyFieldsToObject(res, true);
     }

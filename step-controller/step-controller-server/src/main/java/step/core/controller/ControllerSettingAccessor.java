@@ -6,18 +6,18 @@ import java.util.List;
 
 public interface ControllerSettingAccessor extends Accessor<ControllerSetting> {
 
-	ControllerSetting getSettingByKey(String key);
-	
-	ControllerSetting updateOrCreateSetting(String key, String value);
+    ControllerSetting getSettingByKey(String key);
 
-	boolean getSettingAsBoolean(String settingSchedulerEnabled);
+    ControllerSetting updateOrCreateSetting(String key, String value);
 
-	ControllerSetting save(ControllerSetting controllerSetting);
+    boolean getSettingAsBoolean(String settingSchedulerEnabled);
 
-	ControllerSetting createSettingIfNotExisting(String settingSchedulerEnabled, String string);
+    ControllerSetting save(ControllerSetting controllerSetting);
 
-	void addHook(String key, ControllerSettingHook hook);
+    ControllerSetting createSettingIfNotExisting(String settingSchedulerEnabled, String string);
 
-	boolean removeHook(String key, ControllerSettingHook hook);
+    void addHook(String key, ControllerSettingHook hook);
+
+    boolean removeHook(String key, ControllerSettingHook hook);
 
 }

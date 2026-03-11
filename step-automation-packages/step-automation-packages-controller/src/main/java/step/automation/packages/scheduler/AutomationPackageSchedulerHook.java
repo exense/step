@@ -76,7 +76,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
 
     @Override
     public void onMainAutomationPackageManagerCreate(Map<String, Object> extensions) {
-       extensions.put(EXECUTION_SCHEDULER_EXTENSION, scheduler);
+        extensions.put(EXECUTION_SCHEDULER_EXTENSION, scheduler);
     }
 
     @Override
@@ -90,11 +90,11 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
                                  AutomationPackage oldPackage, AutomationPackageStaging targetStaging, ObjectPredicate objectPredicate) {
         if (isSchedulerInContext(apContext)) {
             List<ExecutiontTaskParameters> preparedForStaging = prepareExecutionTasksParamsStaging((List<AutomationPackageSchedule>) objects,
-                    apContent,
-                    apContext,
-                    oldPackage,
-                    targetStaging.getPlans(),
-                    objectPredicate
+                apContent,
+                apContext,
+                oldPackage,
+                targetStaging.getPlans(),
+                objectPredicate
             );
 
             targetStaging.addAdditionalObjects(AutomationPackageSchedule.FIELD_NAME_IN_AP, preparedForStaging);
@@ -123,7 +123,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             List<String> cronExclusionsAsStrings = schedule.getCronExclusions();
             if (cronExclusionsAsStrings != null && !cronExclusionsAsStrings.isEmpty()) {
                 List<CronExclusion> cronExclusions = cronExclusionsAsStrings.stream()
-                        .map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
+                    .map(s -> new CronExclusion(s, "")).collect(Collectors.toList());
                 execTaskParameters.setCronExclusions(cronExclusions);
             }
             String assertionPlanName = schedule.getAssertionPlanName();
@@ -131,7 +131,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
                 Plan assertionPlan = lookupPlanByName(plansStaging, assertionPlanName, packageContext, objectPredicate);
                 if (assertionPlan == null) {
                     throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                            ". No assertion plan with '" + assertionPlanName + "' name found for schedule " + schedule.getName());
+                        ". No assertion plan with '" + assertionPlanName + "' name found for schedule " + schedule.getName());
                 }
                 execTaskParameters.setAssertionPlan(assertionPlan.getId());
             }
@@ -139,20 +139,20 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             String planNameFromSchedule = schedule.getPlanName();
             if (planNameFromSchedule == null || planNameFromSchedule.isEmpty()) {
                 throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                        ". Plan name is not defined for schedule " + schedule.getName());
+                    ". Plan name is not defined for schedule " + schedule.getName());
             }
 
             Plan plan = lookupPlanByName(plansStaging, planNameFromSchedule, packageContext, objectPredicate);
             if (plan == null) {
                 throw new AutomationPackageManagerException("Invalid automation package: " + packageContent.getName() +
-                        ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
+                    ". No plan with '" + planNameFromSchedule + "' name found for schedule " + schedule.getName());
             }
 
             RepositoryObjectReference repositoryObjectReference = new RepositoryObjectReference(
-                    RepositoryObjectReference.LOCAL_REPOSITORY_ID, Map.of(RepositoryObjectReference.PLAN_ID, plan.getId().toString())
+                RepositoryObjectReference.LOCAL_REPOSITORY_ID, Map.of(RepositoryObjectReference.PLAN_ID, plan.getId().toString())
             );
             ExecutionParameters executionParameters = new ExecutionParameters(repositoryObjectReference, plan.getAttribute(AbstractOrganizableObject.NAME),
-                    schedule.getExecutionParameters());
+                schedule.getExecutionParameters());
             execTaskParameters.setExecutionsParameters(executionParameters);
             completeExecTasksParameters.add(execTaskParameters);
         }
@@ -192,8 +192,8 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
             context.getEnricher().accept(enrichablePlan);
             // schedule can reference the existing persisted plan (not defined inside the automation package)
             Filter persistedPlanFilter = Filters.and(List.of(Filters.equals("attributes." + AbstractOrganizableObject.NAME, planName),
-                    Filters.not(Filters.equals("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, enrichablePlan.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID).toString()))));
-            plan = getPlanAccessor(context).getCollectionDriver().find(persistedPlanFilter,  null, null, null, 0).filter(objectPredicate).findFirst().orElse(null);
+                Filters.not(Filters.equals("customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID, enrichablePlan.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID).toString()))));
+            plan = getPlanAccessor(context).getCollectionDriver().find(persistedPlanFilter, null, null, null, 0).filter(objectPredicate).findFirst().orElse(null);
         }
         return plan;
     }
@@ -206,11 +206,11 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
         return getExecutionScheduler(context).getExecutionTaskAccessor().findManyByCriteria(AutomationPackageEntity.getAutomationPackageIdCriteria(automationPackageId)).collect(Collectors.toList());
     }
 
-    protected boolean isSchedulerInContext(AutomationPackageContext context)  {
+    protected boolean isSchedulerInContext(AutomationPackageContext context) {
         return context.getExtensions().get(EXECUTION_SCHEDULER_EXTENSION) != null;
     }
 
-    protected ExecutionScheduler getExecutionScheduler(AutomationPackageContext context){
+    protected ExecutionScheduler getExecutionScheduler(AutomationPackageContext context) {
         return (ExecutionScheduler) context.getExtensions().get(EXECUTION_SCHEDULER_EXTENSION);
     }
 }

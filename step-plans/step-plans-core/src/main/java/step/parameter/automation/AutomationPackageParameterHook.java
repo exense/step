@@ -63,8 +63,8 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
     @Override
     public void onPrepareStaging(String fieldName, AutomationPackageContext apContext, AutomationPackageContent apContent, List<?> objects, AutomationPackage oldPackage, AutomationPackageStaging targetStaging, ObjectPredicate objectPredicate) {
         targetStaging.addAdditionalObjects(
-                AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
-                objects.stream().map(p -> ((AutomationPackageParameter)p).toParameter()).collect(Collectors.toList())
+            AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP,
+            objects.stream().map(p -> ((AutomationPackageParameter) p).toParameter()).collect(Collectors.toList())
         );
     }
 
@@ -89,8 +89,8 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
         for (Parameter parameter : parameters) {
             try {
                 getParameterManager(context.getExtensions()).getParameterAccessor().remove(parameter.getId());
-            } catch (Exception e){
-                 log.error("The automation package parameter {} cannot be deleted for automation package {}.", parameter.getKey(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e);
+            } catch (Exception e) {
+                log.error("The automation package parameter {} cannot be deleted for automation package {}.", parameter.getKey(), automationPackage.getAttribute(AbstractOrganizableObject.NAME), e);
             }
         }
     }
@@ -133,7 +133,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
         return "customFields." + AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
     }
 
-    protected ParameterManager getParameterManager(Map<String, Object> extensions){
+    protected ParameterManager getParameterManager(Map<String, Object> extensions) {
         return (ParameterManager) extensions.get(PARAMETER_MANAGER_EXTENSION);
     }
 

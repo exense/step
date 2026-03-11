@@ -24,7 +24,7 @@ public class LineNumberByJsonPointerResolverTest {
     private final LineNumberByJsonPointerResolver resolver = new LineNumberByJsonPointerResolver();
 
     @Before
-    public void beforeEach(){
+    public void beforeEach() {
     }
 
     @Test
@@ -64,11 +64,11 @@ public class LineNumberByJsonPointerResolverTest {
         try (FileInputStream is = new FileInputStream(yamlFile)) {
             List<LineNumberByJsonPointerResolver.JsonPointerSourceLine> found = resolver.findLineNumbers(List.of("#/root", "#"), new String(is.readAllBytes()));
             Assert.assertEquals(
-                    List.of(
-                            new LineNumberByJsonPointerResolver.JsonPointerSourceLine("#/root", 4),
-                            new LineNumberByJsonPointerResolver.JsonPointerSourceLine("#", 1)
-                    ),
-                    found
+                List.of(
+                    new LineNumberByJsonPointerResolver.JsonPointerSourceLine("#/root", 4),
+                    new LineNumberByJsonPointerResolver.JsonPointerSourceLine("#", 1)
+                ),
+                found
             );
         } catch (IOException e) {
             throw new RuntimeException("IO Exception", e);

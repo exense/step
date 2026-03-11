@@ -100,14 +100,14 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
 
     private ServerEndpointConfig makeUploadConfig(StreamingResourceManager manager) {
         return ServerEndpointConfig.Builder.create(StepWebsocketUploadEndpoint.class, UPLOAD_PATH)
-                .configurator(new EndpointConfigurator(() -> new StepWebsocketUploadEndpoint(manager, sessionsHandler)))
-                .build();
+            .configurator(new EndpointConfigurator(() -> new StepWebsocketUploadEndpoint(manager, sessionsHandler)))
+            .build();
     }
 
     private ServerEndpointConfig makeDownloadConfig(StepStreamingResourceManager manager) {
         return ServerEndpointConfig.Builder.create(StepWebsocketDownloadEndpoint.class, DOWNLOAD_PATH)
-                .configurator(new EndpointConfigurator(() -> new StepWebsocketDownloadEndpoint(manager, sessionsHandler, DOWNLOAD_PARAMETER_NAME)))
-                .build();
+            .configurator(new EndpointConfigurator(() -> new StepWebsocketDownloadEndpoint(manager, sessionsHandler, DOWNLOAD_PARAMETER_NAME)))
+            .build();
     }
 
     @Override
@@ -127,7 +127,6 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
                 // Note: this URL is also used by the measures streaming to determine the hostname.
                 executionContext.put(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL, controllerUrl);
             }
-
 
 
             @Override

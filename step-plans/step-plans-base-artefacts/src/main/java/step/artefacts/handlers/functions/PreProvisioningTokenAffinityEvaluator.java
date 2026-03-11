@@ -43,7 +43,7 @@ public class PreProvisioningTokenAffinityEvaluator extends SimpleAffinityEvaluat
     private static TokenPretender replaceCriteria(Identity i1) {
         // Delegate the transformation of the selection criteria to the registered agent pool provisioning parameters. The first non-null transformation is returned
         Map<String, Interest> newInterests = i1.getInterests().entrySet().stream().map(e -> AgentPoolProvisioningParameters.supportedParameters.stream()
-                .map(p -> p.preProvisioningTokenSelectionCriteriaTransformer.apply(e)).filter(Objects::nonNull).findFirst().orElse(e)).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            .map(p -> p.preProvisioningTokenSelectionCriteriaTransformer.apply(e)).filter(Objects::nonNull).findFirst().orElse(e)).collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
         TokenPretender changedI1 = new TokenPretender(i1.getAttributes(), newInterests);
         return changedI1;
     }

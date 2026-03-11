@@ -7,14 +7,14 @@ import java.util.function.Function;
 
 public class Resolver {
 
-	private final List<Function<String, String>> resolvers = new ArrayList<>();
+    private final List<Function<String, String>> resolvers = new ArrayList<>();
 
-	public void register(Function<String, String> resolver) {
-		resolvers.add(resolver);
-	}
+    public void register(Function<String, String> resolver) {
+        resolvers.add(resolver);
+    }
 
-	public String resolve(String expression) {
-		return resolvers.stream().map(r -> r.apply(expression)).filter(Objects::nonNull).findFirst().orElse(expression);
-	}
+    public String resolve(String expression) {
+        return resolvers.stream().map(r -> r.apply(expression)).filter(Objects::nonNull).findFirst().orElse(expression);
+    }
 
 }

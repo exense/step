@@ -16,62 +16,62 @@ import step.core.yaml.YamlModel;
 @Artefact
 public class PerformanceAssert extends AbstractArtefact {
 
-	private List<Filter> filters;
-	private Aggregator aggregator = Aggregator.AVG;
-	private Comparator comparator = Comparator.LOWER_THAN;
-	private DynamicValue<Number> expectedValue = new DynamicValue<Number>(3000l);
-	
-	public PerformanceAssert() {
-		super();
-	}
+    private List<Filter> filters;
+    private Aggregator aggregator = Aggregator.AVG;
+    private Comparator comparator = Comparator.LOWER_THAN;
+    private DynamicValue<Number> expectedValue = new DynamicValue<Number>(3000l);
 
-	public PerformanceAssert(Aggregator aggregator, Comparator comparator, Number expectedValue, Filter... filters) {
-		super();
-		this.filters = new ArrayList<>(Arrays.asList(filters));
-		this.aggregator = aggregator;
-		this.comparator = comparator;
-		this.expectedValue = new DynamicValue<>(expectedValue);
-	}
-	
-	public PerformanceAssert(List<Filter> filters, Aggregator aggregator, Comparator comparator, Number expectedValue) {
-		super();
-		this.filters = filters;
-		this.aggregator = aggregator;
-		this.comparator = comparator;
-		this.expectedValue = new DynamicValue<>(expectedValue);
-	}
+    public PerformanceAssert() {
+        super();
+    }
 
-	@ContainsDynamicValues
-	public List<Filter> getFilters() {
-		return filters;
-	}
+    public PerformanceAssert(Aggregator aggregator, Comparator comparator, Number expectedValue, Filter... filters) {
+        super();
+        this.filters = new ArrayList<>(Arrays.asList(filters));
+        this.aggregator = aggregator;
+        this.comparator = comparator;
+        this.expectedValue = new DynamicValue<>(expectedValue);
+    }
 
-	public void setFilters(List<Filter> filters) {
-		this.filters = filters;
-	}
+    public PerformanceAssert(List<Filter> filters, Aggregator aggregator, Comparator comparator, Number expectedValue) {
+        super();
+        this.filters = filters;
+        this.aggregator = aggregator;
+        this.comparator = comparator;
+        this.expectedValue = new DynamicValue<>(expectedValue);
+    }
 
-	public Aggregator getAggregator() {
-		return aggregator;
-	}
+    @ContainsDynamicValues
+    public List<Filter> getFilters() {
+        return filters;
+    }
 
-	public void setAggregator(Aggregator aggregator) {
-		this.aggregator = aggregator;
-	}
+    public void setFilters(List<Filter> filters) {
+        this.filters = filters;
+    }
 
-	public Comparator getComparator() {
-		return comparator;
-	}
+    public Aggregator getAggregator() {
+        return aggregator;
+    }
 
-	public void setComparator(Comparator comparator) {
-		this.comparator = comparator;
-	}
+    public void setAggregator(Aggregator aggregator) {
+        this.aggregator = aggregator;
+    }
 
-	public DynamicValue<Number> getExpectedValue() {
-		return expectedValue;
-	}
+    public Comparator getComparator() {
+        return comparator;
+    }
 
-	public void setExpectedValue(DynamicValue<Number> expectedValue) {
-		this.expectedValue = expectedValue;
-	}
+    public void setComparator(Comparator comparator) {
+        this.comparator = comparator;
+    }
+
+    public DynamicValue<Number> getExpectedValue() {
+        return expectedValue;
+    }
+
+    public void setExpectedValue(DynamicValue<Number> expectedValue) {
+        this.expectedValue = expectedValue;
+    }
 
 }

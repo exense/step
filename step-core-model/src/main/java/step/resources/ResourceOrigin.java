@@ -26,14 +26,14 @@ public interface ResourceOrigin {
 
     String toStringRepresentation();
 
-    default boolean isModifiable(){
+    default boolean isModifiable() {
         return true;
     }
 
     /**
      * Determines if the resource of this origin can be found via its {@link #toStringRepresentation()}
      */
-    default boolean isIdentifiable(){
+    default boolean isIdentifiable() {
         return false;
     }
 }

@@ -31,8 +31,8 @@ public class AutomationPackageFromInputStreamProvider extends AbstractAutomation
         super(packageStream, fileName);
         AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(tempFile.getTempFile());
         this.archive = reader.createAutomationPackageArchive(tempFile.getTempFile(),
-                packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
-                null);
+            packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
+            null);
     }
 
     @Override

@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -40,214 +40,214 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 
 public class ThreadPool implements Closeable {
-	
-	public static final String EXECUTION_THREADS_AUTO = "execution_threads_auto";
 
-	private static final String EXECUTION_THREADS_AUTO_CONSUMED = "$execution_threads_auto_consumed";
+    public static final String EXECUTION_THREADS_AUTO = "execution_threads_auto";
 
-	private static final Logger logger = LoggerFactory.getLogger(ThreadPool.class);
+    private static final String EXECUTION_THREADS_AUTO_CONSUMED = "$execution_threads_auto_consumed";
 
-	private final ExecutionContext executionContext;
+    private static final Logger logger = LoggerFactory.getLogger(ThreadPool.class);
 
-	private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final ExecutionContext executionContext;
 
-	protected ThreadLocal<Stack<BatchContext>> batchContextStack = ThreadLocal.withInitial(()->new Stack<BatchContext>());
-	
-	public ThreadPool(ExecutionContext context) {
-		super();
-		this.executionContext = context;
-	}
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-	@Override
-	public void close() throws IOException {
-		executorService.shutdown();
-	}
+    protected ThreadLocal<Stack<BatchContext>> batchContextStack = ThreadLocal.withInitial(() -> new Stack<BatchContext>());
 
-	private static final class BatchContext {
+    public ThreadPool(ExecutionContext context) {
+        super();
+        this.executionContext = context;
+    }
 
-		private final ExecutionContext executionContext;
-		private final AtomicBoolean isInterrupted = new AtomicBoolean(false);
-		private final ThreadLocal<Integer> workerIds = new ThreadLocal<>();
-		private final boolean isParallel;
-		
-		public BatchContext(ExecutionContext executionContext, boolean isParallel) {
-			super();
-			this.executionContext = executionContext;
-			this.isParallel = isParallel;
-		}
+    @Override
+    public void close() throws IOException {
+        executorService.shutdown();
+    }
 
-		public boolean isParallel() {
-			return isParallel;
-		}
-	}
+    private static final class BatchContext {
 
-	private static final class Worker<T> implements Runnable {
+        private final ExecutionContext executionContext;
+        private final AtomicBoolean isInterrupted = new AtomicBoolean(false);
+        private final ThreadLocal<Integer> workerIds = new ThreadLocal<>();
+        private final boolean isParallel;
 
-		private final BatchContext batchContext;
-		private final Consumer<T> workItemConsumer;
-		private final Iterator<T> workItemIterator;
+        public BatchContext(ExecutionContext executionContext, boolean isParallel) {
+            super();
+            this.executionContext = executionContext;
+            this.isParallel = isParallel;
+        }
 
-		public Worker(BatchContext batchContext, Consumer<T> workItemConsumer, Iterator<T> workItemIterator) {
-			super();
-			this.batchContext = batchContext;
-			this.workItemConsumer = workItemConsumer;
-			this.workItemIterator = workItemIterator;
-		}
+        public boolean isParallel() {
+            return isParallel;
+        }
+    }
 
-		@Override
-		public void run() {
-			T next;
-			try {
-				while ((next = workItemIterator.next()) != null) {
-					workItemConsumer.accept(next);
-					// ensure that a retrieved workitem is always consumed.
-					// break if necessary after the item has been consumed (The ForBlockHandler for instance rely on this guaranty for row commit)
-					if(batchContext.executionContext.isInterrupted() || batchContext.isInterrupted.get()) {
-						break;
-					}
-				}
-			} catch (NoSuchElementException e) {
-				// Ignore
-			}
-		}
-	}
+    private static final class Worker<T> implements Runnable {
 
-	public static final class WorkerController<T> {
+        private final BatchContext batchContext;
+        private final Consumer<T> workItemConsumer;
+        private final Iterator<T> workItemIterator;
 
-		private final BatchContext batchContext;
+        public Worker(BatchContext batchContext, Consumer<T> workItemConsumer, Iterator<T> workItemIterator) {
+            super();
+            this.batchContext = batchContext;
+            this.workItemConsumer = workItemConsumer;
+            this.workItemIterator = workItemIterator;
+        }
 
-		public WorkerController(BatchContext batchContext) {
-			super();
-			this.batchContext = batchContext;
-		}
+        @Override
+        public void run() {
+            T next;
+            try {
+                while ((next = workItemIterator.next()) != null) {
+                    workItemConsumer.accept(next);
+                    // ensure that a retrieved workitem is always consumed.
+                    // break if necessary after the item has been consumed (The ForBlockHandler for instance rely on this guaranty for row commit)
+                    if (batchContext.executionContext.isInterrupted() || batchContext.isInterrupted.get()) {
+                        break;
+                    }
+                }
+            } catch (NoSuchElementException e) {
+                // Ignore
+            }
+        }
+    }
 
-		public void interrupt() {
-			batchContext.isInterrupted.set(true);
-		}
-		
-		public int getWorkerId() {
-			return batchContext.workerIds.get();
-		}
+    public static final class WorkerController<T> {
 
-		/**
-		 * @return true if the current batch is running in parallel i.e with more than one worker
-		 */
-		public boolean isParallel() {
-			return batchContext.isParallel();
-		}
-	}
+        private final BatchContext batchContext;
 
-	public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,
-			WorkerItemConsumerFactory<WORK_ITEM> workItemConsumerFactory, int numberOfThreads) {
-		// Wrapping the iterator to avoid concurrency issues as iterators aren't ThreadSafe 
-		Iterator<WORK_ITEM> threadSafeIterator = new Iterator<WORK_ITEM>() {
-			@Override
-			public boolean hasNext() {
-				throw new RuntimeException("This method shouldn't be called");
-			}
+        public WorkerController(BatchContext batchContext) {
+            super();
+            this.batchContext = batchContext;
+        }
 
-			@Override
-			public WORK_ITEM next() {
-				synchronized (this) {
-					return workItemIterator.next();
-				}
-			}
-		};
+        public void interrupt() {
+            batchContext.isInterrupted.set(true);
+        }
 
-		final BatchContext batchContext = new BatchContext(executionContext, numberOfThreads>1);
-		
-		WorkerController<WORK_ITEM> workerController = new WorkerController<>(batchContext);
-		Consumer<WORK_ITEM> workItemConsumer = workItemConsumerFactory.createWorkItemConsumer(workerController);
-		
-		if(numberOfThreads == 1) {
-			// No parallelism, run the worker in the current thread
-			createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator, 0);
-		} else {
-			ReportNode currentReportNode = executionContext.getCurrentReportNode();
-			List<Future<?>> futures = new ArrayList<>();
-			long parentThreadId = Thread.currentThread().getId();
-			// Create one worker for each "thread"
-			for (int i = 0; i < numberOfThreads; i++) {
-				int workerId = i;
-				futures.add(executorService.submit(() -> {
-					executionContext.associateThread(parentThreadId, currentReportNode);
-					createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator, workerId);
-				}));
-			}
-			
-			// Wait for the workers to complete
-			for (Future<?> future : futures) {
-				try {
-					future.get();
-				} catch (InterruptedException | ExecutionException e) {
-					logger.error("Error while waiting for worker execution to terminate. Execution ID: "+executionContext.getExecutionId(), e);
-				}
-			}
+        public int getWorkerId() {
+            return batchContext.workerIds.get();
+        }
 
-		}
-	}
+        /**
+         * @return true if the current batch is running in parallel i.e with more than one worker
+         */
+        public boolean isParallel() {
+            return batchContext.isParallel();
+        }
+    }
 
-	public int getEffectiveNumberOfThreads(int specifiedNumberOfThreads) {
-		return getEffectiveNumberOfThreads(specifiedNumberOfThreads, Integer.MAX_VALUE);
-	}
+    public <WORK_ITEM> void consumeWork(Iterator<WORK_ITEM> workItemIterator,
+                                        WorkerItemConsumerFactory<WORK_ITEM> workItemConsumerFactory, int numberOfThreads) {
+        // Wrapping the iterator to avoid concurrency issues as iterators aren't ThreadSafe
+        Iterator<WORK_ITEM> threadSafeIterator = new Iterator<WORK_ITEM>() {
+            @Override
+            public boolean hasNext() {
+                throw new RuntimeException("This method shouldn't be called");
+            }
 
-	public int getEffectiveNumberOfThreads(int specifiedNumberOfThreads, int requiredNumberOfThreads) {
-		Integer autoNumberOfThreads = getAutoNumberOfThreads();
-		if (autoNumberOfThreads != null) {
-			if(!isAutoNumberOfThreadsConsumed() && requiredNumberOfThreads > 1) {
-				// Forcing the number of threads to the required autoNumberOfThreads for the
-				// first Artefact using the ThreadPool (Level = 1)
-				specifiedNumberOfThreads = autoNumberOfThreads;
-				consumeAutoNumberOfThreads();
-			} else {
-				// Avoid parallelism for the artefacts that are children of an artefact
-				// already using the ThreadPool (Level > 1)
-				specifiedNumberOfThreads = 1;
-			}
-		}
-		return specifiedNumberOfThreads;
-	}
+            @Override
+            public WORK_ITEM next() {
+                synchronized (this) {
+                    return workItemIterator.next();
+                }
+            }
+        };
 
-	/**
-	 * @return true if the current thread is a reentrant thread. A Thread is called "reentrant"
-	 * when it is already managed by a {@link ThreadPool}
-	 */
-	protected boolean isReentrantThread() {
-		return !batchContextStack.get().isEmpty();
-	}
+        final BatchContext batchContext = new BatchContext(executionContext, numberOfThreads > 1);
 
-	public Integer getAutoNumberOfThreads() {
-		Object autoNumberOfThreads = executionContext.getVariablesManager().getVariableAsString(EXECUTION_THREADS_AUTO, null);
-		if(autoNumberOfThreads != null && !autoNumberOfThreads.toString().trim().isEmpty()) {
-			return Integer.parseInt(autoNumberOfThreads.toString());
-		} else {
-			return null;
-		}
-		
-	}
+        WorkerController<WORK_ITEM> workerController = new WorkerController<>(batchContext);
+        Consumer<WORK_ITEM> workItemConsumer = workItemConsumerFactory.createWorkItemConsumer(workerController);
 
-	protected boolean isAutoNumberOfThreadsConsumed() {
-		Object autoNumberOfThreads = executionContext.getVariablesManager().getVariableAsString(EXECUTION_THREADS_AUTO_CONSUMED, Boolean.FALSE.toString());
-		return Boolean.parseBoolean(autoNumberOfThreads.toString());
-	}
+        if (numberOfThreads == 1) {
+            // No parallelism, run the worker in the current thread
+            createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator, 0);
+        } else {
+            ReportNode currentReportNode = executionContext.getCurrentReportNode();
+            List<Future<?>> futures = new ArrayList<>();
+            long parentThreadId = Thread.currentThread().getId();
+            // Create one worker for each "thread"
+            for (int i = 0; i < numberOfThreads; i++) {
+                int workerId = i;
+                futures.add(executorService.submit(() -> {
+                    executionContext.associateThread(parentThreadId, currentReportNode);
+                    createWorkerAndRun(batchContext, workItemConsumer, threadSafeIterator, workerId);
+                }));
+            }
 
-	protected void consumeAutoNumberOfThreads() {
-		executionContext.getVariablesManager().putVariable(executionContext.getCurrentReportNode(), EXECUTION_THREADS_AUTO_CONSUMED, Boolean.TRUE.toString());
-	}
+            // Wait for the workers to complete
+            for (Future<?> future : futures) {
+                try {
+                    future.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    logger.error("Error while waiting for worker execution to terminate. Execution ID: " + executionContext.getExecutionId(), e);
+                }
+            }
 
-	private <WORK_ITEM> void createWorkerAndRun(BatchContext batchContext, Consumer<WORK_ITEM> workItemConsumer, Iterator<WORK_ITEM> workItemIterator, int workerId) {
-		Stack<BatchContext> stack = pushBatchContextToStack(batchContext);
-		try {
-			batchContext.workerIds.set(workerId);
-			new Worker<WORK_ITEM>(batchContext, workItemConsumer, workItemIterator).run();
-		} finally {
-			stack.pop();
-		}
-	}
+        }
+    }
 
-	protected Stack<BatchContext> pushBatchContextToStack(final BatchContext batchContext) {
-		Stack<BatchContext> stack = batchContextStack.get();
-		stack.push(batchContext);
-		return stack;
-	}
+    public int getEffectiveNumberOfThreads(int specifiedNumberOfThreads) {
+        return getEffectiveNumberOfThreads(specifiedNumberOfThreads, Integer.MAX_VALUE);
+    }
+
+    public int getEffectiveNumberOfThreads(int specifiedNumberOfThreads, int requiredNumberOfThreads) {
+        Integer autoNumberOfThreads = getAutoNumberOfThreads();
+        if (autoNumberOfThreads != null) {
+            if (!isAutoNumberOfThreadsConsumed() && requiredNumberOfThreads > 1) {
+                // Forcing the number of threads to the required autoNumberOfThreads for the
+                // first Artefact using the ThreadPool (Level = 1)
+                specifiedNumberOfThreads = autoNumberOfThreads;
+                consumeAutoNumberOfThreads();
+            } else {
+                // Avoid parallelism for the artefacts that are children of an artefact
+                // already using the ThreadPool (Level > 1)
+                specifiedNumberOfThreads = 1;
+            }
+        }
+        return specifiedNumberOfThreads;
+    }
+
+    /**
+     * @return true if the current thread is a reentrant thread. A Thread is called "reentrant"
+     * when it is already managed by a {@link ThreadPool}
+     */
+    protected boolean isReentrantThread() {
+        return !batchContextStack.get().isEmpty();
+    }
+
+    public Integer getAutoNumberOfThreads() {
+        Object autoNumberOfThreads = executionContext.getVariablesManager().getVariableAsString(EXECUTION_THREADS_AUTO, null);
+        if (autoNumberOfThreads != null && !autoNumberOfThreads.toString().trim().isEmpty()) {
+            return Integer.parseInt(autoNumberOfThreads.toString());
+        } else {
+            return null;
+        }
+
+    }
+
+    protected boolean isAutoNumberOfThreadsConsumed() {
+        Object autoNumberOfThreads = executionContext.getVariablesManager().getVariableAsString(EXECUTION_THREADS_AUTO_CONSUMED, Boolean.FALSE.toString());
+        return Boolean.parseBoolean(autoNumberOfThreads.toString());
+    }
+
+    protected void consumeAutoNumberOfThreads() {
+        executionContext.getVariablesManager().putVariable(executionContext.getCurrentReportNode(), EXECUTION_THREADS_AUTO_CONSUMED, Boolean.TRUE.toString());
+    }
+
+    private <WORK_ITEM> void createWorkerAndRun(BatchContext batchContext, Consumer<WORK_ITEM> workItemConsumer, Iterator<WORK_ITEM> workItemIterator, int workerId) {
+        Stack<BatchContext> stack = pushBatchContextToStack(batchContext);
+        try {
+            batchContext.workerIds.set(workerId);
+            new Worker<WORK_ITEM>(batchContext, workItemConsumer, workItemIterator).run();
+        } finally {
+            stack.pop();
+        }
+    }
+
+    protected Stack<BatchContext> pushBatchContextToStack(final BatchContext batchContext) {
+        Stack<BatchContext> stack = batchContextStack.get();
+        stack.push(batchContext);
+        return stack;
+    }
 }

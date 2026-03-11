@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -27,45 +27,45 @@ import step.core.execution.ExecutionContext;
 
 public class ExcelFileLookup {
 
-	ExecutionContext context;
-	FileResolver fileResolver;
-	
-	public ExcelFileLookup(ExecutionContext context) {
-		super();
-		this.context = context;
-		if(context!=null) {
-			this.fileResolver = context.getFileResolver();
-		}
-	}
+    ExecutionContext context;
+    FileResolver fileResolver;
 
-	public File lookup(String workbookPath) {
-		File workBookFile;
-		if(workbookPath.contains("/")||workbookPath.contains("\\")) {
-			workBookFile = new File(workbookPath);
-		} else {
-			workBookFile = fileResolver!=null?fileResolver.resolve(workbookPath):null;
-			if(workBookFile == null || !workBookFile.exists()) {
-				if(context!=null) {
-					Object o = null;
-					if(workbookPath.isEmpty()) {
-						Pattern excelFilenamePattern = Pattern.compile("^.*\\.xls(x)?$");
-						o = context.getVariablesManager().getFirstVariableMatching(excelFilenamePattern);
-					} else {
-						o = context.getVariablesManager().getVariable(ArtefactHandler.FILE_VARIABLE_PREFIX + workbookPath);
-					}
-					
-					if(o!=null && o instanceof File) {
-						workBookFile = (File) o;
-					} else {
-						throw new RuntimeException("The workbook '" + workbookPath + "' couldn't be found.");
-					}
-					
-				} else {
-					throw new RuntimeException("Unable to lookup workbook '" + workbookPath + "' because the context is null. This should never happen");
-				}
-			}
-		}
-		return workBookFile;
-	}
-	
+    public ExcelFileLookup(ExecutionContext context) {
+        super();
+        this.context = context;
+        if (context != null) {
+            this.fileResolver = context.getFileResolver();
+        }
+    }
+
+    public File lookup(String workbookPath) {
+        File workBookFile;
+        if (workbookPath.contains("/") || workbookPath.contains("\\")) {
+            workBookFile = new File(workbookPath);
+        } else {
+            workBookFile = fileResolver != null ? fileResolver.resolve(workbookPath) : null;
+            if (workBookFile == null || !workBookFile.exists()) {
+                if (context != null) {
+                    Object o = null;
+                    if (workbookPath.isEmpty()) {
+                        Pattern excelFilenamePattern = Pattern.compile("^.*\\.xls(x)?$");
+                        o = context.getVariablesManager().getFirstVariableMatching(excelFilenamePattern);
+                    } else {
+                        o = context.getVariablesManager().getVariable(ArtefactHandler.FILE_VARIABLE_PREFIX + workbookPath);
+                    }
+
+                    if (o != null && o instanceof File) {
+                        workBookFile = (File) o;
+                    } else {
+                        throw new RuntimeException("The workbook '" + workbookPath + "' couldn't be found.");
+                    }
+
+                } else {
+                    throw new RuntimeException("Unable to lookup workbook '" + workbookPath + "' because the context is null. This should never happen");
+                }
+            }
+        }
+        return workBookFile;
+    }
+
 }

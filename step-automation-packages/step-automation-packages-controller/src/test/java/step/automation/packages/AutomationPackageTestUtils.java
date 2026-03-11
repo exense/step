@@ -83,7 +83,7 @@ public class AutomationPackageTestUtils {
         throw new AssertionError("Keyword not found: " + clazz);
     }
 
-    public static <T extends AbstractOrganizableObject> T findByName(List<T> objects, String name){
+    public static <T extends AbstractOrganizableObject> T findByName(List<T> objects, String name) {
         for (T object : objects) {
             if (object.getAttribute(AbstractOrganizableObject.NAME).equals(name)) {
                 return object;

@@ -59,7 +59,7 @@ public abstract class AbstractYamlDataSource<T extends DataPoolConfiguration> ex
         }
     }
 
-    public final T toDataPoolConfiguration(boolean isForWriteEditable){
+    public final T toDataPoolConfiguration(boolean isForWriteEditable) {
         T res = createDataPoolConfiguration();
         fillDataPoolConfiguration(res, isForWriteEditable);
         return res;

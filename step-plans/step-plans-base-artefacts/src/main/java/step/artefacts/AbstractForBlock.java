@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -30,81 +30,81 @@ import step.datapool.DataPoolFactory;
 
 
 public class AbstractForBlock extends AbstractArtefact {
-	
-	private DynamicValue<String> item = new DynamicValue<String>("row");
-	
-	private String dataSourceType;
-	
-	private DataPoolConfiguration dataSource;
-	
-	private DynamicValue<Integer> maxFailedLoops = new DynamicValue<Integer>(null);
-	
-	private DynamicValue<Integer> threads = new DynamicValue<Integer>(1);
-	
-	private DynamicValue<String> globalCounter = new DynamicValue<String>("gcounter");
 
-	private DynamicValue<String> userItem = new DynamicValue<String>("userId");
-	
-	@PostConstruct
-	public void init() {
-		dataSource = DataPoolFactory.getDefaultDataPoolConfiguration(dataSourceType);
-	}
-	
-	public String getDataSourceType() {
-		return dataSourceType;
-	}
+    private DynamicValue<String> item = new DynamicValue<String>("row");
 
-	public void setDataSourceType(String dataSourceType) {
-		this.dataSourceType = dataSourceType;
-	}
-	
-	@ContainsDynamicValues
-	@EntityReference(type= EntityConstants.recursive)
-	public DataPoolConfiguration getDataSource() {
-		return dataSource;
-	}
+    private String dataSourceType;
 
-	public void setDataSource(DataPoolConfiguration dataSource) {
-		this.dataSource = dataSource;
-	}
+    private DataPoolConfiguration dataSource;
 
-	public DynamicValue<Integer> getThreads() {
-		return threads;
-	}
+    private DynamicValue<Integer> maxFailedLoops = new DynamicValue<Integer>(null);
 
-	public void setThreads(DynamicValue<Integer> threads) {
-		this.threads = threads;
-	}
+    private DynamicValue<Integer> threads = new DynamicValue<Integer>(1);
 
-	public DynamicValue<Integer> getMaxFailedLoops() {
-		return maxFailedLoops;
-	}
+    private DynamicValue<String> globalCounter = new DynamicValue<String>("gcounter");
 
-	public void setMaxFailedLoops(DynamicValue<Integer> maxFailedLoops) {
-		this.maxFailedLoops = maxFailedLoops;
-	}
+    private DynamicValue<String> userItem = new DynamicValue<String>("userId");
 
-	public DynamicValue<String> getItem() {
-		return item;
-	}
+    @PostConstruct
+    public void init() {
+        dataSource = DataPoolFactory.getDefaultDataPoolConfiguration(dataSourceType);
+    }
 
-	public void setItem(DynamicValue<String> item) {
-		this.item = item;
-	}
+    public String getDataSourceType() {
+        return dataSourceType;
+    }
 
-	public DynamicValue<String> getGlobalCounter() {
-		return globalCounter;
-	}
-	
-	public void setGlobalCounter(DynamicValue<String> globalCounter) {
-		this.globalCounter = globalCounter;
-	}
+    public void setDataSourceType(String dataSourceType) {
+        this.dataSourceType = dataSourceType;
+    }
 
-	public DynamicValue<String> getUserItem() {
-		return userItem;
-	}
+    @ContainsDynamicValues
+    @EntityReference(type = EntityConstants.recursive)
+    public DataPoolConfiguration getDataSource() {
+        return dataSource;
+    }
 
-	public void setUserItem(DynamicValue<String> userItem) {
-		this.userItem = userItem;
-	}
+    public void setDataSource(DataPoolConfiguration dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public DynamicValue<Integer> getThreads() {
+        return threads;
+    }
+
+    public void setThreads(DynamicValue<Integer> threads) {
+        this.threads = threads;
+    }
+
+    public DynamicValue<Integer> getMaxFailedLoops() {
+        return maxFailedLoops;
+    }
+
+    public void setMaxFailedLoops(DynamicValue<Integer> maxFailedLoops) {
+        this.maxFailedLoops = maxFailedLoops;
+    }
+
+    public DynamicValue<String> getItem() {
+        return item;
+    }
+
+    public void setItem(DynamicValue<String> item) {
+        this.item = item;
+    }
+
+    public DynamicValue<String> getGlobalCounter() {
+        return globalCounter;
+    }
+
+    public void setGlobalCounter(DynamicValue<String> globalCounter) {
+        this.globalCounter = globalCounter;
+    }
+
+    public DynamicValue<String> getUserItem() {
+        return userItem;
+    }
+
+    public void setUserItem(DynamicValue<String> userItem) {
+        this.userItem = userItem;
+    }
 }

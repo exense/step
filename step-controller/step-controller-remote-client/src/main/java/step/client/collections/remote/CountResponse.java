@@ -2,23 +2,23 @@ package step.client.collections.remote;
 
 public class CountResponse {
 
-	private Long count;
+    private Long count;
 
-	public CountResponse() {
-		super();
-	}
+    public CountResponse() {
+        super();
+    }
 
-	public CountResponse(Long count) {
-		super();
-		this.count = count;
-	}
+    public CountResponse(Long count) {
+        super();
+        this.count = count;
+    }
 
-	public Long getCount() {
-		return count;
-	}
+    public Long getCount() {
+        return count;
+    }
 
-	public void setCount(Long count) {
-		this.count = count;
-	}
+    public void setCount(Long count) {
+        this.count = count;
+    }
 
 }

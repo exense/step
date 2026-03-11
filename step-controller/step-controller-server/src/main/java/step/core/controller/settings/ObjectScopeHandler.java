@@ -43,12 +43,13 @@ public abstract class ObjectScopeHandler {
 
     /**
      * return the scope value for current scope in given session
+     *
      * @param session
      * @return the scope value in given session
      */
     protected abstract String getScopeValue(Session<?> session);
 
-    public Predicate<AbstractScopedObject> getObjectPredicate(Session<?> session){
+    public Predicate<AbstractScopedObject> getObjectPredicate(Session<?> session) {
         return new Predicate<AbstractScopedObject>() {
             @Override
             public boolean test(AbstractScopedObject abstractScopedObject) {
@@ -58,7 +59,7 @@ public abstract class ObjectScopeHandler {
         };
     }
 
-    public Predicate<AbstractScopedObject> getObjectPredicateIsNotSet(){
+    public Predicate<AbstractScopedObject> getObjectPredicateIsNotSet() {
         return new Predicate<AbstractScopedObject>() {
             @Override
             public boolean test(AbstractScopedObject abstractScopedObject) {
@@ -75,6 +76,7 @@ public abstract class ObjectScopeHandler {
      * Return the priority for this scope, higher number is the highest priority
      * Note that for combined scope search the sum must be considered, i.e. if scope1 alone must have an higher prio
      * than scope2 and scope3 together: prio1 > prio2+prio3 must be true
+     *
      * @return the priority
      */
     protected abstract int getPriority();

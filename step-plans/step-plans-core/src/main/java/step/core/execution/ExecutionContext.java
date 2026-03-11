@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -39,211 +39,212 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class ExecutionContext extends AbstractExecutionEngineContext  {
+public class ExecutionContext extends AbstractExecutionEngineContext {
 
-	// Immutable fields
-	private final String executionId;
-	private final ExecutionParameters executionParameters;
-	private final ArtefactHandlerManager artefactHandlerManager;
-	private final ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
-	private final ReportNode reportNode;
-	private final VariablesManager variablesManager;
-	private final ReportNodeCache reportNodeCache;
-	private final EventManager eventManager;
-	private final ExecutionManager executionManager;
-	private ExecutionCallbacks executionCallbacks;
-	private final Resolver resolver;
+    // Immutable fields
+    private final String executionId;
+    private final ExecutionParameters executionParameters;
+    private final ArtefactHandlerManager artefactHandlerManager;
+    private final ThreadLocal<ReportNode> currentNodeRegistry = new ThreadLocal<>();
+    private final ReportNode reportNode;
+    private final VariablesManager variablesManager;
+    private final ReportNodeCache reportNodeCache;
+    private final EventManager eventManager;
+    private final ExecutionManager executionManager;
+    private ExecutionCallbacks executionCallbacks;
+    private final Resolver resolver;
 
-	private ObjectEnricher objectEnricher;
-	private ObjectPredicate objectPredicate;
+    private ObjectEnricher objectEnricher;
+    private ObjectPredicate objectPredicate;
 
-	private final Set<ExecutionVetoer> executionVetoers = new HashSet<>();
-	
-	// Mutable fields
-	private volatile ExecutionStatus status;
-	private String executionType;
-	private Plan plan;
+    private final Set<ExecutionVetoer> executionVetoers = new HashSet<>();
 
-	// Keep track of agents involved in the execution; access is via tailored methods,
-	// so the implementation is not exposed via the "usual" getters.
-	private final Set<String> agentUrls = ConcurrentHashMap.newKeySet();
-	
-	protected ExecutionContext(String executionId, ExecutionParameters executionParameters) {
-		super();
-		this.executionId = executionId;
-		this.executionParameters = executionParameters;
+    // Mutable fields
+    private volatile ExecutionStatus status;
+    private String executionType;
+    private Plan plan;
 
-		executionManager = new ExecutionManager(this);
-		reportNodeCache = new ReportNodeCache();
-		variablesManager = new VariablesManager(this);
-		artefactHandlerManager = new ArtefactHandlerManager(this);
-		eventManager = new EventManager();
-		resolver = new Resolver();
-		
-		reportNode = new ReportNode();
-		reportNode.setExecutionID(executionId);
-		reportNode.setId(new ObjectId(executionId));
-		reportNodeCache.put(reportNode);
-		setCurrentReportNode(reportNode);
-	}
+    // Keep track of agents involved in the execution; access is via tailored methods,
+    // so the implementation is not exposed via the "usual" getters.
+    private final Set<String> agentUrls = ConcurrentHashMap.newKeySet();
 
-	public ArtefactHandlerManager getArtefactHandlerManager() {
-		return artefactHandlerManager;
-	}
+    protected ExecutionContext(String executionId, ExecutionParameters executionParameters) {
+        super();
+        this.executionId = executionId;
+        this.executionParameters = executionParameters;
 
-	public String getExecutionType() {
-		return executionType;
-	}
+        executionManager = new ExecutionManager(this);
+        reportNodeCache = new ReportNodeCache();
+        variablesManager = new VariablesManager(this);
+        artefactHandlerManager = new ArtefactHandlerManager(this);
+        eventManager = new EventManager();
+        resolver = new Resolver();
 
-	public void setExecutionType(String executionType) {
-		this.executionType = executionType;
-	}
+        reportNode = new ReportNode();
+        reportNode.setExecutionID(executionId);
+        reportNode.setId(new ObjectId(executionId));
+        reportNodeCache.put(reportNode);
+        setCurrentReportNode(reportNode);
+    }
 
-	@Override
-	public void setExecutionAccessor(ExecutionAccessor executionAccessor) {
-		super.setExecutionAccessor(executionAccessor);
-	}
+    public ArtefactHandlerManager getArtefactHandlerManager() {
+        return artefactHandlerManager;
+    }
 
-	public Plan getPlan() {
-		return plan;
-	}
+    public String getExecutionType() {
+        return executionType;
+    }
 
-	public void setPlan(Plan plan) {
-		this.plan = plan;
-	}
+    public void setExecutionType(String executionType) {
+        this.executionType = executionType;
+    }
 
-	public ReportNode getReport() {
-		return reportNode;
-	}
-	
-	public ReportNodeCache getReportNodeCache() {
-		return reportNodeCache;
-	}
+    @Override
+    public void setExecutionAccessor(ExecutionAccessor executionAccessor) {
+        super.setExecutionAccessor(executionAccessor);
+    }
 
-	public ReportNode getCurrentReportNode() {
-		ReportNode currentNode = currentNodeRegistry.get();
-		if(currentNode==null) {
-			throw new RuntimeException("Current report node is null!");
-		} else {
-			return currentNode;
-		}
-	}
-	
-	public void setCurrentReportNode(ReportNode node) {
-		currentNodeRegistry.set(node);
-	}
+    public Plan getPlan() {
+        return plan;
+    }
 
-	public void associateThread() {
-		getExecutionCallbacks().associateThread(this, Thread.currentThread());
-	}
-	
-	public void associateThread(long parentThreadId, ReportNode currentReportNode) {
-		// TODO refactor the handling of current report node. It shouldn't be the responsability of the 
-		// caller of this method to get the currentReportNode. We should be able to get it based on the parentThreadId
-		setCurrentReportNode(currentReportNode);
-		getExecutionCallbacks().associateThread(this, Thread.currentThread(),parentThreadId);
-	}
+    public void setPlan(Plan plan) {
+        this.plan = plan;
+    }
 
-	public String getExecutionId() {
-		return executionId;
-	}
+    public ReportNode getReport() {
+        return reportNode;
+    }
 
-	public ExecutionStatus getStatus() {
-		return status;
-	}
+    public ReportNodeCache getReportNodeCache() {
+        return reportNodeCache;
+    }
 
-	private static final ThreadLocal<Boolean> interruptByPass = new ThreadLocal<>();
+    public ReportNode getCurrentReportNode() {
+        ReportNode currentNode = currentNodeRegistry.get();
+        if (currentNode == null) {
+            throw new RuntimeException("Current report node is null!");
+        } else {
+            return currentNode;
+        }
+    }
 
-	public void byPassInterruptInCurrentThread(boolean bypass) {
-		if (bypass) {
-			interruptByPass.set(true);
-		} else {
-			interruptByPass.remove();
-		}
-	}
-	public boolean isInterrupted() {
-		boolean byPass = interruptByPass.get() != null && interruptByPass.get();
-		return !byPass && (getStatus() == ExecutionStatus.ABORTING || getStatus() == ExecutionStatus.FORCING_ABORT);
-	}
+    public void setCurrentReportNode(ReportNode node) {
+        currentNodeRegistry.set(node);
+    }
 
-	public boolean isSimulation() {
-		return getExecutionParameters().getMode()==ExecutionMode.SIMULATION;
-	}
-	
-	public void updateStatus(ExecutionStatus status) {
-		this.status = status;
-	}
-	
-	public VariablesManager getVariablesManager() {
-		return variablesManager;
-	}
+    public void associateThread() {
+        getExecutionCallbacks().associateThread(this, Thread.currentThread());
+    }
 
-	@Override
-	public String toString() {
-		return "ExecutionContext [executionId=" + executionId + "]";
-	}
-	
-	public ExecutionParameters getExecutionParameters() {
-		return executionParameters;
-	}
-	
-	public EventManager getEventManager() {
-		return eventManager;
-	}
+    public void associateThread(long parentThreadId, ReportNode currentReportNode) {
+        // TODO refactor the handling of current report node. It shouldn't be the responsability of the
+        // caller of this method to get the currentReportNode. We should be able to get it based on the parentThreadId
+        setCurrentReportNode(currentReportNode);
+        getExecutionCallbacks().associateThread(this, Thread.currentThread(), parentThreadId);
+    }
 
-	public ExecutionManager getExecutionManager() {
-		return executionManager;
-	}
+    public String getExecutionId() {
+        return executionId;
+    }
 
-	public ExecutionCallbacks getExecutionCallbacks() {
-		return executionCallbacks;
-	}
+    public ExecutionStatus getStatus() {
+        return status;
+    }
 
-	protected void setExecutionCallbacks(ExecutionCallbacks executionCallbacks) {
-		this.executionCallbacks = executionCallbacks;
-	}
+    private static final ThreadLocal<Boolean> interruptByPass = new ThreadLocal<>();
 
-	public ObjectEnricher getObjectEnricher() {
-		return objectEnricher;
-	}
+    public void byPassInterruptInCurrentThread(boolean bypass) {
+        if (bypass) {
+            interruptByPass.set(true);
+        } else {
+            interruptByPass.remove();
+        }
+    }
 
-	protected void setObjectEnricher(ObjectEnricher objectEnricher) {
-		this.objectEnricher = objectEnricher;
-	}
+    public boolean isInterrupted() {
+        boolean byPass = interruptByPass.get() != null && interruptByPass.get();
+        return !byPass && (getStatus() == ExecutionStatus.ABORTING || getStatus() == ExecutionStatus.FORCING_ABORT);
+    }
 
-	public ObjectPredicate getObjectPredicate() {
-		return objectPredicate;
-	}
+    public boolean isSimulation() {
+        return getExecutionParameters().getMode() == ExecutionMode.SIMULATION;
+    }
 
-	protected void setObjectPredicate(ObjectPredicate objectPredicate) {
-		this.objectPredicate = objectPredicate;
-	}
+    public void updateStatus(ExecutionStatus status) {
+        this.status = status;
+    }
 
-	public Resolver getResolver() {
-		return resolver;
-	}
+    public VariablesManager getVariablesManager() {
+        return variablesManager;
+    }
 
-	public Set<ExecutionVetoer> getExecutionVetoers() {
-		return new HashSet<>(executionVetoers);
-	}
+    @Override
+    public String toString() {
+        return "ExecutionContext [executionId=" + executionId + "]";
+    }
 
-	public void addExecutionVetoer(ExecutionVetoer executionVetoer) {
-		this.executionVetoers.add(executionVetoer);
-	}
+    public ExecutionParameters getExecutionParameters() {
+        return executionParameters;
+    }
 
-	public void addAgentUrl(String agentUrl) {
-		if (agentUrl != null) {
-			agentUrls.add(agentUrl);
-		}
-	}
+    public EventManager getEventManager() {
+        return eventManager;
+    }
 
-	/**
-	 * @return agents involved in the execution, as a single string of
-	 * space-separated URLs.
-	 */
-	public String getAgentUrls() {
-		return agentUrls.stream()
-				.sorted(String.CASE_INSENSITIVE_ORDER)
-				.collect(Collectors.joining(" "));
-	}
+    public ExecutionManager getExecutionManager() {
+        return executionManager;
+    }
+
+    public ExecutionCallbacks getExecutionCallbacks() {
+        return executionCallbacks;
+    }
+
+    protected void setExecutionCallbacks(ExecutionCallbacks executionCallbacks) {
+        this.executionCallbacks = executionCallbacks;
+    }
+
+    public ObjectEnricher getObjectEnricher() {
+        return objectEnricher;
+    }
+
+    protected void setObjectEnricher(ObjectEnricher objectEnricher) {
+        this.objectEnricher = objectEnricher;
+    }
+
+    public ObjectPredicate getObjectPredicate() {
+        return objectPredicate;
+    }
+
+    protected void setObjectPredicate(ObjectPredicate objectPredicate) {
+        this.objectPredicate = objectPredicate;
+    }
+
+    public Resolver getResolver() {
+        return resolver;
+    }
+
+    public Set<ExecutionVetoer> getExecutionVetoers() {
+        return new HashSet<>(executionVetoers);
+    }
+
+    public void addExecutionVetoer(ExecutionVetoer executionVetoer) {
+        this.executionVetoers.add(executionVetoer);
+    }
+
+    public void addAgentUrl(String agentUrl) {
+        if (agentUrl != null) {
+            agentUrls.add(agentUrl);
+        }
+    }
+
+    /**
+     * @return agents involved in the execution, as a single string of
+     * space-separated URLs.
+     */
+    public String getAgentUrls() {
+        return agentUrls.stream()
+            .sorted(String.CASE_INSENSITIVE_ORDER)
+            .collect(Collectors.joining(" "));
+    }
 }

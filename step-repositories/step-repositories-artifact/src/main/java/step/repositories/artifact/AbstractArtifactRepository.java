@@ -37,37 +37,37 @@ import java.util.Set;
 
 public abstract class AbstractArtifactRepository extends RepositoryWithAutomationPackageSupport {
 
-	protected static final Logger logger = LoggerFactory.getLogger(MavenArtifactRepository.class);
+    protected static final Logger logger = LoggerFactory.getLogger(MavenArtifactRepository.class);
 
-	public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, AutomationPackageManager manager,
-									  FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor,
-									  ResourceManager resourceManager) {
-		super(canonicalRepositoryParameters, manager, functionTypeRegistry, functionAccessor, resourceManager);
-	}
+    public AbstractArtifactRepository(Set<String> canonicalRepositoryParameters, AutomationPackageManager manager,
+                                      FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor,
+                                      ResourceManager resourceManager) {
+        super(canonicalRepositoryParameters, manager, functionTypeRegistry, functionAccessor, resourceManager);
+    }
 
-	protected static String getMandatoryRepositoryParameter(Map<String, String> repositoryParameters, String paramKey) {
-		String value = repositoryParameters.get(paramKey);
-		if (value == null) {
-			throw new ControllerServiceException("Missing required parameter " + paramKey);
-		}
-		return value;
-	}
+    protected static String getMandatoryRepositoryParameter(Map<String, String> repositoryParameters, String paramKey) {
+        String value = repositoryParameters.get(paramKey);
+        if (value == null) {
+            throw new ControllerServiceException("Missing required parameter " + paramKey);
+        }
+        return value;
+    }
 
-	@Override
-	public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) {
-		ArtefactInfo info = new ArtefactInfo();
-		info.setName(resolveArtifactName(repositoryParameters));
-		info.setType(TestSet.class.getSimpleName());
-		return info;
-	}
+    @Override
+    public ArtefactInfo getArtefactInfo(Map<String, String> repositoryParameters) {
+        ArtefactInfo info = new ArtefactInfo();
+        info.setName(resolveArtifactName(repositoryParameters));
+        info.setType(TestSet.class.getSimpleName());
+        return info;
+    }
 
-	protected abstract String resolveArtifactName(Map<String, String> repositoryParameters);
+    protected abstract String resolveArtifactName(Map<String, String> repositoryParameters);
 
-	public abstract File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate);
+    public abstract File getArtifact(Map<String, String> repositoryParameters, ObjectPredicate objectPredicate);
 
-	@Override
-	public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) {
+    @Override
+    public void exportExecution(ExecutionContext context, Map<String, String> repositoryParameters) {
 
-	}
+    }
 
 }

@@ -39,9 +39,9 @@ public class StreamingResourceCollectionCatalogBackend implements StreamingResou
         // FIXME: Currently an upload context is not strictly *required* (nor is the enricher) - do we want to enforce it?
         Optional<StreamingResourceUploadContext> maybeContext = Optional.ofNullable(context);
         maybeContext.map(c -> (ObjectEnricher) c.getAttributes().get(LiveReportingConstants.ACCESSCONTROL_ENRICHER))
-                .ifPresent(enricher -> enricher.accept(entity));
+            .ifPresent(enricher -> enricher.accept(entity));
         maybeContext.map(c -> (String) c.getAttributes().get(LiveReportingConstants.CONTEXT_EXECUTION_ID))
-                .ifPresent(id -> entity.addAttribute(StreamingResource.ATTRIBUTE_EXECUTION_ID, id));
+            .ifPresent(id -> entity.addAttribute(StreamingResource.ATTRIBUTE_EXECUTION_ID, id));
 
         return accessor.save(entity).getId().toHexString();
     }
@@ -73,7 +73,7 @@ public class StreamingResourceCollectionCatalogBackend implements StreamingResou
 
     public Stream<String> findResourceIdsForExecution(String executionId) {
         return accessor.findManyByCriteria(Map.of("attributes." + StreamingResource.ATTRIBUTE_EXECUTION_ID, executionId))
-                .map(r -> r.getId().toHexString());
+            .map(r -> r.getId().toHexString());
     }
 
     @Override

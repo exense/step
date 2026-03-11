@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -46,151 +46,151 @@ import step.datapool.DataSet;
  */
 public class GoogleSheetv4DataPool extends DataSet<GoogleSheetv4DataPoolConfiguration> {
 
-	FileResolver fileResolver;
-	
-	private String saKey;
-	private String fileId;
-	private String tabName;
+    FileResolver fileResolver;
 
-	List<List<Object>> datapool;
+    private String saKey;
+    private String fileId;
+    private String tabName;
 
-	List<String> headers;
+    List<List<Object>> datapool;
 
-	int cursor;
+    List<String> headers;
 
-	public GoogleSheetv4DataPool(GoogleSheetv4DataPoolConfiguration configuration) {
-		super(configuration);
-		saKey = configuration.getServiceAccountKey().get();
-		fileId = configuration.getFileId().get();
-		tabName = configuration.getTabName().get();
-	}
+    int cursor;
 
-	Sheets service = null;
+    public GoogleSheetv4DataPool(GoogleSheetv4DataPoolConfiguration configuration) {
+        super(configuration);
+        saKey = configuration.getServiceAccountKey().get();
+        fileId = configuration.getFileId().get();
+        tabName = configuration.getTabName().get();
+    }
 
-	@Override
-	public void init() {
-		super.init();
-		fileResolver = context.getFileResolver();
-		createDatapool(saKey, fileId, tabName);
-		createHeaders();
-		this.cursor = 1; // skip headers
-	}
+    Sheets service = null;
 
-	private void createHeaders() {
-		this.headers = new LinkedList<>();
-		for(Object o : datapool.get(0)) // 0 = headers row
-			this.headers.add((String)o);
-	}
+    @Override
+    public void init() {
+        super.init();
+        fileResolver = context.getFileResolver();
+        createDatapool(saKey, fileId, tabName);
+        createHeaders();
+        this.cursor = 1; // skip headers
+    }
 
-	private int getIndexForHeader(String header) {
-		return this.headers.indexOf(header);
-	}
+    private void createHeaders() {
+        this.headers = new LinkedList<>();
+        for (Object o : datapool.get(0)) // 0 = headers row
+            this.headers.add((String) o);
+    }
 
-	@Override
-	public void reset() {
-		init();
-	}
+    private int getIndexForHeader(String header) {
+        return this.headers.indexOf(header);
+    }
 
-	@Override
-	public void close() {
-		super.close();
-		//nothing to do, apparently the Sheet service doesn't need to be closed explicitely
-	}
+    @Override
+    public void reset() {
+        init();
+    }
 
-	@Override
-	public Object next_() {
-		if(cursor >= this.datapool.size())
-			return null;
-		RowWrapper row = new RowWrapper(cursor);
-		cursor++;
-		return row;
-	}
+    @Override
+    public void close() {
+        super.close();
+        //nothing to do, apparently the Sheet service doesn't need to be closed explicitely
+    }
 
-	@Override
-	public void addRow(Object row) {
-		throw new RuntimeException("Not implemented");
-	}
+    @Override
+    public Object next_() {
+        if (cursor >= this.datapool.size())
+            return null;
+        RowWrapper row = new RowWrapper(cursor);
+        cursor++;
+        return row;
+    }
 
-	private class RowWrapper extends SimpleStringMap{
+    @Override
+    public void addRow(Object row) {
+        throw new RuntimeException("Not implemented");
+    }
 
-		private int cursor;
+    private class RowWrapper extends SimpleStringMap {
 
-		public RowWrapper(int cursor){
-			this.cursor = cursor;
-		}
+        private int cursor;
 
-		@Override
-		public int size() {
-			return datapool.get(cursor).size();
-		}
+        public RowWrapper(int cursor) {
+            this.cursor = cursor;
+        }
 
-		@Override
-		public boolean isEmpty() {
-			return datapool.get(cursor).isEmpty();
-		}
+        @Override
+        public int size() {
+            return datapool.get(cursor).size();
+        }
 
-		//TODO: handle other types?
-		@Override
-		public String get(String key) {
-			if(getIndexForHeader(key) < 0)
-				throw new RuntimeException("Column unknown:" + key);
-			return (String) datapool.get(cursor).get(getIndexForHeader(key));
-		}
+        @Override
+        public boolean isEmpty() {
+            return datapool.get(cursor).isEmpty();
+        }
+
+        //TODO: handle other types?
+        @Override
+        public String get(String key) {
+            if (getIndexForHeader(key) < 0)
+                throw new RuntimeException("Column unknown:" + key);
+            return (String) datapool.get(cursor).get(getIndexForHeader(key));
+        }
 
 
-		//TODO:easy to implement by turning the datapool into List<LinkedList<Object>>
-		@Override
-		public String put(String key, String value) {
-			throw new RuntimeException("Not implemented.");
-		}
+        //TODO:easy to implement by turning the datapool into List<LinkedList<Object>>
+        @Override
+        public String put(String key, String value) {
+            throw new RuntimeException("Not implemented.");
+        }
 
-		@Override
-		public Set<String> keySet() {
-			return new LinkedHashSet<>(headers);
-		}
+        @Override
+        public Set<String> keySet() {
+            return new LinkedHashSet<>(headers);
+        }
 
-	}
+    }
 
-	public void createDatapool(String saKey, String fileId, String tabName){
-		try {
-			this.service = buildService(getCredential(saKey));
-			this.datapool = getValuesForRange(fileId, tabName);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    public void createDatapool(String saKey, String fileId, String tabName) {
+        try {
+            this.service = buildService(getCredential(saKey));
+            this.datapool = getValuesForRange(fileId, tabName);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	public GoogleCredential getCredential(String saKey) throws Exception {
-		Set<String> all = new HashSet<>();
-		all.addAll(SheetsScopes.all());
-		all.addAll(DriveScopes.all());
+    public GoogleCredential getCredential(String saKey) throws Exception {
+        Set<String> all = new HashSet<>();
+        all.addAll(SheetsScopes.all());
+        all.addAll(DriveScopes.all());
 
-		GoogleCredential gCred = null;
-		FileInputStream keyFileIS = null;
-		try{
-			keyFileIS = new FileInputStream(this.fileResolver.resolve(saKey));
-			gCred = GoogleCredential.fromStream(keyFileIS)
-					.createScoped(all);
-		}finally{
-			if(keyFileIS != null)
-				keyFileIS.close();
-		}
+        GoogleCredential gCred = null;
+        FileInputStream keyFileIS = null;
+        try {
+            keyFileIS = new FileInputStream(this.fileResolver.resolve(saKey));
+            gCred = GoogleCredential.fromStream(keyFileIS)
+                .createScoped(all);
+        } finally {
+            if (keyFileIS != null)
+                keyFileIS.close();
+        }
 
-		return gCred;
-	}
+        return gCred;
+    }
 
-	public Sheets buildService(GoogleCredential credential) throws IOException,
-	GeneralSecurityException {
-		return new Sheets.Builder(
-				GoogleNetHttpTransport.newTrustedTransport(),
-				JacksonFactory.getDefaultInstance(),
-				credential)
-				.setApplicationName("Sheets API Snippets")
-				.build();
-	}
+    public Sheets buildService(GoogleCredential credential) throws IOException,
+        GeneralSecurityException {
+        return new Sheets.Builder(
+            GoogleNetHttpTransport.newTrustedTransport(),
+            JacksonFactory.getDefaultInstance(),
+            credential)
+            .setApplicationName("Sheets API Snippets")
+            .build();
+    }
 
-	public List<List<Object>> getValuesForRange(String spreadsheetId, String range) throws IOException {
-		ValueRange result = service.spreadsheets().values().get(spreadsheetId, range).execute();
-		return result.getValues();
-	}
+    public List<List<Object>> getValuesForRange(String spreadsheetId, String range) throws IOException {
+        ValueRange result = service.spreadsheets().values().get(spreadsheetId, range).execute();
+        return result.getValues();
+    }
 }

@@ -106,9 +106,9 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
             List<String> executionIds;
             try {
                 executionIds = automationPackageClient.executeAutomationPackage(
-                        createPackageSource(parameters.getAutomationPackageFile(), createMavenArtifactXml(parameters.getAutomationPackageMavenArtifact())),
-                        executionParameters,
-                        createLibrarySource(parameters.getLibraryFile(), createMavenArtifactXml(parameters.getLibraryMavenArtifact())
+                    createPackageSource(parameters.getAutomationPackageFile(), createMavenArtifactXml(parameters.getAutomationPackageMavenArtifact())),
+                    executionParameters,
+                    createLibrarySource(parameters.getLibraryFile(), createMavenArtifactXml(parameters.getLibraryMavenArtifact())
                         , parameters.getManagedLibraryName()));
             } catch (AutomationPackageClientException e) {
                 throw new StepCliExecutionException("Error while executing automation package: " + e.getMessage());
@@ -128,7 +128,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
                     Exception executionError = null;
                     try {
                         waitForExecutionFinish(remoteExecutionManager, executionIds);
-                    } catch (Exception ex){
+                    } catch (Exception ex) {
                         // if some execution fails, we will get exception here, but we want to save the execution report anyway
                         executionError = ex;
                     }
@@ -219,7 +219,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
         }
     }
 
-    private boolean isStatusSuccess(Execution ex){
+    private boolean isStatusSuccess(Execution ex) {
         Set<ReportNodeStatus> okStatus = Set.of(ReportNodeStatus.PASSED, ReportNodeStatus.SKIPPED, ReportNodeStatus.NORUN);
         return okStatus.contains(ex.getResult());
     }
@@ -251,7 +251,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
         return executionParameters;
     }
 
-     public static PlanFilter getPlanFilters(String includePlans, String excludePlans, String includeCategories, String excludeCategories) {
+    public static PlanFilter getPlanFilters(String includePlans, String excludePlans, String includeCategories, String excludeCategories) {
         List<PlanFilter> multiFilter = new ArrayList<>();
         if (includePlans != null) {
             multiFilter.add(new PlanByIncludedNamesFilter(parseList(includePlans)));
@@ -289,7 +289,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
 
         public Report(ReportType reportType) {
             this.reportType = reportType;
-            switch (reportType){
+            switch (reportType) {
                 case junit:
                     this.outputModes = List.of(ReportOutputMode.file);
                     break;

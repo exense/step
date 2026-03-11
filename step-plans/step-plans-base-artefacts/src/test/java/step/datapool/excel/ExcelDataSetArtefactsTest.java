@@ -16,46 +16,46 @@ import java.nio.file.Files;
 
 public class ExcelDataSetArtefactsTest extends AbstractDataPoolTest {
 
-	protected boolean supportDataSetUpdate() {
-		return true;
-	}
+    protected boolean supportDataSetUpdate() {
+        return true;
+    }
 
-	@Override
-	protected boolean isInMemory() {
-		return false;
-	}
-	protected DataPoolConfiguration getDataPoolConfiguration() throws IOException {
-		ExcelDataPool pool = new ExcelDataPool();
-		pool.setWorksheet(new DynamicValue<>("Sheet1"));
-		File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "File.xlsx");
-		File tempFile = FileHelper.createTempFile();
-		try (OutputStream os = new FileOutputStream(tempFile)) {
-			Files.copy(file.toPath(), os);
-		}
-		pool.setFile(new DynamicValue<String>(tempFile.getAbsolutePath()));
-		return pool;
-	}
+    @Override
+    protected boolean isInMemory() {
+        return false;
+    }
 
-	protected String getDataSourceType() {
-		return "excel";
-	}
+    protected DataPoolConfiguration getDataPoolConfiguration() throws IOException {
+        ExcelDataPool pool = new ExcelDataPool();
+        pool.setWorksheet(new DynamicValue<>("Sheet1"));
+        File file = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "File.xlsx");
+        File tempFile = FileHelper.createTempFile();
+        try (OutputStream os = new FileOutputStream(tempFile)) {
+            Files.copy(file.toPath(), os);
+        }
+        pool.setFile(new DynamicValue<String>(tempFile.getAbsolutePath()));
+        return pool;
+    }
 
-	protected DataSetArtefact getDataSetArtefact(boolean resetAtEnd) throws IOException {
-		DataSetArtefact dataSetArtefact = new DataSetArtefact();
-		dataSetArtefact.setDataSource(getDataPoolConfiguration());
-		dataSetArtefact.setDataSourceType(getDataSourceType());
-		dataSetArtefact.setResetAtEnd(new DynamicValue<>(resetAtEnd));
-		return dataSetArtefact;
-	}
+    protected String getDataSourceType() {
+        return "excel";
+    }
 
-	protected ForBlock getForBlock() throws IOException {
-		ForBlock f = new ForBlock();
-		f.setDataSourceType(getDataSourceType());
-		f.setDataSource(getDataPoolConfiguration());
-		f.setItem(new DynamicValue<>("item"));
-		return f;
-	}
+    protected DataSetArtefact getDataSetArtefact(boolean resetAtEnd) throws IOException {
+        DataSetArtefact dataSetArtefact = new DataSetArtefact();
+        dataSetArtefact.setDataSource(getDataPoolConfiguration());
+        dataSetArtefact.setDataSourceType(getDataSourceType());
+        dataSetArtefact.setResetAtEnd(new DynamicValue<>(resetAtEnd));
+        return dataSetArtefact;
+    }
 
+    protected ForBlock getForBlock() throws IOException {
+        ForBlock f = new ForBlock();
+        f.setDataSourceType(getDataSourceType());
+        f.setDataSource(getDataPoolConfiguration());
+        f.setItem(new DynamicValue<>("item"));
+        return f;
+    }
 
 
 }

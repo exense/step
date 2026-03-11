@@ -51,7 +51,7 @@ import step.plugins.functions.types.CompositeFunction;
 public class CompositeFunctionServices extends AbstractStepServices {
 
     private FunctionAccessor functionAccessor;
-    private  PlanTypeRegistry planTypeRegistry;
+    private PlanTypeRegistry planTypeRegistry;
     private PlanAccessor planAccessor;
     private ObjectPredicateFactory objectPredicateFactory;
 
@@ -75,7 +75,7 @@ public class CompositeFunctionServices extends AbstractStepServices {
         if (function == null) {
             throw new ControllerServiceException("The keyword with Id " + id + " doesn't exist");
         }
-        if (! (function instanceof CompositeFunction)) {
+        if (!(function instanceof CompositeFunction)) {
             throw new ControllerServiceException("The function with Id " + id + " is not a Composite keyword");
         }
 
@@ -94,7 +94,7 @@ public class CompositeFunctionServices extends AbstractStepServices {
     @GET
     @Path("/{id}/artefacts/{artefactid}/lookup/plan")
     @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right="plan-read")
+    @Secured(right = "plan-read")
     public Plan lookupPlan(@PathParam("id") String id, @PathParam("artefactid") String artefactId) {
         Function function = functionAccessor.get(id);
         if (!(function instanceof CompositeFunction)) {
@@ -110,7 +110,8 @@ public class CompositeFunctionServices extends AbstractStepServices {
         ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
         try {
             result = planLocator.selectPlan(artefact, objectPredicate, null);
-        } catch (RuntimeException e) {}
+        } catch (RuntimeException e) {
+        }
         return result;
     }
 

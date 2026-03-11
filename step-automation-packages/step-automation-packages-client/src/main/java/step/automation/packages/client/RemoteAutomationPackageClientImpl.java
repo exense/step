@@ -57,11 +57,11 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
                                                                          Map<String, String> tokenSelectionCriteria, Boolean executeFunctionsLocally,
                                                                          Boolean async, Boolean forceRefreshOfSnapshots) throws AutomationPackageClientException {
         return uploadPackage(automationPackageSource, apLibrarySource, versionName, activationExpr,
-                plansAttributes, functionsAttributes, tokenSelectionCriteria, executeFunctionsLocally, async, forceRefreshOfSnapshots,
-                multiPartEntity -> {
-                    Invocation.Builder builder = requestBuilder("/rest/automation-packages");
-                    return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
-                });
+            plansAttributes, functionsAttributes, tokenSelectionCriteria, executeFunctionsLocally, async, forceRefreshOfSnapshots,
+            multiPartEntity -> {
+                Invocation.Builder builder = requestBuilder("/rest/automation-packages");
+                return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
+            });
     }
 
     @Override

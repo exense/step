@@ -39,15 +39,15 @@ public class AgentPoolProvisioningParameter {
     }
 
     /**
-     * @param name the unique name of the provisioning parameter
-     * @param label the label of the provisioning parameter to be displayed to the users
+     * @param name                                                    the unique name of the provisioning parameter
+     * @param label                                                   the label of the provisioning parameter to be displayed to the users
      * @param tokenSelectionCriteriaToAgentPoolProvisioningParameters defines the consumer that creates the provisioning parameters based on the selection criteria
-     * @param preProvisioningTokenSelectionCriteriaTransformer defines the transformer of token selection criteria.
-     *                                                         Some token attributes are only populated at provisioning time and have to be either removed
-     *                                                         or transformed during the matching of the configured agent pool templates. This is the role of this transformer
+     * @param preProvisioningTokenSelectionCriteriaTransformer        defines the transformer of token selection criteria.
+     *                                                                Some token attributes are only populated at provisioning time and have to be either removed
+     *                                                                or transformed during the matching of the configured agent pool templates. This is the role of this transformer
      */
     public AgentPoolProvisioningParameter(String name, String label, BiConsumer<Map<String, Interest>,
-            Map<String, String>> tokenSelectionCriteriaToAgentPoolProvisioningParameters, Function<Map.Entry<String, Interest>, Map.Entry<String, Interest>> preProvisioningTokenSelectionCriteriaTransformer) {
+        Map<String, String>> tokenSelectionCriteriaToAgentPoolProvisioningParameters, Function<Map.Entry<String, Interest>, Map.Entry<String, Interest>> preProvisioningTokenSelectionCriteriaTransformer) {
         this.name = name;
         this.label = label;
         this.tokenSelectionCriteriaToAgentPoolProvisioningParameters = tokenSelectionCriteriaToAgentPoolProvisioningParameters;

@@ -75,11 +75,11 @@ public class AgentPoolSpec {
     @Override
     public String toString() {
         return "AgentPoolSpec{" +
-                "name='" + name + '\'' +
-                ", attributes=" + attributes +
-                ", numberOfTokens=" + numberOfTokens +
-                ", factoryUrl='" + factoryUrl + '\'' +
-                ", factoryAgenStartTimeoutSeconds=" + factoryAgentStartTimeoutSeconds +
-                '}';
+            "name='" + name + '\'' +
+            ", attributes=" + attributes +
+            ", numberOfTokens=" + numberOfTokens +
+            ", factoryUrl='" + factoryUrl + '\'' +
+            ", factoryAgenStartTimeoutSeconds=" + factoryAgentStartTimeoutSeconds +
+            '}';
     }
 }

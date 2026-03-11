@@ -1,7 +1,7 @@
 package step.plugins.timeseries.dashboards.model;
 
 public enum TableChartColumn {
-    
+
     COUNT,
     SUM,
     AVG,
@@ -12,5 +12,5 @@ public enum TableChartColumn {
     PCL_3,
     TPS,
     TPH
-    
+
 }

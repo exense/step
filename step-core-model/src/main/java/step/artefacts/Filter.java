@@ -5,50 +5,50 @@ import step.core.dynamicbeans.DynamicValue;
 
 public class Filter {
 
-	private DynamicValue<String> field;
-	private DynamicValue<String> filter;
-	private FilterType filterType;
-	
-	public Filter() {
-		super();
-	}
+    private DynamicValue<String> field;
+    private DynamicValue<String> filter;
+    private FilterType filterType;
 
-	public Filter(String field, String value, FilterType filterType) {
-		super();
-		this.field = new DynamicValue<String>(field);
-		this.filter = new DynamicValue<String>(value);
-		this.filterType = filterType;
-	}
+    public Filter() {
+        super();
+    }
 
-	public DynamicValue<String> getField() {
-		return field;
-	}
+    public Filter(String field, String value, FilterType filterType) {
+        super();
+        this.field = new DynamicValue<String>(field);
+        this.filter = new DynamicValue<String>(value);
+        this.filterType = filterType;
+    }
 
-	public void setField(DynamicValue<String> field) {
-		this.field = field;
-	}
+    public DynamicValue<String> getField() {
+        return field;
+    }
 
-	public DynamicValue<String> getFilter() {
-		return filter;
-	}
+    public void setField(DynamicValue<String> field) {
+        this.field = field;
+    }
 
-	public void setFilter(DynamicValue<String> filter) {
-		this.filter = filter;
-	}
+    public DynamicValue<String> getFilter() {
+        return filter;
+    }
 
-	public FilterType getFilterType() {
-		return filterType;
-	}
-	
-	public void setFilterType(FilterType filterType) {
-		this.filterType = filterType;
-	}
+    public void setFilter(DynamicValue<String> filter) {
+        this.filter = filter;
+    }
 
-	public step.core.collections.Filter toCollectionFilter() {
-		if(filterType == FilterType.REGEX) {
-			return Filters.regex(field.get(), filter.get(), true);
-		} else {
-			return Filters.equals(field.get(), filter.get());
-		}
-	}
+    public FilterType getFilterType() {
+        return filterType;
+    }
+
+    public void setFilterType(FilterType filterType) {
+        this.filterType = filterType;
+    }
+
+    public step.core.collections.Filter toCollectionFilter() {
+        if (filterType == FilterType.REGEX) {
+            return Filters.regex(field.get(), filter.get(), true);
+        } else {
+            return Filters.equals(field.get(), filter.get());
+        }
+    }
 }

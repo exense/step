@@ -28,43 +28,43 @@ import java.util.Map;
 
 public class StepRunnerTestKeywords extends AbstractKeyword {
 
-	@Keyword
-	public void callExisting() {
-		System.out.println("My first keyword is called!");
-	}
+    @Keyword
+    public void callExisting() {
+        System.out.println("My first keyword is called!");
+    }
 
-	@Keyword
-	public void callExisting2() {
-		System.out.println("My second keyword is called from composite!");
-	}
+    @Keyword
+    public void callExisting2() {
+        System.out.println("My second keyword is called from composite!");
+    }
 
-	@Keyword
-	public void callExisting3(@Input(name = "stringInput") String stringInput, @Input(name = "intInput") Integer intInput) {
-		System.out.println("My third keyword is called with inputs: " + stringInput + ", " + intInput);
+    @Keyword
+    public void callExisting3(@Input(name = "stringInput") String stringInput, @Input(name = "intInput") Integer intInput) {
+        System.out.println("My third keyword is called with inputs: " + stringInput + ", " + intInput);
 
-		// assert input values used in tests
-		Assert.assertEquals("abc", stringInput);
-		Assert.assertEquals(Integer.valueOf(777), intInput);
-	}
+        // assert input values used in tests
+        Assert.assertEquals("abc", stringInput);
+        Assert.assertEquals(Integer.valueOf(777), intInput);
+    }
 
-	@Keyword(planReference = "plans/composite1.plan", schema = "{ \"properties\": { "
-			+ "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
-			+ "}, \"required\" : []}", properties = { "" },
-			description = "Keyword used to explicitly close the current driver.", name="MyCompoInPackage")
-	public void composite1() {
+    @Keyword(planReference = "plans/composite1.plan", schema = "{ \"properties\": { "
+        + "\"myInput\": {\"type\": \"string\", \"default\":\"defaultValueString\"}"
+        + "}, \"required\" : []}", properties = {""},
+        description = "Keyword used to explicitly close the current driver.", name = "MyCompoInPackage")
+    public void composite1() {
 
-	}
+    }
 
-	@Keyword
-	public void customKeywordWithMapInput(@Input(name = "URL") String url,
-										  @Input(name = "Name") String name,
-										  @Input(name = "Headers") Map<String, String> headers,
-										  @Input(name = "ArrayInput") List<Integer> arrayInput
-	){
-		System.out.println("Custom keyword with map input has been called");
-		System.out.println("URL: " + url);
-		System.out.println("Name: " + name);
-		System.out.println("Headers: " + headers);
-		System.out.println("ArrayInput: " + arrayInput);
-	}
+    @Keyword
+    public void customKeywordWithMapInput(@Input(name = "URL") String url,
+                                          @Input(name = "Name") String name,
+                                          @Input(name = "Headers") Map<String, String> headers,
+                                          @Input(name = "ArrayInput") List<Integer> arrayInput
+    ) {
+        System.out.println("Custom keyword with map input has been called");
+        System.out.println("URL: " + url);
+        System.out.println("Name: " + name);
+        System.out.println("Headers: " + headers);
+        System.out.println("ArrayInput: " + arrayInput);
+    }
 }

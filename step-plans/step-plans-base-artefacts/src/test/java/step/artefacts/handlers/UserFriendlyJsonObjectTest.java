@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 public class UserFriendlyJsonObjectTest {
 
     @Test
-    public void testUnwrapping(){
+    public void testUnwrapping() {
         JsonProvider provider = JsonProvider.provider();
         JsonObjectBuilder builder = provider.createObjectBuilder();
         BigDecimal bigDecimal = new BigDecimal("333333333333.44444444444444444444444");

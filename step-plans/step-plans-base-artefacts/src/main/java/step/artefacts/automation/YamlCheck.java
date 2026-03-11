@@ -39,7 +39,7 @@ public class YamlCheck extends AbstractYamlArtefact<Check> {
     @Override
     protected void fillArtefactFields(Check res) {
         super.fillArtefactFields(res);
-        if(getExpression() != null) {
+        if (getExpression() != null) {
             res.setExpression(new DynamicValue<>(getExpression(), ""));
         }
     }

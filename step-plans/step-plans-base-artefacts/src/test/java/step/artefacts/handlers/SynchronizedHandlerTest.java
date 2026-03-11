@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -55,235 +55,237 @@ import step.threadpool.ThreadPoolPlugin;
 
 public class SynchronizedHandlerTest {
 
-	public static Logger logger = LoggerFactory.getLogger(SynchronizedHandlerTest.class);
+    public static Logger logger = LoggerFactory.getLogger(SynchronizedHandlerTest.class);
 
-	private ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
-		@Override
-		public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
-				ExecutionContext executionContext) {
-			executionContext.getArtefactHandlerRegistry().put(TestArtefact.class, TestArtefactHandler.class);
-		}
-	}).withPlugin(new TokenForecastingExecutionPlugin()).build();
-	
-	@Test
-	public void testUnnamedLocalLock() throws IOException {		
-		AtomicInteger maxParallelism = new AtomicInteger(0);
-		AtomicInteger parallelism = new AtomicInteger(0);
-		AtomicInteger iterations = new AtomicInteger(0);
-		
-		Plan plan = PlanBuilder.create().startBlock(testScenario())
-											.startBlock(threadGroup(5,10))
-												.startBlock(synchronized_("", false))
-													.add(testArtefact(maxParallelism, parallelism, iterations))
-												.endBlock()
-											.endBlock()
-											.startBlock(threadGroup(5,10))
-												.startBlock(synchronized_("", false))
-													.add(testArtefact(maxParallelism, parallelism, iterations))
-												.endBlock()
-											.endBlock()
-										.endBlock()
-									.build();
+    private ExecutionEngine engine = ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new AbstractExecutionEnginePlugin() {
+        @Override
+        public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
+                                               ExecutionContext executionContext) {
+            executionContext.getArtefactHandlerRegistry().put(TestArtefact.class, TestArtefactHandler.class);
+        }
+    }).withPlugin(new TokenForecastingExecutionPlugin()).build();
 
-		executeAndAssertAllPassed(plan);
-		// Unnamed lock are equivalent to a lock using the artefactID as lock name and is therefore local to a specific artefact
-		// we're therefore expecting a parallelism of 2 in this test case
-		Assert.assertEquals(2, maxParallelism.get());
-		Assert.assertEquals(100, iterations.get());
-	}
+    @Test
+    public void testUnnamedLocalLock() throws IOException {
+        AtomicInteger maxParallelism = new AtomicInteger(0);
+        AtomicInteger parallelism = new AtomicInteger(0);
+        AtomicInteger iterations = new AtomicInteger(0);
 
-	private void executeAndAssertAllPassed(Plan plan) {
-		PlanRunnerResult results = engine.execute(plan);
-		String errorSummary = results.getErrorSummary();
-		if (errorSummary != null && !errorSummary.isBlank()) {
-			logger.error(errorSummary);
-		}
-		results.visitReportNodes(node->{
-			Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		});
-	}
+        Plan plan = PlanBuilder.create().startBlock(testScenario())
+            .startBlock(threadGroup(5, 10))
+            .startBlock(synchronized_("", false))
+            .add(testArtefact(maxParallelism, parallelism, iterations))
+            .endBlock()
+            .endBlock()
+            .startBlock(threadGroup(5, 10))
+            .startBlock(synchronized_("", false))
+            .add(testArtefact(maxParallelism, parallelism, iterations))
+            .endBlock()
+            .endBlock()
+            .endBlock()
+            .build();
 
-	@Test
-	public void testNamedLocalLock() throws IOException {		
-		AtomicInteger maxParallelism = new AtomicInteger(0);
-		AtomicInteger parallelism = new AtomicInteger(0);
-		AtomicInteger iterations = new AtomicInteger(0);
-		
-		Plan plan = PlanBuilder.create().startBlock(testScenario())
-											.startBlock(threadGroup(5,10))
-												.startBlock(synchronized_("Lock1", false))
-													.add(testArtefact(maxParallelism, parallelism, iterations))
-												.endBlock()
-											.endBlock()
-											.startBlock(threadGroup(5,10))
-												.startBlock(synchronized_("Lock2", false))
-													.add(testArtefact(maxParallelism, parallelism, iterations))
-												.endBlock()
-											.endBlock()
-											.startBlock(threadGroup(5,10))
-												.startBlock(synchronized_("Lock2", false))
-													.add(testArtefact(maxParallelism, parallelism, iterations))
-												.endBlock()
-											.endBlock()
-										.endBlock()
-									.build();
+        executeAndAssertAllPassed(plan);
+        // Unnamed lock are equivalent to a lock using the artefactID as lock name and is therefore local to a specific artefact
+        // we're therefore expecting a parallelism of 2 in this test case
+        Assert.assertEquals(2, maxParallelism.get());
+        Assert.assertEquals(100, iterations.get());
+    }
 
-		executeAndAssertAllPassed(plan);
-		Assert.assertEquals(2, maxParallelism.get());
-		Assert.assertEquals(150, iterations.get());
-	}
-	
-	@Test
-	public void testNamedGlobalLock() throws IOException, InterruptedException {		
-		AtomicInteger maxParallelism = new AtomicInteger(0);
-		AtomicInteger parallelism = new AtomicInteger(0);
-		AtomicInteger iterations = new AtomicInteger(0);
-		
-		Plan plan1 = PlanBuilder.create().startBlock(testScenario())
-											.startBlock(threadGroup(5,10))
-												.startBlock(synchronized_("Lock1", true))
-													.add(testArtefact(maxParallelism, parallelism, iterations))
-												.endBlock()
-											.endBlock()
-										.endBlock()
-									.build();
+    private void executeAndAssertAllPassed(Plan plan) {
+        PlanRunnerResult results = engine.execute(plan);
+        String errorSummary = results.getErrorSummary();
+        if (errorSummary != null && !errorSummary.isBlank()) {
+            logger.error(errorSummary);
+        }
+        results.visitReportNodes(node -> {
+            Assert.assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+        });
+    }
 
-		Plan plan2 = PlanBuilder.create().startBlock(testScenario())
-				.startBlock(threadGroup(5,10))
-					.startBlock(synchronized_("Lock1", true))
-						.add(testArtefact(maxParallelism, parallelism, iterations))
-					.endBlock()
-				.endBlock()
-			.endBlock()
-		.build();
-		
-		ExecutorService threadPool = Executors.newFixedThreadPool(2);
-		threadPool.execute(()->engine.execute(plan1));
-		threadPool.execute(()->engine.execute(plan2));
+    @Test
+    public void testNamedLocalLock() throws IOException {
+        AtomicInteger maxParallelism = new AtomicInteger(0);
+        AtomicInteger parallelism = new AtomicInteger(0);
+        AtomicInteger iterations = new AtomicInteger(0);
 
-		threadPool.shutdown();
-		threadPool.awaitTermination(10, TimeUnit.SECONDS);
-		
-		Assert.assertEquals(1, maxParallelism.get());
-		Assert.assertEquals(100, iterations.get());
-	}
+        Plan plan = PlanBuilder.create().startBlock(testScenario())
+            .startBlock(threadGroup(5, 10))
+            .startBlock(synchronized_("Lock1", false))
+            .add(testArtefact(maxParallelism, parallelism, iterations))
+            .endBlock()
+            .endBlock()
+            .startBlock(threadGroup(5, 10))
+            .startBlock(synchronized_("Lock2", false))
+            .add(testArtefact(maxParallelism, parallelism, iterations))
+            .endBlock()
+            .endBlock()
+            .startBlock(threadGroup(5, 10))
+            .startBlock(synchronized_("Lock2", false))
+            .add(testArtefact(maxParallelism, parallelism, iterations))
+            .endBlock()
+            .endBlock()
+            .endBlock()
+            .build();
 
-	protected TestArtefact testArtefact(AtomicInteger maxParallelism, AtomicInteger parallelism,
-			AtomicInteger iterations) {
-		return new TestArtefact(iterations, parallelism, maxParallelism);
-	}
-	
-	@Test
-	public void testNamedLocalGlobal() throws IOException {		
-		Synchronized synchronized1 = new Synchronized();
-		synchronized1.setGlobalLock(new DynamicValue<Boolean>(false));
-		synchronized1.setLockName(new DynamicValue<String>("MyLock"));
-		
-		Synchronized synchronized2 = new Synchronized();
-		synchronized1.setGlobalLock(new DynamicValue<Boolean>(false));
-		synchronized1.setLockName(new DynamicValue<String>("MyLock2"));
+        executeAndAssertAllPassed(plan);
+        Assert.assertEquals(2, maxParallelism.get());
+        Assert.assertEquals(150, iterations.get());
+    }
 
-		TestScenario testScenario = new TestScenario();
-		
-		ThreadGroup threadGroup = new ThreadGroup();
-		threadGroup.setIterations(new DynamicValue<Integer>(10));
-		threadGroup.setUsers(new DynamicValue<Integer>(5));
-		
-		ThreadGroup threadGroup2 = new ThreadGroup();
-		threadGroup2.setIterations(new DynamicValue<Integer>(10));
-		threadGroup2.setUsers(new DynamicValue<Integer>(5));
-		
-		AtomicInteger maxParallelism = new AtomicInteger(0);
-		AtomicInteger parallelism = new AtomicInteger(0);
-		AtomicInteger iterations = new AtomicInteger(0);
-		TestArtefact c = testArtefact(maxParallelism, parallelism, iterations);
-		
-		Plan plan = PlanBuilder.create().startBlock(testScenario)
-											.startBlock(threadGroup)
-												.startBlock(synchronized1)
-													.add(c)
-												.endBlock()
-											.endBlock()
-											.startBlock(threadGroup2)
-												.startBlock(synchronized2)
-													.add(c)
-												.endBlock()
-											.endBlock()
-										.endBlock()
-									.build();
+    @Test
+    public void testNamedGlobalLock() throws IOException, InterruptedException {
+        AtomicInteger maxParallelism = new AtomicInteger(0);
+        AtomicInteger parallelism = new AtomicInteger(0);
+        AtomicInteger iterations = new AtomicInteger(0);
 
-		executeAndAssertAllPassed(plan);
-		Assert.assertEquals(2, maxParallelism.get());
-		Assert.assertEquals(100, iterations.get());
-	}
-	
-	@Artefact(test = true)
-	public static class TestArtefact extends AbstractArtefact {
-		
-		private AtomicInteger iterations;
-		private AtomicInteger parallelism;
-		private AtomicInteger maxParallelism;
-		
-		public TestArtefact() {
-			super();
-		}
+        Plan plan1 = PlanBuilder.create().startBlock(testScenario())
+            .startBlock(threadGroup(5, 10))
+            .startBlock(synchronized_("Lock1", true))
+            .add(testArtefact(maxParallelism, parallelism, iterations))
+            .endBlock()
+            .endBlock()
+            .endBlock()
+            .build();
 
-		public TestArtefact(AtomicInteger iterations, AtomicInteger parallelism, AtomicInteger maxParallelism) {
-			super();
-			this.iterations = iterations;
-			this.parallelism = parallelism;
-			this.maxParallelism = maxParallelism;
-		}
+        Plan plan2 = PlanBuilder.create().startBlock(testScenario())
+            .startBlock(threadGroup(5, 10))
+            .startBlock(synchronized_("Lock1", true))
+            .add(testArtefact(maxParallelism, parallelism, iterations))
+            .endBlock()
+            .endBlock()
+            .endBlock()
+            .build();
 
-		public AtomicInteger getIterations() {
-			return iterations;
-		}
+        ExecutorService threadPool = Executors.newFixedThreadPool(2);
+        threadPool.execute(() -> engine.execute(plan1));
+        threadPool.execute(() -> engine.execute(plan2));
 
-		public void setIterations(AtomicInteger iterations) {
-			this.iterations = iterations;
-		}
+        threadPool.shutdown();
+        threadPool.awaitTermination(10, TimeUnit.SECONDS);
 
-		public AtomicInteger getParallelism() {
-			return parallelism;
-		}
+        Assert.assertEquals(1, maxParallelism.get());
+        Assert.assertEquals(100, iterations.get());
+    }
 
-		public void setParallelism(AtomicInteger parallelism) {
-			this.parallelism = parallelism;
-		}
+    protected TestArtefact testArtefact(AtomicInteger maxParallelism, AtomicInteger parallelism,
+                                        AtomicInteger iterations) {
+        return new TestArtefact(iterations, parallelism, maxParallelism);
+    }
 
-		public AtomicInteger getMaxParallelism() {
-			return maxParallelism;
-		}
+    @Test
+    public void testNamedLocalGlobal() throws IOException {
+        Synchronized synchronized1 = new Synchronized();
+        synchronized1.setGlobalLock(new DynamicValue<Boolean>(false));
+        synchronized1.setLockName(new DynamicValue<String>("MyLock"));
 
-		public void setMaxParallelism(AtomicInteger maxParallelism) {
-			this.maxParallelism = maxParallelism;
-		}
-	};
-	
-	public static class TestArtefactHandler extends ArtefactHandler<TestArtefact, ReportNode> {
+        Synchronized synchronized2 = new Synchronized();
+        synchronized1.setGlobalLock(new DynamicValue<Boolean>(false));
+        synchronized1.setLockName(new DynamicValue<String>("MyLock2"));
 
-		@Override
-		protected void createReportSkeleton_(ReportNode parentNode, TestArtefact testArtefact) {
-		}
+        TestScenario testScenario = new TestScenario();
 
-		@Override
-		protected void execute_(ReportNode node, TestArtefact testArtefact) throws InterruptedException {
-			int currentParallelism = testArtefact.parallelism.incrementAndGet();
-			if(currentParallelism>testArtefact.maxParallelism.get()) {
-				testArtefact.maxParallelism.set(currentParallelism);
-			}
-			Thread.sleep(10);
-			testArtefact.iterations.incrementAndGet();
-			testArtefact.parallelism.decrementAndGet();
-			node.setStatus(ReportNodeStatus.PASSED);
-		}
+        ThreadGroup threadGroup = new ThreadGroup();
+        threadGroup.setIterations(new DynamicValue<Integer>(10));
+        threadGroup.setUsers(new DynamicValue<Integer>(5));
 
-		@Override
-		public ReportNode createReportNode_(ReportNode parentNode,
-				TestArtefact testArtefact) {
-			return new ReportNode();
-		}
+        ThreadGroup threadGroup2 = new ThreadGroup();
+        threadGroup2.setIterations(new DynamicValue<Integer>(10));
+        threadGroup2.setUsers(new DynamicValue<Integer>(5));
 
-	}
+        AtomicInteger maxParallelism = new AtomicInteger(0);
+        AtomicInteger parallelism = new AtomicInteger(0);
+        AtomicInteger iterations = new AtomicInteger(0);
+        TestArtefact c = testArtefact(maxParallelism, parallelism, iterations);
+
+        Plan plan = PlanBuilder.create().startBlock(testScenario)
+            .startBlock(threadGroup)
+            .startBlock(synchronized1)
+            .add(c)
+            .endBlock()
+            .endBlock()
+            .startBlock(threadGroup2)
+            .startBlock(synchronized2)
+            .add(c)
+            .endBlock()
+            .endBlock()
+            .endBlock()
+            .build();
+
+        executeAndAssertAllPassed(plan);
+        Assert.assertEquals(2, maxParallelism.get());
+        Assert.assertEquals(100, iterations.get());
+    }
+
+    @Artefact(test = true)
+    public static class TestArtefact extends AbstractArtefact {
+
+        private AtomicInteger iterations;
+        private AtomicInteger parallelism;
+        private AtomicInteger maxParallelism;
+
+        public TestArtefact() {
+            super();
+        }
+
+        public TestArtefact(AtomicInteger iterations, AtomicInteger parallelism, AtomicInteger maxParallelism) {
+            super();
+            this.iterations = iterations;
+            this.parallelism = parallelism;
+            this.maxParallelism = maxParallelism;
+        }
+
+        public AtomicInteger getIterations() {
+            return iterations;
+        }
+
+        public void setIterations(AtomicInteger iterations) {
+            this.iterations = iterations;
+        }
+
+        public AtomicInteger getParallelism() {
+            return parallelism;
+        }
+
+        public void setParallelism(AtomicInteger parallelism) {
+            this.parallelism = parallelism;
+        }
+
+        public AtomicInteger getMaxParallelism() {
+            return maxParallelism;
+        }
+
+        public void setMaxParallelism(AtomicInteger maxParallelism) {
+            this.maxParallelism = maxParallelism;
+        }
+    }
+
+    ;
+
+    public static class TestArtefactHandler extends ArtefactHandler<TestArtefact, ReportNode> {
+
+        @Override
+        protected void createReportSkeleton_(ReportNode parentNode, TestArtefact testArtefact) {
+        }
+
+        @Override
+        protected void execute_(ReportNode node, TestArtefact testArtefact) throws InterruptedException {
+            int currentParallelism = testArtefact.parallelism.incrementAndGet();
+            if (currentParallelism > testArtefact.maxParallelism.get()) {
+                testArtefact.maxParallelism.set(currentParallelism);
+            }
+            Thread.sleep(10);
+            testArtefact.iterations.incrementAndGet();
+            testArtefact.parallelism.decrementAndGet();
+            node.setStatus(ReportNodeStatus.PASSED);
+        }
+
+        @Override
+        public ReportNode createReportNode_(ReportNode parentNode,
+                                            TestArtefact testArtefact) {
+            return new ReportNode();
+        }
+
+    }
 
 }

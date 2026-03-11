@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class AttributeValuesStats {
-    
+
     private Map<Object, AtomicInteger> valuesCount = new HashMap<>();
     private int totalCount;
 
@@ -20,5 +20,5 @@ public class AttributeValuesStats {
     public int getTotalCount() {
         return totalCount;
     }
-    
+
 }

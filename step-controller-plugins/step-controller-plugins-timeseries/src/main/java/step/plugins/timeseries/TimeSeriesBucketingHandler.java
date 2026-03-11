@@ -59,7 +59,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
         Map<String, Object> bucketAttributesMap = new HashMap<>();
         handledAttributes.forEach(a -> {
             if (measurement.containsKey(a)) {
-                bucketAttributesMap.put(a,measurement.get(a));
+                bucketAttributesMap.put(a, measurement.get(a));
             }
         });
         return new BucketAttributes(bucketAttributesMap);
@@ -79,6 +79,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     /**
      * This method will handle existing measurements, and will check if it is a gauge or normal measurement
+     *
      * @param measurement
      */
     public void ingestExistingMeasurement(Measurement measurement) {

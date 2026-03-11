@@ -65,22 +65,22 @@ public class ApLocalExecuteCommandHandler {
                     libFileInputStream = new FileInputStream(libFile);
                 }
                 AutomationPackageLibraryProvider libFromInputStreamProvider = libFileInputStream == null ?
-                        new NoAutomationPackageLibraryProvider() :
-                        new AutomationPackageLibraryFromInputStreamProvider(libFileInputStream, libFile.getName());
+                    new NoAutomationPackageLibraryProvider() :
+                    new AutomationPackageLibraryFromInputStreamProvider(libFileInputStream, libFile.getName());
                 AutomationPackageFromInputStreamProvider automationPackageProvider = new AutomationPackageFromInputStreamProvider(automationPackageManager.getAutomationPackageReaderRegistry(),
-                        is, apFile.getName(), libFromInputStreamProvider);
+                    is, apFile.getName(), libFromInputStreamProvider);
                 AutomationPackageUpdateParameter localCreateParameters = new AutomationPackageUpdateParameterBuilder().withCreateOnly()
-                        .forLocalExecution().build();
+                    .forLocalExecution().build();
                 ObjectId automationPackageId = automationPackageManager.createOrUpdateAutomationPackage(
-                        automationPackageProvider, libFromInputStreamProvider, localCreateParameters).getId();
+                    automationPackageProvider, libFromInputStreamProvider, localCreateParameters).getId();
 
                 PlanFilter planFilters = getPlanFilters(includePlans, excludePlans, includeCategories, excludeCategories);
                 List<StepClassParserResult> listPlans = automationPackageManager.getPackagePlans(automationPackageId)
-                        .stream()
-                        .filter(planFilters::isSelected)
-                        .filter(p -> p.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution())
-                        .map(p -> new StepClassParserResult(getPlanName(p), p, null))
-                        .collect(Collectors.toList());
+                    .stream()
+                    .filter(planFilters::isSelected)
+                    .filter(p -> p.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution())
+                    .map(p -> new StepClassParserResult(getPlanName(p), p, null))
+                    .collect(Collectors.toList());
 
                 log.info("The following plans will be executed: {}", listPlans.stream().map(StepClassParserResult::getName).collect(Collectors.toList()));
 
@@ -97,7 +97,7 @@ public class ApLocalExecuteCommandHandler {
 
                             String executionTree = ExecuteAutomationPackageTool.getExecutionTreeAsString(result);
                             String detailMessage = errorText + "\n" + executionTree;
-                            if(assertionError){
+                            if (assertionError) {
                                 detailMessage += "Assertion error. ";
                             }
                             detailMessage += "Execution tree is: " + executionTree;
