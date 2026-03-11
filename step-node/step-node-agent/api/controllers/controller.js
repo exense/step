@@ -1,8 +1,10 @@
 const fs = require("fs");
 const path = require("path");
-const {fork, execSync} = require("child_process");
+const {fork, spawn, spawnSync} = require("child_process");
 const Session = require('./session');
 const { OutputBuilder } = require('./output');
+
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 process.on('unhandledRejection', error => {
   console.log('[Controller] Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported', error)
@@ -93,8 +95,8 @@ class Controller {
 
       await this.executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder)
     } catch (e) {
-      console.log('[Controller] Unexpected error while executing keyword ' + keywordName + ' :' + err)
-      outputBuilder.fail('Unexpected error while executing keyword', err)
+      console.log('[Controller] Unexpected error while executing keyword ' + keywordName + ' :', e)
+      outputBuilder.fail('Unexpected error while executing keyword', e)
     }
     return outputBuilder.build();
   }
@@ -127,21 +129,81 @@ class Controller {
         throw new Error("Multiple projects not supported within the same session");
       }
 
+      let npmAttachment = null;
+      let isDebugEnabled = properties['debug'] === 'true';
+
       if (!forkedAgent) {
         console.log('[Controller] Starting agent fork in ' + npmProjectPath + ' for token ' + tokenId)
         forkedAgent = createForkedAgent(npmProjectPath);
+
         console.log('[Controller] Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
-        execSync('npm install', { cwd: npmProjectPath, stdio: 'inherit' });
+        const npmInstallResult = await this.executeNpmInstall(npmProjectPath);
+        const npmInstallOutput = Buffer.concat([npmInstallResult.stdout || Buffer.alloc(0), npmInstallResult.stderr || Buffer.alloc(0)]);
+        const npmInstallFailed = npmInstallResult.status !== 0 || npmInstallResult.error != null;
+        if (npmInstallFailed || isDebugEnabled) {
+          npmAttachment = {
+            name: 'npm-install.log',
+            isDirectory: false,
+            description: 'npm install output',
+            hexContent: npmInstallOutput.toString('base64')
+          };
+        }
+
         session.set('forkedAgent', forkedAgent);
         session.set('npmProjectPath', npmProjectPath);
+
+        if (npmInstallFailed) {
+          throw npmInstallResult.error || new Error('npm install exited with code ' + npmInstallResult.status);
+        }
       }
 
-      const output = await forkedAgent.runKeywordTask(forkedAgent, npmProjectPath, keywordName, argument, properties);
-      outputBuilder.merge(output.payload)
+      console.log('[Controller] Executing keyword \'' + keywordName + ' in ' + npmProjectPath + ' for token ' + tokenId)
+      const { result, outputBuffer } = await forkedAgent.runKeywordTask(forkedAgent, npmProjectPath, keywordName, argument, properties);
+      outputBuilder.merge(result.payload)
+
+      if (npmAttachment) {
+        outputBuilder.attach(npmAttachment);
+      }
+
+      if (outputBuffer && (result.payload.error || isDebugEnabled)) {
+        const forkAttachment = {
+          name: 'keyword-process.log',
+          isDirectory: false,
+          description: 'Output of the forked keyword process',
+          hexContent: outputBuffer.toString('base64'),
+        };
+        outputBuilder.attach(forkAttachment);
+      }
     } catch (e) {
       console.log("[Controller] Unexpected error occurred while executing keyword ", e)
       outputBuilder.fail('An error occurred while attempting to execute the keyword ' + keywordName, e)
     }
+  }
+
+  async executeNpmInstall(npmProjectPath) {
+    return await new Promise((resolve) => {
+      const child = spawn(npmCommand, ['install'], {cwd: npmProjectPath, shell: false});
+      const stdoutChunks = [];
+      const stderrChunks = [];
+
+      child.stdout.on('data', (data) => {
+        stdoutChunks.push(data);
+        process.stdout.write(data);
+      });
+
+      child.stderr.on('data', (data) => {
+        stderrChunks.push(data);
+        process.stderr.write(data);
+      });
+
+      child.on('error', (error) => {
+        resolve({status: null, error, stdout: Buffer.concat(stdoutChunks), stderr: Buffer.concat(stderrChunks)});
+      });
+
+      child.on('close', (code) => {
+        resolve({status: code, error: null, stdout: Buffer.concat(stdoutChunks), stderr: Buffer.concat(stderrChunks)});
+      });
+    });
   }
 }
 
@@ -149,7 +211,7 @@ function createForkedAgent(keywordProjectPath) {
   fs.copyFileSync(path.resolve(__dirname, '../../agent-fork.js'), path.join(keywordProjectPath, './agent-fork.js'));
   fs.copyFileSync(path.join(__dirname, 'output.js'), path.join(keywordProjectPath, './output.js'));
   fs.copyFileSync(path.join(__dirname, 'session.js'), path.join(keywordProjectPath, './session.js'));
-  return new ForkedAgent(fork('./agent-fork.js', [], {cwd: keywordProjectPath}));
+  return new ForkedAgent(fork('./agent-fork.js', [], {cwd: keywordProjectPath, silent: true}));
 }
 
 class ForkedAgent {
@@ -161,17 +223,49 @@ class ForkedAgent {
   runKeywordTask(forkedAgent, keywordProjectPath, functionName, input, properties) {
     return new Promise((resolve) => {
       try {
-        this.process.send({ type: "KEYWORD", projectPath: keywordProjectPath, functionName, input, properties });
+        const stdoutChunks = [];
+        const stderrChunks = [];
+
+        const stdoutListener = (data) => {
+          stdoutChunks.push(data);
+          process.stdout.write(data);
+        };
+        const stderrListener = (data) => {
+          stderrChunks.push(data);
+          process.stderr.write(data);
+        };
+
+        if (this.process.stdout) {
+          this.process.stdout.on('data', stdoutListener);
+        }
+
+        if (this.process.stderr) {
+          this.process.stderr.on('data', stderrListener);
+        }
 
         this.process.removeAllListeners('message');
         this.process.on('message', (result) => {
-          resolve(result);
+          if (this.process.stdout) {
+            this.process.stdout.removeListener('data', stdoutListener);
+          }
+          if (this.process.stderr) {
+            this.process.stderr.removeListener('data', stderrListener);
+          }
+
+          const outputBuffer = Buffer.concat([
+            ...stdoutChunks,
+            ...stderrChunks,
+          ]);
+
+          resolve({ result, outputBuffer });
         });
 
         this.process.removeAllListeners('error');
         this.process.on('error', (err) => {
           console.error('Error while calling forked agent:', err);
         });
+
+        this.process.send({ type: "KEYWORD", projectPath: keywordProjectPath, functionName, input, properties });
       } catch (e) {
         console.log('[Controller] Unexpected error while calling forked agent', e);
       }
