@@ -53,10 +53,10 @@ public class AbstractRemoteClient implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractRemoteClient.class);
 
-	private static final int CONNECT_TIMEOUT_SECONDS = 10;
-	private static final int READ_TIMEOUT_SECONDS = 30;
-	private static final int MAX_CONNECTIONS_TOTAL = 100;
-	private static final int MAX_CONNECTIONS_PER_ROUTE = 20;
+    private static final int CONNECT_TIMEOUT_SECONDS = 10;
+    private static final int READ_TIMEOUT_SECONDS = 30;
+    private static final int MAX_CONNECTIONS_TOTAL = 100;
+    private static final int MAX_CONNECTIONS_PER_ROUTE = 20;
 
     protected Client client;
 
@@ -82,19 +82,19 @@ public class AbstractRemoteClient implements Closeable {
     }
 
     private void createClient() {
-		ClientConfig config = new ClientConfig();
-		config.connectorProvider(new Apache5ConnectorProvider());
-		config.property(Apache5ClientProperties.CONNECTION_MANAGER,
-				PoolingHttpClientConnectionManagerBuilder.create()
-						.setMaxConnTotal(MAX_CONNECTIONS_TOTAL)
-						.setMaxConnPerRoute(MAX_CONNECTIONS_PER_ROUTE)
-						.build());
-		// Buffered processing is required for correct Content-Length header handling, especially with multipart requests
-		config.property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED);
+        ClientConfig config = new ClientConfig();
+        config.connectorProvider(new Apache5ConnectorProvider());
+        config.property(Apache5ClientProperties.CONNECTION_MANAGER,
+            PoolingHttpClientConnectionManagerBuilder.create()
+                .setMaxConnTotal(MAX_CONNECTIONS_TOTAL)
+                .setMaxConnPerRoute(MAX_CONNECTIONS_PER_ROUTE)
+                .build());
+        // Buffered processing is required for correct Content-Length header handling, especially with multipart requests
+        config.property(ClientProperties.REQUEST_ENTITY_PROCESSING, RequestEntityProcessing.BUFFERED);
         client = ClientBuilder.newBuilder()
-				.withConfig(config)
-				.connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-				.readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .withConfig(config)
+            .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .build();
         client.register(JacksonMapperProvider.class);
         client.register(MultiPartFeature.class);
@@ -107,7 +107,7 @@ public class AbstractRemoteClient implements Closeable {
         c.setPassword(credentials.getPassword());
         Entity<Credentials> entity = Entity.entity(c, MediaType.APPLICATION_JSON);
         logger.info("Logging into:" + credentials.getServerUrl() + " with user " + credentials.getUsername());
-		client.target(credentials.getServerUrl() + "/rest/access/login").request().post(entity).close();
+        client.target(credentials.getServerUrl() + "/rest/access/login").request().post(entity).close();
     }
 
     public Builder requestBuilder(String path) {
