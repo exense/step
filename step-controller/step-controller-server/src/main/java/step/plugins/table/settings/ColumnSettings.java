@@ -26,7 +26,7 @@ import static step.functions.Function.JSON_CLASS_FIELD;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ScreenInputColumnSettings.class)
 })
-@JsonTypeInfo(use= JsonTypeInfo.Id.CLASS, property= JSON_CLASS_FIELD)
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = JSON_CLASS_FIELD)
 public class ColumnSettings {
 
     public String columnId;
@@ -41,5 +41,5 @@ public class ColumnSettings {
         this.visible = visible;
         this.position = position;
     }
-    
+
 }

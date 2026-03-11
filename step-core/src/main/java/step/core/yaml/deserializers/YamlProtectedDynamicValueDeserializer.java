@@ -25,28 +25,28 @@ import step.core.dynamicbeans.ProtectedDynamicValue;
 @StepYamlDeserializerAddOn(targetClasses = {ProtectedDynamicValue.class})
 public class YamlProtectedDynamicValueDeserializer extends YamlDynamicValueDeserializer {
 
-	public YamlProtectedDynamicValueDeserializer() {
-	}
+    public YamlProtectedDynamicValueDeserializer() {
+    }
 
-	public YamlProtectedDynamicValueDeserializer(ObjectMapper yamlObjectMapper) {
-		super(yamlObjectMapper);
-	}
+    public YamlProtectedDynamicValueDeserializer(ObjectMapper yamlObjectMapper) {
+        super(yamlObjectMapper);
+    }
 
-	@Override
-	public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {
-		this.type = property.getType().containedType(0);
-		YamlProtectedDynamicValueDeserializer deserializer = new YamlProtectedDynamicValueDeserializer();
-		deserializer.type = type;
-		return deserializer;
-	}
+    @Override
+    public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {
+        this.type = property.getType().containedType(0);
+        YamlProtectedDynamicValueDeserializer deserializer = new YamlProtectedDynamicValueDeserializer();
+        deserializer.type = type;
+        return deserializer;
+    }
 
-	@Override
-	protected DynamicValue<?> getDynamicValue(Object o) {
-		return new ProtectedDynamicValue<>(o);
-	}
+    @Override
+    protected DynamicValue<?> getDynamicValue(Object o) {
+        return new ProtectedDynamicValue<>(o);
+    }
 
-	@Override
-	protected DynamicValue<Object> getDynamicValueWithExpresion(String expression) {
-		return new ProtectedDynamicValue<>(expression, "");
-	}
+    @Override
+    protected DynamicValue<Object> getDynamicValueWithExpresion(String expression) {
+        return new ProtectedDynamicValue<>(expression, "");
+    }
 }

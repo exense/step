@@ -39,41 +39,41 @@ import java.util.List;
 @Plugin
 public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 
-	private static final Logger logger = LoggerFactory.getLogger(RawMeasurementsControllerPlugin.class);
+    private static final Logger logger = LoggerFactory.getLogger(RawMeasurementsControllerPlugin.class);
 
-	private MeasurementAccessor accessor;
-	private Collection<Document> collection;
+    private MeasurementAccessor accessor;
+    private Collection<Document> collection;
 
-	@Override
-	public void serverStart(GlobalContext context) throws Exception {
+    @Override
+    public void serverStart(GlobalContext context) throws Exception {
 
-		collection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Document.class);
-		accessor = new MeasurementAccessor(collection);
-		context.put(MeasurementAccessor.class, accessor);
+        collection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Document.class);
+        accessor = new MeasurementAccessor(collection);
+        context.put(MeasurementAccessor.class, accessor);
 
-		TableRegistry tableRegistry = context.get(TableRegistry.class);
-		tableRegistry.register(EntityConstants.measurements, new Table<>(collection, null, false));
+        TableRegistry tableRegistry = context.get(TableRegistry.class);
+        tableRegistry.register(EntityConstants.measurements, new Table<>(collection, null, false));
 
-		MeasurementPlugin.registerMeasurementHandlers(new RawMeasurementsHandler(accessor));
-	}
+        MeasurementPlugin.registerMeasurementHandlers(new RawMeasurementsHandler(accessor));
+    }
 
-	@Override
-	public void serverStop(GlobalContext context) {
-	}
+    @Override
+    public void serverStop(GlobalContext context) {
+    }
 
-	@Override
-	public void initializeData(GlobalContext context) throws Exception {
-		IndexField eidIndex = new IndexField(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, Order.ASC, String.class);
-		IndexField beginIndex = new IndexField(MeasurementPlugin.BEGIN, Order.ASC, Integer.class);
-		IndexField typeIndex = new IndexField(MeasurementPlugin.TYPE, Order.ASC, String.class);
-		IndexField planIndex = new IndexField(MeasurementPlugin.PLAN_ID, Order.ASC, String.class);
-		IndexField taskIndex = new IndexField(MeasurementPlugin.TASK_ID, Order.ASC, String.class);
-		IndexField rnIdIndex = new IndexField(MeasurementPlugin.RN_ID, Order.ASC, String.class);
-		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, beginIndex)));
-		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, typeIndex, beginIndex)));
-		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(planIndex, beginIndex)));
-		collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(taskIndex, beginIndex)));
-		collection.createOrUpdateIndex(beginIndex);
-		collection.createOrUpdateIndex(rnIdIndex);
-	}
+    @Override
+    public void initializeData(GlobalContext context) throws Exception {
+        IndexField eidIndex = new IndexField(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, Order.ASC, String.class);
+        IndexField beginIndex = new IndexField(MeasurementPlugin.BEGIN, Order.ASC, Integer.class);
+        IndexField typeIndex = new IndexField(MeasurementPlugin.TYPE, Order.ASC, String.class);
+        IndexField planIndex = new IndexField(MeasurementPlugin.PLAN_ID, Order.ASC, String.class);
+        IndexField taskIndex = new IndexField(MeasurementPlugin.TASK_ID, Order.ASC, String.class);
+        IndexField rnIdIndex = new IndexField(MeasurementPlugin.RN_ID, Order.ASC, String.class);
+        collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, beginIndex)));
+        collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, typeIndex, beginIndex)));
+        collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(planIndex, beginIndex)));
+        collection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(taskIndex, beginIndex)));
+        collection.createOrUpdateIndex(beginIndex);
+        collection.createOrUpdateIndex(rnIdIndex);
+    }
 }

@@ -81,13 +81,13 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
         this.artefactClass = artefactClass;
     }
 
-    public final AbstractArtefact toArtefact(){
+    public final AbstractArtefact toArtefact() {
         T artefactInstance = createArtefactInstance();
         fillArtefactFields(artefactInstance);
         return artefactInstance;
     }
 
-    public T createArtefactInstance(){
+    public T createArtefactInstance() {
         try {
             return (T) artefactClass.getConstructor().newInstance();
         } catch (Exception e) {
@@ -177,15 +177,15 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
         this.yamlObjectMapper = yamlObjectMapper;
     }
 
-    public static <T extends AbstractArtefact> AbstractYamlArtefact<T> toYamlArtefact(T artefact, ObjectMapper yamlObjectMapper){
+    public static <T extends AbstractArtefact> AbstractYamlArtefact<T> toYamlArtefact(T artefact, ObjectMapper yamlObjectMapper) {
         AbstractYamlArtefact<T> instance = (AbstractYamlArtefact<T>) createYamlArtefactInstance(artefact, yamlObjectMapper);
         instance.fillYamlArtefactFields(artefact);
         return instance;
     }
 
-    private static AbstractYamlArtefact<?> createYamlArtefactInstance(AbstractArtefact artefact, ObjectMapper yamlObjectMapper){
+    private static AbstractYamlArtefact<?> createYamlArtefactInstance(AbstractArtefact artefact, ObjectMapper yamlObjectMapper) {
         Class<?> applicableYamlClass;
-        if(YamlArtefactsLookuper.getSimpleYamlArtefactModels().contains(artefact.getClass())){
+        if (YamlArtefactsLookuper.getSimpleYamlArtefactModels().contains(artefact.getClass())) {
             applicableYamlClass = SimpleYamlArtefact.class;
         } else {
             applicableYamlClass = YamlArtefactsLookuper.getSpecialModelClassForArtefact(artefact.getClass());

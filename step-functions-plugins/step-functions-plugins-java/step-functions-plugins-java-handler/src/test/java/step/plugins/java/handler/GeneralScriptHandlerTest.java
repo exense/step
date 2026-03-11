@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -47,205 +47,206 @@ import static org.junit.Assert.assertEquals;
 
 public class GeneralScriptHandlerTest {
 
-	private TestFileManagerClient testFileManagerClient;
-	private ApplicationContextBuilder applicationContextBuilder;
-	private TokenReservationSession tokenReservationSession;
+    private TestFileManagerClient testFileManagerClient;
+    private ApplicationContextBuilder applicationContextBuilder;
+    private TokenReservationSession tokenReservationSession;
 
-	@Test
-	public void testJava() throws Exception {
-		GeneralScriptHandler handler = createHandler();
-		
-		Input<JsonObject> input = new Input<>();
-		input.setFunction("MyKeyword1");
+    @Test
+    public void testJava() throws Exception {
+        GeneralScriptHandler handler = createHandler();
 
-		HashMap<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_LANGUAGE, "java");
-		properties.put(ScriptHandler.SCRIPT_FILE+".id", "java-plugin-handler-test.jar");
-		properties.put(ScriptHandler.SCRIPT_FILE+".version", "");
-		input.setProperties(properties);
-		
-		Output<JsonObject> output = handler.handle(input);
-		Assert.assertEquals("MyValue", output.getPayload().getString("MyKey"));
+        Input<JsonObject> input = new Input<>();
+        input.setFunction("MyKeyword1");
 
-		closeAndAssertCacheUsage(1);
-	}
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(ScriptHandler.SCRIPT_LANGUAGE, "java");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".id", "java-plugin-handler-test.jar");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".version", "");
+        input.setProperties(properties);
 
-	private void closeAndAssertCacheUsage(int expected) {
-		tokenReservationSession.close();
-		applicationContextBuilder.close();
-		assertEquals(expected, testFileManagerClient.cacheUsage.keySet().size());
-		testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
-	}
+        Output<JsonObject> output = handler.handle(input);
+        Assert.assertEquals("MyValue", output.getPayload().getString("MyKey"));
+
+        closeAndAssertCacheUsage(1);
+    }
+
+    private void closeAndAssertCacheUsage(int expected) {
+        tokenReservationSession.close();
+        applicationContextBuilder.close();
+        assertEquals(expected, testFileManagerClient.cacheUsage.keySet().size());
+        testFileManagerClient.cacheUsage.values().forEach(v -> assertEquals(0, v.get()));
+    }
 
 
-	@Test
-	public void testJS223NashornHappyPath() throws Exception {
-		GeneralScriptHandler handler = createHandler();
+    @Test
+    public void testJS223NashornHappyPath() throws Exception {
+        GeneralScriptHandler handler = createHandler();
 
-		Input<JsonObject> input = new Input<>();
-		input.setFunction("MyKeyword1");
-		input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
+        Input<JsonObject> input = new Input<>();
+        input.setFunction("MyKeyword1");
+        input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
 
-		HashMap<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_LANGUAGE, "javascript");
-		properties.put(ScriptHandler.SCRIPT_FILE+".id", "scripts/test1.js");
-		properties.put(ScriptHandler.SCRIPT_FILE+".version", "");
-		input.setProperties(properties);
-		
-		Output<JsonObject> output = handler.handle(input);
-		Assert.assertEquals("MyValue", output.getPayload().getString("key1"));
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(ScriptHandler.SCRIPT_LANGUAGE, "javascript");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".id", "scripts/test1.js");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".version", "");
+        input.setProperties(properties);
 
-		closeAndAssertCacheUsage(1);
-	}
-	
-	@Test
-	public void testJS223GroovyHappyPath() throws Exception {
-		GeneralScriptHandler handler = createHandler();
+        Output<JsonObject> output = handler.handle(input);
+        Assert.assertEquals("MyValue", output.getPayload().getString("key1"));
 
-		Input<JsonObject> input = new Input<>();
-		input.setFunction("MyKeyword1");
-		input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
+        closeAndAssertCacheUsage(1);
+    }
 
-		HashMap<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_LANGUAGE, "groovy");
-		properties.put(ScriptHandler.SCRIPT_FILE+".id", "scripts/testGroovyUTF8.groovy");
-		properties.put(ScriptHandler.SCRIPT_FILE+".version", "");
-		input.setProperties(properties);
-		
-		Output<JsonObject> output = handler.handle(input);
-		Assert.assertEquals("kéÿ1", output.getPayload().getString("key1"));
+    @Test
+    public void testJS223GroovyHappyPath() throws Exception {
+        GeneralScriptHandler handler = createHandler();
 
-		closeAndAssertCacheUsage(1);
-	}
-	
-	@Test
-	public void testJS223GroovyErrorWithoutHandler() throws Exception {
-		GeneralScriptHandler handler = createHandler();
+        Input<JsonObject> input = new Input<>();
+        input.setFunction("MyKeyword1");
+        input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
 
-		Input<JsonObject> input = new Input<>();
-		input.setFunction("MyKeyword1");
-		input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(ScriptHandler.SCRIPT_LANGUAGE, "groovy");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".id", "scripts/testGroovyUTF8.groovy");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".version", "");
+        input.setProperties(properties);
 
-		HashMap<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_LANGUAGE, "groovy");
-		properties.put(ScriptHandler.SCRIPT_FILE+".id", "scripts/throwable.groovy");
-		properties.put(ScriptHandler.SCRIPT_FILE+".version", "");
-		input.setProperties(properties);
-		
-		Output<JsonObject> output = handler.handle(input);
-		Assert.assertEquals("Error while running script throwable.groovy: assert false\n", output.getError().getMsg());
+        Output<JsonObject> output = handler.handle(input);
+        Assert.assertEquals("kéÿ1", output.getPayload().getString("key1"));
 
-		closeAndAssertCacheUsage(1);
-	}
-	
-	@Test
-	public void testJS223GroovyErrorWithHandler() throws Exception {
-		GeneralScriptHandler handler = createHandler();
+        closeAndAssertCacheUsage(1);
+    }
 
-		Input<JsonObject> input = new Input<>();
-		input.setFunction("MyKeyword1");
-		input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
+    @Test
+    public void testJS223GroovyErrorWithoutHandler() throws Exception {
+        GeneralScriptHandler handler = createHandler();
 
-		HashMap<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_LANGUAGE, "groovy");
-		properties.put(ScriptHandler.SCRIPT_FILE+".id", "scripts/throwable.groovy");
-		properties.put(ScriptHandler.SCRIPT_FILE+".version", "");
-		properties.put(ScriptHandler.ERROR_HANDLER_FILE+".id", "scripts/errorHandler.groovy");
-		properties.put(ScriptHandler.ERROR_HANDLER_FILE+".version", "");
-		input.setProperties(properties);
-		
-		Output<JsonObject> output = handler.handle(input);
-		Assert.assertEquals("Error handler called", output.getError().getMsg());
+        Input<JsonObject> input = new Input<>();
+        input.setFunction("MyKeyword1");
+        input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
 
-		closeAndAssertCacheUsage(2);
-	}
-	
-	@Test
-	public void testJS223GroovyErrorWithFailingHandler() throws Exception {
-		GeneralScriptHandler handler = createHandler();
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(ScriptHandler.SCRIPT_LANGUAGE, "groovy");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".id", "scripts/throwable.groovy");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".version", "");
+        input.setProperties(properties);
 
-		Input<JsonObject> input = new Input<>();
-		input.setFunction("MyKeyword1");
-		input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
+        Output<JsonObject> output = handler.handle(input);
+        Assert.assertEquals("Error while running script throwable.groovy: assert false\n", output.getError().getMsg());
 
-		HashMap<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_LANGUAGE, "groovy");
-		properties.put(ScriptHandler.SCRIPT_FILE+".id", "scripts/throwable.groovy");
-		properties.put(ScriptHandler.SCRIPT_FILE+".version", "");
-		properties.put(ScriptHandler.ERROR_HANDLER_FILE+".id", "scripts/throwable.groovy");
-		properties.put(ScriptHandler.ERROR_HANDLER_FILE+".version", "");
-		input.setProperties(properties);
-		
-		Output<JsonObject> output = handler.handle(input);
-		Assert.assertEquals("Error while running error handler script: throwable.groovy. assert false\n", output.getError().getMsg());
+        closeAndAssertCacheUsage(1);
+    }
 
-		closeAndAssertCacheUsage(1);
-	}
-	
-	@Test
-	public void testUnknownScriptLanguage() throws Exception {
-		GeneralScriptHandler handler = createHandler();
+    @Test
+    public void testJS223GroovyErrorWithHandler() throws Exception {
+        GeneralScriptHandler handler = createHandler();
 
-		Input<JsonObject> input = new Input<>();
-		input.setFunction("MyKeyword1");
-		input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
+        Input<JsonObject> input = new Input<>();
+        input.setFunction("MyKeyword1");
+        input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
 
-		HashMap<String, String> properties = new HashMap<>();
-		properties.put(ScriptHandler.SCRIPT_LANGUAGE, "invalidScriptLanguage");
-		properties.put(ScriptHandler.SCRIPT_FILE+".id", "scripts/throwable.groovy");
-		properties.put(ScriptHandler.SCRIPT_FILE+".version", "");
-		input.setProperties(properties);
-		
-		Output<JsonObject> output = handler.handle(input);
-		Assert.assertEquals("Unsupported script language: invalidScriptLanguage", output.getError().getMsg());
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(ScriptHandler.SCRIPT_LANGUAGE, "groovy");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".id", "scripts/throwable.groovy");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".version", "");
+        properties.put(ScriptHandler.ERROR_HANDLER_FILE + ".id", "scripts/errorHandler.groovy");
+        properties.put(ScriptHandler.ERROR_HANDLER_FILE + ".version", "");
+        input.setProperties(properties);
 
-		closeAndAssertCacheUsage(1);
-	}
+        Output<JsonObject> output = handler.handle(input);
+        Assert.assertEquals("Error handler called", output.getError().getMsg());
 
-	public GeneralScriptHandler createHandler()
-			throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-		FunctionHandlerFactory factory = getFunctionHandlerFactory();
-		tokenReservationSession = new TokenReservationSession();
-		GeneralScriptHandler handler = (GeneralScriptHandler) factory.create(this.getClass().getClassLoader(), GeneralScriptHandler.class.getName(), new TokenSession(), tokenReservationSession, new HashMap<>());
-		return handler;
-	}
+        closeAndAssertCacheUsage(2);
+    }
 
-	public static class TestFileManagerClient implements FileManagerClient {
+    @Test
+    public void testJS223GroovyErrorWithFailingHandler() throws Exception {
+        GeneralScriptHandler handler = createHandler();
 
-		Map<String, AtomicInteger> cacheUsage = new ConcurrentHashMap<>();
-		@Override
-		public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
-			String file = GeneralScriptHandlerTest.class.getClassLoader().getResource(fileVersionId.getFileId()).getFile();
-			cacheUsage.computeIfAbsent(fileVersionId.getFileId(), (v) -> new AtomicInteger(0)).incrementAndGet();
-			return new FileVersion(new File(file), fileVersionId, false);
-		}
+        Input<JsonObject> input = new Input<>();
+        input.setFunction("MyKeyword1");
+        input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
 
-		@Override
-		public void removeFileVersionFromCache(FileVersionId fileVersionId) {
-		}
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(ScriptHandler.SCRIPT_LANGUAGE, "groovy");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".id", "scripts/throwable.groovy");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".version", "");
+        properties.put(ScriptHandler.ERROR_HANDLER_FILE + ".id", "scripts/throwable.groovy");
+        properties.put(ScriptHandler.ERROR_HANDLER_FILE + ".version", "");
+        input.setProperties(properties);
 
-		@Override
-		public void cleanupCache() {
+        Output<JsonObject> output = handler.handle(input);
+        Assert.assertEquals("Error while running error handler script: throwable.groovy. assert false\n", output.getError().getMsg());
 
-		}
+        closeAndAssertCacheUsage(1);
+    }
 
-		@Override
-		public void releaseFileVersion(FileVersion fileVersion) {
-			cacheUsage.get(fileVersion.getFileId()).decrementAndGet();
-		}
+    @Test
+    public void testUnknownScriptLanguage() throws Exception {
+        GeneralScriptHandler handler = createHandler();
 
-		@Override
-		public void close() throws Exception {
+        Input<JsonObject> input = new Input<>();
+        input.setFunction("MyKeyword1");
+        input.setPayload(Json.createObjectBuilder().add("key1", "MyValue").build());
 
-		}
-	}
+        HashMap<String, String> properties = new HashMap<>();
+        properties.put(ScriptHandler.SCRIPT_LANGUAGE, "invalidScriptLanguage");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".id", "scripts/throwable.groovy");
+        properties.put(ScriptHandler.SCRIPT_FILE + ".version", "");
+        input.setProperties(properties);
 
-	public FunctionHandlerFactory getFunctionHandlerFactory() {
-		applicationContextBuilder = new ApplicationContextBuilder(new ExecutionContextCacheConfiguration());
-		applicationContextBuilder.forkCurrentContext(GeneralScriptHandler.FORKED_BRANCH);
-		testFileManagerClient = new TestFileManagerClient();
-		FunctionHandlerFactory factory = new FunctionHandlerFactory(applicationContextBuilder, testFileManagerClient );
-		return factory;
-	}
+        Output<JsonObject> output = handler.handle(input);
+        Assert.assertEquals("Unsupported script language: invalidScriptLanguage", output.getError().getMsg());
+
+        closeAndAssertCacheUsage(1);
+    }
+
+    public GeneralScriptHandler createHandler()
+        throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        FunctionHandlerFactory factory = getFunctionHandlerFactory();
+        tokenReservationSession = new TokenReservationSession();
+        GeneralScriptHandler handler = (GeneralScriptHandler) factory.create(this.getClass().getClassLoader(), GeneralScriptHandler.class.getName(), new TokenSession(), tokenReservationSession, new HashMap<>());
+        return handler;
+    }
+
+    public static class TestFileManagerClient implements FileManagerClient {
+
+        Map<String, AtomicInteger> cacheUsage = new ConcurrentHashMap<>();
+
+        @Override
+        public FileVersion requestFileVersion(FileVersionId fileVersionId, boolean cleanable) throws FileManagerException {
+            String file = GeneralScriptHandlerTest.class.getClassLoader().getResource(fileVersionId.getFileId()).getFile();
+            cacheUsage.computeIfAbsent(fileVersionId.getFileId(), (v) -> new AtomicInteger(0)).incrementAndGet();
+            return new FileVersion(new File(file), fileVersionId, false);
+        }
+
+        @Override
+        public void removeFileVersionFromCache(FileVersionId fileVersionId) {
+        }
+
+        @Override
+        public void cleanupCache() {
+
+        }
+
+        @Override
+        public void releaseFileVersion(FileVersion fileVersion) {
+            cacheUsage.get(fileVersion.getFileId()).decrementAndGet();
+        }
+
+        @Override
+        public void close() throws Exception {
+
+        }
+    }
+
+    public FunctionHandlerFactory getFunctionHandlerFactory() {
+        applicationContextBuilder = new ApplicationContextBuilder(new ExecutionContextCacheConfiguration());
+        applicationContextBuilder.forkCurrentContext(GeneralScriptHandler.FORKED_BRANCH);
+        testFileManagerClient = new TestFileManagerClient();
+        FunctionHandlerFactory factory = new FunctionHandlerFactory(applicationContextBuilder, testFileManagerClient);
+        return factory;
+    }
 
 }

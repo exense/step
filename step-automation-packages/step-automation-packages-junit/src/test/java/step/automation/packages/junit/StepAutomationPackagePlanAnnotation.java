@@ -10,42 +10,42 @@ public class StepAutomationPackagePlanAnnotation extends AbstractKeyword {
     @Plan
     @PlanCategories({"My Category A", "My Category C"})
     @Keyword(name = "Local Keyword Category A and C")
-    public void localKeywordAC(){
+    public void localKeywordAC() {
 
     }
 
     @Plan
     @PlanCategories({"My Category A"})
     @Keyword(name = "Local Keyword Category A")
-    public void localKeywordA(){
+    public void localKeywordA() {
 
     }
 
     @Plan
     @PlanCategories({"My Category B"})
     @Keyword(name = "Local Keyword Category B")
-    public void localKeywordB(){
+    public void localKeywordB() {
 
     }
 
     @Plan
     @PlanCategories({"My Category A", "My Category B"})
     @Keyword(name = "Local Keyword Category A and B")
-    public void localKeywordAB(){
+    public void localKeywordAB() {
 
     }
 
     @Plan
     @PlanCategories({"My Category D"})
     @Keyword(name = "Local Keyword Category D")
-    public void localKeywordD(){
+    public void localKeywordD() {
 
     }
 
     @Plan
     @PlanCategories({"My Category E"})
     @Keyword(name = "Local Keyword Category E")
-    public void localKeywordE(){
+    public void localKeywordE() {
 
     }
 }

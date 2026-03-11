@@ -9,5 +9,6 @@ public class LiveReportingConstants {
     public static final String CONTEXT_VARIABLES_MANAGER = "$liveReporting.context.variablesManager";
     public static final String CONTEXT_REPORT_NODE = "$liveReporting.context.reportNode";
 
-    private LiveReportingConstants() {}
+    private LiveReportingConstants() {
+    }
 }

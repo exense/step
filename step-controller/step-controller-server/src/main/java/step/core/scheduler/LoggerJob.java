@@ -15,6 +15,7 @@ public class LoggerJob implements Job {
         this.e = e;
         this.msg = msg;
     }
+
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         logger.error(msg, e);

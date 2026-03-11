@@ -45,13 +45,13 @@ public abstract class AbstractAutomationPackageMojo extends AbstractStepPluginMo
         if (library == null) {
             library = new LibraryConfiguration();
         }
-        if (getLibraryGroupId() != null)    library.setGroupId(getLibraryGroupId());
+        if (getLibraryGroupId() != null) library.setGroupId(getLibraryGroupId());
         if (getLibraryArtifactId() != null) library.setArtifactId(getLibraryArtifactId());
-        if (getLibraryVersion() != null)    library.setVersion(getLibraryVersion());
+        if (getLibraryVersion() != null) library.setVersion(getLibraryVersion());
         if (getLibraryClassifier() != null) library.setClassifier(getLibraryClassifier());
-        if (getLibraryType() != null)       library.setType(getLibraryType());
-        if (getLibraryPath() != null)       library.setPath(getLibraryPath());
-        if (getLibraryManaged() != null)    library.setManaged(getLibraryManaged());
+        if (getLibraryType() != null) library.setType(getLibraryType());
+        if (getLibraryPath() != null) library.setPath(getLibraryPath());
+        if (getLibraryManaged() != null) library.setManaged(getLibraryManaged());
 
         if (library.isSet()) {
             library.validate();

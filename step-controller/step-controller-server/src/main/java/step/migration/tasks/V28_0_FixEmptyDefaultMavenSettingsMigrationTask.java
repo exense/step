@@ -38,37 +38,37 @@ import java.util.Objects;
 public class V28_0_FixEmptyDefaultMavenSettingsMigrationTask extends MigrationTask {
 
     protected static final String OLD_MAVEN_EMPTY_SETTINGS =
-            "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n" +
-                    "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                    "          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
-                    "</settings>\n";
+        "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n" +
+            "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            "          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
+            "</settings>\n";
 
     // The actual value in ArtifactRepositoryConstants
     public static final String NEW_MAVEN_EMPTY_SETTINGS =
-            "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n" +
-                    "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                    "          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
-                    "    <activeProfiles>\n" +
-                    "        <activeProfile>default</activeProfile>\n" +
-                    "    </activeProfiles>\n" +
-                    "\n" +
-                    "    <profiles>\n" +
-                    "        <profile>\n" +
-                    "            <id>default</id>\n" +
-                    "            <repositories>\n" +
-                    "                <repository>\n" +
-                    "                    <id>central</id>\n" +
-                    "                    <url>https://repo1.maven.org/maven2/</url>\n" +
-                    "                </repository>\n" +
-                    "            </repositories>\n" +
-                    "        </profile>\n" +
-                    "    </profiles>\n" +
-                    "</settings>";
+        "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n" +
+            "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            "          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
+            "    <activeProfiles>\n" +
+            "        <activeProfile>default</activeProfile>\n" +
+            "    </activeProfiles>\n" +
+            "\n" +
+            "    <profiles>\n" +
+            "        <profile>\n" +
+            "            <id>default</id>\n" +
+            "            <repositories>\n" +
+            "                <repository>\n" +
+            "                    <id>central</id>\n" +
+            "                    <url>https://repo1.maven.org/maven2/</url>\n" +
+            "                </repository>\n" +
+            "            </repositories>\n" +
+            "        </profile>\n" +
+            "    </profiles>\n" +
+            "</settings>";
 
     private static final Logger log = LoggerFactory.getLogger(V28_0_FixEmptyDefaultMavenSettingsMigrationTask.class);
 
     public V28_0_FixEmptyDefaultMavenSettingsMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-        super(new Version(3,28,0), collectionFactory, migrationContext);
+        super(new Version(3, 28, 0), collectionFactory, migrationContext);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class V28_0_FixEmptyDefaultMavenSettingsMigrationTask extends MigrationTa
 
         Collection<ControllerSetting> settingsCollection = collectionFactory.getCollection("settings", ControllerSetting.class);
         ControllerSetting setting = settingsCollection.find(Filters.equals("key", "maven_settings_default"), null, null, null, 0).findFirst().orElse(null);
-        if(setting != null && setting.getValue() != null){
+        if (setting != null && setting.getValue() != null) {
             log.info("Existing default maven settings detected");
             try {
                 JsonNode xmlInDb = xmlMapper.readTree(setting.getValue());

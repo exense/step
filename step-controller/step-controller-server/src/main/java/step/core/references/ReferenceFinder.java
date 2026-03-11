@@ -72,9 +72,9 @@ public class ReferenceFinder {
 
     private List<Object> getReferencedObjectsMatchingRequest(String entityType, AbstractOrganizableObject object, FindReferencesRequest request) {
         return getReferencedObjects(entityType, object, request.searchValue).stream()
-                .filter(o -> (o != null &&  !o.equals(object)))
-                .filter(o -> doesRequestMatch(request, o))
-                .collect(Collectors.toList());
+            .filter(o -> (o != null && !o.equals(object)))
+            .filter(o -> doesRequestMatch(request, o))
+            .collect(Collectors.toList());
     }
 
     // returns a (generic) set of objects referenced by a plan
@@ -88,7 +88,8 @@ public class ReferenceFinder {
         // When searching the references of a give entity we must apply the predicate as if we were in the context of this entity
         ObjectPredicate predicate = o -> true; //default value for non enricheable objects
         if (object instanceof EnricheableObject) {
-            AbstractContext context = new AbstractContext() {};
+            AbstractContext context = new AbstractContext() {
+            };
             try {
                 objectHookRegistry.rebuildContext(context, (EnricheableObject) object);
             } catch (Exception e) {

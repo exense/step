@@ -34,7 +34,9 @@ public class YamlEditorPlan extends Plan {
 
     protected RootArtefactType type;
 
-    public RootArtefactType getType() { return type; }
+    public RootArtefactType getType() {
+        return type;
+    }
 
     public void setType(RootArtefactType type) {
         this.type = type;

@@ -9,7 +9,7 @@ import step.migration.MigrationTask;
 public class MigrateResolutionsWithIgnoredFieldsTask extends MigrationTask {
 
     public MigrateResolutionsWithIgnoredFieldsTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-        super(new Version(3,26,2), collectionFactory, migrationContext);
+        super(new Version(3, 26, 2), collectionFactory, migrationContext);
     }
 
     @Override

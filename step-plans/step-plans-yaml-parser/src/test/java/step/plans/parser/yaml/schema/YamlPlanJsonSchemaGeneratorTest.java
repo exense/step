@@ -35,27 +35,27 @@ import static step.plans.parser.yaml.model.YamlPlanVersions.ACTUAL_JSON_SCHEMA_P
 
 public class YamlPlanJsonSchemaGeneratorTest {
 
-	private static final Logger log = LoggerFactory.getLogger(YamlPlanJsonSchemaGeneratorTest.class);
+    private static final Logger log = LoggerFactory.getLogger(YamlPlanJsonSchemaGeneratorTest.class);
 
-	private final ObjectMapper jsonObjectMapper = new ObjectMapper();
+    private final ObjectMapper jsonObjectMapper = new ObjectMapper();
 
-	@Test
-	public void generateJsonSchema() throws IOException, JsonSchemaPreparationException {
-		log.info("Generating actual json schema for simplified plan format");
+    @Test
+    public void generateJsonSchema() throws IOException, JsonSchemaPreparationException {
+        log.info("Generating actual json schema for simplified plan format");
 
 
-		// read published json schema
-		InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream(ACTUAL_JSON_SCHEMA_PATH);
+        // read published json schema
+        InputStream jsonSchemaFile = this.getClass().getClassLoader().getResourceAsStream(ACTUAL_JSON_SCHEMA_PATH);
 
-		JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
-		YamlPlanJsonSchemaGenerator schemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
-		JsonNode currentSchema = schemaGenerator.generateJsonSchema();
+        JsonNode publishedSchema = jsonObjectMapper.readTree(jsonSchemaFile);
+        YamlPlanJsonSchemaGenerator schemaGenerator = new YamlPlanJsonSchemaGenerator("step", YamlPlanVersions.ACTUAL_VERSION, null);
+        JsonNode currentSchema = schemaGenerator.generateJsonSchema();
 
-		log.info("GENERATED SCHEMA:");
-		log.info(currentSchema.toPrettyString());
+        log.info("GENERATED SCHEMA:");
+        log.info(currentSchema.toPrettyString());
 
-		String errorMessage = "Published schema doesn't match to the actual one. To fix the test you need to publish " +
-				"the generated schema printed above and actualize the published schema in current test";
-		Assert.assertEquals(errorMessage, publishedSchema, currentSchema);
-	}
+        String errorMessage = "Published schema doesn't match to the actual one. To fix the test you need to publish " +
+            "the generated schema printed above and actualize the published schema in current test";
+        Assert.assertEquals(errorMessage, publishedSchema, currentSchema);
+    }
 }

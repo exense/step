@@ -51,14 +51,14 @@ public class ExpressionHandlerTest {
         try (ExpressionHandler e = new ExpressionHandler()) {
             o = e.evaluateGroovyExpression("1+1", null);
         }
-        assertEquals(2,o);
+        assertEquals(2, o);
     }
 
     @Test
     @Ignore
     public void benchmarkToString() {
         //AtomicLong totalDuration = new AtomicLong(0);
-        for (int j=0; j< 20; j++) {
+        for (int j = 0; j < 20; j++) {
             long startTime = System.currentTimeMillis();
             for (int i = 0; i < 10; i++) {
                 testStrings();
@@ -80,12 +80,12 @@ public class ExpressionHandlerTest {
 
         try (ExpressionHandler e = new ExpressionHandler()) {
             Exception ex = assertThrows("Method 'substring' is not allowed on protected variables. It was invoked on 'var2'.", RuntimeException.class, () -> e.evaluateGroovyExpression("var1 + \" \" + var2.substring(2)",
-                    Map.of("var1", new ProtectedVariable("var1", "stringOne"), "var2", new ProtectedVariable("var2", "stringTwo")),
-                    true));
+                Map.of("var1", new ProtectedVariable("var1", "stringOne"), "var2", new ProtectedVariable("var2", "stringTwo")),
+                true));
             assertEquals("Error while running groovy expression: 'var1 + \" \" + var2.substring(2)'", ex.getMessage());
 
-            ex =assertThrows("Error while running groovy expression: 'var1 + \" ${var2}\".substring(2)'", RuntimeException.class, () -> e.evaluateGroovyExpression("var1 + \" ${var2}\".substring(2)",
-                    Map.of("var1", new ProtectedVariable("var1", "stringOne"), "var2", new ProtectedVariable("var2", "stringTwo")), true));
+            ex = assertThrows("Error while running groovy expression: 'var1 + \" ${var2}\".substring(2)'", RuntimeException.class, () -> e.evaluateGroovyExpression("var1 + \" ${var2}\".substring(2)",
+                Map.of("var1", new ProtectedVariable("var1", "stringOne"), "var2", new ProtectedVariable("var2", "stringTwo")), true));
             assertEquals("Error while running groovy expression: 'var1 + \" ${var2}\".substring(2)'", ex.getMessage());
         }
     }
@@ -157,7 +157,7 @@ public class ExpressionHandlerTest {
             int count = compilationCounter.incrementAndGet();
             expressionCompilationCount.merge(expression, 1, Integer::sum);
             logger.debug("COMPILATION #{} - Expression: '{}'", count,
-                    expression.length() > 50 ? expression.substring(0, 50) + "..." : expression);
+                expression.length() > 50 ? expression.substring(0, 50) + "..." : expression);
 
             // Call the real method
             return invocation.callRealMethod();
@@ -165,7 +165,7 @@ public class ExpressionHandlerTest {
 
         }).when(spyFactory).makeObject(any(GroovyPoolKey.class));
         Object o;
-        try (ExpressionHandler e = new ExpressionHandler(null, spyFactory, 2 ,2 ,2, 2, 1)) {
+        try (ExpressionHandler e = new ExpressionHandler(null, spyFactory, 2, 2, 2, 2, 1)) {
             o = e.evaluateGroovyExpression("1+1", null);
             assertEquals(2, o);
             assertEquals(1, compilationCounter.get());
@@ -198,10 +198,10 @@ public class ExpressionHandlerTest {
             o = e.evaluateGroovyExpression("test", b);
         }
         assertEquals("value", o.toString());
-	}
+    }
 
-	@Test
-	public void testScriptBaseClass() {
+    @Test
+    public void testScriptBaseClass() {
         Object o;
         try (ExpressionHandler e = new ExpressionHandler("step.expressions.GroovyFunctions")) {
             o = e.evaluateGroovyExpression("yyyyMMdd", null);
@@ -239,7 +239,7 @@ public class ExpressionHandlerTest {
             o = e.evaluateGroovyExpression("simpleBinding", b, false);
             assertEquals("value", o.toString());
             assertThrows("Error while resolving groovy properties in expression: 'protectedBinding'. The property 'protectedBinding' is protected and can only be used as Keyword's inputs or Keyword's properties.",
-                    RuntimeException.class, () -> e.evaluateGroovyExpression("protectedBinding", b, false));
+                RuntimeException.class, () -> e.evaluateGroovyExpression("protectedBinding", b, false));
             o = e.evaluateGroovyExpression("simpleBinding", b, true);
             assertEquals("value", o.toString());
             o = e.evaluateGroovyExpression("protectedBinding", b, true);
@@ -250,7 +250,7 @@ public class ExpressionHandlerTest {
             assertEquals("***protectedBinding***", pb.obfuscatedValue);
 
             assertThrows("Error while resolving groovy properties in expression: 'simpleBinding + \" \" + protectedBinding'. The property 'protectedBinding' is protected and can only be used as Keyword's inputs or Keyword's properties.",
-                    RuntimeException.class, () -> e.evaluateGroovyExpression("simpleBinding + \" \"+ protectedBinding", b, false));
+                RuntimeException.class, () -> e.evaluateGroovyExpression("simpleBinding + \" \"+ protectedBinding", b, false));
 
             o = e.evaluateGroovyExpression("\"some text: \" + simpleBinding + \" \"+ protectedBinding", b, true);
             assertEquals("some text: value ***protectedBinding***", o.toString());
@@ -284,23 +284,23 @@ public class ExpressionHandlerTest {
             o = e.evaluateGroovyExpression("\"${simpleBinding} ${protectedBinding}\"", b, true);
             assertEquals("value ***protectedBinding***", o.toString());
             assertTrue(o instanceof ProtectedVariable);
-            assertEquals("value protectedValue",((ProtectedVariable) o).value.toString());
+            assertEquals("value protectedValue", ((ProtectedVariable) o).value.toString());
             assertThrows("Error while resolving groovy properties in expression: '\"${simpleBinding} ${protectedBinding}\"'. The property 'protectedBinding' is protected and can only be used as Keyword's inputs or Keyword's properties.",
-                    RuntimeException.class, () -> e.evaluateGroovyExpression("\"${simpleBinding} ${protectedBinding}\"", b, false));
+                RuntimeException.class, () -> e.evaluateGroovyExpression("\"${simpleBinding} ${protectedBinding}\"", b, false));
 
-            o = e.evaluateGroovyExpression("\"${simpleBinding} some thing \" + simpleBinding" , b, true);
+            o = e.evaluateGroovyExpression("\"${simpleBinding} some thing \" + simpleBinding", b, true);
             assertEquals("value some thing value", o.toString());
             assertTrue(o instanceof String);
 
-            o = e.evaluateGroovyExpression("\"${otherProtectedBinding} some thing \" + protectedBinding" , b, true);
+            o = e.evaluateGroovyExpression("\"${otherProtectedBinding} some thing \" + protectedBinding", b, true);
             assertEquals("***otherProtectedBinding*** some thing ***protectedBinding***", o.toString());
             assertTrue(o instanceof ProtectedVariable);
-            assertEquals("otherProtectedValue some thing protectedValue",((ProtectedVariable) o).value.toString());
+            assertEquals("otherProtectedValue some thing protectedValue", ((ProtectedVariable) o).value.toString());
 
-            o = e.evaluateGroovyExpression("\"${simpleBinding} some thing \" + protectedBinding" , b, true);
+            o = e.evaluateGroovyExpression("\"${simpleBinding} some thing \" + protectedBinding", b, true);
             assertEquals("value some thing ***protectedBinding***", o.toString());
             assertTrue(o instanceof ProtectedVariable);
-            assertEquals("value some thing protectedValue",((ProtectedVariable) o).value.toString());
+            assertEquals("value some thing protectedValue", ((ProtectedVariable) o).value.toString());
         }
     }
 
@@ -310,7 +310,7 @@ public class ExpressionHandlerTest {
         String expr1bis = "param1 + \"string\"";
         String expr2 = "param1 + param2";
         String expr2bis = "\"${param1} something ${param2}\"";
-        benchmarkGroovyPoolConfig(10, 1000,1000,50,-1, expr1, expr1bis, expr2, expr2bis);
+        benchmarkGroovyPoolConfig(10, 1000, 1000, 50, -1, expr1, expr1bis, expr2, expr2bis);
     }
 
     @Test
@@ -325,45 +325,67 @@ public class ExpressionHandlerTest {
         int maxPoolPerKey = 8;
         int iterationsPerThread = 50;
 
-        benchmarkGroovyPoolConfig( threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
-        benchmarkGroovyPoolConfig( threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
-        benchmarkGroovyPoolConfig(threadsPerExpression1, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression2, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression3, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression4, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
+        benchmarkGroovyPoolConfig(threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        benchmarkGroovyPoolConfig(threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        benchmarkGroovyPoolConfig(threadsPerExpression1, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression2, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression3, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression4, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
 
-        maxPoolPerKey=50;
-        benchmarkGroovyPoolConfig( threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig( threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression1, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression2, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression3, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression4, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
+        maxPoolPerKey = 50;
+        benchmarkGroovyPoolConfig(threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression1, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression2, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression3, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression4, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
 
-        maxPoolPerKey=100;
-        benchmarkGroovyPoolConfig( threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig( threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression1, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression2, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression3, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression4, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
+        maxPoolPerKey = 100;
+        benchmarkGroovyPoolConfig(threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression1, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression2, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression3, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression4, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
 
-        maxPoolPerKey=200;
-        benchmarkGroovyPoolConfig( threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
-        benchmarkGroovyPoolConfig( threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        maxPoolPerKey = 200;
+        benchmarkGroovyPoolConfig(threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        benchmarkGroovyPoolConfig(threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
         benchmarkGroovyPoolConfig(threadsPerExpression1, iterationsPerThread, poolSize, maxPoolPerKey, -1);
         benchmarkGroovyPoolConfig(threadsPerExpression2, iterationsPerThread, poolSize, maxPoolPerKey, -1);
         benchmarkGroovyPoolConfig(threadsPerExpression3, iterationsPerThread, poolSize, maxPoolPerKey, -1);
         benchmarkGroovyPoolConfig(threadsPerExpression4, iterationsPerThread, poolSize, maxPoolPerKey, -1);
 
 
-        maxPoolPerKey=1000;
-        benchmarkGroovyPoolConfig( threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig( threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression1, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression2, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression3, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
-        benchmarkGroovyPoolConfig(threadsPerExpression4, iterationsPerThread, poolSize, maxPoolPerKey, -1);;
+        maxPoolPerKey = 1000;
+        benchmarkGroovyPoolConfig(threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression0, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression1, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression2, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression3, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
+        benchmarkGroovyPoolConfig(threadsPerExpression4, iterationsPerThread, poolSize, maxPoolPerKey, -1);
+        ;
     }
 
 
@@ -378,8 +400,7 @@ public class ExpressionHandlerTest {
     private static void benchmarkGroovyPoolConfig(int threadsPerExpression, int iterationsPerThread, int poolSize, int maxPoolPerKey, int maxIdlePerKey, String EXPRESSION_1,
                                                   String EXPRESSION_2, String EXPRESSION_1_BIS, String EXPRESSION_2_BIS) throws Exception {
         logger.info(">>>> Benchmark with poolSize {}, threadsPerExpression {}, iterationsPerThread {}, maxPoolPerKey {}, maxIdlePerKey {}"
-                , poolSize, threadsPerExpression, iterationsPerThread, maxPoolPerKey, maxIdlePerKey);
-
+            , poolSize, threadsPerExpression, iterationsPerThread, maxPoolPerKey, maxIdlePerKey);
 
 
         // Track compilations manually
@@ -400,7 +421,7 @@ public class ExpressionHandlerTest {
             expressionCompilationCount.merge(expression, 1, Integer::sum);
 
             logger.debug("COMPILATION #{} - Expression: '{}'", count,
-                    expression.length() > 50 ? expression.substring(0, 50) + "..." : expression);
+                expression.length() > 50 ? expression.substring(0, 50) + "..." : expression);
 
             // Call the real method
             long startCompilation = System.nanoTime();
@@ -410,7 +431,7 @@ public class ExpressionHandlerTest {
 
         }).when(spyFactory).makeObject(any(GroovyPoolKey.class));
 
-        try (ExpressionHandler handler = new ExpressionHandler( null, spyFactory,null, poolSize, maxPoolPerKey, maxIdlePerKey, 1)) {
+        try (ExpressionHandler handler = new ExpressionHandler(null, spyFactory, null, poolSize, maxPoolPerKey, maxIdlePerKey, 1)) {
 
             logger.info("=== PHASE 1: Expression 1 dominates the pool ===");
 
@@ -475,19 +496,19 @@ public class ExpressionHandlerTest {
             double expr2BisAvg = expr2BisTotalTime.get() / (double) threadsPerExpression / iterationsPerThread / 1_000_000.0;
 
             logger.info("<<<< Summary results Benchmark with poolSize {}, threadsPerExpression {}, iterationsPerThread {}, maxPoolPerKey {}, maxIdlePerKey {}}"
-                    , poolSize, threadsPerExpression, iterationsPerThread, maxPoolPerKey, maxIdlePerKey);
+                , poolSize, threadsPerExpression, iterationsPerThread, maxPoolPerKey, maxIdlePerKey);
             logger.info("Performance compilations phase 1: {}", compilationStatsPhase1);
             logger.info("Performance compilations phase 2: {}", compilationStatsPhase2);
             logger.info("Performance - Total compilations {}, Phase1 {}ms, Phase2 {}ms, Expr1 Phase1: {}ms, Expr1 Phase2: {}ms, Expr1Bis: {}ms, Expr2: {}ms, Expr2Bis: {}ms",
-                    compilationCounter.get(), phase1DurationMs, phase2DurationMs, expr1Phase1Avg, expr1Phase2Avg, expr1BisPhase2Avg, expr2Avg, expr2BisAvg);
+                compilationCounter.get(), phase1DurationMs, phase2DurationMs, expr1Phase1Avg, expr1Phase2Avg, expr1BisPhase2Avg, expr2Avg, expr2BisAvg);
         }
     }
 
     private static String getCompilationDetails(Map<String, Integer> expressionCompilationCount, Map<String, Long> expressionCompilationDuration) {
         StringBuilder stringBuffer = new StringBuilder("Compilations by expression:");
         expressionCompilationCount.forEach((expr, count) ->
-                stringBuffer.append("'").append(expr.substring(0, Math.min(30, expr.length()))).append("' -> ").append(count).append(" compilations, durations ")
-                        .append((double) expressionCompilationDuration.get(expr) / count /  1_000_000.0).append("ms,"));
+            stringBuffer.append("'").append(expr.substring(0, Math.min(30, expr.length()))).append("' -> ").append(count).append(" compilations, durations ")
+                .append((double) expressionCompilationDuration.get(expr) / count / 1_000_000.0).append("ms,"));
         return stringBuffer.toString();
     }
 
@@ -498,7 +519,7 @@ public class ExpressionHandlerTest {
                 try {
                     for (int j = 0; j < iterationsPerThread; j++) {
                         long startTime = System.nanoTime();
-                        Object result = handler.evaluateGroovyExpression(EXPRESSION_1, Map.of("input", input,"param1", "paramValue","param2","param2Value"));
+                        Object result = handler.evaluateGroovyExpression(EXPRESSION_1, Map.of("input", input, "param1", "paramValue", "param2", "param2Value"));
                         long duration = System.nanoTime() - startTime;
                         expr1TotalTime.addAndGet(duration);
                         assertNotNull(result);
@@ -507,10 +528,10 @@ public class ExpressionHandlerTest {
                         }
                     }
 
-                } catch(Exception e){
+                } catch (Exception e) {
                     logger.error("Error in expression {} evaluation", EXPRESSION_1, e);
                     fail("Expression " + EXPRESSION_1 + " failed: " + e.getMessage());
-                } finally{
+                } finally {
                     phase1Latch.countDown();
                 }
             });

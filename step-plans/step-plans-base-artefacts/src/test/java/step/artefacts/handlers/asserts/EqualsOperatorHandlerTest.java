@@ -24,7 +24,7 @@ import org.junit.Test;
 public class EqualsOperatorHandlerTest {
 
     @Test
-    public void testNumericEquals(){
+    public void testNumericEquals() {
         // we support comparison between strings and numbers
 
         EqualsOperatorHandler handler = new EqualsOperatorHandler();

@@ -7,13 +7,15 @@
       "capacity": 10,
       "tokenConf": {
         "attributes": {},
-        "properties": {"myProp1":"myProp1"}
+        "properties": {
+          "myProp1": "myProp1"
+        }
       }
     }
   ],
   "properties": {
-    "myProp1":"myDefaultValue",
-    "myProp2":"myValue2",
+    "myProp1": "myDefaultValue",
+    "myProp2": "myValue2",
     "keywords": "keywords/keywords.js;"
   }
 }

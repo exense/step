@@ -42,6 +42,7 @@ public class PlanByIncludedCategoriesFilter extends PlanFilter {
 
     /**
      * Determine whether the plan should be included. This filter select plans which belongs to one of the included categories
+     *
      * @param plan to be evaluated
      * @return whether this plan belong to one of the included categories
      */

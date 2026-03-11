@@ -32,7 +32,7 @@ public class ImportExportAutomationPackageTest extends AbstractAutomationPackage
     public void before() {
         super.before();
         entityManager = createEntityManager(getMockedEncryptionManager(), resourceManager, parameterAccessor, planAccessor
-                ,functionAccessor, resourceManager.getResourceAccessor(), resourceManager.getResourceRevisionAccessor());
+            , functionAccessor, resourceManager.getResourceAccessor(), resourceManager.getResourceRevisionAccessor());
 
         migrationManager = createMigrationManager();
     }
@@ -44,9 +44,9 @@ public class ImportExportAutomationPackageTest extends AbstractAutomationPackage
         try (InputStream is = new FileInputStream(automationPackageJar)) {
             AutomationPackageFileSource sample1FileSource = AutomationPackageFileSource.withInputStream(is, SAMPLE1_FILE_NAME);
             AutomationPackageUpdateParameter createParameters = new AutomationPackageUpdateParameterBuilder().forJunit()
-                    .withAllowUpdate(false)
-                    .withApSource(sample1FileSource)
-                    .build();
+                .withAllowUpdate(false)
+                .withApSource(sample1FileSource)
+                .build();
             ObjectId id = manager.createOrUpdateAutomationPackage(createParameters).getId();
             assertNotNull(id);
         }
@@ -64,7 +64,7 @@ public class ImportExportAutomationPackageTest extends AbstractAutomationPackage
             ExportResult exportResult = exportManager.exportAll(exportConfig);
 
             assertEquals(1, exportResult.getMessages().size());
-            assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN,exportResult.getMessages().toArray()[0]);
+            assertEquals(ParameterManagerControllerPlugin.EXPORT_PROTECT_PARAM_WARN, exportResult.getMessages().toArray()[0]);
 
 
             //Reset all accessors
@@ -72,8 +72,8 @@ public class ImportExportAutomationPackageTest extends AbstractAutomationPackage
             ImportManager importManager = new ImportManager(entityManager, migrationManager, Controller.VERSION);
             ImportConfiguration importConfiguration = new ImportConfiguration(testExportFile, dummyObjectEnricher(), null, false);
             ImportResult importResult = importManager.importAll(importConfiguration);
-            assertEquals(1,importResult.getMessages().size());
-            assertEquals(ParameterManagerControllerPlugin.IMPORT_RESET_WARN,importResult.getMessages().toArray()[0]);
+            assertEquals(1, importResult.getMessages().size());
+            assertEquals(ParameterManagerControllerPlugin.IMPORT_RESET_WARN, importResult.getMessages().toArray()[0]);
 
             assertEquals(plansCount, planAccessor.stream().count());
             assertTrue(planAccessor.stream().allMatch(p -> p.getCustomFields() == null || !p.getCustomFields().containsKey(AutomationPackageEntity.AUTOMATION_PACKAGE_ID)));

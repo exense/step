@@ -9,14 +9,14 @@ import step.core.reports.Measure;
 
 public class PerformanceAssertSession {
 
-	private final ConcurrentHashMap<String, Aggregation> aggregations = new ConcurrentHashMap<>();
-	
-	public final void addMeasure(Measure measure) {
-		Aggregation aggregation = aggregations.computeIfAbsent(measure.getName(), name->new Aggregation(name));
-		aggregation.addMeasure(measure);
-	}
+    private final ConcurrentHashMap<String, Aggregation> aggregations = new ConcurrentHashMap<>();
 
-	public Set<Entry<String, Aggregation>> getAggregations() {
-		return aggregations.entrySet();
-	}
+    public final void addMeasure(Measure measure) {
+        Aggregation aggregation = aggregations.computeIfAbsent(measure.getName(), name -> new Aggregation(name));
+        aggregation.addMeasure(measure);
+    }
+
+    public Set<Entry<String, Aggregation>> getAggregations() {
+        return aggregations.entrySet();
+    }
 }

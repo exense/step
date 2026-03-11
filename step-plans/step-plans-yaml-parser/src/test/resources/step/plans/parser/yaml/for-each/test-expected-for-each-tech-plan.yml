@@ -25,7 +25,7 @@ root:
       useDynamicName: false
       workArtefact: false
       description: "test sequence"
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -79,7 +79,7 @@ root:
       useDynamicName: false
       workArtefact: false
       description: "test excel"
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -190,7 +190,7 @@ root:
       useDynamicName: false
       workArtefact: false
       description: "test csv"
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -240,7 +240,7 @@ root:
       useDynamicName: false
       workArtefact: false
       description: "test folder"
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -287,7 +287,7 @@ root:
       useDynamicName: false
       workArtefact: false
       description: "test gsheet"
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -340,7 +340,7 @@ root:
       useDynamicName: false
       workArtefact: false
       description: "test json"
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -387,7 +387,7 @@ root:
       useDynamicName: false
       workArtefact: false
       description: "test json array"
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -434,7 +434,7 @@ root:
       useDynamicName: false
       workArtefact: false
       description: "test sql"
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false
@@ -496,7 +496,7 @@ root:
       useDynamicName: false
       workArtefact: false
       description: "test file"
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false

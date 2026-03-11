@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -54,129 +54,129 @@ import step.parameter.ParameterManager;
 
 public class ParameterManagerTest {
 
-	private static final Logger logger = LoggerFactory.getLogger(ParameterManagerTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(ParameterManagerTest.class);
 
-	private final DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
+    private final DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
 
-	@Test
-	public void testJavascript() throws ScriptException {
-		Configuration configuration = new Configuration();
-		configuration.putProperty("tec.activator.scriptEngine","javascript");
-		test1Common(configuration);
-	}
+    @Test
+    public void testJavascript() throws ScriptException {
+        Configuration configuration = new Configuration();
+        configuration.putProperty("tec.activator.scriptEngine", "javascript");
+        test1Common(configuration);
+    }
 
-	@Test
-	public void testGroovy() throws ScriptException {
-		Configuration configuration = new Configuration();
-		configuration.putProperty("tec.activator.scriptEngine","groovy");
-		test1Common(configuration);
-	}
+    @Test
+    public void testGroovy() throws ScriptException {
+        Configuration configuration = new Configuration();
+        configuration.putProperty("tec.activator.scriptEngine", "groovy");
+        test1Common(configuration);
+    }
 
-	public void test1Common(Configuration configuration) throws ScriptException {
-		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
-		ParameterManager m = new ParameterManager(accessor, null, configuration, resolver);
+    public void test1Common(Configuration configuration) throws ScriptException {
+        InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+        ParameterManager m = new ParameterManager(accessor, null, configuration, resolver);
 
-		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
-		accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
-		accessor.save(new Parameter(new Expression("user=='abricot'"), "key1", "abricotier", "desc"));
-		accessor.save(new Parameter(new Expression("user=='poire'"), "key1", "poirier", "desc"));
+        accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
+        accessor.save(new Parameter(new Expression("user=='pomme'"), "key1", "pommier", "desc"));
+        accessor.save(new Parameter(new Expression("user=='abricot'"), "key1", "abricotier", "desc"));
+        accessor.save(new Parameter(new Expression("user=='poire'"), "key1", "poirier", "desc"));
 
-		accessor.save(new Parameter(null, "key2", "defaultValue", "desc"));
-		accessor.save(new Parameter(null, "key2", "defaultValue2", "desc"));
-		accessor.save(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue3", "desc"));
+        accessor.save(new Parameter(null, "key2", "defaultValue", "desc"));
+        accessor.save(new Parameter(null, "key2", "defaultValue2", "desc"));
+        accessor.save(new Parameter(new Expression("user=='poire'"), "key2", "defaultValue3", "desc"));
 
-		accessor.save(new Parameter(null, "key3", "value1", "desc"));
-		accessor.save(new Parameter(new Expression("user=='poire'"), "key3", "value2", "desc"));
-		Parameter p = new Parameter(new Expression("user=='poire'"), "key3", "value3", "desc");
-		p.setPriority(10);
-		accessor.save(p);
+        accessor.save(new Parameter(null, "key3", "value1", "desc"));
+        accessor.save(new Parameter(new Expression("user=='poire'"), "key3", "value2", "desc"));
+        Parameter p = new Parameter(new Expression("user=='poire'"), "key3", "value3", "desc");
+        p.setPriority(10);
+        accessor.save(p);
 
-		Map<String, Object> bindings = new HashMap<String, Object>();
-		bindings.put("user", "poire");
+        Map<String, Object> bindings = new HashMap<String, Object>();
+        bindings.put("user", "poire");
 
-		Map<String, String> params = m.getAllParameterValues(bindings, null);
-		Assert.assertEquals("poirier", params.get("key1"));
-		Assert.assertEquals("defaultValue3", params.get("key2"));
-		Assert.assertEquals("value3", params.get("key3"));
+        Map<String, String> params = m.getAllParameterValues(bindings, null);
+        Assert.assertEquals("poirier", params.get("key1"));
+        Assert.assertEquals("defaultValue3", params.get("key2"));
+        Assert.assertEquals("value3", params.get("key3"));
 
-		params = m.getAllParameterValues(bindings, t -> false);
-		Assert.assertEquals(0, params.size());
-	}
+        params = m.getAllParameterValues(bindings, t -> false);
+        Assert.assertEquals(0, params.size());
+    }
 
-	@Category(PerformanceTest.class)
-	@Test
-	public void testPerf() throws ScriptException {
-		Properties properties = new Properties();
-		properties.put("host", "central-mongodb.stepcloud-test.ch");
-		properties.put("database", "test");
-		properties.put("username", "tester");
-		properties.put("password", "5dB(rs+4YRJe");
-		Collection<Parameter> collection = new MongoDBCollectionFactory(properties).getCollection("perfParameters", Parameter.class);
-		AbstractAccessor<Parameter> accessor = new AbstractAccessor<>(collection);
-		accessor.getCollectionDriver().remove(Filters.empty());
-		ParameterManager m = new ParameterManager(accessor, null, new Configuration(), resolver);
-		
-		int nIt = 100;
-		for(int i=1;i<=nIt;i++) {
-			accessor.save(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i, "desc"));
-		}
-		
-		Map<String, Object> bindings = new HashMap<String, Object>();
-		bindings.put("user", "user"+nIt);
-		
-		long t1 = System.currentTimeMillis();
-		Map<String, String> params = m.getAllParameterValues(bindings, null);
-		logger.info("ms:"+(System.currentTimeMillis()-t1));
-		Assert.assertEquals(params.get("key1"),"value"+nIt);
-		
-		t1 = System.currentTimeMillis();
-		params = m.getAllParameterValues(bindings, null);
-		logger.info("ms:"+(System.currentTimeMillis()-t1));
-		Assert.assertEquals(params.get("key1"),"value"+nIt);
-		
-		Assert.assertTrue((System.currentTimeMillis()-t1)<3000);
-	}
-	
-	@Test
-	public void testParallel() throws ScriptException, InterruptedException, ExecutionException {
-		InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
-		ParameterManager m = new ParameterManager(accessor, null, new Configuration(), resolver);
-		
-		int nIt = 100;
-		for(int i=1;i<=nIt;i++) {
-			accessor.save(new Parameter(new Expression("user=='user"+i+"'"), "key1", "value"+i, "desc"));
-		}
-		
-		int iterations = 25;
-		
-		int nThreads = 4;
-		ExecutorService e = Executors.newFixedThreadPool(10);
-		List<Future> futures = new ArrayList<>();
-		for(int j=0; j<nThreads;j++) {
-			futures.add(e.submit(new Runnable() {
-				@Override
-				public void run() {
-					for(int i=0;i<iterations;i++) {
-						Map<String, Object> bindings = new HashMap<String, Object>();
-						Random r = new Random();
-						int userId = r.nextInt(nIt)+1;
-						bindings.put("user", "user"+userId);
-						Map<String, String> params = m.getAllParameterValues(bindings, null);
-						Assert.assertEquals(params.get("key1"),"value"+userId);
-					}
-				}
-			}));
-		}
-			
-		e.shutdown();
-		e.awaitTermination(1, TimeUnit.MINUTES);
-		
-		for(Future f:futures) {
-			try {
-				f.get();
-			} catch (ExecutionException e1) {
-				throw e1;
-			}
-		}
-	}
+    @Category(PerformanceTest.class)
+    @Test
+    public void testPerf() throws ScriptException {
+        Properties properties = new Properties();
+        properties.put("host", "central-mongodb.stepcloud-test.ch");
+        properties.put("database", "test");
+        properties.put("username", "tester");
+        properties.put("password", "5dB(rs+4YRJe");
+        Collection<Parameter> collection = new MongoDBCollectionFactory(properties).getCollection("perfParameters", Parameter.class);
+        AbstractAccessor<Parameter> accessor = new AbstractAccessor<>(collection);
+        accessor.getCollectionDriver().remove(Filters.empty());
+        ParameterManager m = new ParameterManager(accessor, null, new Configuration(), resolver);
+
+        int nIt = 100;
+        for (int i = 1; i <= nIt; i++) {
+            accessor.save(new Parameter(new Expression("user=='user" + i + "'"), "key1", "value" + i, "desc"));
+        }
+
+        Map<String, Object> bindings = new HashMap<String, Object>();
+        bindings.put("user", "user" + nIt);
+
+        long t1 = System.currentTimeMillis();
+        Map<String, String> params = m.getAllParameterValues(bindings, null);
+        logger.info("ms:" + (System.currentTimeMillis() - t1));
+        Assert.assertEquals(params.get("key1"), "value" + nIt);
+
+        t1 = System.currentTimeMillis();
+        params = m.getAllParameterValues(bindings, null);
+        logger.info("ms:" + (System.currentTimeMillis() - t1));
+        Assert.assertEquals(params.get("key1"), "value" + nIt);
+
+        Assert.assertTrue((System.currentTimeMillis() - t1) < 3000);
+    }
+
+    @Test
+    public void testParallel() throws ScriptException, InterruptedException, ExecutionException {
+        InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+        ParameterManager m = new ParameterManager(accessor, null, new Configuration(), resolver);
+
+        int nIt = 100;
+        for (int i = 1; i <= nIt; i++) {
+            accessor.save(new Parameter(new Expression("user=='user" + i + "'"), "key1", "value" + i, "desc"));
+        }
+
+        int iterations = 25;
+
+        int nThreads = 4;
+        ExecutorService e = Executors.newFixedThreadPool(10);
+        List<Future> futures = new ArrayList<>();
+        for (int j = 0; j < nThreads; j++) {
+            futures.add(e.submit(new Runnable() {
+                @Override
+                public void run() {
+                    for (int i = 0; i < iterations; i++) {
+                        Map<String, Object> bindings = new HashMap<String, Object>();
+                        Random r = new Random();
+                        int userId = r.nextInt(nIt) + 1;
+                        bindings.put("user", "user" + userId);
+                        Map<String, String> params = m.getAllParameterValues(bindings, null);
+                        Assert.assertEquals(params.get("key1"), "value" + userId);
+                    }
+                }
+            }));
+        }
+
+        e.shutdown();
+        e.awaitTermination(1, TimeUnit.MINUTES);
+
+        for (Future f : futures) {
+            try {
+                f.get();
+            } catch (ExecutionException e1) {
+                throw e1;
+            }
+        }
+    }
 }

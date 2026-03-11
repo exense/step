@@ -39,7 +39,6 @@ public class ApIgnoreFileFilterTest {
         assertTrue(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "/sub/root-ignore-folder")));
 
 
-
         assertFalse(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "folder/sub-folder/app.exe")));
         assertFalse(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "star.exe")));
         assertTrue(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "not-excluded-extension.java")));

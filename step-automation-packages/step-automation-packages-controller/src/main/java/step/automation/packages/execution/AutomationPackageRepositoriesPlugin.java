@@ -57,7 +57,7 @@ public class AutomationPackageRepositoriesPlugin extends AbstractControllerPlugi
         super.initializeData(context);
 
         // settings
-         controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
+        controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
         createIsolatedApControllerSettingsIfNecessary(context);
     }
 
@@ -69,25 +69,25 @@ public class AutomationPackageRepositoriesPlugin extends AbstractControllerPlugi
 
         // repository for isolated execution
         IsolatedAutomationPackageRepository isolatedApRepository = new IsolatedAutomationPackageRepository(
-                context.require(AutomationPackageManager.class),
-                context.getResourceManager(),
-                context.require(FunctionTypeRegistry.class),
-                context.require(FunctionAccessor.class),
-                () -> {
-                    ControllerSetting setting = controllerSettingAccessor.getSettingByKey(ISOLATED_AP_HOUSEKEEPING_TTL);
-                    return setting == null ? null : setting.getValue();
-                },
-                localRepository.toPath()
+            context.require(AutomationPackageManager.class),
+            context.getResourceManager(),
+            context.require(FunctionTypeRegistry.class),
+            context.require(FunctionAccessor.class),
+            () -> {
+                ControllerSetting setting = controllerSettingAccessor.getSettingByKey(ISOLATED_AP_HOUSEKEEPING_TTL);
+                return setting == null ? null : setting.getValue();
+            },
+            localRepository.toPath()
         );
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.ISOLATED_AUTOMATION_PACKAGE, isolatedApRepository);
         context.put(IsolatedAutomationPackageRepository.class, isolatedApRepository);
 
         // repository for deployed automation packages
         LocalAutomationPackageRepository localApRepository = new LocalAutomationPackageRepository(
-                context.require(AutomationPackageManager.class),
-                context.require(FunctionTypeRegistry.class),
-                context.require(FunctionAccessor.class),
-                context.getResourceManager()
+            context.require(AutomationPackageManager.class),
+            context.require(FunctionTypeRegistry.class),
+            context.require(FunctionAccessor.class),
+            context.getResourceManager()
         );
         context.getRepositoryObjectManager().registerRepository(AutomationPackageExecutor.LOCAL_AUTOMATION_PACKAGE, localApRepository);
         context.put(LocalAutomationPackageRepository.class, localApRepository);
@@ -95,11 +95,11 @@ public class AutomationPackageRepositoriesPlugin extends AbstractControllerPlugi
         Integer isolatedExecutionTimeout = context.getConfiguration().getPropertyAsInteger(CONFIG_KEY_ISOLATED_AP_EXECUTION_TIMEOUT, DEFAULT_ISOLATED_AP_EXECUTION_TIMEOUT);
         // isolated ap executor
         AutomationPackageExecutor packageExecutor = new AutomationPackageExecutor(
-                context.require(AutomationPackageManager.class),
-                context.getScheduler(),
-                context.require(ExecutionAccessor.class),
-                context.getRepositoryObjectManager(),
-                isolatedExecutionTimeout
+            context.require(AutomationPackageManager.class),
+            context.getScheduler(),
+            context.require(ExecutionAccessor.class),
+            context.getRepositoryObjectManager(),
+            isolatedExecutionTimeout
         );
         context.put(AutomationPackageExecutor.class, packageExecutor);
 

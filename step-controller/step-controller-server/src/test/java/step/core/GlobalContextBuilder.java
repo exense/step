@@ -66,69 +66,69 @@ import java.io.IOException;
 
 public class GlobalContextBuilder {
 
-	private static final Logger logger = LoggerFactory.getLogger(GlobalContextBuilder.class);
+    private static final Logger logger = LoggerFactory.getLogger(GlobalContextBuilder.class);
 
-	public static GlobalContext createGlobalContext() throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
-		GlobalContext context = new GlobalContext();
+    public static GlobalContext createGlobalContext() throws CircularDependencyException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+        GlobalContext context = new GlobalContext();
 
-		ExpressionHandler expressionHandler = new ExpressionHandler();
-		context.setExpressionHandler(expressionHandler);
-		DynamicBeanResolver dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler()));
-		context.setDynamicBeanResolver(dynamicBeanResolver);
+        ExpressionHandler expressionHandler = new ExpressionHandler();
+        context.setExpressionHandler(expressionHandler);
+        DynamicBeanResolver dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler()));
+        context.setDynamicBeanResolver(dynamicBeanResolver);
 
-		//new since SED-440, class need a full refactoring
-		context.setExpressionHandler(expressionHandler);
-		context.setDynamicBeanResolver(dynamicBeanResolver);
+        //new since SED-440, class need a full refactoring
+        context.setExpressionHandler(expressionHandler);
+        context.setDynamicBeanResolver(dynamicBeanResolver);
 
-		Configuration configuration = new Configuration();
-		ControllerPluginManager pluginManager = new ControllerPluginManager(new ServerPluginManager(configuration, null));
-		context.setContorllerPluginManager(pluginManager);
+        Configuration configuration = new Configuration();
+        ControllerPluginManager pluginManager = new ControllerPluginManager(new ServerPluginManager(configuration, null));
+        context.setContorllerPluginManager(pluginManager);
 
-		context.setConfiguration(configuration);
+        context.setConfiguration(configuration);
 
-		context.put(TableRegistry.class, new TableRegistry());
-		InMemoryExecutionAccessor executionAccessor = new InMemoryExecutionAccessor();
-		context.setExecutionAccessor(executionAccessor);
-		context.setPlanAccessor(new InMemoryPlanAccessor());
-		context.setReportNodeAccessor(new InMemoryReportNodeAccessor());
-		context.setScheduleAccessor(new InMemoryExecutionTaskAccessor());
-		context.setUserAccessor(new InMemoryUserAccessor());
-		context.setRepositoryObjectManager(new RepositoryObjectManager());
+        context.put(TableRegistry.class, new TableRegistry());
+        InMemoryExecutionAccessor executionAccessor = new InMemoryExecutionAccessor();
+        context.setExecutionAccessor(executionAccessor);
+        context.setPlanAccessor(new InMemoryPlanAccessor());
+        context.setReportNodeAccessor(new InMemoryReportNodeAccessor());
+        context.setScheduleAccessor(new InMemoryExecutionTaskAccessor());
+        context.setUserAccessor(new InMemoryUserAccessor());
+        context.setRepositoryObjectManager(new RepositoryObjectManager());
 
-		FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
-		context.put(FunctionAccessor.class, functionAccessor);
+        FunctionAccessor functionAccessor = new InMemoryFunctionAccessorImpl();
+        context.put(FunctionAccessor.class, functionAccessor);
 
-		ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
-		InMemoryResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
-		try {
-			File rootFolder = FileHelper.createTempFolder();
-			ResourceManager resourceManager = new ResourceManagerImpl(rootFolder,resourceAccessor, resourceRevisionAccessor);
-			context.setResourceManager(resourceManager);
-		} catch (IOException e) {
-			logger.error("Unable to create temp folder for the resource manager", e);
-		}
+        ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
+        InMemoryResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
+        try {
+            File rootFolder = FileHelper.createTempFolder();
+            ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
+            context.setResourceManager(resourceManager);
+        } catch (IOException e) {
+            logger.error("Unable to create temp folder for the resource manager", e);
+        }
 
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		PlanLocator planLocator = new PlanLocator(context.getPlanAccessor(), selectorHelper);
-		FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+        SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+        PlanLocator planLocator = new PlanLocator(context.getPlanAccessor(), selectorHelper);
+        FunctionLocator functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
 
-		EntityManager entityManager = new EntityManager();
-		context.setEntityManager(entityManager);
-		context.getEntityManager()
-				.register(new Entity<Execution, ExecutionAccessor>(EntityConstants.executions,
-						context.getExecutionAccessor(), Execution.class))
-				.register(new PlanEntity(context.getPlanAccessor(), planLocator, entityManager))
-				.register(new Entity<ReportNode, ReportNodeAccessor>(EntityConstants.reports, context.getReportAccessor(),
-						ReportNode.class))
-				.register(new ScheduleEntity(context.getScheduleAccessor(), ExecutiontTaskParameters.class, entityManager))
-				.register(new Entity<User, UserAccessor>(EntityConstants.users, context.getUserAccessor(), User.class))
-				.register(new FunctionEntity(functionAccessor, functionLocator, entityManager))
-				.register(new ResourceEntity(resourceAccessor, entityManager))
-				.register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityConstants.resourceRevisions,
-						resourceRevisionAccessor, ResourceRevision.class));
+        EntityManager entityManager = new EntityManager();
+        context.setEntityManager(entityManager);
+        context.getEntityManager()
+            .register(new Entity<Execution, ExecutionAccessor>(EntityConstants.executions,
+                context.getExecutionAccessor(), Execution.class))
+            .register(new PlanEntity(context.getPlanAccessor(), planLocator, entityManager))
+            .register(new Entity<ReportNode, ReportNodeAccessor>(EntityConstants.reports, context.getReportAccessor(),
+                ReportNode.class))
+            .register(new ScheduleEntity(context.getScheduleAccessor(), ExecutiontTaskParameters.class, entityManager))
+            .register(new Entity<User, UserAccessor>(EntityConstants.users, context.getUserAccessor(), User.class))
+            .register(new FunctionEntity(functionAccessor, functionLocator, entityManager))
+            .register(new ResourceEntity(resourceAccessor, entityManager))
+            .register(new Entity<ResourceRevision, ResourceRevisionAccessor>(EntityConstants.resourceRevisions,
+                resourceRevisionAccessor, ResourceRevision.class));
 
-		context.setArtefactHandlerRegistry(new ArtefactHandlerRegistry());
-		return context;
-	}
+        context.setArtefactHandlerRegistry(new ArtefactHandlerRegistry());
+        return context;
+    }
 }

@@ -29,7 +29,7 @@ package step.expressions;
  * The context also includes a {@link Tokenizer} for processing protected value markers in
  * string concatenation operations, allowing secure handling of sensitive data in expressions.
  * </p>
- * 
+ *
  * <h3>Usage Pattern:</h3>
  * <pre>{@code
  * try {
@@ -40,7 +40,7 @@ package step.expressions;
  *     ProtectionContext.clear();
  * }
  * }</pre>
- * 
+ *
  * @see ProtectedVariable
  * @see GroovyProtectedBinding
  * @see Tokenizer
@@ -56,13 +56,13 @@ public final class ProtectionContext {
      * Flag indicating whether protected values can be accessed in this context.
      */
     private final boolean canAccessProtectedValue;
-    
+
     /**
      * Flag indicating whether this context has been properly initialized.
      * Used to prevent context override after initial setup.
      */
     private final boolean isSet;
-    
+
     /**
      * Tokenizer instance for processing protected value markers in string operations.
      */
@@ -70,7 +70,7 @@ public final class ProtectionContext {
 
     /**
      * Private constructor to create a new protection context.
-     * 
+     *
      * @param canAccess whether protected values can be accessed in this context
      */
     private ProtectionContext(boolean canAccess) {
@@ -85,10 +85,9 @@ public final class ProtectionContext {
      * This method establishes whether protected values can be accessed during Groovy expression
      * evaluation. Once set, the context cannot be overridden for security reasons.
      * </p>
-     * 
+     *
      * @param canAccess {@code true} if protected values can be accessed, {@code false} otherwise
      * @throws IllegalStateException if a protection context has already been set for this thread
-     * 
      * @see #clear()
      * @see #get()
      */
@@ -102,9 +101,8 @@ public final class ProtectionContext {
 
     /**
      * Retrieves the protection context for the current thread.
-     * 
+     *
      * @return the current protection context, or {@code null} if no context has been set
-     * 
      * @see #set(boolean)
      * @see #clear()
      */
@@ -118,7 +116,7 @@ public final class ProtectionContext {
      * This method should be called in a finally block to ensure proper cleanup
      * of the thread-local context after expression evaluation is complete.
      * </p>
-     * 
+     *
      * @see #set(boolean)
      * @see #get()
      */
@@ -128,11 +126,11 @@ public final class ProtectionContext {
 
     /**
      * Returns whether protected values can be accessed in this context.
-     * 
+     *
      * @return {@code true} if protected values can be accessed, {@code false} otherwise
      */
-    public boolean canAccessProtectedValue() { 
-        return canAccessProtectedValue; 
+    public boolean canAccessProtectedValue() {
+        return canAccessProtectedValue;
     }
 
     /**
@@ -142,10 +140,10 @@ public final class ProtectionContext {
      * expression handling components. The tokenizer is used to process string concatenation
      * operations that involve protected values, ensuring proper obfuscation.
      * </p>
-     * 
+     *
      * @return the tokenizer instance associated with this context
      */
-    Tokenizer tokenizer() { 
-        return tokenizer; 
+    Tokenizer tokenizer() {
+        return tokenizer;
     }
 }

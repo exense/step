@@ -68,7 +68,7 @@ public class QuotaCheckerTests {
     public void bindWithUnknownReservationThrowsIllegalState() {
         QuotaChecker checker = newChecker(2L, 10_000L, 100_000L);
         IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> checker.bindResourceId("no-such-token", "rX"));
+            () -> checker.bindResourceId("no-such-token", "rX"));
         assertTrue(ex.getMessage().startsWith("Reservation token ") && ex.getMessage().endsWith(" not found"));
     }
 
@@ -80,7 +80,7 @@ public class QuotaCheckerTests {
 
         String t2 = checker.reserveNewResource();
         IllegalStateException ex = assertThrows(IllegalStateException.class,
-                () -> checker.bindResourceId(t2, "r1"));
+            () -> checker.bindResourceId(t2, "r1"));
         assertTrue(ex.getMessage().contains("Resource already bound"));
     }
 
@@ -187,7 +187,7 @@ public class QuotaCheckerTests {
     }
 
     @Test
-    public void reserveAndGrowNearLimitWithMultipleQuotaViolations()  throws Exception {
+    public void reserveAndGrowNearLimitWithMultipleQuotaViolations() throws Exception {
         QuotaChecker checker = newChecker(10L, 100L, 100L);
         // 99 is "just before" the execution limit, every additional (non-zero) write will reach the limit.
         checker.totalBytes.set(99L);

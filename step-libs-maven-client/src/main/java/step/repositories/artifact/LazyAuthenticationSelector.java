@@ -6,30 +6,25 @@ import org.eclipse.aether.repository.MirrorSelector;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.repository.DefaultAuthenticationSelector;
 
-public class LazyAuthenticationSelector implements AuthenticationSelector
-{
+public class LazyAuthenticationSelector implements AuthenticationSelector {
     private final MirrorSelector mirrorSelector;
     private final DefaultAuthenticationSelector defaultAuthSelector;
 
-    LazyAuthenticationSelector(MirrorSelector mirrorSelector)
-    {
+    LazyAuthenticationSelector(MirrorSelector mirrorSelector) {
         this.mirrorSelector = mirrorSelector;
         this.defaultAuthSelector = new DefaultAuthenticationSelector();
     }
 
     @Override
-    public Authentication getAuthentication(RemoteRepository repository)
-    {
+    public Authentication getAuthentication(RemoteRepository repository) {
         RemoteRepository mirror = mirrorSelector.getMirror(repository);
-        if (mirror != null)
-        {
+        if (mirror != null) {
             return defaultAuthSelector.getAuthentication(mirror);
         }
         return defaultAuthSelector.getAuthentication(repository);
     }
 
-    public void add(String id, Authentication authentication)
-    {
+    public void add(String id, Authentication authentication) {
         defaultAuthSelector.add(id, authentication);
     }
 }

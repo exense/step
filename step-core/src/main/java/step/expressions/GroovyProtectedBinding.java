@@ -67,7 +67,7 @@ public class GroovyProtectedBinding extends GroovyObjectSupport {
      * Creates a new protected binding with the specified key and value.
      * The obfuscated value is automatically generated using the key as a hint.
      *
-     * @param key a descriptive identifier for the protected value
+     * @param key   a descriptive identifier for the protected value
      * @param value the actual value to be protected
      */
     public GroovyProtectedBinding(String key, Object value) {
@@ -99,12 +99,13 @@ public class GroovyProtectedBinding extends GroovyObjectSupport {
      * Private constructor for internal use that allows explicit specification
      * of all binding properties.
      *
-     * @param key the descriptive identifier for the protected value
-     * @param value the actual value to be protected
+     * @param key             the descriptive identifier for the protected value
+     * @param value           the actual value to be protected
      * @param obfuscatedValue the pre-computed obfuscated representation
      */
     private GroovyProtectedBinding(String key, Object value, String obfuscatedValue) {
-        this.value = value;;
+        this.value = value;
+        ;
         this.key = key;
         this.obfuscatedValue = obfuscatedValue;
     }
@@ -138,7 +139,7 @@ public class GroovyProtectedBinding extends GroovyObjectSupport {
      * This operation directly modifies the wrapped object's property.
      *
      * @param propertyName the name of the property to set
-     * @param newValue the new value to assign to the property
+     * @param newValue     the new value to assign to the property
      * @throws ProtectedPropertyException if access is not granted by the current protection context
      * @see ProtectionContext#canAccessProtectedValue()
      */
@@ -167,10 +168,10 @@ public class GroovyProtectedBinding extends GroovyObjectSupport {
      * in a new {@code GroovyProtectedBinding} with an updated key.</p>
      *
      * @param methodName the name of the method to invoke
-     * @param args the arguments to pass to the method
+     * @param args       the arguments to pass to the method
      * @return the result of the method invocation, potentially wrapped in a new binding
      * @throws ProtectedPropertyException if access is not granted or if an unsupported
-     *         method is called on a protected String value
+     *                                    method is called on a protected String value
      * @see ProtectionContext#canAccessProtectedValue()
      */
     @Override
@@ -178,7 +179,7 @@ public class GroovyProtectedBinding extends GroovyObjectSupport {
         ProtectionContext context = ProtectionContext.get();
         if (context != null && context.canAccessProtectedValue()) {
             // Special handling for String, only plus method is allowed and use custom logic
-            if (value instanceof String){
+            if (value instanceof String) {
                 if ("plus".equals(methodName) && value instanceof String) {
                     return InvokerHelper.invokeMethod(getTokenizedString(context), methodName, args);
                 } else {

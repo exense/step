@@ -27,13 +27,13 @@ public class FunctionGroupSessionTest {
             Object argument = invocationOnMock.getArgument(1);
             TokenWrapper tokenWrapper = new TokenWrapper();
             Token token = new Token();
-            token.setId("token"+callCount.get());
-            token.setAttributes(((Map<String, Interest>) argument).entrySet().stream().collect(Collectors.toMap(o -> o.getKey(), o->o.getValue().getSelectionPattern().pattern())));
+            token.setId("token" + callCount.get());
+            token.setAttributes(((Map<String, Interest>) argument).entrySet().stream().collect(Collectors.toMap(o -> o.getKey(), o -> o.getValue().getSelectionPattern().pattern())));
             tokenWrapper.setToken(token);
             return tokenWrapper;
         });
 
-        Mockito.when(functionExecutionService.getLocalTokenHandle()).thenAnswer(invocationOnMock->{
+        Mockito.when(functionExecutionService.getLocalTokenHandle()).thenAnswer(invocationOnMock -> {
             TokenWrapper tokenWrapper = new TokenWrapper();
             Token token = new Token();
             token.setId("local");

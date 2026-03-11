@@ -40,7 +40,7 @@ public class RefreshResourceResult {
         errorMessages.add(errorMessage);
     }
 
-    public void addInfo(String infoMessage){
+    public void addInfo(String infoMessage) {
         infoMessages.add(infoMessage);
     }
 
@@ -52,7 +52,7 @@ public class RefreshResourceResult {
         this.resultStatus = resultStatus;
     }
 
-    public boolean isFailed(){
+    public boolean isFailed() {
         return resultStatus == ResultStatus.FAILED;
     }
 

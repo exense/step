@@ -26,11 +26,11 @@ public class BookmarkPlugin extends AbstractControllerPlugin {
         context.put(BookmarkAccessor.class, bookmarkAccessor);
         context.getEntityManager().register(new Entity<>(EntityConstants.bookmarks, bookmarkAccessor, UserBookmark.class));
         context.get(TableRegistry.class).register(EntityConstants.bookmarks,
-                new Table<>(bookmarkCollection, null, false)
-                        .withTableFiltersFactory((tableParameters, session) -> {
-                            String userId = session.getUser().getId().toHexString();
-                            return new Equals("userId", userId);
-                        }));
+            new Table<>(bookmarkCollection, null, false)
+                .withTableFiltersFactory((tableParameters, session) -> {
+                    String userId = session.getUser().getId().toHexString();
+                    return new Equals("userId", userId);
+                }));
         userAccessor.registerOnRemoveHook(new Function<User, Void>() {
             @Override
             public Void apply(User user) {

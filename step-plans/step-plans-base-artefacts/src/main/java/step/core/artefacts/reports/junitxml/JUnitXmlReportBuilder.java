@@ -65,9 +65,9 @@ public class JUnitXmlReportBuilder {
     public JUnitReport buildJUnitXmlReport(List<String> executionIds) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(baos)) {
             Junit4ReportConfig config = new Junit4ReportConfig.Builder()
-                    .setServerConfiguration(configuration)
-                    .setAddLinksToStepFrontend(true)
-                    .createConfig();
+                .setServerConfiguration(configuration)
+                .setAddLinksToStepFrontend(true)
+                .createConfig();
             ReportMetadata reportMetadata = buildJUnitXmlReport(new JUnit4ReportWriter(config), executionIds, writer);
             return new JUnitReport(reportMetadata.getFileName(), baos.toByteArray());
         }
@@ -76,25 +76,25 @@ public class JUnitXmlReportBuilder {
     /**
      * Builds the JUnit report as zip archive with the following structure:
      * {attachmentsRootFolder} - the configured output folder for CLI or maven plugin
-     *  {timestamp}-junit.xml - the report (containing relative links to attached files)
-     *  attachments - the folder with attachments
-     *    {testCaseId} - the subfoler with attachments per testCase (to avoid collisions by file names in case we have the same name for several attachments like exception.log)
-     *      exception.log - some attachments
+     * {timestamp}-junit.xml - the report (containing relative links to attached files)
+     * attachments - the folder with attachments
+     * {testCaseId} - the subfoler with attachments per testCase (to avoid collisions by file names in case we have the same name for several attachments like exception.log)
+     * exception.log - some attachments
      *
-     * @param executionIds the execution ids
-     * @param includeAttachments links to attachments and attachment files itself will be included in the archive if the value is true
+     * @param executionIds          the execution ids
+     * @param includeAttachments    links to attachments and attachment files itself will be included in the archive if the value is true
      * @param attachmentsRootFolder if the 'includeAttachments' param is true, defines the name of {attachmentsRootFolder} in zip file
      */
     public JUnitReport buildJunitZipReport(List<String> executionIds, Boolean includeAttachments, String attachmentsRootFolder) throws IOException {
         String attachmentsSubfolder = DEFAULT_ATTACHMETS_SUBFOLDER;
         Junit4ReportConfig junit4ReportConfig = new Junit4ReportConfig.Builder()
-                .setAddAttachments(includeAttachments != null ? includeAttachments : false)
-                .setAttachmentSubfolder(attachmentsSubfolder)
-                .setAttachmentRootFolder(attachmentsRootFolder)
-                .setAttachmentResourceManager(attachmentsResourceManager)
-                .setAddLinksToStepFrontend(true)
-                .setServerConfiguration(configuration)
-                .createConfig();
+            .setAddAttachments(includeAttachments != null ? includeAttachments : false)
+            .setAttachmentSubfolder(attachmentsSubfolder)
+            .setAttachmentRootFolder(attachmentsRootFolder)
+            .setAttachmentResourceManager(attachmentsResourceManager)
+            .setAddLinksToStepFrontend(true)
+            .setServerConfiguration(configuration)
+            .createConfig();
 
         JUnit4ReportWriter reportWriter = new JUnit4ReportWriter(junit4ReportConfig);
         try (ByteArrayOutputStream mainReportOutput = new ByteArrayOutputStream(); OutputStreamWriter writer = new OutputStreamWriter(mainReportOutput)) {
