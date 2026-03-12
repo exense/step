@@ -161,17 +161,14 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             if (!(sourceEntity instanceof AbstractTrackedObject)) {
                 newTrackedEntity.setCreationDate(lastModificationDate);
                 newTrackedEntity.setCreationUser(username);
-                newTrackedEntity.setCreationUserId(userId);
             } else {
                 //In case of update we make sure we keep the creation metadata from the DB info
                 AbstractTrackedObject sourceTrackedEntity = (AbstractTrackedObject) sourceEntity;
                 newTrackedEntity.setCreationDate(sourceTrackedEntity.getCreationDate());
                 newTrackedEntity.setCreationUser(sourceTrackedEntity.getCreationUser());
-                newTrackedEntity.setCreationUserId(sourceTrackedEntity.getCreationUserId());
             }
             newTrackedEntity.setLastModificationDate(lastModificationDate);
             newTrackedEntity.setLastModificationUser(username);
-            newTrackedEntity.setLastModificationUserId(userId);
         }
     }
 

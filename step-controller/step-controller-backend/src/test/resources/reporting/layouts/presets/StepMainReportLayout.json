@@ -1,0 +1,118 @@
+{
+  "uid": "fe687d84-5414-4fa0-ba2e-3bd09fef11b3",
+  "name": "Step Main Layout",
+  "layout": {
+    "widgets": [
+      {
+        "id": "c4460688-41d9-4765-a260-d3bed46c4d50",
+        "widgetType": "errorsWidget",
+        "position": {
+          "row": 1,
+          "column": 1,
+          "widthInCells": 8,
+          "heightInCells": 1
+        }
+      },
+      {
+        "id": "c11a02b1-de67-408a-9abe-f036f3ba7894",
+        "widgetType": "testCases",
+        "position": {
+          "row": 2,
+          "column": 1,
+          "widthInCells": 6,
+          "heightInCells": 3
+        }
+      },
+      {
+        "id": "eb2af1f3-1037-409d-943f-35434a2cb0ed",
+        "widgetType": "testCasesSummary",
+        "position": {
+          "row": 2,
+          "column": 7,
+          "widthInCells": 2,
+          "heightInCells": 3
+        }
+      },
+      {
+        "id": "8556aa3f-87fb-4300-b1e4-c7da0f7bbc9c",
+        "widgetType": "keywordsSummary",
+        "position": {
+          "row": 5,
+          "column": 1,
+          "widthInCells": 2,
+          "heightInCells": 3
+        }
+      },
+      {
+        "id": "505e9f33-c342-40de-b390-01812dd6a2f7",
+        "widgetType": "executionTree",
+        "position": {
+          "row": 5,
+          "column": 3,
+          "widthInCells": 6,
+          "heightInCells": 3
+        }
+      },
+      {
+        "id": "a1928775-e4de-42e1-aab6-74e357462c47",
+        "widgetType": "keywordsList",
+        "position": {
+          "row": 8,
+          "column": 1,
+          "widthInCells": 6,
+          "heightInCells": 3
+        }
+      },
+      {
+        "id": "4cd5b4d3-f12e-43e2-bb91-7609d89098c7",
+        "widgetType": "performanceOverview",
+        "position": {
+          "row": 8,
+          "column": 7,
+          "widthInCells": 2,
+          "heightInCells": 3
+        }
+      },
+      {
+        "id": "ef3f70e8-eed9-433d-ba07-c6c830eb1122",
+        "widgetType": "errors",
+        "position": {
+          "row": 11,
+          "column": 1,
+          "widthInCells": 8,
+          "heightInCells": 3
+        }
+      },
+      {
+        "id": "d0d7bfd9-1d2e-4170-9fa1-a62000073d9f",
+        "widgetType": "notificationSubscriptionForExecution",
+        "position": {
+          "row": 14,
+          "column": 1,
+          "widthInCells": 4,
+          "heightInCells": 3
+        }
+      },
+      {
+        "id": "7da124f6-89ba-42b6-a888-1502a784641f",
+        "widgetType": "housekeepingSettingsForExecution",
+        "position": {
+          "row": 14,
+          "column": 5,
+          "widthInCells": 4,
+          "heightInCells": 3
+        }
+      },
+      {
+        "id": "11af33b5-48b9-46ba-9f9f-d9feb7ef2756",
+        "widgetType": "currentOperations",
+        "position": {
+          "row": 17,
+          "column": 1,
+          "widthInCells": 4,
+          "heightInCells": 3
+        }
+      }
+    ]
+  }
+}

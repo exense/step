@@ -1,4 +1,4 @@
-package step.core.reporting;
+package step.core.reporting.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,7 +17,7 @@ public class ReportLayout extends AbstractTrackedObject {
     public ReportLayoutVisibility visibility;
 
     @JsonCreator
-    public ReportLayout(@JsonProperty("layout") JsonObject layout, @JsonProperty(value = "visibility", defaultValue = "Private") ReportLayoutVisibility visibility) {
+    public ReportLayout(@JsonProperty("layout") JsonObject layout, @JsonProperty(value = FIELD_VISIBILITY, defaultValue = "Private") ReportLayoutVisibility visibility) {
         this.layout = layout;
         this.visibility = visibility != null ? visibility : ReportLayoutVisibility.Private;
     }

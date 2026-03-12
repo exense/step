@@ -7,10 +7,13 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.apache.poi.ss.formula.functions.T;
 import step.controller.services.entities.AbstractEntityServices;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.deployment.AuthorizationException;
 import step.core.entities.EntityConstants;
+import step.core.reporting.model.ReportLayout;
+import step.core.reporting.model.ReportLayoutJson;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 
@@ -52,6 +55,16 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
         return reportLayout;
     }
 
+    @Operation(operationId = "exportLayout", description = "Export the report layout to its Json representation")
+    @GET
+    @Path("/{id}/json")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "{entity}-read")
+    public ReportLayoutJson exportLayout(@PathParam("id") String id) {
+        ReportLayout reportLayout = getEntity(id);
+        return new ReportLayoutJson(reportLayout);
+    }
+
     @Override
     public List<ReportLayout> findByIds(List<String> ids) {
         List<ReportLayout> byIds = super.findByIds(ids);
@@ -86,7 +99,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right="{entity}-read")
     public List<ReportLayout> getAllReportLayouts() {
-        return reportLayoutAccessor.getAccessibleReportLayoutsDefinitions(getSession().getUser().getId().toHexString());
+        return reportLayoutAccessor.getAccessibleReportLayoutsDefinitions(getSession().getUser().getUsername());
     }
 
     @Override
@@ -104,7 +117,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
             }
         } else {
             //If the current user is the owner, he is always allowed (if he has the base access right role)
-            if (!reportLayout.getCreationUserId().equals(this.getSession().getUser().getId().toHexString())) {
+            if (!reportLayout.getCreationUser().equals(this.getSession().getUser().getUsername())) {
                 if (ReportLayout.ReportLayoutVisibility.Shared.equals(reportLayout.visibility)) {
                     //Base read right automatically grant access to reading shared dashboard, write and delete require specific rights
                     if (!READ_RIGHT.equals(right)) {
