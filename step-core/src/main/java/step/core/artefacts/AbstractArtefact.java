@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -37,249 +37,249 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@JsonTypeInfo(use=Id.CUSTOM,property= AbstractArtefact.JSON_CLASS_PROPERTY)
+@JsonTypeInfo(use = Id.CUSTOM, property = AbstractArtefact.JSON_CLASS_PROPERTY)
 @JsonTypeIdResolver(ArtefactTypeIdResolver.class)
 public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
-	public static final String JSON_CLASS_PROPERTY = "_class";
-	protected DynamicValue<String> dynamicName;
+    public static final String JSON_CLASS_PROPERTY = "_class";
+    protected DynamicValue<String> dynamicName;
 
-	protected boolean useDynamicName;
+    protected boolean useDynamicName;
 
-	protected String description;
-		
-	protected List<AbstractArtefact> children = new ArrayList<>();
-	 
-	@JsonSerialize(using = MapSerializer.class)
-	@JsonDeserialize(using = MapDeserializer.class) 
-	protected Map<String, Object> customAttributes;
-	
-	protected List<ObjectId> attachments;
+    protected String description;
 
-	private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
-	private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
-	private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
-	private boolean isWorkArtefact = false;
+    protected List<AbstractArtefact> children = new ArrayList<>();
 
-	private ChildrenBlock before;
-	private ChildrenBlock after;
+    @JsonSerialize(using = MapSerializer.class)
+    @JsonDeserialize(using = MapDeserializer.class)
+    protected Map<String, Object> customAttributes;
 
-	public AbstractArtefact() {
-		super();
-		Map<String, String> defaultAttributes = new HashMap<>();
-		defaultAttributes.put("name", getArtefactName(this.getClass()));
-		attributes = defaultAttributes;
-		dynamicName = new DynamicValue<String>("");
-		//dynamicName.setDynamic(true);
-		dynamicName.setExpression("");
-	}
-	
-	public static String getArtefactName(Class<? extends AbstractArtefact> artefactClass) {
-		Artefact annotation = artefactClass.getAnnotation(Artefact.class);
-		return !annotation.name().isEmpty() ? annotation.name() : artefactClass.getSimpleName();
-	}
+    protected List<ObjectId> attachments;
 
-	public String getDescription() {
-		return description;
-	}
+    private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
+    private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
+    private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
+    private boolean isWorkArtefact = false;
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    private ChildrenBlock before;
+    private ChildrenBlock after;
 
-	@EntityReference(type= EntityConstants.recursive)
-	public List<AbstractArtefact> getChildren() {
-		return children;
-	}
+    public AbstractArtefact() {
+        super();
+        Map<String, String> defaultAttributes = new HashMap<>();
+        defaultAttributes.put("name", getArtefactName(this.getClass()));
+        attributes = defaultAttributes;
+        dynamicName = new DynamicValue<String>("");
+        //dynamicName.setDynamic(true);
+        dynamicName.setExpression("");
+    }
 
-	public void setChildren(List<AbstractArtefact> children) {
-		this.children = children;
-	}
+    public static String getArtefactName(Class<? extends AbstractArtefact> artefactClass) {
+        Artefact annotation = artefactClass.getAnnotation(Artefact.class);
+        return !annotation.name().isEmpty() ? annotation.name() : artefactClass.getSimpleName();
+    }
 
-	public boolean addChild(AbstractArtefact e) {
-		return children.add(e);
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public Map<String, Object> getCustomAttributes() {
-		return customAttributes;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public void setCustomAttributes(Map<String, Object> customAttributes) {
-		this.customAttributes = customAttributes;
-	}
+    @EntityReference(type = EntityConstants.recursive)
+    public List<AbstractArtefact> getChildren() {
+        return children;
+    }
 
-	public Object getCustomAttribute(String key) {
-		if(customAttributes!=null) {
-			return customAttributes.get(key);
-		} else {
-			return null;
-		}
-	}
+    public void setChildren(List<AbstractArtefact> children) {
+        this.children = children;
+    }
 
-	public synchronized void addCustomAttribute(String key, Object value) {
-		if(customAttributes==null) {
-			customAttributes = new HashMap<>();
-		}
-		customAttributes.put(key, value);
-	}
-	
-	public void addAttachment(ObjectId attachmentId) {
-		if(attachments==null) {
-			attachments = new ArrayList<>();
-		}
-		attachments.add(attachmentId);
-	}
-	
-	public void setAttachments(List<ObjectId> attachments) {
-		this.attachments = attachments;
-	}
+    public boolean addChild(AbstractArtefact e) {
+        return children.add(e);
+    }
 
-	public List<ObjectId> getAttachments() {
-		return attachments;
-	}
+    public Map<String, Object> getCustomAttributes() {
+        return customAttributes;
+    }
 
-	@JsonIgnore
-	public boolean isCreateSkeleton() {
-		return false;
-	}
+    public void setCustomAttributes(Map<String, Object> customAttributes) {
+        this.customAttributes = customAttributes;
+    }
 
-	/**
-	 * @return true if this Artefact is calling Artefacts from other plans
-	 */
-	@JsonIgnore
-	public boolean isCallingArtefactsFromOtherPlans() {
-		return false;
-	}
+    public Object getCustomAttribute(String key) {
+        if (customAttributes != null) {
+            return customAttributes.get(key);
+        } else {
+            return null;
+        }
+    }
 
-	/**
-	 * @deprecated
-	 * This field has been deprecated and isn't used anymore.
-	 * The getter and setter have been kept in the model to avoid deserialization issues
-	 * TODO implement a migration task and remove the getter and setter
-	 * @return
-	 */
-	@JsonIgnore
-	@Deprecated
-	public boolean isPersistNode() {
-		return true;
-	}
+    public synchronized void addCustomAttribute(String key, Object value) {
+        if (customAttributes == null) {
+            customAttributes = new HashMap<>();
+        }
+        customAttributes.put(key, value);
+    }
 
-	/**
-	 * @deprecated
-	 * This field has been deprecated and isn't used anymore.
-	 * The setter has been kept in the model to avoid deserialization issues
-	 * @param persistNode
-	 */
-	@Deprecated
-	public void setPersistNode(boolean persistNode) {}
+    public void addAttachment(ObjectId attachmentId) {
+        if (attachments == null) {
+            attachments = new ArrayList<>();
+        }
+        attachments.add(attachmentId);
+    }
 
-	public DynamicValue<Boolean> getSkipNode() {
-		return skipNode;
-	}
+    public void setAttachments(List<ObjectId> attachments) {
+        this.attachments = attachments;
+    }
 
-	public void setSkipNode(DynamicValue<Boolean> skipNode) {
-		this.skipNode = skipNode;
-	}
+    public List<ObjectId> getAttachments() {
+        return attachments;
+    }
 
-	public DynamicValue<String> getDynamicName() {
-		return dynamicName;
-	}
+    @JsonIgnore
+    public boolean isCreateSkeleton() {
+        return false;
+    }
 
-	public void setDynamicName(DynamicValue<String> dynamicName) {
-		this.dynamicName = dynamicName;
-	}
+    /**
+     * @return true if this Artefact is calling Artefacts from other plans
+     */
+    @JsonIgnore
+    public boolean isCallingArtefactsFromOtherPlans() {
+        return false;
+    }
 
-	public boolean isUseDynamicName() {
-		return useDynamicName;
-	}
+    /**
+     * @return
+     * @deprecated This field has been deprecated and isn't used anymore.
+     * The getter and setter have been kept in the model to avoid deserialization issues
+     * TODO implement a migration task and remove the getter and setter
+     */
+    @JsonIgnore
+    @Deprecated
+    public boolean isPersistNode() {
+        return true;
+    }
 
-	public void setUseDynamicName(boolean useDynamicName) {
-		this.useDynamicName = useDynamicName;
-	}
+    /**
+     * @param persistNode
+     * @deprecated This field has been deprecated and isn't used anymore.
+     * The setter has been kept in the model to avoid deserialization issues
+     */
+    @Deprecated
+    public void setPersistNode(boolean persistNode) {
+    }
 
-	public void deepCleanupAllCustomAttributes() {
-		if (getCustomAttributes() != null) {
-			getCustomAttributes().clear();
-		}
+    public DynamicValue<Boolean> getSkipNode() {
+        return skipNode;
+    }
 
-		List<AbstractArtefact> children = getChildren();
-		if (children != null) {
-			for (AbstractArtefact child : children) {
-				// repeat recursively for all children
-				child.deepCleanupAllCustomAttributes();
-			}
-		}
-	}
+    public void setSkipNode(DynamicValue<Boolean> skipNode) {
+        this.skipNode = skipNode;
+    }
 
-	public DynamicValue<Boolean> getInstrumentNode() {
-		return instrumentNode;
-	}
+    public DynamicValue<String> getDynamicName() {
+        return dynamicName;
+    }
 
-	public void setInstrumentNode(DynamicValue<Boolean> instrumentNode) {
-		this.instrumentNode = instrumentNode;
-	}
+    public void setDynamicName(DynamicValue<String> dynamicName) {
+        this.dynamicName = dynamicName;
+    }
 
-	public DynamicValue<Boolean> getContinueParentNodeExecutionOnError() {
-		return continueParentNodeExecutionOnError;
-	}
+    public boolean isUseDynamicName() {
+        return useDynamicName;
+    }
 
-	public void setContinueParentNodeExecutionOnError(DynamicValue<Boolean> continueOnError) {
-		this.continueParentNodeExecutionOnError = continueOnError;
-	}
+    public void setUseDynamicName(boolean useDynamicName) {
+        this.useDynamicName = useDynamicName;
+    }
 
-	public boolean isWorkArtefact() {
-		return isWorkArtefact;
-	}
+    public void deepCleanupAllCustomAttributes() {
+        if (getCustomAttributes() != null) {
+            getCustomAttributes().clear();
+        }
 
-	public void setWorkArtefact(boolean workArtefact) {
-		isWorkArtefact = workArtefact;
-	}
+        List<AbstractArtefact> children = getChildren();
+        if (children != null) {
+            for (AbstractArtefact child : children) {
+                // repeat recursively for all children
+                child.deepCleanupAllCustomAttributes();
+            }
+        }
+    }
 
-	@EntityReference(type= EntityConstants.recursive)
-	public ChildrenBlock getBefore() {
-		return before;
-	}
+    public DynamicValue<Boolean> getInstrumentNode() {
+        return instrumentNode;
+    }
 
-	public void setBefore(ChildrenBlock before) {
-		this.before = before;
-	}
+    public void setInstrumentNode(DynamicValue<Boolean> instrumentNode) {
+        this.instrumentNode = instrumentNode;
+    }
 
-	@EntityReference(type= EntityConstants.recursive)
-	public ChildrenBlock getAfter() {
-		return after;
-	}
+    public DynamicValue<Boolean> getContinueParentNodeExecutionOnError() {
+        return continueParentNodeExecutionOnError;
+    }
 
-	public void setAfter(ChildrenBlock after) {
-		this.after = after;
-	}
+    public void setContinueParentNodeExecutionOnError(DynamicValue<Boolean> continueOnError) {
+        this.continueParentNodeExecutionOnError = continueOnError;
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
-		return result;
-	}
+    public boolean isWorkArtefact() {
+        return isWorkArtefact;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		AbstractArtefact other = (AbstractArtefact) obj;
-		if (getId() == null) {
-			if (other.getId() != null)
-				return false;
-		} else if (!getId().equals(other.getId()))
-			return false;
-		return true;
-	}
+    public void setWorkArtefact(boolean workArtefact) {
+        isWorkArtefact = workArtefact;
+    }
 
-	/**
-	 * Void class to be used in annotations instead of null-values
-	 */
-	public static final class None extends AbstractArtefact {}
+    @EntityReference(type = EntityConstants.recursive)
+    public ChildrenBlock getBefore() {
+        return before;
+    }
+
+    public void setBefore(ChildrenBlock before) {
+        this.before = before;
+    }
+
+    @EntityReference(type = EntityConstants.recursive)
+    public ChildrenBlock getAfter() {
+        return after;
+    }
+
+    public void setAfter(ChildrenBlock after) {
+        this.after = after;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((getId() == null) ? 0 : getId().hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        AbstractArtefact other = (AbstractArtefact) obj;
+        if (getId() == null) {
+            if (other.getId() != null)
+                return false;
+        } else if (!getId().equals(other.getId()))
+            return false;
+        return true;
+    }
+
+    /**
+     * Void class to be used in annotations instead of null-values
+     */
+    public static final class None extends AbstractArtefact {
+    }
 }

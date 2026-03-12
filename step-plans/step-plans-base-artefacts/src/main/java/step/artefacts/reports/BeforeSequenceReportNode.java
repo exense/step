@@ -7,10 +7,10 @@ import step.core.artefacts.reports.ReportNode;
  * Used only for report node deserialization
  */
 @Deprecated
-public class BeforeSequenceReportNode  extends ReportNode {
+public class BeforeSequenceReportNode extends ReportNode {
 
-	@Override
-	public boolean setVariableInParentScope() {
-		return true;
-	}
+    @Override
+    public boolean setVariableInParentScope() {
+        return true;
+    }
 }

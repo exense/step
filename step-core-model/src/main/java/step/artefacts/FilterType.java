@@ -4,16 +4,16 @@ import java.util.function.BiFunction;
 
 public enum FilterType {
 
-	EQUALS(String::equals),
-	REGEX(String::matches);
-	
-	private final BiFunction<String, String, Boolean> filterFunction;
+    EQUALS(String::equals),
+    REGEX(String::matches);
 
-	private FilterType(BiFunction<String, String, Boolean> filterFunction) {
-		this.filterFunction = filterFunction;
-	}
+    private final BiFunction<String, String, Boolean> filterFunction;
 
-	public BiFunction<String, String, Boolean> getFilterFunction() {
-		return filterFunction;
-	}
+    private FilterType(BiFunction<String, String, Boolean> filterFunction) {
+        this.filterFunction = filterFunction;
+    }
+
+    public BiFunction<String, String, Boolean> getFilterFunction() {
+        return filterFunction;
+    }
 }

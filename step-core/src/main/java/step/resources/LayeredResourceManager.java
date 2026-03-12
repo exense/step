@@ -92,7 +92,7 @@ public class LayeredResourceManager implements ResourceManager {
     @Override
     public boolean resourceExists(String resourceId) {
         for (ResourceManager resourceManager : resourceManagers) {
-            if(resourceManager.resourceExists(resourceId)){
+            if (resourceManager.resourceExists(resourceId)) {
                 return true;
             }
         }
@@ -199,6 +199,13 @@ public class LayeredResourceManager implements ResourceManager {
     public void deleteResourceRevisionContent(String resourceId) {
         for (ResourceManager resourceManager : resourceManagers) {
             resourceManager.deleteResourceRevisionContent(resourceId);
+        }
+    }
+
+    @Override
+    public void deleteAttachmentsForExecutionId(String executionId) {
+        for (ResourceManager resourceManager : resourceManagers) {
+            resourceManager.deleteAttachmentsForExecutionId(executionId);
         }
     }
 

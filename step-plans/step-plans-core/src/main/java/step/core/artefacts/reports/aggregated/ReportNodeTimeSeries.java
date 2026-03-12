@@ -11,10 +11,14 @@ import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
+import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
 
 public class ReportNodeTimeSeries implements AutoCloseable {
 
@@ -32,7 +36,7 @@ public class ReportNodeTimeSeries implements AutoCloseable {
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, Configuration configuration) {
         this(collectionFactory, TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION),
-                configuration.getPropertyAsBoolean(CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED, true));
+            configuration.getPropertyAsBoolean(CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED, true));
     }
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, TimeSeriesCollectionsSettings timeSeriesCollectionsSettings, boolean ingestionEnabled) {
@@ -40,6 +44,15 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         timeSeries = new TimeSeriesBuilder().registerCollections(timeSeriesCollections).build();
         ingestionPipeline = timeSeries.getIngestionPipeline();
         timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
+        IndexField beginIndexField = new IndexField(TIMESTAMP_ATTRIBUTE, Order.ASC, Long.class);
+        timeSeries.createCompoundIndex(new LinkedHashSet<>(List.of(
+            new IndexField(ATTRIBUTES_PREFIX + "taskId", Order.ASC, String.class),
+            beginIndexField
+        )));
+        timeSeries.createCompoundIndex(new LinkedHashSet<>(List.of(
+            new IndexField(ATTRIBUTES_PREFIX + "planId", Order.ASC, String.class),
+            beginIndexField
+        )));
         this.ingestionEnabled = ingestionEnabled;
     }
 
@@ -99,24 +112,24 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         Filter filter = Filters.equals("attributes." + EXECUTION_ID, executionId);
         Set<String> groupBy = Set.of(groupLevel1, groupLevel2);
         TimeSeriesAggregationQueryBuilder queryBuilder = new TimeSeriesAggregationQueryBuilder()
-                .withOptimizationType(TimeSeriesOptimizationType.MOST_ACCURATE)
-                .withFilter(filter)
-                .withGroupDimensions(groupBy)
-                .split(1);
+            .withOptimizationType(TimeSeriesOptimizationType.MOST_EFFICIENT)
+            .withFilter(filter)
+            .withGroupDimensions(groupBy)
+            .split(1);
 
         if (range != null) {
             queryBuilder.range(range.from, range.to);
         }
         return timeSeries.getAggregationPipeline().collect(queryBuilder.build())
-                .getSeries().entrySet().stream()
-                .filter(e -> e.getKey().keySet().containsAll(groupBy))
-                .collect(Collectors.groupingBy(
-                        e -> (String) e.getKey().get(groupLevel1), // outer key
-                        Collectors.toMap(
-                                e -> (String)  e.getKey().get(groupLevel2),    // inner key
-                                e -> e.getValue().values().stream().findFirst().orElse(new Bucket())
-                        )
-                ));
+            .getSeries().entrySet().stream()
+            .filter(e -> e.getKey().keySet().containsAll(groupBy))
+            .collect(Collectors.groupingBy(
+                e -> (String) e.getKey().get(groupLevel1), // outer key
+                Collectors.toMap(
+                    e -> (String) e.getKey().get(groupLevel2),    // inner key
+                    e -> e.getValue().values().stream().findFirst().orElse(new Bucket())
+                )
+            ));
     }
 
     @Override

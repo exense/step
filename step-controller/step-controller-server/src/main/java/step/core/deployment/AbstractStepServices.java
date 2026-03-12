@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -39,101 +39,107 @@ import static step.core.deployment.ObjectHookInterceptor.ENTITY_ACCESS_DENIED;
 
 public abstract class AbstractStepServices extends AbstractServices<User> {
 
-	public static final String SESSION = "session";
+    public static final String SESSION = "session";
 
-	protected Configuration configuration;
+    protected Configuration configuration;
 
-	private ObjectHookRegistry objectHookRegistry;
+    private ObjectHookRegistry objectHookRegistry;
 
-	@Inject
-	GlobalContext serverContext;
+    @Inject
+    GlobalContext serverContext;
 
-	public AbstractStepServices() {
-		super();
-	}
-	
-	@PostConstruct
-	public void init() throws Exception {
-		configuration = serverContext.getConfiguration();
-		objectHookRegistry = serverContext.get(ObjectHookRegistry.class);
-	}
+    public AbstractStepServices() {
+        super();
+    }
 
-	protected GlobalContext getContext() {
-		return serverContext;
-	}
+    @PostConstruct
+    public void init() throws Exception {
+        configuration = serverContext.getConfiguration();
+        objectHookRegistry = serverContext.get(ObjectHookRegistry.class);
+    }
 
-	protected ExecutionScheduler getScheduler() {
-		return serverContext.getScheduler();
-	}
-	
-	protected ExecutionContext getExecutionRunnable(String executionID) {
-		return getScheduler().getCurrentExecutions().stream().filter(e->e.getExecutionId().equals(executionID))
-				.findFirst().orElse(null);
-	}
-	
-	protected ObjectEnricher getObjectEnricher() {
-		return objectHookRegistry.getObjectEnricher(getSession());
-	}
+    protected GlobalContext getContext() {
+        return serverContext;
+    }
 
-	protected ObjectFilter getObjectFilter() {
-		return objectHookRegistry.getObjectFilter(getSession());
-	}
+    protected ExecutionScheduler getScheduler() {
+        return serverContext.getScheduler();
+    }
 
-	protected ObjectPredicate getObjectPredicate(){
-		return objectHookRegistry.getObjectPredicate(getSession());
-	}
+    protected ExecutionContext getExecutionRunnable(String executionID) {
+        return getScheduler().getCurrentExecutions().stream().filter(e -> e.getExecutionId().equals(executionID))
+            .findFirst().orElse(null);
+    }
 
-	protected AuthorizationManager<User, Session<User>> getAuthorizationManager(){
-		return getContext().require(AuthorizationManager.class);
-	}
+    protected ObjectEnricher getObjectEnricher() {
+        return objectHookRegistry.getObjectEnricher(getSession());
+    }
 
-	protected void checkRights(String right) {
-		Session<User> session = getSession();
-		try {
-			if (!getAuthorizationManager().checkRightInContext(session, right)) {
-				User user = session.getUser();
-				throw new AuthorizationException("User " + (user == null ? "" : user.getUsername()) + " has no permission on '" + right + "'");
-			}
-		} catch (NotMemberOfProjectException ex){
-			// if user is not a member of the project, we want to return 'access denied' error
-			throw new AuthorizationException(ex.getMessage());
-		}
-	}
+    protected ObjectFilter getObjectFilter() {
+        return objectHookRegistry.getObjectFilter(getSession());
+    }
 
-	protected void checkRightsOnBehalfOf(String right, String userOnBehalfOf) {
-		Session<User> session = getSession();
-		try {
-			if (!getAuthorizationManager().checkRightInContext(session, right, userOnBehalfOf)) {
-				User user = session.getUser();
-				throw new AuthorizationException("User " + (user == null ? "" : user.getUsername()) + " has no permission on '" + right + "' (on behalf of " + userOnBehalfOf + ")");
-			}
-		} catch (NotMemberOfProjectException ex){
-			// if 'userOnBehalf' is not a member of the project, we want to return 'access denied' error
-			throw new AuthorizationException(ex.getMessage());
-		}
-	}
+    protected ObjectFilter getRestrictedObjectFilter() {
+        Session<User> session = new RestrictedScopeSession(getSession());
+        return objectHookRegistry.getObjectFilter(session);
+    }
 
-	/**
-	 * The ObjectHookInterceptor.aroundReadFrom can only be used for POST request passing an entity as request BODY
-	 * This method can be used as helper for all other cases where checking if the entity is editable in given context (i.e. DELETE request...(
-	 * @param entity the entity to be asserted
-	 */
-	protected void assertEntityIsEditableInContext(AbstractIdentifiableObject entity) {
-		if (entity instanceof EnricheableObject) {
-			EnricheableObject enricheableObject = (EnricheableObject) entity;
-			Session<User> session = getSession();
-			Optional<ObjectAccessException> optionalViolations = objectHookRegistry.isObjectEditableInContext(session, enricheableObject);
-			if (optionalViolations.isPresent()) {
-				ObjectAccessException objectAccessException = optionalViolations.get();
-				throw new ControllerServiceException(
-						HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
-						objectAccessException.getMessage(), objectAccessException.getViolations()
-				);
-			}
-		}
-	}
+    protected ObjectPredicate getObjectPredicate() {
+        return objectHookRegistry.getObjectPredicate(getSession());
+    }
 
-	protected WriteAccessValidator getWriteAccessValidator() {
-		return new WriteAccessValidatorImpl(objectHookRegistry, getSession());
-	}
+    protected AuthorizationManager<User, Session<User>> getAuthorizationManager() {
+        return getContext().require(AuthorizationManager.class);
+    }
+
+    protected void checkRights(String right) {
+        Session<User> session = getSession();
+        try {
+            if (!getAuthorizationManager().checkRightInContext(session, right)) {
+                User user = session.getUser();
+                throw new AuthorizationException("User " + (user == null ? "" : user.getUsername()) + " has no permission on '" + right + "'");
+            }
+        } catch (NotMemberOfProjectException ex) {
+            // if user is not a member of the project, we want to return 'access denied' error
+            throw new AuthorizationException(ex.getMessage());
+        }
+    }
+
+    protected void checkRightsOnBehalfOf(String right, String userOnBehalfOf) {
+        Session<User> session = getSession();
+        try {
+            if (!getAuthorizationManager().checkRightInContext(session, right, userOnBehalfOf)) {
+                User user = session.getUser();
+                throw new AuthorizationException("User " + (user == null ? "" : user.getUsername()) + " has no permission on '" + right + "' (on behalf of " + userOnBehalfOf + ")");
+            }
+        } catch (NotMemberOfProjectException ex) {
+            // if 'userOnBehalf' is not a member of the project, we want to return 'access denied' error
+            throw new AuthorizationException(ex.getMessage());
+        }
+    }
+
+    /**
+     * The ObjectHookInterceptor.aroundReadFrom can only be used for POST request passing an entity as request BODY
+     * This method can be used as helper for all other cases where checking if the entity is editable in given context (i.e. DELETE request...(
+     *
+     * @param entity the entity to be asserted
+     */
+    protected void assertEntityIsEditableInContext(AbstractIdentifiableObject entity) {
+        if (entity instanceof EnricheableObject) {
+            EnricheableObject enricheableObject = (EnricheableObject) entity;
+            Session<User> session = getSession();
+            Optional<ObjectAccessException> optionalViolations = objectHookRegistry.isObjectEditableInContext(session, enricheableObject);
+            if (optionalViolations.isPresent()) {
+                ObjectAccessException objectAccessException = optionalViolations.get();
+                throw new ControllerServiceException(
+                    HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
+                    objectAccessException.getMessage(), objectAccessException.getViolations()
+                );
+            }
+        }
+    }
+
+    protected WriteAccessValidator getWriteAccessValidator() {
+        return new WriteAccessValidatorImpl(objectHookRegistry, getSession());
+    }
 }

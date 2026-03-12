@@ -46,7 +46,7 @@ public class AutomationPackageStaging {
         return resourceManager;
     }
 
-    public Set<String> getAdditionalFields(){
+    public Set<String> getAdditionalFields() {
         return additionalObjects.keySet();
     }
 

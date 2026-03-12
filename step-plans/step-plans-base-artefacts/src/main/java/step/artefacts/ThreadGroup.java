@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -29,124 +29,124 @@ import step.core.yaml.YamlModel;
 @YamlModel(model = YamlThreadGroup.class, name = "threadGroup")
 @Artefact(validAsRoot = true)
 public class ThreadGroup extends AbstractArtefact {
-	
-	DynamicValue<Integer> users = new DynamicValue<Integer>(1);
 
-	DynamicValue<Integer> iterations = new DynamicValue<Integer>(1);
-	
-	DynamicValue<Integer> rampup = new DynamicValue<Integer>(null);
+    DynamicValue<Integer> users = new DynamicValue<Integer>(1);
 
-	DynamicValue<Integer> pack = new DynamicValue<Integer>(null);
-	
-	DynamicValue<Integer> pacing = new DynamicValue<Integer>(null);
+    DynamicValue<Integer> iterations = new DynamicValue<Integer>(1);
 
-	DynamicValue<Integer> startOffset = new DynamicValue<Integer>(0);
-	
-	DynamicValue<Integer> maxDuration = new DynamicValue<Integer>(0);
-	
-	DynamicValue<String> item = new DynamicValue<String>("gcounter");
-	
-	DynamicValue<String> localItem = new DynamicValue<String>("literationId");
+    DynamicValue<Integer> rampup = new DynamicValue<Integer>(null);
 
-	DynamicValue<String> userItem = new DynamicValue<String>("userId");
+    DynamicValue<Integer> pack = new DynamicValue<Integer>(null);
 
-	ChildrenBlock beforeThread;
+    DynamicValue<Integer> pacing = new DynamicValue<Integer>(null);
 
-	ChildrenBlock afterThread;
+    DynamicValue<Integer> startOffset = new DynamicValue<Integer>(0);
 
-	public DynamicValue<Integer> getUsers() {
-		return users;
-	}
+    DynamicValue<Integer> maxDuration = new DynamicValue<Integer>(0);
 
-	public void setUsers(DynamicValue<Integer> users) {
-		this.users = users;
-	}
+    DynamicValue<String> item = new DynamicValue<String>("gcounter");
 
-	public DynamicValue<Integer> getIterations() {
-		return iterations;
-	}
+    DynamicValue<String> localItem = new DynamicValue<String>("literationId");
 
-	public void setIterations(DynamicValue<Integer> iterations) {
-		this.iterations = iterations;
-	}
+    DynamicValue<String> userItem = new DynamicValue<String>("userId");
 
-	public DynamicValue<Integer> getRampup() {
-		return rampup;
-	}
+    ChildrenBlock beforeThread;
 
-	public void setRampup(DynamicValue<Integer> rampup) {
-		this.rampup = rampup;
-	}
+    ChildrenBlock afterThread;
 
-	public DynamicValue<Integer> getPacing() {
-		return pacing;
-	}
+    public DynamicValue<Integer> getUsers() {
+        return users;
+    }
 
-	public void setPacing(DynamicValue<Integer> pacing) {
-		this.pacing = pacing;
-	}
+    public void setUsers(DynamicValue<Integer> users) {
+        this.users = users;
+    }
 
-	public DynamicValue<Integer> getPack() {
-		return pack;
-	}
+    public DynamicValue<Integer> getIterations() {
+        return iterations;
+    }
 
-	public void setPack(DynamicValue<Integer> pack) {
-		this.pack = pack;
-	}
+    public void setIterations(DynamicValue<Integer> iterations) {
+        this.iterations = iterations;
+    }
 
-	public DynamicValue<Integer> getStartOffset() {
-		return startOffset;
-	}
+    public DynamicValue<Integer> getRampup() {
+        return rampup;
+    }
 
-	public void setStartOffset(DynamicValue<Integer> startOffset) {
-		this.startOffset = startOffset;
-	}
+    public void setRampup(DynamicValue<Integer> rampup) {
+        this.rampup = rampup;
+    }
 
-	public DynamicValue<Integer> getMaxDuration() {
-		return maxDuration;
-	}
+    public DynamicValue<Integer> getPacing() {
+        return pacing;
+    }
 
-	public void setMaxDuration(DynamicValue<Integer> maxDuration) {
-		this.maxDuration = maxDuration;
-	}
+    public void setPacing(DynamicValue<Integer> pacing) {
+        this.pacing = pacing;
+    }
 
-	public DynamicValue<String> getItem() {
-		return item;
-	}
+    public DynamicValue<Integer> getPack() {
+        return pack;
+    }
 
-	public void setItem(DynamicValue<String> item) {
-		this.item = item;
-	}
+    public void setPack(DynamicValue<Integer> pack) {
+        this.pack = pack;
+    }
 
-	public DynamicValue<String> getLocalItem() {
-		return localItem;
-	}
+    public DynamicValue<Integer> getStartOffset() {
+        return startOffset;
+    }
 
-	public void setLocalItem(DynamicValue<String> localItem) {
-		this.localItem = localItem;
-	}
+    public void setStartOffset(DynamicValue<Integer> startOffset) {
+        this.startOffset = startOffset;
+    }
 
-	public DynamicValue<String> getUserItem() {
-		return userItem;
-	}
+    public DynamicValue<Integer> getMaxDuration() {
+        return maxDuration;
+    }
 
-	public void setUserItem(DynamicValue<String> userItem) {
-		this.userItem = userItem;
-	}
+    public void setMaxDuration(DynamicValue<Integer> maxDuration) {
+        this.maxDuration = maxDuration;
+    }
 
-	public ChildrenBlock getBeforeThread() {
-		return beforeThread;
-	}
+    public DynamicValue<String> getItem() {
+        return item;
+    }
 
-	public void setBeforeThread(ChildrenBlock beforeThread) {
-		this.beforeThread = beforeThread;
-	}
+    public void setItem(DynamicValue<String> item) {
+        this.item = item;
+    }
 
-	public ChildrenBlock getAfterThread() {
-		return afterThread;
-	}
+    public DynamicValue<String> getLocalItem() {
+        return localItem;
+    }
 
-	public void setAfterThread(ChildrenBlock afterThread) {
-		this.afterThread = afterThread;
-	}
+    public void setLocalItem(DynamicValue<String> localItem) {
+        this.localItem = localItem;
+    }
+
+    public DynamicValue<String> getUserItem() {
+        return userItem;
+    }
+
+    public void setUserItem(DynamicValue<String> userItem) {
+        this.userItem = userItem;
+    }
+
+    public ChildrenBlock getBeforeThread() {
+        return beforeThread;
+    }
+
+    public void setBeforeThread(ChildrenBlock beforeThread) {
+        this.beforeThread = beforeThread;
+    }
+
+    public ChildrenBlock getAfterThread() {
+        return afterThread;
+    }
+
+    public void setAfterThread(ChildrenBlock afterThread) {
+        this.afterThread = afterThread;
+    }
 }

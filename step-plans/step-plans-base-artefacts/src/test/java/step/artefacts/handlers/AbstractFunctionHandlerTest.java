@@ -81,6 +81,12 @@ public class AbstractFunctionHandlerTest {
         t.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
     }
 
+    protected static void validateIsInSession(ExecutionContext t) {
+        if (t.getVariablesManager().getVariable(FunctionGroupHandler.FUNCTION_GROUP_CONTEXT_KEY) == null) {
+            throw new RuntimeException("Not is a session");
+        }
+    }
+
     private static void getLocalAndRemoteToken(FunctionGroupSession session) {
         session.getLocalToken();
         try {
@@ -106,19 +112,19 @@ public class AbstractFunctionHandlerTest {
 
     protected ExecutionEngine newEngineWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction, AbstractExecutionEnginePlugin additionalPlugin) {
         return ExecutionEngine.builder().withOperationMode(OperationMode.CONTROLLER)
-                .withPlugin(new BaseArtefactPlugin())
-                .withPlugin(new FunctionPlugin())
-                .withPlugin(newMyFunctionTypePlugin())
-                .withPlugin(new TokenForecastingExecutionPlugin())
-                .withPlugin(Optional.ofNullable(additionalPlugin).orElse(new AbstractExecutionEnginePlugin() { // dummy one doing nothing
-                }))
-                .withPlugin(new AbstractExecutionEnginePlugin() {
-            @Override
-            public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
-                                                   ExecutionContext executionContext) {
-                executionContext.put(FunctionExecutionService.class, newFunctionExecutionServiceWithCustomTokenReleaseFunction(tokenReleaseFunction));
-            }
-        }).build();
+            .withPlugin(new BaseArtefactPlugin())
+            .withPlugin(new FunctionPlugin())
+            .withPlugin(newMyFunctionTypePlugin())
+            .withPlugin(new TokenForecastingExecutionPlugin())
+            .withPlugin(Optional.ofNullable(additionalPlugin).orElse(new AbstractExecutionEnginePlugin() { // dummy one doing nothing
+            }))
+            .withPlugin(new AbstractExecutionEnginePlugin() {
+                @Override
+                public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
+                                                       ExecutionContext executionContext) {
+                    executionContext.put(FunctionExecutionService.class, newFunctionExecutionServiceWithCustomTokenReleaseFunction(tokenReleaseFunction));
+                }
+            }).build();
     }
 
     protected FunctionExecutionService newFunctionExecutionServiceWithCustomTokenReleaseFunction(Consumer<String> tokenReleaseFunction) {

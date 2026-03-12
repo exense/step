@@ -167,21 +167,21 @@ public class TimeSeriesCollectionsSettings {
     }
 
     public static TimeSeriesCollectionsSettings readSettings(Configuration configuration, String collectionName) {
-        long mainResolution = getPropertyAsLong(configuration, TIME_SERIES_MAIN_RESOLUTION, collectionName, 1000L);
+        long mainResolution = getPropertyAsLong(configuration, TIME_SERIES_MAIN_RESOLUTION, collectionName, 5000L);
         validateMainResolutionParam(mainResolution);
         return new TimeSeriesCollectionsSettings()
-                .setMainResolution(mainResolution)
-                .setMainFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofSeconds(1).toMillis()))
-                .setFlushSeriesQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE, collectionName, 20000))
-                .setFlushAsyncQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE, collectionName, 5000))
-                .setPerMinuteEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_MINUTE_COLLECTION_ENABLED, collectionName, true))
-                .setPerMinuteFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofMinutes(1).toMillis()))
-                .setHourlyEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_HOUR_COLLECTION_ENABLED, collectionName, true))
-                .setHourlyFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_HOUR_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofMinutes(5).toMillis()))
-                .setDailyEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_DAY_COLLECTION_ENABLED, collectionName, true))
-                .setDailyFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_DAY_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofHours(1).toMillis()))
-                .setWeeklyEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_WEEK_COLLECTION_ENABLED, collectionName, true))
-                .setWeeklyFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_WEEK_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofHours(2).toMillis()));
+            .setMainResolution(mainResolution)
+            .setMainFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MAIN_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofSeconds(1).toMillis()))
+            .setFlushSeriesQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_SERIES_QUEUE_SIZE, collectionName, 20000))
+            .setFlushAsyncQueueSize(getPropertyAsInteger(configuration, TIME_SERIES_COLLECTION_FLUSH_ASYNC_QUEUE_SIZE, collectionName, 5000))
+            .setPerMinuteEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_MINUTE_COLLECTION_ENABLED, collectionName, true))
+            .setPerMinuteFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_MINUTE_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofMinutes(1).toMillis()))
+            .setHourlyEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_HOUR_COLLECTION_ENABLED, collectionName, true))
+            .setHourlyFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_HOUR_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofMinutes(5).toMillis()))
+            .setDailyEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_DAY_COLLECTION_ENABLED, collectionName, true))
+            .setDailyFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_DAY_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofHours(1).toMillis()))
+            .setWeeklyEnabled(getPropertyAsBoolean(configuration, TIME_SERIES_WEEK_COLLECTION_ENABLED, collectionName, true))
+            .setWeeklyFlushInterval(getPropertyAsLong(configuration, TIME_SERIES_WEEK_COLLECTION_FLUSH_PERIOD, collectionName, Duration.ofHours(2).toMillis()));
     }
 
     private static Long getPropertyAsLong(Configuration configuration, String property, String collectionName, long defaultValue) {
@@ -215,6 +215,7 @@ public class TimeSeriesCollectionsSettings {
         timeSeriesCollectionsSettings.setWeeklyEnabled(false);
         timeSeriesCollectionsSettings.setMainResolution(mainResolution);
         timeSeriesCollectionsSettings.setMainFlushInterval(mainFlushInterval);
+        timeSeriesCollectionsSettings.setFlushSeriesQueueSize(20000);
         return timeSeriesCollectionsSettings;
     }
 

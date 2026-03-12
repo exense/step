@@ -57,114 +57,114 @@ import static step.planbuilder.BaseArtefacts.set;
 
 public class DatasetHandlerTest {
 
-	private static final Logger logger = LoggerFactory.getLogger(DatasetHandlerTest.class);
-	private ExecutionEngine executionEngine;
+    private static final Logger logger = LoggerFactory.getLogger(DatasetHandlerTest.class);
+    private ExecutionEngine executionEngine;
 
-	@Before
-	public void before() {
-		DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
-		executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
-				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()
-				).build();
-	}
+    @Before
+    public void before() {
+        DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
+        executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
+            .withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin()
+            ).build();
+    }
 
-	@After
-	public void after() {
-		executionEngine.close();
-	}
+    @After
+    public void after() {
+        executionEngine.close();
+    }
 
-	@Test
-	public void testUnprotected() throws IOException {
-		DataSetArtefact dataSetArtefact = new DataSetArtefact();
+    @Test
+    public void testUnprotected() throws IOException {
+        DataSetArtefact dataSetArtefact = new DataSetArtefact();
 
-		JsonArrayDataPoolConfiguration configuration = new JsonArrayDataPoolConfiguration();
-		configuration.setJson(new DynamicValue<String>("[ {\"a\" : \"va1\", \"b\" : \"vb1\"}, {\"a\" : \"va2\", \"b\" : \"vb2\"}, {\"a\" : 1}, {\"a\" : []}]"));
-		configuration.setProtect(new DynamicValue<>(false));
+        JsonArrayDataPoolConfiguration configuration = new JsonArrayDataPoolConfiguration();
+        configuration.setJson(new DynamicValue<String>("[ {\"a\" : \"va1\", \"b\" : \"vb1\"}, {\"a\" : \"va2\", \"b\" : \"vb2\"}, {\"a\" : 1}, {\"a\" : []}]"));
+        configuration.setProtect(new DynamicValue<>(false));
 
-		dataSetArtefact.setDataSource(configuration);
-		dataSetArtefact.setDataSourceType(JSON_ARRAY);
-		dataSetArtefact.setItem(new DynamicValue<String>("dataSet"));
-		dataSetArtefact.setGlobalCounter(new DynamicValue<String>("globalCounter"));
-		dataSetArtefact.setUserItem(new DynamicValue<String>("userId"));
+        dataSetArtefact.setDataSource(configuration);
+        dataSetArtefact.setDataSourceType(JSON_ARRAY);
+        dataSetArtefact.setItem(new DynamicValue<String>("dataSet"));
+        dataSetArtefact.setGlobalCounter(new DynamicValue<String>("globalCounter"));
+        dataSetArtefact.setUserItem(new DynamicValue<String>("userId"));
 
-		String argumentStr = "{\"Col1\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"row.a\"}," +
-				"\"Col2\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"dataSet.next().a\"}}";
-		MyFunction function = newPassingFunctionWithInput();
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
-		callFunction.setArgument(new DynamicValue<>(argumentStr));
+        String argumentStr = "{\"Col1\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"row.a\"}," +
+            "\"Col2\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"dataSet.next().a\"}}";
+        MyFunction function = newPassingFunctionWithInput();
+        CallFunction callFunction = new CallFunction();
+        callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
+        callFunction.setArgument(new DynamicValue<>(argumentStr));
 
-		Plan plan = PlanBuilder.create().startBlock(sequence())
-				.add(dataSetArtefact)
-				.add(set("row","dataSet.next()"))
-				.add(callFunction)
-				.endBlock().build();
-		plan.setFunctions(List.of(function));
-		PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
-		planRunnerResult.printTree();
-		CallFunctionReportNode node = getFirstCallFunctionReportNode(planRunnerResult);
+        Plan plan = PlanBuilder.create().startBlock(sequence())
+            .add(dataSetArtefact)
+            .add(set("row", "dataSet.next()"))
+            .add(callFunction)
+            .endBlock().build();
+        plan.setFunctions(List.of(function));
+        PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
+        planRunnerResult.printTree();
+        CallFunctionReportNode node = getFirstCallFunctionReportNode(planRunnerResult);
 
-		assertNull(node.getError());
-		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		assertEquals("{\"Col1\":\"va1\",\"Col2\":\"va2\"}", node.getOutput());
-		assertEquals("{\"Col1\":\"va1\",\"Col2\":\"va2\"}", node.getInput());
+        assertNull(node.getError());
+        assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+        assertEquals("{\"Col1\":\"va1\",\"Col2\":\"va2\"}", node.getOutput());
+        assertEquals("{\"Col1\":\"va1\",\"Col2\":\"va2\"}", node.getInput());
 
-	}
+    }
 
-	@Test
-	public void testProtected() throws IOException {
-		DataSetArtefact dataSetArtefact = new DataSetArtefact();
+    @Test
+    public void testProtected() throws IOException {
+        DataSetArtefact dataSetArtefact = new DataSetArtefact();
 
-		JsonArrayDataPoolConfiguration configuration = new JsonArrayDataPoolConfiguration();
-		configuration.setJson(new DynamicValue<String>("[ {\"a\" : \"va1\", \"b\" : \"vb1\"}, {\"a\" : \"va2\", \"b\" : \"vb2\"}, {\"a\" : 1}, {\"a\" : []}]"));
-		configuration.setProtect(new DynamicValue<>(true));
+        JsonArrayDataPoolConfiguration configuration = new JsonArrayDataPoolConfiguration();
+        configuration.setJson(new DynamicValue<String>("[ {\"a\" : \"va1\", \"b\" : \"vb1\"}, {\"a\" : \"va2\", \"b\" : \"vb2\"}, {\"a\" : 1}, {\"a\" : []}]"));
+        configuration.setProtect(new DynamicValue<>(true));
 
-		dataSetArtefact.setDataSource(configuration);
-		dataSetArtefact.setDataSourceType(JSON_ARRAY);
-		dataSetArtefact.setItem(new DynamicValue<String>("dataSet"));
-		dataSetArtefact.setGlobalCounter(new DynamicValue<String>("globalCounter"));
-		dataSetArtefact.setUserItem(new DynamicValue<String>("userId"));
+        dataSetArtefact.setDataSource(configuration);
+        dataSetArtefact.setDataSourceType(JSON_ARRAY);
+        dataSetArtefact.setItem(new DynamicValue<String>("dataSet"));
+        dataSetArtefact.setGlobalCounter(new DynamicValue<String>("globalCounter"));
+        dataSetArtefact.setUserItem(new DynamicValue<String>("userId"));
 
-		String argumentStr = "{\"Col1\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"row.a\"}," +
-				"\"Col2\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"dataSet.next().a\"}}";
-		MyFunction function = newPassingFunctionWithInput();
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
-		callFunction.setArgument(new DynamicValue<>(argumentStr));
+        String argumentStr = "{\"Col1\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"row.a\"}," +
+            "\"Col2\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"dataSet.next().a\"}}";
+        MyFunction function = newPassingFunctionWithInput();
+        CallFunction callFunction = new CallFunction();
+        callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
+        callFunction.setArgument(new DynamicValue<>(argumentStr));
 
-		Plan plan = PlanBuilder.create().startBlock(sequence()).add(dataSetArtefact).add(set("row","dataSet.next()")).add(callFunction).endBlock().build();
-		plan.setFunctions(List.of(function));
-		PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
-		planRunnerResult.printTree();
-		CallFunctionReportNode node = getFirstCallFunctionReportNode(planRunnerResult);
+        Plan plan = PlanBuilder.create().startBlock(sequence()).add(dataSetArtefact).add(set("row", "dataSet.next()")).add(callFunction).endBlock().build();
+        plan.setFunctions(List.of(function));
+        PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
+        planRunnerResult.printTree();
+        CallFunctionReportNode node = getFirstCallFunctionReportNode(planRunnerResult);
 
-		assertNull(node.getError());
-		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		assertEquals("{\"Col1\":\"va1\",\"Col2\":\"va2\"}", node.getOutput());
-		assertEquals("{\"Col1\":\"***next().a***\",\"Col2\":\"***next().a***\"}", node.getInput());
+        assertNull(node.getError());
+        assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+        assertEquals("{\"Col1\":\"va1\",\"Col2\":\"va2\"}", node.getOutput());
+        assertEquals("{\"Col1\":\"***next().a***\",\"Col2\":\"***next().a***\"}", node.getInput());
 
-	}
+    }
 
-	private MyFunction newPassingFunctionWithInput() {
-		MyFunction function = new MyFunction(input -> {
-			Output<JsonObject> output = new Output<>();
+    private MyFunction newPassingFunctionWithInput() {
+        MyFunction function = new MyFunction(input -> {
+            Output<JsonObject> output = new Output<>();
 
-			output.setPayload(Json.createObjectBuilder().add("Col1", input.getPayload().getString("Col1"))
-					.add("Col2", input.getPayload().getString("Col2")).build());
-			return output;
-		});
-		function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
-		return function;
-	}
+            output.setPayload(Json.createObjectBuilder().add("Col1", input.getPayload().getString("Col1"))
+                .add("Col2", input.getPayload().getString("Col2")).build());
+            return output;
+        });
+        function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
+        return function;
+    }
 
-	protected static CallFunctionReportNode getFirstCallFunctionReportNode(PlanRunnerResult result) {
-		List<CallFunctionReportNode> callKWs = new ArrayList<>();
-		result.visitReportNodes(r -> {
-			if (r instanceof CallFunctionReportNode) {
-				callKWs.add((CallFunctionReportNode) r);
-			}
-		});
-		return callKWs.get(0);
-	}
+    protected static CallFunctionReportNode getFirstCallFunctionReportNode(PlanRunnerResult result) {
+        List<CallFunctionReportNode> callKWs = new ArrayList<>();
+        result.visitReportNodes(r -> {
+            if (r instanceof CallFunctionReportNode) {
+                callKWs.add((CallFunctionReportNode) r);
+            }
+        });
+        return callKWs.get(0);
+    }
 }
 

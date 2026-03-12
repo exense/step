@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -40,53 +40,53 @@ import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.
 
 public class TestScenarioHandler extends ArtefactHandler<TestScenario, ReportNode> {
 
-	@Override
-	public void createReportSkeleton_(ReportNode node, TestScenario testArtefact) {
-		TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
-		int numberOfThreads = testArtefact.getChildren().size();
-		numberOfThreads = context.require(ThreadPool.class).getEffectiveNumberOfThreads(numberOfThreads, numberOfThreads);
-		MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads);
-		pushNewTokenNumberCalculationContext(context, newTokenForecastingContext);
-		try {
-			for(AbstractArtefact child:getChildren(testArtefact)) {
-				delegateCreateReportSkeleton(child, node);
-				newTokenForecastingContext.nextIteration();
-			}
-		} finally {
-			newTokenForecastingContext.end();
-		}
-	}
+    @Override
+    public void createReportSkeleton_(ReportNode node, TestScenario testArtefact) {
+        TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
+        int numberOfThreads = testArtefact.getChildren().size();
+        numberOfThreads = context.require(ThreadPool.class).getEffectiveNumberOfThreads(numberOfThreads, numberOfThreads);
+        MaxAndMultiplyingTokenForecastingContext newTokenForecastingContext = new MaxAndMultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads);
+        pushNewTokenNumberCalculationContext(context, newTokenForecastingContext);
+        try {
+            for (AbstractArtefact child : getChildren(testArtefact)) {
+                delegateCreateReportSkeleton(child, node);
+                newTokenForecastingContext.nextIteration();
+            }
+        } finally {
+            newTokenForecastingContext.end();
+        }
+    }
 
-	@Override
-	public void execute_(final ReportNode node, TestScenario testArtefact) {
-		AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node);
-		
-		List<AbstractArtefact> artefacts = getChildren(testArtefact);
-		if (artefacts.isEmpty()) {
-			// empty scenario, report as passed
-			node.setStatus(ReportNodeStatus.PASSED);
-			return;
-		}
-		Iterator<AbstractArtefact> iterator = artefacts.iterator();
-		
-		ThreadPool threadPool = context.get(ThreadPool.class);
-		int effectiveNumberOfThreads = threadPool.getEffectiveNumberOfThreads(artefacts.size(), artefacts.size());
-		threadPool.consumeWork(iterator, new WorkerItemConsumerFactory<AbstractArtefact>() {
-			@Override
-			public Consumer<AbstractArtefact> createWorkItemConsumer(WorkerController<AbstractArtefact> control) {
-				return workItem -> {
-					ReportNode childReportNode = delegateExecute(workItem, node);
-					reportNodeStatusComposer.addStatusAndRecompose(childReportNode);
-				};
-			}
-		}, effectiveNumberOfThreads);
+    @Override
+    public void execute_(final ReportNode node, TestScenario testArtefact) {
+        AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(node);
 
-		reportNodeStatusComposer.applyComposedStatusToParentNode(node);
-	}
+        List<AbstractArtefact> artefacts = getChildren(testArtefact);
+        if (artefacts.isEmpty()) {
+            // empty scenario, report as passed
+            node.setStatus(ReportNodeStatus.PASSED);
+            return;
+        }
+        Iterator<AbstractArtefact> iterator = artefacts.iterator();
 
-	@Override
-	public ReportNode createReportNode_(ReportNode parentNode, TestScenario testArtefact) {
-		return new ReportNode();
-	}
+        ThreadPool threadPool = context.get(ThreadPool.class);
+        int effectiveNumberOfThreads = threadPool.getEffectiveNumberOfThreads(artefacts.size(), artefacts.size());
+        threadPool.consumeWork(iterator, new WorkerItemConsumerFactory<AbstractArtefact>() {
+            @Override
+            public Consumer<AbstractArtefact> createWorkItemConsumer(WorkerController<AbstractArtefact> control) {
+                return workItem -> {
+                    ReportNode childReportNode = delegateExecute(workItem, node);
+                    reportNodeStatusComposer.addStatusAndRecompose(childReportNode);
+                };
+            }
+        }, effectiveNumberOfThreads);
+
+        reportNodeStatusComposer.applyComposedStatusToParentNode(node);
+    }
+
+    @Override
+    public ReportNode createReportNode_(ReportNode parentNode, TestScenario testArtefact) {
+        return new ReportNode();
+    }
 
 }

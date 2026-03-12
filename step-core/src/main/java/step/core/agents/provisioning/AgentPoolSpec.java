@@ -50,6 +50,7 @@ public class AgentPoolSpec {
      */
     public String factoryUrl;
     public Set<AgentPoolProvisioningParameter> supportedProvisioningParameters;
+    public int factoryAgentStartTimeoutSeconds;
 
     public AgentPoolSpec() {
     }
@@ -74,10 +75,11 @@ public class AgentPoolSpec {
     @Override
     public String toString() {
         return "AgentPoolSpec{" +
-                "name='" + name + '\'' +
-                ", attributes=" + attributes +
-                ", numberOfTokens=" + numberOfTokens +
-                ", factoryUrl='" + factoryUrl + '\'' +
-                '}';
+            "name='" + name + '\'' +
+            ", attributes=" + attributes +
+            ", numberOfTokens=" + numberOfTokens +
+            ", factoryUrl='" + factoryUrl + '\'' +
+            ", factoryAgenStartTimeoutSeconds=" + factoryAgentStartTimeoutSeconds +
+            '}';
     }
 }

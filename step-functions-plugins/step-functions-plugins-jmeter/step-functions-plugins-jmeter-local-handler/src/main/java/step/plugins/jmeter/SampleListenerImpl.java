@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -35,96 +35,99 @@ import step.functions.io.OutputBuilder;
 
 public class SampleListenerImpl extends AbstractTestElement implements SampleListener, Cloneable {
 
-	private static final long serialVersionUID = -4394201534114759490L;
+    private static final long serialVersionUID = -4394201534114759490L;
 
-	private OutputBuilder outputBuilder;
-	
-	List<SampleResult> samples = Collections.synchronizedList(new ArrayList<>());
+    private OutputBuilder outputBuilder;
 
-	public SampleListenerImpl() {
-		super();
-	}
+    List<SampleResult> samples = Collections.synchronizedList(new ArrayList<>());
 
-	public SampleListenerImpl(OutputBuilder outputBuilder) {
-		super();
-		this.outputBuilder = outputBuilder;
-	}
+    public SampleListenerImpl() {
+        super();
+    }
 
-	@Override
-	public void sampleOccurred(SampleEvent e) {
-		SampleResult result = e.getResult();
-		samples.add(result);
-		outputBuilder.addMeasure(result.getSampleLabel(), result.getTime(), getDataMapForSample(result));
-	}
+    public SampleListenerImpl(OutputBuilder outputBuilder) {
+        super();
+        this.outputBuilder = outputBuilder;
+    }
 
-	private Map<String, Object> getDataMapForSample(SampleResult sample) {
-		// Using a LinkedHashMap ensures that keys are enumerated in the order they were added.
-		Map<String, Object> data = new LinkedHashMap<>();
+    @Override
+    public void sampleOccurred(SampleEvent e) {
+        SampleResult result = e.getResult();
+        samples.add(result);
+        outputBuilder.addMeasure(result.getSampleLabel(), result.getTime(), getDataMapForSample(result));
+    }
 
-		if(sample instanceof HTTPSampleResult) {
-			HTTPSampleResult httpSampleResult = (HTTPSampleResult) sample;
-			data.put("url", httpSampleResult.getUrlAsString());
-			data.put("httpMethod", httpSampleResult.getHTTPMethod());
-			data.put("responseCode", httpSampleResult.getResponseCode());
-		}
+    private Map<String, Object> getDataMapForSample(SampleResult sample) {
+        // Using a LinkedHashMap ensures that keys are enumerated in the order they were added.
+        Map<String, Object> data = new LinkedHashMap<>();
 
-		data.put("time", sample.getTime()); // this should be the elapsed time = duration for the full request
-		data.put("errorCount", sample.getErrorCount());
+        if (sample instanceof HTTPSampleResult) {
+            HTTPSampleResult httpSampleResult = (HTTPSampleResult) sample;
+            data.put("url", httpSampleResult.getUrlAsString());
+            data.put("httpMethod", httpSampleResult.getHTTPMethod());
+            data.put("responseCode", httpSampleResult.getResponseCode());
+        }
 
-		return data;
-	}
+        data.put("time", sample.getTime()); // this should be the elapsed time = duration for the full request
+        data.put("errorCount", sample.getErrorCount());
 
-	@Override
-	public void sampleStarted(SampleEvent e) {}
+        return data;
+    }
 
-	@Override
-	public void sampleStopped(SampleEvent e) {}
+    @Override
+    public void sampleStarted(SampleEvent e) {
+    }
 
-	/**
-	 * Collect the Jmeter samples and set business errors in any sample contain an error
-	 * @return true if not errors occurred, false otherwise
-	 */
-	public boolean collect() {
-		JsonArrayBuilder array = Json.createArrayBuilder();
-		Map<String, Long> erroredSamples = new LinkedHashMap<>();
+    @Override
+    public void sampleStopped(SampleEvent e) {
+    }
 
-		for(SampleResult sample:samples) {
-			JsonObjectBuilder object = Json.createObjectBuilder();
-			mapSampleAttributesToReturnObject(object, sample);
-			array.add(object.build());
+    /**
+     * Collect the Jmeter samples and set business errors in any sample contain an error
+     *
+     * @return true if not errors occurred, false otherwise
+     */
+    public boolean collect() {
+        JsonArrayBuilder array = Json.createArrayBuilder();
+        Map<String, Long> erroredSamples = new LinkedHashMap<>();
 
-			if (sample.getErrorCount() > 0) {
-				erroredSamples.merge(sample.getSampleLabel(), (long) sample.getErrorCount(), Long::sum);
-			}
-		}
+        for (SampleResult sample : samples) {
+            JsonObjectBuilder object = Json.createObjectBuilder();
+            mapSampleAttributesToReturnObject(object, sample);
+            array.add(object.build());
 
-		outputBuilder.getPayloadBuilder().add("samples", array.build());
+            if (sample.getErrorCount() > 0) {
+                erroredSamples.merge(sample.getSampleLabel(), (long) sample.getErrorCount(), Long::sum);
+            }
+        }
 
-		// We consider the keyword call to be failed (with a business exception) if any sample returned an error.
-		if (!erroredSamples.isEmpty()) {
-			String message = "The following samples returned errors (error count in parentheses): ";
-			message += erroredSamples.entrySet().stream().map(e -> e.getKey() + " (" + e.getValue() + ")").collect(Collectors.joining(", "));
-			outputBuilder.setBusinessError(message);
-			return false;
-		} else {
-			return true;
-		}
-	}
-	
-	private void mapSampleAttributesToReturnObject(JsonObjectBuilder object, SampleResult sample) {
-		object.add("label", sample.getSampleLabel());
-		Map<String, Object> attributes = getDataMapForSample(sample);
-		attributes.forEach((key, valueObject) -> {
-			String value = Optional.ofNullable(valueObject).map(Object::toString).orElse("null");
-			object.add(key, value);
-		});
-	}
+        outputBuilder.getPayloadBuilder().add("samples", array.build());
 
-	@Override
-	public Object clone() {
-		Object clone =  super.clone();
-		((SampleListenerImpl)clone).outputBuilder = outputBuilder;
-		((SampleListenerImpl)clone).samples = samples;
-		return clone;
-	}
+        // We consider the keyword call to be failed (with a business exception) if any sample returned an error.
+        if (!erroredSamples.isEmpty()) {
+            String message = "The following samples returned errors (error count in parentheses): ";
+            message += erroredSamples.entrySet().stream().map(e -> e.getKey() + " (" + e.getValue() + ")").collect(Collectors.joining(", "));
+            outputBuilder.setBusinessError(message);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private void mapSampleAttributesToReturnObject(JsonObjectBuilder object, SampleResult sample) {
+        object.add("label", sample.getSampleLabel());
+        Map<String, Object> attributes = getDataMapForSample(sample);
+        attributes.forEach((key, valueObject) -> {
+            String value = Optional.ofNullable(valueObject).map(Object::toString).orElse("null");
+            object.add(key, value);
+        });
+    }
+
+    @Override
+    public Object clone() {
+        Object clone = super.clone();
+        ((SampleListenerImpl) clone).outputBuilder = outputBuilder;
+        ((SampleListenerImpl) clone).samples = samples;
+        return clone;
+    }
 }

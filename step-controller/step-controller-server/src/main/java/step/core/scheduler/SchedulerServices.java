@@ -32,13 +32,11 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.repositories.RepositoryObjectReference;
 import step.framework.server.Session;
+import step.framework.server.audit.AuditLogger;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @Singleton
 @Path("scheduler/task")
@@ -88,11 +86,12 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
         // when create/update the execution task, we need to check that user defined in execution parameters have rights to execute it
         checkRightsOnBehalfOf("plan-execute", schedule.getExecutionsParameters().getUserID());
 
-		try {
+        try {
             scheduler.addOrUpdateExecutionTask(schedule);
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
+        auditLog("save", schedule);
         return schedule;
     }
 
@@ -131,6 +130,8 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
         } else {
             scheduler.disableAllExecutionTasksSchedule();
         }
+        // sample log: INFO  AuditLogger - {"user":"admin","operation":"manage-scheduler","type":"scheduler","name":"scheduler","id":null,"attributes":{"enabled":"false"}}
+        AuditLogger.logEntityModification(getSession(), "manage-scheduler", "scheduler", null, "scheduler", Map.of("enabled", Boolean.toString(Boolean.TRUE.equals(enabled))));
     }
 
     @Operation(description = "Enable/disable the given scheduler task.")
@@ -139,10 +140,17 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Secured(right = "{entity}-toggle")
     public void enableExecutionTask(@PathParam("id") String executionTaskID, @QueryParam("enabled") Boolean enabled) {
         try {
+            String auditOperation;
             if (enabled != null && enabled) {
                 scheduler.enableExecutionTask(executionTaskID);
+                auditOperation = "enable";
             } else {
                 scheduler.disableExecutionTask(executionTaskID);
+                auditOperation = "disable";
+            }
+            if (AuditLogger.isEntityModificationsLoggingEnabled()) {
+                ExecutiontTaskParameters auditTask = scheduler.get(executionTaskID);
+                auditLog(auditOperation, auditTask);
             }
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
@@ -152,7 +160,9 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Override
     @Secured(right = "{entity}-delete")
     public void delete(String id) {
-        assertEntityIsEditableInContext(getEntity(id));
+        ExecutiontTaskParameters task = getEntity(id);
+        assertEntityIsEditableInContext(task);
+        auditLog("delete", task);
         scheduler.removeExecutionTask(id);
     }
 }

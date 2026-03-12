@@ -95,12 +95,11 @@ public class TokenForecastingContext {
         @Override
         public String toString() {
             return "Key{" +
-                    "matchingPools=" + matchingPools +
-                    ", provisioningParameters=" + provisioningParameters +
-                    '}';
+                "matchingPools=" + matchingPools +
+                ", provisioningParameters=" + provisioningParameters +
+                '}';
         }
     }
-
 
 
     protected void releaseRequiredToken(Key key, int count) {
@@ -116,7 +115,7 @@ public class TokenForecastingContext {
             this.score = score;
         }
     }
-    
+
     private Set<AgentPoolSpec> getBestMatchingPools(Map<String, Interest> criteria) throws NoMatchingTokenPoolException {
         PreProvisioningTokenAffinityEvaluator affinityEvaluator = new PreProvisioningTokenAffinityEvaluator();
         // Find all the agent pools that match the criteria among the available agent pools
@@ -124,11 +123,11 @@ public class TokenForecastingContext {
         // - we filter out the agent pools that have a score lower than 1
         // - we order the result by decreasing score
         List<AgentPoolSpecAndScore> matchingAgentPools = availableAgentPools.stream()
-                .map(entry -> new AgentPoolSpecAndScore(entry, affinityEvaluator.getAffinityScore(new TokenPretender(Map.of(), criteria), new TokenPretender(entry.attributes, Map.of()))))
-                .filter(o -> o.score > 0).sorted(Comparator.comparingInt(o -> o.score)).collect(Collectors.toList());
+            .map(entry -> new AgentPoolSpecAndScore(entry, affinityEvaluator.getAffinityScore(new TokenPretender(Map.of(), criteria), new TokenPretender(entry.attributes, Map.of()))))
+            .filter(o -> o.score > 0).sorted(Comparator.comparingInt(o -> o.score)).collect(Collectors.toList());
 
         int size = matchingAgentPools.size();
-        if(size == 0) {
+        if (size == 0) {
             // No matching agent pool could be found
             throw new NoMatchingTokenPoolException();
         } else if (size == 1) {
@@ -153,13 +152,13 @@ public class TokenForecastingContext {
         getTokenForecastPerKey().forEach((key, requiredNumberOfTokens) -> {
             // Sort the matching pools by descending number of tokens
             List<AgentPoolSpec> matchingPools = key.matchingPools.stream()
-                    .sorted(Comparator.comparingInt(o -> -o.numberOfTokens)).collect(Collectors.toList());
+                .sorted(Comparator.comparingInt(o -> -o.numberOfTokens)).collect(Collectors.toList());
 
             // If we have more than one matching pool, we calculate the combination than minimizes the total number of agents
             int remainingTokenCount = requiredNumberOfTokens;
             for (AgentPoolSpec pool : matchingPools.subList(0, matchingPools.size() - 1)) {
                 int nAgents = (remainingTokenCount - (remainingTokenCount % pool.numberOfTokens)) / pool.numberOfTokens;
-                if(nAgents > 0) {
+                if (nAgents > 0) {
                     result.add(new AgentPoolRequirementSpec(pool.name, key.provisioningParameters, nAgents));
                     remainingTokenCount = remainingTokenCount - nAgents * pool.numberOfTokens;
                 }
@@ -168,7 +167,7 @@ public class TokenForecastingContext {
             // to guaranty the total number of tokens
             AgentPoolSpec lastAgentPool = matchingPools.get(matchingPools.size() - 1);
             int nAgents = (int) Math.ceil((1.0 * remainingTokenCount) / lastAgentPool.numberOfTokens);
-            if(nAgents > 0) {
+            if (nAgents > 0) {
                 result.add(new AgentPoolRequirementSpec(lastAgentPool.name, key.provisioningParameters, nAgents));
             }
         });

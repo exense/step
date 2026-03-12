@@ -33,12 +33,12 @@ import java.io.StringReader;
 
 import static org.junit.Assert.assertEquals;
 
-public class CheckHandlerTest extends AbstractArtefactHandlerTest{
+public class CheckHandlerTest extends AbstractArtefactHandlerTest {
 
     private static final Logger log = LoggerFactory.getLogger(CheckHandlerTest.class);
 
     @Test
-    public void testExpressions(){
+    public void testExpressions() {
         runExpression("output.MyJsonString == \"jsonValue1\"", ReportNodeStatus.PASSED);
         runExpression("output.MyJsonString == \"jsonValueIncorrect\"", ReportNodeStatus.FAILED);
 
@@ -74,22 +74,22 @@ public class CheckHandlerTest extends AbstractArtefactHandlerTest{
 
         CallFunctionReportNode callNode = new CallFunctionReportNode();
         String json = "{\n" +
-                "  \"MyJsonString\": \"jsonValue1\",\n" +
-                "  \"MyJsonInt\": 888,\n" +
-                "  \"MyJsonBool\": true,\n" +
-                "  \"MyJsonNested\": {\n" +
-                "    \"MyJsonNestedString\": \"jsonValue2\",\n" +
-                "    \"MyJsonNestedInt\": 999\n" +
-                "  },\n" +
-                "  \"MyJsonArray\": [\n" +
-                "    {\n" +
-                "      \"MyArrayValue\": \"arrayValue1\"\n" +
-                "    },\n" +
-                "    {\n" +
-                "      \"MyArrayValue\": \"arrayValue2\"\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}";
+            "  \"MyJsonString\": \"jsonValue1\",\n" +
+            "  \"MyJsonInt\": 888,\n" +
+            "  \"MyJsonBool\": true,\n" +
+            "  \"MyJsonNested\": {\n" +
+            "    \"MyJsonNestedString\": \"jsonValue2\",\n" +
+            "    \"MyJsonNestedInt\": 999\n" +
+            "  },\n" +
+            "  \"MyJsonArray\": [\n" +
+            "    {\n" +
+            "      \"MyArrayValue\": \"arrayValue1\"\n" +
+            "    },\n" +
+            "    {\n" +
+            "      \"MyArrayValue\": \"arrayValue2\"\n" +
+            "    }\n" +
+            "  ]\n" +
+            "}";
         JsonObject o = Json.createReader(new StringReader(json)).readObject();
         callNode.setStatus(ReportNodeStatus.PASSED);
         callNode.setOutputObject(o);

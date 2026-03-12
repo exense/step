@@ -26,7 +26,7 @@ import static step.repositories.LocalRepository.getPlanId;
  * It must run before FunctionPlugin.initializeExecutionContext which create the cached accessor for keywords
  */
 @IgnoreDuringAutoDiscovery
-@Plugin(runsBefore= FunctionPlugin.class)
+@Plugin(runsBefore = FunctionPlugin.class)
 public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(AutomationPackageExecutionPlugin.class);
@@ -48,8 +48,8 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
                 if (!locked) {
                     debugLog(automationPackageExecutionContext, "Timeout while acquiring read lock on automation package.");
                     throw new PluginCriticalException("Timeout while acquiring lock on automation package with id " +
-                            automationPackageExecutionContext.automationPackageId + ". This usually means that an update of this automation package is on-going and took more than the property " +
-                            AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS + " (default " + AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT + " seconds)");
+                        automationPackageExecutionContext.automationPackageId + ". This usually means that an update of this automation package is on-going and took more than the property " +
+                        AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS + " (default " + AUTOMATION_PACKAGE_READ_LOCK_TIMEOUT_SECS_DEFAULT + " seconds)");
                 } else {
                     executionContext.put(EXECUTION_CONTEXT_LOCK_ID, automationPackageExecutionContext.automationPackageId);
                     debugLog(automationPackageExecutionContext, "Acquired read lock on automation package.");
@@ -84,7 +84,7 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
     private void debugLog(AutomationPackageExecutionContext apContext, String message) {
         if (logger.isDebugEnabled()) {
             logger.debug(message + " Id: " + apContext.automationPackageId + ", execution id: " +
-                    apContext.context.getExecutionId() + ",  plan: " + apContext.planName);
+                apContext.context.getExecutionId() + ",  plan: " + apContext.planName);
         }
     }
 
@@ -108,6 +108,7 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
          *  <li>a custom field in the plan object referenced in the execution parameters</li>
          *  <li>lastly for local plan repository we fetch the plan from DB and check its custom fields too</li>
          *  </ul>
+         *
          * @param context the execution context for which we want to extract the AP ID
          */
         public AutomationPackageExecutionContext(ExecutionContext context) {
@@ -119,13 +120,13 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
                 //Either it is already set in the execution parameters (which is the case for schedules deployed from AP)
                 apID = (String) executionParameters.getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
                 resolvedPlanName = (executionParameters.getPlan() != null) ?
-                        executionParameters.getPlan().getAttribute(AbstractOrganizableObject.NAME) :
-                        executionParameters.getDescription();
+                    executionParameters.getPlan().getAttribute(AbstractOrganizableObject.NAME) :
+                    executionParameters.getDescription();
                 if (apID == null) {
                     // Or it can be defined in the repository parameters (case for RepositoryWithAutomationPackageSupport)
                     RepositoryObjectReference repositoryObject = executionParameters.getRepositoryObject();
-                    Map<String, String> repositoryParameters = (repositoryObject != null) ? repositoryObject.getRepositoryParameters(): null;
-                    String repoParametersAppID = (repositoryParameters != null) ? repositoryParameters.get(AP_ID): null;
+                    Map<String, String> repositoryParameters = (repositoryObject != null) ? repositoryObject.getRepositoryParameters() : null;
+                    String repoParametersAppID = (repositoryParameters != null) ? repositoryParameters.get(AP_ID) : null;
                     if (repoParametersAppID != null) {
                         apID = repoParametersAppID;
                     } else {
@@ -133,8 +134,8 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
                         if (executionParameters.getPlan() != null) {
                             apID = (String) executionParameters.getPlan().getCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
                         } else if (repositoryObject != null &&
-                                repositoryObject.getRepositoryID().equals(RepositoryObjectReference.LOCAL_REPOSITORY_ID) &&
-                                repositoryParameters != null) {
+                            repositoryObject.getRepositoryID().equals(RepositoryObjectReference.LOCAL_REPOSITORY_ID) &&
+                            repositoryParameters != null) {
                             //last chance if it's a local repo, we get the plan from the DB
                             String planId = getPlanId(repositoryParameters);
                             Plan plan = context.getPlanAccessor().get(planId);

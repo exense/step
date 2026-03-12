@@ -28,109 +28,112 @@ import static step.plugins.timeseries.MetricsConstants.EXECUTION_RESULT;
 import static step.plugins.timeseries.MetricsConstants.EXECUTION_BOOLEAN_RESULT;
 
 @IgnoreDuringAutoDiscovery
-@Plugin(dependencies= {ViewPlugin.class, ExecutionTypePlugin.class})
+@Plugin(dependencies = {ViewPlugin.class, ExecutionTypePlugin.class})
 public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
-	// TODO find a better place to define this constant
-	public static final String METRIC_TYPE = "metricType";
+    // TODO find a better place to define this constant
+    public static final String METRIC_TYPE = "metricType";
 
-	public static final String EXECUTIONS_DURATION = "executions/duration";
-	public static final String EXECUTIONS_COUNT = "executions/count";
-	public static final String FAILURE_PERCENTAGE = "executions/failure-percentage";
-	public static final String FAILURE_COUNT = "executions/failure-count";
-	public static final String FAILURES_COUNT_BY_ERROR_CODE = "executions/failures-count-by-error-code";
-	public static final String RESPONSE_TIME = "response-time";
-	public static final String THREAD_GROUP = "threadgroup";
-	public static final String ERROR_CODE = "errorCode";
-	public static String TIMESERIES_FLAG = "hasTimeSeries";
+    public static final String EXECUTIONS_DURATION = "executions/duration";
+    public static final String EXECUTIONS_COUNT = "executions/count";
+    public static final String FAILURE_PERCENTAGE = "executions/failure-percentage";
+    public static final String FAILURE_COUNT = "executions/failure-count";
+    public static final String FAILURES_COUNT_BY_ERROR_CODE = "executions/failures-count-by-error-code";
+    public static final String RESPONSE_TIME = "response-time";
+    public static final String THREAD_GROUP = "threadgroup";
+    public static final String ERROR_CODE = "errorCode";
+    public static String TIMESERIES_FLAG = "hasTimeSeries";
 
-	public static final String EXECUTION_ID = "eId";
-	public static final String TASK_ID = "taskId";
-	public static final String PLAN_ID = "planId";
+    public static final String EXECUTION_ID = "eId";
+    public static final String TASK_ID = "taskId";
+    public static final String PLAN_ID = "planId";
 
-	private final TimeSeries timeSeries;
+    private final TimeSeries timeSeries;
 
-	public TimeSeriesExecutionPlugin(TimeSeries timeSeries) {
-		this.timeSeries = timeSeries;
-	}
+    public TimeSeriesExecutionPlugin(TimeSeries timeSeries) {
+        this.timeSeries = timeSeries;
+    }
 
-	@Override
-	public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-		super.initializeExecutionContext(executionEngineContext, executionContext);
-		TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getIngestionPipeline();
-		TreeMap<String, String> additionalAttributes = executionContext.getObjectEnricher().getAdditionalAttributes();
-		TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null, new TimeSeriesIngestionPipelineSettings()) {
-			@Override
-			public void ingestPoint(Map<String, Object> attributes, long timestamp, long value) {
-				attributes.putAll(additionalAttributes);
-				mainIngestionPipeline.ingestPoint(attributes, timestamp, value);
-			}
+    @Override
+    public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+        super.initializeExecutionContext(executionEngineContext, executionContext);
+        TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getIngestionPipeline();
+        TreeMap<String, String> additionalAttributes = executionContext.getObjectEnricher().getAdditionalAttributes();
+        //Crete a wrapper of the ingestion pipeline to automatically enrich data with execution attributes
+        //This approach is quite error-prone and should be refactored
+        TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null,
+            new TimeSeriesIngestionPipelineSettings().setResolution(mainIngestionPipeline.getResolution())) {
+            @Override
+            public void ingestPoint(Map<String, Object> attributes, long timestamp, long value) {
+                attributes.putAll(additionalAttributes);
+                mainIngestionPipeline.ingestPoint(attributes, timestamp, value);
+            }
 
-			@Override
-			public void flush() {
-				mainIngestionPipeline.flush();
-			}
+            @Override
+            public void flush() {
+                mainIngestionPipeline.flush();
+            }
 
-			@Override
-			public long getFlushCount() {
-				return mainIngestionPipeline.getFlushCount();
-			}
+            @Override
+            public long getFlushCount() {
+                return mainIngestionPipeline.getFlushCount();
+            }
 
-			@Override
-			public void close() {
-				mainIngestionPipeline.close();
-			}
-		};
+            @Override
+            public void close() {
+                mainIngestionPipeline.close();
+            }
+        };
 
-		executionContext.put(TimeSeriesAggregationPipeline.class, timeSeries.getAggregationPipeline());
-		executionContext.put(TimeSeriesIngestionPipeline.class, ingestionPipeline);
+        executionContext.put(TimeSeriesAggregationPipeline.class, timeSeries.getAggregationPipeline());
+        executionContext.put(TimeSeriesIngestionPipeline.class, ingestionPipeline);
 
-		Execution execution = executionContext.getExecutionAccessor().get(executionContext.getExecutionId());
-		if (execution != null) {
-			execution.addCustomField(TIMESERIES_FLAG,true);
-			executionContext.getExecutionAccessor().save(execution);
-		}
-	}
+        Execution execution = executionContext.getExecutionAccessor().get(executionContext.getExecutionId());
+        if (execution != null) {
+            execution.addCustomField(TIMESERIES_FLAG, true);
+            executionContext.getExecutionAccessor().save(execution);
+        }
+    }
 
-	@Override
-	public void afterExecutionEnd(ExecutionContext context) {
-		TimeSeriesIngestionPipeline ingestionPipeline = context.require(TimeSeriesIngestionPipeline.class);
-		ExecutionAccessor executionAccessor = context.getExecutionAccessor();
-		Execution execution = executionAccessor.get(context.getExecutionId());
-		ViewManager viewManager = context.require(ViewManager.class);
-		ExecutionTypeManager executionTypeManager = context.require(ExecutionTypeManager.class);
+    @Override
+    public void afterExecutionEnd(ExecutionContext context) {
+        TimeSeriesIngestionPipeline ingestionPipeline = context.require(TimeSeriesIngestionPipeline.class);
+        ExecutionAccessor executionAccessor = context.getExecutionAccessor();
+        Execution execution = executionAccessor.get(context.getExecutionId());
+        ViewManager viewManager = context.require(ViewManager.class);
+        ExecutionTypeManager executionTypeManager = context.require(ExecutionTypeManager.class);
 
-		if (executionTypeManager.get(execution.getExecutionType()).generateExecutionMetrics()) {
-			boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
+        if (executionTypeManager.get(execution.getExecutionType()).generateExecutionMetrics()) {
+            boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
 
-			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_COUNT)), execution.getStartTime(), 1);
-			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_PERCENTAGE)), execution.getStartTime(), executionPassed ? 0 : 100);
-			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_COUNT)), execution.getStartTime(), executionPassed ? 0 : 1);
-			// Execution.endTime is not set at this stage. Use the current time instead. It's not really nice but we have no other option for now
-			ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_DURATION, EXECUTION_RESULT.getName(), execution.getResult().toString(), EXECUTION_BOOLEAN_RESULT.getName(), executionPassed ? "PASSED":"FAILED" )), execution.getStartTime(), System.currentTimeMillis() - execution.getStartTime());
+            ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_COUNT)), execution.getStartTime(), 1);
+            ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_PERCENTAGE)), execution.getStartTime(), executionPassed ? 0 : 100);
+            ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURE_COUNT)), execution.getStartTime(), executionPassed ? 0 : 1);
+            // Execution.endTime is not set at this stage. Use the current time instead. It's not really nice but we have no other option for now
+            ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, EXECUTIONS_DURATION, EXECUTION_RESULT.getName(), execution.getResult().toString(), EXECUTION_BOOLEAN_RESULT.getName(), executionPassed ? "PASSED" : "FAILED")), execution.getStartTime(), System.currentTimeMillis() - execution.getStartTime());
 
-			ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
+            ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
 
-			errorDistribution.getCountByErrorCode().entrySet().forEach(entry -> {
-				ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURES_COUNT_BY_ERROR_CODE, ERROR_CODE, entry.getKey())), execution.getStartTime(), entry.getValue() > 0 ? 1 : 0);
-			});
+            errorDistribution.getCountByErrorCode().entrySet().forEach(entry -> {
+                ingestionPipeline.ingestPoint(withExecutionAttributes(execution, Map.of(METRIC_TYPE, FAILURES_COUNT_BY_ERROR_CODE, ERROR_CODE, entry.getKey())), execution.getStartTime(), entry.getValue() > 0 ? 1 : 0);
+            });
 
-			// Ensure that all measurements have been flushed before the execution ends
-			// This is critical for the SchedulerTaskAssertions to work properly
-			ingestionPipeline.flush();
-		}
+            // Ensure that all measurements have been flushed before the execution ends
+            // This is critical for the SchedulerTaskAssertions to work properly
+            ingestionPipeline.flush();
+        }
 
-		super.afterExecutionEnd(context);
-	}
+        super.afterExecutionEnd(context);
+    }
 
-	private BucketAttributes withExecutionAttributes(Execution execution, Map<String, Object> attributes) {
-		HashMap<String, Object> result = new HashMap<>(attributes);
-		result.put(EXECUTION_ID, execution.getId().toString());
-		String executionTaskID = execution.getExecutionTaskID();
-		if (executionTaskID != null) {
-			result.put(TASK_ID, executionTaskID);
-		}
-		result.put(PLAN_ID, execution.getPlanId());
-		return new BucketAttributes(result);
-	}
+    private BucketAttributes withExecutionAttributes(Execution execution, Map<String, Object> attributes) {
+        HashMap<String, Object> result = new HashMap<>(attributes);
+        result.put(EXECUTION_ID, execution.getId().toString());
+        String executionTaskID = execution.getExecutionTaskID();
+        if (executionTaskID != null) {
+            result.put(TASK_ID, executionTaskID);
+        }
+        result.put(PLAN_ID, execution.getPlanId());
+        return new BucketAttributes(result);
+    }
 }

@@ -70,12 +70,12 @@ public class DeployLibraryMojo extends AbstractStepPluginMojo {
         MavenArtifactIdentifier remoteApMavenIdentifier = getRemoteMavenIdentifier();
         File localFile = remoteApMavenIdentifier != null ? null : DeployLibraryMojo.this.getFileToUpload();
         return new MavenDeployLibraryTool(
-                url, new LibraryDeployParameters()
-                .setStepProjectName(projectName)
-                .setAuthToken(authToken)
-                .setManagedLibraryName(managedLibraryName)
-                .setLibraryFile(localFile)
-                .setLibraryMavenArtifact(remoteApMavenIdentifier)
+            url, new LibraryDeployParameters()
+            .setStepProjectName(projectName)
+            .setAuthToken(authToken)
+            .setManagedLibraryName(managedLibraryName)
+            .setLibraryFile(localFile)
+            .setLibraryMavenArtifact(remoteApMavenIdentifier)
 
         );
     }
@@ -175,6 +175,15 @@ public class DeployLibraryMojo extends AbstractStepPluginMojo {
                 DeployLibraryMojo.this.getLog().info(infoText, e);
             } else {
                 DeployLibraryMojo.this.getLog().info(infoText);
+            }
+        }
+
+        @Override
+        public void logDebug(String infoText, Throwable e) {
+            if (e != null) {
+                DeployLibraryMojo.this.getLog().debug(infoText, e);
+            } else {
+                DeployLibraryMojo.this.getLog().debug(infoText);
             }
         }
     }

@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -28,46 +28,46 @@ import java.util.Objects;
 
 public class ArtefactTypeIdResolver implements TypeIdResolver {
 
-	@Override
-	public Id getMechanism() {
-		return Id.CUSTOM;
-	}
+    @Override
+    public Id getMechanism() {
+        return Id.CUSTOM;
+    }
 
-	@Override
-	public String idFromBaseType() {
-		return null;
-	}
+    @Override
+    public String idFromBaseType() {
+        return null;
+    }
 
-	@Override
-	public String idFromValue(Object arg0) {
-		return idFromClass(arg0.getClass());
-	}
-	
-	@SuppressWarnings("unchecked")
-	private String idFromClass(Class<?>c) {
-		return ArtefactTypeCache.getArtefactName((Class<? extends AbstractArtefact>) c);
-	}
+    @Override
+    public String idFromValue(Object arg0) {
+        return idFromClass(arg0.getClass());
+    }
 
-	@Override
-	public String idFromValueAndType(Object arg0, Class<?> arg1) {
-		return idFromClass(arg1);
-	}
+    @SuppressWarnings("unchecked")
+    private String idFromClass(Class<?> c) {
+        return ArtefactTypeCache.getArtefactName((Class<? extends AbstractArtefact>) c);
+    }
 
-	@Override
-	public void init(JavaType arg0) {
-	}
+    @Override
+    public String idFromValueAndType(Object arg0, Class<?> arg1) {
+        return idFromClass(arg1);
+    }
 
-	@Override
-	public JavaType typeFromId(DatabindContext arg0, String arg1) {
-		Class<? extends AbstractArtefact> artefactClass = ArtefactTypeCache.getArtefactType(arg1);
-		Objects.requireNonNull(artefactClass,"Artefact unknown : " + arg1);
-		return TypeFactory.defaultInstance().constructType(artefactClass);
-	}
+    @Override
+    public void init(JavaType arg0) {
+    }
 
-	@Override
-	public String getDescForKnownTypeIds() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public JavaType typeFromId(DatabindContext arg0, String arg1) {
+        Class<? extends AbstractArtefact> artefactClass = ArtefactTypeCache.getArtefactType(arg1);
+        Objects.requireNonNull(artefactClass, "Artefact unknown : " + arg1);
+        return TypeFactory.defaultInstance().constructType(artefactClass);
+    }
+
+    @Override
+    public String getDescForKnownTypeIds() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 }

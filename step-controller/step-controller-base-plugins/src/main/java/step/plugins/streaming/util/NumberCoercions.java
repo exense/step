@@ -10,14 +10,15 @@ import java.math.BigInteger;
  * underscores in large numbers (e.g. 100_000_000).
  */
 public final class NumberCoercions {
-    private NumberCoercions() {}
+    private NumberCoercions() {
+    }
 
     /**
      * Convert a dynamic Groovy/Java value to a Long.
      * Strict rules:
-     *  - Only integral values are accepted (no fractional part).
-     *  - Must fit in the signed 64-bit range.
-     *  - Strings/GStrings are parsed in base 10 (underscores allowed).
+     * - Only integral values are accepted (no fractional part).
+     * - Must fit in the signed 64-bit range.
+     * - Strings/GStrings are parsed in base 10 (underscores allowed).
      *
      * @throws IllegalArgumentException if the value cannot be converted exactly.
      */

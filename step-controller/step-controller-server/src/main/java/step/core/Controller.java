@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -75,160 +75,160 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Controller {
 
-	public static final Version VERSION = Constants.STEP_API_VERSION;
+    public static final Version VERSION = Constants.STEP_VERSION;
 
-	public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
-	public static final String USER = "user";
-	private Configuration configuration;
-	
-	private GlobalContext context;
-	
-	private ServiceRegistrationCallback serviceRegistrationCallback;
-	
-	private CollectionFactory collectionFactory;
-	private ReportNodeTimeSeries reportNodeTimeSeries;
+    public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
+    public static final String USER = "user";
+    private Configuration configuration;
 
-	public Controller(GlobalContext context) {
-		super();
-		this.context = context;
-		this.configuration = context.getConfiguration();
-		ContextFactory ctx;
-	}
+    private GlobalContext context;
 
-	public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {			
-		this.serviceRegistrationCallback = serviceRegistrationCallback;
-		
-		initContext();
-		context.setServiceRegistrationCallback(serviceRegistrationCallback);
-	}
-	
-	private void initContext() throws ClassNotFoundException, PluginManager.Builder.CircularDependencyException, InstantiationException, IllegalAccessException {
-		context.setConfiguration(configuration);
-		context.setArtefactHandlerRegistry(new ArtefactHandlerRegistry());
-		//Set version here for now
-		context.put(Version.class, Controller.VERSION);
-		
-		collectionFactory = CollectionFactoryConfigurationParser.parseConfiguration(configuration);
-		context.setCollectionFactory(collectionFactory);
+    private ServiceRegistrationCallback serviceRegistrationCallback;
 
-		context.setContorllerPluginManager(new ControllerPluginManager(context.require(ServerPluginManager.class)));
+    private CollectionFactory collectionFactory;
+    private ReportNodeTimeSeries reportNodeTimeSeries;
 
-		NoAuthorizationManager noAccessManager = new NoAuthorizationManager();
-		context.put(AuthorizationManager.class, noAccessManager);
+    public Controller(GlobalContext context) {
+        super();
+        this.context = context;
+        this.configuration = context.getConfiguration();
+        ContextFactory ctx;
+    }
 
-		SessionResponseBuilder sessionResponseBuilder = new SessionResponseBuilder();
-		context.put(SessionResponseBuilder.class, sessionResponseBuilder);
-		sessionResponseBuilder.registerHook(s -> Map.of("username", s.getUser().getSessionUsername()));
-		//AuthorizationManager might get overwritten by plugins, FE still need a default role in OS
-		sessionResponseBuilder.registerHook(s -> Map.of("role", context.get(AuthorizationManager.class).getRoleInContext(s)));
-		sessionResponseBuilder.registerHook(s -> Map.of("authenticated", s.isAuthenticated()));
+    public void init(ServiceRegistrationCallback serviceRegistrationCallback) throws Exception {
+        this.serviceRegistrationCallback = serviceRegistrationCallback;
 
-		ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));
+        initContext();
+        context.setServiceRegistrationCallback(serviceRegistrationCallback);
+    }
 
-		Collection<ResourceRevision> resourceRevisionCollection = collectionFactory.getCollection(EntityConstants.resourceRevisions, ResourceRevision.class);
-		resourceRevisionCollection.createOrUpdateIndex("resourceId");
-		ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(resourceRevisionCollection);
+    private void initContext() throws ClassNotFoundException, PluginManager.Builder.CircularDependencyException, InstantiationException, IllegalAccessException {
+        context.setConfiguration(configuration);
+        context.setArtefactHandlerRegistry(new ArtefactHandlerRegistry());
+        //Set version here for now
+        context.put(Version.class, Controller.VERSION);
 
-		String resourceRootDir = ResourceManagerControllerPlugin.getResourceDir(configuration);
-		ResourceManager resourceManager = new ResourceManagerImpl(new File(resourceRootDir), resourceAccessor, resourceRevisionAccessor);
-		context.setResourceManager(resourceManager);
+        collectionFactory = CollectionFactoryConfigurationParser.parseConfiguration(configuration);
+        context.setCollectionFactory(collectionFactory);
 
-		TableRegistry tableRegistry = new TableRegistry();
-		context.put(TableRegistry.class, tableRegistry);		
-		ExecutionAccessorImpl executionAccessor = new ExecutionAccessorImpl(
-				collectionFactory.getCollection("executions", Execution.class));
-		context.setExecutionAccessor(executionAccessor);		
+        context.setContorllerPluginManager(new ControllerPluginManager(context.require(ServerPluginManager.class)));
 
-		PlanAccessorImpl plans = new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class));
-		plans.createDefaultIndexIfNeeded();
-		context.setPlanAccessor(plans);
+        NoAuthorizationManager noAccessManager = new NoAuthorizationManager();
+        context.put(AuthorizationManager.class, noAccessManager);
 
-		context.setReportNodeAccessor(
-				new ReportNodeAccessorImpl(collectionFactory.getCollection("reports", ReportNode.class)));
-		reportNodeTimeSeries = new ReportNodeTimeSeries(collectionFactory, context.getConfiguration());
-		context.put(ReportNodeTimeSeries.class, reportNodeTimeSeries);
-		context.put(ResolvedPlanNodeAccessor.class, new ResolvedPlanNodeAccessor(collectionFactory));
-		context.setScheduleAccessor(new ExecutionTaskAccessorImpl(
-				collectionFactory.getCollection("tasks", ExecutiontTaskParameters.class)));
+        SessionResponseBuilder sessionResponseBuilder = new SessionResponseBuilder();
+        context.put(SessionResponseBuilder.class, sessionResponseBuilder);
+        sessionResponseBuilder.registerHook(s -> Map.of("username", s.getUser().getSessionUsername()));
+        //AuthorizationManager might get overwritten by plugins, FE still need a default role in OS
+        sessionResponseBuilder.registerHook(s -> Map.of("role", context.get(AuthorizationManager.class).getRoleInContext(s)));
+        sessionResponseBuilder.registerHook(s -> Map.of("authenticated", s.isAuthenticated()));
 
-		Collection<User> userCollection = collectionFactory.getCollection("users", User.class);
-		context.setUserAccessor(new UserAccessorImpl(userCollection));
-		tableRegistry.register("users", new Table<>(userCollection, "user-read",false));
+        ResourceAccessor resourceAccessor = new ResourceAccessorImpl(collectionFactory.getCollection("resources", Resource.class));
 
-		ObjectScopeRegistry objectScopeRegistry = new ObjectScopeRegistry();
-		objectScopeRegistry.register(USER, new ObjectScopeHandler(USER) {
-			@Override
-			protected String getScopeValue(Session<?> session) {
-				AbstractUser user = session.getUser();
-				return (user != null) ? user.getSessionUsername() : null;
-			}
+        Collection<ResourceRevision> resourceRevisionCollection = collectionFactory.getCollection(EntityConstants.resourceRevisions, ResourceRevision.class);
+        resourceRevisionCollection.createOrUpdateIndex("resourceId");
+        ResourceRevisionAccessor resourceRevisionAccessor = new ResourceRevisionAccessorImpl(resourceRevisionCollection);
 
-			@Override
-			public int getPriority() {
-				return 1000;
-			}
+        String resourceRootDir = ResourceManagerControllerPlugin.getResourceDir(configuration);
+        ResourceManager resourceManager = new ResourceManagerImpl(new File(resourceRootDir), resourceAccessor, resourceRevisionAccessor);
+        context.setResourceManager(resourceManager);
 
-		});
-		context.put(ObjectScopeRegistry.class, objectScopeRegistry);
+        TableRegistry tableRegistry = new TableRegistry();
+        context.put(TableRegistry.class, tableRegistry);
+        ExecutionAccessorImpl executionAccessor = new ExecutionAccessorImpl(
+            collectionFactory.getCollection("executions", Execution.class));
+        context.setExecutionAccessor(executionAccessor);
 
-		//Im memory map to store last user activities
-		Map<String, Long> userActivityMap = new ConcurrentHashMap<>();
-		context.put(USER_ACTIVITY_MAP_KEY, userActivityMap);
+        PlanAccessorImpl plans = new PlanAccessorImpl(collectionFactory.getCollection("plans", Plan.class));
+        plans.createDefaultIndexIfNeeded();
+        context.setPlanAccessor(plans);
+
+        context.setReportNodeAccessor(
+            new ReportNodeAccessorImpl(collectionFactory.getCollection("reports", ReportNode.class)));
+        reportNodeTimeSeries = new ReportNodeTimeSeries(collectionFactory, context.getConfiguration());
+        context.put(ReportNodeTimeSeries.class, reportNodeTimeSeries);
+        context.put(ResolvedPlanNodeAccessor.class, new ResolvedPlanNodeAccessor(collectionFactory));
+        context.setScheduleAccessor(new ExecutionTaskAccessorImpl(
+            collectionFactory.getCollection("tasks", ExecutiontTaskParameters.class)));
+
+        Collection<User> userCollection = collectionFactory.getCollection("users", User.class);
+        context.setUserAccessor(new UserAccessorImpl(userCollection));
+        tableRegistry.register("users", new Table<>(userCollection, "user-read", false));
+
+        ObjectScopeRegistry objectScopeRegistry = new ObjectScopeRegistry();
+        objectScopeRegistry.register(USER, new ObjectScopeHandler(USER) {
+            @Override
+            protected String getScopeValue(Session<?> session) {
+                AbstractUser user = session.getUser();
+                return (user != null) ? user.getSessionUsername() : null;
+            }
+
+            @Override
+            public int getPriority() {
+                return 1000;
+            }
+
+        });
+        context.put(ObjectScopeRegistry.class, objectScopeRegistry);
+
+        //Im memory map to store last user activities
+        Map<String, Long> userActivityMap = new ConcurrentHashMap<>();
+        context.put(USER_ACTIVITY_MAP_KEY, userActivityMap);
 
 
-		context.setRepositoryObjectManager(new RepositoryObjectManager());
-		context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"), 
-				configuration.getPropertyAsInteger("tec.expressions.warningthreshold",200),
-				configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal",1000),
-				configuration.getPropertyAsInteger("tec.expressions.pool.maxTotalPerKey", 50),
-				configuration.getPropertyAsInteger("tec.expressions.pool.maxIdlePerKey",-1),
-				configuration.getPropertyAsInteger("tec.expressions.pool.monitoringIntervalSeconds",60)));
-		context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
-		
-		context.setEntityManager(new EntityManager());
-		DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
-		PlanLocator planLocator = new PlanLocator(context.getPlanAccessor(), selectorHelper);
-		
-		EntityManager entityManager = context.getEntityManager();
-		entityManager
-				// Bean entity used for remote test
-				.register(new Entity<Bean, AbstractAccessor<Bean>>("beans",
-						new AbstractAccessor(context.getCollectionFactory().getCollection("beans", Bean.class)),
-						Bean.class))
-				.register(new Entity<>(EntityConstants.executions, context.getExecutionAccessor(), Execution.class))
-				.register(new PlanEntity(context.getPlanAccessor(), planLocator, entityManager))
-				.register(new Entity<>(EntityConstants.reports, context.getReportAccessor(), ReportNode.class))
-				.register(new ScheduleEntity(context.getScheduleAccessor(), ExecutiontTaskParameters.class, entityManager))
-				.register(new Entity<>(EntityConstants.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class))
-				.register(new Entity<>(EntityConstants.users, context.getUserAccessor(), User.class))
-				.register(new ResourceEntity(resourceAccessor, entityManager))
-				.register(new Entity<>(EntityConstants.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
-		
-		entityManager.registerImportHook(new ResourceImporter(context.getResourceManager()));
+        context.setRepositoryObjectManager(new RepositoryObjectManager());
+        context.setExpressionHandler(new ExpressionHandler(configuration.getProperty("tec.expressions.scriptbaseclass"),
+            configuration.getPropertyAsInteger("tec.expressions.warningthreshold", 200),
+            configuration.getPropertyAsInteger("tec.expressions.pool.maxtotal", 1000),
+            configuration.getPropertyAsInteger("tec.expressions.pool.maxTotalPerKey", 50),
+            configuration.getPropertyAsInteger("tec.expressions.pool.maxIdlePerKey", -1),
+            configuration.getPropertyAsInteger("tec.expressions.pool.monitoringIntervalSeconds", 60)));
+        context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
 
-		context.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
+        context.setEntityManager(new EntityManager());
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+        SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
+        PlanLocator planLocator = new PlanLocator(context.getPlanAccessor(), selectorHelper);
 
-		createOrUpdateIndexes();
+        EntityManager entityManager = context.getEntityManager();
+        entityManager
+            // Bean entity used for remote test
+            .register(new Entity<Bean, AbstractAccessor<Bean>>("beans",
+                new AbstractAccessor(context.getCollectionFactory().getCollection("beans", Bean.class)),
+                Bean.class))
+            .register(new Entity<>(EntityConstants.executions, context.getExecutionAccessor(), Execution.class))
+            .register(new PlanEntity(context.getPlanAccessor(), planLocator, entityManager))
+            .register(new Entity<>(EntityConstants.reports, context.getReportAccessor(), ReportNode.class))
+            .register(new ScheduleEntity(context.getScheduleAccessor(), ExecutiontTaskParameters.class, entityManager))
+            .register(new Entity<>(EntityConstants.tasks, context.getScheduleAccessor(), ExecutiontTaskParameters.class))
+            .register(new Entity<>(EntityConstants.users, context.getUserAccessor(), User.class))
+            .register(new ResourceEntity(resourceAccessor, entityManager))
+            .register(new Entity<>(EntityConstants.resourceRevisions, resourceRevisionAccessor, ResourceRevision.class));
 
-	}
+        entityManager.registerImportHook(new ResourceImporter(context.getResourceManager()));
 
-	private void createOrUpdateIndexes() {
-		long dataTTL = context.getConfiguration().getPropertyAsInteger("db.datattl", 0);
-		context.getReportAccessor().createIndexesIfNeeded(dataTTL);
-		context.getExecutionAccessor().createIndexesIfNeeded(dataTTL);
-	}
+        context.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
 
-	public void destroy() {
-		if (reportNodeTimeSeries != null) {
-			reportNodeTimeSeries.close();
-		}
-		serviceRegistrationCallback.stop();
-	}
+        createOrUpdateIndexes();
 
-	public void postShutdownHook() throws IOException {
-		collectionFactory.close();
-	}
+    }
+
+    private void createOrUpdateIndexes() {
+        long dataTTL = context.getConfiguration().getPropertyAsInteger("db.datattl", 0);
+        context.getReportAccessor().createIndexesIfNeeded(dataTTL);
+        context.getExecutionAccessor().createIndexesIfNeeded(dataTTL);
+    }
+
+    public void destroy() {
+        if (reportNodeTimeSeries != null) {
+            reportNodeTimeSeries.close();
+        }
+        serviceRegistrationCallback.stop();
+    }
+
+    public void postShutdownHook() throws IOException {
+        collectionFactory.close();
+    }
 
 
 }

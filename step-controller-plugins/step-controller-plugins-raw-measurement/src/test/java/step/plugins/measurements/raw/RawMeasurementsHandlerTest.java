@@ -36,7 +36,7 @@ import static step.planbuilder.BaseArtefacts.sleep;
 public class RawMeasurementsHandlerTest {
 
     @Test
-    public void testRawMeasurementsHandler(){
+    public void testRawMeasurementsHandler() {
         InMemoryPlanAccessor planAccessor = new InMemoryPlanAccessor();
         InMemoryExecutionAccessor executionAccessor = new InMemoryExecutionAccessor();
         InMemoryExecutionTaskAccessor scheduleAccessor = new InMemoryExecutionTaskAccessor();
@@ -54,8 +54,8 @@ public class RawMeasurementsHandlerTest {
         RawMeasurementsHandler handler = new RawMeasurementsHandler(measurementAccessor);
         MeasurementPlugin.registerMeasurementHandlers(handler);
         try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(measurementPlugin)
-                .withPlugin(new BaseArtefactPlugin())
-                .withObjectHookRegistry(getObjectHookRegistry()).build()) {
+            .withPlugin(new BaseArtefactPlugin())
+            .withObjectHookRegistry(getObjectHookRegistry()).build()) {
             ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, "my test", null, null, true, null);
             PlanRunnerResult execute = engine.execute(executionParameters);
 
@@ -89,7 +89,6 @@ public class RawMeasurementsHandlerTest {
         planAccessor.save(plan);
 
 
-
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.setExecutionAccessor(executionAccessor);
         parentContext.setPlanAccessor(planAccessor);
@@ -98,8 +97,8 @@ public class RawMeasurementsHandlerTest {
         RawMeasurementsHandler handler = new RawMeasurementsHandler(measurementAccessor);
         MeasurementPlugin.registerMeasurementHandlers(handler);
         try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(measurementPlugin)
-                .withPlugin(new BaseArtefactPlugin())
-                .withObjectHookRegistry(getObjectHookRegistry()).build()) {
+            .withPlugin(new BaseArtefactPlugin())
+            .withObjectHookRegistry(getObjectHookRegistry()).build()) {
             ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, "my test", null, null, true, null);
             String executionId = engine.initializeExecution(executionParameters);
             Execution execution = executionAccessor.get(executionId);
@@ -152,15 +151,15 @@ public class RawMeasurementsHandlerTest {
                     @Override
                     public TreeMap<String, String> getAdditionalAttributes() {
                         TreeMap<String, String> treeMap = new TreeMap<>();
-                        treeMap.put("attr1","val1");
-                        treeMap.put("attr2","val2");
+                        treeMap.put("attr1", "val1");
+                        treeMap.put("attr2", "val2");
                         return treeMap;
                     }
 
                     @Override
                     public void accept(EnricheableObject enricheableObject) {
-                        enricheableObject.addAttribute("attr1","val1");
-                        enricheableObject.addAttribute("attr2","val2");
+                        enricheableObject.addAttribute("attr1", "val1");
+                        enricheableObject.addAttribute("attr2", "val2");
                     }
                 };
             }

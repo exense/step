@@ -140,9 +140,9 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
     protected Resource getApResource(String contextId, String apName) {
         List<Resource> foundResources = resourceManager.findManyByCriteria(
-                Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP,
-                        "customFields." + CONTEXT_ID_CUSTOM_FIELD, contextId,
-                        "customFields." + AP_NAME_CUSTOM_FIELD, apName)
+            Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP,
+                "customFields." + CONTEXT_ID_CUSTOM_FIELD, contextId,
+                "customFields." + AP_NAME_CUSTOM_FIELD, apName)
         );
         Resource resource = null;
         if (!foundResources.isEmpty()) {
@@ -161,10 +161,10 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
         // find all temporary APs and keyword libs
         List<Resource> foundAps = resourceManager.findManyByCriteria(
-                Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP)
+            Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP)
         );
         List<Resource> foundKeywordLibs = resourceManager.findManyByCriteria(
-                Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB)
+            Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB)
         );
         List<Resource> foundResources = new ArrayList<>();
         foundResources.addAll(foundAps);
@@ -179,7 +179,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
                     OffsetDateTime lastExecutionTime = OffsetDateTime.parse(lastExecutionTimeStr, DateTimeFormatter.ISO_DATE_TIME);
                     if (lastExecutionTime.isBefore(minExecutionTime)) {
                         log.info("Cleanup the outdated resource for automation package: {} ...", apResourceInfo);
-                        resourceManager.deleteResourceRevisionContent(foundResource.getId().toString());
+                        resourceManager.deleteResource(foundResource.getId().toString());
                         removed++;
                     }
                 } else {
@@ -205,10 +205,11 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
         try {
             List<Path> mavenJarFiles = findOldJarFiles(mavenCachePath, minExecutionTime);
             artifactsCandidate = mavenJarFiles.size();
-            for(Path jarPath: mavenJarFiles) {
+            for (Path jarPath : mavenJarFiles) {
                 File parentFile = jarPath.toFile().getParentFile();
                 if (parentFile != null) {
-                    boolean deleted = FileHelper.safeDeleteFolder(parentFile);;
+                    boolean deleted = FileHelper.safeDeleteFolder(parentFile);
+                    ;
                     if (deleted) {
                         removed++;
                     } else {
@@ -244,7 +245,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
         return oldJarFiles;
     }
 
-    private String getApResourceInfo(Resource resource){
+    private String getApResourceInfo(Resource resource) {
         return resource.getCustomField(AP_NAME_CUSTOM_FIELD) + " (ctx=" + resource.getCustomField(CONTEXT_ID_CUSTOM_FIELD) + ")";
     }
 
@@ -269,7 +270,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
 
             return resource;
         } catch (IOException | InvalidResourceFormatException ex) {
-            throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName, ex);
+            throw new AutomationPackageManagerException("Cannot save automation package as resource: " + fileName + ".", ex, true);
         }
     }
 
@@ -277,16 +278,15 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
         return resourceManager.getResourceFile(resource.getId().toString()).getResourceFile();
     }
 
-    public void setApNameForResource(Resource resource, String apName){
+    public void setApNameForResource(Resource resource, String apName) {
         // store file in temporary storage to support rerun
         try {
             resource.addCustomField(AP_NAME_CUSTOM_FIELD, apName);
             resourceManager.saveResource(resource);
         } catch (IOException ex) {
-            throw new AutomationPackageManagerException("Cannot update the automation package name in resource: " + resource.getId(), ex);
+            throw new AutomationPackageManagerException("Cannot update the automation package name in resource: " + resource.getId() + ".", ex, true);
         }
     }
-
 
 
 }

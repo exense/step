@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
-import step.automation.packages.library.ManagedLibraryProvider;
 import step.core.AbstractContext;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.objectenricher.*;
@@ -36,6 +35,7 @@ import step.resources.ResourceManager;
 import step.resources.ResourceMissingException;
 import step.resources.ResourceRevisionFileHandle;
 
+import javax.xml.transform.Result;
 import java.io.*;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -77,15 +77,15 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
             AutomationPackageFileSource libSource = AutomationPackageFileSource.withMavenIdentifier(libVersion1);
 
             AutomationPackageUpdateParameter createParametersGlobal = new AutomationPackageUpdateParameterBuilder().forJunit()
-                    .withApSource(sample1ApSource)
-                    .withApLibrarySource(libSource)
-                    .withAllowUpdate(false)
-                    .withAsync(false)
-                    .withCheckForSameOrigin(true)
-                    .withEnricher(createTenantEnricher(GLOBAL_PROJECT))
-                    .withWriteAccessValidator(createWriteAccessValidator(GLOBAL_PROJECT))
-                    .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT, PROJECT_1))
-                    .build();
+                .withApSource(sample1ApSource)
+                .withApLibrarySource(libSource)
+                .withAllowUpdate(false)
+                .withAsync(false)
+                .withCheckForSameOrigin(true)
+                .withEnricher(createTenantEnricher(GLOBAL_PROJECT))
+                .withWriteAccessValidator(createWriteAccessValidator(GLOBAL_PROJECT))
+                .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT, PROJECT_1))
+                .build();
             AutomationPackageUpdateResult resultGlobal = manager.createOrUpdateAutomationPackage(createParametersGlobal);
             Assert.assertEquals(CREATED, resultGlobal.getStatus());
 
@@ -105,15 +105,15 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
             // upload another ap in another project, but with the same (unmodified lib)
             AutomationPackageUpdateParameter createParameters1 = new AutomationPackageUpdateParameterBuilder().forJunit()
-                    .withApSource(anotherApSource)
-                    .withApLibrarySource(libSource)
-                    .withAllowUpdate(false)
-                    .withCheckForSameOrigin(true)
-                    .withAsync(false)
-                    .withEnricher(createTenantEnricher(PROJECT_1))
-                    .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
-                    .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT, PROJECT_1))
-                    .build();
+                .withApSource(anotherApSource)
+                .withApLibrarySource(libSource)
+                .withAllowUpdate(false)
+                .withCheckForSameOrigin(true)
+                .withAsync(false)
+                .withEnricher(createTenantEnricher(PROJECT_1))
+                .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
+                .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT, PROJECT_1))
+                .build();
 
             AutomationPackageUpdateResult result1 = manager.createOrUpdateAutomationPackage(createParameters1);
             Assert.assertEquals(CREATED, result1.getStatus());
@@ -128,21 +128,21 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
             // try to reload AP library (newSnapshotVersion=true) without permissions on project1
             providersResolver.getMavenArtifactMocks().put(libVersion1, new ResolvedMavenArtifact(
-                    libJarUpdated,
-                    new SnapshotMetadata("some timestamp", System.currentTimeMillis(), 1, true))
+                libJarUpdated,
+                new SnapshotMetadata("some timestamp", System.currentTimeMillis(), 1, true))
             );
 
-            AutomationPackageUpdateParameter updateParameter =  new AutomationPackageUpdateParameterBuilder().forJunit()
-                    .withApSource(extendedApSource)
-                    .withApLibrarySource(libSource)
-                    .withAllowUpdate(true)
-                    .withForceRefreshOfSnapshots(true)
-                    .withAsync(false)
-                    .withCheckForSameOrigin(true)
-                    .withEnricher(createTenantEnricher(GLOBAL_PROJECT))
-                    .withWriteAccessValidator(createWriteAccessValidator(GLOBAL_PROJECT))
-                    .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT, PROJECT_1))
-                    .build();
+            AutomationPackageUpdateParameter updateParameter = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withApSource(extendedApSource)
+                .withApLibrarySource(libSource)
+                .withAllowUpdate(true)
+                .withForceRefreshOfSnapshots(true)
+                .withAsync(false)
+                .withCheckForSameOrigin(true)
+                .withEnricher(createTenantEnricher(GLOBAL_PROJECT))
+                .withWriteAccessValidator(createWriteAccessValidator(GLOBAL_PROJECT))
+                .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT, PROJECT_1))
+                .build();
 
             AutomationPackageUpdateResult result3 = manager.createOrUpdateAutomationPackage(updateParameter);
             Assert.assertEquals(UPDATED, result3.getStatus());
@@ -150,18 +150,18 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
             // Try to delete global AP without permissions - it is restricted
             try {
                 manager.removeAutomationPackage(apGlobal.getId(), "userProject1",
-                        createAccessPredicate(GLOBAL_PROJECT),
-                        createWriteAccessValidator(PROJECT_1)
+                    createAccessPredicate(GLOBAL_PROJECT),
+                    createWriteAccessValidator(PROJECT_1)
                 );
                 Assert.fail("Exception should be thrown");
-            } catch (AutomationPackageAccessException ex){
+            } catch (AutomationPackageAccessException ex) {
                 log.info("Exception caught: {}", ex.getMessage());
             }
 
             // Delete global AP with enough permissions
             manager.removeAutomationPackage(apGlobal.getId(), "globalAdmin",
-                    createAccessPredicate(GLOBAL_PROJECT),
-                    createWriteAccessValidator(GLOBAL_PROJECT)
+                createAccessPredicate(GLOBAL_PROJECT),
+                createWriteAccessValidator(GLOBAL_PROJECT)
             );
 
             // check AP and resource is deleted, but AP lib still exists and used in Project1
@@ -171,7 +171,7 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
             try {
                 resourceManager.getResource(apResourceGlobal.getId().toHexString());
                 Assert.fail("Resource is not removed");
-            } catch (ResourceMissingException ex){
+            } catch (ResourceMissingException ex) {
                 log.info("Resource is removed: {}", ex.getMessage());
             }
 
@@ -184,7 +184,7 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
     }
 
     @Test
-    public void testManagedLibrary(){
+    public void testManagedLibrary() {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File anotherAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
 
@@ -201,12 +201,12 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
             // 1. Create managed library by Global Admin
             AutomationPackageUpdateParameter globalAdminParams = new AutomationPackageUpdateParameterBuilder()
-                    .forJunit()
-                    .withActorUser("globalAdmin")
-                    .withEnricher(createTenantEnricher(GLOBAL_PROJECT))
-                    .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT))
-                    .withWriteAccessValidator(createWriteAccessValidator(GLOBAL_PROJECT))
-                    .build();
+                .forJunit()
+                .withActorUser("globalAdmin")
+                .withEnricher(createTenantEnricher(GLOBAL_PROJECT))
+                .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT))
+                .withWriteAccessValidator(createWriteAccessValidator(GLOBAL_PROJECT))
+                .build();
 
             Resource globalLibResource = manager.createAutomationPackageResource(ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY, libSource, "testManagedLibrary", globalAdminParams);
             Assert.assertNotNull(globalLibResource);
@@ -214,16 +214,16 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
             // 2. User in Project1 uses the managed library
             AutomationPackageUpdateParameter user1CreateApParams = new AutomationPackageUpdateParameterBuilder()
-                    .forJunit()
-                    .withApSource(sample1ApSource)
-                    .withApLibrarySource(AutomationPackageFileSource.withResourceId(globalLibResource.getId().toHexString()))
-                    .withAllowUpdate(false)
-                    .withAsync(false)
-                    .withCheckForSameOrigin(true)
-                    .withEnricher(createTenantEnricher(PROJECT_1))
-                    .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT, PROJECT_1))
-                    .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
-                    .build();
+                .forJunit()
+                .withApSource(sample1ApSource)
+                .withApLibrarySource(AutomationPackageFileSource.withResourceId(globalLibResource.getId().toHexString()))
+                .withAllowUpdate(false)
+                .withAsync(false)
+                .withCheckForSameOrigin(true)
+                .withEnricher(createTenantEnricher(PROJECT_1))
+                .withObjectPredicate(createAccessPredicate(GLOBAL_PROJECT, PROJECT_1))
+                .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
+                .build();
 
             Instant timeBeforeUpdate = Instant.now();
             AutomationPackageUpdateResult resultAp1 = manager.createOrUpdateAutomationPackage(user1CreateApParams);
@@ -231,21 +231,21 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
             // new library snapshot is uploaded in nexus
             providersResolver.getMavenArtifactMocks().put(libVersion1, new ResolvedMavenArtifact(
-                    libJarUpdated,
-                    new SnapshotMetadata("some timestamp", System.currentTimeMillis(), 1, true))
+                libJarUpdated,
+                new SnapshotMetadata("some timestamp", System.currentTimeMillis(), 1, true))
             );
 
             // 3.1. The managed library cannot be created with the same name
             try {
                 manager.createAutomationPackageResource(ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY, libSource, "testManagedLibrary", globalAdminParams);
                 Assert.fail("Exception is not thrown");
-            } catch (AutomationPackageManagerException ex){
+            } catch (AutomationPackageManagerException ex) {
                 log.info("Caught: {}", ex.getMessage());
             }
 
             // 3.2 Global admin updates the library
             Resource updatedGlobalLibResource = manager.updateAutomationPackageManagedLibrary(
-                    globalLibResource.getId().toString(), libSource, "testManagedLibraryUpdated", globalAdminParams
+                globalLibResource.getId().toString(), libSource, "testManagedLibraryUpdated", globalAdminParams
             );
 
             //Get latest verions of resource
@@ -267,10 +267,10 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
             // 4. user without write permission cannot update the managed library
             try {
                 manager.updateAutomationPackageManagedLibrary(
-                        globalLibResource.getId().toString(), libSource, "testManagedLibraryUpdated", user1CreateApParams
+                    globalLibResource.getId().toString(), libSource, "testManagedLibraryUpdated", user1CreateApParams
                 );
                 Assert.fail("Exception is not thrown");
-            } catch (AutomationPackageManagerException ex){
+            } catch (AutomationPackageManagerException ex) {
                 log.info("Exception caught: {}", ex.getMessage());
             }
         } catch (IOException e) {
@@ -279,7 +279,7 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
     }
 
     @Test
-    public void testManagedLibraryInIsolatedProjects() throws IOException, ManagedLibraryMissingException, AutomationPackageReadingException {
+    public void testManagedLibraryInIsolatedProjects() throws IOException, InterruptedException {
         File automationPackageJar = new File("src/test/resources/samples/" + SAMPLE1_FILE_NAME);
         File anotherAutomationPackageJar = new File("src/test/resources/samples/" + SAMPLE_ECHO_FILE_NAME);
 
@@ -294,12 +294,12 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
         // 1. Create managed library in project1
         AutomationPackageUpdateParameter user1Params = new AutomationPackageUpdateParameterBuilder()
-                .forJunit()
-                .withActorUser("user1")
-                .withEnricher(createTenantEnricher(PROJECT_1))
-                .withObjectPredicate(createAccessPredicate(PROJECT_1))
-                .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
-                .build();
+            .forJunit()
+            .withActorUser("user1")
+            .withEnricher(createTenantEnricher(PROJECT_1))
+            .withObjectPredicate(createAccessPredicate(PROJECT_1))
+            .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
+            .build();
 
         Resource projectLibResource1 = manager.createAutomationPackageResource(ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY, libSource, "testManagedLibrary", user1Params);
         Assert.assertNotNull(projectLibResource1);
@@ -307,12 +307,12 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
 
         // 2. Create managed library in project2 with the same name - it is allowed, because we use separate tenants
         AutomationPackageUpdateParameter user2Params = new AutomationPackageUpdateParameterBuilder()
-                .forJunit()
-                .withActorUser("user2")
-                .withEnricher(createTenantEnricher(PROJECT_2))
-                .withObjectPredicate(createAccessPredicate(PROJECT_2))
-                .withWriteAccessValidator(createWriteAccessValidator(PROJECT_2))
-                .build();
+            .forJunit()
+            .withActorUser("user2")
+            .withEnricher(createTenantEnricher(PROJECT_2))
+            .withObjectPredicate(createAccessPredicate(PROJECT_2))
+            .withWriteAccessValidator(createWriteAccessValidator(PROJECT_2))
+            .build();
 
         Resource projectLibResource2 = manager.createAutomationPackageResource(ResourceManager.RESOURCE_TYPE_AP_MANAGED_LIBRARY, libSource, "testManagedLibrary", user2Params);
         Assert.assertNotNull(projectLibResource2);
@@ -323,16 +323,16 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
             AutomationPackageFileSource sample1ApSource = AutomationPackageFileSource.withInputStream(is, SAMPLE1_FILE_NAME);
             try {
                 AutomationPackageUpdateParameter user1CreateApParams = new AutomationPackageUpdateParameterBuilder()
-                        .forJunit()
-                        .withApSource(sample1ApSource)
-                        .withApLibrarySource(AutomationPackageFileSource.withResourceId(projectLibResource2.getId().toHexString()))
-                        .withAllowUpdate(false)
-                        .withAsync(false)
-                        .withCheckForSameOrigin(true)
-                        .withEnricher(createTenantEnricher(PROJECT_1))
-                        .withObjectPredicate(createAccessPredicate(PROJECT_1))
-                        .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
-                        .build();
+                    .forJunit()
+                    .withApSource(sample1ApSource)
+                    .withApLibrarySource(AutomationPackageFileSource.withResourceId(projectLibResource2.getId().toHexString()))
+                    .withAllowUpdate(false)
+                    .withAsync(false)
+                    .withCheckForSameOrigin(true)
+                    .withEnricher(createTenantEnricher(PROJECT_1))
+                    .withObjectPredicate(createAccessPredicate(PROJECT_1))
+                    .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
+                    .build();
 
                 manager.createOrUpdateAutomationPackage(user1CreateApParams);
                 Assert.fail("Exception should be thrown");
@@ -352,32 +352,32 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
             AutomationPackageFileSource sample1ApSource = AutomationPackageFileSource.withInputStream(is, SAMPLE1_FILE_NAME);
 
             AutomationPackageUpdateParameter user1CreateApParams = new AutomationPackageUpdateParameterBuilder()
-                    .forJunit()
-                    .withApSource(sample1ApSource)
-                    .withApLibrarySource(AutomationPackageFileSource.withResourceId(projectLibResource1.getId().toHexString()))
-                    .withAllowUpdate(false)
-                    .withAsync(false)
-                    .withCheckForSameOrigin(true)
-                    .withEnricher(createTenantEnricher(PROJECT_1))
-                    .withObjectPredicate(createAccessPredicate(PROJECT_1))
-                    .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
-                    .build();
+                .forJunit()
+                .withApSource(sample1ApSource)
+                .withApLibrarySource(AutomationPackageFileSource.withResourceId(projectLibResource1.getId().toHexString()))
+                .withAllowUpdate(false)
+                .withAsync(false)
+                .withCheckForSameOrigin(true)
+                .withEnricher(createTenantEnricher(PROJECT_1))
+                .withObjectPredicate(createAccessPredicate(PROJECT_1))
+                .withWriteAccessValidator(createWriteAccessValidator(PROJECT_1))
+                .build();
 
             resultAp1 = manager.createOrUpdateAutomationPackage(user1CreateApParams);
             Assert.assertEquals(CREATED, resultAp1.getStatus());
             AutomationPackageFileSource sample2ApSource = AutomationPackageFileSource.withInputStream(isAnother, SAMPLE1_FILE_NAME);
 
             AutomationPackageUpdateParameter user2CreateApParams = new AutomationPackageUpdateParameterBuilder()
-                    .forJunit()
-                    .withApSource(sample2ApSource)
-                    .withApLibrarySource(AutomationPackageFileSource.withResourceId(projectLibResource2.getId().toHexString()))
-                    .withAllowUpdate(false)
-                    .withAsync(false)
-                    .withCheckForSameOrigin(true)
-                    .withEnricher(createTenantEnricher(PROJECT_2))
-                    .withObjectPredicate(createAccessPredicate(PROJECT_2))
-                    .withWriteAccessValidator(createWriteAccessValidator(PROJECT_2))
-                    .build();
+                .forJunit()
+                .withApSource(sample2ApSource)
+                .withApLibrarySource(AutomationPackageFileSource.withResourceId(projectLibResource2.getId().toHexString()))
+                .withAllowUpdate(false)
+                .withAsync(false)
+                .withCheckForSameOrigin(true)
+                .withEnricher(createTenantEnricher(PROJECT_2))
+                .withObjectPredicate(createAccessPredicate(PROJECT_2))
+                .withWriteAccessValidator(createWriteAccessValidator(PROJECT_2))
+                .build();
 
             resultAp2 = manager.createOrUpdateAutomationPackage(user2CreateApParams);
             Assert.assertEquals(CREATED, resultAp2.getStatus());
@@ -396,15 +396,16 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
         Assert.assertEquals(FileResolver.resolveResourceId(ap1.getAutomationPackageLibraryResource()), projectLibResource1.getId().toHexString());
         Assert.assertEquals(FileResolver.resolveResourceId(ap2.getAutomationPackageLibraryResource()), projectLibResource2.getId().toHexString());
 
-        // 4.1 User1 updates the lib in project1 - AP from project2 should be untouched
+        // 5. User1 updates the lib in project1 - AP from project2 should be untouched
         providersResolver.getMavenArtifactMocks().put(libVersion1, new ResolvedMavenArtifact(
-                libJarUpdated,
-                new SnapshotMetadata("some timestamp", System.currentTimeMillis(), 1, true))
+            libJarUpdated,
+            new SnapshotMetadata("some timestamp", System.currentTimeMillis(), 1, true))
         );
 
         Instant nowBeforeLib1Update = Instant.now();
+        Thread.sleep(1);
         RefreshResourceResult refreshResourceResult = manager.getAutomationPackageResourceManager().refreshResourceAndLinkedPackages(
-                projectLibResource1.getId().toHexString(), user1Params, manager
+            projectLibResource1.getId().toHexString(), user1Params, manager
         );
         Assert.assertEquals(RefreshResourceResult.ResultStatus.REFRESHED, refreshResourceResult.getResultStatus());
 
@@ -431,32 +432,6 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
         Assert.assertEquals(PROJECT_1, ap1.getAttribute(ATTRIBUTE_PROJECT_NAME));
         Assert.assertEquals(PROJECT_2, ap2.getAttribute(ATTRIBUTE_PROJECT_NAME));
 
-        // 4.2 User1 re-uploads the same managed library again - the behavior should be the same as in 4.1
-        providersResolver.getMavenArtifactMocks().put(libVersion1, new ResolvedMavenArtifact(
-                libJarUpdated,
-                new SnapshotMetadata("some timestamp 2", System.currentTimeMillis(), 1, true))
-        );
-
-        nowBeforeLib1Update = Instant.now();
-        updatedLib1Resource = manager.getAutomationPackageResourceManager().uploadOrReuseAutomationPackageLibrary(
-               new ManagedLibraryProvider(manager.getAutomationPackageLibraryProvider(libSource, createAccessPredicate(PROJECT_1)), projectLibResource1, "testManagedLibrary"), ap1, user1Params, true, true
-        );
-
-        Assert.assertFalse(updatedLib1Resource.getLastModificationDate().toInstant().isBefore(nowBeforeLib1Update));
-        Assert.assertArrayEquals(Files.readAllBytes(resourceManager.getResourceFile(projectLibResource1.getId().toHexString()).getResourceFile().toPath()), Files.readAllBytes(libJarUpdated.toPath()));
-
-        // lib2 is not updated
-        Assert.assertFalse(projectLibResource2.getLastModificationDate().toInstant().isAfter(nowBeforeLib1Update));
-        Assert.assertArrayEquals(Files.readAllBytes(resourceManager.getResourceFile(projectLibResource2.getId().toHexString()).getResourceFile().toPath()), Files.readAllBytes(libJar.toPath()));
-
-        // take the actual state from db
-        ap1 = automationPackageAccessor.get(ap1.getId());
-        ap2 = automationPackageAccessor.get(ap2.getId());
-
-        // original tenants for automation packages should not be changed after reupload
-        Assert.assertEquals(PROJECT_1, ap1.getAttribute(ATTRIBUTE_PROJECT_NAME));
-        Assert.assertEquals(PROJECT_2, ap2.getAttribute(ATTRIBUTE_PROJECT_NAME));
-
         // 5. User1 still has the access to AP to read and delete it
         AutomationPackage apTakenFromManager = manager.getAutomationPackageById(ap1.getId(), createAccessPredicate(PROJECT_1));
         Assert.assertNotNull(apTakenFromManager);
@@ -466,10 +441,21 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
         // ap1 doesn't exist anymore
         Assert.assertNull(automationPackageAccessor.get(ap1.getId()));
 
-        // resource file and resource for lib are not automatically deleted
-        ResourceRevisionFileHandle resourceFile = resourceManager.getResourceFile(updatedLib1Resource.getId().toString());
-        Assert.assertNotNull(resourceManager.getResource(updatedLib1Resource.getId().toString()));
-        Assert.assertNotNull(resourceFile);
+        //Library resources were created manually, they shall not be deleted when deleting APs using them
+        resourceManager.getResourceFile(updatedLib1Resource.getId().toString());
+        resourceManager.getResourceFile(projectLibResource2.getId().toString());
+        try {
+            manager.getAutomationPackageResourceManager().deleteResource(updatedLib1Resource.getId().toString(), user1Params.writeAccessValidator);
+        } catch (AutomationPackageUnsupportedResourceTypeException e) {
+            log.error("Unable to delete library", e);
+            Assert.fail("Unable to delete library");
+        }
+        try {
+            resourceManager.getResourceFile(updatedLib1Resource.getId().toString());
+            Assert.fail("Exception should be thrown");
+        } catch (ResourceMissingException ex) {
+            log.info("Resource deleted: {}", ex.getMessage());
+        }
     }
 
     protected AutomationPackageManager createManager(AutomationPackageHookRegistry automationPackageHookRegistry, AutomationPackageReaderRegistry automationPackageReaderRegistry) {
@@ -493,31 +479,31 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
         });
 
         return AutomationPackageManager.createMainAutomationPackageManager(
-                automationPackageAccessor,
-                functionManager,
-                functionAccessor,
-                planAccessor,
-                resourceManager,
-                automationPackageHookRegistry,
-                automationPackageReaderRegistry,
-                automationPackageLocks,
-                null, -1,
-                objectHookRegistry
+            automationPackageAccessor,
+            functionManager,
+            functionAccessor,
+            planAccessor,
+            resourceManager,
+            automationPackageHookRegistry,
+            automationPackageReaderRegistry,
+            automationPackageLocks,
+            null, -1,
+            objectHookRegistry
         );
     }
 
-    protected WriteAccessValidator createWriteAccessValidator(String ... projectNames){
+    protected WriteAccessValidator createWriteAccessValidator(String... projectNames) {
         return new WriteAccessValidator() {
             @Override
             public void validate(EnricheableObject entity) throws ObjectAccessException {
-                if(!createAccessPredicate(projectNames).test(entity)){
+                if (!createAccessPredicate(projectNames).test(entity)) {
                     throw new ObjectAccessException(List.of(new ObjectAccessViolation("testHookId", "testErrorCode", "User has no access to " + entity.toString())));
                 }
             }
         };
     }
 
-    protected ObjectPredicate createAccessPredicate(String ... projectNames) {
+    protected ObjectPredicate createAccessPredicate(String... projectNames) {
         return object -> {
             String projectNameAttr = object.getAttribute(ATTRIBUTE_PROJECT_NAME);
             return projectNameAttr != null && Arrays.asList(projectNames).contains(projectNameAttr);

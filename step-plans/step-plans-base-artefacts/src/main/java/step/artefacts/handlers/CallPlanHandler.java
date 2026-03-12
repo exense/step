@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -40,78 +40,78 @@ import java.util.NoSuchElementException;
 
 public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
 
-	protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
-	
-	protected PlanLocator planLocator;
-	
-	@Override
-	public void init(ExecutionContext context) {
-		super.init(context);
-		dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-		planLocator = new PlanLocator(context.getPlanAccessor(), new SelectorHelper(dynamicJsonObjectResolver));
-	}
-	
-	@Override
-	protected void createReportSkeleton_(ReportNode parentNode,	CallPlan testArtefact) {
-		beforeDelegation(parentNode, testArtefact);
-		Plan a = selectPlan(testArtefact);
+    protected DynamicJsonObjectResolver dynamicJsonObjectResolver;
 
-		delegateCreateReportSkeleton(a.getRoot(), parentNode);
-	}
+    protected PlanLocator planLocator;
 
-	private void beforeDelegation(ReportNode parentNode, CallPlan testArtefact) {
-		context.getVariablesManager().putVariable(parentNode, "#placeholder", testArtefact);
+    @Override
+    public void init(ExecutionContext context) {
+        super.init(context);
+        dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+        planLocator = new PlanLocator(context.getPlanAccessor(), new SelectorHelper(dynamicJsonObjectResolver));
+    }
 
-		String inputJson = (testArtefact.getInput().get()!=null)?testArtefact.getInput().get():"{}";
-		JsonObject input = JsonProviderCache.createReader(new StringReader(inputJson)).readObject();
-		JsonObject resolvedInput = dynamicJsonObjectResolver.evaluate(input, getBindings());		
-		context.getVariablesManager().putVariable(parentNode, "input", resolvedInput);
-	}
+    @Override
+    protected void createReportSkeleton_(ReportNode parentNode, CallPlan testArtefact) {
+        beforeDelegation(parentNode, testArtefact);
+        Plan a = selectPlan(testArtefact);
 
-	@Override
-	protected void execute_(ReportNode node, CallPlan testArtefact) {
-		beforeDelegation(node, testArtefact);
+        delegateCreateReportSkeleton(a.getRoot(), parentNode);
+    }
 
-		Plan a = selectPlan(testArtefact);
-		
-		ReportNode resultNode = delegateExecute(a.getRoot(), node);
-		node.setStatus(resultNode.getStatus());
-	}
+    private void beforeDelegation(ReportNode parentNode, CallPlan testArtefact) {
+        context.getVariablesManager().putVariable(parentNode, "#placeholder", testArtefact);
 
-	@Override
-	public boolean requiresToPushArtefactPathOnResolution() {
-		return true;
-	}
+        String inputJson = (testArtefact.getInput().get() != null) ? testArtefact.getInput().get() : "{}";
+        JsonObject input = JsonProviderCache.createReader(new StringReader(inputJson)).readObject();
+        JsonObject resolvedInput = dynamicJsonObjectResolver.evaluate(input, getBindings());
+        context.getVariablesManager().putVariable(parentNode, "input", resolvedInput);
+    }
 
-	@Override
-	protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallPlan artefactNode, String currentArtefactPath) {
-		List<ResolvedChildren> results = new ArrayList<>();
-		try {
-			dynamicBeanResolver.evaluate(artefactNode, getBindings());
-			Plan plan = selectPlan(artefactNode);
-			if (plan != null) {
-				results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(plan.getRoot()), currentArtefactPath));
-			}
-		} catch (NoSuchElementException e) {
-			logger.warn("Unable to resolve plan", e);
-		} catch (RuntimeException e) {
-			//groovy selection attributes cannot be evaluated at this stage, ignoring
-			if (logger.isTraceEnabled()) {
-				logger.trace("Unable to resolve the plan referenced by this callPlan '{}' artefact at this stage.", artefactNode.getAttribute(AbstractOrganizableObject.NAME), e);
-			}
-		}
-		//For call plans with do not add the call plan children since they are not executed
-		return results;
-	}
+    @Override
+    protected void execute_(ReportNode node, CallPlan testArtefact) {
+        beforeDelegation(node, testArtefact);
 
-	protected Plan selectPlan(CallPlan testArtefact) {
-		return planLocator.selectPlan(testArtefact, context.getObjectPredicate(),
-				ExecutionContextBindings.get(context));
-	}
+        Plan a = selectPlan(testArtefact);
 
-	@Override
-	public ReportNode createReportNode_(ReportNode parentNode, CallPlan testArtefact) {
-		return new ReportNode();
-	}
+        ReportNode resultNode = delegateExecute(a.getRoot(), node);
+        node.setStatus(resultNode.getStatus());
+    }
+
+    @Override
+    public boolean requiresToPushArtefactPathOnResolution() {
+        return true;
+    }
+
+    @Override
+    protected List<ResolvedChildren> resolveChildrenArtefactBySource_(CallPlan artefactNode, String currentArtefactPath) {
+        List<ResolvedChildren> results = new ArrayList<>();
+        try {
+            dynamicBeanResolver.evaluate(artefactNode, getBindings());
+            Plan plan = selectPlan(artefactNode);
+            if (plan != null) {
+                results.add(new ResolvedChildren(ParentSource.SUB_PLAN, List.of(plan.getRoot()), currentArtefactPath));
+            }
+        } catch (NoSuchElementException e) {
+            logger.warn("Unable to resolve plan", e);
+        } catch (RuntimeException e) {
+            //groovy selection attributes cannot be evaluated at this stage, ignoring
+            if (logger.isTraceEnabled()) {
+                logger.trace("Unable to resolve the plan referenced by this callPlan '{}' artefact at this stage.", artefactNode.getAttribute(AbstractOrganizableObject.NAME), e);
+            }
+        }
+        //For call plans with do not add the call plan children since they are not executed
+        return results;
+    }
+
+    protected Plan selectPlan(CallPlan testArtefact) {
+        return planLocator.selectPlan(testArtefact, context.getObjectPredicate(),
+            ExecutionContextBindings.get(context));
+    }
+
+    @Override
+    public ReportNode createReportNode_(ReportNode parentNode, CallPlan testArtefact) {
+        return new ReportNode();
+    }
 
 }

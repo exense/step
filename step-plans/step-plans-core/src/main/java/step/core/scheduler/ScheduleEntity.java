@@ -24,11 +24,11 @@ public class ScheduleEntity extends Entity<ExecutiontTaskParameters, Accessor<Ex
                     if (repositoryObject != null && repositoryObject.getRepositoryID() != null && repositoryObject.getRepositoryID().equals(LOCAL_REPOSITORY_ID)) {
                         String localPlanId = repositoryObject.getRepositoryParameters().get(RepositoryObjectReference.PLAN_ID);
                         if (localPlanId != null) {
-                            if (context.isRecursive()) {
+                            if (EntityDependencyTreeVisitor.VISIT_MODE.RECURSIVE.equals(context.getVisitMode())) {
                                 context.visitEntity(EntityConstants.plans, localPlanId);
                             }
                             String newEntityId = context.resolvedEntityId(EntityConstants.plans, localPlanId);
-                            if(newEntityId != null) {
+                            if (newEntityId != null) {
                                 repositoryObject.getRepositoryParameters().put(RepositoryObjectReference.PLAN_ID, newEntityId);
                             }
                         }

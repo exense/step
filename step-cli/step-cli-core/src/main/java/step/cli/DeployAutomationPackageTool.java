@@ -45,10 +45,10 @@ public class DeployAutomationPackageTool extends AbstractCliTool<ApDeployParamet
 
             try {
                 updateResult = automationPackageClient.createOrUpdateAutomationPackage(
-                        createPackageSource(parameters.getAutomationPackageFile(), mavenAutomationPackageXml),
-                        createLibrarySource(parameters.getLibraryFile(), mavenPackageLibraryXml, parameters.getManagedLibraryName()),
-                        parameters.getVersionName(), parameters.getActivationExpression(), null, null, null, null,
-                        parameters.getAsync(), parameters.getForceRefreshOfSnapshots()
+                    createPackageSource(parameters.getAutomationPackageFile(), mavenAutomationPackageXml),
+                    createLibrarySource(parameters.getLibraryFile(), mavenPackageLibraryXml, parameters.getManagedLibraryName()),
+                    parameters.getVersionName(), parameters.getActivationExpression(), null, null, null, null,
+                    parameters.getAsync(), parameters.getForceRefreshOfSnapshots()
 
                 );
 
@@ -58,8 +58,8 @@ public class DeployAutomationPackageTool extends AbstractCliTool<ApDeployParamet
                 } else {
                     throw new StepCliExecutionException("Unexpected response from Step. The returned automation package id is null. Please check the controller logs.");
                 }
-            } catch (AutomationPackageClientException e){
-               throw new StepCliExecutionException("Error while uploading automation package to Step: " + e.getMessage());
+            } catch (AutomationPackageClientException e) {
+                throw new StepCliExecutionException("Error while uploading automation package to Step: " + e.getMessage());
             }
         } catch (StepCliExecutionException e) {
             throw e;

@@ -19,11 +19,11 @@
 package step.core.yaml.schema;
 
 public class JsonSchemaFieldProcessingException extends RuntimeException {
-	public JsonSchemaFieldProcessingException(String message) {
-		super(message);
-	}
+    public JsonSchemaFieldProcessingException(String message) {
+        super(message);
+    }
 
-	public JsonSchemaFieldProcessingException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public JsonSchemaFieldProcessingException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

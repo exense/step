@@ -35,7 +35,7 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
     private final Map<MavenArtifactIdentifier, ResolvedMavenArtifact> mavenArtifactMocks;
 
     public MockedAutomationPackageProvidersResolver(Map<MavenArtifactIdentifier, ResolvedMavenArtifact> mavenArtifactMocks, ResourceManager resourceManager,
-                                                    AutomationPackageReaderRegistry apReaderRegistry){
+                                                    AutomationPackageReaderRegistry apReaderRegistry) {
         super(apReaderRegistry, resourceManager);
         this.mavenArtifactMocks = mavenArtifactMocks;
     }
@@ -63,17 +63,17 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
                                                                                           AutomationPackageLibraryProvider apLibraryProvider,
                                                                                           ResourceManager resourceManager) throws AutomationPackageReadingException {
         return new MockedAutomationPackageFromMavenProvider(apReaderRegistry,
-                mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(),
-                apFileSource.getMavenArtifactIdentifier(),
-                apLibraryProvider
+            mavenConfigProvider == null ? null : mavenConfigProvider.getConfig(),
+            apFileSource.getMavenArtifactIdentifier(),
+            apLibraryProvider
         );
     }
 
     @Override
     protected AutomationPackageLibraryFromMavenProvider createAutomationPackageLibraryFromMavenProvider(AutomationPackageFileSource apLibrarySource, ObjectPredicate predicate, AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider, ResourceManager resourceManager) throws AutomationPackageReadingException {
         return new MockedAutomationPackageLibraryFromMavenProvider(mavenConfigProvider == null ? null :
-                mavenConfigProvider.getConfig(), apLibrarySource.getMavenArtifactIdentifier(),
-                resourceManager, predicate);
+            mavenConfigProvider.getConfig(), apLibrarySource.getMavenArtifactIdentifier(),
+            resourceManager, predicate);
     }
 
     public Map<MavenArtifactIdentifier, ResolvedMavenArtifact> getMavenArtifactMocks() {
@@ -83,9 +83,9 @@ public class MockedAutomationPackageProvidersResolver extends AutomationPackageM
     private class MockedAutomationPackageFromMavenProvider extends AutomationPackageFromMavenProvider {
 
         public MockedAutomationPackageFromMavenProvider(AutomationPackageReaderRegistry automationPackageReaderRegistry,
-                AutomationPackageMavenConfig mavenConfig,
-                MavenArtifactIdentifier mavenArtifactIdentifier,
-                AutomationPackageLibraryProvider keywordLibraryProvider
+                                                        AutomationPackageMavenConfig mavenConfig,
+                                                        MavenArtifactIdentifier mavenArtifactIdentifier,
+                                                        AutomationPackageLibraryProvider keywordLibraryProvider
         ) throws AutomationPackageReadingException {
             super(automationPackageReaderRegistry, mavenConfig, mavenArtifactIdentifier, keywordLibraryProvider, null, null);
         }

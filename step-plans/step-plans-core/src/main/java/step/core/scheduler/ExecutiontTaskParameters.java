@@ -29,113 +29,112 @@ import java.util.List;
 
 public class ExecutiontTaskParameters extends AbstractOrganizableObject implements EnricheableObject {
 
-	// TODO remove this field and create a migration task to also remove it from the DB
-	public String name;
+    // TODO remove this field and create a migration task to also remove it from the DB
+    public String name;
 
-	public ExecutionParameters executionsParameters;
+    public ExecutionParameters executionsParameters;
 
-	private ObjectId assertionPlan;
+    private ObjectId assertionPlan;
 
-	public String cronExpression;
-	public  List<CronExclusion> cronExclusions;
-	public boolean active;
+    public String cronExpression;
+    public List<CronExclusion> cronExclusions;
+    public boolean active;
 
-	public ExecutiontTaskParameters() {
-		super();
-	}
+    public ExecutiontTaskParameters() {
+        super();
+    }
 
-	public ExecutiontTaskParameters(
-			ExecutionParameters executionsParameters, String cronExpr) {
-		super();
-		this.executionsParameters = executionsParameters;
-		this.cronExpression = cronExpr;
-		this.active = true;
-	}
+    public ExecutiontTaskParameters(
+        ExecutionParameters executionsParameters, String cronExpr) {
+        super();
+        this.executionsParameters = executionsParameters;
+        this.cronExpression = cronExpr;
+        this.active = true;
+    }
 
-	/**
-	 * @deprecated This field isn't used anymore. The task name is now persisted as
-	 *             attribute.Please use getAttribute("name") instead
-	 * @return
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * @return
+     * @deprecated This field isn't used anymore. The task name is now persisted as
+     * attribute.Please use getAttribute("name") instead
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @deprecated This field isn't used anymore. The task name is now persisted as
-	 *             attribute.Please use setAttribute("name","...") instead
-	 * @param name
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+    /**
+     * @param name
+     * @deprecated This field isn't used anymore. The task name is now persisted as
+     * attribute.Please use setAttribute("name","...") instead
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public ExecutionParameters getExecutionsParameters() {
-		return executionsParameters;
-	}
+    public ExecutionParameters getExecutionsParameters() {
+        return executionsParameters;
+    }
 
-	public String getCronExpression() {
-		return cronExpression;
-	}
+    public String getCronExpression() {
+        return cronExpression;
+    }
 
-	public void setExecutionsParameters(ExecutionParameters executionsParameters) {
-		this.executionsParameters = executionsParameters;
-	}
+    public void setExecutionsParameters(ExecutionParameters executionsParameters) {
+        this.executionsParameters = executionsParameters;
+    }
 
-	public void setCronExpression(String cronExpression) {
-		this.cronExpression = cronExpression;
-	}
+    public void setCronExpression(String cronExpression) {
+        this.cronExpression = cronExpression;
+    }
 
-	public List<CronExclusion> getCronExclusions() {
-		return cronExclusions;
-	}
+    public List<CronExclusion> getCronExclusions() {
+        return cronExclusions;
+    }
 
-	public void setCronExclusions(List<CronExclusion> cronExclusions) {
-		this.cronExclusions = cronExclusions;
-	}
+    public void setCronExclusions(List<CronExclusion> cronExclusions) {
+        this.cronExclusions = cronExclusions;
+    }
 
-	public boolean isActive() {
-		return active;
-	}
+    public boolean isActive() {
+        return active;
+    }
 
-	public void setActive(boolean active) {
-		this.active = active;
-	}
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 
-	@EntityReference(type= EntityConstants.plans)
-	public ObjectId getAssertionPlan() {
-		return assertionPlan;
-	}
+    @EntityReference(type = EntityConstants.plans)
+    public ObjectId getAssertionPlan() {
+        return assertionPlan;
+    }
 
-	public void setAssertionPlan(ObjectId assertionPlan) {
-		this.assertionPlan = assertionPlan;
-	}
+    public void setAssertionPlan(ObjectId assertionPlan) {
+        this.assertionPlan = assertionPlan;
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!super.equals(obj))
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ExecutiontTaskParameters other = (ExecutiontTaskParameters) obj;
-		if (getId() == null) {
-			if (other.getId() != null)
-				return false;
-		} else if (!getId().equals(other.getId()))
-			return false;
-		return true;
-	}
-
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ExecutiontTaskParameters other = (ExecutiontTaskParameters) obj;
+        if (getId() == null) {
+            if (other.getId() != null)
+                return false;
+        } else if (!getId().equals(other.getId()))
+            return false;
+        return true;
+    }
 
 
 }

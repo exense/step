@@ -32,7 +32,7 @@ public class AgentPoolProvisioningParameters {
 
     public static final String PROVISIONING_PARAMETER_DOCKER_IMAGE = "dockerImage";
     public static final AgentPoolProvisioningParameter DOCKER_IMAGE = new AgentPoolProvisioningParameter(PROVISIONING_PARAMETER_DOCKER_IMAGE, "Docker image", (criteria, provisioningParameters) -> {
-        if(criteria.containsKey(TOKEN_ATTRIBUTE_DOCKER_IMAGE)) {
+        if (criteria.containsKey(TOKEN_ATTRIBUTE_DOCKER_IMAGE)) {
             provisioningParameters.put(PROVISIONING_PARAMETER_DOCKER_IMAGE, criteria.get(TOKEN_ATTRIBUTE_DOCKER_IMAGE).getSelectionPattern().pattern());
         }
     }, criteria -> {

@@ -38,7 +38,6 @@ public class YamlThreadGroup extends AbstractYamlArtefact<ThreadGroup> {
     }
 
 
-
     @Override
     protected void fillArtefactFields(ThreadGroup res) {
         super.fillArtefactFields(res);

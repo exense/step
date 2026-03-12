@@ -58,14 +58,14 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
         // Assert that the token have been returned after Session execution
         assertThatLocalAndRemoteTokenHaveBeenReleased();
         assertEquals("Session:PASSED:\n" +
-                " CheckArtefact:PASSED:\n" +
-                " Echo:PASSED:\n", writer.toString());
+            " CheckArtefact:PASSED:\n" +
+            " Echo:PASSED:\n", writer.toString());
     }
 
     @Test
     public void testReleaseMultipleErrors() throws IOException, ExecutionEngineException {
         Plan plan = PlanBuilder.create().startBlock(new FunctionGroup()).add(new CheckArtefact(t -> getLocalAndRemoteTokenFromSession(t)))
-                .add(new Echo()).endBlock().build();
+            .add(new Echo()).endBlock().build();
 
         StringWriter writer = new StringWriter();
         try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(id -> {
@@ -78,8 +78,8 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
         // Assert that the token have been returned after Session execution
         assertThatLocalAndRemoteTokenHaveBeenReleased();
         assertEquals("Session:TECHNICAL_ERROR:Multiple errors occurred when releasing agent tokens: Test error, Test error\n" +
-                " CheckArtefact:PASSED:\n" +
-                " Echo:PASSED:\n", writer.toString());
+            " CheckArtefact:PASSED:\n" +
+            " Echo:PASSED:\n", writer.toString());
     }
 
     @Test
@@ -102,8 +102,8 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
         // Assert that the token have been returned after Session execution
         assertThatLocalAndRemoteTokenHaveBeenReleased();
         assertEquals("Session:TECHNICAL_ERROR:Test error\n" +
-                " CheckArtefact:PASSED:\n" +
-                " Echo:PASSED:\n", writer.toString());
+            " CheckArtefact:PASSED:\n" +
+            " Echo:PASSED:\n", writer.toString());
     }
 
     @Test
@@ -167,21 +167,46 @@ public class FunctionGroupHandlerTest extends AbstractFunctionHandlerTest {
         assertEquals(1, localTokenReturned.get());
         assertEquals(3, tokenReturned.get());
         assertEquals(("Session:FAILED:\n" +
-                " CheckArtefact:PASSED:\n" +
-                " Sequence:FAILED:\n" +
-                "  Sleep:PASSED:\n" +
-                "  CallKeyword:PASSED:\n" +
-                "  RetryIfFails:FAILED:\n" +
-                "   Iteration1:FAILED:\n" +
-                "    CheckArtefact:FAILED:\n" +
-                "   Iteration2:FAILED:\n" +
-                "    CheckArtefact:FAILED:\n" +
-                "   Iteration3:FAILED:\n" +
-                "    CheckArtefact:FAILED:\n" +
-                "  CallKeyword:PASSED:\n").replace("CallKeyword", name), writer.toString());
+            " CheckArtefact:PASSED:\n" +
+            " Sequence:FAILED:\n" +
+            "  Sleep:PASSED:\n" +
+            "  CallKeyword:PASSED:\n" +
+            "  RetryIfFails:FAILED:\n" +
+            "   Iteration1:FAILED:\n" +
+            "    CheckArtefact:FAILED:\n" +
+            "   Iteration2:FAILED:\n" +
+            "    CheckArtefact:FAILED:\n" +
+            "   Iteration3:FAILED:\n" +
+            "    CheckArtefact:FAILED:\n" +
+            "  CallKeyword:PASSED:\n").replace("CallKeyword", name), writer.toString());
 
         // check that the remote agent token is properly reported as being involved in the execution
         assertEquals(REMOTE_URL, executionRef.get().getAgentsInvolved());
+    }
+
+
+    /**
+     * this test verifies that the session group context of a session control is cleaned up before executing its after section
+     *
+     * @throws IOException
+     * @throws ExecutionEngineException
+     */
+    @Test
+    public void testSessionAfterSection() throws IOException, ExecutionEngineException {
+        Plan plan = PlanBuilder.create().startBlock(new FunctionGroup()).withAfter(new CheckArtefact(FunctionGroupHandlerTest::validateIsInSession)).add(new CheckArtefact(FunctionGroupHandlerTest::getLocalAndRemoteTokenFromSession)).add(new Echo()).endBlock().build();
+
+        StringWriter writer = new StringWriter();
+        try (ExecutionEngine engine = newEngineWithCustomTokenReleaseFunction(this::markTokenAsReleased, null)) {
+            engine.execute(plan).printTree(writer);
+        }
+
+        // Assert that the token have been returned after Session execution
+        assertThatLocalAndRemoteTokenHaveBeenReleased();
+        assertEquals("Session:TECHNICAL_ERROR:\n" +
+            " CheckArtefact:PASSED:\n" +
+            " Echo:PASSED:\n" +
+            " [AFTER]\n" +
+            "  CheckArtefact:TECHNICAL_ERROR:Not is a session\n", writer.toString());
     }
 
 }

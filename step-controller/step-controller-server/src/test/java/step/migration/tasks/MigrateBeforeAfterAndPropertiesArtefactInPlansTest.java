@@ -24,7 +24,7 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlansTest {
     @Test
     public void testMigrateBeforeAfterArtefactInPlan() throws IOException {
         try (InputStream is = this.getClass().getResourceAsStream("oldDBPlanWithBeforeAfter.json");
-                InputStream expectedIS = this.getClass().getResourceAsStream("newDBPlanWithBeforeAfter.json")) {
+             InputStream expectedIS = this.getClass().getResourceAsStream("newDBPlanWithBeforeAfter.json")) {
             ObjectMapper mapper = DefaultJacksonMapperProvider.getObjectMapper();
             Document oldPlan = mapper.readValue(is, Document.class);
             InMemoryCollectionFactory collectionFactory = new InMemoryCollectionFactory(new Properties());
@@ -32,12 +32,12 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlansTest {
             plans.save(oldPlan);
             Document entityVersion = new Document();
             Document oldPlanVersion = new Document(oldPlan);
-            oldPlanVersion.put("_entityClass","step.core.plans.Plan");
-            entityVersion.put("entity",oldPlanVersion);
-            entityVersion.put("id","66cc86aa5b5628560a04dfb5");
+            oldPlanVersion.put("_entityClass", "step.core.plans.Plan");
+            entityVersion.put("entity", oldPlanVersion);
+            entityVersion.put("id", "66cc86aa5b5628560a04dfb5");
             entityVersion.put("updateTime", System.currentTimeMillis());
             entityVersion.put("updateGroupTime", System.currentTimeMillis());
-            Collection<Document> versionedPlans = collectionFactory.getCollection("plans"+VERSION_COLLECTION_SUFFIX, Document.class);
+            Collection<Document> versionedPlans = collectionFactory.getCollection("plans" + VERSION_COLLECTION_SUFFIX, Document.class);
             versionedPlans.save(entityVersion);
             //Test migration
             MigrateBeforeAfterAndPropertiesArtefactInPlans migrateBeforeAfterArtefactInPlans = new MigrateBeforeAfterAndPropertiesArtefactInPlans(collectionFactory, null);
@@ -51,7 +51,7 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlansTest {
 
             //Make sure new model works
             Collection<Plan> plans1 = collectionFactory.getCollection("plans", Plan.class);
-            Collection<EntityVersion> versionCollection = collectionFactory.getCollection("plans"+VERSION_COLLECTION_SUFFIX, EntityVersion.class);
+            Collection<EntityVersion> versionCollection = collectionFactory.getCollection("plans" + VERSION_COLLECTION_SUFFIX, EntityVersion.class);
             AbstractAccessor<Plan> planAbstractAccessor = new AbstractAccessor<>(plans1);
             planAbstractAccessor.enableVersioning(versionCollection, 1000L);
             Plan plan = plans1.find(Filters.empty(), null, null, null, 0).findFirst().orElseThrow(() -> new RuntimeException("No plans found in collection"));

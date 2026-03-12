@@ -53,16 +53,16 @@ public class YamlKeywordSchemaGenerator {
         this.schemaHelper = new YamlJsonSchemaHelper(jsonProvider);
 
         this.jsonSchemaCreator = new JsonSchemaCreator(
-                jsonProvider,
-                new AggregatedJsonSchemaFieldProcessor(YamlJsonSchemaHelper.prepareDefaultFieldProcessors(null)),
-                new DefaultFieldMetadataExtractor()
+            jsonProvider,
+            new AggregatedJsonSchemaFieldProcessor(YamlJsonSchemaHelper.prepareDefaultFieldProcessors(null)),
+            new DefaultFieldMetadataExtractor()
         );
     }
 
     protected List<JsonSchemaExtension> getDefinitionsExtensions() {
         List<JsonSchemaExtension> extensions = new ArrayList<>();
         CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
-                .map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
+            .map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
         return extensions;
     }
 

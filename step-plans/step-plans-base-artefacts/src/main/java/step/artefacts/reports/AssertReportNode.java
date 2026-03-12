@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -22,58 +22,58 @@ import step.core.artefacts.reports.ReportNode;
 
 public class AssertReportNode extends ReportNode {
 
-	String message;
+    String message;
 
-	String description;
-	
-	String key;
-	
-	String actual;
-	
-	String expected;
+    String description;
 
-	public String getMessage() {
-		return message;
-	}
+    String key;
 
-	public void setMessage(String message) {
-		this.message = message;
-	}
+    String actual;
 
-	public String getKey() {
-		return key;
-	}
+    String expected;
 
-	public void setKey(String key) {
-		this.key = key;
-	}
+    public String getMessage() {
+        return message;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public String getKey() {
+        return key;
+    }
 
-	public String getActual() {
-		return actual;
-	}
+    public void setKey(String key) {
+        this.key = key;
+    }
 
-	public void setActual(String actual) {
-		this.actual = actual;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public String getExpected() {
-		return expected;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public void setExpected(String expected) {
-		this.expected = expected;
-	}
+    public String getActual() {
+        return actual;
+    }
 
-	@Override
-	public String getReportAsString() {
-		return message;
-	}
+    public void setActual(String actual) {
+        this.actual = actual;
+    }
+
+    public String getExpected() {
+        return expected;
+    }
+
+    public void setExpected(String expected) {
+        this.expected = expected;
+    }
+
+    @Override
+    public String getReportAsString() {
+        return message;
+    }
 }

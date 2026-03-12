@@ -18,11 +18,12 @@ public class RemoteCollectionFactory implements CollectionFactory {
 
     public RemoteCollectionFactory(Properties properties) {
         this(new ControllerCredentials(
-                properties.getProperty(REMOTE_URL_PROP),
-                properties.getProperty(REMOTE_USER_PROP),
-                properties.getProperty(REMOTE_PWD_PROP)
+            properties.getProperty(REMOTE_URL_PROP),
+            properties.getProperty(REMOTE_USER_PROP),
+            properties.getProperty(REMOTE_PWD_PROP)
         ));
     }
+
     public RemoteCollectionFactory() {
         this.client = new AbstractRemoteClient();
     }
@@ -37,7 +38,7 @@ public class RemoteCollectionFactory implements CollectionFactory {
 
     @Override
     public void close() throws IOException {
-        if (client!=null) {
+        if (client != null) {
             client.close();
         }
     }

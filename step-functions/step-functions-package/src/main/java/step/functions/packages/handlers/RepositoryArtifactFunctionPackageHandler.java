@@ -43,135 +43,135 @@ import java.util.Map;
 
 public class RepositoryArtifactFunctionPackageHandler extends JavaFunctionPackageHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(RepositoryArtifactFunctionPackageHandler.class);
-	
-	private final ResourceManager resourceManager;
-	private final RepositorySystem repositorySystem;
-	private List<RemoteRepository> repositories;
-	private final LocalRepository localRepository;
+    private static final Logger logger = LoggerFactory.getLogger(RepositoryArtifactFunctionPackageHandler.class);
 
-	public RepositoryArtifactFunctionPackageHandler(ResourceManager resourceManager, FileResolver fileResolver, Configuration config) {
-		super(fileResolver, config);
+    private final ResourceManager resourceManager;
+    private final RepositorySystem repositorySystem;
+    private List<RemoteRepository> repositories;
+    private final LocalRepository localRepository;
 
-		this.resourceManager = resourceManager;
-		repositorySystem = newRepositorySystem();
-		localRepository = new LocalRepository(
-				config.getProperty("plugins.FunctionPackagePlugin.maven.localrepository", "maven"));
+    public RepositoryArtifactFunctionPackageHandler(ResourceManager resourceManager, FileResolver fileResolver, Configuration config) {
+        super(fileResolver, config);
 
-		parseConfigurationAndCreateRepositoryList(config);
-	}
+        this.resourceManager = resourceManager;
+        repositorySystem = newRepositorySystem();
+        localRepository = new LocalRepository(
+            config.getProperty("plugins.FunctionPackagePlugin.maven.localrepository", "maven"));
 
-	private void parseConfigurationAndCreateRepositoryList(Configuration config) {
-		Map<String, Map<String, String>> repositoriesProperties = new HashMap<>();
-		config.getPropertyNames().forEach(p -> {
-			String key = p.toString();
-			if (key.startsWith("plugins.FunctionPackagePlugin.maven.repository.")) {
-				String repositoryId = key.replace("plugins.FunctionPackagePlugin.maven.repository.", "")
-						.split("\\.")[0];
-				Map<String, String> repositoryProperties = repositoriesProperties.computeIfAbsent(repositoryId,
-						k -> new HashMap<>());
-				String propertyKey = key.replace("plugins.FunctionPackagePlugin.maven.repository." + repositoryId + ".",
-						"");
-				repositoryProperties.put(propertyKey, config.getProperty(key));
-			}
-		});
+        parseConfigurationAndCreateRepositoryList(config);
+    }
 
-		repositories = new ArrayList<>();
-		repositoriesProperties.entrySet().forEach(e -> {
-			Map<String, String> properties = e.getValue();
-			String url = properties.get("url");
-			String username = properties.get("username");
-			String password = properties.get("password");
+    private void parseConfigurationAndCreateRepositoryList(Configuration config) {
+        Map<String, Map<String, String>> repositoriesProperties = new HashMap<>();
+        config.getPropertyNames().forEach(p -> {
+            String key = p.toString();
+            if (key.startsWith("plugins.FunctionPackagePlugin.maven.repository.")) {
+                String repositoryId = key.replace("plugins.FunctionPackagePlugin.maven.repository.", "")
+                    .split("\\.")[0];
+                Map<String, String> repositoryProperties = repositoriesProperties.computeIfAbsent(repositoryId,
+                    k -> new HashMap<>());
+                String propertyKey = key.replace("plugins.FunctionPackagePlugin.maven.repository." + repositoryId + ".",
+                    "");
+                repositoryProperties.put(propertyKey, config.getProperty(key));
+            }
+        });
 
-			RemoteRepository.Builder builder = new RemoteRepository.Builder(e.getKey(), "default", url);
-			if (username != null) {
-				Authentication authentication = new AuthenticationBuilder().addUsername(username).addPassword(password)
-						.build();
-				builder.setAuthentication(authentication);
-			}
-			
-			String proxyType = properties.get("proxy.type");
-			if(proxyType!=null) {
-				String proxyHost = properties.get("proxy.host");
-				int proxyPort = Integer.parseInt(properties.get("proxy.port"));
-				String proxyUsername = properties.get("proxy.username");
-				String proxyPassword = properties.get("proxy.password");
-				Authentication authentication = null;
-				if(proxyUsername !=null) {
-					authentication = new AuthenticationBuilder().addUsername(proxyUsername).addPassword(proxyPassword)
-							.build();
-				}
-				Proxy proxy = new Proxy(proxyType, proxyHost, proxyPort, authentication);
-				builder.setProxy(proxy);
-			}
-			
-			RemoteRepository remoteRepository = builder.build();
-			repositories.add(remoteRepository);
+        repositories = new ArrayList<>();
+        repositoriesProperties.entrySet().forEach(e -> {
+            Map<String, String> properties = e.getValue();
+            String url = properties.get("url");
+            String username = properties.get("username");
+            String password = properties.get("password");
 
-		});
-	}
+            RemoteRepository.Builder builder = new RemoteRepository.Builder(e.getKey(), "default", url);
+            if (username != null) {
+                Authentication authentication = new AuthenticationBuilder().addUsername(username).addPassword(password)
+                    .build();
+                builder.setAuthentication(authentication);
+            }
 
-	@Override
-	public boolean isValidForPackage(FunctionPackage functionPackag) {
-		return functionPackag.getPackageLocation().contains("<dependency>");
-	}
+            String proxyType = properties.get("proxy.type");
+            if (proxyType != null) {
+                String proxyHost = properties.get("proxy.host");
+                int proxyPort = Integer.parseInt(properties.get("proxy.port"));
+                String proxyUsername = properties.get("proxy.username");
+                String proxyPassword = properties.get("proxy.password");
+                Authentication authentication = null;
+                if (proxyUsername != null) {
+                    authentication = new AuthenticationBuilder().addUsername(proxyUsername).addPassword(proxyPassword)
+                        .build();
+                }
+                Proxy proxy = new Proxy(proxyType, proxyHost, proxyPort, authentication);
+                builder.setProxy(proxy);
+            }
 
-	public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception {
-		String packageLocation = functionPackage.getPackageLocation();
+            RemoteRepository remoteRepository = builder.build();
+            repositories.add(remoteRepository);
 
-		MavenArtifactIdentifier dependency =  new MavenArtifactIdentifierFromXmlParser().parse(packageLocation);
-		Artifact artifact = new DefaultArtifact(
-				dependency.getGroupId(), dependency.getArtifactId(),
-				dependency.getClassifier(), dependency.getType() == null || dependency.getType().isEmpty() ? "jar" : dependency.getType(),
-				dependency.getVersion()
-		);
-		File artifactFile = getArtifactByAether(artifact);
-		
-		// TODO we're changing the package location to the path of the resolved file. 
-		// This works because the function package gets saved by the FunctionPackageManager aftewards.
-		// However this isn't a clean way of doing this. Change the API to allow changes to the FunctionPackage
-		if(preview) {
-			functionPackage.setPackageLocation(artifactFile.getAbsolutePath());
-		} else {
-			// if it's not a preview, we save the temporary file as resource
-			Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(artifactFile), artifactFile.getName(), objectEnricher, null);
-			functionPackage.setPackageLocation(FileResolver.RESOURCE_PREFIX+resource.getId().toString());
-			functionPackage.addAttribute(AbstractOrganizableObject.VERSION, artifact.getVersion());
-		}
-		List<Function> functions = super.buildFunctions(functionPackage, preview, objectEnricher);
-		return functions;
-	}
+        });
+    }
 
-	private RepositorySystem newRepositorySystem() {
-		DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
-		locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
-		locator.addService(TransporterFactory.class, FileTransporterFactory.class);
-		locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
-		return locator.getService(RepositorySystem.class);
-	}
+    @Override
+    public boolean isValidForPackage(FunctionPackage functionPackag) {
+        return functionPackag.getPackageLocation().contains("<dependency>");
+    }
 
-	private RepositorySystemSession newSession() {
-		DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
-		session.setLocalRepositoryManager(repositorySystem.newLocalRepositoryManager(session, localRepository));
-		return session;
-	}
+    public List<Function> buildFunctions(FunctionPackage functionPackage, boolean preview, ObjectEnricher objectEnricher) throws Exception {
+        String packageLocation = functionPackage.getPackageLocation();
 
-	private File getArtifactByAether(final Artifact artifact) throws IOException, ArtifactResolutionException {
-		RepositorySystemSession session = newSession();
-		ArtifactRequest artifactRequest = new ArtifactRequest();
-		artifactRequest.setArtifact(artifact);
-		artifactRequest.setRepositories(repositories);
-		File result;
+        MavenArtifactIdentifier dependency = new MavenArtifactIdentifierFromXmlParser().parse(packageLocation);
+        Artifact artifact = new DefaultArtifact(
+            dependency.getGroupId(), dependency.getArtifactId(),
+            dependency.getClassifier(), dependency.getType() == null || dependency.getType().isEmpty() ? "jar" : dependency.getType(),
+            dependency.getVersion()
+        );
+        File artifactFile = getArtifactByAether(artifact);
 
-		ArtifactResult artifactResult = repositorySystem.resolveArtifact(session, artifactRequest);
-		Artifact resolvedArtifact = artifactResult.getArtifact();
-		if (resolvedArtifact != null) {
-			result = resolvedArtifact.getFile();
-		} else {
-			artifactResult.getExceptions().forEach(e->logger.error("Error while resolving artifact "+artifact.toString(), e));
-			throw new RuntimeException("The resolution of the artifact failed. See the logs for more details");
-		}
-		
-		return result;
-	}
+        // TODO we're changing the package location to the path of the resolved file.
+        // This works because the function package gets saved by the FunctionPackageManager aftewards.
+        // However this isn't a clean way of doing this. Change the API to allow changes to the FunctionPackage
+        if (preview) {
+            functionPackage.setPackageLocation(artifactFile.getAbsolutePath());
+        } else {
+            // if it's not a preview, we save the temporary file as resource
+            Resource resource = resourceManager.createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, new FileInputStream(artifactFile), artifactFile.getName(), objectEnricher, null);
+            functionPackage.setPackageLocation(FileResolver.RESOURCE_PREFIX + resource.getId().toString());
+            functionPackage.addAttribute(AbstractOrganizableObject.VERSION, artifact.getVersion());
+        }
+        List<Function> functions = super.buildFunctions(functionPackage, preview, objectEnricher);
+        return functions;
+    }
+
+    private RepositorySystem newRepositorySystem() {
+        DefaultServiceLocator locator = MavenRepositorySystemUtils.newServiceLocator();
+        locator.addService(RepositoryConnectorFactory.class, BasicRepositoryConnectorFactory.class);
+        locator.addService(TransporterFactory.class, FileTransporterFactory.class);
+        locator.addService(TransporterFactory.class, HttpTransporterFactory.class);
+        return locator.getService(RepositorySystem.class);
+    }
+
+    private RepositorySystemSession newSession() {
+        DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
+        session.setLocalRepositoryManager(repositorySystem.newLocalRepositoryManager(session, localRepository));
+        return session;
+    }
+
+    private File getArtifactByAether(final Artifact artifact) throws IOException, ArtifactResolutionException {
+        RepositorySystemSession session = newSession();
+        ArtifactRequest artifactRequest = new ArtifactRequest();
+        artifactRequest.setArtifact(artifact);
+        artifactRequest.setRepositories(repositories);
+        File result;
+
+        ArtifactResult artifactResult = repositorySystem.resolveArtifact(session, artifactRequest);
+        Artifact resolvedArtifact = artifactResult.getArtifact();
+        if (resolvedArtifact != null) {
+            result = resolvedArtifact.getFile();
+        } else {
+            artifactResult.getExceptions().forEach(e -> logger.error("Error while resolving artifact " + artifact.toString(), e));
+            throw new RuntimeException("The resolution of the artifact failed. See the logs for more details");
+        }
+
+        return result;
+    }
 }

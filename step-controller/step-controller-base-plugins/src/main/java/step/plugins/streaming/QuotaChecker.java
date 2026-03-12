@@ -63,10 +63,10 @@ public class QuotaChecker {
         // If total is already above the per-execution cap, refuse new reservations.
         if (limits.maxBytesPerExecution != null && totalBytes.get() >= limits.maxBytesPerExecution) {
             String msg = String.format(
-                    "Total size for execution %s reached quota %d",
-                    executionId, limits.maxBytesPerExecution);
+                "Total size for execution %s reached quota %d",
+                executionId, limits.maxBytesPerExecution);
             logger.debug("reserveNewResource: totalBytes={} exceeds cap {} for execution {}",
-                    totalBytes.get(), limits.maxBytesPerExecution, executionId);
+                totalBytes.get(), limits.maxBytesPerExecution, executionId);
             throw new QuotaExceededException(msg);
         }
 
@@ -81,15 +81,15 @@ public class QuotaChecker {
             int count = resources.size() + reservations.size();
             if (count >= limits.maxResourcesPerExecution) {
                 String msg = String.format(
-                        "Maximum number of resources (%d) for execution %s is reached",
-                        limits.maxResourcesPerExecution, executionId);
+                    "Maximum number of resources (%d) for execution %s is reached",
+                    limits.maxResourcesPerExecution, executionId);
                 logger.debug("reserveNewResource: quota hit for execution {} (active={}, reserved={})",
-                        executionId, resources.size(), reservations.size());
+                    executionId, resources.size(), reservations.size());
                 throw new QuotaExceededException(msg);
             }
             reservations.add(token);
             logger.debug("Reserved token {} for execution {} (active={}, reserved={})",
-                    token, executionId, resources.size(), reservations.size());
+                token, executionId, resources.size(), reservations.size());
         }
         return token;
     }
@@ -107,7 +107,7 @@ public class QuotaChecker {
                 throw new IllegalStateException("Resource already bound: " + resourceId);
             }
             logger.debug("Bound resource {} to execution {} (moved from reserved; active={}, reserved={})",
-                    resourceId, executionId, resources.size(), reservations.size());
+                resourceId, executionId, resources.size(), reservations.size());
         }
     }
 
@@ -119,7 +119,7 @@ public class QuotaChecker {
             boolean removed = reservations.remove(reservation);
             if (removed) {
                 logger.debug("Canceled reservation token {} for execution {} (active={}, reserved={})",
-                        reservation, executionId, resources.size(), reservations.size());
+                    reservation, executionId, resources.size(), reservations.size());
             } else {
                 logger.debug("cancelReservation: token {} not found for execution {}", reservation, executionId);
             }
@@ -162,8 +162,8 @@ public class QuotaChecker {
         if (limits.maxBytesPerExecution != null) {
             if (!grow(totalBytes, delta, limits.maxBytesPerExecution)) {
                 String msg = String.format(
-                        "Total size for execution %s reached quota %d",
-                        executionId, limits.maxBytesPerExecution);
+                    "Total size for execution %s reached quota %d",
+                    executionId, limits.maxBytesPerExecution);
                 logger.warn(msg);
                 QuotaExceededException ex2 = new QuotaExceededException(msg);
                 if (exception == null) {
@@ -183,8 +183,8 @@ public class QuotaChecker {
     private void checkSizeQuotaPerResource(String resourceId, long currentSize) throws QuotaExceededException {
         if (limits.maxBytesPerResource != null && currentSize > limits.maxBytesPerResource) {
             String msg = String.format(
-                    "Resource %s reached resource size quota %d",
-                    resourceId, limits.maxBytesPerResource);
+                "Resource %s reached resource size quota %d",
+                resourceId, limits.maxBytesPerResource);
             logger.warn(msg);
             throw new QuotaExceededException(msg);
         }
