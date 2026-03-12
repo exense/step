@@ -96,6 +96,17 @@ public class RepositoryObjectManager {
         }
     }
 
+    public ArtefactLinks getArtefactLinks(RepositoryObjectReference ref) throws Exception {
+        String repositoryId = ref.getRepositoryID();
+        try {
+            Repository repository = getRepository(repositoryId);
+            return repository.getArtefactLinks(ref.getRepositoryParameters());
+        } catch (Exception e) {
+            logger.error("Error while getting artefact links for {}", ref, e);
+            throw e;
+        }
+    }
+
     public TestSetStatusOverview getReport(RepositoryObjectReference report, ObjectPredicate objectPredicate, String username) throws Exception {
         String respositoryId = report.getRepositoryID();
         Repository repository = getRepository(respositoryId);
