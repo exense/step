@@ -40,7 +40,7 @@ describe('runner', () => {
     test('accepts a message and exception, attaches stack trace', async () => {
       const output = await runner.run('SetErrorWithMessageAndExceptionKW', { ErrorMsg: 'MyError3', rethrow_error: true })
       expect(output.error.msg).toBe('MyError3')
-      expect(output.attachments).toHaveLength(1)
+      expect(output.attachments.find(a => a.name === 'exception.log')).toBeDefined()
     })
   })
 

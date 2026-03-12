@@ -1,16 +1,17 @@
 const minimist = require('minimist')
 const path = require('path')
 const YAML = require('yaml')
+const logger = require('./api/logger').child({ component: 'Agent' })
 
 let args = minimist(process.argv.slice(2), {
   default: {
     f: path.join(__dirname, 'AgentConf.yaml')
   }
 })
-console.log('[Agent] Using arguments ' + JSON.stringify(args))
+logger.info('Using arguments ' + JSON.stringify(args))
 
 const agentConfFile = args.f
-console.log('[Agent] Reading agent configuration ' + agentConfFile)
+logger.info('Reading agent configuration ' + agentConfFile)
 const fs = require('fs')
 const content = fs.readFileSync(agentConfFile, 'utf8')
 const agentConfFileExt = path.extname(agentConfFile)
@@ -26,7 +27,7 @@ function parseAgentConf() {
   }
 }
 
-console.log('[Agent] Creating agent context and tokens')
+logger.info('Creating agent context and tokens')
 const uuid = require('uuid/v4')
 const jwtUtils = require('./utils/jwtUtils')
 const agentType = 'node'
@@ -53,7 +54,7 @@ agentConf.tokenGroups.forEach(function (tokenGroup) {
   }
 })
 
-console.log('[Agent] Starting agent services')
+logger.info('Starting agent services')
 const express = require('express')
 const app = express()
 const port = agentConf.agentPort || 3000
@@ -73,8 +74,8 @@ const server = app.listen(port)
 server.setTimeout(timeout)
 
 const startWithAgentUrl = async function(agentUrl) {
-  console.log('[Agent] Registering agent as ' + agentUrl + ' to grid ' + agentConf.gridHost)
-  console.log('[Agent] Creating registration timer')
+  logger.info('Registering agent as ' + agentUrl + ' to grid ' + agentConf.gridHost)
+  logger.info('Creating registration timer')
   const registrationPeriod = agentConf.registrationPeriod || 5000
   setInterval(async () => {
     const body = { agentRef: { agentId: agent.id, agentUrl: agentUrl, agentType: agentType }, tokens: agentContext.tokens }
@@ -94,15 +95,14 @@ const startWithAgentUrl = async function(agentUrl) {
       })
       if (res.status !== 204) {
         const responseBody = await res.text().catch(() => null)
-        console.log("[Agent] Failed to register agent: grid responded with status " + res.status + (responseBody != null ? ". Response body: " + responseBody : ""))
+        logger.warn('Failed to register agent: grid responded with status ' + res.status + (responseBody != null ? '. Response body: ' + responseBody : ''))
       }
     } catch (err) {
-      console.log("[Agent] Error while registering agent to grid")
-      console.log(err)
+      logger.error('Error while registering agent to grid: ' + err)
     }
   }, registrationPeriod)
 
-  console.log('[Agent] Successfully started on: ' + port)
+  logger.info('Successfully started on port ' + port)
 }
 
 if(agentConf.agentUrl) {
@@ -112,7 +112,7 @@ if(agentConf.agentUrl) {
   getFQDN().then(FQDN => {
     startWithAgentUrl('http://' + FQDN + ':' + port)
   }).catch(e => {
-    console.log('[Agent] Error while getting FQDN ' + e)
+    logger.error('Error while getting FQDN: ' + e)
   })
 }
 
@@ -121,5 +121,5 @@ const v8 = require('v8');
 process.on('SIGUSR2', () => {
   const fileName = `/tmp/heap-${process.pid}-${Date.now()}.heapsnapshot`;
   v8.writeHeapSnapshot(fileName);
-  console.log(`Heap dump written to ${fileName}`);
+  logger.info('Heap dump written to ' + fileName)
 });

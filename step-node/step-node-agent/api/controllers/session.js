@@ -16,9 +16,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Step.  If not, see <http://www.gnu.org/licenses/>.
  */
+let logger;
+try {
+  logger = require('../logger').child({ component: 'Session' });
+} catch {
+  logger = { info: console.log.bind(console), warn: console.warn.bind(console), error: console.error.bind(console) };
+}
+
 class Session extends Map {
   [Symbol.dispose]() {
-    console.log(`[Session] Disposing Session: Cleaning up ${this.size} resources...`);
+    logger.info(`Disposing Session: Cleaning up ${this.size} resources...`);
 
     for (const [key, resource] of this) {
       try {
@@ -35,9 +42,9 @@ class Session extends Map {
           resource.close();
         }
 
-        console.log(`[Session] Successfully closed resource: ${key}`);
+        logger.info(`Successfully closed resource: ${key}`);
       } catch (err) {
-        console.error(`[Session] Failed to close resource ${key}:`, err);
+        logger.error(`Failed to close resource ${key}: ${err}`);
       }
     }
 

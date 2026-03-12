@@ -4,15 +4,16 @@ const https = require('https')
 const url = require('url')
 const unzip = require('unzip-stream')
 const jwtUtils = require('../../utils/jwtUtils')
+const logger = require('../logger').child({ component: 'FileManager' })
 
 class FileManager {
   constructor(agentContext) {
     this.agentContext = agentContext;
     const filemanagerPath = agentContext.properties['filemanagerPath'] || 'filemanager'
     this.workingDir = filemanagerPath + '/work/'
-    console.log('[FileManager] Starting file manager using working directory: ' + this.workingDir)
+    logger.info('Starting file manager using working directory: ' + this.workingDir)
 
-    console.log('[FileManager] Clearing working dir: ' + this.workingDir)
+    logger.info('Clearing working dir: ' + this.workingDir)
     fs.rmSync(this.workingDir, { recursive: true, force: true })
     fs.mkdirSync(this.workingDir, { recursive: true })
 
@@ -40,7 +41,7 @@ class FileManager {
       const cacheEntry = this.#getCacheEntry(fileId, fileVersionId)
       if (cacheEntry) {
         if (!cacheEntry.loading) {
-          console.log('[FileManager] Entry found for fileId ' + fileId + ': ' + cacheEntry.name)
+          logger.info('Entry found for fileId ' + fileId + ': ' + cacheEntry.name)
           const fileName = cacheEntry.name
 
           if (fs.existsSync(filePath + '/' + fileName)) {
@@ -49,23 +50,23 @@ class FileManager {
             reject(new Error('Entry exists but no file found: ' + filePath + '/' + fileName))
           }
         } else {
-          console.log('[FileManager] Waiting for cache entry to be loaded for fileId ' + fileId)
+          logger.info('Waiting for cache entry to be loaded for fileId ' + fileId)
           cacheEntry.promises.push((result) => {
-            console.log('[FileManager] Cache entry loaded for fileId ' + fileId)
+            logger.info('Cache entry loaded for fileId ' + fileId)
             resolve(result)
           })
         }
       } else {
         this.#putCacheEntry(fileId, fileVersionId, { loading: true, promises: [] })
 
-        console.log('[FileManager] No entry found for fileId ' + fileId + '. Loading...')
+        logger.info('No entry found for fileId ' + fileId + '. Loading...')
         fs.mkdirSync(filePath, { recursive: true })
-        console.log('[FileManager] Created file path: ' + filePath + ' for fileId ' + fileId)
+        logger.info('Created file path: ' + filePath + ' for fileId ' + fileId)
 
         const fileVersionUrl = controllerUrl + fileId + '/' + fileVersionId
-        console.log('[FileManager] Requesting file from: ' + fileVersionUrl)
+        logger.info('Requesting file from: ' + fileVersionUrl)
         this.#getKeywordFile(fileVersionUrl, filePath).then((result) => {
-          console.log('[FileManager] Transfered file ' + result + ' from ' + fileVersionUrl)
+          logger.info('Transferred file ' + result + ' from ' + fileVersionUrl)
 
           const cacheEntry = this.#getCacheEntry(fileId, fileVersionId)
           cacheEntry.name = result
@@ -80,7 +81,7 @@ class FileManager {
 
           resolve(filePath + '/' + result)
         }, (err) => {
-          console.log('Error :' + err)
+          logger.error('Error downloading file: ' + err)
           reject(err)
         })
       }
@@ -123,7 +124,7 @@ class FileManager {
           resp.pipe(myFile).on('finish', () => resolve(filename))
         }
       }).on('error', (err) => {
-        console.log('Error: ' + err.message)
+        logger.error('HTTP request error: ' + err.message)
         reject(err)
       })
 

@@ -3,15 +3,16 @@ const path = require("path");
 const {fork, spawn, spawnSync} = require("child_process");
 const Session = require('./session');
 const { OutputBuilder } = require('./output');
+const logger = require('../logger').child({ component: 'Controller' });
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 process.on('unhandledRejection', error => {
-  console.log('[Controller] Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported', error)
+  logger.error('Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported: ' + error)
 })
 
 process.on('uncaughtException', error => {
-  console.log('[Controller] Critical: an unhandled error (uncaught exception) occurred and might not have been reported', error)
+  logger.error('Critical: an unhandled error (uncaught exception) occurred and might not have been reported: ' + error)
 })
 
 class Controller {
@@ -30,7 +31,7 @@ class Controller {
   }
 
   reserveToken_(tokenId) {
-    console.log('[Controller] Reserving token: ' + tokenId)
+    logger.info('Reserving token: ' + tokenId)
   }
 
   releaseToken(req, res) {
@@ -39,7 +40,7 @@ class Controller {
   }
 
   releaseToken_(tokenId) {
-    console.log('[Controller] Releasing token: ' + tokenId)
+    logger.info('Releasing token: ' + tokenId)
 
     const session = this.agentContext.tokenSessions[tokenId]
     if (session) {
@@ -47,13 +48,13 @@ class Controller {
       session[Symbol.dispose]();
       this.agentContext.tokenSessions[tokenId] = null;
     } else {
-      console.log('[Controller] No session founds for token: ' + tokenId)
+      logger.warn('No session found for token: ' + tokenId)
     }
   }
 
   interruptExecution(req, res) {
     const tokenId = req.params.tokenId
-    console.warn('[Controller] Interrupting token: ' + tokenId + ' : not implemented')
+    logger.warn('Interrupting token: ' + tokenId + ' : not implemented')
   }
 
   async process(req, res) {
@@ -64,7 +65,7 @@ class Controller {
 
     let token = this.agentContext.tokens.find(value => value.id == tokenId);
     if(token) {
-      console.log('[Controller] Using token: ' + tokenId + ' to execute ' + keywordName)
+      logger.info('Using token: ' + tokenId + ' to execute ' + keywordName)
 
       // add the agent properties
       const agentProperties = this.agentContext.properties
@@ -95,7 +96,7 @@ class Controller {
 
       await this.executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder)
     } catch (e) {
-      console.log('[Controller] Unexpected error while executing keyword ' + keywordName + ' :', e)
+      logger.error('Unexpected error while executing keyword ' + keywordName + ': ' + e)
       outputBuilder.fail('Unexpected error while executing keyword', e)
     }
     return outputBuilder.build();
@@ -115,7 +116,7 @@ class Controller {
         npmProjectPath = path.resolve(keywordPackageFile)
       }
 
-      console.log('[Controller] Executing keyword in project ' + npmProjectPath + ' for token ' + tokenId)
+      logger.info('Executing keyword in project ' + npmProjectPath + ' for token ' + tokenId)
 
       let session = this.agentContext.tokenSessions[tokenId]
       if (!session) {
@@ -133,10 +134,10 @@ class Controller {
       let isDebugEnabled = properties['debug'] === 'true';
 
       if (!forkedAgent) {
-        console.log('[Controller] Starting agent fork in ' + npmProjectPath + ' for token ' + tokenId)
+        logger.info('Starting agent fork in ' + npmProjectPath + ' for token ' + tokenId)
         forkedAgent = createForkedAgent(npmProjectPath);
 
-        console.log('[Controller] Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
+        logger.info('Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
         const npmInstallResult = await this.executeNpmInstall(npmProjectPath);
         const npmInstallOutput = Buffer.concat([npmInstallResult.stdout || Buffer.alloc(0), npmInstallResult.stderr || Buffer.alloc(0)]);
         const npmInstallFailed = npmInstallResult.status !== 0 || npmInstallResult.error != null;
@@ -153,11 +154,12 @@ class Controller {
         session.set('npmProjectPath', npmProjectPath);
 
         if (npmInstallFailed) {
+          outputBuilder.attach(npmAttachment);
           throw npmInstallResult.error || new Error('npm install exited with code ' + npmInstallResult.status);
         }
       }
 
-      console.log('[Controller] Executing keyword \'' + keywordName + ' in ' + npmProjectPath + ' for token ' + tokenId)
+      logger.info('Executing keyword \'' + keywordName + '\' in ' + npmProjectPath + ' for token ' + tokenId)
       const { result, outputBuffer } = await forkedAgent.runKeywordTask(forkedAgent, npmProjectPath, keywordName, argument, properties);
       outputBuilder.merge(result.payload)
 
@@ -175,7 +177,7 @@ class Controller {
         outputBuilder.attach(forkAttachment);
       }
     } catch (e) {
-      console.log("[Controller] Unexpected error occurred while executing keyword ", e)
+      logger.error('Unexpected error occurred while executing keyword: ' + e)
       outputBuilder.fail('An error occurred while attempting to execute the keyword ' + keywordName, e)
     }
   }
@@ -262,12 +264,12 @@ class ForkedAgent {
 
         this.process.removeAllListeners('error');
         this.process.on('error', (err) => {
-          console.error('Error while calling forked agent:', err);
+          logger.error('Error while calling forked agent: ' + err)
         });
 
         this.process.send({ type: "KEYWORD", projectPath: keywordProjectPath, functionName, input, properties });
       } catch (e) {
-        console.log('[Controller] Unexpected error while calling forked agent', e);
+        logger.error('Unexpected error while calling forked agent: ' + e)
       }
     });
   }

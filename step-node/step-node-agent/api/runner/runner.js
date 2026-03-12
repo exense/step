@@ -1,4 +1,5 @@
 const Session = require('../controllers/session');
+const logger = require('../logger').child({ component: 'Runner' })
 module.exports = function (properties = {}) {
   const tokenId = 'local'
 
@@ -19,7 +20,7 @@ module.exports = function (properties = {}) {
     const output = await controller.process_(tokenId, keywordName, input, properties)
     const payload = output.payload;
     if (payload.error) {
-      console.log("[Runner] The keyword execution returned an error", payload.error);
+      logger.warn('The keyword execution returned an error: ' + JSON.stringify(payload.error))
     }
     return output.payload
   }
