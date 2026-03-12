@@ -62,6 +62,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     @Secured(right = "{entity}-read")
     public ReportLayoutJson exportLayout(@PathParam("id") String id) {
         ReportLayout reportLayout = getEntity(id);
+        checkLayoutRight(reportLayout, READ_RIGHT);
         return new ReportLayoutJson(reportLayout);
     }
 
