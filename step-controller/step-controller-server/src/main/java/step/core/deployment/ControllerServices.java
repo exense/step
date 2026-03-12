@@ -23,7 +23,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import org.apache.http.HttpStatus;
 import org.bson.types.ObjectId;
 import step.artefacts.CallPlan;
 import step.artefacts.handlers.PlanLocator;
@@ -191,7 +191,7 @@ public class ControllerServices extends AbstractStepServices {
         try {
             return getContext().getRepositoryObjectManager().getArtefactInfo(ref);
         } catch (Exception e) {
-            throw new WebApplicationException(Response.status(500).entity("Unable to retrieve artefact." + e.getMessage()).type("text/plain").build());
+            throw new ControllerServiceException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unable to retrieve artefact: " + e.getMessage());
         }
     }
 
@@ -204,7 +204,7 @@ public class ControllerServices extends AbstractStepServices {
         try {
             return getContext().getRepositoryObjectManager().getArtefactLinks(ref);
         } catch (Exception e) {
-            throw new WebApplicationException(Response.status(500).entity("Unable to retrieve artefact links:" + e.getMessage()).type("text/plain").build());
+            throw new ControllerServiceException(HttpStatus.SC_INTERNAL_SERVER_ERROR, "Unable to retrieve artefact links: " + e.getMessage());
         }
     }
 
