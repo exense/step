@@ -27,6 +27,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.Echo;
+import step.artefacts.Sequence;
 import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.JavaAutomationPackageReader;
@@ -42,10 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -60,6 +58,7 @@ public class AutomationPackageCollectionTest {
     private File destinationDirectory;
     private Collection<Plan> planCollection;
     private final Path expectedFilesPath = sourceDirectory.toPath().resolve("expected");
+    private AutomationPackageYamlFragmentManager fragmentManager;
 
     public AutomationPackageCollectionTest() throws AutomationPackageReadingException {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
@@ -77,7 +76,7 @@ public class AutomationPackageCollectionTest {
         destinationDirectory = Files.createTempDirectory("automationPackageCollectionTest").toFile();
         FileUtils.copyDirectory(sourceDirectory, destinationDirectory);
 
-        AutomationPackageYamlFragmentManager fragmentManager = reader.provideAutomationPackageYamlFragmentManager(destinationDirectory);
+        fragmentManager = reader.provideAutomationPackageYamlFragmentManager(destinationDirectory);
         AutomationPackageCollectionFactory collectionFactory = new AutomationPackageCollectionFactory(properties, fragmentManager);
         planCollection = collectionFactory.getCollection("plan", Plan.class);
     }
@@ -143,9 +142,105 @@ public class AutomationPackageCollectionTest {
         assertFilesEqual(expectedFilesPath.resolve("plan1AfterRemove.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
     }
 
+    @Test
+    public void testAddPlanToExistingFragmentWithExistingPlans() throws IOException {
+
+        Sequence sequence = new Sequence();
+        Echo echo = new Echo();
+        echo.setText(new DynamicValue<>("Hello World"));
+        sequence.addChild(echo);
+        
+        Plan plan = new Plan(sequence);
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("name", "New Name");
+        plan.setAttributes(attributes);
+        
+        Properties properties = new Properties();
+        properties.setProperty(AutomationPackageYamlFragmentManager.PROPERTY_NEW_PLAN_FRAGMENT_PATH, "plans/plan1.yml");
+        fragmentManager.setProperties(properties);
+        planCollection.save(plan);
+
+        assertFilesEqual(expectedFilesPath.resolve("plan1AfterAdd.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
+    }
+
+    @Test
+    public void testPlanModifyAndAdd() throws IOException {
+        Optional<Plan> optionalPlan = planCollection.find(Filters.equals("attributes.name", "Test Plan"), null, null, null, 100).findFirst();
+
+        assertTrue(optionalPlan.isPresent());
+
+        Plan plan = optionalPlan.get();
+
+        Echo firstEcho = (Echo) plan.getRoot().getChildren().get(0);
+        DynamicValue<Object> text = firstEcho.getText();
+        text.setDynamic(true);
+        text.setExpression("new Date().toString();");
+
+        planCollection.save(plan);
+        
+        Sequence sequence = new Sequence();
+        Echo echo = new Echo();
+        echo.setText(new DynamicValue<>("Hello World"));
+        sequence.addChild(echo);
+
+        plan = new Plan(sequence);
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("name", "New Name");
+        plan.setAttributes(attributes);
+
+        Properties properties = new Properties();
+        properties.setProperty(AutomationPackageYamlFragmentManager.PROPERTY_NEW_PLAN_FRAGMENT_PATH, "plans/plan1.yml");
+        fragmentManager.setProperties(properties);
+        planCollection.save(plan);
+
+        assertFilesEqual(expectedFilesPath.resolve("plan1AfterModifyAndAdd.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
+    }
+
+    @Test
+    public void testAddPlanToDescriptorWithPresentButEmptyPlanArray() throws IOException {
+
+        Sequence sequence = new Sequence();
+        Echo echo = new Echo();
+        echo.setText(new DynamicValue<>("Hello World"));
+        sequence.addChild(echo);
+
+        Plan plan = new Plan(sequence);
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("name", "New Name");
+        plan.setAttributes(attributes);
+
+        planCollection.save(plan);
+
+        assertFilesEqual(expectedFilesPath.resolve("descriptorAfterAdd.yml"), destinationDirectory.toPath().resolve("automation-package.yml"));
+    }
+
+
+    @Test
+    public void testAddPlanToNewFragment() throws IOException {
+
+        Sequence sequence = new Sequence();
+        Echo echo = new Echo();
+        echo.setText(new DynamicValue<>("Hello World"));
+        sequence.addChild(echo);
+
+        Plan plan = new Plan(sequence);
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("name", "Hello World Plan");
+        plan.setAttributes(attributes);
+
+
+        Properties properties = new Properties();
+        properties.setProperty(AutomationPackageYamlFragmentManager.PROPERTY_NEW_PLAN_FRAGMENT_PATH, "plans/%name%.yml");
+        fragmentManager.setProperties(properties);
+        planCollection.save(plan);
+
+        assertFilesEqual(expectedFilesPath.resolve("Hello_World_Plan.yml"), destinationDirectory.toPath().resolve("plans").resolve("Hello_World_Plan.yml"));
+        
+    }
+
     private void assertFilesEqual(Path expected, Path actual) throws IOException {
-        List<String> expectedLines = Files.readAllLines(expected);
-        List<String> actualLines = Files.readAllLines(actual);
+        String expectedLines = Files.readString(expected);
+        String actualLines = Files.readString(actual);
 
         assertEquals(expectedLines, actualLines);
     }

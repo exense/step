@@ -27,7 +27,7 @@ import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 
 import java.util.List;
 
-public class YamlPlan {
+public class YamlPlan extends PatchableYamlArtefact {
 
 	public static final String PLANS_ENTITY_NAME = "plans";
 
@@ -84,4 +84,9 @@ public class YamlPlan {
 	public void setCategories(List<String> categories) {
 		this.categories = categories;
 	}
+
+    @Override
+    public String getCollectionName() {
+        return PLANS_ENTITY_NAME;
+    }
 }

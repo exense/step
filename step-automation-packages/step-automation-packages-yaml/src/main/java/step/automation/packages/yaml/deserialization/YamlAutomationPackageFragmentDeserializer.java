@@ -20,9 +20,9 @@ package step.automation.packages.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
+import com.fasterxml.jackson.databind.util.LinkedNode;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistryAware;
 import step.automation.packages.yaml.model.AbstractAutomationPackageFragmentYaml;
@@ -30,7 +30,6 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
-import step.core.yaml.SerializationUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -48,42 +47,17 @@ public class YamlAutomationPackageFragmentDeserializer<T extends AutomationPacka
     @Override
     public AbstractAutomationPackageFragmentYaml deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
         JsonDeserializer<Object> defaultDeserializerForClass = getDefaultDeserializerForClass(p, ctxt, getObjectClass());
-        ObjectCodec oc = p.getCodec();
-        JsonNode node = oc.readTree(p);
-
-        ObjectNode nonBasicFields = node.deepCopy();
-        Class<?> clazz = getObjectClass();
-        List<String> basicFields = SerializationUtils.getJsonFieldNames(yamlObjectMapper, clazz);
-        nonBasicFields.remove(basicFields);
-
-        try (JsonParser treeParser = oc.treeAsTokens(node)) {
-            ctxt.getConfig().initialize(treeParser);
-
-            if (treeParser.getCurrentToken() == null) {
-                treeParser.nextToken();
+        AbstractAutomationPackageFragmentYaml res = (AbstractAutomationPackageFragmentYaml) defaultDeserializerForClass.deserialize(p, ctxt);
+        
+        LinkedNode<DeserializationProblemHandler> handlers = ctxt.getConfig().getProblemHandlers();
+        if (handlers != null) {
+            AdditionalFieldHandler handler = (AdditionalFieldHandler) ctxt.getConfig().getProblemHandlers().value();
+            if (handler != null) {
+                res.setAdditionalFields(handler.getAdditionalFields());
             }
-            AbstractAutomationPackageFragmentYaml res = (AbstractAutomationPackageFragmentYaml) defaultDeserializerForClass.deserialize(treeParser, ctxt);
-
-            if (registry != null) {
-                Map<String, List<?>> nonBasicFieldsMap = new HashMap<>();
-                Iterator<Map.Entry<String, JsonNode>> fields = nonBasicFields.fields();
-                while (fields.hasNext()) {
-                    Map.Entry<String, JsonNode> next = fields.next();
-                    List<Object> list = new ArrayList<>();
-                    if (next.getValue() != null) {
-                        // acquire reader for the right type
-                        Class<?> targetClass = registry.resolveClassForYamlField(next.getKey());
-                        if (targetClass != null) {
-                            list = yamlObjectMapper.readerForListOf(targetClass).readValue(next.getValue());
-                        }
-                    }
-                    nonBasicFieldsMap.put(next.getKey(), list);
-                }
-                res.setAdditionalFields(nonBasicFieldsMap);
-            }
-            return res;
         }
-
+        
+        return res;
     }
 
     protected Class<?> getObjectClass() {

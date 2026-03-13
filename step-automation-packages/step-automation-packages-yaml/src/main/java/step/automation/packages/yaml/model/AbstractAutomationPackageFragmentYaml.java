@@ -19,6 +19,7 @@
 package step.automation.packages.yaml.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonMerge;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
@@ -26,10 +27,7 @@ import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class AbstractAutomationPackageFragmentYaml implements AutomationPackageFragmentYaml {
     private List<String> fragments = new ArrayList<>();
@@ -38,10 +36,13 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     private List<YamlPlainTextPlan> plansPlainText = new ArrayList<>();
 
     @JsonIgnore
-    private Map<String, List<?>> additionalFields;
+    private Map<String, List<?>> additionalFields = new HashMap<>();
 
     @JsonIgnore
     private URL url;
+    
+    @JsonIgnore
+    private String currentYaml;
 
     @JsonIgnore
     private List<AutomationPackageFragmentYaml> children = new LinkedList<>();
@@ -106,6 +107,16 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     @JsonIgnore
     public URL getFragmentUrl() {
         return url;
+    }
+
+    @JsonIgnore
+    public void setCurrentYaml(String yaml) {
+        this.currentYaml = yaml;
+    }
+
+    @JsonIgnore
+    public String getCurrentYaml() {
+        return currentYaml;
     }
 
     @JsonIgnore

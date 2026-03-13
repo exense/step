@@ -2,12 +2,15 @@
 fragments: []
 keywords: []
 plans:
-- name: "Test Plan"
+- version: "1.2.0"
+  name: "Test Plan"
   root:
     testCase:
+      nodeName: "Test Plan"
       children:
       - echo:
-          text: "Just echo"
+          text:
+            expression: "new Date().toString();"
       - echo:
           text:
             expression: "mySimpleKey"
@@ -16,8 +19,18 @@ plans:
           inputs:
           - myInput: "myValue"
           keyword: "MyKeyword2"
+  agents: null
   categories:
   - "Yaml Plan"
+- version: "1.2.0"
+  name: "New Name"
+  root:
+    sequence:
+      children:
+      - echo:
+          text: "Hello World"
+  agents: null
+  categories: null
 plansPlainText:
 - name: "Plain text plan"
   rootType: "Sequence"

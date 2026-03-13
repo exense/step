@@ -45,6 +45,10 @@ public interface AutomationPackageFragmentYaml {
     URL getFragmentUrl();
 
     void setFragmentUrl(URL url);
+    
+    String getCurrentYaml();
+    
+    void setCurrentYaml(String yaml);
 
     List<AutomationPackageFragmentYaml> getChildren();
 

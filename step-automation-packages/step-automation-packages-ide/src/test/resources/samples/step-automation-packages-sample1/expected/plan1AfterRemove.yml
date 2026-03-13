@@ -1,7 +1,6 @@
 ---
 fragments: []
 keywords: []
-plans: []
 plansPlainText:
 - name: "Plain text plan"
   rootType: "Sequence"

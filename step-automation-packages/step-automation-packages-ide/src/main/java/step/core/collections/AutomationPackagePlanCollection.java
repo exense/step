@@ -28,9 +28,9 @@ public class AutomationPackagePlanCollection extends InMemoryCollection<Plan> im
     private final AutomationPackageYamlFragmentManager fragmentManager;
 
     public AutomationPackagePlanCollection(AutomationPackageYamlFragmentManager fragmentManager) {
-        super(true, "plan");
+        super(true, "plans");
         this.fragmentManager = fragmentManager;
-        super.save(fragmentManager.getPlans());
+        fragmentManager.getPlans().forEach(super::save);
     }
 
     @Override
