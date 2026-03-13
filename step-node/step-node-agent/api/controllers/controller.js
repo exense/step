@@ -112,10 +112,12 @@ class Controller {
     try {
       let npmProjectPath;
       if (keywordPackageFile.toUpperCase().endsWith('ZIP')) {
-        if (this.filemanager.isFirstLevelKeywordFolder(keywordPackageFile)) {
-          npmProjectPath = path.resolve(keywordPackageFile);
-        } else {
+        if (fs.existsSync(path.resolve(keywordPackageFile, this.filemanager.getFolderName(keywordPackageFile)))) {
+          // If the ZIP contains a top-level wrapper folder
           npmProjectPath = path.resolve(keywordPackageFile, this.filemanager.getFolderName(keywordPackageFile))
+        } else {
+          // Normal path with automation packages
+          npmProjectPath = path.resolve(keywordPackageFile);
         }
       } else {
         // Local execution with KeywordRunner
@@ -134,7 +136,7 @@ class Controller {
       }
 
       let forkedAgent = session.get('forkedAgent');
-      if (!forkedAgent) {
+       if (!forkedAgent) {
         logger.info('Starting agent fork in ' + npmProjectPath + ' for token ' + tokenId)
         forkedAgent = createForkedAgent(npmProjectPath);
         session.set('forkedAgent', forkedAgent);

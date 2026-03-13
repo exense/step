@@ -26,30 +26,32 @@ const session = new Session();
 process.on('message', async ({ type, projectPath, functionName, input, properties }) => {
   if (type === 'KEYWORD') {
     console.log("[Agent fork] Calling keyword " + functionName)
-    const kwModules = await importAllKeywords(projectPath);
-
     const outputBuilder = new OutputBuilder();
-
     try {
-      let keyword = searchKeyword(kwModules, functionName);
-      if (!keyword) {
-        console.log('[Agent fork] Unable to find Keyword ' + functionName + "'");
-        outputBuilder.fail("Unable to find Keyword '" + functionName + "'");
+      if (!keywordDirectoryExists(projectPath)) {
+        outputBuilder.fail("Could not find the 'keywords' directory in " + path.basename(projectPath) + ". Possible cause: If using TypeScript, the keywords may not have been compiled. Fix: Ensure your project is built before deploying to Step or during 'npm install'.")
       } else {
-        try {
-          await keyword(input, outputBuilder, session, properties);
-        } catch (e) {
-          let onError = searchKeyword(kwModules, 'onError');
-          if (onError) {
-            if (await onError(e, input, outputBuilder, session, properties)) {
-              console.log('[Agent fork] Keyword execution failed and onError hook returned \'true\'')
-              outputBuilder.fail(e)
+        const kwModules = await importAllKeywords(projectPath);
+        let keyword = searchKeyword(kwModules, functionName);
+        if (!keyword) {
+          console.log('[Agent fork] Unable to find Keyword ' + functionName + "'");
+          outputBuilder.fail("Unable to find Keyword '" + functionName + "'");
+        } else {
+          try {
+            await keyword(input, outputBuilder, session, properties);
+          } catch (e) {
+            let onError = searchKeyword(kwModules, 'onError');
+            if (onError) {
+              if (await onError(e, input, outputBuilder, session, properties)) {
+                console.log('[Agent fork] Keyword execution failed and onError hook returned \'true\'')
+                outputBuilder.fail(e)
+              } else {
+                console.log('[Agent fork] Keyword execution failed and onError hook returned \'false\'')
+              }
             } else {
-              console.log('[Agent fork] Keyword execution failed and onError hook returned \'false\'')
+              console.log('[Agent fork] Keyword execution failed. No onError hook defined')
+              outputBuilder.fail(e)
             }
-          } else {
-            console.log('[Agent fork] Keyword execution failed. No onError hook defined')
-            outputBuilder.fail(e)
           }
         }
       }
@@ -61,6 +63,10 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
     console.log("[Agent fork] Exiting...")
     session[Symbol.dispose]();
     process.exit(1)
+  }
+
+  function keywordDirectoryExists(projectPath) {
+    return fs.existsSync(path.resolve(projectPath, "./keywords"))
   }
 
   async function importAllKeywords(projectPath) {
