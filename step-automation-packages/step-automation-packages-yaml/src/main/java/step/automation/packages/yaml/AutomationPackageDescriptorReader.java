@@ -18,8 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -31,7 +30,6 @@ import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistryAware;
-import step.automation.packages.yaml.deserialization.AdditionalFieldHandler;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
@@ -174,16 +172,13 @@ public class AutomationPackageDescriptorReader {
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
         //yamlFactory.enable(YAMLGenerator.Feature.MINIMIZE_QUOTES); // Minimize Quotes
         ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
-
+        
+        yamlMapper.setInjectableValues(new InjectableValues.Std()
+                .addValue(ObjectMapper.class, yamlMapper)
+                .addValue(AutomationPackageSerializationRegistry.class, serializationRegistry)
+        );
         // configure custom deserializers
-        SimpleModule module = new SimpleModule();/* {
-            @Override
-            public void setupModule(Module.SetupContext context) {
-                super.setupModule(context);
-                
-                context.addDeserializationProblemHandler(new AdditionalFieldHandler(serializationRegistry, yamlMapper));
-            }
-        };*/
+        SimpleModule module = new SimpleModule();
         
         // register deserializers to read yaml plans
         planReader.registerAllSerializersAndDeserializers(module, yamlMapper, true);
