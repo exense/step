@@ -53,10 +53,4 @@ public interface AutomationPackageFragmentYaml {
     String getCurrentYaml();
     
     void setCurrentYaml(String yaml);
-
-    List<AutomationPackageFragmentYaml> getChildren();
-
-    AutomationPackageFragmentYaml getParent();
-
-    void setParent(AutomationPackageFragmentYaml parent);
 }

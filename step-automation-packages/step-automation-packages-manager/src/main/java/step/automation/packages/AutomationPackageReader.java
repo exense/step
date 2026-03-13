@@ -86,50 +86,48 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
     abstract public List<String> getSupportedFileTypes();
 
-    /**
-     * @param isClasspathBased true if the automation package is located in current classloader (i.e. all annotated keywords
-     *                       can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
-     */
-    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean isClasspathBased) throws AutomationPackageReadingException {
-        return this.readAutomationPackage(automationPackageArchive, apVersion, isClasspathBased, true);
+    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean isClassPathBased) throws AutomationPackageReadingException {
+        return this.readAutomationPackage(automationPackageArchive, apVersion, isClassPathBased, true);
     }
 
     /**
-     * @param isClasspathBased  true if the automation package is located in current classloader (i.e. all annotated keywords
-     *                        can be read as {@link step.engine.plugins.LocalFunctionPlugin.LocalFunction}, but not as {@link GeneralScriptFunction}
      * @param scanAnnotations true if it is required to include annotated java keywords and plans as well as located in yaml descriptor
      */
-    public AutomationPackageContent readAutomationPackage(T archive, String apVersion, boolean isClasspathBased, boolean scanAnnotations) throws AutomationPackageReadingException {
-        if (archive.hasAutomationPackageDescriptor()) {
-            AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(archive.getDescriptorYamlUrl(), archive.getOriginalFileName());
-            return buildAutomationPackage(descriptorYaml, archive, apVersion, isClasspathBased, scanAnnotations);
-        } else if (scanAnnotations) {
-            return buildAutomationPackage(null, archive, apVersion, isClasspathBased, scanAnnotations);
-        } else {
-            return null;
+    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean isClassPathBased, boolean scanAnnotations) throws AutomationPackageReadingException {
+        try {
+            if (automationPackageArchive.hasAutomationPackageDescriptor()) {
+                try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
+                    AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getAutomationPackageName());
+                    return buildAutomationPackage(descriptorYaml, automationPackageArchive, apVersion, isClassPathBased, scanAnnotations);
+                }
+            } else if (scanAnnotations) {
+                return buildAutomationPackage(null, automationPackageArchive, apVersion, isClassPathBased, scanAnnotations);
+            } else {
+                return null;
+            }
+        } catch (IOException ex) {
+            throw new AutomationPackageReadingException("Unable to read the automation package", ex);
         }
     }
 
-
-    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, T archive, String apVersion,
-                                                              boolean isClasspathBased, boolean scanAnnotations) throws AutomationPackageReadingException {
+    private AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, T archive, String apVersion,
+                                                              boolean isClassPathBased, boolean scanAnnotations) throws AutomationPackageReadingException {
         AutomationPackageContent res = newContentInstance();
         String baseName = resolveName(descriptor, archive);
         res.setBaseName(baseName);
         res.setName(resolveUniqueName(baseName, apVersion));
 
         if (scanAnnotations) {
-            fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, isClasspathBased, res);
+            fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, isClassPathBased, res);
         }
 
         // apply imported fragments recursively
         if (descriptor != null) {
-            readAutomationPackageYamlFragmentTree(archive, descriptor);
-            fillAutomationPackageWithImportedFragments(res, descriptor, archive);
+            Map<URL, AutomationPackageFragmentYaml> fragmentMap = new HashMap<>();
+            fillAutomationPackageWithImportedFragments(res, descriptor, archive, fragmentMap);
         }
         return res;
     }
-
 
     private String resolveName(AutomationPackageDescriptorYaml descriptor, T archive) throws AutomationPackageReadingException {
         String finalName;
@@ -155,8 +153,8 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         // Check for characters that could break Groovy expressions
         if (name.contains("'") || name.contains("\\")) {
             throw new AutomationPackageReadingException(
-                    "Package name contains unsafe characters: " + name +
-                            ". Simple quote and backslash characters are not allowed."
+                "Package name contains unsafe characters: " + name +
+                    ". Simple quote and backslash characters are not allowed."
             );
         }
         return name;
@@ -171,51 +169,51 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         return finalName;
     }
 
-    protected AutomationPackageContent newContentInstance(){
+    protected AutomationPackageContent newContentInstance() {
         return new AutomationPackageContent();
     }
 
-    abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, boolean isClasspathBased, AutomationPackageContent res) throws AutomationPackageReadingException;
+    abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, boolean isClassPathBased, AutomationPackageContent res) throws AutomationPackageReadingException;
 
 
     public AutomationPackageYamlFragmentManager provideAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
-        AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(archive.getDescriptorYamlUrl(), archive.getOriginalFileName());
-        readAutomationPackageYamlFragmentTree(archive, descriptor);
-        return new AutomationPackageYamlFragmentManager(descriptor, getOrCreateDescriptorReader());
+        URL descriptorURL = archive.getDescriptorYamlUrl();
+        try (InputStream inputStream = descriptorURL.openStream()){
+            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
+            descriptor.setFragmentUrl(descriptorURL);
+            AutomationPackageContent res = newContentInstance();
+            Map<URL, AutomationPackageFragmentYaml> fragmentMap = new HashMap<>();
+            fillAutomationPackageWithImportedFragments(res, descriptor, archive, fragmentMap);
+            return new AutomationPackageYamlFragmentManager(descriptor, fragmentMap, getOrCreateDescriptorReader());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
+    
+    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Map<URL, AutomationPackageFragmentYaml> fragmentYamlMap) throws AutomationPackageReadingException {
+        fillContentSections(targetPackage, fragment, archive);
 
-    private void readAutomationPackageYamlFragmentTree(AutomationPackageArchive archive, AutomationPackageFragmentYaml parent) throws AutomationPackageReadingException {
-
-        if (!parent.getFragments().isEmpty()) {
-            for (String importedFragmentReference : parent.getFragments()) {
+        if (!fragment.getFragments().isEmpty()) {
+            for (String importedFragmentReference : fragment.getFragments()) {
                 List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
                 for (URL resource : resources) {
-                    AutomationPackageFragmentYaml fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(resource, archive.getOriginalFileName());
-                    fragment.setParent(parent);
-                    parent.getChildren().add(fragment);
-                    readAutomationPackageYamlFragmentTree(archive, fragment);
+                    try (InputStream fragmentYamlStream = resource.openStream()) {
+                        fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getAutomationPackageName());
+                        fragmentYamlMap.put(resource, fragment);
+                        fragment.setFragmentUrl(resource);
+                        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragmentYamlMap);
+                    } catch (IOException e) {
+                        throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
+                    }
                 }
             }
         }
     }
 
-    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
-        fillContentSections(targetPackage, fragment, archive);
-
-        for (AutomationPackageFragmentYaml child: fragment.getChildren()) {
-            fillAutomationPackageWithImportedFragments(targetPackage, child, archive);
-        }
-    }
-
     protected void fillContentSections(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
         targetPackage.getKeywords().addAll(fragment.getKeywords());
-        targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> {
-            Plan plan = getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p);
-            plan.getAttributes().put("fragmentUrl", fragment.getFragmentUrl().toString());
-            plan.getAttributes().put("nameInYaml", p.getName());
-            return plan;
-        }).collect(Collectors.toList()));
+        targetPackage.getPlans().addAll(fragment.getPlans().stream().map(p -> getOrCreateDescriptorReader().getPlanReader().yamlPlanToPlan(p)).collect(Collectors.toList()));
 
         readPlainTextPlans(targetPackage, fragment, archive);
 

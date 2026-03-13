@@ -45,16 +45,20 @@ public class AutomationPackageYamlFragmentManager {
 
     private final Map<Plan, YamlPlan> planToYamlPlan = new ConcurrentHashMap<>();
     private final Map<Plan, AutomationPackageFragmentYaml> planToYamlFragment = new ConcurrentHashMap<>();
-    private final Map<URL, AutomationPackageFragmentYaml> urlToYamlFragment = new ConcurrentHashMap<>();
+    private final Map<URL, AutomationPackageFragmentYaml> urlToYamlFragment;
     private Properties properties = new Properties();
     private final AutomationPackageFragmentYaml descriptorYaml;
 
-    public AutomationPackageYamlFragmentManager(AutomationPackageDescriptorYaml descriptorYaml, AutomationPackageDescriptorReader descriptorReader) {
+    public AutomationPackageYamlFragmentManager(AutomationPackageDescriptorYaml descriptorYaml, Map<URL, AutomationPackageFragmentYaml> fragmentMap, AutomationPackageDescriptorReader descriptorReader) {
 
         this.descriptorReader = descriptorReader;
         this.descriptorYaml = descriptorYaml;
+        
+        urlToYamlFragment = fragmentMap;
 
         initializeMaps(descriptorYaml);
+        
+        urlToYamlFragment.values().forEach(this::initializeMaps);
     }
     
     public void setProperties(Properties properties) {
@@ -68,10 +72,6 @@ public class AutomationPackageYamlFragmentManager {
             planToYamlPlan.put(plan, p);
             planToYamlFragment.put(plan, fragment);
         };
-
-        for (AutomationPackageFragmentYaml child : fragment.getChildren()) {
-            initializeMaps(child);
-        }
     }
 
     public Iterable<Plan> getPlans() {

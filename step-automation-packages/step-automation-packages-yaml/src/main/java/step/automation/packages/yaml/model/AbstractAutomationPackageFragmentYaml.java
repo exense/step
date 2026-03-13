@@ -57,12 +57,6 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     @JsonIgnore
     private String currentYaml;
 
-    @JsonIgnore
-    private List<AutomationPackageFragmentYaml> children = new LinkedList<>();
-
-    @JsonIgnore
-    private AutomationPackageFragmentYaml parent;
-
     @Override
     public List<YamlAutomationPackageKeyword> getKeywords() {
         return keywords;
@@ -139,20 +133,5 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     @JsonIgnore
     public String getCurrentYaml() {
         return currentYaml;
-    }
-
-    @JsonIgnore
-    public List<AutomationPackageFragmentYaml> getChildren() {
-        return children;
-    }
-
-    @JsonIgnore
-    public AutomationPackageFragmentYaml getParent() {
-        return parent;
-    }
-
-    @JsonIgnore
-    public void setParent(AutomationPackageFragmentYaml parent) {
-        this.parent = parent;
     }
 }
