@@ -46,7 +46,7 @@
     <maven.compiler.release>11</maven.compiler.release>
     <!-- internal dependencies -->
     <step-grid.version>0.0.0-MASTER-SNAPSHOT</step-grid.version>
-    <step-framework.version>0.0.0-MASTER-SNAPSHOT</step-framework.version>
+    <step-framework.version>'0.0.0-SED-4497-SNAPSHOT</step-framework.version>
 
     <!-- external, non-transitive, dependencies -->
     <dep.groovy.version>5.0.4</dep.groovy.version>
