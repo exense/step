@@ -10,7 +10,6 @@ public class ApplicationConfigurationManager {
     public ApplicationConfigurationBuilder getDefaultBuilder(Configuration configuration) {
         return new ApplicationConfigurationBuilder()
             .setDebug(configuration.getPropertyAsBoolean("debug", false))
-            .setDemo(configuration.getPropertyAsBoolean("demo", false))
             .setDefaultUrl(configuration.getProperty("ui.default.url", null))
             .setAuthentication(false)
             .setNoLoginMask(true)

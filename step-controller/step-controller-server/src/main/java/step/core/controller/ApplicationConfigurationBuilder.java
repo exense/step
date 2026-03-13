@@ -7,7 +7,6 @@ import java.util.Map;
 public class ApplicationConfigurationBuilder {
     private boolean authentication;
     private String authenticatorName;
-    private boolean demo;
     private boolean debug;
     private boolean noLoginMask;
     private boolean passwordManagement;
@@ -29,11 +28,6 @@ public class ApplicationConfigurationBuilder {
 
     public ApplicationConfigurationBuilder setAuthenticatorName(String authenticatorName) {
         this.authenticatorName = authenticatorName;
-        return this;
-    }
-
-    public ApplicationConfigurationBuilder setDemo(boolean demo) {
-        this.demo = demo;
         return this;
     }
 
@@ -103,7 +97,7 @@ public class ApplicationConfigurationBuilder {
     }
 
     public ApplicationConfiguration build() {
-        return new ApplicationConfiguration(authentication, authenticatorName, demo, debug, noLoginMask,
+        return new ApplicationConfiguration(authentication, authenticatorName, debug, noLoginMask,
             passwordManagement, userManagement, roleManagement, projectMembershipManagement, roles, miscParams,
             defaultUrl, title, contextRoot, forceLegacyReporting);
     }
