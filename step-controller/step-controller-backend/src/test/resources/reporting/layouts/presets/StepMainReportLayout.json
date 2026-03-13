@@ -1,0 +1,107 @@
+{
+  "id": "69b010aeec94534eb48176db",
+  "name": "Step Main Layout",
+  "layout": {
+    "widgets": [
+      {
+        "widgetType": "errorsWidget",
+        "position": {
+          "row": 1,
+          "column": 1,
+          "widthInCells": 8,
+          "heightInCells": 1
+        }
+      },
+      {
+        "widgetType": "testCases",
+        "position": {
+          "row": 2,
+          "column": 1,
+          "widthInCells": 6,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "testCasesSummary",
+        "position": {
+          "row": 2,
+          "column": 7,
+          "widthInCells": 2,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "keywordsSummary",
+        "position": {
+          "row": 5,
+          "column": 1,
+          "widthInCells": 2,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "executionTree",
+        "position": {
+          "row": 5,
+          "column": 3,
+          "widthInCells": 6,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "keywordsList",
+        "position": {
+          "row": 8,
+          "column": 1,
+          "widthInCells": 6,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "performanceOverview",
+        "position": {
+          "row": 8,
+          "column": 7,
+          "widthInCells": 2,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "errors",
+        "position": {
+          "row": 11,
+          "column": 1,
+          "widthInCells": 8,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "notificationSubscriptionForExecution",
+        "position": {
+          "row": 14,
+          "column": 1,
+          "widthInCells": 4,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "housekeepingSettingsForExecution",
+        "position": {
+          "row": 14,
+          "column": 5,
+          "widthInCells": 4,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "currentOperations",
+        "position": {
+          "row": 17,
+          "column": 1,
+          "widthInCells": 4,
+          "heightInCells": 3
+        }
+      }
+    ]
+  }
+}
