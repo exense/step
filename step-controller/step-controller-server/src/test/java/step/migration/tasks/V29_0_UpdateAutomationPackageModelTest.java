@@ -21,7 +21,7 @@ public class V29_0_UpdateAutomationPackageModelTest {
         InMemoryCollectionFactory inMemoryCollectionFactory = new InMemoryCollectionFactory(new Properties());
         Collection<Document> automationPackages = inMemoryCollectionFactory.getCollection("automationPackages", Document.class);
         Document documentWithVersion = new Document();
-        documentWithVersion.put("version","1.0.0");
+        documentWithVersion.put("version", "1.0.0");
         automationPackages.save(documentWithVersion);
         automationPackages.save(new Document());
         V29_0_UpdateAutomationPackageModel v290UpdateAutomationPackageModel = new V29_0_UpdateAutomationPackageModel(inMemoryCollectionFactory, new MigrationContext());

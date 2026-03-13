@@ -40,7 +40,7 @@ public class PlanMultiFilter extends PlanFilter {
         return planFilters;
     }
 
-    public void add(PlanFilter filter){
+    public void add(PlanFilter filter) {
         planFilters.add(filter);
     }
 

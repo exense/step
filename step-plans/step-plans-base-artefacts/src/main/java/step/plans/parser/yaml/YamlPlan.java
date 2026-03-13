@@ -29,57 +29,57 @@ import java.util.List;
 
 public class YamlPlan extends PatchableYamlArtefact {
 
-	public static final String PLANS_ENTITY_NAME = "plans";
+    public static final String PLANS_ENTITY_NAME = "plans";
 
-	// this name should be kept untouched to support the migrations for old versions
-	public static final String VERSION_FIELD_NAME = "version";
+    // this name should be kept untouched to support the migrations for old versions
+    public static final String VERSION_FIELD_NAME = "version";
 
-	private String version;
-	private String name;
+    private String version;
+    private String name;
 
-	private NamedYamlArtefact root;
+    private NamedYamlArtefact root;
 
-	@JsonSerialize(using = AgentProvisioningConfigurationSerializer.class)
-	@JsonDeserialize(using = AgentProvisioningConfigurationDeserializer.class)
-	private AgentProvisioningConfiguration agents;
+    @JsonSerialize(using = AgentProvisioningConfigurationSerializer.class)
+    @JsonDeserialize(using = AgentProvisioningConfigurationDeserializer.class)
+    private AgentProvisioningConfiguration agents;
 
-	private List<String> categories;
+    private List<String> categories;
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public NamedYamlArtefact getRoot() {
-		return root;
-	}
+    public NamedYamlArtefact getRoot() {
+        return root;
+    }
 
-	public void setRoot(NamedYamlArtefact root) {
-		this.root = root;
-	}
+    public void setRoot(NamedYamlArtefact root) {
+        this.root = root;
+    }
 
-	public String getVersion() {
-		return version;
-	}
+    public String getVersion() {
+        return version;
+    }
 
-	public void setVersion(String version) {
-		this.version = version;
-	}
+    public void setVersion(String version) {
+        this.version = version;
+    }
 
-	public AgentProvisioningConfiguration getAgents() {
-		return agents;
-	}
+    public AgentProvisioningConfiguration getAgents() {
+        return agents;
+    }
 
-	public void setAgents(AgentProvisioningConfiguration agents) {
-		this.agents = agents;
-	}
+    public void setAgents(AgentProvisioningConfiguration agents) {
+        this.agents = agents;
+    }
 
-	public List<String> getCategories() {
-		return categories;
-	}
+    public List<String> getCategories() {
+        return categories;
+    }
 
 	public void setCategories(List<String> categories) {
 		this.categories = categories;

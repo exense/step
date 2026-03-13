@@ -27,7 +27,8 @@ public class AgentProvisioningDriverConfiguration {
 
     public Set<AgentPoolSpec> availableAgentPools;
 
-    public AgentProvisioningDriverConfiguration() {}
+    public AgentProvisioningDriverConfiguration() {
+    }
 
     public AgentProvisioningDriverConfiguration(Set<AgentPoolSpec> availableAgentPools) {
         this.availableAgentPools = availableAgentPools;

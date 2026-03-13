@@ -52,12 +52,12 @@ public class InputStreamToTempFileDownloader {
         try {
             if (temp != null && temp.getTempFile() != null && temp.getTempFile().exists()) {
                 //noinspection ResultOfMethodCallIgnored
-                if(!temp.getTempFile().delete()) {
+                if (!temp.getTempFile().delete()) {
                     log.warn("Cannot cleanup temp file {}", temp.getTempFile().getName());
                 }
             }
             if (temp != null && temp.getTempFolder() != null && temp.getTempFolder().exists()) {
-                if (!temp.getTempFolder().delete()){
+                if (!temp.getTempFolder().delete()) {
                     log.warn("Cannot cleanup temp folder  {}", temp.getTempFolder().getName());
                 }
             }

@@ -150,14 +150,14 @@ public class AutomationPackageDescriptorReader {
         // Disable native type id to enable conversion to generic Documents
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
         ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
-        
+
         yamlMapper.setInjectableValues(new InjectableValues.Std()
                 .addValue(ObjectMapper.class, yamlMapper)
                 .addValue(AutomationPackageSerializationRegistry.class, serializationRegistry)
         );
         // configure custom deserializers
         SimpleModule module = new SimpleModule();
-        
+
         // register deserializers to read yaml plans
         planReader.registerAllSerializersAndDeserializers(module, yamlMapper, true);
 
@@ -167,6 +167,7 @@ public class AutomationPackageDescriptorReader {
                 ((AutomationPackageSerializationRegistryAware) stepYamlDeserializer).setSerializationRegistry(serializationRegistry);
             }
         }));
+
 
         yamlMapper.registerModule(module);
 

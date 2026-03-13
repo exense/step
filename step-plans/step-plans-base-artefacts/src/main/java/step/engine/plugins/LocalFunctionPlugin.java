@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -37,95 +37,103 @@ import step.plugins.java.handler.KeywordHandler;
 import java.lang.reflect.Method;
 import java.util.*;
 
-@Plugin(dependencies= {FunctionPlugin.class})
+import static step.core.execution.OperationMode.isLocal;
+
+@Plugin(dependencies = {FunctionPlugin.class})
 public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 
-	private FunctionAccessor functionAccessor;
-	private FunctionTypeRegistry functionTypeRegistry;
+    private FunctionAccessor functionAccessor;
+    private FunctionTypeRegistry functionTypeRegistry;
 
-	@Override
-	public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-		if(context.getOperationMode() == OperationMode.LOCAL) {
-			functionAccessor = context.require(FunctionAccessor.class);
-			functionTypeRegistry = context.require(FunctionTypeRegistry.class);
-			
-			functionTypeRegistry.registerFunctionType(new LocalFunctionType());
-			List<Function> localFunctions = getLocalFunctions();
-			functionAccessor.save(localFunctions);
-		}
-	}
+    @Override
+    public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
+        OperationMode operationMode = context.getOperationMode();
+        if (isLocal(operationMode)) {
+            functionAccessor = context.require(FunctionAccessor.class);
+            functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 
-	public List<Function> getLocalFunctions() {
-		Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class);
-		List<Function> functions = new ArrayList<Function>();
-		for (Method m : methods) {
-			Keyword annotation = m.getAnnotation(Keyword.class);
+            functionTypeRegistry.registerFunctionType(new LocalFunctionType());
 
-			// keywords with plan reference are not local functions but composite functions linked with plan
-			if (annotation.planReference() == null || annotation.planReference().isBlank()) {
-				LocalFunction function = createLocalFunction(m, annotation);
+            // Scanning and saving the local  keywords here is only required for the LocalPlanRunner
+            // In the context of Automation Package, the Automation Package manager is responsible to read the AP (including annotations)
+            if (!OperationMode.LOCAL_AUTOMATION_PACKAGE.equals(operationMode)) {
+                List<Function> localFunctions = getLocalFunctions();
+                functionAccessor.save(localFunctions);
+            }
+        }
+    }
 
-				functions.add(function);
-			}
-		}
-		return functions;
-	}
+    public List<Function> getLocalFunctions() {
+        Set<Method> methods = CachedAnnotationScanner.getMethodsWithAnnotation(Keyword.class);
+        List<Function> functions = new ArrayList<Function>();
+        for (Method m : methods) {
+            Keyword annotation = m.getAnnotation(Keyword.class);
 
-	public static LocalFunction createLocalFunction(Method m, Keyword annotation) {
-		String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
+            // keywords with plan reference are not local functions but composite functions linked with plan
+            if (annotation.planReference() == null || annotation.planReference().isBlank()) {
+                LocalFunction function = createLocalFunction(m, annotation);
 
-		LocalFunction function = new LocalFunction();
-		function.getCallTimeout().setValue(annotation.timeout());
-		function.setAttributes(new HashMap<>());
-		function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
-		function.setClassName(m.getDeclaringClass().getName());
-		return function;
-	}
+                functions.add(function);
+            }
+        }
+        return functions;
+    }
 
-	public static class LocalFunction extends Function {
-		
-		String className;
-		
-		public LocalFunction() {
-			super();
-			this.setId(new ObjectId());
-		}
-	
-		@Override
-		public boolean requiresLocalExecution() {
-			return true;
-		}
+    public static LocalFunction createLocalFunction(Method m, Keyword annotation) {
+        String functionName = annotation.name().length() > 0 ? annotation.name() : m.getName();
 
-		public String getClassName() {
-			return className;
-		}
+        LocalFunction function = new LocalFunction();
+        function.getCallTimeout().setValue(annotation.timeout());
+        function.setAttributes(new HashMap<>());
+        function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
+        function.setClassName(m.getDeclaringClass().getName());
+        return function;
+    }
 
-		public void setClassName(String className) {
-			this.className = className;
-		}
-	}
-	
-	private class LocalFunctionType extends AbstractFunctionType<LocalFunction> {
+    public static class LocalFunction extends Function {
 
-		@Override
-		public String getHandlerChain(LocalFunction function) {
-			return KeywordHandler.class.getName();
-		}
+        String className;
 
-		@Override
-		public HandlerProperties getHandlerProperties(LocalFunction function, AbstractStepContext executionContext) {
-			Map<String, String> properties = new HashMap<>();
-			
-			StringBuilder classes = new StringBuilder();
-			classes.append(function.getClassName()+";");
-			properties.put(KeywordExecutor.KEYWORD_CLASSES, classes.toString());
-			
-			return new HandlerProperties(properties);
-		}
+        public LocalFunction() {
+            super();
+            this.setId(new ObjectId());
+        }
 
-		@Override
-		public LocalFunction newFunction() {
-			return new LocalFunction();
-		}
-	}
+        @Override
+        public boolean requiresLocalExecution() {
+            return true;
+        }
+
+        public String getClassName() {
+            return className;
+        }
+
+        public void setClassName(String className) {
+            this.className = className;
+        }
+    }
+
+    private class LocalFunctionType extends AbstractFunctionType<LocalFunction> {
+
+        @Override
+        public String getHandlerChain(LocalFunction function) {
+            return KeywordHandler.class.getName();
+        }
+
+        @Override
+        public HandlerProperties getHandlerProperties(LocalFunction function, AbstractStepContext executionContext) {
+            Map<String, String> properties = new HashMap<>();
+
+            StringBuilder classes = new StringBuilder();
+            classes.append(function.getClassName() + ";");
+            properties.put(KeywordExecutor.KEYWORD_CLASSES, classes.toString());
+
+            return new HandlerProperties(properties);
+        }
+
+        @Override
+        public LocalFunction newFunction() {
+            return new LocalFunction();
+        }
+    }
 }

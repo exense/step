@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -44,156 +44,156 @@ import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.pushNewTokenNumberCalculationContext;
 
 public class ForBlockHandler extends AbstractSessionArtefactHandler<AbstractForBlock, ForBlockReportNode> {
-	
-	private static final String BREAK_VARIABLE = "break";
-	
-	@Override
-	public void createReportSkeleton_(ForBlockReportNode node, AbstractForBlock testArtefact) {		
-		DataSet<?> dataSet = null;
-		try {
-			dataSet = getDataPool(testArtefact);
-			DataPoolRow nextValue;
-			int rowCount = 0;
 
-			int numberOfThreads = context.require(ThreadPool.class).getEffectiveNumberOfThreads(testArtefact.getThreads().get());
-			TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
-			pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
+    private static final String BREAK_VARIABLE = "break";
 
-			while((nextValue=dataSet.next())!=null) {				
-				try {
-					if(context.isInterrupted()) {
-						break;
-					}
-					
-					rowCount++;
+    @Override
+    public void createReportSkeleton_(ForBlockReportNode node, AbstractForBlock testArtefact) {
+        DataSet<?> dataSet = null;
+        try {
+            dataSet = getDataPool(testArtefact);
+            DataPoolRow nextValue;
+            int rowCount = 0;
 
-					HashMap<String, Object> newVariable = getForBlockHandlerVariable(testArtefact, dataSet.isProtectedDataSource(), nextValue, rowCount, 1);
+            int numberOfThreads = context.require(ThreadPool.class).getEffectiveNumberOfThreads(testArtefact.getThreads().get());
+            TokenForecastingContext tokenForecastingContext = getTokenForecastingContext(context);
+            pushNewTokenNumberCalculationContext(context, new MultiplyingTokenForecastingContext(tokenForecastingContext, numberOfThreads));
 
-					if (numberOfThreads > 1) {
-						createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode) -> {
-							SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-							scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
-						}, "Iteration " + rowCount, newVariable);
-					} else {
-						SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-						scheduler.createReportSkeleton_(node, testArtefact, newVariable);
-					}
-				} finally {
-					nextValue.commit();
-				}
-			}
-		} catch(Throwable e) {
-			failWithException(node, e);
-		} finally {
-			if(dataSet!=null) {
-				dataSet.close();
-			}
-		}
-	}
+            while ((nextValue = dataSet.next()) != null) {
+                try {
+                    if (context.isInterrupted()) {
+                        break;
+                    }
 
-	public DataSet<?> getDataPool(AbstractForBlock testArtefact) {
-		DataSet<?> dataSet;
-		dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource(), context);
-		dataSet.enableRowCommit(true);
-		dataSet.init();
-		return dataSet;
-	}
+                    rowCount++;
 
-	@Override
-	public void execute_(ForBlockReportNode node, AbstractForBlock testArtefact) {
-		final DataSet<?> dataSet = getDataPool(testArtefact);
-		try {
-			Iterator<DataPoolRow> workItemIterator = new Iterator<>() {
+                    HashMap<String, Object> newVariable = getForBlockHandlerVariable(testArtefact, dataSet.isProtectedDataSource(), nextValue, rowCount, 1);
 
-				@Override
-				public boolean hasNext() {
-					return true;
-				}
+                    if (numberOfThreads > 1) {
+                        createReportNodeSkeletonInSession(testArtefact, node, (sessionArtefact, sessionReportNode) -> {
+                            SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+                            scheduler.createReportSkeleton_(sessionReportNode, sessionArtefact);
+                        }, "Iteration " + rowCount, newVariable);
+                    } else {
+                        SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+                        scheduler.createReportSkeleton_(node, testArtefact, newVariable);
+                    }
+                } finally {
+                    nextValue.commit();
+                }
+            }
+        } catch (Throwable e) {
+            failWithException(node, e);
+        } finally {
+            if (dataSet != null) {
+                dataSet.close();
+            }
+        }
+    }
 
-				@Override
-				public DataPoolRow next() {
-					return dataSet.next();
-				}
-			};
-			
-			context.getVariablesManager().putVariable(node, BREAK_VARIABLE, "false");
-			
-			AtomicInteger failedLoopsCounter = new AtomicInteger();
-			AtomicInteger loopsCounter = new AtomicInteger();
-			AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
-			
-			Integer numberOfThreads = testArtefact.getThreads().get();
-			
-			ThreadPool threadPool = context.get(ThreadPool.class);
-			int effectiveNumberOfThreads = threadPool.getEffectiveNumberOfThreads(numberOfThreads);
-			threadPool.consumeWork(workItemIterator, new WorkerItemConsumerFactory<DataPoolRow>() {
-				@Override
-				public Consumer<DataPoolRow> createWorkItemConsumer(WorkerController<DataPoolRow> control) {
-					return workItem -> {
-						try {
-							int i = loopsCounter.incrementAndGet();
+    public DataSet<?> getDataPool(AbstractForBlock testArtefact) {
+        DataSet<?> dataSet;
+        dataSet = DataPoolFactory.getDataPool(testArtefact.getDataSourceType(), testArtefact.getDataSource(), context);
+        dataSet.enableRowCommit(true);
+        dataSet.init();
+        return dataSet;
+    }
 
-							HashMap<String, Object> newVariable = getForBlockHandlerVariable(testArtefact, dataSet.isProtectedDataSource(), workItem, i, control.getWorkerId());
+    @Override
+    public void execute_(ForBlockReportNode node, AbstractForBlock testArtefact) {
+        final DataSet<?> dataSet = getDataPool(testArtefact);
+        try {
+            Iterator<DataPoolRow> workItemIterator = new Iterator<>() {
 
-							ReportNode iterationReportNode;
-							if(control.isParallel()) {
-								iterationReportNode = executeInSession(testArtefact, node, (sessionArtefact, sessionReportNode)->{
-									SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
-									scheduler.execute_(sessionReportNode, sessionArtefact);
-								}, "Iteration "+i, newVariable);
-							} else {
-								Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration "+i, true);
-								iterationReportNode = delegateExecute(iterationTestCase, node, newVariable);
-							}
+                @Override
+                public boolean hasNext() {
+                    return true;
+                }
 
-							reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);
+                @Override
+                public DataPoolRow next() {
+                    return dataSet.next();
+                }
+            };
 
-							if(iterationReportNode.getStatus()==ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus()==ReportNodeStatus.FAILED) {
-								failedLoopsCounter.incrementAndGet();
-							}
+            context.getVariablesManager().putVariable(node, BREAK_VARIABLE, "false");
 
-							boolean forInterrupted = Boolean.parseBoolean((String)context.getVariablesManager().getVariable(node, BREAK_VARIABLE, false));
-							Integer maxFailedLoops = testArtefact.getMaxFailedLoops().get();
-							if(forInterrupted || (maxFailedLoops!=null&&failedLoopsCounter.get()>=maxFailedLoops)) {
-								control.interrupt();
-							}
-						} catch(Throwable e) {
-							failWithException(node, e);
-						} finally {
-							workItem.commit();
-						}
-					};
-				}
-			}, effectiveNumberOfThreads);
-			
-			node.setErrorCount(failedLoopsCounter.get());
-			node.setCount(loopsCounter.get());
-			reportNodeStatusComposer.applyComposedStatusToParentNode(node);
-		} catch(Throwable e) {
-			failWithException(node, e);
-		} finally {
-			if(dataSet!=null) {
-				try {
-					dataSet.save();
-				} finally {
-					dataSet.close();					
-				}
-			}
-		}
-	}
+            AtomicInteger failedLoopsCounter = new AtomicInteger();
+            AtomicInteger loopsCounter = new AtomicInteger();
+            AtomicReportNodeStatusComposer reportNodeStatusComposer = new AtomicReportNodeStatusComposer(ReportNodeStatus.NORUN);
 
-	private static HashMap<String, Object> getForBlockHandlerVariable(AbstractForBlock testArtefact, boolean dataSetIsProtected, DataPoolRow dataPoolRow, int globalCounter, int workerId) {
-		HashMap<String, Object> newVariable = new HashMap<>();
-		String key = testArtefact.getItem().get();
-		Object value = dataSetIsProtected ? new ProtectedVariable(key, dataPoolRow.getValue()) : dataPoolRow.getValue();
-		newVariable.put(key, value);
-		newVariable.put(testArtefact.getGlobalCounter().get(), globalCounter);
-		newVariable.put(testArtefact.getUserItem().get(), workerId);
-		return newVariable;
-	}
+            Integer numberOfThreads = testArtefact.getThreads().get();
 
-	@Override
-	public ForBlockReportNode createReportNode_(ReportNode parentNode, AbstractForBlock testArtefact) {
-		return new ForBlockReportNode();
-	}
+            ThreadPool threadPool = context.get(ThreadPool.class);
+            int effectiveNumberOfThreads = threadPool.getEffectiveNumberOfThreads(numberOfThreads);
+            threadPool.consumeWork(workItemIterator, new WorkerItemConsumerFactory<DataPoolRow>() {
+                @Override
+                public Consumer<DataPoolRow> createWorkItemConsumer(WorkerController<DataPoolRow> control) {
+                    return workItem -> {
+                        try {
+                            int i = loopsCounter.incrementAndGet();
+
+                            HashMap<String, Object> newVariable = getForBlockHandlerVariable(testArtefact, dataSet.isProtectedDataSource(), workItem, i, control.getWorkerId());
+
+                            ReportNode iterationReportNode;
+                            if (control.isParallel()) {
+                                iterationReportNode = executeInSession(testArtefact, node, (sessionArtefact, sessionReportNode) -> {
+                                    SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
+                                    scheduler.execute_(sessionReportNode, sessionArtefact);
+                                }, "Iteration " + i, newVariable);
+                            } else {
+                                Sequence iterationTestCase = createWorkArtefact(Sequence.class, testArtefact, "Iteration " + i, true);
+                                iterationReportNode = delegateExecute(iterationTestCase, node, newVariable);
+                            }
+
+                            reportNodeStatusComposer.addStatusAndRecompose(iterationReportNode);
+
+                            if (iterationReportNode.getStatus() == ReportNodeStatus.TECHNICAL_ERROR || iterationReportNode.getStatus() == ReportNodeStatus.FAILED) {
+                                failedLoopsCounter.incrementAndGet();
+                            }
+
+                            boolean forInterrupted = Boolean.parseBoolean((String) context.getVariablesManager().getVariable(node, BREAK_VARIABLE, false));
+                            Integer maxFailedLoops = testArtefact.getMaxFailedLoops().get();
+                            if (forInterrupted || (maxFailedLoops != null && failedLoopsCounter.get() >= maxFailedLoops)) {
+                                control.interrupt();
+                            }
+                        } catch (Throwable e) {
+                            failWithException(node, e);
+                        } finally {
+                            workItem.commit();
+                        }
+                    };
+                }
+            }, effectiveNumberOfThreads);
+
+            node.setErrorCount(failedLoopsCounter.get());
+            node.setCount(loopsCounter.get());
+            reportNodeStatusComposer.applyComposedStatusToParentNode(node);
+        } catch (Throwable e) {
+            failWithException(node, e);
+        } finally {
+            if (dataSet != null) {
+                try {
+                    dataSet.save();
+                } finally {
+                    dataSet.close();
+                }
+            }
+        }
+    }
+
+    private static HashMap<String, Object> getForBlockHandlerVariable(AbstractForBlock testArtefact, boolean dataSetIsProtected, DataPoolRow dataPoolRow, int globalCounter, int workerId) {
+        HashMap<String, Object> newVariable = new HashMap<>();
+        String key = testArtefact.getItem().get();
+        Object value = dataSetIsProtected ? new ProtectedVariable(key, dataPoolRow.getValue()) : dataPoolRow.getValue();
+        newVariable.put(key, value);
+        newVariable.put(testArtefact.getGlobalCounter().get(), globalCounter);
+        newVariable.put(testArtefact.getUserItem().get(), workerId);
+        return newVariable;
+    }
+
+    @Override
+    public ForBlockReportNode createReportNode_(ReportNode parentNode, AbstractForBlock testArtefact) {
+        return new ForBlockReportNode();
+    }
 }

@@ -40,211 +40,211 @@ import java.util.Map;
 
 public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 
-	private final Map<AssertOperator, AssertOperatorHandler> operatorHandlers;
+    private final Map<AssertOperator, AssertOperatorHandler> operatorHandlers;
 
-	public AssertHandler() {
-		this.operatorHandlers = new HashMap<>();
-		this.operatorHandlers.put(AssertOperator.EQUALS, new EqualsOperatorHandler());
-		this.operatorHandlers.put(AssertOperator.CONTAINS, new ContainsOperatorHandler());
-		this.operatorHandlers.put(AssertOperator.BEGINS_WITH, new BeginsWithOperatorHandler());
-		this.operatorHandlers.put(AssertOperator.ENDS_WITH, new EndsWithOperatorHandler());
-		this.operatorHandlers.put(AssertOperator.MATCHES, new MatchesOperatorHandler());
-		this.operatorHandlers.put(AssertOperator.GREATER_THAN, new GreaterThanOperatorHandler());
-		this.operatorHandlers.put(AssertOperator.GREATER_THAN_OR_EQUALS, new GreaterThanOrEqualsOperatorHandler());
-		this.operatorHandlers.put(AssertOperator.LESS_THAN, new LessThanOperatorHandler());
-		this.operatorHandlers.put(AssertOperator.LESS_THAN_OR_EQUALS, new LessThanOrEqualsOperatorHandler());
-		this.operatorHandlers.put(AssertOperator.IS_NULL, new IsNullOperatorHandler());
-	}
+    public AssertHandler() {
+        this.operatorHandlers = new HashMap<>();
+        this.operatorHandlers.put(AssertOperator.EQUALS, new EqualsOperatorHandler());
+        this.operatorHandlers.put(AssertOperator.CONTAINS, new ContainsOperatorHandler());
+        this.operatorHandlers.put(AssertOperator.BEGINS_WITH, new BeginsWithOperatorHandler());
+        this.operatorHandlers.put(AssertOperator.ENDS_WITH, new EndsWithOperatorHandler());
+        this.operatorHandlers.put(AssertOperator.MATCHES, new MatchesOperatorHandler());
+        this.operatorHandlers.put(AssertOperator.GREATER_THAN, new GreaterThanOperatorHandler());
+        this.operatorHandlers.put(AssertOperator.GREATER_THAN_OR_EQUALS, new GreaterThanOrEqualsOperatorHandler());
+        this.operatorHandlers.put(AssertOperator.LESS_THAN, new LessThanOperatorHandler());
+        this.operatorHandlers.put(AssertOperator.LESS_THAN_OR_EQUALS, new LessThanOrEqualsOperatorHandler());
+        this.operatorHandlers.put(AssertOperator.IS_NULL, new IsNullOperatorHandler());
+    }
 
-	@Override
-	protected void createReportSkeleton_(AssertReportNode parentNode, Assert artefact) {
+    @Override
+    protected void createReportSkeleton_(AssertReportNode parentNode, Assert artefact) {
 
-	}
+    }
 
-	@Override
-	protected void execute_(AssertReportNode node, Assert artefact) {
-		CallFunctionReportNode callFunctionReport = (CallFunctionReportNode) context.getVariablesManager().getVariable("callReport");
-		if (callFunctionReport == null) {
-			node.setError(new Error(ErrorType.TECHNICAL, "Keyword report unreachable. Asserts should be wrapped in Keyword nodes in the test plan."));
-			node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
-			return;
-		}
-		if (callFunctionReport.getStatus() == ReportNodeStatus.PASSED) {
-			JsonObject outputJson = callFunctionReport.getOutputObject();
-			String key = artefact.getActual().get();
-			AssertOperator operator = artefact.getOperator();
-			node.setKey(key);
+    @Override
+    protected void execute_(AssertReportNode node, Assert artefact) {
+        CallFunctionReportNode callFunctionReport = (CallFunctionReportNode) context.getVariablesManager().getVariable("callReport");
+        if (callFunctionReport == null) {
+            node.setError(new Error(ErrorType.TECHNICAL, "Keyword report unreachable. Asserts should be wrapped in Keyword nodes in the test plan."));
+            node.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+            return;
+        }
+        if (callFunctionReport.getStatus() == ReportNodeStatus.PASSED) {
+            JsonObject outputJson = callFunctionReport.getOutputObject();
+            String key = artefact.getActual().get();
+            AssertOperator operator = artefact.getOperator();
+            node.setKey(key);
 
-			// Expected value has a String generic type, but in fact it can be resolved to Boolean or Number
-			// so here we use Object type for expected value
-			Object expectedValue = artefact.getExpected().get();
+            // Expected value has a String generic type, but in fact it can be resolved to Boolean or Number
+            // so here we use Object type for expected value
+            Object expectedValue = artefact.getExpected().get();
 
-			ValueResolvingResult valueResolvingResult = resolveValue(outputJson, key);
+            ValueResolvingResult valueResolvingResult = resolveValue(outputJson, key);
 
-			boolean passed = false;
-			if (valueResolvingResult.actualResolved) {
-				node.setActual(valueToString(valueResolvingResult.actual));
-				node.setExpected(valueToString(expectedValue));
+            boolean passed = false;
+            if (valueResolvingResult.actualResolved) {
+                node.setActual(valueToString(valueResolvingResult.actual));
+                node.setExpected(valueToString(expectedValue));
 
-				//boolean negate = artefact.isNegate();
-				boolean negate = artefact.getDoNegate().get();
+                //boolean negate = artefact.isNegate();
+                boolean negate = artefact.getDoNegate().get();
 
-				AssertResult assertResult = applyOperator(key, valueResolvingResult, expectedValue, negate, operator);
+                AssertResult assertResult = applyOperator(key, valueResolvingResult, expectedValue, negate, operator);
 
-				node.setDescription(assertResult.getDescription());
-				node.setMessage(assertResult.getMessage());
-				node.setStatus(assertResult.isPassed() ? ReportNodeStatus.PASSED : ReportNodeStatus.FAILED);
+                node.setDescription(assertResult.getDescription());
+                node.setMessage(assertResult.getMessage());
+                node.setStatus(assertResult.isPassed() ? ReportNodeStatus.PASSED : ReportNodeStatus.FAILED);
 
-				passed = assertResult.isPassed();
-			} else {
-				node.setMessage(valueResolvingResult.message);
-				node.setStatus(ReportNodeStatus.FAILED);
-			}
+                passed = assertResult.isPassed();
+            } else {
+                node.setMessage(valueResolvingResult.message);
+                node.setStatus(ReportNodeStatus.FAILED);
+            }
 
-			if (!passed) {
-				String customErrorMessage = artefact.getCustomErrorMessage().get();
-				if (customErrorMessage != null && !customErrorMessage.isEmpty()) {
-					node.setMessage(customErrorMessage);
-				}
-				node.setError(new Error(ErrorType.BUSINESS, node.getMessage()));
-			}
-		} else {
-			node.setStatus(ReportNodeStatus.NORUN);
-		}
-	}
+            if (!passed) {
+                String customErrorMessage = artefact.getCustomErrorMessage().get();
+                if (customErrorMessage != null && !customErrorMessage.isEmpty()) {
+                    node.setMessage(customErrorMessage);
+                }
+                node.setError(new Error(ErrorType.BUSINESS, node.getMessage()));
+            }
+        } else {
+            node.setStatus(ReportNodeStatus.NORUN);
+        }
+    }
 
-	private ValueResolvingResult resolveValue(JsonObject outputJson, String key) {
-		if (key.startsWith("$")) {
-			return resolveJsonPathValue(outputJson, key);
-		} else {
-			return resolveSimpleValue(outputJson, key);
-		}
-	}
+    private ValueResolvingResult resolveValue(JsonObject outputJson, String key) {
+        if (key.startsWith("$")) {
+            return resolveJsonPathValue(outputJson, key);
+        } else {
+            return resolveSimpleValue(outputJson, key);
+        }
+    }
 
-	private ValueResolvingResult resolveJsonPathValue(JsonObject outputJson, String key) {
-		ValueResolvingResult valueResolvingResult = new ValueResolvingResult();
-		try {
-			valueResolvingResult.actual = JsonPath.parse(outputJson.toString()).read(key);
-			valueResolvingResult.actualResolved = true;
-		} catch (PathNotFoundException e) {
-			// the attribute is missing (but we mark the value as resolved because some operators like 'notNull' support the missing values as nulls)
-			valueResolvingResult.actual = null;
-			valueResolvingResult.message = e.getMessage();
-			valueResolvingResult.actualResolved = true;
-		}
-		valueResolvingResult.type = ValueType.JSON_PATH;
-		return valueResolvingResult;
-	}
+    private ValueResolvingResult resolveJsonPathValue(JsonObject outputJson, String key) {
+        ValueResolvingResult valueResolvingResult = new ValueResolvingResult();
+        try {
+            valueResolvingResult.actual = JsonPath.parse(outputJson.toString()).read(key);
+            valueResolvingResult.actualResolved = true;
+        } catch (PathNotFoundException e) {
+            // the attribute is missing (but we mark the value as resolved because some operators like 'notNull' support the missing values as nulls)
+            valueResolvingResult.actual = null;
+            valueResolvingResult.message = e.getMessage();
+            valueResolvingResult.actualResolved = true;
+        }
+        valueResolvingResult.type = ValueType.JSON_PATH;
+        return valueResolvingResult;
+    }
 
-	private ValueResolvingResult resolveSimpleValue(JsonObject outputJson, String key) {
-		ValueResolvingResult result = new ValueResolvingResult();
-		JsonValue jsonValue = outputJson.get(key);
-		if (jsonValue == null) {
-			// the attribute is missing (but we mark the value as resolved because some operators like 'notNull' support the missing values as nulls)
-			result.actual = null;
-			result.actualResolved = true;
-		} else if (jsonValue.getValueType() == JsonValue.ValueType.NULL) {
-			result.actual = null;
-			result.actualResolved = true;
-		} else if (jsonValue.getValueType() == JsonValue.ValueType.STRING) {
-			result.actual = outputJson.getString(key);
-			result.actualResolved = true;
-		} else if (jsonValue.getValueType() == JsonValue.ValueType.NUMBER) {
-			result.actual = outputJson.getJsonNumber(key).numberValue();
-			result.actualResolved = true;
-		} else if (jsonValue.getValueType() == JsonValue.ValueType.FALSE || jsonValue.getValueType() == JsonValue.ValueType.TRUE) {
-			result.actual = outputJson.getBoolean(key);
-			result.actualResolved = true;
-		} else {
-			result.message = "Type of " + key + " (" + jsonValue.getValueType() + ") is not supported";
-			result.actualResolved = false;
-		}
+    private ValueResolvingResult resolveSimpleValue(JsonObject outputJson, String key) {
+        ValueResolvingResult result = new ValueResolvingResult();
+        JsonValue jsonValue = outputJson.get(key);
+        if (jsonValue == null) {
+            // the attribute is missing (but we mark the value as resolved because some operators like 'notNull' support the missing values as nulls)
+            result.actual = null;
+            result.actualResolved = true;
+        } else if (jsonValue.getValueType() == JsonValue.ValueType.NULL) {
+            result.actual = null;
+            result.actualResolved = true;
+        } else if (jsonValue.getValueType() == JsonValue.ValueType.STRING) {
+            result.actual = outputJson.getString(key);
+            result.actualResolved = true;
+        } else if (jsonValue.getValueType() == JsonValue.ValueType.NUMBER) {
+            result.actual = outputJson.getJsonNumber(key).numberValue();
+            result.actualResolved = true;
+        } else if (jsonValue.getValueType() == JsonValue.ValueType.FALSE || jsonValue.getValueType() == JsonValue.ValueType.TRUE) {
+            result.actual = outputJson.getBoolean(key);
+            result.actualResolved = true;
+        } else {
+            result.message = "Type of " + key + " (" + jsonValue.getValueType() + ") is not supported";
+            result.actualResolved = false;
+        }
 
-		result.type = ValueType.SIMPLE;
-		return result;
-	}
+        result.type = ValueType.SIMPLE;
+        return result;
+    }
 
-	private AssertResult applyOperator(String key, ValueResolvingResult valueResolvingResult, Object expectedValue, boolean negate, AssertOperator operator) {
-		Object actual = valueResolvingResult.actual;
-		ValueType type = valueResolvingResult.type;
+    private AssertResult applyOperator(String key, ValueResolvingResult valueResolvingResult, Object expectedValue, boolean negate, AssertOperator operator) {
+        Object actual = valueResolvingResult.actual;
+        ValueType type = valueResolvingResult.type;
 
-		AssertOperatorHandler handler = getOperatorHandler(operator);
+        AssertOperatorHandler handler = getOperatorHandler(operator);
 
-		if (!handler.isActualValueSupported(actual)) {
-			String message;
+        if (!handler.isActualValueSupported(actual)) {
+            String message;
 
-			if (valueResolvingResult.message != null && !valueResolvingResult.message.isEmpty()) {
-				// in some cases (like in case of missing attributes) the error message is already prepared during value resolving
-				message = valueResolvingResult.message;
-			} else {
+            if (valueResolvingResult.message != null && !valueResolvingResult.message.isEmpty()) {
+                // in some cases (like in case of missing attributes) the error message is already prepared during value resolving
+                message = valueResolvingResult.message;
+            } else {
 
-				if (actual == null) {
-					// user-friendly message for null-value
-					message = "Unable to execute assertion. The keyword output doesn't contain the attribute '" + key + "'";
-				} else if (type == ValueType.JSON_PATH) {
-					// json path value
-					message = "The json path '" + key + "' returns an object of type "
-							+ actual.getClass().getSimpleName() + " which is not supported for operator " + operator.name();
-				} else {
-					// simple value
-					message = "Type of " + key + " ("
-							+ actual.getClass().getSimpleName()
-							+ ") is not supported for operator " + operator;
-				}
-			}
-			return createFailedAssertResult(message);
-		}
+                if (actual == null) {
+                    // user-friendly message for null-value
+                    message = "Unable to execute assertion. The keyword output doesn't contain the attribute '" + key + "'";
+                } else if (type == ValueType.JSON_PATH) {
+                    // json path value
+                    message = "The json path '" + key + "' returns an object of type "
+                        + actual.getClass().getSimpleName() + " which is not supported for operator " + operator.name();
+                } else {
+                    // simple value
+                    message = "Type of " + key + " ("
+                        + actual.getClass().getSimpleName()
+                        + ") is not supported for operator " + operator;
+                }
+            }
+            return createFailedAssertResult(message);
+        }
 
-		if (!handler.isExpectedValueSupported(expectedValue)) {
-			String message;
-			if (expectedValue == null || (expectedValue instanceof String && ((String) expectedValue).isEmpty())) {
-				// user-friendly message for null-value
-				message = "Unable to execute assertion. The expected value is not defined for the attribute '" + key + "'";
-			} else {
-				message = "Type of expected value (" + expectedValue.getClass().getSimpleName() + ") of " + key +
-						" is not supported for operator " + operator;
-			}
-			return createFailedAssertResult(message);
-		}
+        if (!handler.isExpectedValueSupported(expectedValue)) {
+            String message;
+            if (expectedValue == null || (expectedValue instanceof String && ((String) expectedValue).isEmpty())) {
+                // user-friendly message for null-value
+                message = "Unable to execute assertion. The expected value is not defined for the attribute '" + key + "'";
+            } else {
+                message = "Type of expected value (" + expectedValue.getClass().getSimpleName() + ") of " + key +
+                    " is not supported for operator " + operator;
+            }
+            return createFailedAssertResult(message);
+        }
 
-		return handler.apply(key, actual, expectedValue, negate);
-	}
+        return handler.apply(key, actual, expectedValue, negate);
+    }
 
-	public static final String valueToString(Object value) {
-		return value == null ? null : value.toString();
-	}
+    public static final String valueToString(Object value) {
+        return value == null ? null : value.toString();
+    }
 
-	private AssertResult createFailedAssertResult(String message){
-		AssertResult result = new AssertResult();
-		result.setDescription(null);
-		result.setMessage(message);
-		result.setPassed(false);
-		return result;
-	}
+    private AssertResult createFailedAssertResult(String message) {
+        AssertResult result = new AssertResult();
+        result.setDescription(null);
+        result.setMessage(message);
+        result.setPassed(false);
+        return result;
+    }
 
-	@Override
-	public AssertReportNode createReportNode_(ReportNode parentNode, Assert artefact) {
-		return new AssertReportNode();
-	}
+    @Override
+    public AssertReportNode createReportNode_(ReportNode parentNode, Assert artefact) {
+        return new AssertReportNode();
+    }
 
-	private AssertOperatorHandler getOperatorHandler(AssertOperator operator) {
-		AssertOperatorHandler handler = operatorHandlers.get(operator);
-		if (handler == null) {
-			throw new IllegalStateException("Handler is not defined for operator " + operator);
-		}
-		return handler;
-	}
+    private AssertOperatorHandler getOperatorHandler(AssertOperator operator) {
+        AssertOperatorHandler handler = operatorHandlers.get(operator);
+        if (handler == null) {
+            throw new IllegalStateException("Handler is not defined for operator " + operator);
+        }
+        return handler;
+    }
 
-	private static class ValueResolvingResult {
-		private Object actual = null;
-		private boolean actualResolved = false;
-		private String message = null;
-		private ValueType type = null;
-	}
+    private static class ValueResolvingResult {
+        private Object actual = null;
+        private boolean actualResolved = false;
+        private String message = null;
+        private ValueType type = null;
+    }
 
-	private enum ValueType {
-		SIMPLE,
-		JSON_PATH
-	}
+    private enum ValueType {
+        SIMPLE,
+        JSON_PATH
+    }
 
 }

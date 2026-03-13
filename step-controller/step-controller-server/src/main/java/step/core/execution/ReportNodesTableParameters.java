@@ -5,22 +5,22 @@ import step.framework.server.tables.service.TableParameters;
 import java.util.List;
 
 public class ReportNodesTableParameters extends TableParameters {
-	private String eid;
-	private List<String> testcases;
+    private String eid;
+    private List<String> testcases;
 
-	public String getEid() {
-		return eid;
-	}
+    public String getEid() {
+        return eid;
+    }
 
-	public void setEid(String eid) {
-		this.eid = eid;
-	}
+    public void setEid(String eid) {
+        this.eid = eid;
+    }
 
-	public List<String> getTestcases() {
-		return testcases;
-	}
+    public List<String> getTestcases() {
+        return testcases;
+    }
 
-	public void setTestcases(List<String> testcases) {
-		this.testcases = testcases;
-	}
+    public void setTestcases(List<String> testcases) {
+        this.testcases = testcases;
+    }
 }

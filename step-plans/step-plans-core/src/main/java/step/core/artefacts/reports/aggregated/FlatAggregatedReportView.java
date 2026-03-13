@@ -26,7 +26,7 @@ public class FlatAggregatedReportView extends AbstractAggregatedReportView {
 
     public FlatAggregatedReportView(AggregatedReportView treeReportNode) {
         super(treeReportNode.artefact, treeReportNode.artefactHash, treeReportNode.countByStatus, treeReportNode.countByErrorMessage,
-                treeReportNode.countByChildrenErrorMessage, treeReportNode.singleInstanceReportNode, treeReportNode.bucketsByStatus,
-                treeReportNode.currentOperations);
+            treeReportNode.countByChildrenErrorMessage, treeReportNode.singleInstanceReportNode, treeReportNode.bucketsByStatus,
+            treeReportNode.currentOperations);
     }
 }

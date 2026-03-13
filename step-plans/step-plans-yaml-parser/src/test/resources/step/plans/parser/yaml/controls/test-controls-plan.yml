@@ -35,7 +35,7 @@ root:
           text: "test"
       - export:
           skipNode: true
-      - for: {}
+      - for: { }
       - forEach:
           dataSource:
             sequence:
@@ -45,28 +45,28 @@ root:
       - if:
           condition:
             expression: "true"
-      - placeholder: {}
-      - retryIfFails: {}
-      - return: {}
+      - placeholder: { }
+      - retryIfFails: { }
+      - return: { }
       - script:
           script: "var test=\"test\";"
-      - sequence: {}
-      - session: {}
+      - sequence: { }
+      - session: { }
       - set:
           key: "test"
           value: "test"
-      - sleep: {}
+      - sleep: { }
       - switch:
           children:
             - case:
                 value: "test"
           expression:
             expression: "test"
-      - synchronized: {}
-      - testCase: {}
-      - testScenario: {}
-      - testSet: {}
-      - threadGroup: {}
+      - synchronized: { }
+      - testCase: { }
+      - testScenario: { }
+      - testSet: { }
+      - threadGroup: { }
       - while:
           condition:
             expression: "false"

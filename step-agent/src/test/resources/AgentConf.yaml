@@ -9,7 +9,7 @@ tokenGroups:
     tokenConf:
       attributes:
         key: "val"
-      properties: {}
+      properties: { }
 
 properties:
   plugins.jmeter.home: "/path/to/jmeter"

@@ -28,6 +28,7 @@ import java.text.DateFormat;
 import java.util.Date;
 
 import static org.junit.Assert.*;
+
 public class ResourceTest {
 
     @Test
@@ -42,12 +43,12 @@ public class ResourceTest {
         Assert.assertEquals("newActor", copy.getCreationUser());
         Assert.assertEquals("newActor", copy.getLastModificationUser());
         Assert.assertTrue(
-                "Resource creation date: " + copy.getCreationDate().toInstant() + "; Time before copy: " + timeBeforeCopy.toInstant(),
-                !copy.getCreationDate().toInstant().isBefore(timeBeforeCopy.toInstant())
+            "Resource creation date: " + copy.getCreationDate().toInstant() + "; Time before copy: " + timeBeforeCopy.toInstant(),
+            !copy.getCreationDate().toInstant().isBefore(timeBeforeCopy.toInstant())
         );
         Assert.assertTrue(
-                "Resource modification date: " + copy.getLastModificationDate().toInstant() + "; Time before copy: " + timeBeforeCopy.toInstant(),
-                !copy.getLastModificationDate().toInstant().isBefore(timeBeforeCopy.toInstant())
+            "Resource modification date: " + copy.getLastModificationDate().toInstant() + "; Time before copy: " + timeBeforeCopy.toInstant(),
+            !copy.getLastModificationDate().toInstant().isBefore(timeBeforeCopy.toInstant())
         );
 
         Assert.assertEquals(resource.getId(), copy.getId());

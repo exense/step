@@ -20,10 +20,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @CommandLine.Command(name = ApCommand.AP_COMMAND,
-        mixinStandardHelpOptions = true,
-        version = Constants.STEP_VERSION_STRING,
-        description = "The CLI interface to manage automation packages in Step",
-        usageHelpAutoWidth = true
+    mixinStandardHelpOptions = true,
+    version = Constants.STEP_VERSION_STRING,
+    description = "The CLI interface to manage automation packages in Step",
+    usageHelpAutoWidth = true
 )
 public class ApCommand implements Callable<Integer> {
 
@@ -105,18 +105,18 @@ public class ApCommand implements Callable<Integer> {
     }
 
     @CommandLine.Command(name = "deploy",
-            mixinStandardHelpOptions = true,
-            version = Constants.STEP_VERSION_STRING,
-            description = "The CLI interface to deploy automation packages in Step",
-            usageHelpAutoWidth = true,
-            subcommands = {CommandLine.HelpCommand.class})
+        mixinStandardHelpOptions = true,
+        version = Constants.STEP_VERSION_STRING,
+        description = "The CLI interface to deploy automation packages in Step",
+        usageHelpAutoWidth = true,
+        subcommands = {CommandLine.HelpCommand.class})
     public static class ApDeployCommand extends AbstractApCommand {
 
         public static final String VERSION_NAME = "--versionName";
         public static final String FORCE_REFRESH_OF_SNAPSHOTS = "--forceRefreshOfSnapshots";
 
         @CommandLine.Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
-                description = "Whether to waits for the deployment to complete")
+            description = "Whether to waits for the deployment to complete")
         protected boolean async;
 
         @CommandLine.Option(names = {VERSION_NAME}, description = "Optionally set the version of this automation package. This allows to deploy and use multiple versions of the same package on Step. If a version is set, them the activation expression is required too.")
@@ -126,7 +126,7 @@ public class ApCommand implements Callable<Integer> {
         protected String activationExpression;
 
         @CommandLine.Option(names = {FORCE_REFRESH_OF_SNAPSHOTS}, defaultValue = "false",
-                description = "To force the refresh of snapshot content when available in the remote repository, this will trigger reloading all automation packages using the same snapshot artefact in case of update.")
+            description = "To force the refresh of snapshot content when available in the remote repository, this will trigger reloading all automation packages using the same snapshot artefact in case of update.")
         protected boolean forceRefreshOfSnapshots;
 
         @Override
@@ -143,17 +143,17 @@ public class ApCommand implements Callable<Integer> {
             String managedLibraryName = getManagedLibraryName(library);
 
             ApDeployParameters params = new ApDeployParameters()
-                    .setAsync(async)
-                    .setForceRefreshOfSnapshots(forceRefreshOfSnapshots)
-                    .setAutomationPackageMavenArtifact(apMavenArtifact)
-                    .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
-                    .setStepProjectName(getStepProjectName())
-                    .setAuthToken(getAuthToken())
-                    .setVersionName(versionName)
-                    .setActivationExpression(activationExpression)
-                    .setlibraryMavenArtifact(packageLibraryMavenArtifact)
-                    .setManagedLibraryName(managedLibraryName)
-                    .setLibraryFile(packageLibraryMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library));
+                .setAsync(async)
+                .setForceRefreshOfSnapshots(forceRefreshOfSnapshots)
+                .setAutomationPackageMavenArtifact(apMavenArtifact)
+                .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
+                .setStepProjectName(getStepProjectName())
+                .setAuthToken(getAuthToken())
+                .setVersionName(versionName)
+                .setActivationExpression(activationExpression)
+                .setlibraryMavenArtifact(packageLibraryMavenArtifact)
+                .setManagedLibraryName(managedLibraryName)
+                .setLibraryFile(packageLibraryMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library));
             executeTool(stepUrl, params);
         }
 
@@ -164,11 +164,11 @@ public class ApCommand implements Callable<Integer> {
     }
 
     @CommandLine.Command(name = "execute",
-            mixinStandardHelpOptions = true,
-            version = "step.ap.execute 1.0",
-            description = "The CLI interface to execute automation packages in Step",
-            usageHelpAutoWidth = true,
-            subcommands = {CommandLine.HelpCommand.class})
+        mixinStandardHelpOptions = true,
+        version = "step.ap.execute 1.0",
+        description = "The CLI interface to execute automation packages in Step",
+        usageHelpAutoWidth = true,
+        subcommands = {CommandLine.HelpCommand.class})
     public static class ApExecuteCommand extends AbstractApCommand implements Callable<Integer> {
 
         public static final String EP_DESCRIPTION_KEY = "executionParameters";
@@ -177,7 +177,7 @@ public class ApCommand implements Callable<Integer> {
         protected Integer executionTimeoutS;
 
         @CommandLine.Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
-                description = "Whether to wait for execution completeness")
+            description = "Whether to wait for execution completeness")
         protected boolean async;
 
         @CommandLine.Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed")
@@ -289,27 +289,27 @@ public class ApCommand implements Callable<Integer> {
             String managedLibraryName = getManagedLibraryName(library);
 
             executeRemotely(stepUrl,
-                    new ApExecuteParameters()
-                            .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
-                            .setAutomationPackageMavenArtifact(apMavenArtifact)
-                            .setLibraryFile(packageLibMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library))
-                            .setlibraryMavenArtifact(packageLibMavenArtifact)
-                            .setManagedLibraryName(managedLibraryName)
-                            .setStepProjectName(getStepProjectName())
-                            .setUserId(stepUser)
-                            .setAuthToken(getAuthToken())
-                            .setExecutionParameters(executionParameters)
-                            .setExecutionResultTimeoutS(executionTimeoutS)
-                            .setWaitForExecution(!async)
-                            .setEnsureExecutionSuccess(true)
-                            .setIncludePlans(includePlans)
-                            .setExcludePlans(excludePlans)
-                            .setIncludeCategories(includeCategories)
-                            .setExcludeCategories(excludeCategories)
-                            .setWrapIntoTestSet(wrapIntoTestSet)
-                            .setNumberOfThreads(numberOfThreads)
-                            .setReports(reports)
-                            .setReportOutputDir(reportDir)
+                new ApExecuteParameters()
+                    .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))
+                    .setAutomationPackageMavenArtifact(apMavenArtifact)
+                    .setLibraryFile(packageLibMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library))
+                    .setlibraryMavenArtifact(packageLibMavenArtifact)
+                    .setManagedLibraryName(managedLibraryName)
+                    .setStepProjectName(getStepProjectName())
+                    .setUserId(stepUser)
+                    .setAuthToken(getAuthToken())
+                    .setExecutionParameters(executionParameters)
+                    .setExecutionResultTimeoutS(executionTimeoutS)
+                    .setWaitForExecution(!async)
+                    .setEnsureExecutionSuccess(true)
+                    .setIncludePlans(includePlans)
+                    .setExcludePlans(excludePlans)
+                    .setIncludeCategories(includeCategories)
+                    .setExcludeCategories(excludeCategories)
+                    .setWrapIntoTestSet(wrapIntoTestSet)
+                    .setNumberOfThreads(numberOfThreads)
+                    .setReports(reports)
+                    .setReportOutputDir(reportDir)
             );
         }
 
@@ -330,8 +330,8 @@ public class ApCommand implements Callable<Integer> {
                             reportTypeValue = ExecuteAutomationPackageTool.ReportType.valueOf(paramAndValue[0]);
                         } else if (paramAndValue[0].equalsIgnoreCase("output")) {
                             outputModes = Arrays.stream(paramAndValue[1].split(","))
-                                    .map(ExecuteAutomationPackageTool.ReportOutputMode::valueOf)
-                                    .collect(Collectors.toList());
+                                .map(ExecuteAutomationPackageTool.ReportOutputMode::valueOf)
+                                .collect(Collectors.toList());
                         }
                     }
                     if (reportTypeValue == null) {
@@ -358,7 +358,7 @@ public class ApCommand implements Callable<Integer> {
     public Integer call() throws Exception {
         // call help by default
         return StepConsole.addApSubcommands(new CommandLine(new ApCommand()), ApDeployCommand::new, ApExecuteCommand::new)
-                .execute("help");
+            .execute("help");
     }
 
 }

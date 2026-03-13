@@ -29,37 +29,37 @@ import static step.plugins.timeseries.TimeSeriesControllerPlugin.GENERATION_NAME
 @SecuredContext(key = "entity", value = "dashboard")
 public class DashboardsService extends AbstractEntityServices<DashboardView> { // AbstractEntityServices + init table
 
-	private DashboardAccessor accessor;
+    private DashboardAccessor accessor;
 
-	public DashboardsService() {
-		super(EntityConstants.dashboards);
-	}
+    public DashboardsService() {
+        super(EntityConstants.dashboards);
+    }
 
-	@PostConstruct
-	public void init() throws Exception {
-		super.init();
-		GlobalContext context = getContext();
-		accessor = context.require(DashboardAccessor.class);
-	}
-	
-	@Secured(right = "dashboard-read")
-	@GET
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public List<DashboardView> getAll() {
-		 return accessor.stream().collect(Collectors.toList());
-	}
+    @PostConstruct
+    public void init() throws Exception {
+        super.init();
+        GlobalContext context = getContext();
+        accessor = context.require(DashboardAccessor.class);
+    }
+
+    @Secured(right = "dashboard-read")
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<DashboardView> getAll() {
+        return accessor.stream().collect(Collectors.toList());
+    }
 
 
-	@Override
-	public DashboardView clone(String id) {
-		DashboardView clone = super.clone(id);
-		Map<String, Object> customFields = clone.getCustomFields();
-		if (customFields != null) {
-			customFields.remove(GENERATION_NAME);
-			customFields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
-		}
-		save(clone);
-		return  clone;
-	}
+    @Override
+    public DashboardView clone(String id) {
+        DashboardView clone = super.clone(id);
+        Map<String, Object> customFields = clone.getCustomFields();
+        if (customFields != null) {
+            customFields.remove(GENERATION_NAME);
+            customFields.remove(AutomationPackageEntity.AUTOMATION_PACKAGE_ID);
+        }
+        save(clone);
+        return clone;
+    }
 }

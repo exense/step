@@ -86,22 +86,22 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
     abstract public List<String> getSupportedFileTypes();
 
-    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean isClassPathBased) throws AutomationPackageReadingException {
-        return this.readAutomationPackage(automationPackageArchive, apVersion, isClassPathBased, true);
+    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion) throws AutomationPackageReadingException {
+        return this.readAutomationPackage(automationPackageArchive, apVersion, true);
     }
 
     /**
      * @param scanAnnotations true if it is required to include annotated java keywords and plans as well as located in yaml descriptor
      */
-    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean isClassPathBased, boolean scanAnnotations) throws AutomationPackageReadingException {
+    public AutomationPackageContent readAutomationPackage(T automationPackageArchive, String apVersion, boolean scanAnnotations) throws AutomationPackageReadingException {
         try {
             if (automationPackageArchive.hasAutomationPackageDescriptor()) {
                 try (InputStream yamlInputStream = automationPackageArchive.getDescriptorYaml()) {
                     AutomationPackageDescriptorYaml descriptorYaml = getOrCreateDescriptorReader().readAutomationPackageDescriptor(yamlInputStream, automationPackageArchive.getAutomationPackageName());
-                    return buildAutomationPackage(descriptorYaml, automationPackageArchive, apVersion, isClassPathBased, scanAnnotations);
+                    return buildAutomationPackage(descriptorYaml, automationPackageArchive, apVersion, scanAnnotations);
                 }
             } else if (scanAnnotations) {
-                return buildAutomationPackage(null, automationPackageArchive, apVersion, isClassPathBased, scanAnnotations);
+                return buildAutomationPackage(null, automationPackageArchive, apVersion, scanAnnotations);
             } else {
                 return null;
             }
@@ -110,15 +110,15 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         }
     }
 
-    private AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, T archive, String apVersion,
-                                                              boolean isClassPathBased, boolean scanAnnotations) throws AutomationPackageReadingException {
+    protected AutomationPackageContent buildAutomationPackage(AutomationPackageDescriptorYaml descriptor, T archive, String apVersion,
+                                                              boolean scanAnnotations) throws AutomationPackageReadingException {
         AutomationPackageContent res = newContentInstance();
         String baseName = resolveName(descriptor, archive);
         res.setBaseName(baseName);
         res.setName(resolveUniqueName(baseName, apVersion));
 
         if (scanAnnotations) {
-            fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, isClassPathBased, res);
+            fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, res);
         }
 
         // apply imported fragments recursively
@@ -173,8 +173,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         return new AutomationPackageContent();
     }
 
-    abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, boolean isClassPathBased, AutomationPackageContent res) throws AutomationPackageReadingException;
-
+    abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, AutomationPackageContent res) throws AutomationPackageReadingException;
 
     public AutomationPackageYamlFragmentManager provideAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
@@ -190,7 +189,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
             throw new RuntimeException(e);
         }
     }
-    
+
     private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Map<URL, AutomationPackageFragmentYaml> fragmentYamlMap) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
@@ -288,7 +287,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         return descriptorReader;
     }
 
-    public synchronized void updateJsonSchema(String jsonSchemaPath){
+    public synchronized void updateJsonSchema(String jsonSchemaPath) {
         log.info("Change json schema for automation package to {}", jsonSchemaPath);
         this.jsonSchemaPath = jsonSchemaPath;
         this.descriptorReader = null;

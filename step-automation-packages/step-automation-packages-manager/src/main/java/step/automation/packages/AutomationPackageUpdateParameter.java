@@ -35,10 +35,6 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
      */
     public final boolean allowCreate;
     /**
-     * Whether the package is embedded in the classpath of the runner (i.e. Step Junit runner)
-     */
-    public final boolean isClasspathBased;
-    /**
      * Id of the existing package that has to be updated, should be combined with allowUpdate true and allowCreate false
      */
     public final ObjectId explicitOldId;
@@ -94,7 +90,7 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
      */
     public final boolean reloading;
 
-    public AutomationPackageUpdateParameter(boolean allowUpdate, boolean allowCreate, boolean isClasspathBased, ObjectId explicitOldId,
+    public AutomationPackageUpdateParameter(boolean allowUpdate, boolean allowCreate, ObjectId explicitOldId,
                                             AutomationPackageFileSource apSource, AutomationPackageFileSource apLibrarySource,
                                             String versionName, String activationExpression, ObjectEnricher enricher,
                                             ObjectPredicate objectPredicate, WriteAccessValidator writeAccessValidator, boolean async,
@@ -105,7 +101,6 @@ public class AutomationPackageUpdateParameter extends AutomationPackageAccessPar
         super(enricher, objectPredicate, writeAccessValidator, actorUser);
         this.allowUpdate = allowUpdate;
         this.allowCreate = allowCreate;
-        this.isClasspathBased = isClasspathBased;
         this.explicitOldId = explicitOldId;
         this.apSource = apSource;
         this.apLibrarySource = apLibrarySource;

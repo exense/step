@@ -20,53 +20,53 @@ import step.functions.io.Output;
 @Plugin
 public class PerformanceAssertPlugin extends AbstractExecutionEnginePlugin {
 
-	public static final String $PERFORMANCE_ASSERT_SESSION = "$performanceAssertSession";
+    public static final String $PERFORMANCE_ASSERT_SESSION = "$performanceAssertSession";
 
-	@Override
-	public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
-		//PerformanceAssert must be defined either in an after or after thread block. If any performance assert is defined we
-		//create and add the performance assert session for the corresponding report node.
-		AbstractArtefact resolvedArtefact = node.getResolvedArtefact();
-		ChildrenBlock after = resolvedArtefact.getAfter();
-		ChildrenBlock afterThread = null;
-		if (resolvedArtefact instanceof ThreadGroup) {
-			afterThread = ((ThreadGroup) resolvedArtefact).getAfterThread();
-		}
-		if ((after != null && hasAnyPerformanceAssert(after.getSteps())) ||
-				(afterThread != null && hasAnyPerformanceAssert(afterThread.getSteps()))) {
-			PerformanceAssertSession performanceAssertSession = new PerformanceAssertSession();
-			context.getVariablesManager().putVariable(node, PerformanceAssertPlugin.$PERFORMANCE_ASSERT_SESSION, performanceAssertSession);
-		}
-	}
+    @Override
+    public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
+        //PerformanceAssert must be defined either in an after or after thread block. If any performance assert is defined we
+        //create and add the performance assert session for the corresponding report node.
+        AbstractArtefact resolvedArtefact = node.getResolvedArtefact();
+        ChildrenBlock after = resolvedArtefact.getAfter();
+        ChildrenBlock afterThread = null;
+        if (resolvedArtefact instanceof ThreadGroup) {
+            afterThread = ((ThreadGroup) resolvedArtefact).getAfterThread();
+        }
+        if ((after != null && hasAnyPerformanceAssert(after.getSteps())) ||
+            (afterThread != null && hasAnyPerformanceAssert(afterThread.getSteps()))) {
+            PerformanceAssertSession performanceAssertSession = new PerformanceAssertSession();
+            context.getVariablesManager().putVariable(node, PerformanceAssertPlugin.$PERFORMANCE_ASSERT_SESSION, performanceAssertSession);
+        }
+    }
 
 
-	private boolean hasAnyPerformanceAssert(List<AbstractArtefact> steps) {
-		for (AbstractArtefact artefact: steps) {
-			boolean resultForArtefact = false;
-			if  (artefact instanceof PerformanceAssert){
-				resultForArtefact = true;
-			} else {
-				resultForArtefact = hasAnyPerformanceAssert(artefact.getChildren());
-			}
-			if (resultForArtefact) {
-				return resultForArtefact;
-			}
-		}
-		return false;
-	}
+    private boolean hasAnyPerformanceAssert(List<AbstractArtefact> steps) {
+        for (AbstractArtefact artefact : steps) {
+            boolean resultForArtefact = false;
+            if (artefact instanceof PerformanceAssert) {
+                resultForArtefact = true;
+            } else {
+                resultForArtefact = hasAnyPerformanceAssert(artefact.getChildren());
+            }
+            if (resultForArtefact) {
+                return resultForArtefact;
+            }
+        }
+        return false;
+    }
 
-	@Override
-	public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {
-		VariablesManager variablesManager = context.getVariablesManager();
-		List<Object> allSessions = variablesManager.getAllVariables($PERFORMANCE_ASSERT_SESSION);
-		allSessions.forEach(variable->{
-			PerformanceAssertSession session = (PerformanceAssertSession) variable;
-			if (session != null) {
-				List<Measure> measures = output.getMeasures();
-				if (measures != null) {
-					measures.forEach(m -> session.addMeasure(m));
-				}
-			}
-		});
-	}
+    @Override
+    public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {
+        VariablesManager variablesManager = context.getVariablesManager();
+        List<Object> allSessions = variablesManager.getAllVariables($PERFORMANCE_ASSERT_SESSION);
+        allSessions.forEach(variable -> {
+            PerformanceAssertSession session = (PerformanceAssertSession) variable;
+            if (session != null) {
+                List<Measure> measures = output.getMeasures();
+                if (measures != null) {
+                    measures.forEach(m -> session.addMeasure(m));
+                }
+            }
+        });
+    }
 }

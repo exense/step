@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -68,449 +68,452 @@ import step.grid.tokenpool.Interest;
 public class FunctionExecutionServiceImplTest {
 
 
-	@Test
-	public void testHappyPath() throws FunctionExecutionServiceException {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
+    @Test
+    public void testHappyPath() throws FunctionExecutionServiceException {
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
 
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {}, false);
-		FunctionInput<JsonObject> i = getDummyInput();
-		Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
-		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
-		Assert.assertNotNull(output);
-		Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
+        TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
+        }, false);
+        FunctionInput<JsonObject> i = getDummyInput();
+        Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
+        Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
+        Assert.assertNotNull(output);
+        Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
 
-		Assert.assertNull(output.getError());
-		f.returnTokenHandle(token.getID());
-	}
+        Assert.assertNull(output.getError());
+        f.returnTokenHandle(token.getID());
+    }
 
-	@Test
-	public void testHappyPathWithSkipAutoProvisioning() throws FunctionExecutionServiceException {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
+    @Test
+    public void testHappyPathWithSkipAutoProvisioning() throws FunctionExecutionServiceException {
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
 
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {}, true);
-		FunctionInput<JsonObject> i = getDummyInput();
-		Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
-		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
-		Assert.assertNotNull(output);
-		Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
+        TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
+        }, true);
+        FunctionInput<JsonObject> i = getDummyInput();
+        Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
+        Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
+        Assert.assertNotNull(output);
+        Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
 
-		Assert.assertNull(output.getError());
-		f.returnTokenHandle(token.getID());
-	}
+        Assert.assertNull(output.getError());
+        f.returnTokenHandle(token.getID());
+    }
 
-	@Test
-	public void testLifecycleInterceptor() throws FunctionExecutionServiceException {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
+    @Test
+    public void testLifecycleInterceptor() throws FunctionExecutionServiceException {
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, null);
 
-		TokenLifecycleInterceptor interceptor = new TokenLifecycleInterceptor() {
-			@Override
-			public void onReturnTokenHandle(String tokenHandleId) {
-			}
+        TokenLifecycleInterceptor interceptor = new TokenLifecycleInterceptor() {
+            @Override
+            public void onReturnTokenHandle(String tokenHandleId) {
+            }
 
-			@Override
-			public void onGetTokenHandle(String tokenHandleId) throws Exception {
-				throw new RuntimeException("Execution vetoing exception");
-			}
-		};
-		f.registerTokenLifecycleInterceptor(interceptor);
+            @Override
+            public void onGetTokenHandle(String tokenHandleId) throws Exception {
+                throw new RuntimeException("Execution vetoing exception");
+            }
+        };
+        f.registerTokenLifecycleInterceptor(interceptor);
 
-		// first run with interceptor should fail
-		{
-			try {
-				f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
-				}, false);
-				Assert.fail("Expected exception to be thrown");
-			} catch (FunctionExecutionServiceException e) {
-				Assert.assertEquals("Error while retrieving agent token: Execution vetoing exception", e.getMessage());
-			}
-		}
-		//second run without interceptor should succeed
-		f.unregisterTokenLifecycleInterceptor(interceptor);
-		{
-			TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
-			}, false);
-			FunctionInput<JsonObject> i = getDummyInput();
-			Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
-			Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
-			Assert.assertNotNull(output);
-			Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
+        // first run with interceptor should fail
+        {
+            try {
+                f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
+                }, false);
+                Assert.fail("Expected exception to be thrown");
+            } catch (FunctionExecutionServiceException e) {
+                Assert.assertEquals("Error while retrieving agent token: Execution vetoing exception", e.getMessage());
+            }
+        }
+        //second run without interceptor should succeed
+        f.unregisterTokenLifecycleInterceptor(interceptor);
+        {
+            TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
+            }, false);
+            FunctionInput<JsonObject> i = getDummyInput();
+            Assert.assertFalse(beforeFunctionCallHasBeenCall.get());
+            Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
+            Assert.assertNotNull(output);
+            Assert.assertTrue(beforeFunctionCallHasBeenCall.get());
 
-			Assert.assertNull(output.getError());
-			f.returnTokenHandle(token.getID());
-		}
-	}
+            Assert.assertNull(output.getError());
+            f.returnTokenHandle(token.getID());
+        }
+    }
 
-	@Test
-	public void testReserveError() {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, new AgentCommunicationException("Reserve error"), null);
-		
-		FunctionExecutionServiceException e = null;
-		try {
-			f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
-		} catch (FunctionExecutionServiceException e1) {
-			e = e1;
-		}
-		Assert.assertNotNull(e);
-		Assert.assertEquals("Communication error between the controller and the agent while reserving the agent token", e.getMessage());
-	}
-	
-	@Test
-	public void testReserveTimeoutError() {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, new AgentCallTimeoutException(functionCallTimeout, "Reserve error", null), null);
-		
-		FunctionExecutionServiceException e = null;
-		try {
-			f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
-		} catch (FunctionExecutionServiceException e1) {
-			e = e1;
-		}
-		Assert.assertNotNull(e);
-		Assert.assertEquals("Timeout after "+functionCallTimeout+"ms while reserving the agent token. You can increase the call timeout by setting 'grid.client.token.reserve.timeout.ms' in step.properties", e.getMessage());
-	}
-	
-	@Test
-	public void testReleaseError() throws FunctionExecutionServiceException {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, new AgentCommunicationException("Release error"));
-		
-		FunctionExecutionServiceException e = null;
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
-		try {
-			f.returnTokenHandle(token.getID());
-		} catch (FunctionExecutionServiceException e1) {
-			e = e1;
-		}
-		Assert.assertNotNull(e);
-		Assert.assertEquals("Communication error between the controller and the agent while releasing the agent token", e.getMessage());
-	}
-	
-	@Test
-	public void testReleaseTimeoutError() throws FunctionExecutionServiceException {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, new AgentCallTimeoutException(functionCallTimeout, "Release error", null));
-		
-		FunctionExecutionServiceException e = null;
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
-		try {
-			f.returnTokenHandle(token.getID());
-		} catch (FunctionExecutionServiceException e1) {
-			e = e1;
-		}
-		Assert.assertNotNull(e);
-		Assert.assertEquals("Timeout after "+functionCallTimeout+"ms while releasing the agent token. You can increase the call timeout by setting 'grid.client.token.release.timeout.ms' in step.properties", e.getMessage());
-	}
-	
-	@Test
-	public void testCallAgentCommunicationException() throws FunctionExecutionServiceException {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new AgentCommunicationException("Call error"), null, null);
-		
-		Output<JsonObject> output = callFunctionWithDummyInput(f);
-		Assert.assertNotNull(output);
-		Assert.assertEquals("Communication error between the controller and the agent while calling the agent", output.getError().getMsg());
-	}
-	
-	@Test
-	public void testCallTimeout() throws FunctionExecutionServiceException {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new AgentCallTimeoutException(functionCallTimeout, "Call timeout", null), null, null);
-		
-		Output<JsonObject> output = callFunctionWithDummyInput(f);
-		Assert.assertNotNull(output);
-		Assert.assertEquals("Timeout after "+functionCallTimeout+ "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword", output.getError().getMsg());
-		
-	}
-	
-	@Test
-	public void testCallException() throws FunctionExecutionServiceException {
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new Exception("Call exception", null), null, null);
-		
-		Output<JsonObject> output = callFunctionWithDummyInput(f);
-		Assert.assertNotNull(output);
-		Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Call exception", output.getError().getMsg());
-	}
-	
-	@Test
-	public void testMeasures() throws FunctionExecutionServiceException {
-		JakartaOutputBuilder outputBuilder = new JakartaOutputBuilder();
-		
-		outputBuilder.startMeasure("Measure1");
-		outputBuilder.stopMeasure();
-		
-		Output<JsonObject> expectedOutput = outputBuilder.build();
-		
-		FunctionExecutionService f = getFunctionExecutionService(expectedOutput, null, null, null);
-		
-		Output<JsonObject> output = callFunctionWithDummyInput(f);
-		Assert.assertNotNull(output);
-		Assert.assertEquals(1, output.getMeasures().size());
-	}
-	
-	@Test
-	public void testError() throws FunctionExecutionServiceException {
-		JakartaOutputBuilder outputBuilder = new JakartaOutputBuilder();
-		Output<JsonObject> expectedOutput = outputBuilder.setError("My error").build();
-		
-		FunctionExecutionService f = getFunctionExecutionService(expectedOutput, null, null, null);
-		
-		Output<JsonObject> output = callFunctionWithDummyInput(f);
-		Assert.assertNotNull(output);
-		Assert.assertEquals("My error", output.getError().getMsg());
-	}
-	
-	@Test
-	public void testCallAgentError() throws FunctionExecutionServiceException {
-		OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
-		OutputMessage outputMessage = outputMessageBuilder.build();
-		outputMessage.setAgentError(new AgentError(AgentErrorCode.UNEXPECTED));
-		
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(outputMessage, null, null, null);
-		
-		Output<JsonObject> output = callFunctionWithDummyInput(f);
-		Assert.assertNotNull(output);
-		Assert.assertEquals("Unexpected error while executing the keyword on the agent", output.getError().getMsg());
-	}
+    @Test
+    public void testReserveError() {
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, new AgentCommunicationException("Reserve error"), null);
 
-	@Test
-	public void testOutput() throws FunctionExecutionServiceException {
-		OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
-		outputMessageBuilder.setPayloadJson("{\"payload\":{\"stringValue\":\"string\"}}");
-		OutputMessage outputMessage = outputMessageBuilder.build();
+        FunctionExecutionServiceException e = null;
+        try {
+            f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
+        } catch (FunctionExecutionServiceException e1) {
+            e = e1;
+        }
+        Assert.assertNotNull(e);
+        Assert.assertEquals("Communication error between the controller and the agent while reserving the agent token", e.getMessage());
+    }
 
-		FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(outputMessage, null, null, null);
+    @Test
+    public void testReserveTimeoutError() {
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, new AgentCallTimeoutException(functionCallTimeout, "Reserve error", null), null);
 
-		Output<JsonObject> output = callFunctionWithDummyInput(f);
-		Assert.assertNotNull(output);
-		Assert.assertEquals("string",output.getPayload().get("stringValue").toString());
-	}
+        FunctionExecutionServiceException e = null;
+        try {
+            f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
+        } catch (FunctionExecutionServiceException e1) {
+            e = e1;
+        }
+        Assert.assertNotNull(e);
+        Assert.assertEquals("Timeout after " + functionCallTimeout + "ms while reserving the agent token. You can increase the call timeout by setting 'grid.client.token.reserve.timeout.ms' in step.properties", e.getMessage());
+    }
 
-	protected Output<JsonObject> callFunctionWithDummyInput(FunctionExecutionService f)
-			throws FunctionExecutionServiceException {
-		TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {}, false);
-		FunctionInput<JsonObject> i = getDummyInput();
-		Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
-		return output;
-	}
+    @Test
+    public void testReleaseError() throws FunctionExecutionServiceException {
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, new AgentCommunicationException("Release error"));
 
-	protected FunctionInput<JsonObject> getDummyInput() {
-		FunctionInput<JsonObject> i = new FunctionInput<JsonObject>();
-		HashMap<String, String> inputProperties = new HashMap<>();
-		inputProperties.put("inputProperty1", "inputProperty1");
-		i.setProperties(inputProperties);
-		i.setPayload(Json.createObjectBuilder().build());
-		return i;
-	}
+        FunctionExecutionServiceException e = null;
+        TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
+        try {
+            f.returnTokenHandle(token.getID());
+        } catch (FunctionExecutionServiceException e1) {
+            e = e1;
+        }
+        Assert.assertNotNull(e);
+        Assert.assertEquals("Communication error between the controller and the agent while releasing the agent token", e.getMessage());
+    }
 
-	protected FunctionExecutionService getFunctionExecutionServiceForGridClientTest(OutputMessage outputMessage, Exception callException, AgentCommunicationException reserveTokenException, AgentCommunicationException returnTokenException) {
-		GridClient gridClient = getGridClient(outputMessage, callException, reserveTokenException, returnTokenException);
-		FunctionTypeRegistry functionTypeRegistry = getFunctionTypeRegistry();
-		DynamicBeanResolver dynamicBeanResolver = getDynamicBeanResolver();
-		FunctionExecutionService f;
-		try {
-			f = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, dynamicBeanResolver);
-		} catch (FunctionExecutionServiceException e) {
-			throw new RuntimeException(e);
-		}
-		return f;
-	}
-	
-	protected FunctionExecutionService getFunctionExecutionService(Output<JsonObject> output, Exception callException, AgentCommunicationException reserveTokenException, AgentCommunicationException returnTokenException) {
-		OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
-		
-		ObjectMapper mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
-		outputMessageBuilder.setPayload(mapper.valueToTree(output));
-		
-		return getFunctionExecutionServiceForGridClientTest(outputMessageBuilder.build(), callException, reserveTokenException, returnTokenException);
-	}
+    @Test
+    public void testReleaseTimeoutError() throws FunctionExecutionServiceException {
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, null, null, new AgentCallTimeoutException(functionCallTimeout, "Release error", null));
 
-	protected DynamicBeanResolver getDynamicBeanResolver() {
-		return new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
-	}
+        FunctionExecutionServiceException e = null;
+        TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, null, false);
+        try {
+            f.returnTokenHandle(token.getID());
+        } catch (FunctionExecutionServiceException e1) {
+            e = e1;
+        }
+        Assert.assertNotNull(e);
+        Assert.assertEquals("Timeout after " + functionCallTimeout + "ms while releasing the agent token. You can increase the call timeout by setting 'grid.client.token.release.timeout.ms' in step.properties", e.getMessage());
+    }
 
-	AtomicBoolean beforeFunctionCallHasBeenCall = new AtomicBoolean(false);
-	
-	protected FunctionTypeRegistry getFunctionTypeRegistry() {
-		return new FunctionTypeRegistry() {
-			
-			@Override
-			public void registerFunctionType(AbstractFunctionType<? extends Function> functionType) {
-			}
-			
-			@Override
-			public AbstractFunctionType<Function> getFunctionTypeByFunction(Function function) {
-				return dummyFunctionType();
-			}
-			
-			@Override
-			public AbstractFunctionType<Function> getFunctionType(String functionType) {
-				return dummyFunctionType();
-			}
+    @Test
+    public void testCallAgentCommunicationException() throws FunctionExecutionServiceException {
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new AgentCommunicationException("Call error"), null, null);
 
-			protected AbstractFunctionType<Function> dummyFunctionType() {
-				return new AbstractFunctionType<Function>() {
-					
-					@Override
-					public void beforeFunctionCall(Function function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
-						super.beforeFunctionCall(function, input, properties);
-						beforeFunctionCallHasBeenCall.set(true);
-					}
+        Output<JsonObject> output = callFunctionWithDummyInput(f);
+        Assert.assertNotNull(output);
+        Assert.assertEquals("Communication error between the controller and the agent while calling the agent", output.getError().getMsg());
+    }
 
-					@Override
-					public Function newFunction() {
-						return null;
-					}
-					
-					@Override
-					public HandlerProperties getHandlerProperties(Function function, AbstractStepContext executionContext) {
-						Map<String, String> handlerProperties = new HashMap<>();
-						handlerProperties.put("handlerProperty1", "handlerProperty1");
-						return new HandlerProperties(handlerProperties);
-					}
-					
-					@Override
-					public String getHandlerChain(Function function) {
-						return null;
-					}
-				};
-			}
-		};
-	}
+    @Test
+    public void testCallTimeout() throws FunctionExecutionServiceException {
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new AgentCallTimeoutException(functionCallTimeout, "Call timeout", null), null, null);
 
-	int functionCallTimeout = 985;
+        Output<JsonObject> output = callFunctionWithDummyInput(f);
+        Assert.assertNotNull(output);
+        Assert.assertEquals("Timeout after " + functionCallTimeout + "ms while calling the agent. You can increase the call timeout in the configuration screen of the keyword", output.getError().getMsg());
 
-	private Function getFunction() {
-		Function function = new Function();
-		function.setCallTimeout(new DynamicValue<Integer>(functionCallTimeout));
-		function.setAttributes(new HashMap<>());
-		return function;
-	}
+    }
 
-	protected GridClient getGridClient(OutputMessage outputMessage, Exception callException, AgentCommunicationException reserveTokenException, AgentCommunicationException returnTokenException) {
-		return new GridClient() {
-			
-			@Override
-			public FileVersion registerFile(File file, boolean cleanable) throws FileManagerException {
-				return new FileVersion(null, null, false);
-			}
+    @Test
+    public void testCallException() throws FunctionExecutionServiceException {
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(null, new Exception("Call exception", null), null, null);
 
-			@Override
-			public void releaseFile(FileVersion fileVersion) {
+        Output<JsonObject> output = callFunctionWithDummyInput(f);
+        Assert.assertNotNull(output);
+        Assert.assertEquals("Unexpected error while calling keyword: java.lang.Exception Call exception", output.getError().getMsg());
+    }
 
-			}
+    @Test
+    public void testMeasures() throws FunctionExecutionServiceException {
+        JakartaOutputBuilder outputBuilder = new JakartaOutputBuilder();
 
-			@Override
-			public FileVersion getRegisteredFile(FileVersionId fileVersionId) throws FileManagerException {
-				return new FileVersion(null, null, false);
-			}
-			
-			@Override
-			public void returnTokenHandle(String tokenWrapperId) throws AgentCommunicationException {
-				if(returnTokenException != null) {
-					throw returnTokenException;
-				}
-			}
+        outputBuilder.startMeasure("Measure1");
+        outputBuilder.stopMeasure();
 
-			@Override
-			public void interruptTokenExecution(String s) throws GridClientException, AgentCommunicationException {
+        Output<JsonObject> expectedOutput = outputBuilder.build();
 
-			}
+        FunctionExecutionService f = getFunctionExecutionService(expectedOutput, null, null, null);
 
-			@Override
-			public void markTokenAsFailing(String tokenId, String errorMessage, Exception e) {
+        Output<JsonObject> output = callFunctionWithDummyInput(f);
+        Assert.assertNotNull(output);
+        Assert.assertEquals(1, output.getMeasures().size());
+    }
 
-			}
+    @Test
+    public void testError() throws FunctionExecutionServiceException {
+        JakartaOutputBuilder outputBuilder = new JakartaOutputBuilder();
+        Output<JsonObject> expectedOutput = outputBuilder.setError("My error").build();
 
-			@Override
-			public void removeTokenError(String tokenId) {
+        FunctionExecutionService f = getFunctionExecutionService(expectedOutput, null, null, null);
 
-			}
+        Output<JsonObject> output = callFunctionWithDummyInput(f);
+        Assert.assertNotNull(output);
+        Assert.assertEquals("My error", output.getError().getMsg());
+    }
 
-			@Override
-			public void startTokenMaintenance(String tokenId) {
+    @Test
+    public void testCallAgentError() throws FunctionExecutionServiceException {
+        OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
+        OutputMessage outputMessage = outputMessageBuilder.build();
+        outputMessage.setAgentError(new AgentError(AgentErrorCode.UNEXPECTED));
 
-			}
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(outputMessage, null, null, null);
 
-			@Override
-			public void stopTokenMaintenance(String tokenId) {
+        Output<JsonObject> output = callFunctionWithDummyInput(f);
+        Assert.assertNotNull(output);
+        Assert.assertEquals("Unexpected error while executing the keyword on the agent", output.getError().getMsg());
+    }
 
-			}
+    @Test
+    public void testOutput() throws FunctionExecutionServiceException {
+        OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
+        outputMessageBuilder.setPayloadJson("{\"payload\":{\"stringValue\":\"string\"}}");
+        OutputMessage outputMessage = outputMessageBuilder.build();
 
-			@Override
-			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession) throws AgentCommunicationException {
-				if(reserveTokenException != null) {
-					throw reserveTokenException;
-				} else {
-					return token();
-				}
-			}
-			
-			@Override
-			public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
-					boolean createSession, TokenWrapperOwner tokenOwner) throws AgentCommunicationException {
-				TokenWrapper tokenHandle = getTokenHandle(attributes, interests, createSession);
-				return tokenHandle;
-			}
-			
-			@Override
-			public TokenWrapper getLocalTokenHandle() {
-				return token();
-			}
+        FunctionExecutionService f = getFunctionExecutionServiceForGridClientTest(outputMessage, null, null, null);
 
-			protected TokenWrapper token() {
-				Token token = new Token();
-				token.setId(UUID.randomUUID().toString());
-				return new TokenWrapper(token, new AgentRef());
-			}
-			
-			@Override
-			public OutputMessage call(String tokenWrapperId, JsonNode argument, String handler,
-					FileVersionId handlerPackage, Map<String, String> properties, int callTimeout) throws Exception {
-				assert callTimeout == functionCallTimeout;
-				assert !properties.containsKey("inputProperty1");
-				assert !properties.containsKey("handlerProperty1");
-				
-				ObjectMapper mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
-				Input<?> input = mapper.treeToValue(argument, Input.class);
-				assert input.getFunctionCallTimeout() == functionCallTimeout-100l;
-				assert input.getProperties().containsKey("inputProperty1");
-				assert input.getProperties().containsKey("handlerProperty1");
-				
-				if(callException !=null) {
-					throw callException;
-				} else if(outputMessage !=null) {
-					return outputMessage;					
-				} else {
-					return new OutputMessageBuilder().build();
-				}
-			}
+        Output<JsonObject> output = callFunctionWithDummyInput(f);
+        Assert.assertNotNull(output);
+        Assert.assertEquals("string", output.getPayload().get("stringValue").toString());
+    }
 
-			@Override
-			public void close() {
-			}
+    protected Output<JsonObject> callFunctionWithDummyInput(FunctionExecutionService f)
+        throws FunctionExecutionServiceException {
+        TokenWrapper token = f.getTokenHandle(new HashMap<>(), new HashMap<>(), true, new TokenWrapperOwner() {
+        }, false);
+        FunctionInput<JsonObject> i = getDummyInput();
+        Output<JsonObject> output = f.callFunction(token.getID(), getFunction(), i, JsonObject.class, null);
+        return output;
+    }
 
-			@Override
-			public List<AgentRef> getAgents() {
-				return null;
-			}
+    protected FunctionInput<JsonObject> getDummyInput() {
+        FunctionInput<JsonObject> i = new FunctionInput<JsonObject>();
+        HashMap<String, String> inputProperties = new HashMap<>();
+        inputProperties.put("inputProperty1", "inputProperty1");
+        i.setProperties(inputProperties);
+        i.setPayload(Json.createObjectBuilder().build());
+        return i;
+    }
 
-			@Override
-			public List<TokenWrapper> getTokens() {
-				return null;
-			}
+    protected FunctionExecutionService getFunctionExecutionServiceForGridClientTest(OutputMessage outputMessage, Exception callException, AgentCommunicationException reserveTokenException, AgentCommunicationException returnTokenException) {
+        GridClient gridClient = getGridClient(outputMessage, callException, reserveTokenException, returnTokenException);
+        FunctionTypeRegistry functionTypeRegistry = getFunctionTypeRegistry();
+        DynamicBeanResolver dynamicBeanResolver = getDynamicBeanResolver();
+        FunctionExecutionService f;
+        try {
+            f = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, dynamicBeanResolver);
+        } catch (FunctionExecutionServiceException e) {
+            throw new RuntimeException(e);
+        }
+        return f;
+    }
 
-			@Override
-			public void pingAgent(AgentRef agentRef) throws AgentCommunicationException {
+    protected FunctionExecutionService getFunctionExecutionService(Output<JsonObject> output, Exception callException, AgentCommunicationException reserveTokenException, AgentCommunicationException returnTokenException) {
+        OutputMessageBuilder outputMessageBuilder = new OutputMessageBuilder();
 
-			}
+        ObjectMapper mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
+        outputMessageBuilder.setPayload(mapper.valueToTree(output));
 
-			@Override
-			public void unregisterFile(FileVersionId fileVersionId) {
-				
-			}
+        return getFunctionExecutionServiceForGridClientTest(outputMessageBuilder.build(), callException, reserveTokenException, returnTokenException);
+    }
 
-			@Override
-			public FileVersion registerFile(InputStream inputStream, String fileName, boolean isDirectory, boolean cleanable)
-					throws FileManagerException {
-				return new FileVersion(null, null, false);
-			}
-		};
-	}
+    protected DynamicBeanResolver getDynamicBeanResolver() {
+        return new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
+    }
+
+    AtomicBoolean beforeFunctionCallHasBeenCall = new AtomicBoolean(false);
+
+    protected FunctionTypeRegistry getFunctionTypeRegistry() {
+        return new FunctionTypeRegistry() {
+
+            @Override
+            public void registerFunctionType(AbstractFunctionType<? extends Function> functionType) {
+            }
+
+            @Override
+            public AbstractFunctionType<Function> getFunctionTypeByFunction(Function function) {
+                return dummyFunctionType();
+            }
+
+            @Override
+            public AbstractFunctionType<Function> getFunctionType(String functionType) {
+                return dummyFunctionType();
+            }
+
+            protected AbstractFunctionType<Function> dummyFunctionType() {
+                return new AbstractFunctionType<Function>() {
+
+                    @Override
+                    public void beforeFunctionCall(Function function, Input<?> input, Map<String, String> properties) throws FunctionExecutionException {
+                        super.beforeFunctionCall(function, input, properties);
+                        beforeFunctionCallHasBeenCall.set(true);
+                    }
+
+                    @Override
+                    public Function newFunction() {
+                        return null;
+                    }
+
+                    @Override
+                    public HandlerProperties getHandlerProperties(Function function, AbstractStepContext executionContext) {
+                        Map<String, String> handlerProperties = new HashMap<>();
+                        handlerProperties.put("handlerProperty1", "handlerProperty1");
+                        return new HandlerProperties(handlerProperties);
+                    }
+
+                    @Override
+                    public String getHandlerChain(Function function) {
+                        return null;
+                    }
+                };
+            }
+        };
+    }
+
+    int functionCallTimeout = 985;
+
+    private Function getFunction() {
+        Function function = new Function();
+        function.setCallTimeout(new DynamicValue<Integer>(functionCallTimeout));
+        function.setAttributes(new HashMap<>());
+        return function;
+    }
+
+    protected GridClient getGridClient(OutputMessage outputMessage, Exception callException, AgentCommunicationException reserveTokenException, AgentCommunicationException returnTokenException) {
+        return new GridClient() {
+
+            @Override
+            public FileVersion registerFile(File file, boolean cleanable) throws FileManagerException {
+                return new FileVersion(null, null, false);
+            }
+
+            @Override
+            public void releaseFile(FileVersion fileVersion) {
+
+            }
+
+            @Override
+            public FileVersion getRegisteredFile(FileVersionId fileVersionId) throws FileManagerException {
+                return new FileVersion(null, null, false);
+            }
+
+            @Override
+            public void returnTokenHandle(String tokenWrapperId) throws AgentCommunicationException {
+                if (returnTokenException != null) {
+                    throw returnTokenException;
+                }
+            }
+
+            @Override
+            public void interruptTokenExecution(String s) throws GridClientException, AgentCommunicationException {
+
+            }
+
+            @Override
+            public void markTokenAsFailing(String tokenId, String errorMessage, Exception e) {
+
+            }
+
+            @Override
+            public void removeTokenError(String tokenId) {
+
+            }
+
+            @Override
+            public void startTokenMaintenance(String tokenId) {
+
+            }
+
+            @Override
+            public void stopTokenMaintenance(String tokenId) {
+
+            }
+
+            @Override
+            public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
+                                               boolean createSession) throws AgentCommunicationException {
+                if (reserveTokenException != null) {
+                    throw reserveTokenException;
+                } else {
+                    return token();
+                }
+            }
+
+            @Override
+            public TokenWrapper getTokenHandle(Map<String, String> attributes, Map<String, Interest> interests,
+                                               boolean createSession, TokenWrapperOwner tokenOwner) throws AgentCommunicationException {
+                TokenWrapper tokenHandle = getTokenHandle(attributes, interests, createSession);
+                return tokenHandle;
+            }
+
+            @Override
+            public TokenWrapper getLocalTokenHandle() {
+                return token();
+            }
+
+            protected TokenWrapper token() {
+                Token token = new Token();
+                token.setId(UUID.randomUUID().toString());
+                return new TokenWrapper(token, new AgentRef());
+            }
+
+            @Override
+            public OutputMessage call(String tokenWrapperId, JsonNode argument, String handler,
+                                      FileVersionId handlerPackage, Map<String, String> properties, int callTimeout) throws Exception {
+                assert callTimeout == functionCallTimeout;
+                assert !properties.containsKey("inputProperty1");
+                assert !properties.containsKey("handlerProperty1");
+
+                ObjectMapper mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
+                Input<?> input = mapper.treeToValue(argument, Input.class);
+                assert input.getFunctionCallTimeout() == functionCallTimeout - 100l;
+                assert input.getProperties().containsKey("inputProperty1");
+                assert input.getProperties().containsKey("handlerProperty1");
+
+                if (callException != null) {
+                    throw callException;
+                } else if (outputMessage != null) {
+                    return outputMessage;
+                } else {
+                    return new OutputMessageBuilder().build();
+                }
+            }
+
+            @Override
+            public void close() {
+            }
+
+            @Override
+            public List<AgentRef> getAgents() {
+                return null;
+            }
+
+            @Override
+            public List<TokenWrapper> getTokens() {
+                return null;
+            }
+
+            @Override
+            public void pingAgent(AgentRef agentRef) throws AgentCommunicationException {
+
+            }
+
+            @Override
+            public void unregisterFile(FileVersionId fileVersionId) {
+
+            }
+
+            @Override
+            public FileVersion registerFile(InputStream inputStream, String fileName, boolean isDirectory, boolean cleanable)
+                throws FileManagerException {
+                return new FileVersion(null, null, false);
+            }
+        };
+    }
 
 }

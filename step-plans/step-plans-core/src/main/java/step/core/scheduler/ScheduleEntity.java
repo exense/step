@@ -28,7 +28,7 @@ public class ScheduleEntity extends Entity<ExecutiontTaskParameters, Accessor<Ex
                                 context.visitEntity(EntityConstants.plans, localPlanId);
                             }
                             String newEntityId = context.resolvedEntityId(EntityConstants.plans, localPlanId);
-                            if(newEntityId != null) {
+                            if (newEntityId != null) {
                                 repositoryObject.getRepositoryParameters().put(RepositoryObjectReference.PLAN_ID, newEntityId);
                             }
                         }

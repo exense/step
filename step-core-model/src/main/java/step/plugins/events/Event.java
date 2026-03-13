@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -21,122 +21,123 @@ package step.plugins.events;
 import java.util.Map;
 
 public class Event {
-	
-	private String id;
-	private String name;
-	private String group;
-	private Object payload;
-	
-	private final long creationTimestamp;
-	
-	//TODO add "meta" map and put timestamps in that map
-	
-	// For client side
-	private long submitionTimestamp;
-	private long receptionTimestamp;
-	
-	// Server side
-	private long insertionTimestamp;
-	private long deletionTimestamp;
-	private long lastReadTimestamp;
-	
-	public Event(){
-		creationTimestamp = System.currentTimeMillis();
-	}
 
-	public String getId() {
-		return id;
-	}
+    private String id;
+    private String name;
+    private String group;
+    private Object payload;
 
-	public Event setId(String id) {
-		this.id = id;
-		return this;
-	}
+    private final long creationTimestamp;
 
-	public String getName() {
-		return name;
-	}
+    //TODO add "meta" map and put timestamps in that map
 
-	public Event setName(String name) {
-		this.name = name;
-		return this;
-	}
+    // For client side
+    private long submitionTimestamp;
+    private long receptionTimestamp;
 
-	public String getGroup() {
-		return group;
-	}
-	
-	public Event setGroup(String group) {
-		this.group = group;
-		return this;
-	}
-	public Object getPayload() {
-		return payload;
-	}
-	
-	public Event setPayload(Object payload) {
-		this.payload = payload;
-		return this;
-	}
+    // Server side
+    private long insertionTimestamp;
+    private long deletionTimestamp;
+    private long lastReadTimestamp;
 
-	public String toString(){
-		return new StringBuilder()
-				.append("{")
-				.append("id=").append(id).append(",")
-				.append("group=").append(group).append(",")
-				.append("name=").append(name).append(",")
-				.append("payload=").append(payload)
-				.append("}")
-				.toString();
-	}
+    public Event() {
+        creationTimestamp = System.currentTimeMillis();
+    }
 
-	public long getCreationTimestamp() {
-		return creationTimestamp;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public long getSubmitionTimestamp() {
-		return submitionTimestamp;
-	}
+    public Event setId(String id) {
+        this.id = id;
+        return this;
+    }
 
-	public Event setSubmitionTimestamp(long submitionTimestamp) {
-		this.submitionTimestamp = submitionTimestamp;
-		return this;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public long getReceptionTimestamp() {
-		return receptionTimestamp;
-	}
+    public Event setName(String name) {
+        this.name = name;
+        return this;
+    }
 
-	public Event setReceptionTimestamp(long receptionTimestamp) {
-		this.receptionTimestamp = receptionTimestamp;
-		return this;
-	}
+    public String getGroup() {
+        return group;
+    }
 
-	public long getInsertionTimestamp() {
-		return insertionTimestamp;
-	}
+    public Event setGroup(String group) {
+        this.group = group;
+        return this;
+    }
 
-	public Event setInsertionTimestamp(long insertionTimestamp) {
-		this.insertionTimestamp = insertionTimestamp;
-		return this;
-	}
+    public Object getPayload() {
+        return payload;
+    }
 
-	public long getDeletionTimestamp() {
-		return deletionTimestamp;
-	}
+    public Event setPayload(Object payload) {
+        this.payload = payload;
+        return this;
+    }
 
-	public Event setDeletionTimestamp(long deletionTimestamp) {
-		this.deletionTimestamp = deletionTimestamp;
-		return this;
-	}
+    public String toString() {
+        return new StringBuilder()
+            .append("{")
+            .append("id=").append(id).append(",")
+            .append("group=").append(group).append(",")
+            .append("name=").append(name).append(",")
+            .append("payload=").append(payload)
+            .append("}")
+            .toString();
+    }
 
-	public long getLastReadTimestamp() {
-		return lastReadTimestamp;
-	}
+    public long getCreationTimestamp() {
+        return creationTimestamp;
+    }
 
-	public Event setLastReadTimestamp(long lastReadTimestamp) {
-		this.lastReadTimestamp = lastReadTimestamp;
-		return this;
-	}
+    public long getSubmitionTimestamp() {
+        return submitionTimestamp;
+    }
+
+    public Event setSubmitionTimestamp(long submitionTimestamp) {
+        this.submitionTimestamp = submitionTimestamp;
+        return this;
+    }
+
+    public long getReceptionTimestamp() {
+        return receptionTimestamp;
+    }
+
+    public Event setReceptionTimestamp(long receptionTimestamp) {
+        this.receptionTimestamp = receptionTimestamp;
+        return this;
+    }
+
+    public long getInsertionTimestamp() {
+        return insertionTimestamp;
+    }
+
+    public Event setInsertionTimestamp(long insertionTimestamp) {
+        this.insertionTimestamp = insertionTimestamp;
+        return this;
+    }
+
+    public long getDeletionTimestamp() {
+        return deletionTimestamp;
+    }
+
+    public Event setDeletionTimestamp(long deletionTimestamp) {
+        this.deletionTimestamp = deletionTimestamp;
+        return this;
+    }
+
+    public long getLastReadTimestamp() {
+        return lastReadTimestamp;
+    }
+
+    public Event setLastReadTimestamp(long lastReadTimestamp) {
+        this.lastReadTimestamp = lastReadTimestamp;
+        return this;
+    }
 
 }

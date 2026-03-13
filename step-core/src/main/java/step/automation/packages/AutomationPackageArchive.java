@@ -38,14 +38,6 @@ public abstract class AutomationPackageArchive implements Closeable {
     private final String type;
     private final String archiveName;
 
-    protected AutomationPackageArchive(String type) {
-        this.originalFile = null;
-        this.keywordLibFile = null;
-        Objects.requireNonNull(type, NULL_TYPE_ERROR_MSG);
-        this.type = type;
-        this.archiveName = null;
-    }
-
     public AutomationPackageArchive(File automationPackageFile, File keywordLibFile, String type, String archiveName) throws AutomationPackageReadingException {
         Objects.requireNonNull(automationPackageFile, "The automationPackageFile must not be null");
         Objects.requireNonNull(automationPackageFile, NULL_TYPE_ERROR_MSG);
@@ -60,6 +52,7 @@ public abstract class AutomationPackageArchive implements Closeable {
 
     /**
      * this method should be called in case the automation package does not contain any YAML descriptor with a name set in it
+     *
      * @return the name of the automation package
      */
     public String getAutomationPackageName() {
@@ -74,11 +67,11 @@ public abstract class AutomationPackageArchive implements Closeable {
 
     abstract public InputStream getResourceAsStream(String resourcePath) throws IOException;
 
-    abstract public URL getResource(String resourcePath) ;
+    abstract public URL getResource(String resourcePath);
 
     abstract public List<URL> getResourcesByPattern(String resourcePathPattern);
 
-    public File getKeywordLibFile(){
+    public File getKeywordLibFile() {
         return keywordLibFile;
     }
 

@@ -35,6 +35,6 @@ public class AutomationPackageLibraryFromResourceIdProvider extends AbstractAuto
 
     @Override
     public File getAutomationPackageLibrary() throws AutomationPackageReadingException {
-       return resourceFile.getResourceFile();
+        return resourceFile.getResourceFile();
     }
 }

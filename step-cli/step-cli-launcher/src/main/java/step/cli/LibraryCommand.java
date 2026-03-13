@@ -12,10 +12,10 @@ import static step.cli.ApCommand.AbstractApCommand.prepareFile;
 
 
 @CommandLine.Command(name = LibraryCommand.LIBRARY_COMMAND,
-        mixinStandardHelpOptions = true,
-        version = Constants.STEP_VERSION_STRING,
-        description = "The CLI interface to manage automation package libraries in Step",
-        usageHelpAutoWidth = true
+    mixinStandardHelpOptions = true,
+    version = Constants.STEP_VERSION_STRING,
+    description = "The CLI interface to manage automation package libraries in Step",
+    usageHelpAutoWidth = true
 )
 public class LibraryCommand implements Callable<Integer> {
 
@@ -26,7 +26,7 @@ public class LibraryCommand implements Callable<Integer> {
         // call help by default
         // call help by default
         return StepConsole.addLibrarySubcommands(new CommandLine(new LibraryCommand()), LibraryCommand.DeployLibraryCommand::new)
-                .execute("help");
+            .execute("help");
 
     }
 
@@ -52,14 +52,14 @@ public class LibraryCommand implements Callable<Integer> {
             checkAll();
             MavenArtifactIdentifier libraryMavenIdentifier = getMavenArtifact(libraryPath);
             File libraryFile = (libraryMavenIdentifier == null) ?
-                    prepareFile(libraryPath, "package library", false) :
-                    null;
+                prepareFile(libraryPath, "package library", false) :
+                null;
             LibraryDeployParameters libraryDeployParameters = new LibraryDeployParameters()
-                    .setStepProjectName(getStepProjectName())
-                    .setAuthToken(getAuthToken())
-                    .setLibraryMavenArtifact(libraryMavenIdentifier)
-                    .setLibraryFile(libraryFile)
-                    .setManagedLibraryName(managedLibraryName);
+                .setStepProjectName(getStepProjectName())
+                .setAuthToken(getAuthToken())
+                .setLibraryMavenArtifact(libraryMavenIdentifier)
+                .setLibraryFile(libraryFile)
+                .setManagedLibraryName(managedLibraryName);
 
             executeTool(stepUrl, libraryDeployParameters);
         }

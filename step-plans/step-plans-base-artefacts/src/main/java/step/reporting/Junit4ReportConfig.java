@@ -106,8 +106,8 @@ public class Junit4ReportConfig {
 
         public Junit4ReportConfig createConfig() {
             return new Junit4ReportConfig(
-                    attachmentSubfolder, attachmentRootFolder, attachmentResourceManager,
-                    addAttachments, addLinksToStepFrontend, serverConfiguration
+                attachmentSubfolder, attachmentRootFolder, attachmentResourceManager,
+                addAttachments, addLinksToStepFrontend, serverConfiguration
             );
         }
 

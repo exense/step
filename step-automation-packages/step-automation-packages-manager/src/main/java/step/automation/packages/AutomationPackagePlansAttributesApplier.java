@@ -20,6 +20,7 @@ package step.automation.packages;
 
 import step.attachments.FileResolver;
 import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.ChildrenBlock;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
@@ -37,6 +38,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,13 +66,13 @@ public class AutomationPackagePlansAttributesApplier {
     }
 
     protected StagingAutomationPackageContext prepareContext(AutomationPackage automationPackage, AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
-                                                      String actorUser, ObjectEnricher enricher, Map<String, Object> extensions) {
+                                                             String actorUser, ObjectEnricher enricher, Map<String, Object> extensions) {
         return new StagingAutomationPackageContext(automationPackage, operationMode, resourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
     }
 
     private void applySpecialValuesForArtifact(AbstractArtefact artifact, StagingAutomationPackageContext apContext) {
         fillResources(artifact, apContext);
-        applySpecialValuesForChildren(artifact, apContext);
+        applySpecialValuesForChildrenAndBeforeAfterSections(artifact, apContext);
     }
 
     private void fillResources(Object object, StagingAutomationPackageContext apContext) {
@@ -135,9 +137,9 @@ public class AutomationPackagePlansAttributesApplier {
         Class<?> currentClass = object.getClass();
         while (currentClass != null && currentClass.getPackageName().startsWith(STEP_PACKAGE + ".")) {
             allFieldsInHierarchy.addAll(Stream.of(currentClass.getDeclaredFields())
-                    .filter(f -> !java.lang.reflect.Modifier.isStatic(f.getModifiers()))
-                    .filter(f -> f.getType().getPackageName().startsWith(STEP_PACKAGE + "."))
-                    .collect(Collectors.toList()));
+                .filter(f -> !java.lang.reflect.Modifier.isStatic(f.getModifiers()))
+                .filter(f -> f.getType().getPackageName().startsWith(STEP_PACKAGE + "."))
+                .collect(Collectors.toList()));
             currentClass = currentClass.getSuperclass();
         }
 
@@ -157,12 +159,15 @@ public class AutomationPackagePlansAttributesApplier {
         return result;
     }
 
-    private void applySpecialValuesForChildren(AbstractArtefact parent, StagingAutomationPackageContext apContext) {
-        List<AbstractArtefact> children = parent.getChildren();
-        if (children != null) {
-            for (AbstractArtefact child : children) {
-                applySpecialValuesForArtifact(child, apContext);
-            }
+    private void applySpecialValuesForChildrenAndBeforeAfterSections(AbstractArtefact parent, StagingAutomationPackageContext apContext) {
+        applySpecialValuesForSteps(parent.getChildren(), apContext);
+        Optional.ofNullable(parent.getBefore()).ifPresent(b -> applySpecialValuesForSteps(b.getSteps(), apContext));
+        Optional.ofNullable(parent.getAfter()).ifPresent(a -> applySpecialValuesForSteps(a.getSteps(), apContext));
+    }
+
+    private void applySpecialValuesForSteps(List<AbstractArtefact> steps, StagingAutomationPackageContext apContext) {
+        if (steps != null) {
+            steps.forEach(s -> applySpecialValuesForArtifact(s, apContext));
         }
     }
 

@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -48,102 +48,102 @@ import step.planbuilder.FunctionArtefacts;
 
 public class FunctionPluginTest {
 
-	@Test
-	public void testNormalMode() {
-		AbstractExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL , true);
-		InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
-		
-		Function function = new Function();
-		functionAccessor.save(function);
+    @Test
+    public void testNormalMode() {
+        AbstractExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+        InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
 
-		Function function2 = new Function();
-		
-		parentContext.put(FunctionAccessor.class, functionAccessor);
-		
-		CustomPlugin plugin = new CustomPlugin(c->{
-			// Assert that the function of the parent context is available in the local context
-			FunctionAccessor localFunctionAccessor = c.require(FunctionAccessor.class);
-			Assert.assertEquals(function, localFunctionAccessor.getAll().next());
-			
-			localFunctionAccessor.save(function2);
-		});
-		try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(new FunctionPlugin()).withPlugin(plugin).build()) {
-			Plan plan = PlanBuilder.create().startBlock(FunctionArtefacts.keyword("My function call")).endBlock().build();
-			ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, null, null, null, true, null);
-			engine.execute(executionParameters);
-		}
+        Function function = new Function();
+        functionAccessor.save(function);
 
-		// Assert that the function2 that has been saved to the local function accessor of the execution context
-		// has not be saved to the parent context
-		Function actual = functionAccessor.get(function2.getId());
-		assertNull(actual);
-	}
-	
-	@IgnoreDuringAutoDiscovery
-	@Plugin(dependencies = {FunctionPlugin.class})
-	public static class CustomPlugin extends AbstractExecutionEnginePlugin {
-		
-		private final Consumer<ExecutionContext> consumer;
-		private CustomFunctionType functionType = new CustomFunctionType();
+        Function function2 = new Function();
 
-		public CustomPlugin(Consumer<ExecutionContext> consumer) {
-			super();
-			this.consumer = consumer;
-		}
+        parentContext.put(FunctionAccessor.class, functionAccessor);
 
-		@Override
-		public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext,
-				ExecutionEngineContext executionEngineContext) {
-			try {
-				FunctionTypeRegistry functionTypeRegistry = executionEngineContext.require(FunctionTypeRegistry.class);
-				Assert.assertNotNull(functionTypeRegistry);
-				functionTypeRegistry.registerFunctionType(functionType);
-				functionType.performAsserts();
-			} catch (Throwable e) {
-				throw new PluginCriticalException("Error within plugin", e);
-			}
-		}
+        CustomPlugin plugin = new CustomPlugin(c -> {
+            // Assert that the function of the parent context is available in the local context
+            FunctionAccessor localFunctionAccessor = c.require(FunctionAccessor.class);
+            Assert.assertEquals(function, localFunctionAccessor.getAll().next());
 
-		@Override
-		public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
-				ExecutionContext executionContext) {
-			try {
-				FunctionTypeRegistry functionTypeRegistry = executionEngineContext.require(FunctionTypeRegistry.class);
-				AbstractFunctionType<Function> functionType = functionTypeRegistry.getFunctionType(Function.class.getName());
-				Assert.assertNotNull(functionType);
-				Assert.assertTrue(this.functionType == functionType);
-				
-				consumer.accept(executionContext);
+            localFunctionAccessor.save(function2);
+        });
+        try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(new FunctionPlugin()).withPlugin(plugin).build()) {
+            Plan plan = PlanBuilder.create().startBlock(FunctionArtefacts.keyword("My function call")).endBlock().build();
+            ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, null, null, null, true, null);
+            engine.execute(executionParameters);
+        }
 
-			} catch (Throwable e) {
-				throw new PluginCriticalException("Error within plugin", e);
-			}
-		}
-	}
-	
-	public static class CustomFunctionType extends AbstractFunctionType<Function> {
+        // Assert that the function2 that has been saved to the local function accessor of the execution context
+        // has not be saved to the parent context
+        Function actual = functionAccessor.get(function2.getId());
+        assertNull(actual);
+    }
 
-		@Override
-		public String getHandlerChain(Function function) {
-			return null;
-		}
+    @IgnoreDuringAutoDiscovery
+    @Plugin(dependencies = {FunctionPlugin.class})
+    public static class CustomPlugin extends AbstractExecutionEnginePlugin {
 
-		@Override
-		public HandlerProperties getHandlerProperties(Function function, AbstractStepContext executionContext) {
-			return new HandlerProperties(null);
-		}
+        private final Consumer<ExecutionContext> consumer;
+        private CustomFunctionType functionType = new CustomFunctionType();
 
-		@Override
-		public Function newFunction() {
-			return new Function();
-		}
-		
-		public void performAsserts() {
-			Assert.assertNotNull(this.fileResolver);
-			Assert.assertNotNull(this.fileResolverCache);
-			Assert.assertNotNull(this.gridFileServices);
-			Assert.assertNotNull(this.functionTypeConfiguration);
-		}
-	}
+        public CustomPlugin(Consumer<ExecutionContext> consumer) {
+            super();
+            this.consumer = consumer;
+        }
+
+        @Override
+        public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext,
+                                                     ExecutionEngineContext executionEngineContext) {
+            try {
+                FunctionTypeRegistry functionTypeRegistry = executionEngineContext.require(FunctionTypeRegistry.class);
+                Assert.assertNotNull(functionTypeRegistry);
+                functionTypeRegistry.registerFunctionType(functionType);
+                functionType.performAsserts();
+            } catch (Throwable e) {
+                throw new PluginCriticalException("Error within plugin", e);
+            }
+        }
+
+        @Override
+        public void initializeExecutionContext(ExecutionEngineContext executionEngineContext,
+                                               ExecutionContext executionContext) {
+            try {
+                FunctionTypeRegistry functionTypeRegistry = executionEngineContext.require(FunctionTypeRegistry.class);
+                AbstractFunctionType<Function> functionType = functionTypeRegistry.getFunctionType(Function.class.getName());
+                Assert.assertNotNull(functionType);
+                Assert.assertTrue(this.functionType == functionType);
+
+                consumer.accept(executionContext);
+
+            } catch (Throwable e) {
+                throw new PluginCriticalException("Error within plugin", e);
+            }
+        }
+    }
+
+    public static class CustomFunctionType extends AbstractFunctionType<Function> {
+
+        @Override
+        public String getHandlerChain(Function function) {
+            return null;
+        }
+
+        @Override
+        public HandlerProperties getHandlerProperties(Function function, AbstractStepContext executionContext) {
+            return new HandlerProperties(null);
+        }
+
+        @Override
+        public Function newFunction() {
+            return new Function();
+        }
+
+        public void performAsserts() {
+            Assert.assertNotNull(this.fileResolver);
+            Assert.assertNotNull(this.fileResolverCache);
+            Assert.assertNotNull(this.gridFileServices);
+            Assert.assertNotNull(this.functionTypeConfiguration);
+        }
+    }
 
 }

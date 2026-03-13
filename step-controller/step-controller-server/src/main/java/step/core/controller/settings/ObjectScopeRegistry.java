@@ -48,21 +48,23 @@ public class ObjectScopeRegistry {
 
     /**
      * Build filters for requested scope and given session context, unrequested scope must not exist in the records
-     * @param scopes requested scope
+     *
+     * @param scopes  requested scope
      * @param session session context from which scope values are retrieved
      * @return the list of filters
      */
     public List<Predicate<AbstractScopedObject>> getPredicates(List<ObjectScopeHandler> scopes, Session session) {
         Objects.requireNonNull(scopes, "Scope list cannot be null, use an empty list instead");
-        return  objectScopeHandlers.values().stream()
-                .map(h -> (scopes.contains(h)) ? h.getObjectPredicate(session) : h.getObjectPredicateIsNotSet())
-                .collect(Collectors.toList());
+        return objectScopeHandlers.values().stream()
+            .map(h -> (scopes.contains(h)) ? h.getObjectPredicate(session) : h.getObjectPredicateIsNotSet())
+            .collect(Collectors.toList());
     }
 
 
     /**
      * This method return the list of filters to be used to retrieve objects by scope
      * The list is in priority order, the last filter search for the entry with no scope information (application scope)
+     *
      * @param session the Step HTTP session from which the scope is extracted
      * @return the list of ordered filters to retrieve the objects
      */
@@ -70,7 +72,7 @@ public class ObjectScopeRegistry {
         //Get available scope information in Session and retrieve applicable handlers
         List<List<Predicate<AbstractScopedObject>>> listOfScopedObjectPredicates = new ArrayList<>();
         List<ObjectScopeHandler> scopeHandlers = objectScopeHandlers.values().stream()
-                .filter(objectScopeHandler -> objectScopeHandler.scopeIsApplicable(session)).collect(Collectors.toList());
+            .filter(objectScopeHandler -> objectScopeHandler.scopeIsApplicable(session)).collect(Collectors.toList());
 
         //List all scope combinations, sort them from highest to lower priorities and return corresponding filters
         listOfScopedObjectPredicates.addAll(getAllCombination(scopeHandlers).stream().sorted((o1, o2) -> {
@@ -98,9 +100,9 @@ public class ObjectScopeRegistry {
     private void getAllNCombination(List<ObjectScopeHandler> scopeHandlers, List<List<ObjectScopeHandler>> results, ObjectScopeHandler[] nResults, int start, int index, int n) {
         int size = scopeHandlers.size();
         if (index < n) {
-            for (int i = start; (i < size) && ((size-i) >= (n-index)); i++) {
+            for (int i = start; (i < size) && ((size - i) >= (n - index)); i++) {
                 nResults[index] = (scopeHandlers.get(i));
-                getAllNCombination(scopeHandlers, results, nResults, i+1, index+1, n);
+                getAllNCombination(scopeHandlers, results, nResults, i + 1, index + 1, n);
             }
         } else {
             results.add(new ArrayList<>(Arrays.asList(nResults)));

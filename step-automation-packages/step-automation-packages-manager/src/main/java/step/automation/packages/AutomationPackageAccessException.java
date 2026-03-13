@@ -25,7 +25,7 @@ import step.core.objectenricher.ObjectAccessException;
 
 public class AutomationPackageAccessException extends AutomationPackageManagerException {
 
-    public AutomationPackageAccessException(String errorMessage){
+    public AutomationPackageAccessException(String errorMessage) {
         super(errorMessage);
     }
 
@@ -41,9 +41,9 @@ public class AutomationPackageAccessException extends AutomationPackageManagerEx
         return "Automation package " + automationPackage.getAttribute(AbstractOrganizableObject.NAME) + " is not acceptable";
     }
 
-    private static String getErrorMessage(AutomationPackage automationPackage, String additionalMessage, ObjectAccessException objectAccessException){
+    private static String getErrorMessage(AutomationPackage automationPackage, String additionalMessage, ObjectAccessException objectAccessException) {
         StringBuilder finalMessage = new StringBuilder(getCommonErrorMessage(automationPackage));
-        if(additionalMessage != null){
+        if (additionalMessage != null) {
             finalMessage.append(". ").append(additionalMessage);
         }
         if (objectAccessException != null) {

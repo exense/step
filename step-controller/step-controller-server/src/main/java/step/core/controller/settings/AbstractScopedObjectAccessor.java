@@ -44,10 +44,11 @@ public class AbstractScopedObjectAccessor<T extends AbstractScopedObject> extend
 
     /**
      * Save object applying selected scope
-     * @param baseScope the map of base scope info to be saved
+     *
+     * @param baseScope    the map of base scope info to be saved
      * @param scopedObject the scoped object to be saved
-     * @param scopes the scope to be applied from the session context
-     * @param session the related session (used to retrieve scope values)
+     * @param scopes       the scope to be applied from the session context
+     * @param session      the related session (used to retrieve scope values)
      */
     public T saveScopedObject(Map<String, String> baseScope, T scopedObject, List<String> scopes, Session<User> session) {
         //Override previous scope and id in case of update, i.e. if scope is changed we create a new entry
@@ -71,7 +72,7 @@ public class AbstractScopedObjectAccessor<T extends AbstractScopedObject> extend
     private void cleanupObjectsWithNarrowerScopes(T scopedObject, Session<User> session) {
         //any entry saved with the same scope info + additional scope info are cleaned up
         List<T> baseScopedObjects = this.collectionDriver.find(getBaseFilters(scopedObject.getScope()), null, null, null, 0).collect(Collectors.toList());
-        baseScopedObjects.stream().filter(o -> o.getScope().size() > scopedObject.getScope().size()).forEach(o->this.remove(o.getId()));
+        baseScopedObjects.stream().filter(o -> o.getScope().size() > scopedObject.getScope().size()).forEach(o -> this.remove(o.getId()));
     }
 
     /**
@@ -79,8 +80,9 @@ public class AbstractScopedObjectAccessor<T extends AbstractScopedObject> extend
      * Example: one object with base scope settingId=A is stored for scope project=projectA and user=userA and another one only with scope user=userA.
      * If the session is for userA in project A, the first setting will be returned, if the session is for userA in projectB,
      * the 2nd setting will be returned, otherwise no setting will be returned
+     *
      * @param baseScope the map of static scope information (i.e. defined not the caller and not based on session context
-     * @param session the session used to match stored objects by scope
+     * @param session   the session used to match stored objects by scope
      * @return optional scoped object
      */
     public Optional<T> getScopedObject(Map<String, String> baseScope, Session<User> session) {

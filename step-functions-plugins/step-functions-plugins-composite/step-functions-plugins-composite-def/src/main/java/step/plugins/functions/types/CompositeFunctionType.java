@@ -35,66 +35,67 @@ import java.util.Map;
 
 public class CompositeFunctionType extends AbstractFunctionType<CompositeFunction> {
 
-	private final ObjectHookRegistry objectHookRegistry;
+    private final ObjectHookRegistry objectHookRegistry;
 
-	public CompositeFunctionType(ObjectHookRegistry objectHookRegistry) {
-		super();
-		this.objectHookRegistry = objectHookRegistry;
-	}
+    public CompositeFunctionType(ObjectHookRegistry objectHookRegistry) {
+        super();
+        this.objectHookRegistry = objectHookRegistry;
+    }
 
-	@Override
-	public void init() {
-		super.init();
-		handlerPackageVersion = registerResource(getClass().getClassLoader(), "step-functions-composite-handler.jar", false, false);
-	}
+    @Override
+    public void init() {
+        super.init();
+        handlerPackageVersion = registerResource(getClass().getClassLoader(), "step-functions-composite-handler.jar", false, false);
+    }
 
-	@Override
-	public String getHandlerChain(CompositeFunction function) {
-		return ArtefactFunctionHandler.class.getName();
-	}
+    @Override
+    public String getHandlerChain(CompositeFunction function) {
+        return ArtefactFunctionHandler.class.getName();
+    }
 
-	@Override
-	public HandlerProperties getHandlerProperties(CompositeFunction function, AbstractStepContext executionContext) {
-		Map<String, String> props = new HashMap<>();
-		props.put(ArtefactFunctionHandler.COMPOSITE_FUNCTION_KEY, function.getId().toString());
-		return new HandlerProperties(props);
-	}
+    @Override
+    public HandlerProperties getHandlerProperties(CompositeFunction function, AbstractStepContext executionContext) {
+        Map<String, String> props = new HashMap<>();
+        props.put(ArtefactFunctionHandler.COMPOSITE_FUNCTION_KEY, function.getId().toString());
+        return new HandlerProperties(props);
+    }
 
-	@Override
-	public void setupFunction(CompositeFunction function) throws SetupFunctionException {
-		super.setupFunction(function);
+    @Override
+    public void setupFunction(CompositeFunction function) throws SetupFunctionException {
+        super.setupFunction(function);
 
-		// for the new function we need to create a default (empty) plan
-		if (function.getPlan() == null) {
-			Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();;
-			plan.setVisible(false);
+        // for the new function we need to create a default (empty) plan
+        if (function.getPlan() == null) {
+            Plan plan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
+            ;
+            plan.setVisible(false);
 
-			// add same context attributes to plan
-			if (objectHookRegistry != null) {
-				try {
-					AbstractContext context = new AbstractContext() {
-					};
-					objectHookRegistry.rebuildContext(context, function);
+            // add same context attributes to plan
+            if (objectHookRegistry != null) {
+                try {
+                    AbstractContext context = new AbstractContext() {
+                    };
+                    objectHookRegistry.rebuildContext(context, function);
 
-					// TODO: do we need to call objectEnricher?
-					objectHookRegistry.getObjectEnricher(context).accept(plan);
-				} catch (Exception e) {
-					throw new SetupFunctionException("Error while rebuilding context for function " + function, e);
-				}
-			}
+                    // TODO: do we need to call objectEnricher?
+                    objectHookRegistry.getObjectEnricher(context).accept(plan);
+                } catch (Exception e) {
+                    throw new SetupFunctionException("Error while rebuilding context for function " + function, e);
+                }
+            }
 
-			// save plan in composite function
-			function.setPlan(plan);
-		}
-	}
+            // save plan in composite function
+            function.setPlan(plan);
+        }
+    }
 
-	@Override
-	public CompositeFunction copyFunction(CompositeFunction function) throws FunctionTypeException {
-		return super.copyFunction(function);
-	}
+    @Override
+    public CompositeFunction copyFunction(CompositeFunction function) throws FunctionTypeException {
+        return super.copyFunction(function);
+    }
 
-	@Override
-	public CompositeFunction newFunction() {
-		return new CompositeFunction();
-	}
+    @Override
+    public CompositeFunction newFunction() {
+        return new CompositeFunction();
+    }
 }

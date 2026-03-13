@@ -37,12 +37,12 @@ public class FunctionManagerImplTest {
 
         Method methodKeywordWrongRoutingReservedWord = FunctionManagerImplTest.class.getMethod("keywordWrongRoutingReservedWord");
         assertThrows("Invalid routing value: 'WrongController'. " +
-                "If a single value is provided, it must be the reserved keyword 'controller'.", IllegalArgumentException.class, () -> FunctionManagerImpl.applyRoutingFromAnnotation(new Function(), methodKeywordWrongRoutingReservedWord.getAnnotation(Keyword.class)));
+            "If a single value is provided, it must be the reserved keyword 'controller'.", IllegalArgumentException.class, () -> FunctionManagerImpl.applyRoutingFromAnnotation(new Function(), methodKeywordWrongRoutingReservedWord.getAnnotation(Keyword.class)));
 
         Method methodKeywordWrongRoutingCriteria = FunctionManagerImplTest.class.getMethod("keywordWrongRoutingCriteria");
         assertThrows("Invalid routing array length: 5. " +
-                "When specifying agent selection criteria as key-value pairs, " +
-                "the array must contain an even number of elements (key1, value1, key2, value2, ...).", IllegalArgumentException.class, () -> FunctionManagerImpl.applyRoutingFromAnnotation(new Function(), methodKeywordWrongRoutingCriteria.getAnnotation(Keyword.class)));
+            "When specifying agent selection criteria as key-value pairs, " +
+            "the array must contain an even number of elements (key1, value1, key2, value2, ...).", IllegalArgumentException.class, () -> FunctionManagerImpl.applyRoutingFromAnnotation(new Function(), methodKeywordWrongRoutingCriteria.getAnnotation(Keyword.class)));
     }
 
     @Keyword
@@ -50,22 +50,22 @@ public class FunctionManagerImplTest {
     }
 
     @Keyword(routing = {Keyword.ROUTING_EXECUTE_ON_CONTROLLER})
-    public void keywordRouteToController(){
+    public void keywordRouteToController() {
 
     }
 
-    @Keyword(routing = {"OS","WINDOWS","TYPE", "PLAYWRIGHT"})
-    public void keywordRoutingCriteria(){
+    @Keyword(routing = {"OS", "WINDOWS", "TYPE", "PLAYWRIGHT"})
+    public void keywordRoutingCriteria() {
 
     }
 
     @Keyword(routing = {"WrongController"})
-    public void keywordWrongRoutingReservedWord(){
+    public void keywordWrongRoutingReservedWord() {
 
     }
 
-    @Keyword(routing = {"OS","WINDOWS","TYPE", "PLAYWRIGHT","NEXT_KEY"})
-    public void keywordWrongRoutingCriteria(){
+    @Keyword(routing = {"OS", "WINDOWS", "TYPE", "PLAYWRIGHT", "NEXT_KEY"})
+    public void keywordWrongRoutingCriteria() {
 
     }
 }
