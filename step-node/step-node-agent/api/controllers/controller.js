@@ -16,9 +16,10 @@ process.on('uncaughtException', error => {
 })
 
 class Controller {
-  constructor(agentContext, fileManager) {
+  constructor(agentContext, fileManager, mode) {
     this.agentContext = agentContext;
     this.filemanager = fileManager;
+    this.redirectIO = mode !== 'agent';
   }
 
   isRunning(req, res) {
@@ -59,9 +60,12 @@ class Controller {
 
   async process(req, res) {
     const tokenId = req.params.tokenId
-    const keywordName = req.body.payload.function
-    const argument = req.body.payload.payload
-    const properties = req.body.payload.properties
+    let input = req.body.payload;
+    const keywordName = input.function
+    let offset = 1000;
+    const callTimeoutMs = Math.max(offset, input.functionCallTimeout ? input.functionCallTimeout : 180000 - offset);
+    const argument = input.payload
+    const properties = input.properties
 
     let token = this.agentContext.tokens.find(value => value.id == tokenId);
     if(token) {
@@ -75,16 +79,15 @@ class Controller {
       const additionalProperties = this.agentContext.tokenProperties[tokenId]
       Object.entries(additionalProperties).forEach(([key, value]) => { properties[key] = value })
 
-      const payload = await this.process_(tokenId, keywordName, argument, properties)
+      const payload = await this.process_(tokenId, keywordName, argument, properties, callTimeoutMs)
       res.json(payload)
     } else {
       const outputBuilder = new OutputBuilder();
       outputBuilder.fail("The token '" + tokenId + " doesn't exist on this agent. This usually means that the agent crashed and restarted.");
     }
-
   }
 
-  async process_(tokenId, keywordName, argument, properties) {
+  async process_(tokenId, keywordName, argument, properties, callTimeoutMs) {
     const outputBuilder = new OutputBuilder();
     try {
       const keywordPackageFile = await this.filemanager.loadOrGetKeywordFile(
@@ -94,7 +97,7 @@ class Controller {
         keywordName
       )
 
-      await this.executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder)
+      await this.executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder, callTimeoutMs)
     } catch (e) {
       logger.error('Unexpected error while executing keyword ' + keywordName + ': ' + e)
       outputBuilder.fail('Unexpected error while executing keyword', e)
@@ -102,7 +105,10 @@ class Controller {
     return outputBuilder.build();
   }
 
-  async executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder) {
+  async executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder, callTimeoutMs) {
+    let isDebugEnabled = properties['debug'] === 'true';
+    let npmAttachment = null;
+    let forkedAgentProcessOutputAttachment = null;
     try {
       let npmProjectPath;
       if (keywordPackageFile.toUpperCase().endsWith('ZIP')) {
@@ -118,93 +124,103 @@ class Controller {
 
       logger.info('Executing keyword in project ' + npmProjectPath + ' for token ' + tokenId)
 
-      let session = this.agentContext.tokenSessions[tokenId]
-      if (!session) {
-        session = new Session();
-        this.agentContext.tokenSessions[tokenId] = session;
+      let session = this.getOrCreateSession(tokenId);
+
+      const npmProjectPathInSession = session.get('npmProjectPath');
+      if (npmProjectPathInSession && npmProjectPathInSession !== npmProjectPath) {
+        throw new Error("Multiple npm projects are not supported within the same session");
+      } else {
+        session.set('npmProjectPath', npmProjectPath);
       }
 
       let forkedAgent = session.get('forkedAgent');
-      const project = session.get('npmProjectPath');
-      if (!project && forkedAgent) {
-        throw new Error("Multiple projects not supported within the same session");
-      }
-
-      let npmAttachment = null;
-      let isDebugEnabled = properties['debug'] === 'true';
-
       if (!forkedAgent) {
         logger.info('Starting agent fork in ' + npmProjectPath + ' for token ' + tokenId)
         forkedAgent = createForkedAgent(npmProjectPath);
+        session.set('forkedAgent', forkedAgent);
 
         logger.info('Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
         const npmInstallResult = await this.executeNpmInstall(npmProjectPath);
-        const npmInstallOutput = Buffer.concat([npmInstallResult.stdout || Buffer.alloc(0), npmInstallResult.stderr || Buffer.alloc(0)]);
         const npmInstallFailed = npmInstallResult.status !== 0 || npmInstallResult.error != null;
         if (npmInstallFailed || isDebugEnabled) {
-          npmAttachment = {
-            name: 'npm-install.log',
-            isDirectory: false,
-            description: 'npm install output',
-            hexContent: npmInstallOutput.toString('base64')
-          };
+          npmAttachment = npmInstallResult.processOutputAttachment;
         }
 
-        session.set('forkedAgent', forkedAgent);
-        session.set('npmProjectPath', npmProjectPath);
-
         if (npmInstallFailed) {
-          outputBuilder.attach(npmAttachment);
           throw npmInstallResult.error || new Error('npm install exited with code ' + npmInstallResult.status);
         }
       }
 
       logger.info('Executing keyword \'' + keywordName + '\' in ' + npmProjectPath + ' for token ' + tokenId)
-      const { result, outputBuffer } = await forkedAgent.runKeywordTask(forkedAgent, npmProjectPath, keywordName, argument, properties);
+      const { result, processOutputAttachment } = await forkedAgent.runKeywordTask(forkedAgent, npmProjectPath, keywordName, argument, properties, callTimeoutMs, this.redirectIO);
       outputBuilder.merge(result.payload)
-
+      if (result.error || isDebugEnabled) {
+        forkedAgentProcessOutputAttachment = processOutputAttachment;
+      }
+    } catch (e) {
+      if (e instanceof CategorizedError) {
+        logger.error('Error occurred while executing keyword: ' + e.message)
+        outputBuilder.fail(e.message)
+        forkedAgentProcessOutputAttachment = e.processOutputAttachment;
+      } else {
+        logger.error('Unexpected error occurred while executing keyword: ' + e)
+        outputBuilder.fail('Unexpected error: ' + e.message, e)
+      }
+    } finally {
       if (npmAttachment) {
         outputBuilder.attach(npmAttachment);
       }
-
-      if (outputBuffer && (result.payload.error || isDebugEnabled)) {
-        const forkAttachment = {
-          name: 'keyword-process.log',
-          isDirectory: false,
-          description: 'Output of the forked keyword process',
-          hexContent: outputBuffer.toString('base64'),
-        };
-        outputBuilder.attach(forkAttachment);
+      if (forkedAgentProcessOutputAttachment) {
+        outputBuilder.attach(forkedAgentProcessOutputAttachment);
       }
-    } catch (e) {
-      logger.error('Unexpected error occurred while executing keyword: ' + e)
-      outputBuilder.fail('An error occurred while attempting to execute the keyword ' + keywordName, e)
     }
+  }
+
+  getOrCreateSession(tokenId) {
+    let session = this.agentContext.tokenSessions[tokenId]
+    if (!session) {
+      session = new Session();
+      this.agentContext.tokenSessions[tokenId] = session;
+    }
+    return session;
   }
 
   async executeNpmInstall(npmProjectPath) {
     return await new Promise((resolve) => {
       const child = spawn(npmCommand, ['install'], {cwd: npmProjectPath, shell: false});
-      const stdoutChunks = [];
-      const stderrChunks = [];
+      const stdChunks = [];
 
       child.stdout.on('data', (data) => {
-        stdoutChunks.push(data);
-        process.stdout.write(data);
+        stdChunks.push(data);
+        if (this.redirectIO) {
+          process.stdout.write(data)
+        }
       });
 
       child.stderr.on('data', (data) => {
-        stderrChunks.push(data);
-        process.stderr.write(data);
+        stdChunks.push(data);
+        if (this.redirectIO) {
+          process.stderr.write(data)
+        }
       });
 
       child.on('error', (error) => {
-        resolve({status: null, error, stdout: Buffer.concat(stdoutChunks), stderr: Buffer.concat(stderrChunks)});
+        resolve({status: null, error, processOutputAttachment: getNpmInstallProcessOutputAttachment()});
       });
 
       child.on('close', (code) => {
-        resolve({status: code, error: null, stdout: Buffer.concat(stdoutChunks), stderr: Buffer.concat(stderrChunks)});
+        resolve({status: code, error: null, processOutputAttachment: getNpmInstallProcessOutputAttachment()});
       });
+
+      function getNpmInstallProcessOutputAttachment() {
+        const npmInstallOutput = Buffer.concat(stdChunks);
+        return {
+          name: 'npm-install.log',
+          isDirectory: false,
+          description: 'npm install output',
+          hexContent: npmInstallOutput.toString('base64')
+        };
+      }
     });
   }
 }
@@ -219,68 +235,99 @@ function createForkedAgent(keywordProjectPath) {
 class ForkedAgent {
 
   constructor(process) {
-    this.process = process;
+    this.forkProcess = process;
   }
 
-  runKeywordTask(forkedAgent, keywordProjectPath, functionName, input, properties) {
-    return new Promise((resolve) => {
+  runKeywordTask(forkedAgent, keywordProjectPath, functionName, input, properties, timeoutMs, redirectIO) {
+    return new Promise((resolve, reject) => {
       try {
-        const stdoutChunks = [];
-        const stderrChunks = [];
+        const stdChunks = [];
 
         const stdoutListener = (data) => {
-          stdoutChunks.push(data);
-          process.stdout.write(data);
+          stdChunks.push(data);
+          if(redirectIO) {
+            process.stdout.write(data);
+          }
         };
         const stderrListener = (data) => {
-          stderrChunks.push(data);
-          process.stderr.write(data);
+          stdChunks.push(data);
+          if(redirectIO) {
+            process.stderr.write(data);
+          }
         };
 
-        if (this.process.stdout) {
-          this.process.stdout.on('data', stdoutListener);
+        if (this.forkProcess.stdout) {
+          this.forkProcess.stdout.on('data', stdoutListener);
         }
 
-        if (this.process.stderr) {
-          this.process.stderr.on('data', stderrListener);
+        if (this.forkProcess.stderr) {
+          this.forkProcess.stderr.on('data', stderrListener);
         }
 
-        this.process.removeAllListeners('message');
-        this.process.on('message', (result) => {
-          if (this.process.stdout) {
-            this.process.stdout.removeListener('data', stdoutListener);
-          }
-          if (this.process.stderr) {
-            this.process.stderr.removeListener('data', stderrListener);
-          }
+        const timeoutHandle = timeoutMs != null ? setTimeout(() => {
+          cleanup();
+          let processOutputAttachment = buildProcessOutputAttachment(stdChunks);
+          reject(new CategorizedError(`Keyword execution timed out after ${timeoutMs}ms`, processOutputAttachment));
+        }, timeoutMs) : null;
 
-          const outputBuffer = Buffer.concat([
-            ...stdoutChunks,
-            ...stderrChunks,
-          ]);
+        const cleanup = () => {
+          clearTimeout(timeoutHandle);
+          if (this.forkProcess.stdout) {
+            this.forkProcess.stdout.removeListener('data', stdoutListener);
+          }
+          if (this.forkProcess.stderr) {
+            this.forkProcess.stderr.removeListener('data', stderrListener);
+          }
+        };
 
-          resolve({ result, outputBuffer });
+        this.forkProcess.removeAllListeners('message');
+        this.forkProcess.on('message', (result) => {
+          logger.info(`Keyword '${functionName}' execution completed in forked agent.`)
+          cleanup();
+
+          let processOutputAttachment = buildProcessOutputAttachment(stdChunks);
+          resolve({ result, processOutputAttachment});
         });
 
-        this.process.removeAllListeners('error');
-        this.process.on('error', (err) => {
+        this.forkProcess.removeAllListeners('error');
+        this.forkProcess.on('error', (err) => {
           logger.error('Error while calling forked agent: ' + err)
         });
 
-        this.process.send({ type: "KEYWORD", projectPath: keywordProjectPath, functionName, input, properties });
+        this.forkProcess.send({ type: "KEYWORD", projectPath: keywordProjectPath, functionName, input, properties });
       } catch (e) {
         logger.error('Unexpected error while calling forked agent: ' + e)
       }
     });
+
+    function buildProcessOutputAttachment(stdChunks) {
+      const outputBuffer = Buffer.concat(stdChunks);
+      return {
+        name: 'keyword-process.log',
+        isDirectory: false,
+        description: 'Output of the forked keyword process',
+        hexContent: outputBuffer.toString('base64'),
+      };
+    }
   }
 
   close() {
     try {
-      this.process.send({ type: "KILL" });
+      this.forkProcess.send({ type: "KILL" });
     } catch (e) {
-      this.process.kill();
+      this.forkProcess.kill();
     }
 
   }
 }
+
+class CategorizedError extends Error {
+  processOutputAttachment;
+  constructor(message, processOutputAttachment) {
+    super(message); // (1)
+    this.name = "CategorizedError";
+    this.processOutputAttachment = processOutputAttachment;
+  }
+}
+
 module.exports = Controller;

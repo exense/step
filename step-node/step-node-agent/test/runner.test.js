@@ -5,6 +5,7 @@ describe('runner', () => {
 
   beforeAll(() => {
     runner = require('../api/runner/runner')({ Property1: 'Prop1' })
+    runner.setThrowExceptionOnError(false)
   })
 
   afterAll(() => {

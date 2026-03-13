@@ -88,6 +88,10 @@ class OutputBuilder {
     return this;
   }
 
+  hasError() {
+    return this.builder.payload.error;
+  }
+
   /**
    * Sets a business error (results in FAILED status rather than ERROR in Step).
    * @param {string} errorMessage

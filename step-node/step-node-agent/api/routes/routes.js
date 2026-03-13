@@ -2,7 +2,7 @@
 module.exports = function (app, agentContext) {
   const Controller = require('../controllers/controller')
   const FileManager = require('../filemanager/filemanager')
-  const controller = new Controller(agentContext, new FileManager(agentContext))
+  const controller = new Controller(agentContext, new FileManager(agentContext), 'agent')
 
   app.route('/running').get(controller.isRunning.bind(controller))
   app.route('/token/:tokenId/reserve').get(controller.reserveToken.bind(controller))
