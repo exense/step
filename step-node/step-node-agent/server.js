@@ -98,7 +98,7 @@ const startWithAgentUrl = async function(agentUrl) {
         logger.warn('Failed to register agent: grid responded with status ' + res.status + (responseBody != null ? '. Response body: ' + responseBody : ''))
       }
     } catch (err) {
-      logger.error('Error while registering agent to grid: ' + err)
+      logger.error('Error while registering agent to grid:', err)
     }
   }, registrationPeriod)
 
@@ -112,7 +112,7 @@ if(agentConf.agentUrl) {
   getFQDN().then(FQDN => {
     startWithAgentUrl('http://' + FQDN + ':' + port)
   }).catch(e => {
-    logger.error('Error while getting FQDN: ' + e)
+    logger.error('Error while getting FQDN:', e)
   })
 }
 

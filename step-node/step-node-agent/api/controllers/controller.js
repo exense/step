@@ -8,11 +8,11 @@ const logger = require('../logger').child({ component: 'Controller' });
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 process.on('unhandledRejection', error => {
-  logger.error('Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported: ' + error)
+  logger.error('Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported:', error)
 })
 
 process.on('uncaughtException', error => {
-  logger.error('Critical: an unhandled error (uncaught exception) occurred and might not have been reported: ' + error)
+  logger.error('Critical: an unhandled error (uncaught exception) occurred and might not have been reported:', error)
 })
 
 class Controller {
@@ -73,11 +73,15 @@ class Controller {
 
       // add the agent properties
       const agentProperties = this.agentContext.properties
-      Object.entries(agentProperties).forEach(([key, value]) => { properties[key] = value })
+      if (agentProperties) {
+        Object.entries(agentProperties).forEach(([key, value]) => { properties[key] = value })
+      }
 
       // add the properties of the tokenGroup
       const additionalProperties = this.agentContext.tokenProperties[tokenId]
-      Object.entries(additionalProperties).forEach(([key, value]) => { properties[key] = value })
+      if (additionalProperties) {
+        Object.entries(additionalProperties).forEach(([key, value]) => { properties[key] = value })
+      }
 
       const payload = await this.process_(tokenId, keywordName, argument, properties, callTimeoutMs)
       res.json(payload)
@@ -99,7 +103,7 @@ class Controller {
 
       await this.executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder, callTimeoutMs)
     } catch (e) {
-      logger.error('Unexpected error while executing keyword ' + keywordName + ': ' + e)
+      logger.error('Unexpected error while executing keyword ' + keywordName + ':', e)
       outputBuilder.fail('Unexpected error while executing keyword', e)
     }
     return outputBuilder.build();
@@ -161,11 +165,11 @@ class Controller {
       }
     } catch (e) {
       if (e instanceof CategorizedError) {
-        logger.error('Error occurred while executing keyword: ' + e.message)
+        logger.error('Error occurred while executing keyword:' + e.message)
         outputBuilder.fail(e.message)
         forkedAgentProcessOutputAttachment = e.processOutputAttachment;
       } else {
-        logger.error('Unexpected error occurred while executing keyword: ' + e)
+        logger.error('Unexpected error occurred while executing keyword:', e)
         outputBuilder.fail('Unexpected error: ' + e.message, e)
       }
     } finally {
@@ -293,12 +297,12 @@ class ForkedAgent {
 
         this.forkProcess.removeAllListeners('error');
         this.forkProcess.on('error', (err) => {
-          logger.error('Error while calling forked agent: ' + err)
+          logger.error('Error while calling forked agent:', err)
         });
 
         this.forkProcess.send({ type: "KEYWORD", projectPath: keywordProjectPath, functionName, input, properties });
       } catch (e) {
-        logger.error('Unexpected error while calling forked agent: ' + e)
+        logger.error('Unexpected error while calling forked agent:', e)
       }
     });
 

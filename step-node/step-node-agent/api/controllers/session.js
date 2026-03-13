@@ -42,9 +42,9 @@ class Session extends Map {
           resource.close();
         }
 
-        logger.info(`Successfully closed resource: ${key}`);
+        logger.debug(`Successfully closed resource: ${key}`);
       } catch (err) {
-        logger.error(`Failed to close resource ${key}: ${err}`);
+        logger.error(`Failed to close resource ${key}:`, err);
       }
     }
 

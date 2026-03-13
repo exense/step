@@ -81,7 +81,7 @@ class FileManager {
 
           resolve(filePath + '/' + result)
         }, (err) => {
-          logger.error('Error downloading file: ' + err)
+          logger.error('Error downloading file:', err)
           reject(err)
         })
       }
@@ -124,7 +124,7 @@ class FileManager {
           resp.pipe(myFile).on('finish', () => resolve(filename))
         }
       }).on('error', (err) => {
-        logger.error('HTTP request error: ' + err.message)
+        logger.error('HTTP request error:', err)
         reject(err)
       })
 
