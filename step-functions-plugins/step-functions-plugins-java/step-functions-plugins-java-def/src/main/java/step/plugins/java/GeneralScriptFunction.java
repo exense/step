@@ -111,8 +111,9 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
                 }
             } else {
                 //Keyword annotated in main AP file
-                if (ap.getAutomationPackageResourceRevision() != null && !ap.getAutomationPackageResourceRevision().isEmpty()) {
-                    setScriptFile(new DynamicValue<>(ap.getAutomationPackageResourceRevision()));
+                String automationPackageResourceRevision = ap.getAutomationPackageResourceRevision();
+                if (automationPackageResourceRevision != null && !automationPackageResourceRevision.isEmpty()) {
+                    setScriptFile(new DynamicValue<>(automationPackageResourceRevision));
                 } else {
                     throw new RuntimeException("Inconsistent state: the annotated Keyword '" + this.getAttribute(NAME) + "' was detected in an Automation Package, but the package resource does not exist.");
                 }
