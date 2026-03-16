@@ -42,44 +42,44 @@ Step is a distributed platform built around a **controller – agent** model:
 
 - The **Controller** stores and executes automation plans, schedules runs, manages resources, and serves the web UI.
 - **Agents** are lightweight worker processes that execute Keywords on remote machines and report results back in real time.
-- **Keywords** are the atomic units of automation — Java methods annotated with `@Keyword` that the engine discovers, routes, and calls remotely.
+- **Keywords** are the atomic units of automation that the engine discovers, routes, and calls remotely.
 
 See [Architecture overview](https://step.dev/knowledgebase/concepts/architecture) in the knowledgebase for a deeper dive.
 
 ## Key Concepts
 
-| Concept | Description                                                                                                                   | Learn more |
-|---------|-------------------------------------------------------------------------------------------------------------------------------|------------|
-| **Keyword** | An executable unit of automation implemented in Java, .NET, JavaScript, or via a tool plugin (Cypress, K6, JMeter, SoapUI, …) | [Keywords](https://step.dev/knowledgebase/userdocs/keywords/) |
-| **Plan** | A test or automation scenario composed of Keywords and control-flow artefacts                                                 | [Plans](https://step.dev/knowledgebase/userdocs/plans/) |
-| **Automation Package** | An executable and deployable unit (Archive + descriptor) that bundles Step entities (Keywords, Plans,...)                     | [Automation Packages](https://step.dev/knowledgebase/devops/automation-packages-overview) |
-| **Agent / Token** | A worker process exposing a pool of execution slots (tokens) to the controller                                                | [Agents](https://step.dev/knowledgebase/setup/installation/binaries/agentinstall/) |
-| **Scheduler** | Triggers plan executions on a cron schedule                                                             | [Scheduler](https://step.dev/knowledgebase/userdocs/executions/#schedule) |
+| Concept | Description                                                                                                                                                                                                             | Learn more |
+|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------|
+| **Keyword** | An executable unit of automation implemented following one of three approaches: **code-based** (Java, .NET, JavaScript), **tool-native** (Cypress, K6, JMeter, SoapUI, …), or **command-based** (shell/CLI invocations) | [Keywords](https://step.dev/knowledgebase/userdocs/keywords/) |
+| **Plan** | A test or automation scenario composed of Keywords and control-flow artefacts                                                                                                                                           | [Plans](https://step.dev/knowledgebase/userdocs/plans/) |
+| **Automation Package** | An executable and deployable unit (Archive + descriptor) that bundles Step entities (Keywords, Plans,...)                                                                                                               | [Automation Packages](https://step.dev/knowledgebase/devops/automation-packages-overview) |
+| **Agent / Token** | A worker process exposing a pool of execution slots (tokens) to the controller                                                                                                                                          | [Agents](https://step.dev/knowledgebase/setup/installation/binaries/agentinstall/) |
+| **Scheduler** | Triggers plan executions on a cron schedule                                                                                                                                                                             | [Scheduler](https://step.dev/knowledgebase/userdocs/executions/#schedule) |
 
 ## Modules
 
 This repository contains the Step backend, organized as a Maven multi-module build:
 
-| Module | Description |
-|--------|-------------|
-| `step-commons` | Shared utilities used across the platform |
-| `step-constants` | Platform-wide constants and enumerations |
-| `step-core-model` | Core domain model: plans, artefacts, functions, resources |
-| `step-core` | Execution engine: artefact lifecycle, expression evaluation, parameter resolution, security |
-| `step-plans` | Plan parsing, YAML support, and control-flow artefacts (loops, conditionals, sequences) |
-| `step-automation-packages` | Automation package management with YAML, JUnit, and JUnit5 support |
-| `step-functions` | Keyword execution layer: handlers, routing, and package management |
-| `step-functions-plugins` | Plugin extensions for the function execution layer |
-| `step-agent` | Agent process that executes Keywords on worker nodes |
-| `step-controller` | Central orchestration server: REST API, scheduling, reporting, multi-tenancy |
-| `step-controller-plugins` | Controller plugin infrastructure |
-| `step-repositories` | Repository abstraction for automation artifact storage and retrieval |
-| `step-json-schema` | JSON schema support for Step entity validation |
-| `step-livereporting` | Real-time execution monitoring and streaming |
-| `step-maven-plugin` | Maven plugin for CI/CD integration |
-| `step-cli` | Command-line interface for triggering and managing executions |
-| `step-libs-maven-client` | Maven client for dynamic dependency resolution at runtime |
-| `step-ide` | IDE integration utilities |
+| Module | Description                                                                                               |
+|--------|-----------------------------------------------------------------------------------------------------------|
+| `step-commons` | Shared utilities used across the platform                                                                 |
+| `step-constants` | Platform-wide constants and enumerations                                                                  |
+| `step-core-model` | Core domain model: plans, artefacts, functions, resources                                                 |
+| `step-core` | Artefact lifecycle, expression evaluation, parameter resolution, security                                 |
+| `step-plans` | Execution engine, Plan parsing, YAML support, and control-flow artefacts (loops, conditionals, sequences) |
+| `step-automation-packages` | Automation package management with YAML, JUnit, and JUnit5 support                                        |
+| `step-functions` | Keyword execution layer: handlers, routing, and package management                                        |
+| `step-functions-plugins` | Plugin extensions for the function execution layer                                                        |
+| `step-agent` | Agent process that executes Keywords on worker nodes                                                      |
+| `step-controller` | Central orchestration server: REST API, scheduling, reporting, multi-tenancy                              |
+| `step-controller-plugins` | Controller plugin infrastructure                                                                          |
+| `step-repositories` | Repository abstraction for external plan storage and retrieval                                            |
+| `step-json-schema` | JSON schema support for Step entity validation                                                            |
+| `step-livereporting` | Real-time execution monitoring and streaming                                                              |
+| `step-maven-plugin` | Maven plugin for CI/CD integration                                                                        |
+| `step-cli` | Command-line interface for triggering and managing executions                                             |
+| `step-libs-maven-client` | Maven client for dynamic dependency resolution at runtime                                                 |
+| `step-ide` | Step plugins dedicated to the Step IDE — a standalone Step instance for local use by developers and testers to design plans and validate executions locally |
 
 ## Step Ecosystem
 
