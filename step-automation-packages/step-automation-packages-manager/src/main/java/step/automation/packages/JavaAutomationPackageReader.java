@@ -8,7 +8,6 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
-import step.engine.plugins.LocalFunctionPlugin;
 import step.functions.Function;
 import step.functions.manager.FunctionManagerImpl;
 import step.handlers.javahandler.Keyword;
@@ -62,9 +61,6 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
     @Override
     protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(JavaAutomationPackageArchive archive, AutomationPackageContent res) throws AutomationPackageReadingException {
         try (AnnotationScanner annotationScanner = archive.createAnnotationScanner()) {
-            // this code duplicates the StepJarParser, but here we don't set the scriptFile and librariesFile to GeneralScriptFunctions
-            // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
-            // Exception: keywords originating from the library JAR get the library path as scriptFile immediately (librariesFile left empty).
             List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, archive);
             if (!scannedKeywords.isEmpty()) {
                 log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
@@ -171,10 +167,17 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
     }
 
     /**
-     * Extract annotated Keywords from provided annotationScanner and AP archive. Keywords declared in the libraries should be created using the library as script JAR
-     * Note that setting the script and library resource is done at a later stage as this extraction is done before creating the related Step resources
-     * @param annotationScanner the scanner backed by a classloader containing both the main AP JAR and the library JAR
-     * @param archive     Automation Package (AP archive and its dependency) from which we are extracting Keywords
+     * Extracts annotated Keywords from the provided annotation scanner and AP archive.
+     *
+     * <p>Note: script and library resources are assigned to the Keywords at a later stage,
+     * after the related Step resources have been created. Keywords declared in a library
+     * are marked with the custom field {@code $_MARK_AS_KEYWORD_FROM_AUTOMATION_PACKAGE_LIBRARY}
+     * and will use that library as their script JAR.
+     *
+     * @param annotationScanner the scanner backed by a classloader containing both the main AP JAR
+     *                          and the (optional) library JAR
+     * @param archive           the Automation Package (AP archive and its library) from which
+     *                          Keywords are being extracted
      */
     private static List<ScriptAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, AutomationPackageArchive archive) throws JsonSchemaPreparationException {
         List<ScriptAutomationPackageKeyword> scannedKeywords = new ArrayList<>();
@@ -203,10 +206,10 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
                     // Because the actual script and libraries are set later while preparing the staging in applyAutomationPackageContext,
                     // we mark the function with a flag here.
                     // We use ClassGraph's scan metadata (via annotationScanner) to determine the source
-                    File keywordLibFile = archive.getKeywordLibFile();
-                    if (keywordLibFile != null) {
+                    File libraryFile = archive.getLibraryFile();
+                    if (libraryFile != null) {
                         try {
-                            URI libraryJarUri = keywordLibFile.toURI();
+                            URI libraryJarUri = libraryFile.toURI();
                             URL classpathElementUrl = annotationScanner.getClasspathElementUrl(m.getDeclaringClass().getName());
                             if (classpathElementUrl != null && libraryJarUri.equals(classpathElementUrl.toURI())) {
                                 function.addCustomField($_MARK_AS_KEYWORD_FROM_AUTOMATION_PACKAGE_LIBRARY, true);
