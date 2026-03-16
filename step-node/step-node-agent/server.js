@@ -32,7 +32,7 @@ const uuid = require('uuid/v4')
 const jwtUtils = require('./utils/jwtUtils')
 const agentType = 'node'
 const agent = {id: uuid()}
-const agentContext = { tokens: [], tokenSessions: [], tokenProperties: [], properties: agentConf.properties, controllerUrl: agentConf.gridHost, gridSecurity: agentConf.gridSecurity }
+const agentContext = { tokens: [], tokenSessions: [], tokenProperties: [], properties: agentConf.properties, controllerUrl: agentConf.gridHost, gridSecurity: agentConf.gridSecurity, workingDir: agentConf.workingDir, npmProjectWorkspaceCleanupIdleTimeMs: agentConf.npmProjectWorkspaceCleanupIdleTimeMs }
 agentConf.tokenGroups.forEach(function (tokenGroup) {
   const tokenConf = tokenGroup.tokenConf
   let attributes = tokenConf.attributes

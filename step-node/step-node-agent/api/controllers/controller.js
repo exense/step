@@ -19,7 +19,15 @@ class Controller {
   constructor(agentContext, fileManager, mode) {
     this.agentContext = agentContext;
     this.filemanager = fileManager;
+    this.mode = mode;
     this.redirectIO = mode !== 'agent';
+    this.npmProjectWorkspaces = new Map(); // cacheKey -> { path, inUse, lastFreeAt }
+    this.npmProjectWorkspaceCleanupIdleTimeMs = agentContext.npmProjectWorkspaceCleanupIdleTimeMs ?? 3600000;
+
+    if(mode === 'agent' && this.npmProjectWorkspaceCleanupIdleTimeMs > 0) {
+      logger.info(`Scheduling npm project workspace cleanup every ${this.npmProjectWorkspaceCleanupIdleTimeMs}ms`);
+      setInterval(() => this.cleanupUnusedWorkspaces(this.npmProjectWorkspaceCleanupIdleTimeMs), this.npmProjectWorkspaceCleanupIdleTimeMs);
+    }
   }
 
   isRunning(req, res) {
@@ -67,6 +75,7 @@ class Controller {
     const argument = input.payload
     const properties = input.properties
 
+    let output;
     let token = this.agentContext.tokens.find(value => value.id == tokenId);
     if(token) {
       logger.info('Using token: ' + tokenId + ' to execute ' + keywordName)
@@ -83,25 +92,54 @@ class Controller {
         Object.entries(additionalProperties).forEach(([key, value]) => { properties[key] = value })
       }
 
-      const payload = await this.process_(tokenId, keywordName, argument, properties, callTimeoutMs)
-      res.json(payload)
+      output = await this.process_(tokenId, keywordName, argument, properties, callTimeoutMs)
     } else {
       const outputBuilder = new OutputBuilder();
       outputBuilder.fail("The token '" + tokenId + " doesn't exist on this agent. This usually means that the agent crashed and restarted.");
+      output = outputBuilder.build();
     }
+    res.json(output)
   }
 
   async process_(tokenId, keywordName, argument, properties, callTimeoutMs) {
     const outputBuilder = new OutputBuilder();
     try {
-      const keywordPackageFile = await this.filemanager.loadOrGetKeywordFile(
+      let fileId = properties['$node.js.file.id'];
+      let fileVersionId = properties['$node.js.file.version'];
+      const file = await this.filemanager.loadOrGetKeywordFile(
         this.agentContext.controllerUrl + '/grid/file/',
-        properties['$node.js.file.id'],
-        properties['$node.js.file.version'],
+        fileId,
+        fileVersionId,
         keywordName
       )
 
-      await this.executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder, callTimeoutMs)
+      let npmProjectPath;
+      if (file.toUpperCase().endsWith('ZIP') && fs.existsSync(path.resolve(file, this.filemanager.getFolderName(file)))) {
+        // If the ZIP contains a top-level wrapper folder
+        npmProjectPath = path.resolve(file, this.filemanager.getFolderName(file))
+      } else {
+        npmProjectPath = path.resolve(file)
+      }
+
+      let workspacePath;
+      if (this.mode === 'agent') {
+        // Create a copy of the npm project for each token
+        workspacePath = this.getOrCreateNpmProjectWorkspace(tokenId, {fileId, fileVersionId, file: npmProjectPath});
+        this.markWorkspaceInUse(workspacePath);
+      } else {
+        // When running keywords locally we're working directly in npm project passed by the runner
+        workspacePath = npmProjectPath;
+      }
+      try {
+        await this.executeKeyword(keywordName, workspacePath, tokenId, argument, properties, outputBuilder, callTimeoutMs)
+      } finally {
+        if (this.mode === 'agent') {
+          this.markWorkspaceFree(workspacePath);
+          if (this.npmProjectWorkspaceCleanupIdleTimeMs === 0) {
+            this.cleanupUnusedWorkspaces(0);
+          }
+        }
+      }
     } catch (e) {
       logger.error('Unexpected error while executing keyword ' + keywordName + ':', e)
       outputBuilder.fail('Unexpected error while executing keyword', e)
@@ -109,25 +147,11 @@ class Controller {
     return outputBuilder.build();
   }
 
-  async executeKeyword(keywordName, keywordPackageFile, tokenId, argument, properties, outputBuilder, callTimeoutMs) {
+  async executeKeyword(keywordName, npmProjectPath, tokenId, argument, properties, outputBuilder, callTimeoutMs) {
     let isDebugEnabled = properties['debug'] === 'true';
     let npmAttachment = null;
     let forkedAgentProcessOutputAttachment = null;
     try {
-      let npmProjectPath;
-      if (keywordPackageFile.toUpperCase().endsWith('ZIP')) {
-        if (fs.existsSync(path.resolve(keywordPackageFile, this.filemanager.getFolderName(keywordPackageFile)))) {
-          // If the ZIP contains a top-level wrapper folder
-          npmProjectPath = path.resolve(keywordPackageFile, this.filemanager.getFolderName(keywordPackageFile))
-        } else {
-          // Normal path with automation packages
-          npmProjectPath = path.resolve(keywordPackageFile);
-        }
-      } else {
-        // Local execution with KeywordRunner
-        npmProjectPath = path.resolve(keywordPackageFile)
-      }
-
       logger.info('Executing keyword in project ' + npmProjectPath + ' for token ' + tokenId)
 
       let session = this.getOrCreateSession(tokenId);
@@ -182,6 +206,57 @@ class Controller {
     }
   }
 
+  getOrCreateNpmProjectWorkspace(tokenId, keywordPackage) {
+    const cacheKey = `${keywordPackage.fileId}_${keywordPackage.fileVersionId}_${tokenId}`;
+    const workspace = this.npmProjectWorkspaces.get(cacheKey);
+    if (workspace) {
+      return workspace.path;
+    }
+    const baseDir = path.resolve((this.agentContext.workingDir ?? '.'), 'npm-project-workspaces');
+    const workspacePath = path.join(baseDir, cacheKey);
+    if (!fs.existsSync(workspacePath)) {
+      logger.info(`Creating npm project workspace at ${workspacePath}`);
+      fs.cpSync(keywordPackage.file, workspacePath, { recursive: true });
+    }
+    this.npmProjectWorkspaces.set(cacheKey, { path: workspacePath, inUse: false, lastFreeAt: Date.now() });
+    return workspacePath;
+  }
+
+  markWorkspaceInUse(workspacePath) {
+    for (const workspace of this.npmProjectWorkspaces.values()) {
+      if (workspace.path === workspacePath) {
+        workspace.inUse = true;
+        return;
+      }
+    }
+  }
+
+  markWorkspaceFree(workspacePath) {
+    for (const workspace of this.npmProjectWorkspaces.values()) {
+      if (workspace.path === workspacePath) {
+        workspace.inUse = false;
+        workspace.lastFreeAt = Date.now();
+        return;
+      }
+    }
+  }
+
+  cleanupUnusedWorkspaces(idleTimeMs) {
+    const now = Date.now();
+    for (const [cacheKey, workspace] of this.npmProjectWorkspaces) {
+      if (!workspace.inUse && (now - workspace.lastFreeAt) >= idleTimeMs) {
+        logger.info(`Deleting npm project workspace unused for ${idleTimeMs}ms: ${workspace.path}`);
+        try {
+          fs.rmSync(workspace.path, { recursive: true, force: true });
+        } catch (e) {
+          logger.error(`Failed to delete npm project workspace ${workspace.path}:`, e);
+          continue;
+        }
+        this.npmProjectWorkspaces.delete(cacheKey);
+      }
+    }
+  }
+
   getOrCreateSession(tokenId) {
     let session = this.agentContext.tokenSessions[tokenId]
     if (!session) {
@@ -232,16 +307,19 @@ class Controller {
 }
 
 function createForkedAgent(keywordProjectPath) {
-  fs.copyFileSync(path.resolve(__dirname, '../../agent-fork.js'), path.join(keywordProjectPath, './agent-fork.js'));
-  fs.copyFileSync(path.join(__dirname, 'output.js'), path.join(keywordProjectPath, './output.js'));
-  fs.copyFileSync(path.join(__dirname, 'session.js'), path.join(keywordProjectPath, './session.js'));
-  return new ForkedAgent(fork('./agent-fork.js', [], {cwd: keywordProjectPath, silent: true}));
+  return new ForkedAgent(keywordProjectPath);
 }
 
 class ForkedAgent {
 
-  constructor(process) {
-    this.forkProcess = process;
+  constructor(keywordProjectPath) {
+    const agentForkerLibPath = path.join(keywordProjectPath, 'agent-fork-libs');
+    fs.mkdirSync(agentForkerLibPath, { recursive: true });
+    fs.copyFileSync(path.resolve(__dirname, 'agent-fork.js'), path.join(agentForkerLibPath, 'agent-fork.js'));
+    fs.copyFileSync(path.join(__dirname, 'output.js'), path.join(agentForkerLibPath, 'output.js'));
+    fs.copyFileSync(path.join(__dirname, 'session.js'), path.join(agentForkerLibPath, 'session.js'));
+    this.agentForkerLibPath = agentForkerLibPath;
+    this.forkProcess = fork(path.join(agentForkerLibPath, 'agent-fork.js'), [], {cwd: keywordProjectPath, silent: true});
   }
 
   runKeywordTask(forkedAgent, keywordProjectPath, functionName, input, properties, timeoutMs, redirectIO) {
@@ -323,7 +401,7 @@ class ForkedAgent {
     } catch (e) {
       this.forkProcess.kill();
     }
-
+    fs.rmSync(this.agentForkerLibPath, {recursive: true, force: true});
   }
 }
 
