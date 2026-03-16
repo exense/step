@@ -99,23 +99,25 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
             if (ap == null) {
                 throw new RuntimeException("General script functions defined in Automation Packages must either be declared in the descriptor providing an explicit script file or with Keyword annotation.");
             }
+            String automationPackageLibraryResourceRevision = ap.getAutomationPackageLibraryResourceRevision();
+            boolean hasLibrary = automationPackageLibraryResourceRevision != null && !automationPackageLibraryResourceRevision.isEmpty();
             //Handle Keywords declared in AP library, the library is used as script file for them
             if (getCustomField($_MARK_AS_KEYWORD_FROM_AUTOMATION_PACKAGE_LIBRARY) != null) {
                 getCustomFields().remove($_MARK_AS_KEYWORD_FROM_AUTOMATION_PACKAGE_LIBRARY);
-                if (ap.getAutomationPackageLibraryResourceRevision() != null && !ap.getAutomationPackageLibraryResourceRevision().isEmpty()) {
-                    setScriptFile(new DynamicValue<>(ap.getAutomationPackageLibraryResourceRevision()));
+                if (hasLibrary) {
+                    setScriptFile(new DynamicValue<>(automationPackageLibraryResourceRevision));
                 } else {
-                    throw new RuntimeException("Inconsistent state: the annotated Keyword '" + this.getAttribute(NAME) + "' was detected in an Automation Package Library, but the library resource does not exists.");
+                    throw new RuntimeException("Inconsistent state: the annotated Keyword '" + this.getAttribute(NAME) + "' was detected in an Automation Package Library, but the library resource does not exist.");
                 }
             } else {
                 //Keyword annotated in main AP file
                 if (ap.getAutomationPackageResourceRevision() != null && !ap.getAutomationPackageResourceRevision().isEmpty()) {
                     setScriptFile(new DynamicValue<>(ap.getAutomationPackageResourceRevision()));
                 } else {
-                    throw new RuntimeException("Inconsistent state: the annotated Keyword '" + this.getAttribute(NAME) + "' was detected in an Automation Package, but the package resource does not exists.");
+                    throw new RuntimeException("Inconsistent state: the annotated Keyword '" + this.getAttribute(NAME) + "' was detected in an Automation Package, but the package resource does not exist.");
                 }
-                if (ap.getAutomationPackageLibraryResourceRevision() != null && !ap.getAutomationPackageLibraryResourceRevision().isEmpty()) {
-                    setLibrariesFile(new DynamicValue<>(ap.getAutomationPackageLibraryResourceRevision()));
+                if (hasLibrary) {
+                    setLibrariesFile(new DynamicValue<>(automationPackageLibraryResourceRevision));
                 }
             }
         }
