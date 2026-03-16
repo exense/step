@@ -9,11 +9,11 @@
 
 Step focuses on the **reuse of automation artifacts** across teams, tools, and automation use cases. Instead of maintaining separate codebases for tests, load scenarios, and monitoring probes, Step lets you write automation once and run it in any context:
 
-![Illustration of Step's reusability](https://step.dev/knowledgebase/images/step-reusability.svg)
+![Illustration of Step's reusability](docs/images/step-reusability.svg)
 
 Step integrates with existing automation tools and DevOps platforms rather than replacing them:
 
-![Illustration of Step's integrations](https://step.dev/knowledgebase/images/step-integration.svg)
+![Illustration of Step's integrations](docs/images/step-integration.svg)
 
 For a full introduction see the [Step knowledgebase](https://step.dev/knowledgebase).
 
