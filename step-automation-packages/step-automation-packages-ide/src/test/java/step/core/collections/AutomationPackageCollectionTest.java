@@ -149,12 +149,12 @@ public class AutomationPackageCollectionTest {
         Echo echo = new Echo();
         echo.setText(new DynamicValue<>("Hello World"));
         sequence.addChild(echo);
-        
+
         Plan plan = new Plan(sequence);
         Map<String, String> attributes = new HashMap<>();
         attributes.put("name", "New Name");
         plan.setAttributes(attributes);
-        
+
         Properties properties = new Properties();
         properties.setProperty(AutomationPackageYamlFragmentManager.PROPERTY_NEW_PLAN_FRAGMENT_PATH, "plans/plan1.yml");
         fragmentManager.setProperties(properties);
@@ -177,7 +177,7 @@ public class AutomationPackageCollectionTest {
         text.setExpression("new Date().toString();");
 
         planCollection.save(plan);
-        
+
         Sequence sequence = new Sequence();
         Echo echo = new Echo();
         echo.setText(new DynamicValue<>("Hello World"));
@@ -194,6 +194,44 @@ public class AutomationPackageCollectionTest {
         planCollection.save(plan);
 
         assertFilesEqual(expectedFilesPath.resolve("plan1AfterModifyAndAdd.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
+    }
+
+    @Test
+    public void testPlanModifyAndAddAndRemove() throws IOException {
+        Optional<Plan> optionalPlan = planCollection.find(Filters.equals("attributes.name", "Test Plan"), null, null, null, 100).findFirst();
+
+        assertTrue(optionalPlan.isPresent());
+
+        Plan plan = optionalPlan.get();
+
+        Echo firstEcho = (Echo) plan.getRoot().getChildren().get(0);
+        DynamicValue<Object> text = firstEcho.getText();
+        text.setDynamic(true);
+        text.setExpression("new Date().toString();");
+
+        planCollection.save(plan);
+
+        Sequence sequence = new Sequence();
+        Echo echo = new Echo();
+        echo.setText(new DynamicValue<>("Hello World"));
+        sequence.addChild(echo);
+
+        plan = new Plan(sequence);
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put("name", "New Name");
+        plan.setAttributes(attributes);
+
+        Properties properties = new Properties();
+        properties.setProperty(AutomationPackageYamlFragmentManager.PROPERTY_NEW_PLAN_FRAGMENT_PATH, "plans/plan1.yml");
+        fragmentManager.setProperties(properties);
+        planCollection.save(plan);
+
+        assertFilesEqual(expectedFilesPath.resolve("plan1AfterModifyAndAdd.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
+
+        planCollection.remove(Filters.equals("attributes.name", "New Name"));
+
+
+        assertFilesEqual(expectedFilesPath.resolve("plan1AfterModification.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
     }
 
     @Test
@@ -235,7 +273,7 @@ public class AutomationPackageCollectionTest {
         planCollection.save(plan);
 
         assertFilesEqual(expectedFilesPath.resolve("Hello_World_Plan.yml"), destinationDirectory.toPath().resolve("plans").resolve("Hello_World_Plan.yml"));
-        
+
     }
 
     private void assertFilesEqual(Path expected, Path actual) throws IOException {

@@ -61,9 +61,7 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
 
     @Override
     public YamlPlan deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        JsonLocation startLocation = p.currentLocation();
         JsonNode planJsonNode = p.readValueAsTree();
-        JsonLocation endLocation = p.currentLocation();
 
         if (currentVersion != null) {
             Document yamlPlanDocument = p.getCodec().treeToValue(planJsonNode, Document.class);
@@ -119,7 +117,6 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
         }
 
         YamlPlan yamlPlan = yamlMapper.treeToValue(planJsonNode, YamlPlan.class);
-        yamlPlan.setPatchingBounds(startLocation, endLocation);
         return yamlPlan;
     }
 

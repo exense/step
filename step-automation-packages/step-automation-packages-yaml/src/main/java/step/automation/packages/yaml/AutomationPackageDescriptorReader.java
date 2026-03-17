@@ -18,8 +18,10 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import com.fasterxml.jackson.databind.InjectableValues;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerBase;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -31,12 +33,15 @@ import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistryAware;
+import step.automation.packages.yaml.deserialization.PatchableYamlArtefactDeserializer;
+import step.automation.packages.yaml.deserialization.PatchingParserDelegate;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
+import step.plans.parser.yaml.PatchableYamlArtefact;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
@@ -106,7 +111,8 @@ public class AutomationPackageDescriptorReader {
                 }
             }
 
-            T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(yamlDescriptorString, targetClass);
+            JsonParser parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString));
+            T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(parser, targetClass);
             res.setCurrentYaml(yamlDescriptorString);
             logAfterRead(packageName, res);
             return res;
@@ -156,7 +162,22 @@ public class AutomationPackageDescriptorReader {
                 .addValue(AutomationPackageSerializationRegistry.class, serializationRegistry)
         );
         // configure custom deserializers
-        SimpleModule module = new SimpleModule();
+        SimpleModule module = new SimpleModule() {
+            @Override
+            public void setupModule(SetupContext context) {
+                super.setupModule(context);
+
+                context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
+                    @Override
+                    public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
+                        if (PatchableYamlArtefact.class.isAssignableFrom(beanDesc.getBeanClass())) {
+                            return new PatchableYamlArtefactDeserializer<>(deserializer);
+                        }
+                        return super.modifyDeserializer(config, beanDesc, deserializer);
+                    }
+                });
+            }
+        };
 
         // register deserializers to read yaml plans
         planReader.registerAllSerializersAndDeserializers(module, yamlMapper, true);
