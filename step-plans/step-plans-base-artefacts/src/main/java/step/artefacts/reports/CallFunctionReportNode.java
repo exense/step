@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
 import step.core.reports.Measure;
+import step.core.reports.MetricSample;
 
 public class CallFunctionReportNode extends ReportNode {
 
@@ -47,6 +48,8 @@ public class CallFunctionReportNode extends ReportNode {
     protected JsonObject outputObject;
 
     private List<Measure> measures;
+
+    private List<MetricSample> metricSamples;
 
     public CallFunctionReportNode() {
         super();
@@ -114,6 +117,14 @@ public class CallFunctionReportNode extends ReportNode {
 
     public void setMeasures(List<Measure> measures) {
         this.measures = measures;
+    }
+
+    public List<MetricSample> getMetricSamples() {
+        return metricSamples;
+    }
+
+    public void setMetricSamples(List<MetricSample> metricSamples) {
+        this.metricSamples = metricSamples;
     }
 
     @Override

@@ -13,6 +13,11 @@ import step.plugins.measurements.MeasurementHandler;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
+import step.core.reports.MetricSampleType;
+
+import static step.plugins.measurements.MeasurementPlugin.METRIC_TYPE_KEY;
 
 /**
  * This class acts as a wrapper over a TimeSeries ingestion. It has special methods which alter the data before ingestion.
@@ -20,8 +25,6 @@ import java.util.Map;
 public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private static final String THREAD_GROUP_MEASUREMENT_TYPE = "threadgroup";
-    private static final String METRIC_TYPE_KEY = "metricType";
-    private static final String METRIC_TYPE_RESPONSE_TIME = "response-time";
     private static final String METRIC_TYPE_SAMPLER = "sampler";
 
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesBucketingHandler.class);
@@ -42,15 +45,17 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     @Override
     public void processMeasurements(List<Measurement> measurements) {
-        measurements.forEach(this::processMeasurement);
+        measurements.stream().filter(Objects::nonNull).forEach(this::processMeasurement);
     }
 
     public void processMeasurement(Measurement measurement) {
         long begin = measurement.getBegin();
-        long value = measurement.getValue();
+        long value = Math.round(measurement.getValue());
 
         BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
-        bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
+        // Measurements created before metricType was introduced won't have the field — default to RESPONSE_TIME.
+        String metricType = measurement.getMetricType();
+        bucketAttributes.put(METRIC_TYPE_KEY, Objects.requireNonNullElse(metricType, MetricSampleType.RESPONSE_TIME.value()));
         TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
         ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
     }
@@ -65,18 +70,6 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
         return new BucketAttributes(bucketAttributesMap);
     }
 
-    @Override
-    public void processGauges(List<Measurement> measurements) {
-        measurements.forEach(measurement -> {
-            if (measurement != null) {
-                BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
-                bucketAttributes.put(METRIC_TYPE_KEY, measurement.getType());
-                TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
-                ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
-            }
-        });
-    }
-
     /**
      * This method will handle existing measurements, and will check if it is a gauge or normal measurement
      *
@@ -87,11 +80,7 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
             return;
         }
         measurement.remove("_id"); // because these measurements come with a generated id and can't be grouped into buckets.
-        if (measurement.getType().equals(THREAD_GROUP_MEASUREMENT_TYPE)) {
-            this.processGauges(List.of(measurement));
-        } else {
-            this.processMeasurement(measurement);
-        }
+        this.processMeasurement(measurement);
     }
 
     @Override

@@ -19,6 +19,7 @@ import step.core.timeseries.TimeSeriesCollection;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
+import step.core.reports.MetricSampleType;
 import step.plugins.measurements.Measurement;
 import step.plugins.timeseries.api.BucketResponse;
 import step.plugins.timeseries.api.FetchBucketsRequest;
@@ -268,6 +269,31 @@ public class TimeSeriesHandlerTest {
 
     }
 
+    /**
+     * Verifies that measurements created before the metricType field was introduced
+     * (i.e. without that field in the DB document) can still be ingested into the
+     * time-series without throwing a NullPointerException.
+     */
+    @Test
+    public void fetchRawMeasurementsWithoutMetricTypeTest() {
+        String key = RandomStringUtils.randomAlphabetic(5);
+        List<Measurement> measurements = generateMeasurementsWithoutMetricType(10, "unknownKey", key);
+        measurementsCollection.save(measurements);
+
+        FetchBucketsRequest request = new FetchBucketsRequest();
+        request.setStart(0);
+        request.setEnd(100_000);
+        request.setGroupDimensions(Collections.emptySet());
+        request.setNumberOfBuckets(5);
+        request.setPercentiles(Arrays.asList(10D, 20D, 50D));
+        request.setOqlFilter("attributes.unknownKey = " + key);
+        request.setMaxNumberOfSeries(100);
+
+        // Must not throw NPE despite metricType being absent
+        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        Assert.assertEquals(1, response.getMatrix().size());
+    }
+
     @Test
     public void bucketsThroughputTest() {
         String key = RandomStringUtils.randomAlphabetic(5);
@@ -327,7 +353,23 @@ public class TimeSeriesHandlerTest {
             measurement.put(keyAttribute, keyValue);
             measurement.setBegin(i + 1000);
             measurement.setType("test-measurement");
+            measurement.setMetricType(MetricSampleType.RESPONSE_TIME.value());
             measurement.setValue(RandomUtils.nextLong());
+            measurements.add(measurement);
+        }
+        return measurements;
+    }
+
+    /** Simulates measurements that were persisted before the metricType field was introduced. */
+    private List<Measurement> generateMeasurementsWithoutMetricType(int count, String keyAttribute, String keyValue) {
+        List<Measurement> measurements = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            Measurement measurement = new Measurement();
+            measurement.put(keyAttribute, keyValue);
+            measurement.setBegin(i + 1000);
+            measurement.setType("test-measurement");
+            measurement.setValue(RandomUtils.nextLong());
+            // metricType intentionally not set — simulates pre-existing DB documents
             measurements.add(measurement);
         }
         return measurements;

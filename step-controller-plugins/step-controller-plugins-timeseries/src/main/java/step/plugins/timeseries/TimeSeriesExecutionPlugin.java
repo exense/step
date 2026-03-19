@@ -1,5 +1,6 @@
 package step.plugins.timeseries;
 
+import com.sun.xml.bind.v2.TODO;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
@@ -39,7 +40,10 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
     public static final String FAILURE_PERCENTAGE = "executions/failure-percentage";
     public static final String FAILURE_COUNT = "executions/failure-count";
     public static final String FAILURES_COUNT_BY_ERROR_CODE = "executions/failures-count-by-error-code";
+    //TODO this duplicate the enum values of MetricSampleType
     public static final String RESPONSE_TIME = "response-time";
+    public static final String GAUGE = "gauge";
+    public static final String COUNTER = "counter";
     public static final String THREAD_GROUP = "threadgroup";
     public static final String ERROR_CODE = "errorCode";
     public static String TIMESERIES_FLAG = "hasTimeSeries";

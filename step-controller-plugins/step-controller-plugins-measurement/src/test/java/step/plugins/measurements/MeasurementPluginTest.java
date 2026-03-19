@@ -131,20 +131,21 @@ public class MeasurementPluginTest extends AbstractKeyword {
             }
         }
 
-        private void incValue(String key, long value) {
+        private void incValue(String key, double value) {
             if (!assertMeasurementsCount.containsKey(key)) {
                 assertMeasurementsCount.put(key, new AtomicInteger());
                 assertMeasurementsValue.put(key, new AtomicLong());
             }
             assertMeasurementsCount.get(key).incrementAndGet();
+            long rounded = Math.round(value);
             long l = assertMeasurementsValue.get(key).get();
-            if (l < value) {
-                assertMeasurementsValue.get(key).set(value);
+            if (l < rounded) {
+                assertMeasurementsValue.get(key).set(rounded);
             }
         }
 
         @Override
-        public void processGauges(List<Measurement> measurements) {
+        public void processInternalGauges(List<Measurement> measurements) {
             processMeasurements(measurements);
         }
 

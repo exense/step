@@ -1,5 +1,6 @@
 package step.plugins.measurements;
 
+import com.google.common.util.concurrent.AtomicDouble;
 import groovy.transform.Synchronized;
 import io.prometheus.client.Collector;
 import jakarta.json.JsonObject;
@@ -11,7 +12,6 @@ import step.artefacts.reports.ThreadReportNode;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
@@ -19,6 +19,8 @@ import step.core.plans.Plan;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.reports.Measure;
+import step.core.reports.MetricSample;
+import step.core.reports.MetricSampleType;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
@@ -65,12 +67,18 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
     public static final String CTX_GENERATE_EXECUTION_METRICS = "$generateExecutionMetrics";
     public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
 
+    public static final String METRIC_TYPE_KEY = "metricType";
+    public static final String VALUE_DELTA = "valueDelta";
+
+    public static final String THREAD_GROUP = "threadgroup";
+
     // These are used by the MeasurementControllerPlugin to "reconstruct" measures from measurements, and indicate the
     // "internal" fields which should NOT be added to the measure data field. Keep this in sync with the fields defined above.
     static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", PROJECT, "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
         ORIGIN, RN_STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
     // Same use, but for defining which fields SHOULD be directly copied to the top-level fields of a measure.
     static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE, STATUS);
+
 
     private final Map<String, Set<String[]>> labelsByExec = new ConcurrentHashMap<>();
     private final GaugeCollectorRegistry gaugeCollectorRegistry;
@@ -157,10 +165,16 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
     @Override
     public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {
         LiveReportingPlugin.getLiveReportingContext(context).registerListener(measures -> {
-            List<Measurement> measurements = measures.stream().map(m -> createMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
+            List<Measurement> measurements = measures.stream().map(m -> createKeywordMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
+            processMeasurements(measurements);
+        });
+        LiveReportingPlugin.getLiveReportingContext(context).registerMetricSampleListener(samples -> {
+            List<Measurement> measurements = samples.stream().map(m -> createKeywordMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
             processMeasurements(measurements);
         });
     }
+
+
 
     @Override
     public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {
@@ -188,6 +202,13 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
         return gaugeCollector;
     }
 
+    /**
+     * Each time a thread node is entered or existed with respectively increment or decrement the thread group gauge metric and
+     * notify all handlers f the new measurement
+     * @param context the execution context
+     * @param node the Thread report node
+     * @param inc whether we need to increment or decrement the gauge
+     */
     private void processThreadReportNode(ExecutionContext context, ThreadReportNode node, boolean inc) {
         String scheduleId = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULER_TASK_ID), "");
         String schedule = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULE_NAME), "");
@@ -209,17 +230,16 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
         labelsByExec.get(context.getExecutionId()).add(labelsArray);
         List<Measurement> measurements = gaugeCollector.collectAsMeasurements();
         for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
-            measurementHandler.processGauges(measurements);
+            measurementHandler.processInternalGauges(measurements);
         }
     }
 
     private Measurement transformToMeasurement(ExecutionContext executionContext, ReportNode node) {
-        Measurement measurement = initMeasurement(executionContext);
+        Measurement measurement = initMeasurement(executionContext, node);
         measurement.setName(node.getName());
+        measurement.setMetricType(MetricSampleType.RESPONSE_TIME.value());
         measurement.setValue(node.getDuration());
         measurement.setBegin(node.getExecutionTime());
-        enrichWithNodeAttributes(measurement, node);
-        enrichWithAdditionalAttributes(measurement, executionContext);
         AbstractArtefact artefactInstance = node.getArtefactInstance();
 
         if (node instanceof TestCaseReportNode) {
@@ -249,7 +269,14 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
 
                 if (functionReport.getMeasures() != null) {
                     for (Measure measure : functionReport.getMeasures()) {
-                        Measurement measurement = createMeasurement(executionContext, measure, functionReport);
+                        Measurement measurement = createKeywordMeasurement(executionContext, measure, functionReport);
+                        measurements.add(measurement);
+                    }
+                }
+
+                if (functionReport.getMetricSamples() != null) {
+                    for (MetricSample sample : functionReport.getMetricSamples()) {
+                        Measurement measurement = createKeywordMeasurement(executionContext, sample, functionReport);
                         measurements.add(measurement);
                     }
                 }
@@ -266,13 +293,8 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
         }
     }
 
-    private Measurement createMeasurement(ExecutionContext executionContext, Measure measure, CallFunctionReportNode functionReport) {
-        Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
-        Measurement measurement = initMeasurement(executionContext);
-        if (functionAttributes != null) {
-            measurement.addCustomFields(functionAttributes);
-            measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
-        }
+    private Measurement createKeywordMeasurement(ExecutionContext executionContext, Measure measure, CallFunctionReportNode functionReport) {
+        Measurement measurement = _createKeywordMeasurement(executionContext, functionReport);
         measurement.setName(measure.getName());
         if (measure.getStatus() != null) {
             // Note: status should always be set for live measures, but is null unless explicitly set for "output measures".
@@ -280,12 +302,44 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
             measurement.setStatus(measure.getStatus().name());
         }
         measurement.setType(getMeasureTypeOrDefault(measure));
+        measurement.setMetricType(MetricSampleType.RESPONSE_TIME.value());
         measurement.setValue(measure.getDuration());
         measurement.setBegin(measure.getBegin());
-        measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
-        enrichWithNodeAttributes(measurement, functionReport);
         enrichWithCustomData(measurement, measure.getData());
-        enrichWithAdditionalAttributes(measurement, executionContext);
+        return measurement;
+    }
+
+    private Measurement _createKeywordMeasurement(ExecutionContext executionContext, CallFunctionReportNode functionReport) {
+        Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
+        Measurement measurement = initMeasurement(executionContext, functionReport);
+        if (functionAttributes != null) {
+            measurement.addCustomFields(functionAttributes);
+            measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
+        }
+        measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
+        return measurement;
+    }
+
+    private Measurement createKeywordMeasurement(ExecutionContext executionContext, MetricSample metricSample, CallFunctionReportNode functionReport) {
+        Measurement measurement = _createKeywordMeasurement(executionContext, functionReport);
+        String name = metricSample.getName();
+        double value = metricSample.getValue();
+        MetricSampleType metricType = metricSample.getMetricType();
+        measurement.setName(name);
+        measurement.setMetricType(metricType.value());
+        measurement.setValue(value);
+//        if (MetricSampleType.COUNTER == metricType) {
+//            AtomicDouble runningTotal = countersRunningTotal
+//                .computeIfAbsent(executionContext.getExecutionId(), k -> new ConcurrentHashMap<>())
+//                .computeIfAbsent(name, n -> new AtomicDouble(0.0));
+//            double runningTotalValue = runningTotal.addAndGet(value);
+//            measurement.setValue(runningTotalValue);
+//            measurement.setValueDelta(value);//Keeping delta value for the prometheus handler
+//        } else {
+//            measurement.setValue(value);
+//        }
+        measurement.setBegin(metricSample.getTimestamp());
+        enrichWithCustomData(measurement, metricSample.getTags());
         return measurement;
     }
 
@@ -301,7 +355,7 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
         return type;
     }
 
-    protected Measurement initMeasurement(ExecutionContext executionContext) {
+    protected Measurement initMeasurement(ExecutionContext executionContext, ReportNode node) {
         Measurement measurement = new Measurement();
         Plan plan = executionContext.getPlan();
         measurement.setPlanId(plan.getId().toString());
@@ -309,6 +363,8 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
         measurement.setExecution(Objects.requireNonNullElse((String) executionContext.get(CTX_EXECUTION_DESCRIPTION), ""));
         measurement.setTaskId(Objects.requireNonNullElse((String) executionContext.get(CTX_SCHEDULER_TASK_ID), ""));
         measurement.setSchedule(Objects.requireNonNullElse((String) executionContext.get(CTX_SCHEDULE_NAME), ""));
+        enrichWithNodeAttributes(measurement, node);
+        enrichWithAdditionalAttributes(measurement, executionContext);
         return measurement;
     }
 

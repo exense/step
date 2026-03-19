@@ -45,7 +45,7 @@
     <maven.compiler.target>11</maven.compiler.target>
     <maven.compiler.release>11</maven.compiler.release>
     <!-- internal dependencies -->
-    <step-grid.version>0.0.0-MASTER-SNAPSHOT</step-grid.version>
+    <step-grid.version>0.0.0-SED-4574-SNAPSHOT</step-grid.version>
     <step-framework.version>0.0.0-MASTER-SNAPSHOT</step-framework.version>
 
     <!-- external, non-transitive, dependencies -->

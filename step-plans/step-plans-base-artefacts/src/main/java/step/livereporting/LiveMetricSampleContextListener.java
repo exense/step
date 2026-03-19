@@ -17,17 +17,13 @@
  * along with Step.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package step.livereporting.client;
+package step.livereporting;
 
-import step.reporting.impl.LiveMeasureDestination;
-import step.reporting.impl.LiveMetricSampleDestination;
-import step.streaming.client.upload.StreamingUploadProvider;
+import step.core.reports.MetricSample;
 
-public interface LiveReportingClient {
+import java.util.List;
 
-    LiveMeasureDestination getLiveMeasureDestination();
-
-    LiveMetricSampleDestination getLiveMetricSampleDestination();
-
-    StreamingUploadProvider getStreamingUploadProvider();
+@FunctionalInterface
+public interface LiveMetricSampleContextListener {
+    void accept(List<MetricSample> metricSamples);
 }

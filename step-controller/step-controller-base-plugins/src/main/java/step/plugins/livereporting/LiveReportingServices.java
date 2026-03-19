@@ -8,6 +8,7 @@ import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.Unfiltered;
 import step.core.reports.Measure;
+import step.core.reports.MetricSample;
 import step.framework.server.security.NoSession;
 import step.livereporting.LiveReportingContexts;
 
@@ -33,5 +34,14 @@ public class LiveReportingServices extends AbstractStepServices {
     @NoSession
     public void injectMeasures(List<Measure> measures, @PathParam("contextId") String contextId) {
         liveReportingContexts.onMeasuresReceived(contextId, measures);
+    }
+
+    @POST
+    @Path("/{contextId}/metric-samples")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Unfiltered
+    @NoSession
+    public void injectMetricSamples(List<MetricSample> metricSamples, @PathParam("contextId") String contextId) {
+        liveReportingContexts.onMetricSamplesReceived(contextId, metricSamples);
     }
 }

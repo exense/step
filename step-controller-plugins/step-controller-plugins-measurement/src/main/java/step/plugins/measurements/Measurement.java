@@ -1,5 +1,7 @@
 package step.plugins.measurements;
 
+import step.core.reports.MetricSampleType;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,11 +20,11 @@ public class Measurement extends HashMap<String, Object> {
         this.put(MeasurementPlugin.BEGIN, begin);
     }
 
-    public long getValue() {
-        return (long) this.get(MeasurementPlugin.VALUE);
+    public double getValue() {
+        return ((Number) this.get(MeasurementPlugin.VALUE)).doubleValue();
     }
 
-    public void setValue(long value) {
+    public void setValue(double value) {
         this.put(MeasurementPlugin.VALUE, value);
     }
 
@@ -41,6 +43,24 @@ public class Measurement extends HashMap<String, Object> {
     public void setType(String type) {
         this.put(MeasurementPlugin.TYPE, type);
     }
+
+    public String getMetricType() {
+        return (String) this.get(MeasurementPlugin.METRIC_TYPE_KEY);
+    }
+
+    public void setMetricType(String metricType) {
+        this.put(MeasurementPlugin.METRIC_TYPE_KEY, metricType);
+    }
+//TODO clean up
+
+//    public double getValueDelta() {
+//        return ((Number) this.get(MeasurementPlugin.VALUE_DELTA)).doubleValue();
+//    }
+//
+//    public void setValueDelta(double value) {
+//        this.put(MeasurementPlugin.VALUE_DELTA, value);
+//    }
+
 
     public String getStatus() {
         return (String) this.get(MeasurementPlugin.RN_STATUS);

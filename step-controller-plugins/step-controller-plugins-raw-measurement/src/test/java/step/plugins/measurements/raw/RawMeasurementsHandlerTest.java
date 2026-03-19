@@ -23,6 +23,7 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
+import step.core.reports.MetricSampleType;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementPlugin;
 
@@ -61,7 +62,7 @@ public class RawMeasurementsHandlerTest {
 
             Document document = measurementAccessor.find(Filters.empty()).findFirst().orElseThrow();
             assertNotNull(document);
-            assertEquals(13, document.size());
+            assertEquals(14, document.size());
             assertEquals("val1", document.get("attr1"));
             assertEquals("val2", document.get("attr2"));
             assertFalse(document.containsKey("plan"));
@@ -70,6 +71,7 @@ public class RawMeasurementsHandlerTest {
             assertEquals(execute.getExecutionId(), document.get("eId"));
             assertEquals("Sleep", document.get("name"));
             assertEquals(MeasurementPlugin.TYPE_CUSTOM, document.get("type"));
+            assertEquals(MetricSampleType.RESPONSE_TIME.value(), document.get("metricType"));
             assertEquals("PASSED", document.get("rnStatus"));
             assertEquals(plan.getId().toHexString(), document.get("planId"));
             assertEquals("", document.get("taskId"));
@@ -110,7 +112,7 @@ public class RawMeasurementsHandlerTest {
 
             Document document = measurementAccessor.find(Filters.empty()).findFirst().orElseThrow();
             assertNotNull(document);
-            assertEquals(13, document.size());
+            assertEquals(14, document.size());
             assertEquals("val1", document.get("attr1"));
             assertEquals("val2", document.get("attr2"));
             assertFalse(document.containsKey("plan"));
@@ -119,6 +121,7 @@ public class RawMeasurementsHandlerTest {
             assertEquals(execute.getExecutionId(), document.get("eId"));
             assertEquals("Sleep", document.get("name"));
             assertEquals(MeasurementPlugin.TYPE_CUSTOM, document.get("type"));
+            assertEquals(MetricSampleType.RESPONSE_TIME.value(), document.get("metricType"));
             assertEquals("PASSED", document.get("rnStatus"));
             assertEquals(plan.getId().toHexString(), document.get("planId"));
             assertEquals(taskParameters.getId().toHexString(), document.get("taskId"));
@@ -136,6 +139,27 @@ public class RawMeasurementsHandlerTest {
         }
     }
 
+
+    /**
+     * Verifies that measurements stored in the DB before the metricType field was introduced
+     * can still be retrieved correctly. Such documents simply won't have the field.
+     */
+    @Test
+    public void testLegacyMeasurementWithoutMetricType() {
+        InMemoryCollection<Document> collection = new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap<>());
+        MeasurementAccessor accessor = new MeasurementAccessor(collection);
+
+        // Simulate a measurement persisted by an older version of Step (no metricType field)
+        Document legacyDoc = new Document();
+        legacyDoc.put("name", "legacyMeasure");
+        legacyDoc.put("value", 1000.0);
+        legacyDoc.put("begin", System.currentTimeMillis());
+        collection.save(legacyDoc);
+
+        Document found = accessor.find(Filters.empty()).findFirst().orElseThrow();
+        assertNotNull(found);
+        assertFalse("Legacy measurements must not contain metricType", found.containsKey("metricType"));
+    }
 
     private ObjectHookRegistry getObjectHookRegistry() {
         ObjectHookRegistry objectHooks = new ObjectHookRegistry();

@@ -9,7 +9,6 @@ import step.plugins.timeseries.TimeSeriesControllerPlugin;
 import step.plugins.timeseries.dashboards.model.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static step.controller.services.entities.AbstractEntityServices.CUSTOM_FIELD_LOCKED;
 import static step.plugins.timeseries.MetricsConstants.*;

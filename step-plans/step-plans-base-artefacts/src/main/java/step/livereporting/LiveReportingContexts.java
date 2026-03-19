@@ -22,6 +22,7 @@ package step.livereporting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.reports.Measure;
+import step.core.reports.MetricSample;
 
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,15 @@ public class LiveReportingContexts {
             context.onMeasuresReceived(measures);
         } catch (Exception e) {
             logger.error("Error while dispatching {} measures for context handle {}", measures.size(), contextHandle, e);
+        }
+    }
+
+    public void onMetricSamplesReceived(String contextHandle, List<MetricSample> metricSamples) {
+        LiveReportingContext context = getNonNullContext(contextHandle);
+        try {
+            context.onMetricSamplesReceived(metricSamples);
+        } catch (Exception e) {
+            logger.error("Error while dispatching {} metric samples for context handle {}", metricSamples.size(), contextHandle, e);
         }
     }
 

@@ -1,5 +1,6 @@
 package step.plugins.measurements;
 
+import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ public class PrometheusCollectorRegistry {
 
     Map<String, Histogram> histoCollectors = new HashMap<>();
     Map<String, Gauge> gaugeCollectors = new HashMap<>();
+    Map<String, Counter> counterCollectors = new HashMap<>();
 
     public synchronized Histogram getOrCreateHistogram(String name, String help, double[] buckets, String... labels) {
         Histogram histo;
@@ -42,6 +44,10 @@ public class PrometheusCollectorRegistry {
         return histoCollectors.containsKey(name);
     }
 
+    public boolean containsGauge(String name) {
+        return gaugeCollectors.containsKey(name);
+    }
+
     public synchronized Gauge getOrCreateGauge(String name, String help, String... labels) {
         Gauge gauge;
         if (gaugeCollectors.containsKey(name)) {
@@ -54,6 +60,24 @@ public class PrometheusCollectorRegistry {
             gaugeCollectors.put(name, gauge);
         }
         return gauge;
+    }
+
+    public boolean containsCounter(String name) {
+        return counterCollectors.containsKey(name);
+    }
+
+    public synchronized Counter getOrCreateCounter(String name, String help, String... labels) {
+        Counter counter;
+        if (counterCollectors.containsKey(name)) {
+            counter = counterCollectors.get(name);
+        } else {
+            Counter.Builder builder = Counter.build()
+                .name(name).help(help)
+                .labelNames(labels);
+            counter = builder.register();
+            counterCollectors.put(name, counter);
+        }
+        return counter;
     }
 
 }

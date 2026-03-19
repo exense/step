@@ -49,11 +49,6 @@ public class RawMeasurementsHandler implements MeasurementHandler {
         }
     }
 
-    @Override
-    public void processGauges(List<Measurement> measurements) {
-        processMeasurements(measurements);
-    }
-
     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
         executionContext.put(MeasurementAccessor.class, accessor);
     }

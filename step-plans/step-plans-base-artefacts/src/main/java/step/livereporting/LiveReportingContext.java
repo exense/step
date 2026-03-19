@@ -20,6 +20,7 @@
 package step.livereporting;
 
 import step.core.reports.Measure;
+import step.core.reports.MetricSample;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,14 +33,25 @@ public class LiveReportingContext {
      */
     public final String id = UUID.randomUUID().toString();
     private final List<LiveReportingContextListener> listeners = new ArrayList<>();
+    private final List<LiveMetricSampleContextListener> metricSampleListeners = new ArrayList<>();
 
     public void registerListener(LiveReportingContextListener contextListener) {
         listeners.add(contextListener);
     }
 
+    public void registerMetricSampleListener(LiveMetricSampleContextListener listener) {
+        metricSampleListeners.add(listener);
+    }
+
     public void onMeasuresReceived(List<Measure> measures) {
         for (LiveReportingContextListener listener : listeners) {
             listener.accept(measures);
+        }
+    }
+
+    public void onMetricSamplesReceived(List<MetricSample> metricSamples) {
+        for (LiveMetricSampleContextListener listener : metricSampleListeners) {
+            listener.accept(metricSamples);
         }
     }
 }

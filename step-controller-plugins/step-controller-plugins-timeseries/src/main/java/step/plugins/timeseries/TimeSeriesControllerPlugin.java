@@ -235,6 +235,22 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
                 .setRenderingSettings(new MetricRenderingSettings()),
             new MetricType()
+                .setName(GAUGE)
+                .setDisplayName("Gauge")
+                .setAttributes(Arrays.asList(NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+                .setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
+                .setUnit("1")
+                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
+                .setRenderingSettings(new MetricRenderingSettings()),
+            new MetricType()
+                .setName(COUNTER)
+                .setDisplayName("Counter")
+                .setAttributes(Arrays.asList(NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+                .setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
+                .setUnit("1")
+                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+                .setRenderingSettings(new MetricRenderingSettings()),
+            new MetricType()
                 .setName(THREAD_GROUP)
                 .setDisplayName("Thread group")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
