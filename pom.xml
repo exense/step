@@ -550,8 +550,6 @@
                     <exclude>jakarta.xml.bind:jakarta.xml.bind-api</exclude>
                     <!-- TODO: SED-4411 to consolidate versions, then remove next line -->
                     <exclude>org.apache.maven:maven-builder-support</exclude>
-                    <!-- Same idea, different conflict (with POI ooxml, might be solved once POI is upgraded) -->
-                    <exclude>org.apache.maven:maven-model</exclude>
                   </excludes>
                 </requireUpperBoundDeps>
               </rules>
