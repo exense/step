@@ -245,7 +245,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
      * @param automationPackage the JAR file to be read
      * @param apVersion         the automation package version
      * @param keywordLib        the package library file
-     * @return the automation package content raed from the provided files
+     * @return the automation package content read from the provided files
      * @throws AutomationPackageReadingException in case of error
      */
     public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {

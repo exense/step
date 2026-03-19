@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.util.JsonParserDelegate;
 
-import javax.json.Json;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;

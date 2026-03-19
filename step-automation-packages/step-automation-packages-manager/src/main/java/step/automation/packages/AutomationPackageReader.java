@@ -186,7 +186,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
             fillAutomationPackageWithImportedFragments(res, descriptor, archive, fragmentMap);
             return new AutomationPackageYamlFragmentManager(descriptor, fragmentMap, getOrCreateDescriptorReader());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new AutomationPackageReadingException("Failed to read automation package for editing", e);
         }
     }
 

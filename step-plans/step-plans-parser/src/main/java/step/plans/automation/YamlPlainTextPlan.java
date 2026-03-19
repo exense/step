@@ -67,6 +67,6 @@ public class YamlPlainTextPlan extends PatchableYamlArtefact {
 
     @Override
     public String getCollectionName() {
-        return "plainTextPlan";
+        return AutomationPackagePlainTextPlanJsonSchema.FIELD_NAME_IN_AP;
     }
 }
