@@ -177,6 +177,65 @@ describe('runner', () => {
       expect(output.measures[2].duration).toBe(50)
     })
   })
+
+  // ---------------------------------------------------------------------------
+  // session
+  // ---------------------------------------------------------------------------
+
+  describe('session', () => {
+    test('values stored via session.set() are accessible in a later keyword via session.get()', async () => {
+      await runner.run('SessionSetKW', { value: 'hello' })
+      const output = await runner.run('SessionGetKW')
+      expect(output.payload.value).toBe('hello')
+    })
+
+    test('values stored via dot notation are accessible in a later keyword', async () => {
+      await runner.run('SessionSetDotKW', { value: 'world' })
+      const output = await runner.run('SessionGetDotKW')
+      expect(output.payload.value).toBe('world')
+    })
+
+    test('session value is updated when set again', async () => {
+      await runner.run('SessionSetKW', { value: 'first' })
+      await runner.run('SessionSetKW', { value: 'second' })
+      const output = await runner.run('SessionGetKW')
+      expect(output.payload.value).toBe('second')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // beforeKeyword and afterKeyword hooks
+  // ---------------------------------------------------------------------------
+
+  describe('beforeKeyword and afterKeyword hooks', () => {
+    beforeEach(async () => {
+      await runner.run('GetHookCallsKW')
+    })
+
+    test('beforeKeyword is called with the keyword name before execution', async () => {
+      await runner.run('Echo', {})
+      const { payload: { calls } } = await runner.run('GetHookCallsKW')
+      expect(calls).toContain('before:Echo')
+    })
+
+    test('afterKeyword is called with the keyword name after successful execution', async () => {
+      await runner.run('Echo', {})
+      const { payload: { calls } } = await runner.run('GetHookCallsKW')
+      expect(calls).toContain('after:Echo')
+    })
+
+    test('beforeKeyword is called before afterKeyword', async () => {
+      await runner.run('Echo', {})
+      const { payload: { calls } } = await runner.run('GetHookCallsKW')
+      expect(calls.indexOf('before:Echo')).toBeLessThan(calls.indexOf('after:Echo'))
+    })
+
+    test('afterKeyword is called even when the keyword throws', async () => {
+      await runner.run('ErrorTestKW', { ErrorMsg: 'test error', rethrow_error: false })
+      const { payload: { calls } } = await runner.run('GetHookCallsKW')
+      expect(calls).toContain('after:ErrorTestKW')
+    })
+  })
 })
 
 // ---------------------------------------------------------------------------

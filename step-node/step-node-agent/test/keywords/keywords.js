@@ -100,3 +100,41 @@ exports.MultipleMeasuresKW = async (input, output, session, properties) => {
   output.addMeasure('third', 50)
   output.send()
 }
+
+// --- session ---
+
+exports.SessionSetKW = async (input, output, session) => {
+  session.set('sharedKey', input['value'])
+  output.send()
+}
+
+exports.SessionGetKW = async (input, output, session) => {
+  output.add('value', session.get('sharedKey')).send()
+}
+
+exports.SessionSetDotKW = async (input, output, session) => {
+  session.dotKey = input['value']
+  output.send()
+}
+
+exports.SessionGetDotKW = async (input, output, session) => {
+  output.add('value', session.dotKey).send()
+}
+
+// --- beforeKeyword / afterKeyword hook tracking ---
+
+let _hookCalls = []
+
+exports.beforeKeyword = async (functionName) => {
+  _hookCalls.push(`before:${functionName}`)
+}
+
+exports.afterKeyword = async (functionName) => {
+  _hookCalls.push(`after:${functionName}`)
+}
+
+exports.GetHookCallsKW = async (input, output) => {
+  const calls = [..._hookCalls]
+  _hookCalls = []
+  output.add('calls', calls).send()
+}

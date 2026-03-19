@@ -12,6 +12,20 @@ function assertValidStatus(status) {
   }
 }
 
+/**
+ * Represents a file attachment added to a keyword output.
+ * Mirrors the Java class `step.grid.io.Attachment`.
+ *
+ * @typedef {object} Attachment
+ * @property {string}  name         - Display name of the attachment (e.g. "screenshot.png").
+ * @property {string}  [mimeType]   - MIME type of the content (e.g. "image/png", "text/plain").
+ * @property {string}  [description] - Human-readable description shown in the Step UI.
+ * @property {string}  [hexContent] - File content encoded as a **base64** string despite the field
+ *                                    name. Use `Buffer.from(data).toString('base64')` to produce it.
+ * @property {boolean} [isDirectory] - Set to `true` when the attachment represents a directory
+ *                                    rather than a single file.
+ */
+
 class OutputBuilder {
   constructor() {
     this.builder = { payload: { attachments: [], payload: {} }, attachments: [] }
@@ -104,7 +118,8 @@ class OutputBuilder {
 
   /**
    * Adds an attachment to the output.
-   * @param {object} attachment
+   * @param {Attachment} attachment
+   * @returns {OutputBuilder} this, for chaining
    */
   attach(attachment) {
     this.builder.payload.attachments.push(attachment)

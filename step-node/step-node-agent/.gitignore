@@ -3,3 +3,4 @@ node_modules/
 !/bin
 filemanager/work/
 /coverage/
+/npm-project-workspaces/

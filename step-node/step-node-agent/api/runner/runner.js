@@ -12,7 +12,7 @@ module.exports = function (properties = {}) {
     loadOrGetKeywordFile: () => Promise.resolve('.')
   }
 
-  const Controller = require('../controllers/controller')
+  const Controller = require('../controllers/agent')
   const controller = new Controller(agentContext, fileManager, 'runner')
 
   const api = {}

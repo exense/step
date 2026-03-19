@@ -24,15 +24,6 @@ class FileManager {
     return fs.existsSync(filePath + '/keywords')
   }
 
-  getFolderName(keywordPackageFile) {
-    try {
-      const splitNodes = keywordPackageFile.split('/')
-      const lastNode = splitNodes[splitNodes.length - 1]
-      return lastNode.split('.')[0]
-    } catch (e) {
-      throw new Error('A problem occured while attempting to retrieve subfolder name from zipped project:' + keywordPackageFile)
-    }
-  }
 
   async loadOrGetKeywordFile(controllerUrl, fileId, fileVersionId) {
     return new Promise((resolve, reject) => {

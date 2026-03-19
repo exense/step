@@ -17,6 +17,9 @@
     ],
     "testTimeout": 30000
   },
+  "step": {
+    "keywords": "test/keywords"
+  },
   "author": "Jerome Comte",
   "license": "AGPL-3.0",
   "repository": {

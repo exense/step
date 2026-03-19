@@ -23,24 +23,31 @@ const fs = require("fs");
 const path = require('path')
 const session = new Session();
 
-process.on('message', async ({ type, projectPath, functionName, input, properties }) => {
+process.on('message', async ({ type, projectPath, functionName, input, properties, keywordDirectory }) => {
   if (type === 'KEYWORD') {
     console.log("[Agent fork] Calling keyword " + functionName)
     const outputBuilder = new OutputBuilder();
     try {
-      if (!keywordDirectoryExists(projectPath)) {
-        outputBuilder.fail("Could not find the 'keywords' directory in " + path.basename(projectPath) + ". Possible cause: If using TypeScript, the keywords may not have been compiled. Fix: Ensure your project is built before deploying to Step or during 'npm install'.")
+      if (!keywordDirectoryExists(projectPath, keywordDirectory)) {
+        outputBuilder.fail("The keyword directory '" + keywordDirectory + "' doesn't exist in " + path.basename(projectPath) + ". Possible cause: If using TypeScript, the keywords may not have been compiled. Fix: Ensure your project is built before deploying to Step or during 'npm install'.")
       } else {
-        const kwModules = await importAllKeywords(projectPath);
-        let keyword = searchKeyword(kwModules, functionName);
-        if (!keyword) {
+        const kwModules = await importAllKeywords(projectPath, keywordDirectory);
+        let keywordSearchResult = searchKeyword(kwModules, functionName);
+        if (!keywordSearchResult) {
           console.log('[Agent fork] Unable to find Keyword ' + functionName + "'");
           outputBuilder.fail("Unable to find Keyword '" + functionName + "'");
         } else {
+          const module = keywordSearchResult.keywordModule;
+          const keyword = keywordSearchResult.keywordFunction;
+
           try {
+            const beforeKeyword = module['beforeKeyword'];
+            if(beforeKeyword) {
+              await beforeKeyword(functionName);
+            }
             await keyword(input, outputBuilder, session, properties);
           } catch (e) {
-            let onError = searchKeyword(kwModules, 'onError');
+            const onError = module['onError'];
             if (onError) {
               if (await onError(e, input, outputBuilder, session, properties)) {
                 console.log('[Agent fork] Keyword execution failed and onError hook returned \'true\'')
@@ -51,6 +58,11 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
             } else {
               console.log('[Agent fork] Keyword execution failed. No onError hook defined')
               outputBuilder.fail(e)
+            }
+          } finally {
+            let afterKeyword = module['afterKeyword'];
+            if (afterKeyword) {
+              await afterKeyword(functionName);
             }
           }
         }
@@ -65,13 +77,13 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
     process.exit(1)
   }
 
-  function keywordDirectoryExists(projectPath) {
-    return fs.existsSync(path.resolve(projectPath, "./keywords"))
+  function keywordDirectoryExists(projectPath, keywordDirectory) {
+    return fs.existsSync(path.resolve(projectPath, keywordDirectory))
   }
 
-  async function importAllKeywords(projectPath) {
+  async function importAllKeywords(projectPath, keywordDirectory) {
     const kwModules = [];
-    const kwDir = path.resolve(projectPath, "./keywords");
+    const kwDir = path.resolve(projectPath, keywordDirectory);
     console.log("[Agent fork] Searching keywords in: " + kwDir)
     const kwFiles = fs.readdirSync(kwDir);
     for (const kwFile of kwFiles) {
@@ -87,7 +99,7 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
 
   function searchKeyword(kwModules, keywordName) {
     const kwModule = kwModules.find(m => m[keywordName]);
-    return kwModule ? kwModule[keywordName] : undefined;
+    return kwModule ? {keywordFunction: kwModule[keywordName], keywordModule: kwModule} : undefined;
   }
 });
 
