@@ -9,7 +9,6 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
-import step.engine.plugins.LocalFunctionPlugin;
 import step.functions.Function;
 import step.functions.manager.FunctionManagerImpl;
 import step.handlers.javahandler.Keyword;
@@ -258,7 +257,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
 
     /** Convenient method for test
      * @param automationPackage the JAR file to be read
-     * @return the automation package content raed from the provided files
+     * @return the automation package content read from the provided files for editing
      * @throws AutomationPackageReadingException in case of error
      */
     public AutomationPackageYamlFragmentManager provideAutomationPackageYamlFragmentManager(File automationPackage) throws AutomationPackageReadingException {
