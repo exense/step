@@ -36,7 +36,7 @@ public class ResourceManagerControllerPlugin extends AbstractControllerPlugin {
 
         Collection<Resource> collectionDriver = context.getCollectionFactory().getCollection(EntityConstants.resources,
             Resource.class);
-        context.get(TableRegistry.class).register(EntityConstants.resources, new Table<>(collectionDriver, null, true));
+        context.get(TableRegistry.class).register(EntityConstants.resources, new Table<>(collectionDriver, "resource-read", true));
     }
 
     public static String getResourceDir(Configuration configuration) {

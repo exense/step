@@ -45,10 +45,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Path("/resources")
 @Tag(name = "Resources")
 public class ResourceServices extends AbstractStepAsyncServices {
+
+    private static final String RESOURCE_RIGHT_NAME = "resource";
 
     protected ResourceManager resourceManager;
     private TableService tableService;
@@ -74,10 +77,21 @@ public class ResourceServices extends AbstractStepAsyncServices {
         AuditLogger.logEntityModification(getSession(), operation, "resources", resource.getId().toHexString(), entityName, attributes);
     }
 
+    private void checkResourceTypeRight(String resourceType, String right) {
+        checkRightIfDefined(RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + resourceType +  RIGHT_SEPARATOR + right);
+    }
+
+    private void checkResourceTypeRight(Resource resource, String right) {
+        //We have different services where we do not explicitly check if the type is set, for this reason that if type is not set we grant access
+        String resourceType = resource.getResourceType();
+        if (resourceType != null && !resourceType.isEmpty()) {
+            checkResourceTypeRight(resourceType, right);
+        }
+    }
 
     @POST
     @Path("/content")
-    @Secured(right = "resource-write")
+    @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + WRITE_RIGHT)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     public ResourceUploadResponse createResource(@FormDataParam("file") InputStream uploadedInputStream,
@@ -91,9 +105,10 @@ public class ResourceServices extends AbstractStepAsyncServices {
 
         if (uploadedInputStream == null || fileDetail == null)
             throw new RuntimeException("Invalid arguments");
-        if (resourceType == null || resourceType.length() == 0)
+        if (resourceType == null || resourceType.isEmpty())
             throw new RuntimeException("Missing resource type query parameter 'type'");
 
+        checkResourceTypeRight(resourceType, WRITE_RIGHT);
         try {
             Resource resource = resourceManager.createTrackedResource(
                 resourceType, isDirectory, uploadedInputStream, fileDetail.getFileName(), objectEnricher,
@@ -113,17 +128,18 @@ public class ResourceServices extends AbstractStepAsyncServices {
     }
 
     @POST
-    @Secured(right = "resource-write")
+    @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + WRITE_RIGHT)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Resource saveResource(Resource resource) throws IOException {
+        checkResourceTypeRight(resource, WRITE_RIGHT);
         auditLog("save", resource);
         return resourceManager.saveResource(resource);
     }
 
     @POST
     @Path("/{id}/content")
-    @Secured(right = "resource-write")
+    @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + WRITE_RIGHT)
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     public ResourceUploadResponse saveResourceContent(@PathParam("id") String resourceId, @FormDataParam("file") InputStream uploadedInputStream,
@@ -131,6 +147,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
         if (uploadedInputStream == null || fileDetail == null)
             throw new RuntimeException("Invalid arguments");
 
+        checkResourceTypeRight(getResource(resourceId), WRITE_RIGHT);
         try {
             Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName(), null, getSession().getUser().getUsername());
             auditLog("save-content", resource);
@@ -143,11 +160,13 @@ public class ResourceServices extends AbstractStepAsyncServices {
     @GET
     @Secured
     @Path("/{id}")
-    @Secured(right = "resource-read")
+    @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + READ_RIGHT)
     @Produces(MediaType.APPLICATION_JSON)
     public Resource getResource(@PathParam("id") String resourceId) throws IOException {
         try {
-            return resourceManager.getResource(resourceId);
+            Resource resource = resourceManager.getResource(resourceId);
+            checkResourceTypeRight(resource, READ_RIGHT);
+            return resource;
         } catch (ResourceMissingException e) {
             throw new ControllerServiceException(404, e.getMessage());
         }
@@ -155,19 +174,21 @@ public class ResourceServices extends AbstractStepAsyncServices {
 
     @GET
     @Path("/{id}/content")
-    @Secured(right = "resource-read")
+    @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + READ_RIGHT)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getResourceContent(@PathParam("id") String resourceId, @QueryParam("inline") boolean inline) throws IOException {
         ResourceRevisionContent resourceContent = resourceManager.getResourceContent(resourceId);
+        checkResourceTypeRight(resourceContent.getResource(), READ_RIGHT);
         return getResponseForResourceRevisionContent(resourceContent, inline);
     }
 
     @DELETE
     @Secured
     @Path("/{id}")
-    @Secured(right = "resource-delete")
+    @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + DELETE_RIGHT)
     public void deleteResource(@PathParam("id") String resourceId) {
         Resource resource = resourceManager.getResource(resourceId);
+        checkResourceTypeRight(resource, DELETE_RIGHT);
         assertEntityIsEditableInContext(resource);
         auditLog("delete", resource);
         resourceManager.deleteResource(resourceId);
@@ -176,9 +197,10 @@ public class ResourceServices extends AbstractStepAsyncServices {
     @DELETE
     @Secured
     @Path("/{id}/revisions")
-    @Secured(right = "resource-delete")
+    @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + DELETE_RIGHT)
     public void deleteResourceRevisions(@PathParam("id") String resourceId) {
         Resource resource = resourceManager.getResource(resourceId);
+        checkResourceTypeRight(resource, DELETE_RIGHT);
         assertEntityIsEditableInContext(resource);
         auditLog("delete-revisions", resource);
         resourceManager.deleteResourceRevisionContent(resourceId);
@@ -207,9 +229,10 @@ public class ResourceServices extends AbstractStepAsyncServices {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/revision/{id}/content")
-    @Secured(right = "resource-read")
+    @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + READ_RIGHT)
     public Response getResourceRevisionContent(@PathParam("id") String resourceRevisionId, @QueryParam("inline") boolean inline) throws IOException {
         ResourceRevisionContentImpl resourceContent = resourceManager.getResourceRevisionContent(resourceRevisionId);
+        checkResourceTypeRight(resourceContent.getResource(), READ_RIGHT);
         return getResponseForResourceRevisionContent(resourceContent, inline);
     }
 
@@ -217,9 +240,17 @@ public class ResourceServices extends AbstractStepAsyncServices {
     @Path("/find")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right = "resource-read")
+    @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + READ_RIGHT)
     public List<Resource> findManyByCriteria(Map<String, String> criteria) {
-        return resourceManager.findManyByCriteria(criteria);
+        return resourceManager.findManyByCriteria(criteria).stream().filter(r -> {
+            try {
+                checkResourceTypeRight(r, READ_RIGHT);
+                return true;
+            } catch (Exception e) {
+                //we filter out the resources for which the user has no access
+                return false;
+            }
+        }).collect(Collectors.toList());
     }
 
     protected Response getResponseForResourceRevisionContent(ResourceRevisionContent resourceContent, boolean inline) {
