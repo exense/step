@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
+import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
 import step.plans.parser.yaml.PatchableYamlArtefact;
 
 import java.io.IOException;
@@ -24,9 +25,6 @@ public class PatchableYamlArtefactDeserializer<T extends PatchableYamlArtefact> 
     public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         if (p instanceof PatchingParserDelegate) {
             PatchingParserDelegate patchingParser = (PatchingParserDelegate) p;
-            if (p.getLastClearedToken() == JsonToken.END_OBJECT) {
-                p.getLastClearedToken();
-            }
             JsonLocation startList = patchingParser.getDistinctLocationBeforeToken(JsonToken.FIELD_NAME);
             int startListItemOffset = 0;
             if (p.getLastClearedToken() == JsonToken.END_OBJECT) {
@@ -42,29 +40,18 @@ public class PatchableYamlArtefactDeserializer<T extends PatchableYamlArtefact> 
         }
         return delegate.deserialize(p, ctxt);
     }
-/*
-    @Override
-    public T deserialize(JsonParser p, DeserializationContext ctxt, T intoValue) throws IOException {
-        if (p instanceof PatchingParserDelegate) {
-            PatchingParserDelegate patchingParser = (PatchingParserDelegate) p;
-            JsonLocation before = p.currentLocation();
-            T entity = delegate.deserialize(p, ctxt, intoValue);
-            entity.setPatchingBounds(before, p.currentLocation());
-
-            return entity;
-        }
-        return delegate.deserialize(p, ctxt, intoValue);
-    }*/
 
     @Override
     public JsonDeserializer<?> createContextual(DeserializationContext ctxt,
                                                 BeanProperty property) throws JsonMappingException {
         JsonDeserializer<?> contextual = delegate;
-        if (delegate instanceof ContextualDeserializer) {
+        if (contextual instanceof ContextualDeserializer) {
             // make sure to propagate createContextual to the delegate
             contextual = ((ContextualDeserializer) contextual).createContextual(ctxt, property);
         }
+        if (contextual instanceof ResolvableDeserializer) {
+            ((ResolvableDeserializer) contextual).resolve(ctxt);
+        }
         return new PatchableYamlArtefactDeserializer<>((JsonDeserializer<T>) contextual);
     }
-
 }

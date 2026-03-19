@@ -19,10 +19,11 @@
 package step.plans.automation;
 
 import step.plans.nl.RootArtefactType;
+import step.plans.parser.yaml.PatchableYamlArtefact;
 
 import java.util.List;
 
-public class YamlPlainTextPlan {
+public class YamlPlainTextPlan extends PatchableYamlArtefact {
 
     private String name;
 
@@ -62,5 +63,10 @@ public class YamlPlainTextPlan {
 
     public void setRootType(RootArtefactType rootType) {
         this.rootType = rootType;
+    }
+
+    @Override
+    public String getCollectionName() {
+        return "plainTextPlan";
     }
 }

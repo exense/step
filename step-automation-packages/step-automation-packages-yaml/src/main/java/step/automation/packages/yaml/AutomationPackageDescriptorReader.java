@@ -170,7 +170,8 @@ public class AutomationPackageDescriptorReader {
                 context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
                     @Override
                     public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
-                        if (PatchableYamlArtefact.class.isAssignableFrom(beanDesc.getBeanClass())) {
+                        if (PatchableYamlArtefact.class.isAssignableFrom(beanDesc.getBeanClass())
+                            && !beanDesc.getBeanClass().equals(PatchableYamlArtefact.class)) {
                             return new PatchableYamlArtefactDeserializer<>(deserializer);
                         }
                         return super.modifyDeserializer(config, beanDesc, deserializer);

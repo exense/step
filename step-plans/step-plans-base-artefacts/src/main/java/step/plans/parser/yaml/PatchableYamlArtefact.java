@@ -5,10 +5,19 @@ import com.fasterxml.jackson.core.JsonLocation;
 
 public abstract class PatchableYamlArtefact {
 
+    @JsonIgnore
     private int startOffset = -1;
+
+    @JsonIgnore
     private int startColumn = -1;
+
+    @JsonIgnore
     private int endOffset = -1;
+
+    @JsonIgnore
     private int startListItemOffset = -1;
+
+    @JsonIgnore
     private int startListOffset =  -1;
 
     @JsonIgnore
