@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.plans.parser.yaml.deserializers;
 
-import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -116,8 +115,7 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
             }
         }
 
-        YamlPlan yamlPlan = yamlMapper.treeToValue(planJsonNode, YamlPlan.class);
-        return yamlPlan;
+        return yamlMapper.treeToValue(planJsonNode, YamlPlan.class);
     }
 
 }

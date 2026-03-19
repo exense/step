@@ -20,7 +20,6 @@ package step.automation.packages.yaml;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.BeanDeserializerBase;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -32,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistryAware;
 import step.automation.packages.yaml.deserialization.PatchableYamlArtefactDeserializer;
 import step.automation.packages.yaml.deserialization.PatchingParserDelegate;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
@@ -40,7 +38,6 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.PatchableYamlArtefact;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
@@ -182,15 +179,6 @@ public class AutomationPackageDescriptorReader {
 
         // register deserializers to read yaml plans
         planReader.registerAllSerializersAndDeserializers(module, yamlMapper, true);
-
-        // add annotated jackson deserializers
-        StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlMapper, List.of(stepYamlDeserializer -> {
-            if (stepYamlDeserializer instanceof AutomationPackageSerializationRegistryAware) {
-                ((AutomationPackageSerializationRegistryAware) stepYamlDeserializer).setSerializationRegistry(serializationRegistry);
-            }
-        }));
-
-
         yamlMapper.registerModule(module);
 
         return yamlMapper;
