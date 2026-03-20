@@ -18,12 +18,14 @@
  ******************************************************************************/
 package step.plans.automation;
 
+import step.core.yaml.AbstractYamlModel;
+import step.core.yaml.PatchableAbstractYamlModel;
 import step.plans.nl.RootArtefactType;
-import step.plans.parser.yaml.PatchableYamlArtefact;
+import step.core.yaml.PatchableYamlModel;
 
 import java.util.List;
 
-public class YamlPlainTextPlan extends PatchableYamlArtefact {
+public class YamlPlainTextPlan extends PatchableAbstractYamlModel {
 
     private String name;
 
@@ -63,10 +65,5 @@ public class YamlPlainTextPlan extends PatchableYamlArtefact {
 
     public void setRootType(RootArtefactType rootType) {
         this.rootType = rootType;
-    }
-
-    @Override
-    public String getCollectionName() {
-        return AutomationPackagePlainTextPlanJsonSchema.FIELD_NAME_IN_AP;
     }
 }

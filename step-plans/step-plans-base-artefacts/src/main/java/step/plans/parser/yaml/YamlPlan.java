@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
+import step.core.yaml.AbstractYamlModel;
+import step.core.yaml.PatchableAbstractYamlModel;
 import step.core.yaml.model.NamedYamlArtefact;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -27,7 +29,7 @@ import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 
 import java.util.List;
 
-public class YamlPlan extends PatchableYamlArtefact {
+public class YamlPlan extends PatchableAbstractYamlModel {
 
     public static final String PLANS_ENTITY_NAME = "plans";
 
@@ -84,9 +86,4 @@ public class YamlPlan extends PatchableYamlArtefact {
 	public void setCategories(List<String> categories) {
 		this.categories = categories;
 	}
-
-    @Override
-    public String getCollectionName() {
-        return PLANS_ENTITY_NAME;
-    }
 }

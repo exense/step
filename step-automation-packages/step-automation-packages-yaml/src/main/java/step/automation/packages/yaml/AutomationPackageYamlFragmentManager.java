@@ -28,7 +28,8 @@ import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
-import step.plans.parser.yaml.PatchableYamlArtefact;
+import step.core.yaml.PatchableYamlList;
+import step.core.yaml.PatchableYamlModel;
 import step.plans.parser.yaml.YamlPlan;
 
 import java.io.*;
@@ -91,7 +92,7 @@ public class AutomationPackageYamlFragmentManager {
             fragment = fragmentForNewPlan(p);
             planToYamlFragment.put(p, fragment);
             pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
-            addFragmentEntity(fragment, fragment.getPlans(), newYamlPlan);
+            addFragmentEntity(fragment, YamlPlan.PLANS_ENTITY_NAME, fragment.getPlans(), newYamlPlan);
         } else {
             YamlPlan yamlPlan = planToYamlPlan.get(p);
             modifyFragmentEntity(fragment, fragment.getPlans(), yamlPlan, newYamlPlan);
@@ -101,17 +102,14 @@ public class AutomationPackageYamlFragmentManager {
         return p;
     }
 
-    private <T extends PatchableYamlArtefact>  void addFragmentEntity(AutomationPackageFragmentYaml fragment, List<T> entityList, T newEntity) {
-
-        String collectionName = newEntity.getCollectionName();
-
+    private <T extends PatchableYamlModel>  void addFragmentEntity(AutomationPackageFragmentYaml fragment, String collectionName, PatchableYamlList<T> entityList, T newEntity) {
         if (!entityList.isEmpty()) {
             T lastEntity = entityList.get(entityList.size()-1);
             entityList.add(newEntity);
 
             writeFragmentToDisk(fragment, yaml -> {
 
-                String listItemIndent = yaml.substring(lastEntity.getStartListItemOffset(), lastEntity.getStartOffset());
+                String listItemIndent = yaml.substring(lastEntity.getStartFieldOffset(), lastEntity.getStartOffset());
                 String indent = " ".repeat(lastEntity.getIndent());
                 String entityYaml = entityStringWithIndent(indent, newEntity);
 
@@ -123,21 +121,21 @@ public class AutomationPackageYamlFragmentManager {
             entityList.add(newEntity);
             writeFragmentToDisk(fragment, yaml -> {
 
-                String listYaml = collectionName + ":\n"
+                String listYaml =  collectionName + ":\n"
                     + entityStringWithIndent("", entityList);
 
                 if (yaml == null) {
                     return "---\n" + listYaml;
                 } else {
-                    return removeEmptyCollection(collectionName, yaml).trim()
-                        + "\n" + listYaml;
+                    return yaml.substring(0, entityList.getStartFieldOffset())
+                        + listYaml + yaml.substring(entityList.getEndOffset());
                 }
 
             });
         }
     }
 
-    private <T extends PatchableYamlArtefact> void modifyFragmentEntity(AutomationPackageFragmentYaml fragment, List<T> entityList, T oldEntity, T newEntity) {
+    private <T extends PatchableYamlModel> void modifyFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T oldEntity, T newEntity) {
         entityList.replaceAll(plan -> plan == oldEntity ? newEntity : plan);
         writeFragmentToDisk(fragment, yaml -> {
             int indent = oldEntity.getIndent();
@@ -162,16 +160,12 @@ public class AutomationPackageYamlFragmentManager {
         }
     }
 
-    private  <T extends PatchableYamlArtefact> void removeFragmentEntity(AutomationPackageFragmentYaml fragment, List<T> entityList, T entity) {
+    private  <T extends PatchableYamlModel> void removeFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T entity) {
         entityList.remove(entity);
         writeFragmentToDisk(fragment, yaml -> {
-            int s = entityList.isEmpty() ? entity.getStartListOffset() : entity.getStartListItemOffset();
+            int s = entityList.isEmpty() ? entityList.getStartFieldOffset() : entity.getStartFieldOffset();
             return yaml.substring(0, s) + yaml.substring(entity.getEndOffset());
         });
-    }
-
-    private String removeEmptyCollection(String collectionName, String yaml) {
-        return yaml.replaceAll("\n*" + collectionName + ":.*\n*", "\n");
     }
 
     private AutomationPackageFragmentYaml fragmentForNewPlan(Plan p) {
@@ -222,13 +216,14 @@ public class AutomationPackageYamlFragmentManager {
             JsonParser parser = new PatchingParserDelegate(mapper.createParser(fragment.getCurrentYaml()));
 
             AutomationPackageFragmentYaml newFragment = descriptorReader.getYamlObjectMapper().readValue(parser, fragment.getClass());
+
             updateFragmentObjectOffsets(newFragment.getPlans(), fragment.getPlans());
         } catch (IOException e) {
             throw new AutomationPackageUpdateException("Error re-writing automation package fragment {0}", e);
         }
     }
 
-    private <T extends PatchableYamlArtefact> void updateFragmentObjectOffsets(List<T> newOffsetEntities, List<T> entities) {
+    private <T extends PatchableYamlModel> void updateFragmentObjectOffsets(PatchableYamlList<T> newOffsetEntities, PatchableYamlList<T> entities) {
         Iterator<T> newIt = newOffsetEntities.iterator();
         Iterator<T> it = entities.iterator();
 
@@ -239,6 +234,8 @@ public class AutomationPackageYamlFragmentManager {
         if (newIt.hasNext() || it.hasNext()) {
             throw new AutomationPackageUpdateException("Error with updating fragment object offsets. Inconsistent collection size.");
         }
+
+        entities.setPatchingBounds(newOffsetEntities);
     }
 
     private synchronized void writeFragmentToDisk(AutomationPackageFragmentYaml fragment, Function<String, String> yamlModifier) {

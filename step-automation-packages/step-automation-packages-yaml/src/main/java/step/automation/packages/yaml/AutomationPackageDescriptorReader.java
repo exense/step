@@ -18,10 +18,11 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
+import com.fasterxml.jackson.databind.deser.std.CollectionDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.commons.lang3.StringUtils;
@@ -31,14 +32,15 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.yaml.deserialization.PatchableYamlArtefactDeserializer;
+import step.automation.packages.yaml.deserialization.PatchableYamlListDeserializer;
+import step.automation.packages.yaml.deserialization.PatchableYamlModelDeserializer;
 import step.automation.packages.yaml.deserialization.PatchingParserDelegate;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.DefaultJacksonMapperProvider;
-import step.plans.parser.yaml.PatchableYamlArtefact;
+import step.core.yaml.PatchableYamlModel;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
@@ -108,7 +110,8 @@ public class AutomationPackageDescriptorReader {
                 }
             }
 
-            JsonParser parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString));
+            PatchingParserDelegate parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString));
+            yamlObjectMapper.setNodeFactory(new LocatedYamlObjectFactory(parser));
             T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(parser, targetClass);
             res.setCurrentYaml(yamlDescriptorString);
             logAfterRead(packageName, res);
@@ -153,7 +156,6 @@ public class AutomationPackageDescriptorReader {
         // Disable native type id to enable conversion to generic Documents
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
         ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
-
         yamlMapper.setInjectableValues(new InjectableValues.Std()
                 .addValue(ObjectMapper.class, yamlMapper)
                 .addValue(AutomationPackageSerializationRegistry.class, serializationRegistry)
@@ -167,11 +169,19 @@ public class AutomationPackageDescriptorReader {
                 context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
                     @Override
                     public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
-                        if (PatchableYamlArtefact.class.isAssignableFrom(beanDesc.getBeanClass())
-                            && !beanDesc.getBeanClass().equals(PatchableYamlArtefact.class)) {
-                            return new PatchableYamlArtefactDeserializer<>(deserializer);
+                        if (PatchableYamlModel.class.isAssignableFrom(beanDesc.getBeanClass())
+                            && !beanDesc.getBeanClass().equals(PatchableYamlModel.class)) {
+                            return new PatchableYamlModelDeserializer<>(deserializer);
                         }
                         return super.modifyDeserializer(config, beanDesc, deserializer);
+                    }
+
+                    @Override
+                    public JsonDeserializer<?> modifyCollectionDeserializer(DeserializationConfig config, CollectionType type, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
+                        if (deserializer instanceof CollectionDeserializer) {
+                            return new PatchableYamlListDeserializer((CollectionDeserializer) deserializer);
+                        }
+                        return deserializer;
                     }
                 });
             }

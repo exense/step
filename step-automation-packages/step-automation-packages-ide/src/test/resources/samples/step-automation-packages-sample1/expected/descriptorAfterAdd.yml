@@ -12,13 +12,6 @@ alertingRules:
           predicate:
             BindingValueEqualsPredicate:
               value: "myValue"
-fragments:
-  - "keywords.yml"
-  - "plans/*.yml"
-  - "schedules.yml"
-  - "parameters.yml"
-  - "parameters2.yml"
-  - "unknown.yml"
 plans:
 - version: "1.2.0"
   name: "New Name"
@@ -29,3 +22,10 @@ plans:
           text: "Hello World"
   agents: null
   categories: null
+fragments:
+  - "keywords.yml"
+  - "plans/*.yml"
+  - "schedules.yml"
+  - "parameters.yml"
+  - "parameters2.yml"
+  - "unknown.yml"

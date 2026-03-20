@@ -9,15 +9,15 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
-import step.plans.parser.yaml.PatchableYamlArtefact;
+import step.core.yaml.PatchableYamlModel;
 
 import java.io.IOException;
 
-public class PatchableYamlArtefactDeserializer<T extends PatchableYamlArtefact> extends JsonDeserializer<T> implements ContextualDeserializer {
+public class PatchableYamlModelDeserializer<T extends PatchableYamlModel> extends JsonDeserializer<T> implements ContextualDeserializer {
 
     private final JsonDeserializer<T> delegate;
 
-    public PatchableYamlArtefactDeserializer(JsonDeserializer<?> delegate) {
+    public PatchableYamlModelDeserializer(JsonDeserializer<?> delegate) {
         this.delegate = (JsonDeserializer<T>) delegate;
     }
 
@@ -34,7 +34,7 @@ public class PatchableYamlArtefactDeserializer<T extends PatchableYamlArtefact> 
             }
             JsonLocation startItem = patchingParser.currentLocation();
             T entity = delegate.deserialize(p, ctxt);
-            entity.setPatchingBounds(startItem, startList, startListItemOffset, patchingParser.getLastDistinctLocation());
+            entity.setPatchingBounds(startItem, startListItemOffset, patchingParser.getLastDistinctLocation());
 
             return entity;
         }
@@ -52,6 +52,6 @@ public class PatchableYamlArtefactDeserializer<T extends PatchableYamlArtefact> 
         if (contextual instanceof ResolvableDeserializer) {
             ((ResolvableDeserializer) contextual).resolve(ctxt);
         }
-        return new PatchableYamlArtefactDeserializer<>((JsonDeserializer<T>) contextual);
+        return new PatchableYamlModelDeserializer<>((JsonDeserializer<T>) contextual);
     }
 }

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.core.yaml.PatchableYamlList;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
@@ -35,7 +36,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     private final AutomationPackageSerializationRegistry serializationRegistry;
     private List<String> fragments = new ArrayList<>();
     private List<YamlAutomationPackageKeyword> keywords = new ArrayList<>();
-    private List<YamlPlan> plans = new ArrayList<>();
+    private PatchableYamlList<YamlPlan> plans = new PatchableYamlList<>();
     private List<YamlPlainTextPlan> plansPlainText = new ArrayList<>();
 
     private final Map<String, List<?>> additionalFields = new HashMap<>();
@@ -45,7 +46,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
         this.mapper = mapper;
         this.serializationRegistry = serializationRegistry;
     }
-    
+
     public AbstractAutomationPackageFragmentYaml() {
         this.mapper = null;
         this.serializationRegistry = null;
@@ -53,7 +54,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
 
     @JsonIgnore
     private URL url;
-    
+
     @JsonIgnore
     private String currentYaml;
 
@@ -63,17 +64,17 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setKeywords(List<YamlAutomationPackageKeyword> keywords) {
+    public void setKeywords(PatchableYamlList<YamlAutomationPackageKeyword> keywords) {
         this.keywords = keywords;
     }
 
     @Override
-    public List<YamlPlan> getPlans() {
+    public PatchableYamlList<YamlPlan> getPlans() {
         return plans;
     }
 
     @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setPlans(List<YamlPlan> plans) {
+    public void setPlans(PatchableYamlList<YamlPlan> plans) {
         this.plans = plans;
     }
 
@@ -96,7 +97,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     @Override
     public void setAdditionalFields(String key, JsonNode node) throws IOException {
         if (mapper == null || serializationRegistry == null) return;
-            
+
         // acquire reader for the right type
         Class<?> targetClass = serializationRegistry.resolveClassForYamlField(key);
         if (targetClass == null) return;
