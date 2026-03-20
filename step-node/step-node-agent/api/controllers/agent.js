@@ -61,7 +61,7 @@ class Agent {
     }
   }
 
-  interruptExecution(req, res) {
+  interruptExecution(req, _res) {
     const tokenId = req.params.tokenId
     logger.warn('Interrupting token: ' + tokenId + ' : not implemented')
   }
@@ -413,7 +413,7 @@ class ForkedAgent {
   close() {
     try {
       this.forkProcess.send({ type: "KILL" });
-    } catch (e) {
+    } catch {
       this.forkProcess.kill();
     }
     fs.rmSync(this.agentForkerLibPath, {recursive: true, force: true});

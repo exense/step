@@ -66,7 +66,7 @@ class FileManager {
           this.#putCacheEntry(fileId, fileVersionId, cacheEntry)
 
           if (cacheEntry.promises) {
-            cacheEntry.promises.forEach(callback => callback(filePath + '/' + result)) // eslint-disable-line
+            cacheEntry.promises.forEach(callback => callback(filePath + '/' + result))
           }
           delete cacheEntry.promises
 
