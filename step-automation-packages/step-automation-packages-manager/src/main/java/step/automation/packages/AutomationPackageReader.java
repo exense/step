@@ -123,7 +123,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
         // apply imported fragments recursively
         if (descriptor != null) {
-            Map<URL, AutomationPackageFragmentYaml> fragmentMap = new HashMap<>();
+            Map<String, AutomationPackageFragmentYaml> fragmentMap = new HashMap<>();
             fillAutomationPackageWithImportedFragments(res, descriptor, archive, fragmentMap);
         }
         return res;
@@ -182,7 +182,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
             AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
             descriptor.setFragmentUrl(descriptorURL);
             AutomationPackageContent res = newContentInstance();
-            Map<URL, AutomationPackageFragmentYaml> fragmentMap = new HashMap<>();
+            Map<String, AutomationPackageFragmentYaml> fragmentMap = new HashMap<>();
             fillAutomationPackageWithImportedFragments(res, descriptor, archive, fragmentMap);
             return new AutomationPackageYamlFragmentManager(descriptor, fragmentMap, getOrCreateDescriptorReader());
         } catch (IOException e) {
@@ -190,7 +190,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         }
     }
 
-    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Map<URL, AutomationPackageFragmentYaml> fragmentYamlMap) throws AutomationPackageReadingException {
+    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Map<String, AutomationPackageFragmentYaml> fragmentYamlMap) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
         if (!fragment.getFragments().isEmpty()) {
@@ -199,7 +199,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = resource.openStream()) {
                         fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getAutomationPackageName());
-                        fragmentYamlMap.put(resource, fragment);
+                        fragmentYamlMap.put(resource.toString(), fragment);
                         fragment.setFragmentUrl(resource);
                         fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragmentYamlMap);
                     } catch (IOException e) {

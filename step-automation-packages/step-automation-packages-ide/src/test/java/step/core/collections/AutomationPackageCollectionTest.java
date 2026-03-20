@@ -24,8 +24,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
 import step.automation.packages.AutomationPackageHookRegistry;
@@ -52,17 +50,15 @@ import static org.junit.Assert.*;
 
 public class AutomationPackageCollectionTest {
 
-    private static final Logger log = LoggerFactory.getLogger(AutomationPackageCollectionTest.class);
-
     private final JavaAutomationPackageReader reader;
 
-    private final File sourceDirectory = new File("src/test/resources/samples/step-automation-packages-sample1");;
+    private final File sourceDirectory = new File("src/test/resources/samples/step-automation-packages-sample1");
     private File destinationDirectory;
     private Collection<Plan> planCollection;
     private final Path expectedFilesPath = sourceDirectory.toPath().resolve("expected");
     private AutomationPackageYamlFragmentManager fragmentManager;
 
-    public AutomationPackageCollectionTest() throws AutomationPackageReadingException {
+    public AutomationPackageCollectionTest() {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
 

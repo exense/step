@@ -22,7 +22,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
-import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.yaml.deserialization.PatchingParserDelegate;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
@@ -51,20 +50,20 @@ public class AutomationPackageYamlFragmentManager {
 
     private final Map<Plan, YamlPlan> planToYamlPlan = new ConcurrentHashMap<>();
     private final Map<Plan, AutomationPackageFragmentYaml> planToYamlFragment = new ConcurrentHashMap<>();
-    private final Map<URL, AutomationPackageFragmentYaml> urlToYamlFragment;
+    private final Map<String, AutomationPackageFragmentYaml> pathToYamlFragment;
     private Properties properties = new Properties();
     private final AutomationPackageFragmentYaml descriptorYaml;
 
-    public AutomationPackageYamlFragmentManager(AutomationPackageDescriptorYaml descriptorYaml, Map<URL, AutomationPackageFragmentYaml> fragmentMap, AutomationPackageDescriptorReader descriptorReader) {
+    public AutomationPackageYamlFragmentManager(AutomationPackageDescriptorYaml descriptorYaml, Map<String, AutomationPackageFragmentYaml> fragmentMap, AutomationPackageDescriptorReader descriptorReader) {
 
         this.descriptorReader = descriptorReader;
         this.descriptorYaml = descriptorYaml;
 
-        urlToYamlFragment = fragmentMap;
+        pathToYamlFragment = fragmentMap;
 
         initializeMaps(descriptorYaml);
 
-        urlToYamlFragment.values().forEach(this::initializeMaps);
+        pathToYamlFragment.values().forEach(this::initializeMaps);
     }
 
     public void setProperties(Properties properties) {
@@ -72,12 +71,12 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     public void initializeMaps(AutomationPackageFragmentYaml fragment) {
-        urlToYamlFragment.put(fragment.getFragmentUrl(), fragment);
+        pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
         for (YamlPlan p: fragment.getPlans()) {
             Plan plan = descriptorReader.getPlanReader().yamlPlanToPlan(p);
             planToYamlPlan.put(plan, p);
             planToYamlFragment.put(plan, fragment);
-        };
+        }
     }
 
     public Iterable<Plan> getPlans() {
@@ -91,7 +90,7 @@ public class AutomationPackageYamlFragmentManager {
         if (fragment == null) {
             fragment = fragmentForNewPlan(p);
             planToYamlFragment.put(p, fragment);
-            urlToYamlFragment.put(fragment.getFragmentUrl(), fragment);
+            pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
             addFragmentEntity(fragment, fragment.getPlans(), newYamlPlan);
         } else {
             YamlPlan yamlPlan = planToYamlPlan.get(p);
@@ -178,7 +177,7 @@ public class AutomationPackageYamlFragmentManager {
     private AutomationPackageFragmentYaml fragmentForNewPlan(Plan p) {
 
         String planFragmentPath = properties.getProperty(PROPERTY_NEW_PLAN_FRAGMENT_PATH, descriptorYaml.getFragmentUrl().getPath());
-        planFragmentPath = planFragmentPath.replaceAll("\\%name\\%", sanitizeFilename(p.getAttribute(AbstractOrganizableObject.NAME)));
+        planFragmentPath = planFragmentPath.replaceAll("%name%", sanitizeFilename(p.getAttribute(AbstractOrganizableObject.NAME)));
 
         Path path = new File(planFragmentPath).toPath();
         if (!path.isAbsolute()) {
@@ -191,7 +190,7 @@ public class AutomationPackageYamlFragmentManager {
             URL url = path.toUri().toURL();
 
 
-            if (urlToYamlFragment.containsKey(url)) return urlToYamlFragment.get(url);
+            if (pathToYamlFragment.containsKey(url.toString())) return pathToYamlFragment.get(url.toString());
             AutomationPackageFragmentYaml fragment =  new AutomationPackageFragmentYamlImpl();
             fragment.setFragmentUrl(url);
             return fragment;
@@ -202,7 +201,7 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     public String sanitizeFilename(String inputName) {
-        return inputName.replaceAll("[^a-zA-Z0-9-_\\.]", "_");
+        return inputName.replaceAll("[^a-zA-Z0-9-_.]", "_");
     }
 
     public void removePlan(Plan p) {
