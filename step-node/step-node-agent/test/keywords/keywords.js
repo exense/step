@@ -1,6 +1,6 @@
 exports.Echo = async (input, output, session, properties) => {
   input['properties'] = properties
-  output.send(input)
+  Object.entries(input).forEach(([k, v]) => output.add(k, v))
 }
 
 exports.ErrorTestKW = async (input, output, session, properties) => {
@@ -9,17 +9,14 @@ exports.ErrorTestKW = async (input, output, session, properties) => {
 
 exports.SetErrorTestKW = async (input, output, session, properties) => {
   output.setError(input['ErrorMsg'])
-  output.send()
 }
 
 exports.SetErrorWithExceptionKW = async (input, output, session, properties) => {
   output.setError(new Error(input['ErrorMsg']))
-  output.send()
 }
 
 exports.SetErrorWithMessageAndExceptionKW = async (input, output, session, properties) => {
   output.setError(input['ErrorMsg'], new Error(input['ErrorMsg']))
-  output.send()
 }
 
 exports.FailKW = async (input, output, session, properties) => {
@@ -28,19 +25,16 @@ exports.FailKW = async (input, output, session, properties) => {
 
 exports.BusinessErrorTestKW = async (input, output, session, properties) => {
   output.setBusinessError(input['ErrorMsg'])
-  output.send()
 }
 
 exports.ErrorRejectedPromiseTestKW = async (input, output, session, properties) => {
   Promise.reject(new Error('test'))
-  output.send()
 }
 
 exports.ErrorUncaughtExceptionTestKW = async (input, output, session, properties) => {
   process.nextTick(function () {
     throw new Error()
   })
-  output.send()
 }
 
 exports.onError = async (exception, input, output, session, properties) => {
@@ -52,24 +46,23 @@ exports.onError = async (exception, input, output, session, properties) => {
 // --- output.add ---
 
 exports.AddKW = async (input, output, session, properties) => {
-  output.add('name', 'Alice').add('score', 42).add('active', true).send()
+  output.add('name', 'Alice').add('score', 42).add('active', true)
 }
 
 // --- output.appendError ---
 
 exports.AppendErrorToExistingKW = async (input, output, session, properties) => {
-  output.setError('base error').appendError(' + extra detail').send()
+  output.setError('base error').appendError(' + extra detail')
 }
 
 exports.AppendErrorToNoneKW = async (input, output, session, properties) => {
-  output.appendError('fresh error').send()
+  output.appendError('fresh error')
 }
 
 // --- output.attach ---
 
 exports.AttachKW = async (input, output, session, properties) => {
   output.attach({ name: 'report.txt', isDirectory: false, description: 'test attachment', hexContent: Buffer.from('hello').toString('base64') })
-  output.send()
 }
 
 // --- measurement methods ---
@@ -78,18 +71,15 @@ exports.StartStopMeasureKW = async (input, output, session, properties) => {
   output.startMeasure('step1')
   await new Promise(r => setTimeout(r, 10))
   output.stopMeasure()
-  output.send()
 }
 
 exports.StartStopMeasureWithStatusKW = async (input, output, session, properties) => {
   output.startMeasure('failing-step')
   output.stopMeasure({ status: 'FAILED', data: { reason: 'assertion failed' } })
-  output.send()
 }
 
 exports.AddMeasureKW = async (input, output, session, properties) => {
   output.addMeasure('pre-timed', 150, { status: 'TECHNICAL_ERROR', begin: Date.now() - 150, data: { info: 'test' } })
-  output.send()
 }
 
 exports.MultipleMeasuresKW = async (input, output, session, properties) => {
@@ -98,27 +88,24 @@ exports.MultipleMeasuresKW = async (input, output, session, properties) => {
   output.startMeasure('second')
   output.stopMeasure({ status: 'FAILED' })
   output.addMeasure('third', 50)
-  output.send()
 }
 
 // --- session ---
 
 exports.SessionSetKW = async (input, output, session) => {
   session.set('sharedKey', input['value'])
-  output.send()
 }
 
 exports.SessionGetKW = async (input, output, session) => {
-  output.add('value', session.get('sharedKey')).send()
+  output.add('value', session.get('sharedKey'))
 }
 
 exports.SessionSetDotKW = async (input, output, session) => {
   session.dotKey = input['value']
-  output.send()
 }
 
 exports.SessionGetDotKW = async (input, output, session) => {
-  output.add('value', session.dotKey).send()
+  output.add('value', session.dotKey)
 }
 
 // --- beforeKeyword / afterKeyword hook tracking ---
@@ -136,5 +123,16 @@ exports.afterKeyword = async (functionName) => {
 exports.GetHookCallsKW = async (input, output) => {
   const calls = [..._hookCalls]
   _hookCalls = []
-  output.add('calls', calls).send()
+  output.add('calls', calls)
+}
+
+// --- backward compat: output.send() is no longer required but must still work ---
+
+exports.SendNoArgCompatKW = async (input, output) => {
+  output.add('result', 'ok')
+  output.send()
+}
+
+exports.SendWithPayloadCompatKW = async (input, output) => {
+  output.send({ result: 'ok' })
 }

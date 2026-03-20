@@ -34,7 +34,7 @@ class OutputBuilder {
 
   /**
    * Adds an output attribute to the payload. Can be called multiple times to build the payload
-   * incrementally. Call send() with no arguments afterwards to flush.
+   * incrementally. The accumulated payload is returned automatically — no need to call send().
    * @param {string} name
    * @param {*} value
    * @returns {OutputBuilder} this, for chaining
@@ -45,8 +45,11 @@ class OutputBuilder {
   }
 
   /**
-   * Sends the output. If a payload object is provided it replaces the current payload entirely.
-   * If called with no arguments, the payload built up via add() is used.
+   * @deprecated Calling send() is no longer required. The output accumulated via add(),
+   * setError(), attach(), etc. is returned automatically when the keyword finishes.
+   * This method is kept for backward compatibility and has no negative effect if called:
+   * - send() with no arguments is a no-op.
+   * - send(payload) still replaces the entire payload object, for code that relied on that behaviour.
    * @param {object} [payload]
    */
   send(payload) {
