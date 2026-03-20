@@ -32,6 +32,7 @@ import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.AutomationPackageConcurrentEditException;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.dynamicbeans.DynamicValue;
@@ -41,6 +42,7 @@ import step.parameter.automation.AutomationPackageParametersRegistration;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -116,6 +118,26 @@ public class AutomationPackageCollectionTest {
         planCollection.save(plan);
 
         assertFilesEqual(expectedFilesPath.resolve("plan1AfterModification.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
+    }
+
+
+    @Test
+    public void testPlanModifyWithConcurrentEdit() throws IOException {
+        Optional<Plan> optionalPlan = planCollection.find(Filters.equals("attributes.name", "Test Plan"), null, null, null, 100).findFirst();
+
+        assertTrue(optionalPlan.isPresent());
+
+        Plan plan = optionalPlan.get();
+
+        Echo firstEcho = (Echo) plan.getRoot().getChildren().get(0);
+        DynamicValue<Object> text = firstEcho.getText();
+        text.setDynamic(true);
+        text.setExpression("new Date().toString();");
+
+        Files.writeString(destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"), "This file was edited", StandardCharsets.UTF_8);
+
+        assertThrows(AutomationPackageConcurrentEditException.class, () -> planCollection.save(plan));
+
     }
 
 
