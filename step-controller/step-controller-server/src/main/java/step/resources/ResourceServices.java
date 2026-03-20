@@ -52,6 +52,8 @@ import java.util.stream.Collectors;
 public class ResourceServices extends AbstractStepAsyncServices {
 
     private static final String RESOURCE_RIGHT_NAME = "resource";
+    public static final String INVALID_ARGUMENTS_A_NON_NULL_RESOURCE_MUST_BE_PROVIDED = "Invalid arguments: a non null resource must be provided.";
+    public static final String INVALID_RESOURCE_THE_RESOURCE_HAS_NO_RESOURCE_TYPE_SET = "Invalid resource: the resource has no resourceType set.";
 
     protected ResourceManager resourceManager;
     private TableService tableService;
@@ -78,14 +80,18 @@ public class ResourceServices extends AbstractStepAsyncServices {
     }
 
     private void checkResourceTypeRight(String resourceType, String right) {
+        if (resourceType == null || resourceType.isEmpty()) {
+            throw new ControllerServiceException(INVALID_RESOURCE_THE_RESOURCE_HAS_NO_RESOURCE_TYPE_SET);
+        }
         checkRightIfDefined(RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + resourceType +  RIGHT_SEPARATOR + right);
     }
 
     private void checkResourceTypeRight(Resource resource, String right) {
-        //We have different services where we do not explicitly check if the type is set, for this reason that if type is not set we grant access
-        String resourceType = resource.getResourceType();
-        if (resourceType != null && !resourceType.isEmpty()) {
-            checkResourceTypeRight(resourceType, right);
+        //If a resource is null, right is granted too, it's not the role of this function to perform integrity check
+        if (resource == null) {
+            throw new ControllerServiceException(INVALID_ARGUMENTS_A_NON_NULL_RESOURCE_MUST_BE_PROVIDED);
+        } else {
+            checkResourceTypeRight(resource.getResourceType(), right);
         }
     }
 
@@ -132,7 +138,16 @@ public class ResourceServices extends AbstractStepAsyncServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Resource saveResource(Resource resource) throws IOException {
+        // Always check that we have write access to the new resource type, this automatically ensure the resource and its resourceType are not null
         checkResourceTypeRight(resource, WRITE_RIGHT);
+        // When updating a resource, we need write access to both the original and new types
+        String resourceId = resource.getId().toHexString();
+        if (resourceManager.resourceExists(resourceId)) {
+            String originalResourceType = resourceManager.getResource(resourceId).getResourceType();
+            if (!resource.getResourceType().equals(originalResourceType)) {
+                checkResourceTypeRight(originalResourceType, WRITE_RIGHT);
+            }
+        }
         auditLog("save", resource);
         return resourceManager.saveResource(resource);
     }
@@ -147,7 +162,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
         if (uploadedInputStream == null || fileDetail == null)
             throw new RuntimeException("Invalid arguments");
 
-        checkResourceTypeRight(getResource(resourceId), WRITE_RIGHT);
+        checkResourceTypeRight(resourceManager.getResource(resourceId), WRITE_RIGHT);
         try {
             Resource resource = resourceManager.saveResourceContent(resourceId, uploadedInputStream, fileDetail.getFileName(), null, getSession().getUser().getUsername());
             auditLog("save-content", resource);
