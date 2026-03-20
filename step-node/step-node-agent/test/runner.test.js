@@ -204,6 +204,42 @@ describe('runner', () => {
   })
 
   // ---------------------------------------------------------------------------
+  // properties
+  // ---------------------------------------------------------------------------
+
+  describe('properties', () => {
+    test('property passed to runner constructor is accessible in a keyword', async () => {
+      const output = await runner.run('GetPropertyKW', { key: 'Property1' })
+      expect(output.payload.value).toBe('Prop1')
+    })
+
+    test('all properties passed to runner constructor are accessible', async () => {
+      const r = require('../api/runner/runner')({ KeyA: 'ValA', KeyB: 'ValB' })
+      r.setThrowExceptionOnError(false)
+      try {
+        const outputA = await r.run('GetPropertyKW', { key: 'KeyA' })
+        const outputB = await r.run('GetPropertyKW', { key: 'KeyB' })
+        expect(outputA.payload.value).toBe('ValA')
+        expect(outputB.payload.value).toBe('ValB')
+      } finally {
+        r.close()
+      }
+    })
+
+    test('runner without properties gives keywords an empty properties object', async () => {
+      const r = require('../api/runner/runner')()
+      r.setThrowExceptionOnError(false)
+      try {
+        const output = await r.run('GetPropertyKW', { key: 'anyKey' })
+        expect(output.payload.value).toBeUndefined()
+        expect(output.error).toBeUndefined()
+      } finally {
+        r.close()
+      }
+    })
+  })
+
+  // ---------------------------------------------------------------------------
   // beforeKeyword and afterKeyword hooks
   // ---------------------------------------------------------------------------
 

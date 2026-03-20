@@ -126,6 +126,12 @@ exports.GetHookCallsKW = async (input, output) => {
   output.add('calls', calls)
 }
 
+// --- properties ---
+
+exports.GetPropertyKW = async (input, output, session, properties) => {
+  output.add('value', properties[input['key']])
+}
+
 // --- backward compat: output.send() is no longer required but must still work ---
 
 exports.SendNoArgCompatKW = async (input, output) => {
