@@ -50,7 +50,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     public AbstractAutomationPackageFragmentYaml() {
         this.mapper = null;
         this.serializationRegistry = null;
-    };
+    }
 
     @JsonIgnore
     private URL url;

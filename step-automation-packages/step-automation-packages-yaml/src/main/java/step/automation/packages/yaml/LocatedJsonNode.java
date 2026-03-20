@@ -29,10 +29,6 @@ public class LocatedJsonNode extends ObjectNode {
         return new LocationAwareTreeTraversingParser(super.traverse(), this);
     }
 
-    public JsonLocation getEndLocation() {
-        return endLocation;
-    }
-
     public JsonLocation getStartLocation() {
         return startLocation;
     }

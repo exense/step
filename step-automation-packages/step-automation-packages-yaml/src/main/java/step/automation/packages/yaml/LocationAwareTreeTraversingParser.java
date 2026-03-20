@@ -17,12 +17,6 @@ public class LocationAwareTreeTraversingParser extends PatchingParserDelegate {
 
     @Override
     public JsonLocation currentLocation() {
-        // return the captured location instead of the default one
-        // which would just point to the original source
         return sourceNode.getStartLocation();
-    }
-
-    public LocatedJsonNode getSourceNode() {
-        return sourceNode;
     }
 }

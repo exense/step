@@ -25,8 +25,7 @@ public class PatchableYamlModelDeserializer<T extends PatchableYamlModel> extend
     public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         if (p instanceof PatchingParserDelegate) {
             PatchingParserDelegate patchingParser = (PatchingParserDelegate) p;
-            JsonLocation startList = patchingParser.getDistinctLocationBeforeToken(JsonToken.FIELD_NAME);
-            int startListItemOffset = 0;
+            int startListItemOffset;
             if (p.getLastClearedToken() == JsonToken.END_OBJECT) {
                 startListItemOffset = (int) patchingParser.getDistinctLocationBeforeToken(JsonToken.END_OBJECT).getCharOffset();
             } else {
@@ -52,6 +51,6 @@ public class PatchableYamlModelDeserializer<T extends PatchableYamlModel> extend
         if (contextual instanceof ResolvableDeserializer) {
             ((ResolvableDeserializer) contextual).resolve(ctxt);
         }
-        return new PatchableYamlModelDeserializer<>((JsonDeserializer<T>) contextual);
+        return new PatchableYamlModelDeserializer<>(contextual);
     }
 }

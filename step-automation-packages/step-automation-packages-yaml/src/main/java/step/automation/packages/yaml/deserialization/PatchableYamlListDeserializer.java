@@ -6,8 +6,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.KeyDeserializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.NullValueProvider;
 import com.fasterxml.jackson.databind.deser.std.CollectionDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
@@ -15,19 +13,15 @@ import step.core.yaml.PatchableYamlList;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 
 public class PatchableYamlListDeserializer extends CollectionDeserializer {
 
-    private final CollectionDeserializer delegate;
-
     public PatchableYamlListDeserializer(CollectionDeserializer delegate) {
         super(delegate);
-        this.delegate = delegate;
     }
 
     @Override
-    public Collection<Object> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public Collection<Object> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         if (p instanceof PatchingParserDelegate) {
             PatchingParserDelegate patchingParser = (PatchingParserDelegate) p;
             JsonLocation startFieldLocation = patchingParser.getDistinctLocationBeforeToken(JsonToken.FIELD_NAME);

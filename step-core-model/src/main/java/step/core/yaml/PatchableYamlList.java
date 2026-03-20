@@ -20,15 +20,8 @@ package step.core.yaml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonLocation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import step.core.ReflectionUtils;
-
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class PatchableYamlList<T> extends ArrayList<T> implements PatchableYamlModel {
 

@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class PatchingParserDelegate extends JsonParserDelegate {
 
-    private Map<JsonToken, JsonLocation> distinctLocationBeforeToken = new HashMap<>();
+    private final Map<JsonToken, JsonLocation> distinctLocationBeforeToken = new HashMap<>();
 
     private JsonLocation lastDistinctLocation;
 

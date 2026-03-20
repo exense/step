@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
-import step.core.yaml.AbstractYamlModel;
 import step.core.yaml.PatchableAbstractYamlModel;
 import step.core.yaml.model.NamedYamlArtefact;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
