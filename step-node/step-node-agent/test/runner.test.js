@@ -8,8 +8,8 @@ describe('runner', () => {
     runner.setThrowExceptionOnError(false)
   })
 
-  afterAll(() => {
-    runner.close()
+  afterAll(async () => {
+    await runner.close()
   })
 
   // ---------------------------------------------------------------------------
@@ -204,6 +204,37 @@ describe('runner', () => {
   })
 
   // ---------------------------------------------------------------------------
+  // session auto-disposal on runner.close()
+  //
+  // Keywords run in a forked subprocess whose own session holds user-stored
+  // resources.  When runner.close() is called, the fork receives KILL and its
+  // session disposes those resources.  The close() side-effect (writing a temp
+  // file) is the observable signal crossing the process boundary.
+  // ---------------------------------------------------------------------------
+
+  describe('session auto-disposal on runner.close()', () => {
+    const os = require('os')
+    const path = require('path')
+    const fs = require('fs')
+
+    test('close() is called on a resource stored in the session when runner.close() is invoked', async () => {
+      const closePath = path.join(os.tmpdir(), `step-session-close-${Date.now()}.txt`)
+      const r = require('../api/runner/runner')()
+      r.setThrowExceptionOnError(false)
+      try {
+        await r.run('StoreCloseableKW', { closePath })
+        expect(fs.existsSync(closePath)).toBe(false) // resource not yet closed
+
+        await r.close()
+
+        expect(fs.existsSync(closePath)).toBe(true) // resource closed synchronously with the fork
+      } finally {
+        if (fs.existsSync(closePath)) fs.unlinkSync(closePath)
+      }
+    })
+  })
+
+  // ---------------------------------------------------------------------------
   // properties
   // ---------------------------------------------------------------------------
 
@@ -222,7 +253,7 @@ describe('runner', () => {
         expect(outputA.payload.value).toBe('ValA')
         expect(outputB.payload.value).toBe('ValB')
       } finally {
-        r.close()
+        await r.close()
       }
     })
 
@@ -234,7 +265,7 @@ describe('runner', () => {
         expect(output.payload.value).toBeUndefined()
         expect(output.error).toBeUndefined()
       } finally {
-        r.close()
+        await r.close()
       }
     })
   })

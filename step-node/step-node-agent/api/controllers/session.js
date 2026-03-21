@@ -24,39 +24,43 @@ try {
 }
 
 class Session extends Map {
-  [Symbol.dispose]() {
-    logger.info(`Disposing Session: Cleaning up ${this.size} resources...`);
+
+  async asyncDispose() {
+    logger.info(`Async-disposing Session: Cleaning up ${this.size} resources...`);
+    const promises = [];
 
     for (const [key, resource] of this) {
       try {
-        // 1. Try modern [Symbol.dispose]
-        if (resource && typeof resource[Symbol.dispose] === 'function') {
+        if (resource && typeof resource[Symbol.asyncDispose] === 'function') {
+          promises.push(resource[Symbol.asyncDispose]());
+        } else if (resource && typeof resource[Symbol.dispose] === 'function') {
           resource[Symbol.dispose]();
-        }
-        // 2. Fallback to Node.js child_process .kill()
-        else if (resource && typeof resource.kill === 'function') {
+        } else if (resource && typeof resource.kill === 'function') {
           resource.kill();
+        } else if (resource && typeof resource.close === 'function') {
+          const result = resource.close();
+          if (result && typeof result.then === 'function') promises.push(result);
         }
-        // 3. Fallback to generic .close()
-        else if (resource && typeof resource.close === 'function') {
-          resource.close();
-        }
-
         logger.debug(`Successfully closed resource: ${key}`);
       } catch (err) {
         logger.error(`Failed to close resource ${key}:`, err);
       }
     }
 
-    // Clean up Object properties (Added via .dot notation) to support keywords written for older versions of the agent exposing the session as simple object
+    // Clean up Object properties (Added via .dot notation)
     for (const key of Object.keys(this)) {
       const resource = this[key];
       if (resource && typeof resource.close === 'function') {
-        resource.close();
+        try {
+          const result = resource.close();
+          if (result && typeof result.then === 'function') promises.push(result);
+        } catch (err) {
+          logger.error(`Failed to close dot-notation resource ${key}:`, err);
+        }
       }
     }
 
-    // Clear the map after disposal so resources aren't held in memory
+    await Promise.allSettled(promises);
     this.clear();
   }
 }

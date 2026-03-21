@@ -132,6 +132,14 @@ exports.GetPropertyKW = async (input, output, session, properties) => {
   output.add('value', properties[input['key']])
 }
 
+// --- session auto-disposal ---
+
+exports.StoreCloseableKW = async (input, output, session) => {
+  session.set('resource', {
+    close() { require('fs').writeFileSync(input['closePath'], 'closed') }
+  })
+}
+
 // --- backward compat: output.send() is no longer required but must still work ---
 
 exports.SendNoArgCompatKW = async (input, output) => {

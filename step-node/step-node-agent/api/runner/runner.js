@@ -34,8 +34,8 @@ module.exports = function (properties = {}) {
     return output.payload
   }
 
-  api.close = function () {
-    tokenSession[Symbol.dispose]();
+  api.close = async function () {
+    return await tokenSession.asyncDispose();
   }
 
   return api

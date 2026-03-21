@@ -73,7 +73,7 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
     }
   } else if (type === 'KILL') {
     console.log("[Agent fork] Exiting...")
-    session[Symbol.dispose]();
+    await session.asyncDispose();
     process.exit(1)
   }
 

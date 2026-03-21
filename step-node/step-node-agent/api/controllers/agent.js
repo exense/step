@@ -48,13 +48,13 @@ class Agent {
     res.json({})
   }
 
-  releaseToken_(tokenId) {
+  async releaseToken_(tokenId) {
     logger.info('Releasing token: ' + tokenId)
 
     const session = this.agentContext.tokenSessions[tokenId]
     if (session) {
       // Close the session and all objects it contains
-      session[Symbol.dispose]();
+      await session.asyncDispose();
       this.agentContext.tokenSessions[tokenId] = null;
     } else {
       logger.warn('No session found for token: ' + tokenId)
@@ -410,12 +410,20 @@ class ForkedAgent {
     }
   }
 
-  close() {
+  async close() {
+    const exitPromise = new Promise(resolve => {
+      if (this.forkProcess.exitCode !== null) {
+        resolve();
+      } else {
+        this.forkProcess.once('exit', resolve);
+      }
+    });
     try {
       this.forkProcess.send({ type: "KILL" });
     } catch {
       this.forkProcess.kill();
     }
+    await exitPromise;
     fs.rmSync(this.agentForkerLibPath, {recursive: true, force: true});
   }
 }
