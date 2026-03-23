@@ -41,10 +41,17 @@ class Agent {
 
   reserveToken_(tokenId) {
     logger.info('Reserving token: ' + tokenId)
+    const session = this.agentContext.tokenSessions[tokenId]
+    if (session) {
+      logger.warn('As session is still existing for token: ' + tokenId + '. This usually means that the previous session was not released properly. Trying to release the session again.');
+      // Close the previous session without waiting
+      session.asyncDispose();
+      this.agentContext.tokenSessions[tokenId] = null;
+    }
   }
 
-  releaseToken(req, res) {
-    this.releaseToken_(req.params.tokenId)
+  async releaseToken(req, res) {
+    await this.releaseToken_(req.params.tokenId)
     res.json({})
   }
 
@@ -172,15 +179,17 @@ class Agent {
         forkedAgent = createForkedAgent(npmProjectPath);
         session.set('forkedAgent', forkedAgent);
 
-        logger.info('Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
-        const npmInstallResult = await this.executeNpmInstall(npmProjectPath);
-        const npmInstallFailed = npmInstallResult.status !== 0 || npmInstallResult.error != null;
-        if (npmInstallFailed || isDebugEnabled) {
-          npmAttachment = npmInstallResult.processOutputAttachment;
-        }
+        if (properties['skipNpmInstall'] === 'true') {
+          logger.info('Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
+          const npmInstallResult = await this.executeNpmInstall(npmProjectPath);
+          const npmInstallFailed = npmInstallResult.status !== 0 || npmInstallResult.error != null;
+          if (npmInstallFailed || isDebugEnabled) {
+            npmAttachment = npmInstallResult.processOutputAttachment;
+          }
 
-        if (npmInstallFailed) {
-          throw npmInstallResult.error || new Error('npm install exited with code ' + npmInstallResult.status);
+          if (npmInstallFailed) {
+            throw npmInstallResult.error || new Error('npm install exited with code ' + npmInstallResult.status);
+          }
         }
 
         session.set('keywordDirectory', await readStepKeywordDirectory(npmProjectPath));
@@ -190,7 +199,7 @@ class Agent {
       logger.info('Executing keyword \'' + keywordName + '\' in ' + npmProjectPath + ' for token ' + tokenId)
       const { result, processOutputAttachment } = await forkedAgent.runKeywordTask(npmProjectPath, keywordName, argument, properties, callTimeoutMs, this.redirectIO, keywordDirectory);
       outputBuilder.merge(result.payload)
-      if (result.error || isDebugEnabled) {
+      if (result?.payload?.error || isDebugEnabled) {
         forkedAgentProcessOutputAttachment = processOutputAttachment;
       }
     } catch (e) {
@@ -391,11 +400,14 @@ class ForkedAgent {
         this.forkProcess.removeAllListeners('error');
         this.forkProcess.on('error', (err) => {
           logger.error('Error while calling forked agent:', err)
+          const processOutputAttachment = buildProcessOutputAttachment(stdChunks);
+          reject(new CategorizedError('Error while calling forked agent: ' + err.message, processOutputAttachment));
         });
 
         this.forkProcess.send({ type: "KEYWORD", projectPath: keywordProjectPath, functionName, input, properties, keywordDirectory });
       } catch (e) {
         logger.error('Unexpected error while calling forked agent:', e)
+        reject(new Error('Unexpected error while calling forked agent. See agent logs for more details.'));
       }
     });
 
