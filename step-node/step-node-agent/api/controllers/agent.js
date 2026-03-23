@@ -345,13 +345,29 @@ class ForkedAgent {
     fs.copyFileSync(path.join(__dirname, 'output.js'), path.join(agentForkerLibPath, 'output.js'));
     fs.copyFileSync(path.join(__dirname, 'session.js'), path.join(agentForkerLibPath, 'session.js'));
     this.agentForkerLibPath = agentForkerLibPath;
+    this.startupChunks = [];
     this.forkProcess = fork(path.join(agentForkerLibPath, 'agent-fork.js'), [], {cwd: keywordProjectPath, silent: true});
+    // Capture stdout/stderr immediately so startup crashes are not silently lost
+    if (this.forkProcess.stdout) {
+      this.forkProcess.stdout.on('data', (data) => this.startupChunks.push(data));
+    }
+    if (this.forkProcess.stderr) {
+      this.forkProcess.stderr.on('data', (data) => this.startupChunks.push(data));
+    }
+    this.forkProcess.once('exit', (code, signal) => {
+      if (code !== 0 && code !== null || signal) {
+        const output = Buffer.concat(this.startupChunks).toString();
+        logger.error(`Forked agent process exited unexpectedly (code=${code}, signal=${signal}). Process output:\n${output || '(empty)'}`);
+      }
+    });
   }
 
   runKeywordTask(keywordProjectPath, functionName, input, properties, timeoutMs, redirectIO, keywordDirectory) {
     return new Promise((resolve, reject) => {
       try {
-        const stdChunks = [];
+        // Include any output captured before this task started (e.g. startup crashes)
+        const stdChunks = [...this.startupChunks];
+        this.startupChunks = [];
 
         const stdoutListener = (data) => {
           stdChunks.push(data);
