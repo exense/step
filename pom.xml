@@ -52,8 +52,10 @@
     <dep.groovy.version>5.0.4</dep.groovy.version>
     <dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
     <!-- When updating POI, see where this reference is used and read the comments there! -->
-    <dep.apache-poi.version>5.2.3</dep.apache-poi.version>
-    <dep.aether.version>1.1.0</dep.aether.version>
+    <dep.apache-poi.version>5.5.1</dep.apache-poi.version>
+    <!-- This concerns maven versions referred to in code, not during mvn builds -->
+    <dep.maven.version>3.8.6</dep.maven.version>
+    <dep.maven-resolver.version>1.6.3</dep.maven-resolver.version>
 
     <!-- maven build dependencies -->
     <dep.mvn.assembly.version>3.7.1</dep.mvn.assembly.version>
@@ -255,37 +257,6 @@
       </dependency>
 
       <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-api</artifactId>
-        <version>${dep.aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-spi</artifactId>
-        <version>${dep.aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-impl</artifactId>
-        <version>${dep.aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-connector-basic</artifactId>
-        <version>${dep.aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-transport-file</artifactId>
-        <version>${dep.aether.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.aether</groupId>
-        <artifactId>aether-transport-http</artifactId>
-        <version>${dep.aether.version}</version>
-      </dependency>
-
-      <dependency>
         <groupId>javax.json</groupId>
         <artifactId>javax.json-api</artifactId>
         <version>1.1.4</version>
@@ -304,7 +275,7 @@
         <!-- When updating POI, check if the definition right below is still necessary!!! -->
       </dependency>
 
-      <!-- For POI: force javaparser-core to the higher version from groovy (POI references 3.24.4) -->
+      <!-- For POI: force javaparser-core to the higher version from groovy (POI references 3.26.2) -->
       <dependency>
         <groupId>com.github.javaparser</groupId>
         <artifactId>javaparser-core</artifactId>
@@ -385,16 +356,61 @@
       </dependency>
 
       <!-- These are not for the maven builds, but for the actual sources implementing maven functionality -->
-      <!-- See SED-4411, these need to be consolidated -->
       <dependency>
         <groupId>org.apache.maven</groupId>
-        <artifactId>maven-aether-provider</artifactId>
-        <version>3.3.9</version>
+        <artifactId>maven-model-builder</artifactId>
+        <version>${dep.maven.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-settings</artifactId>
+        <version>${dep.maven.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.maven</groupId>
         <artifactId>maven-settings-builder</artifactId>
-        <version>3.8.6</version>
+        <version>${dep.maven.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven</groupId>
+        <artifactId>maven-resolver-provider</artifactId>
+        <version>${dep.maven.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-api</artifactId>
+        <version>${dep.maven-resolver.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-spi</artifactId>
+        <version>${dep.maven-resolver.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-impl</artifactId>
+        <version>${dep.maven-resolver.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-util</artifactId>
+        <version>${dep.maven-resolver.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-connector-basic</artifactId>
+        <version>${dep.maven-resolver.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-transport-file</artifactId>
+        <version>${dep.maven-resolver.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.maven.resolver</groupId>
+        <artifactId>maven-resolver-transport-http</artifactId>
+        <version>${dep.maven-resolver.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -548,10 +564,6 @@
                 <requireUpperBoundDeps>
                   <excludes>
                     <exclude>jakarta.xml.bind:jakarta.xml.bind-api</exclude>
-                    <!-- TODO: SED-4411 to consolidate versions, then remove next line -->
-                    <exclude>org.apache.maven:maven-builder-support</exclude>
-                    <!-- Same idea, different conflict (with POI ooxml, might be solved once POI is upgraded) -->
-                    <exclude>org.apache.maven:maven-model</exclude>
                   </excludes>
                 </requireUpperBoundDeps>
               </rules>
