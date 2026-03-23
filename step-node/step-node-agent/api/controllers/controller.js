@@ -1,10 +1,10 @@
 module.exports = function Controller (agentContext, fileManager) {
   process.on('unhandledRejection', error => {
-    console.log('[Controller] Critical: an unhandled error (unhandled promise rejection) occured and might not have been reported', error)
+    console.log('[Controller] Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported', error)
   })
 
   process.on('uncaughtException', error => {
-    console.log('[Controller] Critical: an unhandled error (uncaught exception) occured and might not have been reported', error)
+    console.log('[Controller] Critical: an unhandled error (uncaught exception) occurred and might not have been reported', error)
   })
 
   let exports = {}
@@ -71,7 +71,7 @@ module.exports = function Controller (agentContext, fileManager) {
     })
 
     // add the properties of the tokenGroup
-    let additionalProperties = agentContext.tokenProperties[tokenId]
+    let additionalProperties = agentContext.tokenProperties[tokenId] || {}
     Object.entries(additionalProperties).forEach(function (element) {
       properties[element[0]] = element[1]
     })
@@ -150,7 +150,7 @@ module.exports = function Controller (agentContext, fileManager) {
         outputBuilder.fail('Unable to find keyword ' + keywordName)
       }
     } catch (e) {
-      outputBuilder.fail('An error occured while attempting to execute the keyword ' + keywordName, e)
+      outputBuilder.fail('An error occurred while attempting to execute the keyword ' + keywordName, e)
     }
   }
 

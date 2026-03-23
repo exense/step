@@ -58,8 +58,8 @@ const port = agentConf.agentPort || 3000
 const timeout = agentConf.agentServerTimeout || 600000
 const bodyParser = require('body-parser')
 
-app.use(bodyParser.urlencoded({extended: true}))
-app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({extended: true, limit: '10mb'}))
+app.use(bodyParser.json({limit: '10mb'}))
 
 // Apply JWT authentication middleware
 const createJwtAuthMiddleware = require('./middleware/jwtAuth')
