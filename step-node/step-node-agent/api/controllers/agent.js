@@ -180,6 +180,8 @@ class Agent {
         session.set('forkedAgent', forkedAgent);
 
         if (properties['skipNpmInstall'] === 'true') {
+          logger.info('Skipping npm install')
+        } else {
           logger.info('Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
           const npmInstallResult = await this.executeNpmInstall(npmProjectPath);
           const npmInstallFailed = npmInstallResult.status !== 0 || npmInstallResult.error != null;
