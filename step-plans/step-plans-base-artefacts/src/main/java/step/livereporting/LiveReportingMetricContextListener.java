@@ -17,17 +17,19 @@
  * along with Step.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package step.livereporting.client;
+package step.livereporting;
 
-import step.reporting.impl.LiveMeasureDestination;
-import step.reporting.impl.LiveMetricDestination;
-import step.streaming.client.upload.StreamingUploadProvider;
+import step.core.metrics.MetricSnapshot;
 
-public interface LiveReportingClient {
+import java.util.List;
 
-    LiveMeasureDestination getLiveMeasureDestination();
-
-    LiveMetricDestination getLiveMetricDestination();
-
-    StreamingUploadProvider getStreamingUploadProvider();
+/**
+ * Listener notified when a batch of {@link MetricSnapshot}s is received for a
+ * {@link LiveReportingContext}. Registered by {@code MeasurementPlugin} during
+ * {@code beforeFunctionExecution} so that live metric snapshots are processed immediately
+ * as they arrive from the agent.
+ */
+@FunctionalInterface
+public interface LiveReportingMetricContextListener {
+    void accept(List<MetricSnapshot> metrics);
 }

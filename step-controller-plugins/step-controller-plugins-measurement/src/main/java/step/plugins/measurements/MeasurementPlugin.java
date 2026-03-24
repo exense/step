@@ -15,6 +15,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
+import step.core.metrics.MetricSnapshot;
 import step.core.plans.Plan;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
@@ -160,6 +161,12 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
             List<Measurement> measurements = measures.stream().map(m -> createMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
             processMeasurements(measurements);
         });
+        LiveReportingPlugin.getLiveReportingContext(context).registerMetricListener(snapshots -> {
+            List<MetricMeasurement> metricMeasurements = snapshots.stream()
+                .map(s -> createMetricMeasurement(context, s, (CallFunctionReportNode) node))
+                .collect(Collectors.toList());
+            processMetrics(metricMeasurements);
+        });
     }
 
     @Override
@@ -260,6 +267,17 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
             if (!measurements.isEmpty()) {
                 processMeasurements(measurements);
             }
+            //For keyword call, process output metrics
+            if (node instanceof CallFunctionReportNode) {
+                CallFunctionReportNode functionReport = (CallFunctionReportNode) node;
+                List<MetricSnapshot> outputMetrics = functionReport.getMetrics();
+                if (outputMetrics != null && !outputMetrics.isEmpty()) {
+                    List<MetricMeasurement> metricMeasurements = outputMetrics.stream()
+                        .map(m -> createMetricMeasurement(executionContext, m, functionReport))
+                        .collect(Collectors.toList());
+                    processMetrics(metricMeasurements);
+                }
+            }
         }
         if (node instanceof ThreadReportNode) {
             processThreadReportNode(executionContext, (ThreadReportNode) node, false);
@@ -287,6 +305,34 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
         enrichWithCustomData(measurement, measure.getData());
         enrichWithAdditionalAttributes(measurement, executionContext);
         return measurement;
+    }
+
+    private MetricMeasurement createMetricMeasurement(ExecutionContext executionContext, MetricSnapshot metric,
+                                                       CallFunctionReportNode functionReport) {
+        Plan plan = executionContext.getPlan();
+        String planId = plan.getId().toString();
+        String planName = Objects.requireNonNullElse(plan.getAttribute(AbstractOrganizableObject.NAME), "");
+        String taskId = Objects.requireNonNullElse((String) executionContext.get(CTX_SCHEDULER_TASK_ID), "");
+        String schedule = Objects.requireNonNullElse((String) executionContext.get(CTX_SCHEDULE_NAME), "");
+        String execution = Objects.requireNonNullElse((String) executionContext.get(CTX_EXECUTION_DESCRIPTION), "");
+        String execId = functionReport.getExecutionID();
+        String rnId = functionReport.getId().toString();
+        String agentUrl = functionReport.getAgentUrl();
+        String status = functionReport.getStatus() != null ? functionReport.getStatus().name() : null;
+        Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
+        TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
+        return new MetricMeasurement(metric, execId, rnId, planId, planName, taskId, schedule, execution,
+            agentUrl, functionAttributes, status, additionalAttributes);
+    }
+
+    public void processMetrics(List<MetricMeasurement> metrics) {
+        for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
+            try {
+                measurementHandler.processMetrics(metrics);
+            } catch (Exception e) {
+                logger.error("Metrics could not be processed by " + measurementHandler.getClass().getSimpleName(), e);
+            }
+        }
     }
 
     private static String getMeasureTypeOrDefault(Measure measure) {

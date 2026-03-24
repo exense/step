@@ -4,11 +4,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
+import step.core.metrics.CounterSnapshot;
+import step.core.metrics.MetricSnapshot;
+import step.core.metrics.SampledSnapshot;
 import step.core.timeseries.TimeSeries;
+import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
+import step.plugins.measurements.MetricMeasurement;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +28,9 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     private static final String METRIC_TYPE_KEY = "metricType";
     private static final String METRIC_TYPE_RESPONSE_TIME = "response-time";
     private static final String METRIC_TYPE_SAMPLER = "sampler";
+    private static final String METRIC_TYPE_COUNTER = "counter";
+    private static final String METRIC_TYPE_GAUGE = "gauge";
+    private static final String METRIC_TYPE_HISTOGRAM = "histogram";
 
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesBucketingHandler.class);
 
@@ -75,6 +83,100 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
                 ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
         });
+    }
+
+    /**
+     * Ingests a batch of enriched metric snapshots into the time series.
+     * <p>
+     * {@link CounterSnapshot}: ingested as a bucket where {@code count = accumulatedDiff}
+     * (increments since last flush, for per-interval rate calculations) and
+     * {@code sum = min = max = longRunningTotal} (absolute counter value at the end of the
+     * interval, for "current total" display via LAST/MAX aggregation). Empty intervals
+     * (diff == 0) are skipped.
+     * <p>
+     * {@link SampledSnapshot} (gauge/histogram): the pre-aggregated statistics
+     * (count, sum, min, max, distribution) are injected directly as a bucket, preserving the
+     * full distribution for percentile queries. Empty intervals (count == 0) are skipped.
+     */
+    @Override
+    public void processMetrics(List<MetricMeasurement> metrics) {
+        metrics.forEach(this::processMetric);
+    }
+
+    private void processMetric(MetricMeasurement mm) {
+        MetricSnapshot snapshot = mm.getMetric();
+        long begin = snapshot.getSnapshotTimestamp();
+        BucketAttributes attributes = metricMeasurementToBucketAttributes(mm);
+        TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.getIngestionPipeline();
+        switch (snapshot.getType()) {
+            case COUNTER: {
+                CounterSnapshot counter = (CounterSnapshot) snapshot;
+                if (counter.getAccumulatedDiff() == 0) {
+                    return;
+                }
+                attributes.put(METRIC_TYPE_KEY, METRIC_TYPE_COUNTER);
+                ingestionPipeline.ingestBucket(buildCounterBucket(attributes, begin, counter));
+                break;
+            }
+            case GAUGE: {
+                SampledSnapshot sampled = (SampledSnapshot) snapshot;
+                if (sampled.getCount() == 0) {
+                    return;
+                }
+                attributes.put(METRIC_TYPE_KEY, METRIC_TYPE_GAUGE);
+                ingestionPipeline.ingestBucket(buildSampledBucket(attributes, begin, sampled));
+                break;
+            }
+            case HISTOGRAM: {
+                SampledSnapshot sampled = (SampledSnapshot) snapshot;
+                if (sampled.getCount() == 0) {
+                    return;
+                }
+                attributes.put(METRIC_TYPE_KEY, METRIC_TYPE_HISTOGRAM);
+                ingestionPipeline.ingestBucket(buildSampledBucket(attributes, begin, sampled));
+                break;
+            }
+            default:
+                logger.warn("Unhandled metric type: {}", snapshot.getType());
+        }
+    }
+
+    private BucketAttributes metricMeasurementToBucketAttributes(MetricMeasurement mm) {
+        Map<String, Object> attributesMap = new HashMap<>();
+        Map<String, String> effectiveLabels = mm.getEffectiveLabels();
+        handledAttributes.forEach(a -> {
+            if (effectiveLabels.containsKey(a)) {
+                attributesMap.put(a, effectiveLabels.get(a));
+            }
+        });
+        // Metric name always present under "name" for consistent time-series grouping
+        attributesMap.put("name", mm.getMetric().getName());
+        return new BucketAttributes(attributesMap);
+    }
+
+    private static Bucket buildCounterBucket(BucketAttributes attributes, long begin, CounterSnapshot counter) {
+        Bucket bucket = new Bucket();
+        bucket.setBegin(begin);
+        bucket.setAttributes(attributes);
+        bucket.setCount(counter.getAccumulatedDiff());
+        bucket.setSum(counter.getLongRunningTotal());
+        bucket.setMin(counter.getLongRunningTotal());
+        bucket.setMax(counter.getLongRunningTotal());
+        return bucket;
+    }
+
+    private static Bucket buildSampledBucket(BucketAttributes attributes, long begin, SampledSnapshot snapshot) {
+        Bucket bucket = new Bucket();
+        bucket.setBegin(begin);
+        bucket.setAttributes(attributes);
+        bucket.setCount(snapshot.getCount());
+        bucket.setSum(snapshot.getSum());
+        bucket.setMin(snapshot.getMin());
+        bucket.setMax(snapshot.getMax());
+        if (snapshot.getDistribution() != null) {
+            bucket.setDistribution(snapshot.getDistribution());
+        }
+        return bucket;
     }
 
     /**

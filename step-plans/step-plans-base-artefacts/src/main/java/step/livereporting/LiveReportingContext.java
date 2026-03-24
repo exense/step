@@ -19,6 +19,7 @@
 
 package step.livereporting;
 
+import step.core.metrics.MetricSnapshot;
 import step.core.reports.Measure;
 
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ public class LiveReportingContext {
      */
     public final String id = UUID.randomUUID().toString();
     private final List<LiveReportingContextListener> listeners = new ArrayList<>();
+    private final List<LiveReportingMetricContextListener> metricListeners = new ArrayList<>();
 
     public void registerListener(LiveReportingContextListener contextListener) {
         listeners.add(contextListener);
@@ -40,6 +42,16 @@ public class LiveReportingContext {
     public void onMeasuresReceived(List<Measure> measures) {
         for (LiveReportingContextListener listener : listeners) {
             listener.accept(measures);
+        }
+    }
+
+    public void registerMetricListener(LiveReportingMetricContextListener metricListener) {
+        metricListeners.add(metricListener);
+    }
+
+    public void onMetricsReceived(List<MetricSnapshot> metrics) {
+        for (LiveReportingMetricContextListener listener : metricListeners) {
+            listener.accept(metrics);
         }
     }
 }

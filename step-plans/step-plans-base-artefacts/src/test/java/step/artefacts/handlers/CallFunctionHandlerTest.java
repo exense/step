@@ -46,6 +46,13 @@ import step.core.json.JsonProviderCache;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
+import step.core.metrics.CounterMetric;
+import step.core.metrics.CounterSnapshot;
+import step.core.metrics.GaugeMetric;
+import step.core.metrics.HistogramMetric;
+import step.core.metrics.MetricSnapshot;
+import step.core.metrics.MetricType;
+import step.core.metrics.SampledSnapshot;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.reports.Measure;
@@ -398,6 +405,56 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
         assertEquals("{\"protectedParam\":\"protectedParamValue\",\"simpleValue\":\"simpleValue\",\"simpleParam\":\"simpleParamValue\",\"concat\":\"simpleParamValueprotectedParamValue\"}", node.getInput());
     }
 
+    @Test
+    public void testOutputMetricsTransferredToReportNode() {
+        MyFunction function = newFunctionWithMetrics();
+        Plan plan = newCallFunctionPlan(function);
+
+        PlanRunnerResult result = executionEngine.execute(plan);
+        CallFunctionReportNode node = getCallFunctionReportNode(result);
+
+        assertNull(node.getError());
+        List<MetricSnapshot> metrics = node.getMetrics();
+        assertNotNull(metrics);
+        assertEquals(3, metrics.size());
+
+        // Counter: 5+3 = 8 increments, label preserved
+        CounterSnapshot counter = (CounterSnapshot) metrics.get(0);
+        assertEquals("requests", counter.getName());
+        assertEquals(MetricType.COUNTER, counter.getType());
+        assertEquals(8, counter.getAccumulatedDiff());
+        assertEquals(8, counter.getLongRunningTotal());
+        assertEquals("checkout", counter.getLabels().get("service"));
+
+        // Gauge: 3 observations (10, 20, 5)
+        SampledSnapshot gauge = (SampledSnapshot) metrics.get(1);
+        assertEquals("queue_depth", gauge.getName());
+        assertEquals(MetricType.GAUGE, gauge.getType());
+        assertEquals(3, gauge.getCount());
+        assertEquals(35, gauge.getSum());
+        assertEquals(5, gauge.getMin());
+        assertEquals(20, gauge.getMax());
+
+        // Histogram: 2 observations (100, 200)
+        SampledSnapshot histogram = (SampledSnapshot) metrics.get(2);
+        assertEquals("response_time_ms", histogram.getName());
+        assertEquals(MetricType.HISTOGRAM, histogram.getType());
+        assertEquals(2, histogram.getCount());
+        assertEquals(300, histogram.getSum());
+    }
+
+    @Test
+    public void testNoOutputMetrics_reportNodeMetricsNull() {
+        MyFunction function = newPassingFunction();
+        Plan plan = newCallFunctionPlan(function);
+
+        PlanRunnerResult result = executionEngine.execute(plan);
+        CallFunctionReportNode node = getCallFunctionReportNode(result);
+
+        assertNull(node.getError());
+        assertNull(node.getMetrics());
+    }
+
     private static Plan newCallFunctionPlan(MyFunction function) {
         return newCallFunctionPlan(function, "{}");
     }
@@ -490,6 +547,29 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
 
         assertEquals("{\"Output1\":\"Value1\"}", node.getOutput());
         assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+    }
+
+    private static MyFunction newFunctionWithMetrics() {
+        MyFunction function = new MyFunction(input -> {
+            OutputBuilder builder = new OutputBuilder();
+
+            CounterMetric requests = builder.addCounter("requests", Map.of("service", "checkout"));
+            requests.increment(5);
+            requests.increment(3);
+
+            GaugeMetric queueDepth = builder.addGauge("queue_depth");
+            queueDepth.observe(10);
+            queueDepth.observe(20);
+            queueDepth.observe(5);
+
+            HistogramMetric responseTimes = builder.addHistogram("response_time_ms");
+            responseTimes.observe(100);
+            responseTimes.observe(200);
+
+            return builder.build();
+        });
+        function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
+        return function;
     }
 
     private static MyFunction newFunctionWithOutputs() {

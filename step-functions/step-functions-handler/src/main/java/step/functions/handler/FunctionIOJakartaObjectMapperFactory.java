@@ -20,8 +20,10 @@ package step.functions.handler;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsonp.JSONPModule;
 import org.glassfish.json.OutputJsonProviderImpl;
+import step.core.metrics.MetricSnapshot;
 import step.functions.io.Input;
 import step.functions.io.Output;
 
@@ -43,6 +45,9 @@ public class FunctionIOJakartaObjectMapperFactory {
         // since 1.0.3 (2013) they changed/corrected the implementation of the toString to output a valid json string representation
         // To support Java 17 we hat do move the jakarta packages which contain this json change/fix even in the oldest version
         mapper.registerModule(new JSONPModule(new OutputJsonProviderImpl()));
+        SimpleModule metricModule = new SimpleModule();
+        metricModule.addDeserializer(MetricSnapshot.class, new MetricSnapshotDeserializer());
+        mapper.registerModule(metricModule);
         return mapper;
     }
 }

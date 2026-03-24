@@ -352,6 +352,9 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
                     if (output.getMeasures() != null) {
                         node.setMeasures(output.getMeasures());
                     }
+                    if (output.getMetrics() != null) {
+                        node.setMetrics(output.getMetrics());
+                    }
 
                     String drainOutputValue = testArtefact.getResultMap().get();
                     drainOutput(drainOutputValue, output);
