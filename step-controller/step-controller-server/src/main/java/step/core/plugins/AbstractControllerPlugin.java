@@ -18,48 +18,6 @@
  ******************************************************************************/
 package step.core.plugins;
 
-import step.core.GlobalContext;
-import step.engine.plugins.ExecutionEnginePlugin;
-
 public abstract class AbstractControllerPlugin extends AbstractPlugin implements ControllerPlugin {
-
-    @Override
-    public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return null;
-    }
-
-    public AbstractWebPlugin getWebPlugin() {
-        return null;
-    }
-
-    @Override
-    public boolean canBeDisabled() {
-        return true;
-    }
-
-    @Override
-    public void serverStart(GlobalContext context) throws Exception {
-
-    }
-
-    @Override
-    public void serverStop(GlobalContext context) {
-
-    }
-
-    @Override
-    public void migrateData(GlobalContext context) throws Exception {
-
-    }
-
-    @Override
-    public void initializeData(GlobalContext context) throws Exception {
-
-    }
-
-    @Override
-    public void afterInitializeData(GlobalContext context) throws Exception {
-
-    }
 
 }

@@ -24,7 +24,11 @@ import step.framework.server.ServerPlugin;
 
 public interface ControllerPlugin extends ServerPlugin<GlobalContext> {
 
-    public ExecutionEnginePlugin getExecutionEnginePlugin();
+    default ExecutionEnginePlugin getExecutionEnginePlugin() {
+        return null;
+    }
 
-    public AbstractWebPlugin getWebPlugin();
+    default AbstractWebPlugin getWebPlugin() {
+        return null;
+    }
 }
