@@ -14,28 +14,23 @@ import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.exceptions.PluginCriticalException;
-import step.framework.server.ControllerInitializationPlugin;
 import step.core.plugins.Plugin;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.SchedulerServices;
 import step.framework.server.CORSRequestResponseFilter;
 import step.versionmanager.ControllerLog;
 import step.versionmanager.VersionManager;
+import step.versionmanager.VersionManagerPlugin;
 
 import java.io.IOException;
 import java.util.List;
 
-@Plugin
-public class StepControllerPlugin extends AbstractControllerPlugin implements ControllerInitializationPlugin<GlobalContext> {
+@Plugin(runsBefore = {VersionManagerPlugin.class})
+public class StepControllerPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(StepControllerPlugin.class);
 
     private Controller controller;
-
-    @Override
-    public void checkPreconditions(GlobalContext context) throws Exception {
-
-    }
 
     @Override
     public void init(GlobalContext context) throws Exception {
@@ -99,11 +94,9 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
         return url;
     }
 
-
     @Override
     public void recover(GlobalContext context) throws Exception {
-        //At this stage the version manager plugin cannot be started yet, so we create a version manager directly here to read the last start time
-        VersionManager<GlobalContext> versionManager = new VersionManager<>(context);
+        VersionManager<?> versionManager = context.require(VersionManager.class);
         versionManager.readLatestControllerLog();
         ControllerLog latestControllerLog = versionManager.getLatestControllerLog();
         ExecutionAccessor accessor = context.getExecutionAccessor();
@@ -157,7 +150,7 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
     }
 
     @Override
-    public void postShutdownHook(GlobalContext context) {
+    public void postShutdownHook() {
         try {
             if (controller != null) {
                 controller.postShutdownHook();
@@ -166,12 +159,6 @@ public class StepControllerPlugin extends AbstractControllerPlugin implements Co
         } catch (IOException e) {
             logger.error("Unable to gracefully shutdown the collection factory.", e);
         }
-    }
-
-
-    @Override
-    public void serverStop(GlobalContext context) {
-
     }
 
     @Override

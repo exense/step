@@ -26,36 +26,16 @@ import step.core.variables.VariableType;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 
-@Plugin
+@Plugin(dependencies = {StepControllerPlugin.class})
 public class ControllerSettingPlugin extends AbstractControllerPlugin {
 
     private ControllerSettingAccessor controllerSettingAccessor;
 
     @Override
-    public void serverStart(GlobalContext context) throws Exception {
+    public void init(GlobalContext context) throws Exception {
         controllerSettingAccessor = new ControllerSettingAccessorImpl(
             context.getCollectionFactory().getCollection("settings", ControllerSetting.class));
         context.put(ControllerSettingAccessor.class, controllerSettingAccessor);
-    }
-
-    @Override
-    public void migrateData(GlobalContext context) throws Exception {
-
-    }
-
-    @Override
-    public void initializeData(GlobalContext context) throws Exception {
-
-    }
-
-    @Override
-    public void afterInitializeData(GlobalContext context) throws Exception {
-
-    }
-
-    @Override
-    public void serverStop(GlobalContext context) {
-
     }
 
     @Override
