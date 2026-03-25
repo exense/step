@@ -15,7 +15,7 @@ public class MigrateParametersToDynamicValues extends MigrationTask {
     private final Collection<Document> parametersversions;
 
     public MigrateParametersToDynamicValues(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-        super(new Version(3,26,0), collectionFactory, migrationContext);
+        super(new Version(3, 26, 0), collectionFactory, migrationContext);
         parameters = collectionFactory.getCollection("parameters", Document.class);
         parametersversions = collectionFactory.getCollection("parametersversions", Document.class);
     }

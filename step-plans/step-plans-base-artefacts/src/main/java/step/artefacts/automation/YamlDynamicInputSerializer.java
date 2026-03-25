@@ -95,7 +95,7 @@ public class YamlDynamicInputSerializer extends StepYamlSerializer<YamlDynamicIn
                             gen.writeFieldName(inputName);
                             gen.writeStartArray();
                             ArrayNode arrayNode = (ArrayNode) dynamicInputValue;
-                            for (int i=0; i < arrayNode.size(); i++) {
+                            for (int i = 0; i < arrayNode.size(); i++) {
                                 JsonNode itemNode = arrayNode.get(i);
                                 if (itemNode.isContainerNode()) {
                                     if (itemNode.get(DYN_VALUE_DYNAMIC_FIELD).asBoolean()) {
@@ -130,6 +130,6 @@ public class YamlDynamicInputSerializer extends StepYamlSerializer<YamlDynamicIn
     public boolean isEmpty(SerializerProvider provider, YamlDynamicInputs value) {
         DynamicValue<String> dynamicInputsValue = value.toDynamicValue();
         return !((dynamicInputsValue.getValue() != null && !dynamicInputsValue.getValue().isEmpty() && !dynamicInputsValue.getValue().equals(EMPTY_JSON))
-                || (dynamicInputsValue.getExpression() != null && !dynamicInputsValue.getExpression().isEmpty()));
+            || (dynamicInputsValue.getExpression() != null && !dynamicInputsValue.getExpression().isEmpty()));
     }
 }

@@ -25,15 +25,13 @@ import java.io.IOException;
 
 public class AutomationPackageFromClassLoaderProvider implements AutomationPackageArchiveProvider {
 
-    private final ClassLoader classLoader;
 
-    public AutomationPackageFromClassLoaderProvider(ClassLoader classLoader) {
-        this.classLoader = classLoader;
+    public AutomationPackageFromClassLoaderProvider() {
     }
 
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-        return new JavaAutomationPackageArchive(classLoader);
+        return new JavaAutomationPackageArchive();
     }
 
     @Override

@@ -45,11 +45,11 @@ public class MavenArtifactRepositoryTest extends AbstractMavenArtifactRepository
         // getTestSetStatusOverview
         TestSetStatusOverview testSetStatusOverview = artifactRepository.getTestSetStatusOverview(REPOSITORY_PARAMETERS, o -> true, "testUser");
         List<String> expected = Stream.of(
-                "plans/composite-simple-plan.yml", "plans/plan2.plan", "My custom keyword name",
-                "explicitPlanWithExecutionParameter", "planWithAssert", "testAutomation.plan", "plans/plan3.plan",
-                "Local Keyword", "plans/assertsTest.plan", "Inline Plan", "JMeter Plan", "Test Plan").sorted(String::compareTo).collect(Collectors.toList());
+            "plans/composite-simple-plan.yml", "plans/plan2.plan", "My custom keyword name",
+            "explicitPlanWithExecutionParameter", "planWithAssert", "testAutomation.plan", "plans/plan3.plan",
+            "Local Keyword", "plans/assertsTest.plan", "Inline Plan", "JMeter Plan", "Test Plan").sorted(String::compareTo).collect(Collectors.toList());
         assertEquals(expected,
-                testSetStatusOverview.getRuns().stream().map(TestRunStatus::getTestplanName).sorted(String::compareTo).collect(Collectors.toList()));
+            testSetStatusOverview.getRuns().stream().map(TestRunStatus::getTestplanName).sorted(String::compareTo).collect(Collectors.toList()));
 
         // importArtefact
         ImportResult tests = artifactRepository.importArtefact(executionContext, REPOSITORY_PARAMETERS);
@@ -65,7 +65,7 @@ public class MavenArtifactRepositoryTest extends AbstractMavenArtifactRepository
 
         // getArtefactInfo
         try {
-           artifactRepository.getArtefactInfo(Map.of());
+            artifactRepository.getArtefactInfo(Map.of());
         } catch (Exception e) {
             actualException = e;
         }

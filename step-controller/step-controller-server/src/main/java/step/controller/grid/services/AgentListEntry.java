@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -26,43 +26,43 @@ import step.grid.reports.TokenGroupCapacity;
 
 public class AgentListEntry {
 
-	private AgentRef agentRef;
-	
-	private List<TokenWrapper> tokens;
-	
-	private TokenGroupCapacity tokensCapacity;
+    private AgentRef agentRef;
 
-	public AgentListEntry() {
-		super();
-	}
+    private List<TokenWrapper> tokens;
 
-	public AgentListEntry(AgentRef agentRef, List<TokenWrapper> tokens) {
-		super();
-		this.agentRef = agentRef;
-		this.tokens = tokens;
-	}
+    private TokenGroupCapacity tokensCapacity;
 
-	public AgentRef getAgentRef() {
-		return agentRef;
-	}
+    public AgentListEntry() {
+        super();
+    }
 
-	public void setAgentRef(AgentRef agentRef) {
-		this.agentRef = agentRef;
-	}
+    public AgentListEntry(AgentRef agentRef, List<TokenWrapper> tokens) {
+        super();
+        this.agentRef = agentRef;
+        this.tokens = tokens;
+    }
 
-	public List<TokenWrapper> getTokens() {
-		return tokens;
-	}
+    public AgentRef getAgentRef() {
+        return agentRef;
+    }
 
-	public void setTokens(List<TokenWrapper> tokens) {
-		this.tokens = tokens;
-	}
+    public void setAgentRef(AgentRef agentRef) {
+        this.agentRef = agentRef;
+    }
 
-	public TokenGroupCapacity getTokensCapacity() {
-		return tokensCapacity;
-	}
+    public List<TokenWrapper> getTokens() {
+        return tokens;
+    }
 
-	public void setTokensCapacity(TokenGroupCapacity tokensCapacity) {
-		this.tokensCapacity = tokensCapacity;
-	}
+    public void setTokens(List<TokenWrapper> tokens) {
+        this.tokens = tokens;
+    }
+
+    public TokenGroupCapacity getTokensCapacity() {
+        return tokensCapacity;
+    }
+
+    public void setTokensCapacity(TokenGroupCapacity tokensCapacity) {
+        this.tokensCapacity = tokensCapacity;
+    }
 }

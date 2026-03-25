@@ -54,12 +54,12 @@ public class StreamingAttachmentMeta extends AttachmentMeta {
     @Override
     public String toString() {
         return "StreamingAttachmentMeta{" +
-                "id='" + _id.toHexString() + '\'' +
-                ", name='" + name + '\'' +
-                ", mimeType='" + mimeType + '\'' +
-                ", currentSize=" + currentSize +
-                ", currentNumberOfLines=" + currentNumberOfLines +
-                ", status=" + status +
-                '}';
+            "id='" + _id.toHexString() + '\'' +
+            ", name='" + name + '\'' +
+            ", mimeType='" + mimeType + '\'' +
+            ", currentSize=" + currentSize +
+            ", currentNumberOfLines=" + currentNumberOfLines +
+            ", status=" + status +
+            '}';
     }
 }

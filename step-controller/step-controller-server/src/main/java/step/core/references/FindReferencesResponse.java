@@ -17,7 +17,7 @@ public class FindReferencesResponse {
     public final ReferrerType type;
     public final String id;
     public final String name;
-    public final Map<String, String> attributes; 
+    public final Map<String, String> attributes;
 
     public FindReferencesResponse(ReferrerType type, String id, String name, Map<String, String> attributes) {
         this.type = type;

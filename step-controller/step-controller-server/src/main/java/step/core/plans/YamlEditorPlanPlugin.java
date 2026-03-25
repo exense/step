@@ -23,7 +23,7 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.plans.parser.yaml.editor.YamlEditorPlanType;
 
-@Plugin(dependencies= {PlanPlugin.class})
+@Plugin(dependencies = {PlanPlugin.class})
 public class YamlEditorPlanPlugin extends AbstractControllerPlugin {
 
     @Override

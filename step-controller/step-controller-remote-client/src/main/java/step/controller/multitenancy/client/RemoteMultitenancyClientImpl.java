@@ -32,25 +32,26 @@ import step.controller.multitenancy.Tenant;
 @Deprecated
 public class RemoteMultitenancyClientImpl extends AbstractRemoteClient implements MultitenancyClient {
 
-	public RemoteMultitenancyClientImpl(ControllerCredentials credentials) {
-		super(credentials);
-	}
+    public RemoteMultitenancyClientImpl(ControllerCredentials credentials) {
+        super(credentials);
+    }
 
-	@Override
-	public void selectTenant(String tenantName) throws Exception {
-		Builder b = requestBuilder("/rest/tenants/current");
-		executeRequest(()->b.post(Entity.entity(tenantName, MediaType.APPLICATION_JSON)));
-	}
-	
-	@Override
-	public List<Tenant> getAvailableTenants() {
-		Builder b = requestBuilder("/rest/tenants");
-		return executeRequest(()->b.get(new GenericType<List<Tenant>>() {}));
-	}
-	
-	@Override
-	public Tenant getCurrentTenant() {
-		Builder b = requestBuilder("/rest/tenants/current");
-		return executeRequest(()->b.get(Tenant.class));
-	}
+    @Override
+    public void selectTenant(String tenantName) throws Exception {
+        Builder b = requestBuilder("/rest/tenants/current");
+        executeRequest(() -> b.post(Entity.entity(tenantName, MediaType.APPLICATION_JSON)));
+    }
+
+    @Override
+    public List<Tenant> getAvailableTenants() {
+        Builder b = requestBuilder("/rest/tenants");
+        return executeRequest(() -> b.get(new GenericType<List<Tenant>>() {
+        }));
+    }
+
+    @Override
+    public Tenant getCurrentTenant() {
+        Builder b = requestBuilder("/rest/tenants/current");
+        return executeRequest(() -> b.get(Tenant.class));
+    }
 }

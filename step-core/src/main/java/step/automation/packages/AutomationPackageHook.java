@@ -13,13 +13,13 @@ import java.util.Map;
 
 public interface AutomationPackageHook<T> {
 
-    default void onMainAutomationPackageManagerCreate(Map<String, Object> extensions){
+    default void onMainAutomationPackageManagerCreate(Map<String, Object> extensions) {
     }
 
-    default void onIsolatedAutomationPackageManagerCreate(Map<String, Object> extensions){
+    default void onIsolatedAutomationPackageManagerCreate(Map<String, Object> extensions) {
     }
 
-    default void onLocalAutomationPackageManagerCreate(Map<String, Object> extensions){
+    default void onLocalAutomationPackageManagerCreate(Map<String, Object> extensions) {
         onMainAutomationPackageManagerCreate(extensions);
     }
 
@@ -52,9 +52,9 @@ public interface AutomationPackageHook<T> {
     /**
      * Create the entities (taken from previously prepared staging) in database
      */
-    default void onCreate(List<? extends T> entities, AutomationPackageContext context){
+    default void onCreate(List<? extends T> entities, AutomationPackageContext context) {
         for (T entity : entities) {
-            if(entity instanceof EnricheableObject) {
+            if (entity instanceof EnricheableObject) {
                 context.getEnricher().accept((EnricheableObject) entity);
             }
         }
@@ -69,14 +69,14 @@ public interface AutomationPackageHook<T> {
     /**
      * Prepare execution context before isolated execution
      */
-    default void beforeIsolatedExecution(AutomationPackage automationPackage, AbstractStepContext executionContext, Map<String, Object> apManagerExtensions, ImportResult importResult){
+    default void beforeIsolatedExecution(AutomationPackage automationPackage, AbstractStepContext executionContext, Map<String, Object> apManagerExtensions, ImportResult importResult) {
 
     }
 
     /**
      * Returns the map of database entities managed by this hook
      */
-    default Map<String, List<? extends AbstractOrganizableObject>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext){
+    default Map<String, List<? extends AbstractOrganizableObject>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext) {
         return new HashMap<>();
     }
 }

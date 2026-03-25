@@ -32,7 +32,7 @@ public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
     protected YamlDynamicInputs inputs = new YamlDynamicInputs("{}");
 
     @YamlFieldCustomCopy
-    protected YamlKeywordDefinition keyword = new YamlKeywordDefinition(null,null, "{}");
+    protected YamlKeywordDefinition keyword = new YamlKeywordDefinition(null, null, "{}");
 
     public YamlCallFunction() {
         super(CallFunction.class);

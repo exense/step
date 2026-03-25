@@ -103,18 +103,18 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
         String libraryName = library != null && library.isManagedLibraryNameConfigured() ? library.getManaged() : null;
 
         return new MavenDeployAutomationPackageTool(
-                url, new ApDeployParameters()
-                .setAutomationPackageMavenArtifact(remoteApMavenIdentifier)
-                .setAutomationPackageFile(localApFile)
-                .setLibraryFile(libraryFile)
-                .setlibraryMavenArtifact(libraryMavenArtifact)
-                .setManagedLibraryName(libraryName)
-                .setStepProjectName(projectName)
-                .setAuthToken(authToken)
-                .setAsync(async)
-                .setForceRefreshOfSnapshots(forceRefreshOfSnapshots)
-                .setVersionName(apVersion)
-                .setActivationExpression(activationExpr)
+            url, new ApDeployParameters()
+            .setAutomationPackageMavenArtifact(remoteApMavenIdentifier)
+            .setAutomationPackageFile(localApFile)
+            .setLibraryFile(libraryFile)
+            .setlibraryMavenArtifact(libraryMavenArtifact)
+            .setManagedLibraryName(libraryName)
+            .setStepProjectName(projectName)
+            .setAuthToken(authToken)
+            .setAsync(async)
+            .setForceRefreshOfSnapshots(forceRefreshOfSnapshots)
+            .setVersionName(apVersion)
+            .setActivationExpression(activationExpr)
         );
     }
 

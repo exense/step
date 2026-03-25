@@ -77,7 +77,7 @@ public class StepConsoleTest {
     public void testDeployAp() {
         List<TestApDeployCommand.ExecutionParams> deployExecHistory = new ArrayList<>();
 
-        Histories histories = new Histories(deployExecHistory,  null,null, null);
+        Histories histories = new Histories(deployExecHistory, null, null, null);
 
         // for EE
         int res = runMain(histories, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--projectName=testProject", "--token=abc", "--async", "--versionName=ver1", "--activationExpression=true==true");
@@ -133,7 +133,7 @@ public class StepConsoleTest {
 
         // deploy from artifactory
         deployExecHistory.clear();
-        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080",  "--versionName=1.0.0", "--library=mvn:ch.exense.step:some-step-keyword-lib:1.0.0:tests");
+        res = runMain(histories, "ap", "deploy", "-p=mvn:ch.exense.step:step-automation-packages-junit:0.0.0:tests", "-u=http://localhost:8080", "--versionName=1.0.0", "--library=mvn:ch.exense.step:some-step-keyword-lib:1.0.0:tests");
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
@@ -159,14 +159,14 @@ public class StepConsoleTest {
         Histories histories = new Histories(null, null, remoteExecuteHistory, null);
 
         // all parameters
-        StepConsole.main( "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar",
-                "-u=http://localhost:8080", "--projectName=automation-packages",
-                "--token=eyJhbGciOiJIUzI1NiJ9....",
-                "--async", "--includePlans=p1,p2",
-                "--packageLibrary=managed:MyLib",
-                "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD",
-                "--executionTimeoutS=1000",
-                "--excludePlans=p3,p4", "-ep=key1=value1|key2=value2", "-ep=key3=value3"
+        StepConsole.main("ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar",
+            "-u=http://localhost:8080", "--projectName=automation-packages",
+            "--token=eyJhbGciOiJIUzI1NiJ9....",
+            "--async", "--includePlans=p1,p2",
+            "--packageLibrary=managed:MyLib",
+            "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD",
+            "--executionTimeoutS=1000",
+            "--excludePlans=p3,p4", "-ep=key1=value1|key2=value2", "-ep=key3=value3"
         );
     }
 
@@ -178,10 +178,10 @@ public class StepConsoleTest {
 
         // all parameters
         int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar",
-                "-u=http://localhost:8080", "--projectName=testProject", "--token=abc", "--async", "--includePlans=p1,p2",
-                "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD",
-                "--executionTimeoutS=1000",
-                "--excludePlans=p3,p4", "-ep=key1=value1|key2=value2", "-ep=key3=value3"
+            "-u=http://localhost:8080", "--projectName=testProject", "--token=abc", "--async", "--includePlans=p1,p2",
+            "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD",
+            "--executionTimeoutS=1000",
+            "--excludePlans=p3,p4", "-ep=key1=value1|key2=value2", "-ep=key3=value3"
         );
 
         Assert.assertEquals(0, res);
@@ -243,7 +243,7 @@ public class StepConsoleTest {
     }
 
     @Test
-    public void testOutdatedVersion(){
+    public void testOutdatedVersion() {
         List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory = new ArrayList<>();
         List<TestLibraryDeployCommand.ExecutionParams> deployLibraryExecRegistry = new ArrayList<>();
         List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory = new ArrayList<>();
@@ -306,13 +306,13 @@ public class StepConsoleTest {
     }
 
     @Test
-    public void testLocalExecute(){
+    public void testLocalExecute() {
         List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory = new ArrayList<>();
 
-        Histories histories = new Histories(null, null,null, localExecuteHistory);
+        Histories histories = new Histories(null, null, null, localExecuteHistory);
 
         // all parameters
-        int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD","-ep=key1=value1|key2=value2", "-ep=key3=value3");
+        int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD", "-ep=key1=value1|key2=value2", "-ep=key3=value3");
 
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, localExecuteHistory.size());
@@ -336,7 +336,7 @@ public class StepConsoleTest {
 
         // properties files
         localExecuteHistory.clear();
-        res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local",  "-ep=key1=value1|key2=value2", "-c=src/test/resources/customCli.properties", "-c=src/test/resources/customCli2.properties");
+        res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "-ep=key1=value1|key2=value2", "-c=src/test/resources/customCli.properties", "-c=src/test/resources/customCli2.properties");
 
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, localExecuteHistory.size());
@@ -346,7 +346,7 @@ public class StepConsoleTest {
     }
 
     @Test
-    public void testLocalExecutionNoMock(){
+    public void testLocalExecutionNoMock() {
         int res = executeMain("ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local");
         Assert.assertEquals(0, res);
     }
@@ -407,11 +407,11 @@ public class StepConsoleTest {
     private int runMain(Histories histories, String... args) {
         log.info("--- Run CLI - BEGIN ---");
         int res = executeMain(
-                () -> new TestApDeployCommand(histories.deployHistory),
-                () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory),
-                () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
-                false,
-                args
+            () -> new TestApDeployCommand(histories.deployHistory),
+            () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory),
+            () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
+            false,
+            args
         );
         log.info("--- Run CLI - END ---" + "\n");
         return res;
@@ -420,11 +420,11 @@ public class StepConsoleTest {
     private int runMainWithVersion(Histories histories, Version version, String... args) {
         log.info("--- Run CLI - BEGIN ---");
         int res = executeMain(
-                () -> new TestApDeployCommand(histories.deployHistory, version),
-                () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version),
-                () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
-                false,
-                args
+            () -> new TestApDeployCommand(histories.deployHistory, version),
+            () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version),
+            () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
+            false,
+            args
         );
         log.info("--- Run CLI - END ---" + "\n");
         return res;
@@ -539,7 +539,7 @@ public class StepConsoleTest {
         public final List<LocalExecutionParams> localParams;
         private final Version mockedVersion;
 
-        public static class RemoteExecutionParams  {
+        public static class RemoteExecutionParams {
             private String stepUrl;
             private ApExecuteParameters params;
         }

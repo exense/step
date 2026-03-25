@@ -11,17 +11,17 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class MigrateDashboardsTest {
-    
+
     private final CollectionFactory collectionFactory;
     private final Collection<Document> dashboardCollection;
-    
+
     public MigrateDashboardsTest() {
-		super();
-		
-		this.collectionFactory = new InMemoryCollectionFactory(null);
-		this.dashboardCollection = collectionFactory.getCollection("dashboards", Document.class);
-	}
-    
+        super();
+
+        this.collectionFactory = new InMemoryCollectionFactory(null);
+        this.dashboardCollection = collectionFactory.getCollection("dashboards", Document.class);
+    }
+
     @Test
     public void migrateTest() {
         Document grafanaDashboard = createGrafanaDashboard();
@@ -62,7 +62,7 @@ public class MigrateDashboardsTest {
             assertNull(newChartSettings.get("inheritGlobalGrouping"));
             assertNull(newChartSettings.get("readonlyGrouping"));
             assertNull(newChartSettings.get("readonlyAggregate"));
-            
+
             assertEquals(newItem.get("metricKey"), oldChartSettings.get("metricKey"));
             assertEquals(newItem.getArray("attributes").size(), oldChartSettings.getArray("attributes").size());
             assertEquals(newItem.getArray("filters").size(), oldChartSettings.getArray("filters").size());
@@ -75,10 +75,10 @@ public class MigrateDashboardsTest {
             assertEquals(newItem.get("readonlyGrouping"), oldChartSettings.get("readonlyGrouping"));
             assertNotNull(newItem.get("readonlyAggregate"));
             assertEquals(newItem.get("readonlyAggregate"), oldChartSettings.get("readonlyAggregate"));
-            
+
         }
     }
-    
+
     private Document createOldDashboard() {
         List<DocumentObject> dashlets = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
@@ -97,11 +97,11 @@ public class MigrateDashboardsTest {
             chartSettings.put("inheritGlobalGrouping", true);
             chartSettings.put("readonlyGrouping", true);
             chartSettings.put("readonlyAggregate", true);
-            
+
             dashlet.put("chartSettings", chartSettings);
             dashlets.add(dashlet);
         }
-        
+
         Document root = new Document();
         root.put("name", "some dashboard name");
         root.put("description", "some description");

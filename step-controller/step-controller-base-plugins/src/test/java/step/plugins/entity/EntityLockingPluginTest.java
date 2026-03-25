@@ -16,25 +16,25 @@ import static step.controller.services.entities.AbstractEntityServices.CUSTOM_FI
 
 public class EntityLockingPluginTest {
 
-	@Test
-	public void test() throws Exception {
-		EntityLockingPlugin entityLockingPlugin = new EntityLockingPlugin();
-		GlobalContext globalContext = new GlobalContext();
-		ObjectHookRegistry objectHooks = new ObjectHookRegistry();
-		globalContext.put(ObjectHookRegistry.class, objectHooks);
-		entityLockingPlugin.serverStart(globalContext);
+    @Test
+    public void test() throws Exception {
+        EntityLockingPlugin entityLockingPlugin = new EntityLockingPlugin();
+        GlobalContext globalContext = new GlobalContext();
+        ObjectHookRegistry objectHooks = new ObjectHookRegistry();
+        globalContext.put(ObjectHookRegistry.class, objectHooks);
+        entityLockingPlugin.serverStart(globalContext);
 
-		Plan p = new Plan();
-		assertTrue(objectHooks.isObjectEditableInContext(null, p).isEmpty());
-		p.addCustomField(CUSTOM_FIELD_LOCKED, true);
-		Optional<ObjectAccessException> optionalViolations = objectHooks.isObjectEditableInContext(null, p);
-		assertTrue(optionalViolations.isPresent());
-		ObjectAccessException objectAccessException = optionalViolations.get();
-		assertEquals("This entity is locked and cannot be edited", objectAccessException.getMessage());
-		List<ObjectAccessViolation> violations = objectAccessException.getViolations();
-		assertEquals(1, violations.size());
-		assertEquals("This entity is locked and cannot be edited", violations.get(0).message);
+        Plan p = new Plan();
+        assertTrue(objectHooks.isObjectEditableInContext(null, p).isEmpty());
+        p.addCustomField(CUSTOM_FIELD_LOCKED, true);
+        Optional<ObjectAccessException> optionalViolations = objectHooks.isObjectEditableInContext(null, p);
+        assertTrue(optionalViolations.isPresent());
+        ObjectAccessException objectAccessException = optionalViolations.get();
+        assertEquals("This entity is locked and cannot be edited", objectAccessException.getMessage());
+        List<ObjectAccessViolation> violations = objectAccessException.getViolations();
+        assertEquals(1, violations.size());
+        assertEquals("This entity is locked and cannot be edited", violations.get(0).message);
 
-	}
+    }
 
 }

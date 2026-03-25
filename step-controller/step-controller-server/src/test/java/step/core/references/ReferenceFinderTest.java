@@ -49,7 +49,7 @@ public class ReferenceFinderTest {
     }
 
     @Test
-    public void findReferencesForPlansAndKeyword()  {
+    public void findReferencesForPlansAndKeyword() {
         Plan calledPlan = PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
         calledPlan.addAttribute(AbstractOrganizableObject.NAME, CALLED_PLAN_NAME);
         context.getPlanAccessor().save(calledPlan);
@@ -82,22 +82,22 @@ public class ReferenceFinderTest {
 
         //Search usage by Plan ID
         List<FindReferencesResponse> findReferencesResponse =
-                referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.PLAN_ID, calledPlanId));
+            referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.PLAN_ID, calledPlanId));
         assertPlansAndCompositesAreFound(findReferencesResponse, planCallingPlanById, planCallingPlanByName, compositeFunction);
 
         //Search usage by Plan name
         findReferencesResponse =
-                referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.PLAN_NAME, CALLED_PLAN_NAME));
+            referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.PLAN_NAME, CALLED_PLAN_NAME));
         assertPlansAndCompositesAreFound(findReferencesResponse, planCallingPlanById, planCallingPlanByName, compositeFunction);
 
         //Search Keyword By ID
         findReferencesResponse =
-                referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.KEYWORD_ID, function.getId().toString()));
+            referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.KEYWORD_ID, function.getId().toString()));
         assertPlansAndCompositesAreFound(findReferencesResponse, planCallingPlanById, planCallingPlanByName, compositeFunction);
 
         //Search Keyword By name
         findReferencesResponse =
-                referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.KEYWORD_NAME, CALLED_FUNCTION_NAME));
+            referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.KEYWORD_NAME, CALLED_FUNCTION_NAME));
         assertPlansAndCompositesAreFound(findReferencesResponse, planCallingPlanById, planCallingPlanByName, compositeFunction);
 
     }
@@ -131,12 +131,12 @@ public class ReferenceFinderTest {
         context.getPlanAccessor().save(planUsingResource);
 
         List<FindReferencesResponse> findReferencesResponse =
-                referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.RESOURCE_ID, resource.getId().toString()));
+            referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.RESOURCE_ID, resource.getId().toString()));
         assertFirstResponseReference(1, findReferencesResponse, planUsingResource, PLAN_USING_RESOURCE);
 
 
         findReferencesResponse =
-                referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.RESOURCE_NAME, CSV_FILE));
+            referenceFinder.findReferences(new FindReferencesRequest(FindReferencesRequest.Type.RESOURCE_NAME, CSV_FILE));
         assertFirstResponseReference(1, findReferencesResponse, planUsingResource, PLAN_USING_RESOURCE);
 
 

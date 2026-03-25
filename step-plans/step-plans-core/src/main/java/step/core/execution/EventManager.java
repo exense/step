@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -28,41 +28,41 @@ import step.core.artefacts.reports.ReportNode;
 
 public class EventManager {
 
-	private ConcurrentHashMap<ObjectId,List<ReportNodeEventListener>> listeners = new ConcurrentHashMap<>();
-	
-	public void addReportNodeEventListener(ReportNode node, ReportNodeEventListener listener) {
-		List<ReportNodeEventListener> listenerList = listeners.get(node.getId());
-		if(listenerList==null) {
-			listenerList = new LinkedList<ReportNodeEventListener>();
-			List<ReportNodeEventListener> previousValue = listeners.putIfAbsent(node.getId(), listenerList);
-			if(previousValue!=null) {
-				listenerList = previousValue;
-			}
-		}
-		synchronized (listenerList) {
-			listenerList.add(listener);			
-		}
-	}
-	
-	public void notifyReportNodeUpdated(ReportNode node) {
-		List<ReportNodeEventListener> listenerList = listeners.get(node.getId());
-		if(listenerList!=null) {
-			synchronized (listenerList) {
-				for(ReportNodeEventListener listener:listenerList) {
-					listener.onUpdate();
-				}
-			}
-		}
-	}
-	
-	public void notifyReportNodeDestroyed(ReportNode node) {
-		List<ReportNodeEventListener> listenerList = listeners.remove(node.getId());
-		if(listenerList!=null) {
-			synchronized (listenerList) {
-				for(ReportNodeEventListener listener:listenerList) {
-					listener.onDestroy();
-				}
-			}
-		}
-	}
+    private ConcurrentHashMap<ObjectId, List<ReportNodeEventListener>> listeners = new ConcurrentHashMap<>();
+
+    public void addReportNodeEventListener(ReportNode node, ReportNodeEventListener listener) {
+        List<ReportNodeEventListener> listenerList = listeners.get(node.getId());
+        if (listenerList == null) {
+            listenerList = new LinkedList<ReportNodeEventListener>();
+            List<ReportNodeEventListener> previousValue = listeners.putIfAbsent(node.getId(), listenerList);
+            if (previousValue != null) {
+                listenerList = previousValue;
+            }
+        }
+        synchronized (listenerList) {
+            listenerList.add(listener);
+        }
+    }
+
+    public void notifyReportNodeUpdated(ReportNode node) {
+        List<ReportNodeEventListener> listenerList = listeners.get(node.getId());
+        if (listenerList != null) {
+            synchronized (listenerList) {
+                for (ReportNodeEventListener listener : listenerList) {
+                    listener.onUpdate();
+                }
+            }
+        }
+    }
+
+    public void notifyReportNodeDestroyed(ReportNode node) {
+        List<ReportNodeEventListener> listenerList = listeners.remove(node.getId());
+        if (listenerList != null) {
+            synchronized (listenerList) {
+                for (ReportNodeEventListener listener : listenerList) {
+                    listener.onDestroy();
+                }
+            }
+        }
+    }
 }

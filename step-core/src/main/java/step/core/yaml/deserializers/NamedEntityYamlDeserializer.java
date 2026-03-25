@@ -36,11 +36,11 @@ import java.util.Map;
  *    fieldA: valueA
  *    fieldA: valueB
  *    ...
- *}</pre>
+ * }</pre>
  * The `className` is used to resolve the target java class, and all nested fields (`fieldA`, `fieldB`) are the fields
  * of this class.
  */
-public abstract class NamedEntityYamlDeserializer<T>  {
+public abstract class NamedEntityYamlDeserializer<T> {
 
     public NamedEntityYamlDeserializer() {
     }
@@ -79,12 +79,12 @@ public abstract class NamedEntityYamlDeserializer<T>  {
         return techYaml;
     }
 
-    public JsonNode getAllYamlFields(JsonNode node){
+    public JsonNode getAllYamlFields(JsonNode node) {
         String yamlName = getEntityNameFromYaml(node);
         return node.get(yamlName);
     }
 
-    protected String resolveTargetClassNameByYamlName(String yamlName)  {
+    protected String resolveTargetClassNameByYamlName(String yamlName) {
         Class<?> clazz = resolveTargetClassByYamlName(yamlName);
         return clazz == null ? null : clazz.getName();
     }
@@ -112,7 +112,7 @@ public abstract class NamedEntityYamlDeserializer<T>  {
         return yamlName;
     }
 
-    protected String getTargetClassField(){
+    protected String getTargetClassField() {
         return null;
     }
 

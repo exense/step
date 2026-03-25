@@ -43,19 +43,19 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         parentContext.put(FunctionAccessor.class, functionAccessor);
         engine = new ExecutionEngine.Builder().withParentContext(parentContext)
-                .withPlugin(new FunctionPlugin())
-                .withPlugin(new BaseArtefactPlugin())
-                .withPlugin(new TokenForecastingExecutionPlugin())
-                .withPlugin(new ThreadPoolPlugin())
-                .withPlugin(new PerformanceAssertPlugin())
-                .withPlugin(new AbstractExecutionEnginePlugin() {
-                    @Override
-                    public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-                        super.initializeExecutionContext(executionEngineContext, executionContext);
-                        FunctionTypeRegistry functionTypeRegistry = executionContext.require(FunctionTypeRegistry.class);
-                        functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
-                    }
-                }).build();
+            .withPlugin(new FunctionPlugin())
+            .withPlugin(new BaseArtefactPlugin())
+            .withPlugin(new TokenForecastingExecutionPlugin())
+            .withPlugin(new ThreadPoolPlugin())
+            .withPlugin(new PerformanceAssertPlugin())
+            .withPlugin(new AbstractExecutionEnginePlugin() {
+                @Override
+                public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+                    super.initializeExecutionContext(executionEngineContext, executionContext);
+                    FunctionTypeRegistry functionTypeRegistry = executionContext.require(FunctionTypeRegistry.class);
+                    functionTypeRegistry.registerFunctionType(new CompositeFunctionType(null));
+                }
+            }).build();
     }
 
     @After
@@ -69,10 +69,10 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         Return aReturn = new Return();
         aReturn.setOutput(new DynamicValue<>("{\"myOutput\":\"some output values\"}"));
         Plan compositePlan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.sequence())
-                    .add(BaseArtefacts.echo("'Echo 4'"))
-                    .add(aReturn)
-                .endBlock().build();
+            .startBlock(BaseArtefacts.sequence())
+            .add(BaseArtefacts.echo("'Echo 4'"))
+            .add(aReturn)
+            .endBlock().build();
 
         CompositeFunction compositeFunction = new CompositeFunction();
         compositeFunction.addAttribute(AbstractOrganizableObject.NAME, MY_COMPOSITE);
@@ -83,16 +83,16 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         performanceAssert.setFilters(new ArrayList<>(List.of(filterByName)));
 
         Plan subPlan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.sequence())
-                    .startBlock(FunctionArtefacts.keyword(MY_COMPOSITE)).withAfter(performanceAssert)
-                        .add(BaseArtefacts.check("output.myOutput == 'some output values'"))
-                    .endBlock()
-                .endBlock().build();
+            .startBlock(BaseArtefacts.sequence())
+            .startBlock(FunctionArtefacts.keyword(MY_COMPOSITE)).withAfter(performanceAssert)
+            .add(BaseArtefacts.check("output.myOutput == 'some output values'"))
+            .endBlock()
+            .endBlock().build();
 
         Plan plan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.for_(1, 10))
-                    .add(BaseArtefacts.callPlan(subPlan.getId().toString()))
-                .endBlock().build();
+            .startBlock(BaseArtefacts.for_(1, 10))
+            .add(BaseArtefacts.callPlan(subPlan.getId().toString()))
+            .endBlock().build();
 
         ExecutionEngineContext executionEngineContext = engine.getExecutionEngineContext();
         executionEngineContext.getPlanAccessor().save(List.of(subPlan));
@@ -112,16 +112,16 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         System.out.println(node.toString());
 
         Assert.assertEquals("For: 1x: PASSED\n" +
-                        " CallPlan: 10x: PASSED\n" +
-                        "  Sequence: 10x: PASSED\n" +
-                        "   MyComposite: 10x: PASSED\n" +
-                        "    Sequence: 10x: PASSED\n" +
-                        "     Echo: 10x: PASSED\n" +
-                        "     Return: 10x: PASSED\n" +
-                        "    [AFTER]\n" +
-                        "     PerformanceAssert: 10x: PASSED\n" +
-                        "    Check: 10x: PASSED\n",
-                node.toString());
+                " CallPlan: 10x: PASSED\n" +
+                "  Sequence: 10x: PASSED\n" +
+                "   MyComposite: 10x: PASSED\n" +
+                "    Sequence: 10x: PASSED\n" +
+                "     Echo: 10x: PASSED\n" +
+                "     Return: 10x: PASSED\n" +
+                "    [AFTER]\n" +
+                "     PerformanceAssert: 10x: PASSED\n" +
+                "    Check: 10x: PASSED\n",
+            node.toString());
     }
 
     @Test
@@ -130,17 +130,17 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         Return aReturn = new Return();
         aReturn.setOutput(new DynamicValue<>("{\"myOutput\":\"some output values\"}"));
         Plan compositePlan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.sequence())
-                .add(BaseArtefacts.echo("'Echo 4'"))
-                .add(aReturn)
-                .endBlock().build();
+            .startBlock(BaseArtefacts.sequence())
+            .add(BaseArtefacts.echo("'Echo 4'"))
+            .add(aReturn)
+            .endBlock().build();
 
         CompositeFunction compositeFunction = new CompositeFunction();
         compositeFunction.addAttribute(AbstractOrganizableObject.NAME, MY_COMPOSITE + "1");
         compositeFunction.setPlan(compositePlan);
 
         CompositeFunction compositeFunction2 = new CompositeFunction();
-        compositeFunction2.addAttribute(AbstractOrganizableObject.NAME, MY_COMPOSITE  + "2");
+        compositeFunction2.addAttribute(AbstractOrganizableObject.NAME, MY_COMPOSITE + "2");
         compositeFunction2.setPlan(compositePlan);
 
         CallFunction callFunction = new CallFunction();
@@ -148,11 +148,11 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
 
 
         Plan plan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.for_(1, 2))
-                .startBlock(callFunction)
-                .add(BaseArtefacts.check("output.myOutput == 'some output values'"))
-                .endBlock()
-                .endBlock().build();
+            .startBlock(BaseArtefacts.for_(1, 2))
+            .startBlock(callFunction)
+            .add(BaseArtefacts.check("output.myOutput == 'some output values'"))
+            .endBlock()
+            .endBlock().build();
 
         ExecutionEngineContext executionEngineContext = engine.getExecutionEngineContext();
         executionEngineContext.get(FunctionAccessor.class).save(compositeFunction);
@@ -172,12 +172,12 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
         System.out.println(node.toString());
 
         Assert.assertEquals("For: 1x: PASSED\n" +
-                        " CallKeyword: 2x: PASSED\n" +
-                        "  Sequence: 2x: PASSED\n" +
-                        "   Echo: 2x: PASSED\n" +
-                        "   Return: 2x: PASSED\n" +
-                        "  Check: 2x: PASSED\n",
+                " CallKeyword: 2x: PASSED\n" +
+                "  Sequence: 2x: PASSED\n" +
+                "   Echo: 2x: PASSED\n" +
+                "   Return: 2x: PASSED\n" +
+                "  Check: 2x: PASSED\n",
 
-                node.toString());
+            node.toString());
     }
 }

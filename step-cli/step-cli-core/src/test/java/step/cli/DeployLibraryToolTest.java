@@ -35,18 +35,18 @@ public class DeployLibraryToolTest {
 
         RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
         DeployLibraryToolTestable tool = new DeployLibraryToolTestable(
-                "http://localhost:8080", TENANT_1.getName(),
-                null, null, testFile, null, automationPackageClient
+            "http://localhost:8080", TENANT_1.getName(),
+            null, null, testFile, null, automationPackageClient
         );
         tool.execute();
 
         // attributes used to search for existing function packages
         ArgumentCaptor<AutomationPackageSource> packageFileCaptor = ArgumentCaptor.forClass(AutomationPackageSource.class);
         Mockito.verify(automationPackageClient, Mockito.times(1))
-                .createOrUpdateAutomationPackageLibrary(
-                        packageFileCaptor.capture(), Mockito.isNull()
+            .createOrUpdateAutomationPackageLibrary(
+                packageFileCaptor.capture(), Mockito.isNull()
 
-                );
+            );
         Mockito.verify(automationPackageClient, Mockito.times(1)).close();
         Mockito.verifyNoMoreInteractions(automationPackageClient);
         Assert.assertEquals(testFile, packageFileCaptor.getValue().getFile());
@@ -55,7 +55,7 @@ public class DeployLibraryToolTest {
     private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {
         RemoteAutomationPackageClientImpl remoteClient = Mockito.mock(RemoteAutomationPackageClientImpl.class);
         Mockito.when(remoteClient.createOrUpdateAutomationPackageLibrary(
-                Mockito.any(), Mockito.any())
+            Mockito.any(), Mockito.any())
         ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_LIB_ID, null, Set.of()));
         return remoteClient;
     }
@@ -65,14 +65,14 @@ public class DeployLibraryToolTest {
         private final RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock;
 
         public DeployLibraryToolTestable(String url, String stepProjectName, String authToken,
-                                                   MavenArtifactIdentifier mavenIdentifier, File file, String managedLibraryName,
-                                                   RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
+                                         MavenArtifactIdentifier mavenIdentifier, File file, String managedLibraryName,
+                                         RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
             super(url, new LibraryDeployParameters()
-                    .setStepProjectName(stepProjectName)
-                    .setAuthToken(authToken)
-                    .setLibraryMavenArtifact(mavenIdentifier)
-                    .setLibraryFile(file)
-                    .setManagedLibraryName(managedLibraryName));
+                .setStepProjectName(stepProjectName)
+                .setAuthToken(authToken)
+                .setLibraryMavenArtifact(mavenIdentifier)
+                .setLibraryFile(file)
+                .setManagedLibraryName(managedLibraryName));
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }
 

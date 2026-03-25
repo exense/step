@@ -33,11 +33,11 @@ public class ObjectMapperResolver implements ContextResolver<ObjectMapper> {
             jgen.writeString(value.toString());
         }
     }
-    
+
     public ObjectMapperResolver() {
-    	
-    	SimpleModule module = new SimpleModule("ObjectIdmodule");
-    	module.addSerializer(ObjectId.class, new ObjectIdSerializer());
+
+        SimpleModule module = new SimpleModule("ObjectIdmodule");
+        module.addSerializer(ObjectId.class, new ObjectIdSerializer());
         mapper = new ObjectMapper();
         mapper.registerModule(new JSONPModule());
         mapper.registerModule(module);

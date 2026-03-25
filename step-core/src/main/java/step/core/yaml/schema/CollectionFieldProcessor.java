@@ -31,14 +31,14 @@ import static step.handlers.javahandler.JsonObjectMapper.resolveGenericTypeForAr
 /**
  * Provides the following json schema for arrays or collections:
  * {
- *   "type" : "array",
- *   "items" : {
- *     "type" : "object",
- *     "properties" : {
- *       "someField": "all fields resolved via reflection"
- *     },
- *     "additionalProperties": false
- *   }
+ * "type" : "array",
+ * "items" : {
+ * "type" : "object",
+ * "properties" : {
+ * "someField": "all fields resolved via reflection"
+ * },
+ * "additionalProperties": false
+ * }
  * }
  */
 public class CollectionFieldProcessor implements JsonSchemaFieldProcessor {

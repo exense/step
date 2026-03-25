@@ -36,21 +36,21 @@ public class DeployAutomationPackageToolTest {
 
         RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
         DeployAutomationPackageToolTestable tool = new DeployAutomationPackageToolTestable(
-                "http://localhost:8080", testFile, TENANT_1.getName(),
-                null, false, "ver1", "true==true", null, null, automationPackageClient
+            "http://localhost:8080", testFile, TENANT_1.getName(),
+            null, false, "ver1", "true==true", null, null, automationPackageClient
         );
         tool.execute();
 
         // attributes used to search for existing function packages
         ArgumentCaptor<AutomationPackageSource> packageFileCaptor = ArgumentCaptor.forClass(AutomationPackageSource.class);
         Mockito.verify(automationPackageClient, Mockito.times(1))
-                .createOrUpdateAutomationPackage(
-                        packageFileCaptor.capture(), Mockito.isNull(),
-                        Mockito.eq("ver1"), Mockito.eq("true==true"),
-                        Mockito.isNull(), Mockito.isNull(), Mockito.isNull(), Mockito.isNull(),
-                        Mockito.anyBoolean(), Mockito.isNull()
+            .createOrUpdateAutomationPackage(
+                packageFileCaptor.capture(), Mockito.isNull(),
+                Mockito.eq("ver1"), Mockito.eq("true==true"),
+                Mockito.isNull(), Mockito.isNull(), Mockito.isNull(), Mockito.isNull(),
+                Mockito.anyBoolean(), Mockito.isNull()
 
-                );
+            );
         Mockito.verify(automationPackageClient, Mockito.times(1)).close();
         Mockito.verifyNoMoreInteractions(automationPackageClient);
         Assert.assertEquals(testFile, packageFileCaptor.getValue().getFile());
@@ -59,10 +59,10 @@ public class DeployAutomationPackageToolTest {
     private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {
         RemoteAutomationPackageClientImpl remoteClient = Mockito.mock(RemoteAutomationPackageClientImpl.class);
         Mockito.when(remoteClient.createOrUpdateAutomationPackage(
-                Mockito.any(), Mockito.isNull(),
-                Mockito.any(), Mockito.any(), Mockito.isNull(),
-                Mockito.isNull(), Mockito.isNull(), Mockito.isNull(),
-                Mockito.anyBoolean(), Mockito.isNull())
+            Mockito.any(), Mockito.isNull(),
+            Mockito.any(), Mockito.any(), Mockito.isNull(),
+            Mockito.isNull(), Mockito.isNull(), Mockito.isNull(),
+            Mockito.anyBoolean(), Mockito.isNull())
         ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID, null, Set.of()));
         return remoteClient;
     }
@@ -75,14 +75,14 @@ public class DeployAutomationPackageToolTest {
                                                    MavenArtifactIdentifier apLibraryMavenIdentifier, File apLibraryFile,
                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
             super(url, new ApDeployParameters()
-                    .setAsync(async)
-                    .setVersionName(apVersion)
-                    .setActivationExpression(activationExpr)
-                    .setAutomationPackageFile(apFile)
-                    .setStepProjectName(stepProjectName)
-                    .setAuthToken(authToken)
-                    .setlibraryMavenArtifact(apLibraryMavenIdentifier)
-                    .setLibraryFile(apLibraryFile));
+                .setAsync(async)
+                .setVersionName(apVersion)
+                .setActivationExpression(activationExpr)
+                .setAutomationPackageFile(apFile)
+                .setStepProjectName(stepProjectName)
+                .setAuthToken(authToken)
+                .setlibraryMavenArtifact(apLibraryMavenIdentifier)
+                .setLibraryFile(apLibraryFile));
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }
 

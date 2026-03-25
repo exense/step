@@ -78,8 +78,8 @@ public class RestUploadingLiveMeasureDestination implements LiveMeasureDestinati
             return;
         }
         try (Response post = client.target(endpointUrl)
-                .request()
-                .post(Entity.entity(measures, MediaType.APPLICATION_JSON_TYPE))) {
+            .request()
+            .post(Entity.entity(measures, MediaType.APPLICATION_JSON_TYPE))) {
             //Make sure to always consume the response to avoid leak
             if (post.hasEntity()) {
                 post.readEntity(String.class);

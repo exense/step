@@ -5,108 +5,102 @@ import java.util.List;
 import java.util.Map;
 
 public class ApplicationConfigurationBuilder {
-	private boolean authentication;
-	private String authenticatorName;
-	private boolean demo;
-	private boolean debug;
-	private boolean noLoginMask;
-	private boolean passwordManagement;
-	private boolean userManagement;
-	private boolean roleManagement;
-	private boolean projectMembershipManagement;
-	private List<String> roles;
-	private Map<String, String> miscParams = new HashMap<>();
-	private String defaultUrl;
-	private String title;
-	private String contextRoot;
-	private boolean forceLegacyReporting;
+    private boolean authentication;
+    private String authenticatorName;
+    private boolean debug;
+    private boolean noLoginMask;
+    private boolean passwordManagement;
+    private boolean userManagement;
+    private boolean roleManagement;
+    private boolean projectMembershipManagement;
+    private List<String> roles;
+    private Map<String, String> miscParams = new HashMap<>();
+    private String defaultUrl;
+    private String title;
+    private String contextRoot;
+    private boolean forceLegacyReporting;
 
 
-	public ApplicationConfigurationBuilder setAuthentication(boolean authentication) {
-		this.authentication = authentication;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setAuthentication(boolean authentication) {
+        this.authentication = authentication;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setAuthenticatorName(String authenticatorName) {
-		this.authenticatorName = authenticatorName;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setAuthenticatorName(String authenticatorName) {
+        this.authenticatorName = authenticatorName;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setDemo(boolean demo) {
-		this.demo = demo;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setDebug(boolean debug) {
+        this.debug = debug;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setDebug(boolean debug) {
-		this.debug = debug;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setNoLoginMask(boolean noLoginMask) {
+        this.noLoginMask = noLoginMask;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setNoLoginMask(boolean noLoginMask) {
-		this.noLoginMask = noLoginMask;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setUserManagement(boolean userManagement) {
+        this.userManagement = userManagement;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setUserManagement(boolean userManagement) {
-		this.userManagement = userManagement;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setRoleManagement(boolean roleManagement) {
+        this.roleManagement = roleManagement;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setRoleManagement(boolean roleManagement) {
-		this.roleManagement = roleManagement;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setProjectMembershipManagement(boolean projectMembershipManagement) {
+        this.projectMembershipManagement = projectMembershipManagement;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setProjectMembershipManagement(boolean projectMembershipManagement) {
-		this.projectMembershipManagement = projectMembershipManagement;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setPasswordManagement(boolean passwordManagement) {
+        this.passwordManagement = passwordManagement;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setPasswordManagement(boolean passwordManagement) {
-		this.passwordManagement = passwordManagement;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setRoles(List<String> roles) {
+        this.roles = roles;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setRoles(List<String> roles) {
-		this.roles = roles;
-		return this;
-	}
+    public ApplicationConfigurationBuilder putMiscParam(String key, String value) {
+        this.miscParams.put(key, value);
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder putMiscParam(String key, String value) {
-		this.miscParams.put(key, value);
-		return this;
-	}
+    public ApplicationConfigurationBuilder putMiscParams(Map<String, String> miscParams) {
+        this.miscParams.putAll(miscParams);
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder putMiscParams(Map<String, String> miscParams) {
-		this.miscParams.putAll(miscParams);
-		return this;
-	}
+    public ApplicationConfigurationBuilder setDefaultUrl(String defaultUrl) {
+        this.defaultUrl = defaultUrl;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setDefaultUrl(String defaultUrl) {
-		this.defaultUrl = defaultUrl;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setTitle(String title) {
+        this.title = title;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setTitle(String title) {
-		this.title = title;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setContextRoot(String contextRoot) {
+        this.contextRoot = contextRoot;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setContextRoot(String contextRoot) {
-		this.contextRoot = contextRoot;
-		return this;
-	}
+    public ApplicationConfigurationBuilder setForceLegacyReporting(boolean forceLegacyReporting) {
+        this.forceLegacyReporting = forceLegacyReporting;
+        return this;
+    }
 
-	public ApplicationConfigurationBuilder setForceLegacyReporting(boolean forceLegacyReporting) {
-		this.forceLegacyReporting = forceLegacyReporting;
-		return this;
-	}
-
-	public ApplicationConfiguration build() {
-		return new ApplicationConfiguration(authentication, authenticatorName, demo, debug, noLoginMask,
-				passwordManagement, userManagement, roleManagement, projectMembershipManagement, roles, miscParams,
-				defaultUrl, title, contextRoot, forceLegacyReporting);
-	}
+    public ApplicationConfiguration build() {
+        return new ApplicationConfiguration(authentication, authenticatorName, debug, noLoginMask,
+            passwordManagement, userManagement, roleManagement, projectMembershipManagement, roles, miscParams,
+            defaultUrl, title, contextRoot, forceLegacyReporting);
+    }
 
 
 }

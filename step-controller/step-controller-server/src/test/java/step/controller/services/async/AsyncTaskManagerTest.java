@@ -34,13 +34,13 @@ public class AsyncTaskManagerTest {
 
         assertFalse(task.isReady());
         assertNull(task.getResult());
-        assertEquals(0, task.getProgress(),0);
+        assertEquals(0, task.getProgress(), 0);
 
         latch1.countDown();
         latch2.await();
 
         task = asyncTaskManager.getAsyncTaskStatus(id);
-        assertEquals(0.5f, task.getProgress(),0);
+        assertEquals(0.5f, task.getProgress(), 0);
 
         latch3.countDown();
 
@@ -54,7 +54,7 @@ public class AsyncTaskManagerTest {
         task = asyncTaskManager.removeReadyAsyncTaskStatus(id);
         // Assert it is ready
         assertTrue(task.isReady());
-        assertEquals(1, task.getProgress(),0);
+        assertEquals(1, task.getProgress(), 0);
         assertEquals(TEST, task.getResult());
         assertEquals(Set.of("My Warning"), task.getWarnings());
 
