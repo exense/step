@@ -47,16 +47,17 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
             }
             await keyword(input, outputBuilder, session, properties);
           } catch (e) {
+            console.log("[Agent fork] Keyword execution failed with following error", e)
             const onError = module['onError'];
             if (onError) {
               if (await onError(e, input, outputBuilder, session, properties)) {
-                console.log('[Agent fork] Keyword execution failed and onError hook returned \'true\'')
+                console.log('[Agent fork] onError hook returned \'true\'. Propagating error.')
                 outputBuilder.fail(e)
               } else {
-                console.log('[Agent fork] Keyword execution failed and onError hook returned \'false\'')
+                console.log('[Agent fork] onError hook returned \'false\'. Suppressing error.')
               }
             } else {
-              console.log('[Agent fork] Keyword execution failed. No onError hook defined')
+              console.log('[Agent fork] No onError hook defined.')
               outputBuilder.fail(e)
             }
           } finally {
