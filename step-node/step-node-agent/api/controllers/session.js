@@ -20,7 +20,7 @@ let logger;
 try {
   logger = require('../logger').child({ component: 'Session' });
 } catch {
-  logger = { info: console.log.bind(console), warn: console.warn.bind(console), error: console.error.bind(console) };
+  logger = { debug: console.debug.bind(console), info: console.log.bind(console), warn: console.warn.bind(console), error: console.error.bind(console) };
 }
 
 class Session extends Map {
