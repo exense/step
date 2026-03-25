@@ -88,7 +88,7 @@ public abstract class AbstractAutomationPackageFromMavenProvider implements Auto
 
     @Override
     public Long getSnapshotTimestamp() {
-        return (resolvedMavenArtefact.snapshotMetadata) != null ? resolvedMavenArtefact.snapshotMetadata.timestamp: null;
+        return (resolvedMavenArtefact.snapshotMetadata) != null ? resolvedMavenArtefact.snapshotMetadata.timestamp : null;
     }
 
     @Override

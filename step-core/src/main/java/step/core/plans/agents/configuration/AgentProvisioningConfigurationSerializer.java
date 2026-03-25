@@ -28,7 +28,7 @@ import java.io.IOException;
 public class AgentProvisioningConfigurationSerializer extends JsonSerializer<AgentProvisioningConfiguration> {
     @Override
     public void serialize(AgentProvisioningConfiguration agentProvisioningConfiguration, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-        if(agentProvisioningConfiguration instanceof ManualAgentProvisioningConfiguration) {
+        if (agentProvisioningConfiguration instanceof ManualAgentProvisioningConfiguration) {
             ManualAgentProvisioningConfiguration manualAgentProvisioningConfiguration = (ManualAgentProvisioningConfiguration) agentProvisioningConfiguration;
             jsonGenerator.writePOJO(manualAgentProvisioningConfiguration.configuredAgentPools);
         } else if (agentProvisioningConfiguration instanceof AutomaticAgentProvisioningConfiguration) {

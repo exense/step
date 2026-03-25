@@ -61,8 +61,8 @@ public class AutomationPackageResourceUploader {
     }
 
     public Resource uploadResourceFromAutomationPackage(String resourcePath,
-                                                         String resourceType,
-                                                         StagingAutomationPackageContext context) {
+                                                        String resourceType,
+                                                        StagingAutomationPackageContext context) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
 
@@ -100,12 +100,12 @@ public class AutomationPackageResourceUploader {
                 }
 
                 return resourceManager.createResource(
-                        resourceType,
-                        isDirectory,
-                        resourceStream,
-                        fileName,
-                        context.getEnricher(),
-                        context.getActorUser()
+                    resourceType,
+                    isDirectory,
+                    resourceStream,
+                    fileName,
+                    context.getEnricher(),
+                    context.getActorUser()
                 );
             } catch (Exception e) {
                 throw new RuntimeException("Unable to upload automation package resource " + resourcePath, e);

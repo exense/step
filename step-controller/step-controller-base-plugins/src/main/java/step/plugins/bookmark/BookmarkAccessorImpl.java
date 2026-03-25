@@ -13,6 +13,6 @@ public class BookmarkAccessorImpl extends AbstractAccessor<UserBookmark> impleme
 
     @Override
     public void deleteUserBookmarks(User user) {
-        this.findManyByCriteria(Map.of("userId", user.getId().toHexString())).forEach(b-> this.remove(b.getId()));
+        this.findManyByCriteria(Map.of("userId", user.getId().toHexString())).forEach(b -> this.remove(b.getId()));
     }
 }

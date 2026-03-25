@@ -51,7 +51,7 @@ public class TableSettingsTest {
         Session<User> sessionOther = new Session<>();
         sessionOther.put("scope1", "valScope1_2");
         sessionOther.put("scope2", "valScope2_2");
-        tableSettingsAccessor.saveScopedObject(baseScopeSettingsOther, tableSettingsOrigOther, List.of("scope1","scope2"), sessionOther);
+        tableSettingsAccessor.saveScopedObject(baseScopeSettingsOther, tableSettingsOrigOther, List.of("scope1", "scope2"), sessionOther);
 
         //First settings saved for mySetting
         TableSettings tableSettingsOrig1 = new TableSettings();
@@ -59,7 +59,7 @@ public class TableSettingsTest {
         Session<User> session = new Session<>();
         session.put("scope1", "valScope1_1");
         session.put("scope2", "valScope2_1");
-        tableSettingsAccessor.saveScopedObject(baseScopeSettings, tableSettingsOrig1, List.of("scope1","scope2"), session);
+        tableSettingsAccessor.saveScopedObject(baseScopeSettings, tableSettingsOrig1, List.of("scope1", "scope2"), session);
 
         //Save settings for the same setting id but different scope
         TableSettings tableSettingsOrig2 = new TableSettings();
@@ -67,7 +67,7 @@ public class TableSettingsTest {
         Session<User> session2 = new Session<>();
         session2.put("scope1", "valScope1_2");
         session2.put("scope2", "valScope2_2");
-        tableSettingsAccessor.saveScopedObject(baseScopeSettings, tableSettingsOrig2, List.of("scope1","scope2"), session2);
+        tableSettingsAccessor.saveScopedObject(baseScopeSettings, tableSettingsOrig2, List.of("scope1", "scope2"), session2);
 
 
         //Retrieve with same sessions

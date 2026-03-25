@@ -23,68 +23,68 @@ import step.plans.assertions.PerformanceAssertSession;
 public class PerformanceAssertHandler extends ArtefactHandler<PerformanceAssert, PerformanceAssertReportNode> {
 
 
-	@Override
-	protected void createReportSkeleton_(PerformanceAssertReportNode parentNode, PerformanceAssert testArtefact) {
+    @Override
+    protected void createReportSkeleton_(PerformanceAssertReportNode parentNode, PerformanceAssert testArtefact) {
 
-	}
+    }
 
-	@Override
-	protected void execute_(PerformanceAssertReportNode reportNode, PerformanceAssert artefact) throws Exception {
-		PerformanceAssertSession session = (PerformanceAssertSession) context.getVariablesManager().getVariable(PerformanceAssertPlugin.$PERFORMANCE_ASSERT_SESSION);
-		List<String> errors = new ArrayList<>();
-		if(session != null) {
-			List<Filter> filters = artefact.getFilters();
-			
-			List<Entry<String, Aggregation>> matchingAggregations = session.getAggregations().stream().filter(a->matchesFilters(filters, a.getValue())).collect(Collectors.toList());
-			if(matchingAggregations.size() > 0) {
-				for (Entry<String, Aggregation> entry : matchingAggregations) {
-					Aggregation aggregation = entry.getValue();
-					Aggregator aggregator = artefact.getAggregator();
-					Comparator comparator = artefact.getComparator();
-					Number actualValue = aggregator.getValueFunction().apply(aggregation);
-					Number expectedValue = artefact.getExpectedValue().get();
-					if (!comparator.getComparatorFunction().apply(actualValue, expectedValue)) {
-						String errorMessage = aggregator.getDescription() + " of " + aggregation.getName()
-						+ " expected to be " + comparator.getErrorDescription() + " " + expectedValue + " but was "
-						+ actualValue;
-						errors.add(errorMessage);
-					}
-				}
-			} else {
-				errors.add("No measurement is matching the defined filters.");
-			}
-			if(errors.size() > 0) {
-				reportNode.setError(new Error(ErrorType.BUSINESS, errors.stream().collect(Collectors.joining("; "))));
-				reportNode.setStatus(ReportNodeStatus.FAILED);
-			} else {
-				reportNode.setStatus(ReportNodeStatus.PASSED);
-			}
-		} else {
-			reportNode.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
-			reportNode.addError("PerformanceAssert can only be defined in an 'after' or 'after thread' block");
-		}
-	}
+    @Override
+    protected void execute_(PerformanceAssertReportNode reportNode, PerformanceAssert artefact) throws Exception {
+        PerformanceAssertSession session = (PerformanceAssertSession) context.getVariablesManager().getVariable(PerformanceAssertPlugin.$PERFORMANCE_ASSERT_SESSION);
+        List<String> errors = new ArrayList<>();
+        if (session != null) {
+            List<Filter> filters = artefact.getFilters();
 
-	protected boolean matchesFilters(List<Filter> filters, Aggregation aggregation) {
-		boolean allFiltersMatch = true;
-		for (Filter filter : filters) {
-			String field = filter.getField().get();
-			if(field == null || field.equals(AbstractOrganizableObject.NAME)) {
-				String name = aggregation.getName();
-				String filterExpression = filter.getFilter().get();
-				if(!filter.getFilterType().getFilterFunction().apply(name, filterExpression)) {
-					allFiltersMatch = false;
-				}
-			} else {
-				throw new RuntimeException("Unsupported filter field "+field);
-			}
-		}
-		return allFiltersMatch;
-	}
+            List<Entry<String, Aggregation>> matchingAggregations = session.getAggregations().stream().filter(a -> matchesFilters(filters, a.getValue())).collect(Collectors.toList());
+            if (matchingAggregations.size() > 0) {
+                for (Entry<String, Aggregation> entry : matchingAggregations) {
+                    Aggregation aggregation = entry.getValue();
+                    Aggregator aggregator = artefact.getAggregator();
+                    Comparator comparator = artefact.getComparator();
+                    Number actualValue = aggregator.getValueFunction().apply(aggregation);
+                    Number expectedValue = artefact.getExpectedValue().get();
+                    if (!comparator.getComparatorFunction().apply(actualValue, expectedValue)) {
+                        String errorMessage = aggregator.getDescription() + " of " + aggregation.getName()
+                            + " expected to be " + comparator.getErrorDescription() + " " + expectedValue + " but was "
+                            + actualValue;
+                        errors.add(errorMessage);
+                    }
+                }
+            } else {
+                errors.add("No measurement is matching the defined filters.");
+            }
+            if (errors.size() > 0) {
+                reportNode.setError(new Error(ErrorType.BUSINESS, errors.stream().collect(Collectors.joining("; "))));
+                reportNode.setStatus(ReportNodeStatus.FAILED);
+            } else {
+                reportNode.setStatus(ReportNodeStatus.PASSED);
+            }
+        } else {
+            reportNode.setStatus(ReportNodeStatus.TECHNICAL_ERROR);
+            reportNode.addError("PerformanceAssert can only be defined in an 'after' or 'after thread' block");
+        }
+    }
 
-	@Override
-	protected PerformanceAssertReportNode createReportNode_(ReportNode parentReportNode, PerformanceAssert artefact) {
-		return new PerformanceAssertReportNode();
-	}
+    protected boolean matchesFilters(List<Filter> filters, Aggregation aggregation) {
+        boolean allFiltersMatch = true;
+        for (Filter filter : filters) {
+            String field = filter.getField().get();
+            if (field == null || field.equals(AbstractOrganizableObject.NAME)) {
+                String name = aggregation.getName();
+                String filterExpression = filter.getFilter().get();
+                if (!filter.getFilterType().getFilterFunction().apply(name, filterExpression)) {
+                    allFiltersMatch = false;
+                }
+            } else {
+                throw new RuntimeException("Unsupported filter field " + field);
+            }
+        }
+        return allFiltersMatch;
+    }
+
+    @Override
+    protected PerformanceAssertReportNode createReportNode_(ReportNode parentReportNode, PerformanceAssert artefact) {
+        return new PerformanceAssertReportNode();
+    }
 
 }

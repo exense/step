@@ -25,9 +25,9 @@ public class AutomationPackageHookRegistry {
     /**
      * On reading the additional fields in yaml representation (additional data should be stored in AutomationPackageContent)
      */
-    public boolean onAdditionalDataRead(String fieldName, List<?> yamlData, AutomationPackageContent targetContent){
+    public boolean onAdditionalDataRead(String fieldName, List<?> yamlData, AutomationPackageContent targetContent) {
         AutomationPackageHook<?> hook = getHook(fieldName);
-        if(hook != null){
+        if (hook != null) {
             hook.onAdditionalDataRead(fieldName, yamlData, targetContent);
             return true;
         } else {
@@ -96,7 +96,7 @@ public class AutomationPackageHookRegistry {
         }
     }
 
-    public void beforeIsolatedExecution(AutomationPackage automationPackage, AbstractStepContext executionContext, Map<String, Object> apManagerExtensions, ImportResult importResult){
+    public void beforeIsolatedExecution(AutomationPackage automationPackage, AbstractStepContext executionContext, Map<String, Object> apManagerExtensions, ImportResult importResult) {
         for (Map.Entry<String, AutomationPackageHook<?>> hook : registry.entrySet()) {
             hook.getValue().beforeIsolatedExecution(automationPackage, executionContext, apManagerExtensions, importResult);
         }
@@ -106,7 +106,7 @@ public class AutomationPackageHookRegistry {
         registry.put(fieldName, automationPackageHook);
     }
 
-    public Map<String, AutomationPackageHook<?>> unmodifiableRegistry(){
+    public Map<String, AutomationPackageHook<?>> unmodifiableRegistry() {
         return Collections.unmodifiableMap(registry);
     }
 }

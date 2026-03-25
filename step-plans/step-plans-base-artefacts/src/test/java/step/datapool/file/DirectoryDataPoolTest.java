@@ -46,7 +46,7 @@ public class DirectoryDataPoolTest extends AbstractArtefactTest {
         DirectoryDataPool conf = new DirectoryDataPool();
         conf.setFolder(new DynamicValue<String>(file.getAbsolutePath()));
 
-        pool =  DataPoolFactory.getDataPool("folder", conf, newExecutionContext());
+        pool = DataPoolFactory.getDataPool("folder", conf, newExecutionContext());
         pool.init();
     }
 
@@ -68,7 +68,7 @@ public class DirectoryDataPoolTest extends AbstractArtefactTest {
 
         DataPoolRow next = poolEmpty.next();
 
-        Assert.assertTrue(next==null || ((FileDataPoolImpl.ExtendedFile)next.getValue()).getName().equals(".gitignore"));
+        Assert.assertTrue(next == null || ((FileDataPoolImpl.ExtendedFile) next.getValue()).getName().equals(".gitignore"));
 
         poolEmpty.close();
     }
@@ -79,7 +79,7 @@ public class DirectoryDataPoolTest extends AbstractArtefactTest {
 
         String value = pool.next().getValue().toString();
         Assert.assertTrue(value.endsWith("File.txt") ||
-                value.toString().endsWith("File2.txt"));
+            value.toString().endsWith("File2.txt"));
     }
 
     @Test
@@ -88,20 +88,20 @@ public class DirectoryDataPoolTest extends AbstractArtefactTest {
 
         ExtendedFile value = (ExtendedFile) pool.next().getValue();
         Assert.assertTrue(value.getNameWithoutExtension().equals("File") ||
-                value.getNameWithoutExtension().equals("File2"));
+            value.getNameWithoutExtension().equals("File2"));
         Assert.assertTrue((value).getName().equals("File.txt") ||
-                (value).getName().equals("File2.txt"));
+            (value).getName().equals("File2.txt"));
 
         ExtendedFile value2 = (ExtendedFile) pool.next().getValue();
         Assert.assertTrue(value2.getNameWithoutExtension().equals("File") ||
-                value2.getNameWithoutExtension().equals("File2"));
+            value2.getNameWithoutExtension().equals("File2"));
         Assert.assertTrue((value2).getName().equals("File.txt") ||
-                (value2).getName().equals("File2.txt"));
+            (value2).getName().equals("File2.txt"));
 
     }
 
     @Test
     public void testDirectoryDataPoolTestGetPath() {
-        Assert.assertEquals(file.getAbsolutePath(),((ExtendedFile)pool.next().getValue()).getPath());
+        Assert.assertEquals(file.getAbsolutePath(), ((ExtendedFile) pool.next().getValue()).getPath());
     }
 }

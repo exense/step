@@ -50,7 +50,7 @@ public class AggregatedReportViewBuilder {
         this.executionAccessor = executionEngineContext.getExecutionAccessor();
         this.resolvedPlanNodeCachedAccessor = new ResolvedPlanNodeCachedAccessor(executionEngineContext.require(ResolvedPlanNodeAccessor.class), executionAccessor.get(executionId));
         this.mainReportNodeAccessor = executionEngineContext.getReportNodeAccessor();
-        this.defaultResolveSingleInstanceReport =  executionEngineContext.getConfiguration().getPropertyAsBoolean(EXECUTION_REPORT_AGGREGATED_TREE_RESOLVE_SINGLE_INSTANCE, true);
+        this.defaultResolveSingleInstanceReport = executionEngineContext.getConfiguration().getPropertyAsBoolean(EXECUTION_REPORT_AGGREGATED_TREE_RESOLVE_SINGLE_INSTANCE, true);
         this.mainReportNodesTimeSeries = executionEngineContext.require(ReportNodeTimeSeries.class);
         this.threadManager = executionEngineContext.get(ThreadManager.class);
     }
@@ -68,7 +68,7 @@ public class AggregatedReportViewBuilder {
     public FlatAggregatedReport buildFlatAggregatedReport(AggregatedReportViewRequest request) {
         Optional<AggregatedReport> aggregatedReport = Optional.ofNullable(buildAggregatedReport(request));
         return aggregatedReport.map(ar -> new FlatAggregatedReport(flattenAndFilterRecursively(ar.aggregatedReportView, request)))
-                .orElse(null);
+            .orElse(null);
     }
 
     private static List<FlatAggregatedReportView> flattenAndFilterRecursively(AggregatedReportView aggregatedReportView, AggregatedReportViewRequest request) {
@@ -115,13 +115,13 @@ public class AggregatedReportViewBuilder {
             // Generate complete aggregated report tree
             //First aggregate time series data for the given execution context grouped by artefactHash and status as wells as artefactHash and error message
             CompletableFuture<Map<String, Map<String, Bucket>>> countByHashAndStatusFuture =
-                    CompletableFuture.supplyAsync(() ->
-                            mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, STATUS)
-                    );
+                CompletableFuture.supplyAsync(() ->
+                    mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, STATUS)
+                );
             CompletableFuture<Map<String, Map<String, Bucket>>> countByHashAndErrorMessageFuture =
-                    CompletableFuture.supplyAsync(() ->
-                            mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, ERROR_MESSAGE)
-                    );
+                CompletableFuture.supplyAsync(() ->
+                    mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, ERROR_MESSAGE)
+                );
             Map<String, Map<String, Bucket>> countByHashAndStatus = countByHashAndStatusFuture.join();
             Map<String, Map<String, Bucket>> countByHashAndErrorMessage = countByHashAndErrorMessageFuture.join();
             //Because the time series time range extends to the time series resolution we need to use the same range when querying the report nodes
@@ -141,13 +141,13 @@ public class AggregatedReportViewBuilder {
                 reportArtefactHashSet = (request.filterResolvedPlanNodes) ? reportArtefactHashSet : null;
                 //Aggregate time series data for the given execution reporting context grouped by artefactHash and status ans artefactHash and error messages
                 CompletableFuture<Map<String, Map<String, Bucket>>> countByHashAndStatusFuture =
-                        CompletableFuture.supplyAsync(() ->
-                                partialReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range,  ARTEFACT_HASH, STATUS)
-                        );
+                    CompletableFuture.supplyAsync(() ->
+                        partialReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, STATUS)
+                    );
                 CompletableFuture<Map<String, Map<String, Bucket>>> countByHashAndErrorMessageFuture =
-                        CompletableFuture.supplyAsync(() ->
-                                mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, ERROR_MESSAGE)
-                        );
+                    CompletableFuture.supplyAsync(() ->
+                        mainReportNodesTimeSeries.queryByExecutionIdAndGroupBy(executionId, request.range, ARTEFACT_HASH, ERROR_MESSAGE)
+                    );
                 Map<String, Map<String, Bucket>> countByHashAndStatus = countByHashAndStatusFuture.join();
                 Map<String, Map<String, Bucket>> countByHashAndErrorMessage = countByHashAndErrorMessageFuture.join();
                 //Because the time series time range extends to the time series resolution we need to use the same range when querying the report nodes
@@ -160,9 +160,9 @@ public class AggregatedReportViewBuilder {
 
     private ReportNodeTimeSeries.Range getResolvedRange(AggregatedReportViewRequest request, Map<String, Map<String, Bucket>> countByHashAndStatus) {
         Bucket firstBucket = countByHashAndStatus.values().stream()
-                .flatMap(innerMap -> innerMap.values().stream())
-                .findFirst()
-                .orElse(null);
+            .flatMap(innerMap -> innerMap.values().stream())
+            .findFirst()
+            .orElse(null);
         ReportNodeTimeSeries.Range result = request.range;
         if (firstBucket != null) {
             result = new ReportNodeTimeSeries.Range(firstBucket.getBegin(), firstBucket.getEnd());
@@ -173,8 +173,8 @@ public class AggregatedReportViewBuilder {
     private ReportNodeTimeSeries getInMemoryReportNodeTimeSeries() {
         //Need to create a configuration with all time series details
         return new ReportNodeTimeSeries(new InMemoryCollectionFactory(new Properties()),
-                // to build the report we only need a single time bucket and can flush only once all reports are ingested
-                TimeSeriesCollectionsSettings.buildSingleResolutionSettings(Long.MAX_VALUE, 0), true);
+            // to build the report we only need a single time bucket and can flush only once all reports are ingested
+            TimeSeriesCollectionsSettings.buildSingleResolutionSettings(Long.MAX_VALUE, 0), true);
     }
 
     /**
@@ -222,7 +222,7 @@ public class AggregatedReportViewBuilder {
         return resolvedArtefact != null && resolvedArtefact.isWorkArtefact() && resolvedArtefact.getAttribute(AbstractOrganizableObject.NAME).startsWith("Iteration");
     }
 
-    private void ingestReportNodeRecursively(ReportNode reportNode, ReportNodeTimeSeries reportNodeTimeSeries, Map<String, ReportNode> singleReportNodes, Map<String, Long> runningCountByArtefactHash, Map<String, List<Operation>> operationsByArtefactHash,  boolean fetchCurrentOperations) {
+    private void ingestReportNodeRecursively(ReportNode reportNode, ReportNodeTimeSeries reportNodeTimeSeries, Map<String, ReportNode> singleReportNodes, Map<String, Long> runningCountByArtefactHash, Map<String, List<Operation>> operationsByArtefactHash, boolean fetchCurrentOperations) {
         if (reportNode.getStatus().equals(ReportNodeStatus.RUNNING)) {
             runningCountByArtefactHash.merge(reportNode.getArtefactHash(), 1L, Long::sum);
             if (fetchCurrentOperations && threadManager != null) {
@@ -257,22 +257,22 @@ public class AggregatedReportViewBuilder {
         String artefactHash = resolvedPlanNode.artefactHash;
         Map<String, Long> countByChildrenErrorMessage = new HashMap<>();
         List<AggregatedReportView> children = resolvedPlanNodeCachedAccessor.getByParentId(resolvedPlanNode.getId().toString())
-                //filter nodes if filteredArtefactHashSet is provided and node is part of the set
-                .filter(n -> filteredArtefactHashSet == null || filteredArtefactHashSet.contains(n.artefactHash))
-                .map(n -> recursivelyBuildAggregatedReportTree(n, request, bucketByHashAndStatus, countByHashAndErrorMessage,
-                        reportNodeAccessor, filteredArtefactHashSet, runningCountByArtefactHash, operationsByArtefactHash, resolvedTimeserieRange))
-                //update the countByChildrenErrorMessage map before filtering children by artefact class
-                .peek(c -> {
-                    if (c.countByErrorMessage != null) {
-                        c.countByErrorMessage.forEach((key, value) -> countByChildrenErrorMessage.merge(key, value, Long::sum));
-                    }
-                    if (c.countByChildrenErrorMessage != null) {
-                        c.countByChildrenErrorMessage.forEach((key, value) -> countByChildrenErrorMessage.merge(key, value, Long::sum));
-                    }
-                })
-                //if filtering on artefact classes is defined, we only include the artefact for the provided classes, otherwise we directly add all its children if any
-                .flatMap(c -> shouldIncludeAggregatedReport(request, c.artefact) ? Stream.of(c) : c.children.stream())
-                .collect(Collectors.toList());
+            //filter nodes if filteredArtefactHashSet is provided and node is part of the set
+            .filter(n -> filteredArtefactHashSet == null || filteredArtefactHashSet.contains(n.artefactHash))
+            .map(n -> recursivelyBuildAggregatedReportTree(n, request, bucketByHashAndStatus, countByHashAndErrorMessage,
+                reportNodeAccessor, filteredArtefactHashSet, runningCountByArtefactHash, operationsByArtefactHash, resolvedTimeserieRange))
+            //update the countByChildrenErrorMessage map before filtering children by artefact class
+            .peek(c -> {
+                if (c.countByErrorMessage != null) {
+                    c.countByErrorMessage.forEach((key, value) -> countByChildrenErrorMessage.merge(key, value, Long::sum));
+                }
+                if (c.countByChildrenErrorMessage != null) {
+                    c.countByChildrenErrorMessage.forEach((key, value) -> countByChildrenErrorMessage.merge(key, value, Long::sum));
+                }
+            })
+            //if filtering on artefact classes is defined, we only include the artefact for the provided classes, otherwise we directly add all its children if any
+            .flatMap(c -> shouldIncludeAggregatedReport(request, c.artefact) ? Stream.of(c) : c.children.stream())
+            .collect(Collectors.toList());
         Map<String, Long> countByStatus = null;
         Map<String, Long> countByErrorMessage = null;
         Map<String, Bucket> bucketsByStatus = null;
@@ -303,8 +303,8 @@ public class AggregatedReportViewBuilder {
         }
         boolean hasDescendantInvocations = hasDescendantInvocations(children);
         return new AggregatedReportView(resolvedPlanNode.artefact, artefactHash, countByStatus, countByErrorMessage, countByChildrenErrorMessage,
-                children, hasDescendantInvocations, resolvedPlanNode.parentSource, singleInstanceReportNode, bucketsByStatus,
-                operationsByArtefactHash.getOrDefault(artefactHash, new ArrayList<>()));
+            children, hasDescendantInvocations, resolvedPlanNode.parentSource, singleInstanceReportNode, bucketsByStatus,
+            operationsByArtefactHash.getOrDefault(artefactHash, new ArrayList<>()));
     }
 
     private boolean hasDescendantInvocations(List<AggregatedReportView> children) {
@@ -338,7 +338,7 @@ public class AggregatedReportViewBuilder {
             } else {
                 String reportCountMsg = (reports.isEmpty()) ? "no" : "more than one";
                 logger.error("Unexpected number of report nodes found. Found {} report for execution id {}, artefactHash: {} and range: {} to {}",
-                        reportCountMsg, executionId, artefactHash, from, to);
+                    reportCountMsg, executionId, artefactHash, from, to);
                 return null;
             }
         }

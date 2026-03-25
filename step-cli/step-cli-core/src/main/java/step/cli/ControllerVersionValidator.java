@@ -42,6 +42,7 @@ public class ControllerVersionValidator {
 
     /**
      * Validates the current version of Step client (for example, CLI or Maven plugin)
+     *
      * @param clientVersion the client version
      * @return the result of validation if the mismatch is not critical
      * @throws ValidationException in case of mismatch between client version and server version

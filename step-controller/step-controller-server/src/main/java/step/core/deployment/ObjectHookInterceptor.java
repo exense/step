@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -50,78 +50,78 @@ import step.framework.server.security.Secured;
 
 @Secured
 @Provider
-public class ObjectHookInterceptor extends AbstractStepServices implements ReaderInterceptor, WriterInterceptor  {
+public class ObjectHookInterceptor extends AbstractStepServices implements ReaderInterceptor, WriterInterceptor {
 
-	public static final String ENTITY_ACCESS_DENIED = "ENTITY_ACCESS_DENIED";
-	@SuppressWarnings("unused")
-	private static Logger logger = LoggerFactory.getLogger(ObjectHookInterceptor.class);
+    public static final String ENTITY_ACCESS_DENIED = "ENTITY_ACCESS_DENIED";
+    @SuppressWarnings("unused")
+    private static Logger logger = LoggerFactory.getLogger(ObjectHookInterceptor.class);
 
-	@Inject
-	private ExtendedUriInfo extendendUriInfo;
-	
-	private ObjectHookRegistry objectHookRegistry;
+    @Inject
+    private ExtendedUriInfo extendendUriInfo;
 
-	private final Predicate<Object> isNotEnricheable = e->!(e instanceof EnricheableObject);
-	
-	@PostConstruct
-	public void init() throws Exception {
-		super.init();
-		objectHookRegistry = getContext().get(ObjectHookRegistry.class);
-	}
+    private ObjectHookRegistry objectHookRegistry;
 
-	@Override
-	public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
-		Object entity = context.proceed();
-		if(entity instanceof EnricheableObject) {
-			EnricheableObject enricheableObject = (EnricheableObject) entity;
-			Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
-			if (annotation == null) {
-				Session<User> session = getSession();
-				Optional<ObjectAccessException> accessException = objectHookRegistry.isObjectEditableInContext(session, enricheableObject);
-				if (accessException.isPresent()) {
-					ObjectAccessException objectAccessException = accessException.get();
-					throw new ControllerServiceException(
-						HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
-							objectAccessException.getMessage(), objectAccessException.getViolations()
-					);
-				} else {
-					ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
-					objectEnricher.accept(enricheableObject);
-				}
-			}
-		}
-		return entity;
-	}
+    private final Predicate<Object> isNotEnricheable = e -> !(e instanceof EnricheableObject);
 
-	@Override
-	public void aroundWriteTo(WriterInterceptorContext context) 
-			throws IOException, WebApplicationException {
-		Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
-		if(annotation == null) {
-			Object entity = context.getEntity();
-			Session<User> session = getSession();
-			String oqlFilter = objectHookRegistry.getObjectFilter(session).getOQLFilter();
-			PojoFilter<Object> filter = OQLFilterBuilder.getPojoFilter(oqlFilter);
-			Predicate<Object> predicate = isNotEnricheable.or(filter);
-			//When returning list of entities we filter the entities accessible from the current context (predicate)
-			if(entity instanceof List) {
-				List<?> list = (List<?>)entity;
-				final List<?> newList = list.stream().filter(predicate).collect(Collectors.toList());
-				context.setEntity(newList);
-			} else {
-				//For single entity we check read access for the entity
-				if (entity instanceof EnricheableObject) {
-					Optional<ObjectAccessException> accessException = objectHookRegistry.isObjectReadableInContext(session, (EnricheableObject) entity);
-					if (accessException.isPresent()) {
-						ObjectAccessException objectAccessException = accessException.get();
-						throw new ControllerServiceException(
-							HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
-								objectAccessException.getMessage(), objectAccessException.getViolations()
-						);
-					}
-				}
-			}
-		}
-		context.proceed();
-	}
+    @PostConstruct
+    public void init() throws Exception {
+        super.init();
+        objectHookRegistry = getContext().get(ObjectHookRegistry.class);
+    }
+
+    @Override
+    public Object aroundReadFrom(ReaderInterceptorContext context) throws IOException, WebApplicationException {
+        Object entity = context.proceed();
+        if (entity instanceof EnricheableObject) {
+            EnricheableObject enricheableObject = (EnricheableObject) entity;
+            Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
+            if (annotation == null) {
+                Session<User> session = getSession();
+                Optional<ObjectAccessException> accessException = objectHookRegistry.isObjectEditableInContext(session, enricheableObject);
+                if (accessException.isPresent()) {
+                    ObjectAccessException objectAccessException = accessException.get();
+                    throw new ControllerServiceException(
+                        HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
+                        objectAccessException.getMessage(), objectAccessException.getViolations()
+                    );
+                } else {
+                    ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(session);
+                    objectEnricher.accept(enricheableObject);
+                }
+            }
+        }
+        return entity;
+    }
+
+    @Override
+    public void aroundWriteTo(WriterInterceptorContext context)
+        throws IOException, WebApplicationException {
+        Unfiltered annotation = extendendUriInfo.getMatchedResourceMethod().getInvocable().getHandlingMethod().getAnnotation(Unfiltered.class);
+        if (annotation == null) {
+            Object entity = context.getEntity();
+            Session<User> session = getSession();
+            String oqlFilter = objectHookRegistry.getObjectFilter(session).getOQLFilter();
+            PojoFilter<Object> filter = OQLFilterBuilder.getPojoFilter(oqlFilter);
+            Predicate<Object> predicate = isNotEnricheable.or(filter);
+            //When returning list of entities we filter the entities accessible from the current context (predicate)
+            if (entity instanceof List) {
+                List<?> list = (List<?>) entity;
+                final List<?> newList = list.stream().filter(predicate).collect(Collectors.toList());
+                context.setEntity(newList);
+            } else {
+                //For single entity we check read access for the entity
+                if (entity instanceof EnricheableObject) {
+                    Optional<ObjectAccessException> accessException = objectHookRegistry.isObjectReadableInContext(session, (EnricheableObject) entity);
+                    if (accessException.isPresent()) {
+                        ObjectAccessException objectAccessException = accessException.get();
+                        throw new ControllerServiceException(
+                            HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
+                            objectAccessException.getMessage(), objectAccessException.getViolations()
+                        );
+                    }
+                }
+            }
+        }
+        context.proceed();
+    }
 }

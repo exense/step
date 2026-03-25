@@ -43,35 +43,35 @@ public class AutomationPackageFileSource {
         NONE
     }
 
-    private AutomationPackageFileSource(){
+    private AutomationPackageFileSource() {
     }
 
-    public static AutomationPackageFileSource withMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier){
+    public static AutomationPackageFileSource withMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier) {
         AutomationPackageFileSource res = new AutomationPackageFileSource();
         res.mavenArtifactIdentifier = mavenArtifactIdentifier;
         return res;
     }
 
-    public static AutomationPackageFileSource withInputStream(InputStream inputStream, String fileName){
+    public static AutomationPackageFileSource withInputStream(InputStream inputStream, String fileName) {
         AutomationPackageFileSource res = new AutomationPackageFileSource();
         res.inputStream = inputStream;
         res.fileName = fileName;
         return res;
     }
 
-    public static AutomationPackageFileSource withResourceId(String resourceId){
+    public static AutomationPackageFileSource withResourceId(String resourceId) {
         AutomationPackageFileSource res = new AutomationPackageFileSource();
         res.resourceId = resourceId;
         return res;
     }
 
-    public static AutomationPackageFileSource withManagedLibraryName(String managedLibraryName){
+    public static AutomationPackageFileSource withManagedLibraryName(String managedLibraryName) {
         AutomationPackageFileSource res = new AutomationPackageFileSource();
         res.managedLibraryName = managedLibraryName;
         return res;
     }
 
-    public static AutomationPackageFileSource empty(){
+    public static AutomationPackageFileSource empty() {
         return new AutomationPackageFileSource();
     }
 
@@ -95,17 +95,17 @@ public class AutomationPackageFileSource {
         return managedLibraryName;
     }
 
-    public void setInputStream(InputStream inputStream, String fileName){
+    public void setInputStream(InputStream inputStream, String fileName) {
         this.inputStream = inputStream;
         this.fileName = fileName;
     }
 
-    public void setMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier){
+    public void setMavenIdentifier(MavenArtifactIdentifier mavenArtifactIdentifier) {
         this.mavenArtifactIdentifier = mavenArtifactIdentifier;
     }
 
 
-    public void setResourceId(String resourceId){
+    public void setResourceId(String resourceId) {
         this.resourceId = resourceId;
     }
 
@@ -140,10 +140,10 @@ public class AutomationPackageFileSource {
     @Override
     public String toString() {
         return "AutomationPackageFileSource{" +
-                "mavenArtifactIdentifier=" + mavenArtifactIdentifier +
-                ", resourceId='" + resourceId + '\'' +
-                ", fileName='" + fileName + '\'' +
-                ", inputStream=" + (inputStream == null ? "no" : "yes") +
-                '}';
+            "mavenArtifactIdentifier=" + mavenArtifactIdentifier +
+            ", resourceId='" + resourceId + '\'' +
+            ", fileName='" + fileName + '\'' +
+            ", inputStream=" + (inputStream == null ? "no" : "yes") +
+            '}';
     }
 }

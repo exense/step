@@ -60,7 +60,7 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
         // Priority 1: the explicit parameter in repository params
         String mavenSettingsPostfix = repositoryParameters.get(ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS);
         if (mavenSettingsPostfix == null) {
-                mavenSettingsPostfix = ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
+            mavenSettingsPostfix = ArtifactRepositoryConstants.ARTIFACT_PARAM_MAVEN_SETTINGS_DEFAULT;
         }
 
         String mavenSettingsId = MAVEN_SETTINGS_PREFIX + mavenSettingsPostfix;

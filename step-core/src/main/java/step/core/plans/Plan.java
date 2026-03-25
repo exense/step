@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -35,90 +35,90 @@ import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfigurat
 import step.functions.EvaluationExpression;
 import step.functions.Function;
 
-@JsonTypeInfo(use=Id.CLASS,property= Plan.JSON_CLASS_FIELD)
+@JsonTypeInfo(use = Id.CLASS, property = Plan.JSON_CLASS_FIELD)
 public class Plan extends AbstractOrganizableObject implements EnricheableObject, EvaluationExpression {
 
-	public static final String JSON_CLASS_FIELD = "_class";
+    public static final String JSON_CLASS_FIELD = "_class";
 
-	protected AbstractArtefact root;
-	
-	protected Collection<Function> functions;
-	
-	protected Collection<Plan> subPlans;
+    protected AbstractArtefact root;
 
-	@JsonTypeInfo(use= Id.DEDUCTION)
-	protected AgentProvisioningConfiguration agents = new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect);
-	
-	protected boolean visible = true;
+    protected Collection<Function> functions;
 
-	protected Expression activationExpression;
+    protected Collection<Plan> subPlans;
 
-	private List<String> categories;
-	
-	public Plan(AbstractArtefact root) {
-		super();
-		this.root = root;
-	}
+    @JsonTypeInfo(use = Id.DEDUCTION)
+    protected AgentProvisioningConfiguration agents = new AutomaticAgentProvisioningConfiguration(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect);
 
-	public Plan() {
-		super();
-	}
+    protected boolean visible = true;
 
-	@EntityReference(type= EntityConstants.recursive)
-	public AbstractArtefact getRoot() {
-		return root;
-	}
+    protected Expression activationExpression;
 
-	public void setRoot(AbstractArtefact root) {
-		this.root = root;
-	}
-	
-	public Collection<Function> getFunctions() {
-		return functions;
-	}
+    private List<String> categories;
 
-	public void setFunctions(Collection<Function> functions) {
-		this.functions = functions;
-	}
+    public Plan(AbstractArtefact root) {
+        super();
+        this.root = root;
+    }
 
-	public Collection<Plan> getSubPlans() {
-		return subPlans;
-	}
+    public Plan() {
+        super();
+    }
 
-	public void setSubPlans(Collection<Plan> subPlans) {
-		this.subPlans = subPlans;
-	}
+    @EntityReference(type = EntityConstants.recursive)
+    public AbstractArtefact getRoot() {
+        return root;
+    }
 
-	public boolean isVisible() {
-		return visible;
-	}
+    public void setRoot(AbstractArtefact root) {
+        this.root = root;
+    }
 
-	public void setVisible(boolean visible) {
-		this.visible = visible;
-	}
+    public Collection<Function> getFunctions() {
+        return functions;
+    }
 
-	public AgentProvisioningConfiguration getAgents() {
-		return agents;
-	}
+    public void setFunctions(Collection<Function> functions) {
+        this.functions = functions;
+    }
 
-	public void setAgents(AgentProvisioningConfiguration agents) {
-		this.agents = agents;
-	}
+    public Collection<Plan> getSubPlans() {
+        return subPlans;
+    }
 
-	public List<String> getCategories() {
-		return categories;
-	}
+    public void setSubPlans(Collection<Plan> subPlans) {
+        this.subPlans = subPlans;
+    }
 
-	public void setCategories(List<String> categories) {
-		this.categories = categories;
-	}
+    public boolean isVisible() {
+        return visible;
+    }
 
-	@Override
-	public Expression getActivationExpression() {
-		return activationExpression;
-	}
+    public void setVisible(boolean visible) {
+        this.visible = visible;
+    }
 
-	public void setActivationExpression(Expression activationExpression) {
-		this.activationExpression = activationExpression;
-	}
+    public AgentProvisioningConfiguration getAgents() {
+        return agents;
+    }
+
+    public void setAgents(AgentProvisioningConfiguration agents) {
+        this.agents = agents;
+    }
+
+    public List<String> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<String> categories) {
+        this.categories = categories;
+    }
+
+    @Override
+    public Expression getActivationExpression() {
+        return activationExpression;
+    }
+
+    public void setActivationExpression(Expression activationExpression) {
+        this.activationExpression = activationExpression;
+    }
 }

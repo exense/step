@@ -12,17 +12,17 @@ import java.util.List;
 public class MigrateDashboardsTask extends MigrationTask {
 
     private static final List<String> ATTRIBUTES_TO_MIGRATE = Arrays.asList(
-            "metricKey", "attributes", "filters", "oql", "grouping", 
-            "inheritGlobalFilters",
-            "inheritGlobalGrouping",
-            "readonlyGrouping",
-            "readonlyAggregate");
-    
+        "metricKey", "attributes", "filters", "oql", "grouping",
+        "inheritGlobalFilters",
+        "inheritGlobalGrouping",
+        "readonlyGrouping",
+        "readonlyAggregate");
+
     private final Collection<Document> dashboardsCollection;
-    
+
     public MigrateDashboardsTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-        super(new Version(3,25,0), collectionFactory, migrationContext);
-        
+        super(new Version(3, 25, 0), collectionFactory, migrationContext);
+
         dashboardsCollection = collectionFactory.getCollection("dashboards", Document.class);
     }
 

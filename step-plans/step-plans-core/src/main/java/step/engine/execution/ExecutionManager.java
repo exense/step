@@ -32,7 +32,7 @@ public class ExecutionManager {
 
     public void updateStatus(ExecutionStatus newStatus) {
         executionContext.updateStatus(newStatus);
-        updateExecution(execution->{
+        updateExecution(execution -> {
             if (newStatus == ExecutionStatus.ENDED) {
                 execution.setEndTime(System.currentTimeMillis());
                 String agentsInvolved = executionContext.getAgentUrls();

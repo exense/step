@@ -33,82 +33,82 @@ import java.util.regex.Pattern;
 
 public class TokenSelectionCriteriaMapBuilder {
 
-	public static String SKIP_AUTO_PROVISIONING = "$skip_auto_provisioning";
+    public static String SKIP_AUTO_PROVISIONING = "$skip_auto_provisioning";
 
-	private static final String ROUTE_TO = "route_to_";
+    private static final String ROUTE_TO = "route_to_";
 
-	private final FunctionTypeRegistry functionTypeRegistry;
-	protected final TokenSelectorHelper tokenSelectorHelper;
+    private final FunctionTypeRegistry functionTypeRegistry;
+    protected final TokenSelectorHelper tokenSelectorHelper;
 
-	public TokenSelectionCriteriaMapBuilder(FunctionTypeRegistry functionTypeRegistry, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
-		this.tokenSelectorHelper = new TokenSelectorHelper(dynamicJsonObjectResolver);
-		this.functionTypeRegistry = functionTypeRegistry;
-	}
+    public TokenSelectionCriteriaMapBuilder(FunctionTypeRegistry functionTypeRegistry, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
+        this.tokenSelectorHelper = new TokenSelectorHelper(dynamicJsonObjectResolver);
+        this.functionTypeRegistry = functionTypeRegistry;
+    }
 
-	public boolean isLocalTokenRequired(CallFunction callFunction, Function function) {
-		return function.requiresLocalExecution() || callFunction.getRemote().get().equals(false);
-	}
+    public boolean isLocalTokenRequired(CallFunction callFunction, Function function) {
+        return function.requiresLocalExecution() || callFunction.getRemote().get().equals(false);
+    }
 
-	public Map<String, Interest> buildSelectionCriteriaMap(CallFunction callFunction, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
-		Map<String, Interest> allSelectionCriteria = _buildSelectionCriteriaMap(callFunction, function, functionGroupContext, bindings);
-		allSelectionCriteria.remove(SKIP_AUTO_PROVISIONING);
-		return allSelectionCriteria;
-	}
+    public Map<String, Interest> buildSelectionCriteriaMap(CallFunction callFunction, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
+        Map<String, Interest> allSelectionCriteria = _buildSelectionCriteriaMap(callFunction, function, functionGroupContext, bindings);
+        allSelectionCriteria.remove(SKIP_AUTO_PROVISIONING);
+        return allSelectionCriteria;
+    }
 
-	private Map<String, Interest> _buildSelectionCriteriaMap(CallFunction callFunction, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
-		Map<String, Interest> selectionCriteria = new HashMap<>();
+    private Map<String, Interest> _buildSelectionCriteriaMap(CallFunction callFunction, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
+        Map<String, Interest> selectionCriteria = new HashMap<>();
 
-		// Criteria from CallFunction Artefact
-		addSelectionCriteriaFromCallFunctionArtefact(callFunction, bindings, selectionCriteria);
+        // Criteria from CallFunction Artefact
+        addSelectionCriteriaFromCallFunctionArtefact(callFunction, bindings, selectionCriteria);
 
-		// Criteria from Session Artefact if available
-		addSelectionCriteriaFromFunctionGroupContextIfAvailable(functionGroupContext, selectionCriteria);
+        // Criteria from Session Artefact if available
+        addSelectionCriteriaFromFunctionGroupContextIfAvailable(functionGroupContext, selectionCriteria);
 
-		// Criteria from function type
-		// TODO As a workaround we're ignoring null functionTypeRegistry. Remove this in the future
-		if (functionTypeRegistry != null) {
-			AbstractFunctionType<Function> functionType = functionTypeRegistry.getFunctionTypeByFunction(function);
-			Map<String, Interest> tokenSelectionCriteriaFromFunctionType = functionType.getTokenSelectionCriteria(function);
-			if (tokenSelectionCriteriaFromFunctionType != null) {
-				selectionCriteria.putAll(tokenSelectionCriteriaFromFunctionType);
-			}
-		}
+        // Criteria from function type
+        // TODO As a workaround we're ignoring null functionTypeRegistry. Remove this in the future
+        if (functionTypeRegistry != null) {
+            AbstractFunctionType<Function> functionType = functionTypeRegistry.getFunctionTypeByFunction(function);
+            Map<String, Interest> tokenSelectionCriteriaFromFunctionType = functionType.getTokenSelectionCriteria(function);
+            if (tokenSelectionCriteriaFromFunctionType != null) {
+                selectionCriteria.putAll(tokenSelectionCriteriaFromFunctionType);
+            }
+        }
 
-		// Criteria from function
-		Map<String, String> tokenSelectionCriteriaFromFunction = function.getTokenSelectionCriteria();
-		if (tokenSelectionCriteriaFromFunction != null) {
-			tokenSelectionCriteriaFromFunction.keySet().stream().forEach(key -> selectionCriteria.put(key, new Interest(Pattern.compile(tokenSelectionCriteriaFromFunction.get(key)), true)));
-		}
+        // Criteria from function
+        Map<String, String> tokenSelectionCriteriaFromFunction = function.getTokenSelectionCriteria();
+        if (tokenSelectionCriteriaFromFunction != null) {
+            tokenSelectionCriteriaFromFunction.keySet().stream().forEach(key -> selectionCriteria.put(key, new Interest(Pattern.compile(tokenSelectionCriteriaFromFunction.get(key)), true)));
+        }
 
-		// Criteria from bindings (Special variable "route_to_")
-		addTokenSelectionCriteriaFromBindings(selectionCriteria, bindings);
-		return selectionCriteria;
-	}
+        // Criteria from bindings (Special variable "route_to_")
+        addTokenSelectionCriteriaFromBindings(selectionCriteria, bindings);
+        return selectionCriteria;
+    }
 
-	private void addSelectionCriteriaFromFunctionGroupContextIfAvailable(FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Interest> selectionCriteria) {
-		if (functionGroupContext != null && functionGroupContext.getFunctionGroupTokenSelectionCriteria() != null) {
-			selectionCriteria.putAll(functionGroupContext.getFunctionGroupTokenSelectionCriteria());
-		}
-	}
+    private void addSelectionCriteriaFromFunctionGroupContextIfAvailable(FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Interest> selectionCriteria) {
+        if (functionGroupContext != null && functionGroupContext.getFunctionGroupTokenSelectionCriteria() != null) {
+            selectionCriteria.putAll(functionGroupContext.getFunctionGroupTokenSelectionCriteria());
+        }
+    }
 
-	private void addSelectionCriteriaFromCallFunctionArtefact(CallFunction callFunction, Map<String, Object> bindings, Map<String, Interest> selectionCriteria) {
-		selectionCriteria.putAll(tokenSelectorHelper.getTokenSelectionCriteria(callFunction, bindings));
-	}
+    private void addSelectionCriteriaFromCallFunctionArtefact(CallFunction callFunction, Map<String, Object> bindings, Map<String, Interest> selectionCriteria) {
+        selectionCriteria.putAll(tokenSelectorHelper.getTokenSelectionCriteria(callFunction, bindings));
+    }
 
-	private Map<String, Interest> addTokenSelectionCriteriaFromBindings(Map<String, Interest> addtionalSelectionCriteria, Map<String, Object> bindings) {
-		bindings.forEach((k, v) -> {
-			if (v != null) {
-				if (k.startsWith(ROUTE_TO)) {
-					Pattern selectionPattern = Pattern.compile(v.toString());
-					addtionalSelectionCriteria.put(k.replaceFirst(ROUTE_TO, ""), new Interest(selectionPattern, true));
-				}
-			}
-		});
-		return addtionalSelectionCriteria;
-	}
+    private Map<String, Interest> addTokenSelectionCriteriaFromBindings(Map<String, Interest> addtionalSelectionCriteria, Map<String, Object> bindings) {
+        bindings.forEach((k, v) -> {
+            if (v != null) {
+                if (k.startsWith(ROUTE_TO)) {
+                    Pattern selectionPattern = Pattern.compile(v.toString());
+                    addtionalSelectionCriteria.put(k.replaceFirst(ROUTE_TO, ""), new Interest(selectionPattern, true));
+                }
+            }
+        });
+        return addtionalSelectionCriteria;
+    }
 
-	public boolean shouldSkipAutoProvisioning(CallFunction testArtefact, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
-		Interest interest = _buildSelectionCriteriaMap(testArtefact, function, functionGroupContext, bindings).get(SKIP_AUTO_PROVISIONING);
-		return (interest != null && interest.getSelectionPattern().pattern().equals(Boolean.TRUE.toString()));
-	}
+    public boolean shouldSkipAutoProvisioning(CallFunction testArtefact, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
+        Interest interest = _buildSelectionCriteriaMap(testArtefact, function, functionGroupContext, bindings).get(SKIP_AUTO_PROVISIONING);
+        return (interest != null && interest.getSelectionPattern().pattern().equals(Boolean.TRUE.toString()));
+    }
 }

@@ -7,7 +7,7 @@ import step.plugins.table.settings.ScreenInputColumnSettings;
 import java.util.List;
 
 public class TableDashletSettings {
-    
+
     @NotNull
     private List<ColumnSelection> columns;
 
@@ -19,26 +19,27 @@ public class TableDashletSettings {
         this.columns = columns;
         return this;
     }
-    
+
     public static class ColumnSelection {
-        
+
         @NotNull
         private TableChartColumn column;
-        
+
         @NotNull
         private MetricAggregation aggregation;
-        
+
         @NotNull
         private boolean isSelected = true;
-        
+
         public ColumnSelection() {
-            
+
         }
-        
+
         public ColumnSelection(TableChartColumn column, MetricAggregation aggregation) {
             this.column = column;
             this.aggregation = aggregation;
         }
+
         public ColumnSelection(TableChartColumn column, MetricAggregation aggregation, boolean isSelected) {
             this.column = column;
             this.aggregation = aggregation;

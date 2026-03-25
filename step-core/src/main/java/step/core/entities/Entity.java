@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -31,88 +31,88 @@ import java.util.Map;
 
 public class Entity<A extends AbstractIdentifiableObject, T extends Accessor<A>> {
 
-	private final String name;
-	private final T accessor;
-	private final Class<A> entityClass;
-	private boolean byPassObjectPredicate = false;
+    private final String name;
+    private final T accessor;
+    private final Class<A> entityClass;
+    private boolean byPassObjectPredicate = false;
 
-	public Entity(String name, T accessor, Class<A> entityClass) {
-		super();
-		this.name = name;
-		this.accessor = accessor;
-		this.entityClass = entityClass;
-	}
+    public Entity(String name, T accessor, Class<A> entityClass) {
+        super();
+        this.name = name;
+        this.accessor = accessor;
+        this.entityClass = entityClass;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getCollectionName() {
-		return accessor.getCollectionDriver().getName();
-	}
+    public String getCollectionName() {
+        return accessor.getCollectionDriver().getName();
+    }
 
-	public T getAccessor() {
-		return accessor;
-	}
+    public T getAccessor() {
+        return accessor;
+    }
 
-	public Class<A> getEntityClass() {
-		return entityClass;
-	}
+    public Class<A> getEntityClass() {
+        return entityClass;
+    }
 
-	public boolean isByPassObjectPredicate() {
-		return byPassObjectPredicate;
-	}
+    public boolean isByPassObjectPredicate() {
+        return byPassObjectPredicate;
+    }
 
-	public void setByPassObjectPredicate(boolean byPassObjectPredicate) {
-		this.byPassObjectPredicate = byPassObjectPredicate;
-	}
+    public void setByPassObjectPredicate(boolean byPassObjectPredicate) {
+        this.byPassObjectPredicate = byPassObjectPredicate;
+    }
 
-	/**
-	 * This method is responsible for the resolution of atomic references to entity
-	 * id
-	 * 
-	 * @param atomicReference the atomic reference to be resolved
-	 * @param visitorContext  the context object
-	 * @return the resolved entity id or null
-	 */
-	public String resolveAtomicReference(Object atomicReference, EntityTreeVisitorContext visitorContext) {
-		return null;
-	}
+    /**
+     * This method is responsible for the resolution of atomic references to entity
+     * id
+     *
+     * @param atomicReference the atomic reference to be resolved
+     * @param visitorContext  the context object
+     * @return the resolved entity id or null
+     */
+    public String resolveAtomicReference(Object atomicReference, EntityTreeVisitorContext visitorContext) {
+        return null;
+    }
 
-	/**
-	 * This method is responsible for the update of atomic references with a new
-	 * entity id
-	 * 
-	 * @param atomicReference the atomic reference to be updated
-	 * @param newEntityId     the new entity if
-	 * @param visitorContext  the context object
-	 * @return the updated atomic reference
-	 */
-	public Object updateAtomicReference(Object atomicReference, String newEntityId,
-			EntityTreeVisitorContext visitorContext) {
-		return null;
-	}
+    /**
+     * This method is responsible for the update of atomic references with a new
+     * entity id
+     *
+     * @param atomicReference the atomic reference to be updated
+     * @param newEntityId     the new entity if
+     * @param visitorContext  the context object
+     * @return the updated atomic reference
+     */
+    public Object updateAtomicReference(Object atomicReference, String newEntityId,
+                                        EntityTreeVisitorContext visitorContext) {
+        return null;
+    }
 
-	public static  <T extends AbstractOrganizableObject & EnricheableObject> void reuseOldIds(List<T> entities, List<T> oldEntities) {
-		Map<String, ObjectId> nameToIdMap = createNameToIdMap(oldEntities);
+    public static <T extends AbstractOrganizableObject & EnricheableObject> void reuseOldIds(List<T> entities, List<T> oldEntities) {
+        Map<String, ObjectId> nameToIdMap = createNameToIdMap(oldEntities);
 
-		for (T e : entities) {
-			// keep old id
-			ObjectId oldId = nameToIdMap.get(e.getAttribute(AbstractOrganizableObject.NAME));
-			if (oldId != null) {
-				e.setId(oldId);
-			}
-		}
-	}
+        for (T e : entities) {
+            // keep old id
+            ObjectId oldId = nameToIdMap.get(e.getAttribute(AbstractOrganizableObject.NAME));
+            if (oldId != null) {
+                e.setId(oldId);
+            }
+        }
+    }
 
-	private static Map<String, ObjectId> createNameToIdMap(List<? extends AbstractOrganizableObject> objects) {
-		Map<String, ObjectId> nameToIdMap = new HashMap<>();
-		for (AbstractOrganizableObject o : objects) {
-			String name = o.getAttribute(AbstractOrganizableObject.NAME);
-			if (name != null) {
-				nameToIdMap.put(name, o.getId());
-			}
-		}
-		return nameToIdMap;
-	}
+    private static Map<String, ObjectId> createNameToIdMap(List<? extends AbstractOrganizableObject> objects) {
+        Map<String, ObjectId> nameToIdMap = new HashMap<>();
+        for (AbstractOrganizableObject o : objects) {
+            String name = o.getAttribute(AbstractOrganizableObject.NAME);
+            if (name != null) {
+                nameToIdMap.put(name, o.getId());
+            }
+        }
+        return nameToIdMap;
+    }
 }

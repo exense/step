@@ -69,159 +69,159 @@ import static step.datapool.excel.ExcelFunctionsTest.getResourceFile;
 
 public class ForEachHandlerTest {
 
-	private static final Logger logger = LoggerFactory.getLogger(ForEachHandlerTest.class);
-	private ExecutionEngine executionEngine;
-	private AbstractAccessor<Parameter> parameterAccessor;
-	private ParameterManager parameterManager;
+    private static final Logger logger = LoggerFactory.getLogger(ForEachHandlerTest.class);
+    private ExecutionEngine executionEngine;
+    private AbstractAccessor<Parameter> parameterAccessor;
+    private ParameterManager parameterManager;
 
-	@Before
-	public void before() {
-		DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
-		parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
-		parameterManager = new ParameterManager(parameterAccessor, null, new Configuration(), resolver);
-		executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
-				.withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin())
-				.withPlugin(new ParameterManagerPlugin(parameterManager)).build();
-	}
+    @Before
+    public void before() {
+        DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
+        parameterAccessor = new AbstractAccessor<>(new InMemoryCollection<>());
+        parameterManager = new ParameterManager(parameterAccessor, null, new Configuration(), resolver);
+        executionEngine = ExecutionEngine.builder().withPlugin(new FunctionPlugin()).withPlugin(newMyFunctionTypePlugin())
+            .withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin()).withPlugin(new TokenForecastingExecutionPlugin())
+            .withPlugin(new ParameterManagerPlugin(parameterManager)).build();
+    }
 
-	@After
-	public void after() {
-		executionEngine.close();
-	}
+    @After
+    public void after() {
+        executionEngine.close();
+    }
 
-	@Test
-	public void testUnprotected() throws IOException {
-		ForEachBlock f = new ForEachBlock();
+    @Test
+    public void testUnprotected() throws IOException {
+        ForEachBlock f = new ForEachBlock();
 
-		JsonArrayDataPoolConfiguration configuration = new JsonArrayDataPoolConfiguration();
-		configuration.setJson(new DynamicValue<String>("[ {\"a\" : \"va1\", \"b\" : \"vb1\"}, {\"a\" : \"va2\", \"b\" : \"vb2\"}, {\"a\" : 1}, {\"a\" : []}]"));
-		configuration.setProtect(new DynamicValue<>(false));
+        JsonArrayDataPoolConfiguration configuration = new JsonArrayDataPoolConfiguration();
+        configuration.setJson(new DynamicValue<String>("[ {\"a\" : \"va1\", \"b\" : \"vb1\"}, {\"a\" : \"va2\", \"b\" : \"vb2\"}, {\"a\" : 1}, {\"a\" : []}]"));
+        configuration.setProtect(new DynamicValue<>(false));
 
-		f.setDataSource(configuration);
-		f.setDataSourceType(JSON_ARRAY);
-		f.setItem(new DynamicValue<String>("row"));
-		f.setGlobalCounter(new DynamicValue<String>("globalCounter"));
-		f.setUserItem(new DynamicValue<String>("userId"));
+        f.setDataSource(configuration);
+        f.setDataSourceType(JSON_ARRAY);
+        f.setItem(new DynamicValue<String>("row"));
+        f.setGlobalCounter(new DynamicValue<String>("globalCounter"));
+        f.setUserItem(new DynamicValue<String>("userId"));
 
-		String argumentStr = "{\"Col1\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"row.a\"}}";
-		MyFunction function = newPassingFunctionWithInput();
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
-		callFunction.setArgument(new DynamicValue<>(argumentStr));
+        String argumentStr = "{\"Col1\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"row.a\"}}";
+        MyFunction function = newPassingFunctionWithInput();
+        CallFunction callFunction = new CallFunction();
+        callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
+        callFunction.setArgument(new DynamicValue<>(argumentStr));
 
-		Plan plan = PlanBuilder.create().startBlock(f).add(callFunction).endBlock().build();
-		plan.setFunctions(List.of(function));
-		PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
-		planRunnerResult.printTree();
-		CallFunctionReportNode node = getFirstCallFunctionReportNode(planRunnerResult);
+        Plan plan = PlanBuilder.create().startBlock(f).add(callFunction).endBlock().build();
+        plan.setFunctions(List.of(function));
+        PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
+        planRunnerResult.printTree();
+        CallFunctionReportNode node = getFirstCallFunctionReportNode(planRunnerResult);
 
-		assertNull(node.getError());
-		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		assertEquals("{\"Col1\":\"va1\"}", node.getOutput());
-		assertEquals("{\"Col1\":\"va1\"}", node.getInput());
+        assertNull(node.getError());
+        assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+        assertEquals("{\"Col1\":\"va1\"}", node.getOutput());
+        assertEquals("{\"Col1\":\"va1\"}", node.getInput());
 
-	}
+    }
 
-	@Test
-	public void testProtected() throws IOException {
-		ForEachBlock f = new ForEachBlock();
+    @Test
+    public void testProtected() throws IOException {
+        ForEachBlock f = new ForEachBlock();
 
-		JsonArrayDataPoolConfiguration configuration = new JsonArrayDataPoolConfiguration();
-		configuration.setJson(new DynamicValue<String>("[ {\"a\" : \"va1\", \"b\" : \"vb1\"}, {\"a\" : \"va2\", \"b\" : \"vb2\"}, {\"a\" : 1}, {\"a\" : []}]"));
-		configuration.setProtect(new DynamicValue<>(true));
+        JsonArrayDataPoolConfiguration configuration = new JsonArrayDataPoolConfiguration();
+        configuration.setJson(new DynamicValue<String>("[ {\"a\" : \"va1\", \"b\" : \"vb1\"}, {\"a\" : \"va2\", \"b\" : \"vb2\"}, {\"a\" : 1}, {\"a\" : []}]"));
+        configuration.setProtect(new DynamicValue<>(true));
 
-		f.setDataSource(configuration);
-		f.setDataSourceType(JSON_ARRAY);
-		f.setItem(new DynamicValue<String>("row"));
-		f.setGlobalCounter(new DynamicValue<String>("globalCounter"));
-		f.setUserItem(new DynamicValue<String>("userId"));
+        f.setDataSource(configuration);
+        f.setDataSourceType(JSON_ARRAY);
+        f.setItem(new DynamicValue<String>("row"));
+        f.setGlobalCounter(new DynamicValue<String>("globalCounter"));
+        f.setUserItem(new DynamicValue<String>("userId"));
 
-		String argumentStr = "{\"Col1\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"row.a\"}}";
-		MyFunction function = newPassingFunctionWithInput();
-		CallFunction callFunction = new CallFunction();
-		callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
-		callFunction.setArgument(new DynamicValue<>(argumentStr));
+        String argumentStr = "{\"Col1\":{\"value\":\"\",\"dynamic\":true,\"expression\":\"row.a\"}}";
+        MyFunction function = newPassingFunctionWithInput();
+        CallFunction callFunction = new CallFunction();
+        callFunction.setFunction(new DynamicValue<>("{\"name\":\"MyFunction\"}"));
+        callFunction.setArgument(new DynamicValue<>(argumentStr));
 
-		Plan plan = PlanBuilder.create().startBlock(f).add(callFunction).endBlock().build();
-		plan.setFunctions(List.of(function));
-		PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
-		planRunnerResult.printTree();
-		CallFunctionReportNode node = getFirstCallFunctionReportNode(planRunnerResult);
+        Plan plan = PlanBuilder.create().startBlock(f).add(callFunction).endBlock().build();
+        plan.setFunctions(List.of(function));
+        PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
+        planRunnerResult.printTree();
+        CallFunctionReportNode node = getFirstCallFunctionReportNode(planRunnerResult);
 
-		assertNull(node.getError());
-		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		assertEquals("{\"Col1\":\"va1\"}", node.getOutput());
-		assertEquals("{\"Col1\":\"***row.a***\"}", node.getInput());
+        assertNull(node.getError());
+        assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+        assertEquals("{\"Col1\":\"va1\"}", node.getOutput());
+        assertEquals("{\"Col1\":\"***row.a***\"}", node.getInput());
 
-	}
+    }
 
-	@Test
-	public void testPasswordProtectedExcel() throws IOException {
-		testPasswordProtectedExcel(false);
-	}
+    @Test
+    public void testPasswordProtectedExcel() throws IOException {
+        testPasswordProtectedExcel(false);
+    }
 
-	@Test
-	public void testPasswordProtectedExcelDynamic() throws IOException {
-		testPasswordProtectedExcel(true);
-	}
+    @Test
+    public void testPasswordProtectedExcelDynamic() throws IOException {
+        testPasswordProtectedExcel(true);
+    }
 
-	private void testPasswordProtectedExcel(boolean dynamic) throws IOException {
-		ForEachBlock f = new ForEachBlock();
+    private void testPasswordProtectedExcel(boolean dynamic) throws IOException {
+        ForEachBlock f = new ForEachBlock();
 
-		if (dynamic) {
-			Parameter parameter = new Parameter(null, "excelPassword", "testPassword", "");
-			parameter.setProtectedValue(true);
-			parameterAccessor.save(parameter);
-		}
-		ExcelDataPool excelDataPool = new ExcelDataPool();
-		excelDataPool.setFile(new DynamicValue<>(getResourceFile("ExcelWithPassword.xlsx").getAbsolutePath()));
-		//excelDataPool.setPassword(new ProtectedDynamicValue<>("passwordParam", null));
-		if (dynamic) {
-			excelDataPool.setPassword(new ProtectedDynamicValue<>("excelPassword", null));
-		} else {
-			excelDataPool.setPassword(new ProtectedDynamicValue<>("testPassword"));
-		}
-		excelDataPool.setProtect(new DynamicValue<>(false));
+        if (dynamic) {
+            Parameter parameter = new Parameter(null, "excelPassword", "testPassword", "");
+            parameter.setProtectedValue(true);
+            parameterAccessor.save(parameter);
+        }
+        ExcelDataPool excelDataPool = new ExcelDataPool();
+        excelDataPool.setFile(new DynamicValue<>(getResourceFile("ExcelWithPassword.xlsx").getAbsolutePath()));
+        //excelDataPool.setPassword(new ProtectedDynamicValue<>("passwordParam", null));
+        if (dynamic) {
+            excelDataPool.setPassword(new ProtectedDynamicValue<>("excelPassword", null));
+        } else {
+            excelDataPool.setPassword(new ProtectedDynamicValue<>("testPassword"));
+        }
+        excelDataPool.setProtect(new DynamicValue<>(false));
 
-		f.setDataSource(excelDataPool);
-		f.setDataSourceType(EXCEL);
-		f.setItem(new DynamicValue<String>("row"));
-		f.setGlobalCounter(new DynamicValue<String>("globalCounter"));
-		f.setUserItem(new DynamicValue<String>("userId"));
+        f.setDataSource(excelDataPool);
+        f.setDataSourceType(EXCEL);
+        f.setItem(new DynamicValue<String>("row"));
+        f.setGlobalCounter(new DynamicValue<String>("globalCounter"));
+        f.setUserItem(new DynamicValue<String>("userId"));
 
-		Plan plan = PlanBuilder.create().startBlock(f).add(BaseArtefacts.echo("row.User")).endBlock().build();
-		PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
-		planRunnerResult.printTree();
+        Plan plan = PlanBuilder.create().startBlock(f).add(BaseArtefacts.echo("row.User")).endBlock().build();
+        PlanRunnerResult planRunnerResult = executionEngine.execute(plan);
+        planRunnerResult.printTree();
 
-		assertEquals(ReportNodeStatus.PASSED, planRunnerResult.getResult());
-		EchoReportNode node = getFirstEchoReportNode(planRunnerResult);
-		assertNull(node.getError());
-		assertEquals(ReportNodeStatus.PASSED, node.getStatus());
-		assertEquals("Test1", node.getEcho());
-	}
+        assertEquals(ReportNodeStatus.PASSED, planRunnerResult.getResult());
+        EchoReportNode node = getFirstEchoReportNode(planRunnerResult);
+        assertNull(node.getError());
+        assertEquals(ReportNodeStatus.PASSED, node.getStatus());
+        assertEquals("Test1", node.getEcho());
+    }
 
-	private MyFunction newPassingFunctionWithInput() {
-		MyFunction function = new MyFunction(input -> {
-			Output<JsonObject> output = new Output<>();
+    private MyFunction newPassingFunctionWithInput() {
+        MyFunction function = new MyFunction(input -> {
+            Output<JsonObject> output = new Output<>();
 
-			output.setPayload(Json.createObjectBuilder().add("Col1", input.getPayload().getString("Col1")).build());
-			return output;
-		});
-		function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
-		return function;
-	}
+            output.setPayload(Json.createObjectBuilder().add("Col1", input.getPayload().getString("Col1")).build());
+            return output;
+        });
+        function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");
+        return function;
+    }
 
-	protected static CallFunctionReportNode getFirstCallFunctionReportNode(PlanRunnerResult result) {
-		ReportNode forReport = result.getReportTreeAccessor().getChildren(result.getRootReportNode().getId().toString()).next();
-		ReportNode iteration1 = result.getReportTreeAccessor().getChildren(forReport.getId().toString()).next();
-		return (CallFunctionReportNode) result.getReportTreeAccessor().getChildren(iteration1.getId().toString()).next();
-	}
+    protected static CallFunctionReportNode getFirstCallFunctionReportNode(PlanRunnerResult result) {
+        ReportNode forReport = result.getReportTreeAccessor().getChildren(result.getRootReportNode().getId().toString()).next();
+        ReportNode iteration1 = result.getReportTreeAccessor().getChildren(forReport.getId().toString()).next();
+        return (CallFunctionReportNode) result.getReportTreeAccessor().getChildren(iteration1.getId().toString()).next();
+    }
 
-	protected static EchoReportNode getFirstEchoReportNode(PlanRunnerResult result) {
-		ReportNode forReport = result.getReportTreeAccessor().getChildren(result.getRootReportNode().getId().toString()).next();
-		ReportNode iteration1 = result.getReportTreeAccessor().getChildren(forReport.getId().toString()).next();
-		return (EchoReportNode) result.getReportTreeAccessor().getChildren(iteration1.getId().toString()).next();
-	}
+    protected static EchoReportNode getFirstEchoReportNode(PlanRunnerResult result) {
+        ReportNode forReport = result.getReportTreeAccessor().getChildren(result.getRootReportNode().getId().toString()).next();
+        ReportNode iteration1 = result.getReportTreeAccessor().getChildren(forReport.getId().toString()).next();
+        return (EchoReportNode) result.getReportTreeAccessor().getChildren(iteration1.getId().toString()).next();
+    }
 }
 
 

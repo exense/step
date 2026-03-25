@@ -71,7 +71,7 @@ public class LinkedAutomationPackagesFinder {
         if (apOrigin != null && automationPackageProvider.canLookupResources() && automationPackageProvider.isModifiableResource() && automationPackageProvider.hasNewContent()) {
             Resource resourceByOrigin = resourceManager.getResourceByNameAndType(apOrigin.toStringRepresentation(), ResourceManager.RESOURCE_TYPE_AP, objectPredicate);
             if (resourceByOrigin != null) {
-              automationPackagesWithSameOrigin.addAll(findAutomationPackagesIdsByResourceId(resourceByOrigin.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
+                automationPackagesWithSameOrigin.addAll(findAutomationPackagesIdsByResourceId(resourceByOrigin.getId().toHexString(), oldPackage == null ? List.of() : List.of(oldPackage.getId())));
             }
             conflictingAutomationPackages.setApWithSameOrigin(automationPackagesWithSameOrigin);
         }
@@ -91,21 +91,21 @@ public class LinkedAutomationPackagesFinder {
     public Set<ObjectId> findAutomationPackagesIdsByResourceId(String resourceId, List<ObjectId> ignoredApIds) {
         Set<ObjectId> result = new HashSet<>();
         result.addAll(automationPackageAccessor.findByAutomationPackageResource(FileResolver.RESOURCE_PREFIX + resourceId).stream()
-                .map(AbstractIdentifiableObject::getId)
-                .filter(ap -> !ignoredApIds.contains(ap))
-                .collect(Collectors.toList()));
+            .map(AbstractIdentifiableObject::getId)
+            .filter(ap -> !ignoredApIds.contains(ap))
+            .collect(Collectors.toList()));
         result.addAll(automationPackageAccessor.findByLibraryResource(FileResolver.RESOURCE_PREFIX + resourceId)
-                .stream().map(AbstractIdentifiableObject::getId)
-                .filter(ap -> !ignoredApIds.contains(ap))
-                .collect(Collectors.toList()));
+            .stream().map(AbstractIdentifiableObject::getId)
+            .filter(ap -> !ignoredApIds.contains(ap))
+            .collect(Collectors.toList()));
         return result;
     }
 
     public List<AutomationPackage> findAutomationPackagesByResourceId(String resourceId, List<ObjectId> ignoredApIds) {
         return findAutomationPackagesIdsByResourceId(resourceId, ignoredApIds)
-                .stream()
-                .map(automationPackageAccessor::get)
-                .sorted(Comparator.comparing(o -> o.getAttribute(AbstractOrganizableObject.NAME)))
-                .collect(Collectors.toList());
+            .stream()
+            .map(automationPackageAccessor::get)
+            .sorted(Comparator.comparing(o -> o.getAttribute(AbstractOrganizableObject.NAME)))
+            .collect(Collectors.toList());
     }
 }

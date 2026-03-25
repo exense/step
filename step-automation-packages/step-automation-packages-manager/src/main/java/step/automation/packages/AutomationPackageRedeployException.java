@@ -34,7 +34,7 @@ public class AutomationPackageRedeployException extends AutomationPackageManager
         this.failedApsId = failedApsIds;
     }
 
-    private static String createErrorMessage(List<ObjectId> failedApsIds){
+    private static String createErrorMessage(List<ObjectId> failedApsIds) {
         return "Unable to reupload the automation packages: " + failedApsIds.stream().map(ObjectId::toHexString).collect(Collectors.toList());
     }
 

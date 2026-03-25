@@ -75,16 +75,16 @@ public class MeasurementAccessor {
         List<Document> insertables = new ArrayList<>();
 
         lm.stream()
-                .forEach(o -> {
-                    if (o instanceof String)
-                        insertables.add(convertToMongo((String) o));
-                    else {
-                        if (o instanceof Map) {
-                            Document rawMeasurement = getRawMeasurement((Map )o);
-                            insertables.add(rawMeasurement);
-                        }
+            .forEach(o -> {
+                if (o instanceof String)
+                    insertables.add(convertToMongo((String) o));
+                else {
+                    if (o instanceof Map) {
+                        Document rawMeasurement = getRawMeasurement((Map) o);
+                        insertables.add(rawMeasurement);
                     }
-                });
+                }
+            });
         return insertables;
     }
 

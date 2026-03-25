@@ -49,16 +49,16 @@ public class YamlArtefactsLookuper {
 
     private static List<Class<? extends AbstractArtefact>> getArtefactsWithSpecialModels() {
         return YamlModelUtils.scanNamedYamlModels(AbstractArtefact.class).stream()
-                .filter(YamlArtefactsLookuper::hasSpecialModelClass)
-                .map(c -> (Class<? extends AbstractArtefact>) c)
-                .collect(Collectors.toList());
+            .filter(YamlArtefactsLookuper::hasSpecialModelClass)
+            .map(c -> (Class<? extends AbstractArtefact>) c)
+            .collect(Collectors.toList());
     }
 
     public static List<Class<? extends AbstractArtefact>> getSimpleYamlArtefactModels() {
         return YamlModelUtils.scanNamedYamlModels(AbstractArtefact.class).stream()
-                .filter(c -> !hasSpecialModelClass(c))
-                .map(c -> (Class<? extends AbstractArtefact>) c)
-                .collect(Collectors.toList());
+            .filter(c -> !hasSpecialModelClass(c))
+            .map(c -> (Class<? extends AbstractArtefact>) c)
+            .collect(Collectors.toList());
     }
 
     private static boolean hasSpecialModelClass(Class<?> c) {
@@ -82,10 +82,10 @@ public class YamlArtefactsLookuper {
     }
 
     public static Class<? extends AbstractArtefact> getArtefactClass(Class<?> yamlArtefactClass) {
-        if(MODEL_TO_ARTEFACT_MAP.get(yamlArtefactClass) != null){
+        if (MODEL_TO_ARTEFACT_MAP.get(yamlArtefactClass) != null) {
             // speical model
             return MODEL_TO_ARTEFACT_MAP.get(yamlArtefactClass);
-        } else if(AbstractArtefact.class.isAssignableFrom(yamlArtefactClass)){
+        } else if (AbstractArtefact.class.isAssignableFrom(yamlArtefactClass)) {
             // simple model
             return (Class<? extends AbstractArtefact>) yamlArtefactClass;
         } else {

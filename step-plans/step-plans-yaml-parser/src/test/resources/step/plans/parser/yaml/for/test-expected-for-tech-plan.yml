@@ -25,7 +25,7 @@ root:
       useDynamicName: false
       workArtefact: false
       description: "test for"
-      children: []
+      children: [ ]
       skipNode:
         dynamic: false
         value: false

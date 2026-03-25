@@ -48,17 +48,17 @@ public class YamlResourceReference {
         this.resourceId = resourceId;
     }
 
-    public DynamicValue<String> toDynamicValue(){
-        if(simpleString != null && !simpleString.isEmpty()){
+    public DynamicValue<String> toDynamicValue() {
+        if (simpleString != null && !simpleString.isEmpty()) {
             return new DynamicValue<>(simpleString);
-        } else if (resourceId != null && !resourceId.isEmpty()){
+        } else if (resourceId != null && !resourceId.isEmpty()) {
             return new DynamicValue<>(FileResolver.RESOURCE_PREFIX + resourceId);
         } else {
             return new DynamicValue<>();
         }
     }
 
-    public static YamlResourceReference fromDynamicValue(DynamicValue<String> res){
+    public static YamlResourceReference fromDynamicValue(DynamicValue<String> res) {
         // TODO: now we only support file resources resource ids in plans
         return new YamlResourceReference(null, res.getValue().replaceFirst(FileResolver.RESOURCE_PREFIX, ""));
     }

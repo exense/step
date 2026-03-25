@@ -44,16 +44,16 @@ public class ArtifactRepositoryPlugin extends AbstractControllerPlugin {
         ControllerSettingAccessor controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
         Configuration configuration = context.getConfiguration();
         MavenArtifactRepository mavenRepository = new MavenArtifactRepository(
-                context.require(AutomationPackageManager.class),
-                context.require(FunctionTypeRegistry.class),
-                context.require(FunctionAccessor.class),
-                configuration, controllerSettingAccessor,
-                context.getResourceManager());
+            context.require(AutomationPackageManager.class),
+            context.require(FunctionTypeRegistry.class),
+            context.require(FunctionAccessor.class),
+            configuration, controllerSettingAccessor,
+            context.getResourceManager());
         ResourceArtifactRepository resourceRepository = new ResourceArtifactRepository(
-                context.getResourceManager(),
-                context.require(AutomationPackageManager.class),
-                context.require(FunctionTypeRegistry.class),
-                context.require(FunctionAccessor.class));
+            context.getResourceManager(),
+            context.require(AutomationPackageManager.class),
+            context.require(FunctionTypeRegistry.class),
+            context.require(FunctionAccessor.class));
         context.getRepositoryObjectManager().registerRepository(ArtifactRepositoryConstants.MAVEN_REPO_ID, mavenRepository);
         context.getRepositoryObjectManager().registerRepository(ArtifactRepositoryConstants.RESOURCE_REPO_ID, resourceRepository);
     }

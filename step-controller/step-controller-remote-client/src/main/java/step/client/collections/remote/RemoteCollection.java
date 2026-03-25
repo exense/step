@@ -24,7 +24,7 @@ public class RemoteCollection<T> implements Collection<T> {
     protected final Class<T> entityClass;
     protected AbstractRemoteClient client;
 
-    public RemoteCollection(AbstractRemoteClient client, String collection, Class<T> entityClass){
+    public RemoteCollection(AbstractRemoteClient client, String collection, Class<T> entityClass) {
         super();
         this.collectionName = collection;
         this.path = "/rest/remote/" + collection;
@@ -34,14 +34,14 @@ public class RemoteCollection<T> implements Collection<T> {
 
     @Override
     public Stream<T> find(Filter filter, SearchOrder order, Integer skip, Integer limit, int maxTime) {
-        FindRequest findRequest = new FindRequest(filter,order,skip,limit,maxTime);
+        FindRequest findRequest = new FindRequest(filter, order, skip, limit, maxTime);
         Invocation.Builder builder = client.requestBuilder(path + "/find");
 
         GenericType<List<T>> genericType = genericTypeForEntityList();
 
         Iterable<T> iterable = () -> new SkipLimitIterator<>((skipIterator, limitIterator) -> {
-            int skip_value =  (skip != null) ? skip : 0;
-            int limit_value =  (limit != null) ? limit : 0;
+            int skip_value = (skip != null) ? skip : 0;
+            int limit_value = (limit != null) ? limit : 0;
 
             int calculatedSkip = skip_value + skipIterator;
 
@@ -51,7 +51,7 @@ public class RemoteCollection<T> implements Collection<T> {
                 calculatedLimit = (skip_value + limit_value) - calculatedSkip;
             }
 
-            if (calculatedLimit>0) {
+            if (calculatedLimit > 0) {
                 findRequest.setSkip(calculatedSkip);
                 findRequest.setLimit(calculatedLimit);
                 Entity<FindRequest> entity = Entity.entity(findRequest, MediaType.APPLICATION_JSON);
@@ -69,18 +69,18 @@ public class RemoteCollection<T> implements Collection<T> {
     }
 
     private GenericType<List<T>> genericTypeForEntityList() {
-		ParameterizedType parameterizedGenericType = getParametrizedTypeForEntityList();
+        ParameterizedType parameterizedGenericType = getParametrizedTypeForEntityList();
 
         GenericType<List<T>> genericType = new GenericType<List<T>>(
-                parameterizedGenericType) {
+            parameterizedGenericType) {
         };
-		return genericType;
-	}
+        return genericType;
+    }
 
-	private ParameterizedType getParametrizedTypeForEntityList() {
-		return new ParameterizedType() {
+    private ParameterizedType getParametrizedTypeForEntityList() {
+        return new ParameterizedType() {
             public Type[] getActualTypeArguments() {
-                return new Type[] { entityClass };
+                return new Type[]{entityClass};
             }
 
             public Type getRawType() {
@@ -91,13 +91,14 @@ public class RemoteCollection<T> implements Collection<T> {
                 return List.class;
             }
         };
-	}
+    }
 
     @Override
     public List<String> distinct(String columnName, Filter filter) {
         Entity<Filter> entity = Entity.entity(filter, MediaType.APPLICATION_JSON);
         Invocation.Builder builder = client.requestBuilder(path + "/distinct/" + columnName);
-        return client.executeRequest(()->builder.post(entity,new GenericType<List<String>>() {}));
+        return client.executeRequest(() -> builder.post(entity, new GenericType<List<String>>() {
+        }));
     }
 
     @Override
@@ -109,24 +110,24 @@ public class RemoteCollection<T> implements Collection<T> {
     public void remove(Filter filter) {
         Entity<Filter> entity = Entity.entity(filter, MediaType.APPLICATION_JSON);
         Invocation.Builder builder = client.requestBuilder(path + "/remove");
-        client.executeRequest(()->builder.post(entity));
+        client.executeRequest(() -> builder.post(entity));
     }
 
     @Override
     public T save(T entity) {
         Entity<T> entityPayload = Entity.entity(entity, MediaType.APPLICATION_JSON);
         Invocation.Builder builder = client.requestBuilder(path + "/save");
-        return client.executeRequest(()->builder.post(entityPayload, entityClass));
+        return client.executeRequest(() -> builder.post(entityPayload, entityClass));
     }
 
     @Override
     public void save(Iterable<T> entities) {
-    	List<T> arrayList = new ArrayList<T>();
-    	entities.forEach(e->arrayList.add(e));
-    	GenericEntity<List<T>> list = new GenericEntity<List<T>>(arrayList, getParametrizedTypeForEntityList());
+        List<T> arrayList = new ArrayList<T>();
+        entities.forEach(e -> arrayList.add(e));
+        GenericEntity<List<T>> list = new GenericEntity<List<T>>(arrayList, getParametrizedTypeForEntityList());
         Entity<GenericEntity<List<T>>> entityPayload = Entity.entity(list, MediaType.APPLICATION_JSON);
         Invocation.Builder builder = client.requestBuilder(path + "/saveMany");
-        client.executeRequest(()->builder.post(entityPayload));
+        client.executeRequest(() -> builder.post(entityPayload));
     }
 
     @Override
@@ -174,7 +175,7 @@ public class RemoteCollection<T> implements Collection<T> {
         throw notImplemented();
     }
 
-    protected UnsupportedOperationException notImplemented()  {
+    protected UnsupportedOperationException notImplemented() {
         return new UnsupportedOperationException("This method is currently not implemented");
     }
 
@@ -183,16 +184,16 @@ public class RemoteCollection<T> implements Collection<T> {
         return collectionName;
     }
 
-	@Override
-	public long count(Filter filter, Integer limit) {
+    @Override
+    public long count(Filter filter, Integer limit) {
         Invocation.Builder builder = client.requestBuilder(path + "/count");
         Entity<CountRequest> entity = Entity.entity(new CountRequest(filter, limit), MediaType.APPLICATION_JSON);
-        return client.executeRequest(()->builder.post(entity, CountResponse.class)).getCount();
-	}
+        return client.executeRequest(() -> builder.post(entity, CountResponse.class)).getCount();
+    }
 
-	@Override
-	public long estimatedCount() {
-		Invocation.Builder builder = client.requestBuilder(path + "/count/estimated");
-        return client.executeRequest(()->builder.get(CountResponse.class)).getCount();
-	}
+    @Override
+    public long estimatedCount() {
+        Invocation.Builder builder = client.requestBuilder(path + "/count/estimated");
+        return client.executeRequest(() -> builder.get(CountResponse.class)).getCount();
+    }
 }

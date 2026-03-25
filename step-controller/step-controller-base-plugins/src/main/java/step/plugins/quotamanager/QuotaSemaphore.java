@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -22,52 +22,52 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class QuotaSemaphore extends Semaphore {
-	private static final long serialVersionUID = -3808791893658360762L;
-	
-	private final Object lockCounterObject = new Object();
+    private static final long serialVersionUID = -3808791893658360762L;
 
-	AtomicInteger load = new AtomicInteger(0);
-	AtomicInteger peak = new AtomicInteger(0);
-	
-	public QuotaSemaphore(int permits) {
-		super(permits);
-	}
+    private final Object lockCounterObject = new Object();
 
-	public QuotaSemaphore(int permits, boolean fair) {
-		super(permits, fair);
-	}
-	
-	@Override
-	public void acquire() throws InterruptedException {
-		super.acquire();
-	}
+    AtomicInteger load = new AtomicInteger(0);
+    AtomicInteger peak = new AtomicInteger(0);
 
-	public void decrementLoad() {
-		synchronized (lockCounterObject) {
-			load.decrementAndGet();
-			load.set(Math.max(0, load.intValue()));
-			peak.set(Math.max(peak.intValue(), load.intValue()));
-		}
-	}
+    public QuotaSemaphore(int permits) {
+        super(permits);
+    }
 
-	public int getLoad() {
-		return load.intValue();
-	}
+    public QuotaSemaphore(int permits, boolean fair) {
+        super(permits, fair);
+    }
 
-	public int getPeak() {
-		return peak.intValue();
-	}
+    @Override
+    public void acquire() throws InterruptedException {
+        super.acquire();
+    }
 
-	public void incrementLoad() {
-		synchronized (lockCounterObject) {
-			load.incrementAndGet();
-			peak.set(Math.max(peak.intValue(), load.intValue()));
-		}
-		
-	}
+    public void decrementLoad() {
+        synchronized (lockCounterObject) {
+            load.decrementAndGet();
+            load.set(Math.max(0, load.intValue()));
+            peak.set(Math.max(peak.intValue(), load.intValue()));
+        }
+    }
 
-	@Override
-	public void release() {
-		super.release();
-	}
+    public int getLoad() {
+        return load.intValue();
+    }
+
+    public int getPeak() {
+        return peak.intValue();
+    }
+
+    public void incrementLoad() {
+        synchronized (lockCounterObject) {
+            load.incrementAndGet();
+            peak.set(Math.max(peak.intValue(), load.intValue()));
+        }
+
+    }
+
+    @Override
+    public void release() {
+        super.release();
+    }
 }

@@ -2,99 +2,99 @@ package step.core.deployment;
 
 public class ControllerServiceException extends RuntimeException {
 
-	private final int httpErrorCode;
-	private final String errorName;
-	private final String errorMessage;
-	private final Object errorDetails;
+    private final int httpErrorCode;
+    private final String errorName;
+    private final String errorMessage;
+    private final Object errorDetails;
     private boolean technicalError = true;
 
-	public ControllerServiceException(String errorMessage) {
-		super(errorMessage);
-		this.httpErrorCode = 500;
-		this.errorName = null;
-		this.errorMessage = errorMessage;
-		this.errorDetails = null;
-	}
-	
-	public ControllerServiceException(int httpErrorCode, String errorMessage) {
-		super(errorMessage);
-		this.httpErrorCode = httpErrorCode;
-		this.errorName = null;
-		this.errorMessage = errorMessage;
-		this.errorDetails = null;
-	}
+    public ControllerServiceException(String errorMessage) {
+        super(errorMessage);
+        this.httpErrorCode = 500;
+        this.errorName = null;
+        this.errorMessage = errorMessage;
+        this.errorDetails = null;
+    }
 
-	public ControllerServiceException(int httpErrorCode, String errorName, String errorMessage) {
-		super(errorMessage);
-		this.httpErrorCode = httpErrorCode;
-		this.errorName = errorName;
-		this.errorMessage = errorMessage;
-		this.errorDetails = null;
-	}
+    public ControllerServiceException(int httpErrorCode, String errorMessage) {
+        super(errorMessage);
+        this.httpErrorCode = httpErrorCode;
+        this.errorName = null;
+        this.errorMessage = errorMessage;
+        this.errorDetails = null;
+    }
 
-	public ControllerServiceException(int httpErrorCode, String errorName, String errorMessage, Object errorDetails) {
-		super(errorMessage);
-		this.httpErrorCode = httpErrorCode;
-		this.errorName = errorName;
-		this.errorMessage = errorMessage;
-		this.errorDetails = errorDetails;
-	}
+    public ControllerServiceException(int httpErrorCode, String errorName, String errorMessage) {
+        super(errorMessage);
+        this.httpErrorCode = httpErrorCode;
+        this.errorName = errorName;
+        this.errorMessage = errorMessage;
+        this.errorDetails = null;
+    }
 
-	public ControllerServiceException(String errorMessage, Throwable cause) {
-		super(errorMessage, cause);
-		this.httpErrorCode = 500;
-		this.errorName = null;
-		this.errorMessage = errorMessage;
-		this.errorDetails = null;
-	}
+    public ControllerServiceException(int httpErrorCode, String errorName, String errorMessage, Object errorDetails) {
+        super(errorMessage);
+        this.httpErrorCode = httpErrorCode;
+        this.errorName = errorName;
+        this.errorMessage = errorMessage;
+        this.errorDetails = errorDetails;
+    }
 
-	public ControllerServiceException(int httpErrorCode, String errorMessage, Throwable cause) {
-		super(errorMessage, cause);
-		this.httpErrorCode = httpErrorCode;
-		this.errorName = null;
-		this.errorMessage = errorMessage;
-		this.errorDetails = null;
-	}
+    public ControllerServiceException(String errorMessage, Throwable cause) {
+        super(errorMessage, cause);
+        this.httpErrorCode = 500;
+        this.errorName = null;
+        this.errorMessage = errorMessage;
+        this.errorDetails = null;
+    }
 
-	public ControllerServiceException(int httpErrorCode, String errorName, String errorMessage, Throwable cause) {
-		super(errorMessage, cause);
-		this.httpErrorCode = httpErrorCode;
-		this.errorName = errorName;
-		this.errorMessage = errorMessage;
-		this.errorDetails = null;
-	}
+    public ControllerServiceException(int httpErrorCode, String errorMessage, Throwable cause) {
+        super(errorMessage, cause);
+        this.httpErrorCode = httpErrorCode;
+        this.errorName = null;
+        this.errorMessage = errorMessage;
+        this.errorDetails = null;
+    }
 
-	public int getHttpErrorCode() {
-		return httpErrorCode;
-	}
+    public ControllerServiceException(int httpErrorCode, String errorName, String errorMessage, Throwable cause) {
+        super(errorMessage, cause);
+        this.httpErrorCode = httpErrorCode;
+        this.errorName = errorName;
+        this.errorMessage = errorMessage;
+        this.errorDetails = null;
+    }
 
-	public String getErrorName() {
-		return errorName;
-	}
+    public int getHttpErrorCode() {
+        return httpErrorCode;
+    }
 
-	public String getErrorMessage() {
-		return errorMessage;
-	}
+    public String getErrorName() {
+        return errorName;
+    }
 
-	public Object getErrorDetails() {
-		return errorDetails;
-	}
+    public String getErrorMessage() {
+        return errorMessage;
+    }
 
-	@Override
-	public String toString() {
-		return "ControllerServiceException{" +
-				"httpErrorCode=" + httpErrorCode +
-				", errorName='" + errorName + '\'' +
-				", errorMessage='" + errorMessage + '\'' +
-				", errorDetails=" + errorDetails +
-				'}';
-	}
+    public Object getErrorDetails() {
+        return errorDetails;
+    }
 
-	public boolean isTechnicalError() {
-		return technicalError;
-	}
+    @Override
+    public String toString() {
+        return "ControllerServiceException{" +
+            "httpErrorCode=" + httpErrorCode +
+            ", errorName='" + errorName + '\'' +
+            ", errorMessage='" + errorMessage + '\'' +
+            ", errorDetails=" + errorDetails +
+            '}';
+    }
 
-	public void setTechnicalError(boolean technicalError) {
-		this.technicalError = technicalError;
-	}
+    public boolean isTechnicalError() {
+        return technicalError;
+    }
+
+    public void setTechnicalError(boolean technicalError) {
+        this.technicalError = technicalError;
+    }
 }

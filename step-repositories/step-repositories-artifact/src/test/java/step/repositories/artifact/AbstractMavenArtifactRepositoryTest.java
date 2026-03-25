@@ -49,26 +49,26 @@ import java.util.Map;
 public abstract class AbstractMavenArtifactRepositoryTest {
 
     protected static final Map<String, String> REPOSITORY_PARAMETERS = Map.of(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, "ch.exense.step",
-            ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, "step-automation-packages-junit", ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, "0.0.0",
-            ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, "tests");
+        ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, "step-automation-packages-junit", ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION, "0.0.0",
+        ArtifactRepositoryConstants.ARTIFACT_PARAM_CLASSIFIER, "tests");
     protected static final String MAVEN_SETTINGS_NEXUS = "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-            "  xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
-            "    <profiles>\n" +
-            "        <profile>\n" +
-            "          <id>default</id>\n" +
-            "          <repositories>\n" +
-            "            <repository>\n" +
-            "              <id>exense</id>\n" +
-            "              <name>Exense</name>\n" +
-            "              <url>https://nexus-enterprise.exense.ch/repository/container-dependency/</url>\n" +
-            "            </repository>\n" +
-            "          </repositories>\n" +
-            "        </profile>\n" +
-            "    </profiles>\n" +
-            "    <activeProfiles>\n" +
-            "        <activeProfile>default</activeProfile>\n" +
-            "    </activeProfiles>\n" +
-            "</settings>";
+        "  xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
+        "    <profiles>\n" +
+        "        <profile>\n" +
+        "          <id>default</id>\n" +
+        "          <repositories>\n" +
+        "            <repository>\n" +
+        "              <id>exense</id>\n" +
+        "              <name>Exense</name>\n" +
+        "              <url>https://nexus-enterprise.exense.ch/repository/container-dependency/</url>\n" +
+        "            </repository>\n" +
+        "          </repositories>\n" +
+        "        </profile>\n" +
+        "    </profiles>\n" +
+        "    <activeProfiles>\n" +
+        "        <activeProfile>default</activeProfile>\n" +
+        "    </activeProfiles>\n" +
+        "</settings>";
     protected MavenArtifactRepository artifactRepository;
     protected ExecutionContext executionContext;
     protected AutomationPackageManager apManager;
@@ -124,12 +124,11 @@ public abstract class AbstractMavenArtifactRepositoryTest {
                 return jMeterFunctionType;
             } else if (function instanceof GeneralScriptFunction) {
                 return generalScriptFunctionType;
-            } else if (function instanceof CompositeFunction){
+            } else if (function instanceof CompositeFunction) {
                 return compositeFunctionType;
-            } else if (function instanceof NodeFunction){
+            } else if (function instanceof NodeFunction) {
                 return nodeFunctionType;
-            }
-            else {
+            } else {
                 return null;
             }
         });

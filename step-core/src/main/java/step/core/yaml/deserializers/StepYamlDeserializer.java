@@ -33,7 +33,7 @@ public abstract class StepYamlDeserializer<T> extends JsonDeserializer<T> {
     public StepYamlDeserializer() {
     }
 
-    public StepYamlDeserializer(ObjectMapper yamlObjectMapper){
+    public StepYamlDeserializer(ObjectMapper yamlObjectMapper) {
         this.yamlObjectMapper = yamlObjectMapper;
     }
 

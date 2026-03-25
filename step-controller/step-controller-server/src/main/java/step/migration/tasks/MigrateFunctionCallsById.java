@@ -26,6 +26,7 @@ import step.migration.MigrationTask;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObjectBuilder;
+
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -100,8 +101,8 @@ public class MigrateFunctionCallsById extends MigrationTask {
             }
         }
         List<DocumentObject> children = tree.getArray("children");
-        if(children != null) {
-            int countOfChildrenChanged = children.stream().map(this::handleArtefactTreeNode).map(r -> r ? 1:0).reduce(0, Integer::sum);
+        if (children != null) {
+            int countOfChildrenChanged = children.stream().map(this::handleArtefactTreeNode).map(r -> r ? 1 : 0).reduce(0, Integer::sum);
             if (countOfChildrenChanged > 0) {
                 changed = true;
             }

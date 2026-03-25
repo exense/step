@@ -20,13 +20,14 @@ package step.core.controller.settings;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import step.core.accessors.AbstractIdentifiableObject;
 
 public class AbstractScopedObject extends AbstractIdentifiableObject {
 
     public static final String SCOPE_FIELD = "scope";
 
-    private Map<String,String> scope = new HashMap<>();
+    private Map<String, String> scope = new HashMap<>();
 
     public AbstractScopedObject() {
     }

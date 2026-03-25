@@ -39,7 +39,7 @@ public class V29_0_UpdateAutomationPackageModel extends MigrationTask {
     protected AtomicInteger successCount;
 
     public V29_0_UpdateAutomationPackageModel(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-        super(new Version(3,29,0), collectionFactory, migrationContext);
+        super(new Version(3, 29, 0), collectionFactory, migrationContext);
     }
 
     @Override

@@ -11,7 +11,7 @@ public enum ParentSource {
     public boolean printSource;
 
     ParentSource() {
-        printSource=true;
+        printSource = true;
     }
 
     ParentSource(boolean printSource) {
