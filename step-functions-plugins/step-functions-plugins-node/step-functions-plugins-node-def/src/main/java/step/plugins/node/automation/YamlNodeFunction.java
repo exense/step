@@ -44,10 +44,10 @@ public class YamlNodeFunction extends AbstractYamlFunction<NodeFunction> {
     @Override
     protected void fillDeclaredFields(NodeFunction function, StagingAutomationPackageContext context) {
         super.fillDeclaredFields(function, context);
-        AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
+        AutomationPackageResourceUploader resourceUploader = context.getResourceUploader();
 
         String filePath = jsfile.get();
-        String fileRef = resourceUploader.applyResourceReference(filePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
+        String fileRef = resourceUploader.applyUniqueResourceReference(filePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
         if (fileRef != null) {
             function.setJsFile(new DynamicValue<>(fileRef));
         }
