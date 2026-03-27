@@ -18,11 +18,14 @@
  ******************************************************************************/
 package step.plans.automation;
 
+import step.core.yaml.AbstractYamlModel;
+import step.core.yaml.PatchableAbstractYamlModel;
 import step.plans.nl.RootArtefactType;
+import step.core.yaml.PatchableYamlModel;
 
 import java.util.List;
 
-public class YamlPlainTextPlan {
+public class YamlPlainTextPlan extends PatchableAbstractYamlModel {
 
     private String name;
 

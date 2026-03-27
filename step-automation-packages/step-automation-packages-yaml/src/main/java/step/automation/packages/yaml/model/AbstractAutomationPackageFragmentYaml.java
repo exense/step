@@ -18,25 +18,45 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSetter;
-import com.fasterxml.jackson.annotation.Nulls;
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.core.yaml.PatchableYamlList;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
 
 public abstract class AbstractAutomationPackageFragmentYaml implements AutomationPackageFragmentYaml {
+    private final ObjectMapper mapper;
+    private final AutomationPackageSerializationRegistry serializationRegistry;
     private List<String> fragments = new ArrayList<>();
     private List<YamlAutomationPackageKeyword> keywords = new ArrayList<>();
-    private List<YamlPlan> plans = new ArrayList<>();
+    private PatchableYamlList<YamlPlan> plans = new PatchableYamlList<>();
     private List<YamlPlainTextPlan> plansPlainText = new ArrayList<>();
 
+    private final Map<String, List<?>> additionalFields = new HashMap<>();
+
+    @JsonCreator
+    public AbstractAutomationPackageFragmentYaml(@JacksonInject(useInput = OptBoolean.FALSE) ObjectMapper mapper, @JacksonInject(useInput = OptBoolean.FALSE) AutomationPackageSerializationRegistry serializationRegistry) {
+        this.mapper = mapper;
+        this.serializationRegistry = serializationRegistry;
+    }
+
+    public AbstractAutomationPackageFragmentYaml() {
+        this.mapper = null;
+        this.serializationRegistry = null;
+    }
+
     @JsonIgnore
-    private Map<String, List<?>> additionalFields;
+    private URL url;
+
+    @JsonIgnore
+    private String currentYaml;
 
     @Override
     public List<YamlAutomationPackageKeyword> getKeywords() {
@@ -44,17 +64,17 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setKeywords(List<YamlAutomationPackageKeyword> keywords) {
+    public void setKeywords(PatchableYamlList<YamlAutomationPackageKeyword> keywords) {
         this.keywords = keywords;
     }
 
     @Override
-    public List<YamlPlan> getPlans() {
+    public PatchableYamlList<YamlPlan> getPlans() {
         return plans;
     }
 
     @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setPlans(List<YamlPlan> plans) {
+    public void setPlans(PatchableYamlList<YamlPlan> plans) {
         this.plans = plans;
     }
 
@@ -68,13 +88,22 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
         this.fragments = fragments;
     }
 
-    @Override
+    @JsonAnyGetter
     public Map<String, List<?>> getAdditionalFields() {
         return additionalFields;
     }
 
-    public void setAdditionalFields(Map<String, List<?>> additionalFields) {
-        this.additionalFields = additionalFields;
+    @JsonAnySetter
+    @Override
+    public void setAdditionalFields(String key, JsonNode node) throws IOException {
+        if (mapper == null || serializationRegistry == null) return;
+
+        // acquire reader for the right type
+        Class<?> targetClass = serializationRegistry.resolveClassForYamlField(key);
+        if (targetClass == null) return;
+
+        List<?> list = mapper.readerForListOf(targetClass).readValue(node);
+        additionalFields.put(key,  list);
     }
 
     @Override
@@ -85,5 +114,25 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     @JsonSetter(nulls = Nulls.AS_EMPTY)
     public void setPlansPlainText(List<YamlPlainTextPlan> plansPlainText) {
         this.plansPlainText = plansPlainText;
+    }
+
+    @JsonIgnore
+    public void setFragmentUrl(URL url) {
+        this.url = url;
+    }
+
+    @JsonIgnore
+    public URL getFragmentUrl() {
+        return url;
+    }
+
+    @JsonIgnore
+    public void setCurrentYaml(String yaml) {
+        this.currentYaml = yaml;
+    }
+
+    @JsonIgnore
+    public String getCurrentYaml() {
+        return currentYaml;
     }
 }
