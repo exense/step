@@ -9,7 +9,7 @@ const logger = require('../logger').child({ component: 'FileManager' })
 class FileManager {
   constructor(agentContext) {
     this.agentContext = agentContext;
-    const filemanagerPath = agentContext.properties['filemanagerPath'] || 'filemanager'
+    const filemanagerPath = agentContext.filemanagerPath || 'filemanager'
     this.workingDir = filemanagerPath + '/work/'
     logger.info('Starting file manager using working directory: ' + this.workingDir)
 
