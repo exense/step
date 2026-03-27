@@ -13,6 +13,6 @@
   },
   "devDependencies": {
     "jest": "^29.0.0",
-    "step-node-agent": "file:C:/Users/jecom/Git/step-super/step/step-node/step-node-agent"
+    "step-node-agent": "^3.29.4"
   }
 }

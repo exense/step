@@ -32,10 +32,10 @@ const uuid = require('uuid/v4')
 const jwtUtils = require('./utils/jwtUtils')
 const agentType = 'node'
 const agent = {id: uuid()}
-const agentContext = { tokens: [], tokenSessions: [], tokenProperties: [], properties: agentConf.properties, controllerUrl: agentConf.gridHost, gridSecurity: agentConf.gridSecurity, workingDir: agentConf.workingDir, npmProjectWorkspaceCleanupIdleTimeMs: agentConf.npmProjectWorkspaceCleanupIdleTimeMs }
+const agentContext = { tokens: [], tokenSessions: [], tokenProperties: [], properties: agentConf.properties || {}, controllerUrl: agentConf.gridHost, gridSecurity: agentConf.gridSecurity, workingDir: agentConf.workingDir, npmProjectWorkspaceCleanupIdleTimeMs: agentConf.npmProjectWorkspaceCleanupIdleTimeMs, filemanagerPath: agentConf.fileManagerConfiguration?.path }
 agentConf.tokenGroups.forEach(function (tokenGroup) {
-  const tokenConf = tokenGroup.tokenConf
-  let attributes = tokenConf.attributes
+  const tokenConf = tokenGroup.tokenConf || {}
+  let attributes = tokenConf.attributes || {}
   // Transform the selectionPatterns map <String, String> to <String, Interest>
   let selectionPatterns = tokenConf.selectionPatterns;
   const tokenSelectionPatterns = {};
@@ -44,7 +44,7 @@ agentConf.tokenGroups.forEach(function (tokenGroup) {
       tokenSelectionPatterns[key] = { must: true, selectionPattern: selectionPatterns[key] };
     });
   }
-  let additionalProperties = tokenConf.properties
+  let additionalProperties = tokenConf.properties || {}
   attributes['$agenttype'] = agentType
   for (let i = 0; i < tokenGroup.capacity; i++) {
     const token = { id: uuid(), agentid: agent.id, attributes: attributes, selectionPatterns: tokenSelectionPatterns }
@@ -59,8 +59,9 @@ const express = require('express')
 const app = express()
 const port = agentConf.agentPort || 3000
 const timeout = agentConf.agentServerTimeout || 600000
-app.use(express.urlencoded({extended: true}))
-app.use(express.json())
+const payloadLimit = agentConf.agentPayloadLimit || '10mb'
+app.use(express.urlencoded({extended: true, limit: payloadLimit}))
+app.use(express.json({limit: payloadLimit}))
 
 // Apply JWT authentication middleware
 const createJwtAuthMiddleware = require('./middleware/jwtAuth')

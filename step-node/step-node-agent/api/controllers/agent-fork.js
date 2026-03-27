@@ -73,9 +73,10 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
       process.send(outputBuilder.build());
     }
   } else if (type === 'KILL') {
-    console.log("[Agent fork] Exiting...")
+    console.log("[Agent fork] Releasing session...")
     await session.asyncDispose();
-    process.exit(1)
+    console.log("[Agent fork] Exiting...")
+    process.exit(0)
   }
 
   function keywordDirectoryExists(projectPath, keywordDirectory) {
