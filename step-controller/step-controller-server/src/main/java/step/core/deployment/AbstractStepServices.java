@@ -40,6 +40,12 @@ import static step.core.deployment.ObjectHookInterceptor.ENTITY_ACCESS_DENIED;
 public abstract class AbstractStepServices extends AbstractServices<User> {
 
     public static final String SESSION = "session";
+    public static final String RIGHT_SEPARATOR = "-";
+    public static final String READ_RIGHT = "read";
+    public static final String WRITE_RIGHT = "write";
+    public static final String DELETE_RIGHT = "delete";
+    public static final String EXECUTE_RIGHT = "execute";
+
 
     protected Configuration configuration;
 
@@ -114,6 +120,19 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
             }
         } catch (NotMemberOfProjectException ex) {
             // if 'userOnBehalf' is not a member of the project, we want to return 'access denied' error
+            throw new AuthorizationException(ex.getMessage());
+        }
+    }
+
+    protected void checkRightIfDefined(String right) {
+        Session<User> session = getSession();
+        try {
+            if (!getAuthorizationManager().checkRightInContextIfDefined(session, right)) {
+                User user = session.getUser();
+                throw new AuthorizationException("User " + (user == null ? "" : user.getUsername()) + " has no permission on '" + right + "'");
+            }
+        } catch (NotMemberOfProjectException ex) {
+            // if user is not a member of the project, we want to return 'access denied' error
             throw new AuthorizationException(ex.getMessage());
         }
     }
