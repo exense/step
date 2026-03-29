@@ -139,16 +139,16 @@ public abstract class AbstractAutomationPackageManagerTest {
 
     protected AutomationPackageManager createManager(AutomationPackageHookRegistry automationPackageHookRegistry, AutomationPackageReaderRegistry automationPackageReaderRegistry) {
         return AutomationPackageManager.createMainAutomationPackageManager(
-                automationPackageAccessor,
-                functionManager,
-                functionAccessor,
-                planAccessor,
-                resourceManager,
-                automationPackageHookRegistry,
-                automationPackageReaderRegistry,
-                automationPackageLocks,
-                null, -1,
-                new ObjectHookRegistry()
+            automationPackageAccessor,
+            functionManager,
+            functionAccessor,
+            planAccessor,
+            resourceManager,
+            automationPackageHookRegistry,
+            automationPackageReaderRegistry,
+            automationPackageLocks,
+            null, -1,
+            new ObjectHookRegistry()
         );
     }
 

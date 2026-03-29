@@ -47,11 +47,11 @@ public class YamlResourceReferenceSchemaDefinitionCreator implements JsonSchemaE
         JsonArrayBuilder oneOf = jsonProvider.createArrayBuilder();
         oneOf.add(jsonProvider.createObjectBuilder().add("type", "string"));
         oneOf.add(jsonProvider.createObjectBuilder()
-                .add("type", "object")
-                .add("additionalProperties", false)
-                .add("properties", jsonProvider.createObjectBuilder()
-                        .add(FILE_REFERENCE_RESOURCE_ID_FIELD, jsonProvider.createObjectBuilder()
-                                .add("type", "string")))
+            .add("type", "object")
+            .add("additionalProperties", false)
+            .add("properties", jsonProvider.createObjectBuilder()
+                .add(FILE_REFERENCE_RESOURCE_ID_FIELD, jsonProvider.createObjectBuilder()
+                    .add("type", "string")))
         );
         res.put(RESOURCE_REFERENCE_DEF, jsonProvider.createObjectBuilder().add("oneOf", oneOf));
         return res;

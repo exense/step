@@ -7,7 +7,7 @@ agents:
 root:
   _class: "TestCase"
   attributes:
-    name:  "Performance assert example"
+    name: "Performance assert example"
   dynamicName:
     dynamic: false
     value: ""
@@ -34,7 +34,7 @@ root:
             expression: ""
           useDynamicName: false
           workArtefact: false
-          children: []
+          children: [ ]
           skipNode:
             dynamic: false
             value: false

@@ -35,8 +35,8 @@ public class AutomationPackageFromResourceIdProvider extends AbstractAutomationP
         AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(resourceFile.getResourceFile());
         try {
             this.archive = reader.createAutomationPackageArchive(resourceFile.getResourceFile(),
-                    packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
-                    null);
+                packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
+                null);
         } catch (AutomationPackageReadingException e) {
             throw new AutomationPackageManagerException("Unable to load automation package by resource id: " + resourceId);
         }
@@ -44,6 +44,6 @@ public class AutomationPackageFromResourceIdProvider extends AbstractAutomationP
 
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
-       return archive;
+        return archive;
     }
 }

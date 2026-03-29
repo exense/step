@@ -36,7 +36,7 @@ public abstract class AbstractRepository implements Repository {
 
     private static Map<String, String> getCanonicalRepositoryParameters(Set<String> canonicalKeys, Map<String, String> repositoryParameters) {
         return repositoryParameters != null ? repositoryParameters.entrySet().stream().filter(e -> canonicalKeys.contains(e.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)) : null;
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)) : null;
     }
 
     @Override

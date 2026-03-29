@@ -82,8 +82,8 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
         }
 
         return Response.ok(streamingOutput, mimeType)
-                .header("Content-Disposition", (inline ? "inline" : "attachment") + filenameHeaderFragment)
-                .build();
+            .header("Content-Disposition", (inline ? "inline" : "attachment") + filenameHeaderFragment)
+            .build();
     }
 
     @GET
@@ -144,10 +144,10 @@ public class StreamingResourceServices extends AbstractStepAsyncServices {
 
             // RFC 5987: "normal" unreserved characters
             if ((c >= 'a' && c <= 'z') ||
-                    (c >= 'A' && c <= 'Z') ||
-                    (c >= '0' && c <= '9') ||
-                    c == '-' || c == '.' ||
-                    c == '_' || c == '~') {
+                (c >= 'A' && c <= 'Z') ||
+                (c >= '0' && c <= '9') ||
+                c == '-' || c == '.' ||
+                c == '_' || c == '~') {
                 sb.append((char) c);
             } else {
                 // anything else: percent-encode

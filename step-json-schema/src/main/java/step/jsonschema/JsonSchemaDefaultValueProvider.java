@@ -28,6 +28,7 @@ public interface JsonSchemaDefaultValueProvider {
     String getDefaultValue(Class<?> objectClass, Field field);
 
     abstract class None implements JsonSchemaDefaultValueProvider {
-        private None() { } // not to be instantiated
+        private None() {
+        } // not to be instantiated
     }
 }

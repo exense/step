@@ -25,14 +25,14 @@ public class MavenArtifactRepositoryFormattingIssueTest extends AbstractMavenArt
     }
 
     @Before
-    public void before(){
+    public void before() {
         this.resourceManager = new LocalResourceManagerImpl();
         setup();
     }
 
     @After
     public void after() {
-       cleanup();
+        cleanup();
     }
 
     @Test

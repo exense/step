@@ -91,7 +91,7 @@ public class YamlAutomationPackageSchemaGenerator {
 
     protected JsonObjectBuilder prepareDefinitions() throws JsonSchemaPreparationException {
         JsonObjectBuilder result = keywordSchemaGenerator.createKeywordDefs()
-                .addAll(planSchemaGenerator.createDefs(false));
+            .addAll(planSchemaGenerator.createDefs(false));
 
         for (AutomationPackageJsonSchemaExtension extension : extensions) {
             if (extension.getExtendedDefinitions() != null) {
@@ -115,20 +115,20 @@ public class YamlAutomationPackageSchemaGenerator {
         // TODO: split keyword and plans definitions
         JsonObjectBuilder builder = jsonProvider.createObjectBuilder();
         objectBuilder.add(AutomationPackageKeyword.KEYWORDS_ENTITY_NAME,
-                jsonProvider.createObjectBuilder()
-                        .add("type", "array")
-                        .add("items", YamlJsonSchemaHelper.addRef(builder, YamlKeywordSchemaGenerator.KEYWORD_DEF)));
+            jsonProvider.createObjectBuilder()
+                .add("type", "array")
+                .add("items", YamlJsonSchemaHelper.addRef(builder, YamlKeywordSchemaGenerator.KEYWORD_DEF)));
 
         objectBuilder.add(YamlPlan.PLANS_ENTITY_NAME,
-                jsonProvider.createObjectBuilder()
-                        .add("type", "array")
-                        .add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), YamlJsonSchemaHelper.PLAN_DEF))
+            jsonProvider.createObjectBuilder()
+                .add("type", "array")
+                .add("items", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), YamlJsonSchemaHelper.PLAN_DEF))
         );
 
         objectBuilder.add("fragments",
-                jsonProvider.createObjectBuilder()
-                        .add("type", "array")
-                        .add("items", jsonProvider.createObjectBuilder().add("type", "string"))
+            jsonProvider.createObjectBuilder()
+                .add("type", "array")
+                .add("items", jsonProvider.createObjectBuilder().add("type", "string"))
         );
 
         for (AutomationPackageJsonSchemaExtension extension : extensions) {

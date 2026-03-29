@@ -27,7 +27,7 @@ public class ChildrenBlock {
         return steps.add(e);
     }
 
-    @EntityReference(type= EntityConstants.recursive)
+    @EntityReference(type = EntityConstants.recursive)
     public List<AbstractArtefact> getSteps() {
         return steps;
     }

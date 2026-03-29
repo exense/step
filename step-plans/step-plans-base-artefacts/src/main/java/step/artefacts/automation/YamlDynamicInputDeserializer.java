@@ -74,7 +74,7 @@ public class YamlDynamicInputDeserializer extends StepYamlDeserializer<YamlDynam
                             dynamicValueNested.put(DYN_VALUE_DYNAMIC_FIELD, false);
                             dynamicValueNested.set(YamlFields.DYN_VALUE_VALUE_FIELD, e);
                         }
-                        argumentValueFormatted.add( dynamicValueNested);
+                        argumentValueFormatted.add(dynamicValueNested);
                     });
                     dynamicValue.set(YamlFields.DYN_VALUE_VALUE_FIELD, argumentValueFormatted);
                     inputDynamicValues.set(inputName, dynamicValue);

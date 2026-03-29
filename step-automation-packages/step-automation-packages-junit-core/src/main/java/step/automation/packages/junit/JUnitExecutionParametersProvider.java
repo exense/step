@@ -61,7 +61,7 @@ public class JUnitExecutionParametersProvider {
     protected Map<String, String> getExecutionParametersFromSystemProperties() {
         Map<String, String> executionParameters = new HashMap<>();
         System.getProperties().forEach((k, v) ->
-                unescapeParameterKeyIfMatches(k.toString()).ifPresent(key -> executionParameters.put(key, v.toString())));
+            unescapeParameterKeyIfMatches(k.toString()).ifPresent(key -> executionParameters.put(key, v.toString())));
         return executionParameters;
     }
 

@@ -46,23 +46,23 @@ public class ArtifactRepositoryConstants {
     public static final String RESOURCE_PARAM_RESOURCE_ID = "resourceId";
 
     public static final String MAVEN_EMPTY_SETTINGS =
-            "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n" +
-                    "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                    "          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
-                    "    <activeProfiles>\n" +
-                    "        <activeProfile>default</activeProfile>\n" +
-                    "    </activeProfiles>\n" +
-                    "\n" +
-                    "    <profiles>\n" +
-                    "        <profile>\n" +
-                    "            <id>default</id>\n" +
-                    "            <repositories>\n" +
-                    "                <repository>\n" +
-                    "                    <id>central</id>\n" +
-                    "                    <url>https://repo1.maven.org/maven2/</url>\n" +
-                    "                </repository>\n" +
-                    "            </repositories>\n" +
-                    "        </profile>\n" +
-                    "    </profiles>\n" +
-                    "</settings>";
+        "<settings xmlns=\"http://maven.apache.org/SETTINGS/1.0.0\"\n" +
+            "          xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+            "          xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
+            "    <activeProfiles>\n" +
+            "        <activeProfile>default</activeProfile>\n" +
+            "    </activeProfiles>\n" +
+            "\n" +
+            "    <profiles>\n" +
+            "        <profile>\n" +
+            "            <id>default</id>\n" +
+            "            <repositories>\n" +
+            "                <repository>\n" +
+            "                    <id>central</id>\n" +
+            "                    <url>https://repo1.maven.org/maven2/</url>\n" +
+            "                </repository>\n" +
+            "            </repositories>\n" +
+            "        </profile>\n" +
+            "    </profiles>\n" +
+            "</settings>";
 }

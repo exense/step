@@ -116,7 +116,12 @@ public class ClassLoaderResourceFilesystem {
                 try (Stream<Path> walk = Files.walk(resourcePath)) {
                     walk.forEach(path -> {
                         try {
-                            Files.copy(path, extractedDirectory.resolve(resourcePath.relativize(path).toString()));
+                            Path target = extractedDirectory.resolve(resourcePath.relativize(path).toString());
+                            if (Files.isDirectory(path)) {
+                                Files.createDirectories(target);
+                            } else {
+                                Files.copy(path, target);
+                            }
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -130,7 +135,7 @@ public class ClassLoaderResourceFilesystem {
     }
 
     public static List<URL> listDirectory(URL resourceUrl) throws IOException, URISyntaxException {
-        if(ClassLoaderResourceFilesystem.isDirectory(resourceUrl)) {
+        if (ClassLoaderResourceFilesystem.isDirectory(resourceUrl)) {
             String protocol = resourceUrl.getProtocol();
             if (protocol.equals(FILE)) {
                 File directory = new File(resourceUrl.getPath());

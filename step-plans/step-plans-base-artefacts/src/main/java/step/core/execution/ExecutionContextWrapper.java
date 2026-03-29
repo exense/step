@@ -36,7 +36,7 @@ public class ExecutionContextWrapper extends ExecutionContext {
         super((new ObjectId()).toString(), null);
         this.wrappedContext = wrappedContext;
     }
-    
+
     @Override
     public Object get(Object key) {
         return wrappedContext.get(key);
@@ -114,7 +114,7 @@ public class ExecutionContextWrapper extends ExecutionContext {
 
     @Override
     public void setDefaultAttributes() {
-       // wrappedContext.setDefaultAttributes();
+        // wrappedContext.setDefaultAttributes();
     }
 
     @Override
@@ -227,7 +227,7 @@ public class ExecutionContextWrapper extends ExecutionContext {
         if (wrappedContext != null) {
             return wrappedContext.getReportNodeCache();
         } else {
-           return  super.getReportNodeCache();
+            return super.getReportNodeCache();
         }
     }
 
@@ -334,6 +334,6 @@ public class ExecutionContextWrapper extends ExecutionContext {
     public Resolver getResolver() {
         return wrappedContext.getResolver();
     }
-    
-    
+
+
 }

@@ -52,46 +52,46 @@ public class RemoteCollectionServices<T> extends AbstractStepServices {
     @PreDestroy
     public void destroy() {
     }
-    
-	@POST
-	@Path("/{id}/count")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Secured(right = "collection-read")
-	public Response count(@PathParam("id") String collectionId, CountRequest countRequest) {
-		@SuppressWarnings("unchecked")
-		Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId,
-				entityManager.resolveClass(collectionId));
-		long count = collectionDriver.count(countRequest.getFilter(), countRequest.getLimit());
-		return Response.status(200).entity(new CountResponse(count)).build();
-	}
-	
-	@GET
-	@Path("/{id}/count/estimated")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right = "collection-read")
-	public Response countEstimated(@PathParam("id") String collectionId) {
-		@SuppressWarnings("unchecked")
-		Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId,
-				entityManager.resolveClass(collectionId));
-		long count = collectionDriver.estimatedCount();
-		return Response.status(200).entity(new CountResponse(count)).build();
-	}
+
+    @POST
+    @Path("/{id}/count")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured(right = "collection-read")
+    public Response count(@PathParam("id") String collectionId, CountRequest countRequest) {
+        @SuppressWarnings("unchecked")
+        Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId,
+            entityManager.resolveClass(collectionId));
+        long count = collectionDriver.count(countRequest.getFilter(), countRequest.getLimit());
+        return Response.status(200).entity(new CountResponse(count)).build();
+    }
+
+    @GET
+    @Path("/{id}/count/estimated")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "collection-read")
+    public Response countEstimated(@PathParam("id") String collectionId) {
+        @SuppressWarnings("unchecked")
+        Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId,
+            entityManager.resolveClass(collectionId));
+        long count = collectionDriver.estimatedCount();
+        return Response.status(200).entity(new CountResponse(count)).build();
+    }
 
     @POST
     @Path("/{id}/find")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right="collection-read")
+    @Secured(right = "collection-read")
     @Unfiltered
-    public  Response find(@PathParam("id") String collectionId, FindRequest findRequest) {
+    public Response find(@PathParam("id") String collectionId, FindRequest findRequest) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
         List<T> collect = collectionDriver.find(findRequest.getFilter(), findRequest.getOrder(), findRequest.getSkip(),
-                findRequest.getLimit(), findRequest.getMaxTime()).collect(Collectors.toList());
+            findRequest.getLimit(), findRequest.getMaxTime()).collect(Collectors.toList());
         Class<?> entityClass = getContext().getEntityManager().resolveClass(collectionId);
         ParameterizedType parameterizedGenericType = new ParameterizedType() {
             public Type[] getActualTypeArguments() {
-                return new Type[] { entityClass };
+                return new Type[]{entityClass};
             }
 
             public Type getRawType() {
@@ -104,10 +104,10 @@ public class RemoteCollectionServices<T> extends AbstractStepServices {
         };
 
         GenericType<List<T>> genericType = new GenericType<List<T>>(
-                parameterizedGenericType) {
+            parameterizedGenericType) {
         };
 
-        GenericEntity<List<T>> genericEntity = new GenericEntity<>(collect,genericType.getType());
+        GenericEntity<List<T>> genericEntity = new GenericEntity<>(collect, genericType.getType());
         return Response.status(200).entity(genericEntity).build();
     }
 
@@ -115,16 +115,16 @@ public class RemoteCollectionServices<T> extends AbstractStepServices {
     @Path("/{id}/distinct/{columnName}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right="collection-read")
-    public  List<String> distinctPost(@PathParam("id") String collectionId, @PathParam("columnName") String columnName, Filter filter) {
+    @Secured(right = "collection-read")
+    public List<String> distinctPost(@PathParam("id") String collectionId, @PathParam("columnName") String columnName, Filter filter) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
-        return collectionDriver.distinct(columnName,filter);
+        return collectionDriver.distinct(columnName, filter);
     }
 
     @POST
     @Path("/{id}/remove")
     @Consumes(MediaType.APPLICATION_JSON)
-    @Secured(right="collection-delete")
+    @Secured(right = "collection-delete")
     public void delete(@PathParam("id") String collectionId, Filter filter) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
         collectionDriver.remove(filter);
@@ -135,25 +135,25 @@ public class RemoteCollectionServices<T> extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Unfiltered
-    @Secured(right="collection-write")
+    @Secured(right = "collection-write")
     public Response save(@PathParam("id") String collectionId, T entity) {
         Class<?> entityClass = entityManager.resolveClass(collectionId);
         Object value = DefaultJacksonMapperProvider.getObjectMapper().convertValue(entity, entityClass);
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityClass);
         //method cannot return a generic (T) due to serialization
-        return  Response.status(200).entity(collectionDriver.save((T) value)).build();
+        return Response.status(200).entity(collectionDriver.save((T) value)).build();
     }
 
     @POST
     @Path("/{id}/saveMany")
     @Consumes(MediaType.APPLICATION_JSON)
     @Unfiltered
-    @Secured(right="collection-write")
-    public  void saveBulk(@PathParam("id") String collectionId, List<T> entities) {
+    @Secured(right = "collection-write")
+    public void saveBulk(@PathParam("id") String collectionId, List<T> entities) {
         Collection<T> collectionDriver = (Collection<T>) collectionFactory.getCollection(collectionId, entityManager.resolveClass(collectionId));
         Class<?> entityClass = entityManager.resolveClass(collectionId);
         CollectionType collectionType = DefaultJacksonMapperProvider.getObjectMapper().getTypeFactory().constructCollectionType(List.class, entityClass);
-        Object o = DefaultJacksonMapperProvider.getObjectMapper().convertValue(entities,collectionType);
+        Object o = DefaultJacksonMapperProvider.getObjectMapper().convertValue(entities, collectionType);
         collectionDriver.save((List) o);
     }
 

@@ -159,30 +159,47 @@ public class AbstractAutomationPackageMojoTest {
         String libraryManaged;
 
         @Override
-        public LibraryConfiguration getLibrary() { return library; }
+        public LibraryConfiguration getLibrary() {
+            return library;
+        }
 
         @Override
-        public String getLibraryGroupId() { return libraryGroupId; }
+        public String getLibraryGroupId() {
+            return libraryGroupId;
+        }
 
         @Override
-        public String getLibraryArtifactId() { return libraryArtifactId; }
+        public String getLibraryArtifactId() {
+            return libraryArtifactId;
+        }
 
         @Override
-        public String getLibraryVersion() { return libraryVersion; }
+        public String getLibraryVersion() {
+            return libraryVersion;
+        }
 
         @Override
-        public String getLibraryClassifier() { return libraryClassifier; }
+        public String getLibraryClassifier() {
+            return libraryClassifier;
+        }
 
         @Override
-        public String getLibraryType() { return libraryType; }
+        public String getLibraryType() {
+            return libraryType;
+        }
 
         @Override
-        public String getLibraryPath() { return libraryPath; }
+        public String getLibraryPath() {
+            return libraryPath;
+        }
 
         @Override
-        public String getLibraryManaged() { return libraryManaged; }
+        public String getLibraryManaged() {
+            return libraryManaged;
+        }
 
         @Override
-        public void execute() throws MojoExecutionException { }
+        public void execute() throws MojoExecutionException {
+        }
     }
 }

@@ -48,8 +48,8 @@ public abstract class AbstractOperatorHandler implements AssertOperatorHandler {
         return value == null;
     }
 
-    protected boolean isAnyNumeric(Object value){
-        return value instanceof Integer || value instanceof Long || value instanceof Double || value instanceof  BigDecimal || value instanceof Float;
+    protected boolean isAnyNumeric(Object value) {
+        return value instanceof Integer || value instanceof Long || value instanceof Double || value instanceof BigDecimal || value instanceof Float;
     }
 
     protected int compareNumeric(Object actual, Object expectedValue) {

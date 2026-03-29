@@ -52,8 +52,8 @@ public class LibraryConfiguration {
 
     public boolean isSet() {
         return groupId != null || artifactId != null || version != null
-                || classifier != null || type != null
-                || path != null || managed != null;
+            || classifier != null || type != null
+            || path != null || managed != null;
     }
 
     /**
@@ -76,8 +76,8 @@ public class LibraryConfiguration {
 
         if (configuredMethods > 1) {
             throw new MojoExecutionException(
-                    "Library configuration error: Only one configuration method should be used " +
-                            "(either Maven coordinates, path, or managed library name).");
+                "Library configuration error: Only one configuration method should be used " +
+                    "(either Maven coordinates, path, or managed library name).");
         }
     }
 
@@ -88,10 +88,10 @@ public class LibraryConfiguration {
      */
     public boolean isMavenCoordinatesConfigured() throws MojoExecutionException {
         boolean coordinatesConfigured = !StringUtils.isBlank(groupId) || !StringUtils.isBlank(artifactId) || !StringUtils.isBlank(version)
-                || !StringUtils.isBlank(this.type)  || !StringUtils.isBlank(this.classifier);
+            || !StringUtils.isBlank(this.type) || !StringUtils.isBlank(this.classifier);
         if (coordinatesConfigured && (StringUtils.isBlank(groupId) || StringUtils.isBlank(artifactId) || StringUtils.isBlank(version))) {
             throw new MojoExecutionException(
-                    "Library configuration error: partial maven coordinates configuration found: groupId artifactId and version are required.");
+                "Library configuration error: partial maven coordinates configuration found: groupId artifactId and version are required.");
         }
         return coordinatesConfigured;
     }

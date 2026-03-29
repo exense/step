@@ -28,7 +28,7 @@ public class FunctionEntity extends Entity<Function, Accessor<Function>> {
                         //In recursive mode we visit the resolved entity recursively (the highest priority is chosen if multiple entity matches)
                         try {
                             Function function = functionLocator.getFunction(callFunction, context.getObjectPredicate(),
-                                    null);
+                                null);
                             context.visitEntity(EntityConstants.functions, function.getId().toString());
                         } catch (NoSuchElementException e) {
                             context.getVisitor().onWarning("The keyword referenced by the call keyword artefact '" + (callFunction).getAttribute(AbstractOrganizableObject.NAME) + "' could not be found");

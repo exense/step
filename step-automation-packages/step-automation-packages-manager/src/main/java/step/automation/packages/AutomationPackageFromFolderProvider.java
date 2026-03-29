@@ -38,8 +38,8 @@ public class AutomationPackageFromFolderProvider implements AutomationPackageArc
     @Override
     public AutomationPackageArchive getAutomationPackageArchive() throws AutomationPackageReadingException {
         return new JavaAutomationPackageArchive(apFolder,
-                packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
-                null);
+            packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
+            null);
     }
 
     @Override

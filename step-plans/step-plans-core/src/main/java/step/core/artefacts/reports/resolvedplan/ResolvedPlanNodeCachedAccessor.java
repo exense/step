@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
-public class ResolvedPlanNodeCachedAccessor  {
+public class ResolvedPlanNodeCachedAccessor {
 
     private static final Logger logger = LoggerFactory.getLogger(ResolvedPlanNodeCachedAccessor.class);
     private final ResolvedPlanNodeAccessor underlyingAccessor;
@@ -23,8 +23,10 @@ public class ResolvedPlanNodeCachedAccessor  {
         underlyingAccessor.getByExecutionId(execution.getId().toHexString()).forEach(this::store);
     }
 
-    /** This class and the field executionId in ResolvedPlanNode were introduced to improve the performance
+    /**
+     * This class and the field executionId in ResolvedPlanNode were introduced to improve the performance
      * of the aggregated report tree builder. To avoid migration of all execution we migrate data on the fly when required
+     *
      * @param execution the execution for mich the resolved plan nodes might have to be migrated once
      */
     private void migrateDataIFRequired(Execution execution) {
@@ -42,7 +44,7 @@ public class ResolvedPlanNodeCachedAccessor  {
 
     private void recursivelyAddExecutionIdToResolvedPlanNodes(String executionId, ResolvedPlanNode resolvedPlanNode, AtomicLong counter) {
         ResolvedPlanNode updatedResolvedPlanNode = new ResolvedPlanNode(executionId, resolvedPlanNode.artefact,
-                resolvedPlanNode.artefactHash, resolvedPlanNode.parentId, resolvedPlanNode.parentSource, resolvedPlanNode.position);
+            resolvedPlanNode.artefactHash, resolvedPlanNode.parentId, resolvedPlanNode.parentSource, resolvedPlanNode.position);
         updatedResolvedPlanNode.setId(resolvedPlanNode.getId());
         underlyingAccessor.save(updatedResolvedPlanNode);
         counter.incrementAndGet();
@@ -62,7 +64,7 @@ public class ResolvedPlanNodeCachedAccessor  {
         //We need to sort by position, since this is called once by parent ID only, sorting here is fine
         List<ResolvedPlanNode> resolvedPlanNodes = cacheByParentId.get(parentId);
         return (resolvedPlanNodes != null) ? resolvedPlanNodes.stream().sorted(Comparator.comparingInt(r -> r.position)) :
-                Stream.empty();
+            Stream.empty();
     }
 
     /**

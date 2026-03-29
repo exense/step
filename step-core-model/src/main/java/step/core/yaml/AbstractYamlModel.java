@@ -38,23 +38,23 @@ public class AbstractYamlModel {
             Field fieldTo = allFieldsTo.stream().filter(f -> fieldYaml.getName().equals(f.getName())).findFirst().orElse(null);
             if (fieldTo == null) {
                 log.error("No target field '{}' has been found in {}. To copy the value from yaml model " +
-                        "you should either have the same field in DB model or use the YamlFieldNoCopy annotation " +
-                        "in yaml model and implement the custom copying", fieldYaml.getName(), to.getClass());
+                    "you should either have the same field in DB model or use the YamlFieldNoCopy annotation " +
+                    "in yaml model and implement the custom copying", fieldYaml.getName(), to.getClass());
             } else {
                 copyValue(fieldYaml, fieldTo, this, to, ignoreNulls);
             }
         }
     }
 
-    protected void copyFieldsFromObject(Object from, boolean ignoreNulls){
+    protected void copyFieldsFromObject(Object from, boolean ignoreNulls) {
         List<Field> allFieldsFrom = ReflectionUtils.getAllFieldsInHierarchy(from.getClass(), null);
         List<Field> allFieldsYaml = getAutoCopyFields();
         for (Field fieldYaml : allFieldsYaml) {
             Field fieldFrom = allFieldsFrom.stream().filter(f -> fieldYaml.getName().equals(f.getName())).findFirst().orElse(null);
-            if(fieldFrom == null){
+            if (fieldFrom == null) {
                 log.error("No source field '{}' has been found in {}. To copy the value from DB model to YAML model " +
-                        "you should either have the same fields in both models or use the YamlFieldCustomCopy annotation " +
-                        "in yaml model and implement the custom copying", fieldYaml.getName(), from.getClass());
+                    "you should either have the same fields in both models or use the YamlFieldCustomCopy annotation " +
+                    "in yaml model and implement the custom copying", fieldYaml.getName(), from.getClass());
             } else {
                 copyValue(fieldFrom, fieldYaml, from, this, ignoreNulls);
             }
@@ -63,10 +63,10 @@ public class AbstractYamlModel {
 
     private List<Field> getAutoCopyFields() {
         return ReflectionUtils.getAllFieldsInHierarchy(this.getClass(), AbstractYamlModel.class)
-                .stream()
-                .filter(f -> !f.isAnnotationPresent(YamlFieldCustomCopy.class))
-                .filter(f -> !f.isAnnotationPresent(JsonIgnore.class))
-                .collect(Collectors.toList());
+            .stream()
+            .filter(f -> !f.isAnnotationPresent(YamlFieldCustomCopy.class))
+            .filter(f -> !f.isAnnotationPresent(JsonIgnore.class))
+            .collect(Collectors.toList());
     }
 
     private void copyValue(Field fieldFrom, Field fieldTo, Object from, Object to, boolean ignoreNulls) {

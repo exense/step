@@ -91,8 +91,8 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
         String url; // actually contains scheme, hostname, and potentially port.
         // If present, agent-side configuration overrides the default value, but both agentProperties or the value might be undefined.
         String agentConfUrl = Optional.ofNullable(agentProperties)
-                .map(m -> m.get("step.reporting.url"))
-                .orElse(null);
+            .map(m -> m.get("step.reporting.url"))
+            .orElse(null);
         if (agentConfUrl != null) {
             // just a sanity check really
             if (!agentConfUrl.matches("^https?://.+")) {

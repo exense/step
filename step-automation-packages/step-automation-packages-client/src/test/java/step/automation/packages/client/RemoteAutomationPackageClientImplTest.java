@@ -33,7 +33,7 @@ public class RemoteAutomationPackageClientImplTest {
         AutomationPackageSource fileSource = AutomationPackageSource.withFile(testFile);
         try (RemoteAutomationPackageClientImpl automationPackageClient = new RemoteAutomationPackageClientImpl(new ControllerCredentials("http://localhost:8080", "admin", "init"))) {
             AutomationPackageUpdateResult ver1 = automationPackageClient.createOrUpdateAutomationPackage(fileSource, null, "v1", "env == DEV",
-                    null, Map.of("FunctionAttr1", "FunctionAttr1Value"), Map.of("OS", "LINUX"), null, true, false);
+                null, Map.of("FunctionAttr1", "FunctionAttr1Value"), Map.of("OS", "LINUX"), null, true, false);
         }
 
 

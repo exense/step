@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -43,75 +43,75 @@ import java.util.Map;
 @Path("export")
 @Tag(name = "Exports")
 public class ExportServices extends AbstractStepServices {
-	
-	private ExportManager exportManager;
-	private PlanAccessor accessor;
-	private ObjectHookRegistry objectHookRegistry;
-	private AsyncTaskManager asyncTaskManager;
-	private ResourceManager resourceManager;
 
-	@PostConstruct
-	public void init() throws Exception {
-		super.init();
-		GlobalContext context = getContext();
-		accessor = context.getPlanAccessor();
-		exportManager = new ExportManager(context.getEntityManager(), context.getResourceManager());
-		objectHookRegistry = context.get(ObjectHookRegistry.class);
-		asyncTaskManager = context.require(AsyncTaskManager.class);
-		resourceManager = context.getResourceManager();
-	}
+    private ExportManager exportManager;
+    private PlanAccessor accessor;
+    private ObjectHookRegistry objectHookRegistry;
+    private AsyncTaskManager asyncTaskManager;
+    private ResourceManager resourceManager;
 
-	@GET
-	@Path("/{entity}/{id}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
-	public AsyncTaskStatus<Resource> exportEntityById(@PathParam("entity") String entity, @PathParam("id") String id, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
-													  @QueryParam("additionalEntities") List<String> additionalEntities) {
-		Session session = getSession();
-		Map<String, String> metadata = getMetadata();
-		String finalFilename = removeUnsupportedChars(filename);
-		return asyncTaskManager.scheduleAsyncTask(handle -> {
-			ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename, null);
-			ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata, objectHookRegistry.getObjectPredicate(session),
-					entity, recursively, additionalEntities);
-			ExportResult exportResult = exportManager.exportById(exportConfig, id);
-			handle.setWarnings(exportResult.getMessages());
-			resourceContainer.save(null);
-			return resourceContainer.getResource();
-		});
-	}
+    @PostConstruct
+    public void init() throws Exception {
+        super.init();
+        GlobalContext context = getContext();
+        accessor = context.getPlanAccessor();
+        exportManager = new ExportManager(context.getEntityManager(), context.getResourceManager());
+        objectHookRegistry = context.get(ObjectHookRegistry.class);
+        asyncTaskManager = context.require(AsyncTaskManager.class);
+        resourceManager = context.getResourceManager();
+    }
 
-	private String removeUnsupportedChars(String filename) {
-		return filename.replace("/","").replace("\\","");
-	}
+    @GET
+    @Path("/{entity}/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "plan-read")
+    public AsyncTaskStatus<Resource> exportEntityById(@PathParam("entity") String entity, @PathParam("id") String id, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
+                                                      @QueryParam("additionalEntities") List<String> additionalEntities) {
+        Session session = getSession();
+        Map<String, String> metadata = getMetadata();
+        String finalFilename = removeUnsupportedChars(filename);
+        return asyncTaskManager.scheduleAsyncTask(handle -> {
+            ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename, null);
+            ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(), metadata, objectHookRegistry.getObjectPredicate(session),
+                entity, recursively, additionalEntities);
+            ExportResult exportResult = exportManager.exportById(exportConfig, id);
+            handle.setWarnings(exportResult.getMessages());
+            resourceContainer.save(null);
+            return resourceContainer.getResource();
+        });
+    }
 
-	private Map<String,String> getMetadata() {
-		Map<String,String> metadata = new HashMap<>();
-		metadata.put("user",getSession().getUser().getUsername());
-		metadata.put("version",getContext().getCurrentVersion().toString());
-		metadata.put("export-time",String.valueOf(System.currentTimeMillis()));
-		return metadata;
-	}
-	
-	@GET
-	@Path("/{entity}")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	@Secured(right="plan-read")
-	public AsyncTaskStatus<Resource> exportEntities(@PathParam("entity") String entity, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
-													@QueryParam("additionalEntities") List<String> additionalEntities) {
-		Session session = getSession();
-		Map<String,String> metadata = getMetadata();
-		String finalFilename = removeUnsupportedChars(filename);
-		return asyncTaskManager.scheduleAsyncTask(handle -> {
-			ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename, null);
-			ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),
-					metadata, objectHookRegistry.getObjectPredicate(session), entity, recursively, additionalEntities);
-			ExportResult exportResult = exportManager.exportAll(exportConfig);
-			handle.setWarnings(exportResult.getMessages());
-			resourceContainer.save(null);
-			return resourceContainer.getResource();
-		});
-	}
+    private String removeUnsupportedChars(String filename) {
+        return filename.replace("/", "").replace("\\", "");
+    }
+
+    private Map<String, String> getMetadata() {
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("user", getSession().getUser().getUsername());
+        metadata.put("version", getContext().getCurrentVersion().toString());
+        metadata.put("export-time", String.valueOf(System.currentTimeMillis()));
+        return metadata;
+    }
+
+    @GET
+    @Path("/{entity}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "plan-read")
+    public AsyncTaskStatus<Resource> exportEntities(@PathParam("entity") String entity, @QueryParam("recursively") boolean recursively, @QueryParam("filename") String filename,
+                                                    @QueryParam("additionalEntities") List<String> additionalEntities) {
+        Session session = getSession();
+        Map<String, String> metadata = getMetadata();
+        String finalFilename = removeUnsupportedChars(filename);
+        return asyncTaskManager.scheduleAsyncTask(handle -> {
+            ResourceRevisionContainer resourceContainer = resourceManager.createResourceContainer(ResourceManager.RESOURCE_TYPE_TEMP, finalFilename, null);
+            ExportConfiguration exportConfig = new ExportConfiguration(resourceContainer.getOutputStream(),
+                metadata, objectHookRegistry.getObjectPredicate(session), entity, recursively, additionalEntities);
+            ExportResult exportResult = exportManager.exportAll(exportConfig);
+            handle.setWarnings(exportResult.getMessages());
+            resourceContainer.save(null);
+            return resourceContainer.getResource();
+        });
+    }
 }

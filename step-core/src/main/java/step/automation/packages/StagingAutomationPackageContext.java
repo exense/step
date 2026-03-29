@@ -8,6 +8,7 @@ import java.util.Map;
 public class StagingAutomationPackageContext extends AutomationPackageContext {
 
     private final AutomationPackageArchive automationPackageArchive;
+    private final AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
 
     public StagingAutomationPackageContext(AutomationPackage automationPackage, AutomationPackageOperationMode operationMode,
                                            ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive,
@@ -18,5 +19,9 @@ public class StagingAutomationPackageContext extends AutomationPackageContext {
 
     public AutomationPackageArchive getAutomationPackageArchive() {
         return automationPackageArchive;
+    }
+
+    public AutomationPackageResourceUploader getResourceUploader() {
+        return resourceUploader;
     }
 }

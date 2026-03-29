@@ -30,10 +30,20 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AutomationPackageResourceUploader {
 
     private static final Logger logger = LoggerFactory.getLogger(AutomationPackageResourceUploader.class);
+
+    private final Map<String, String> uniqueResourceReferences = new ConcurrentHashMap<>();
+
+    public String applyUniqueResourceReference(String resourceReference,
+                                         String resourceType,
+                                         StagingAutomationPackageContext context) {
+        return uniqueResourceReferences.computeIfAbsent(resourceReference, key -> applyResourceReference(resourceReference, resourceType, context));
+    };
 
     public String applyResourceReference(String resourceReference,
                                          String resourceType,
@@ -51,8 +61,8 @@ public class AutomationPackageResourceUploader {
     }
 
     public Resource uploadResourceFromAutomationPackage(String resourcePath,
-                                                         String resourceType,
-                                                         StagingAutomationPackageContext context) {
+                                                        String resourceType,
+                                                        StagingAutomationPackageContext context) {
         if (resourcePath != null && !resourcePath.isEmpty()) {
             ResourceManager resourceManager = context.getResourceManager();
 
@@ -90,12 +100,12 @@ public class AutomationPackageResourceUploader {
                 }
 
                 return resourceManager.createResource(
-                        resourceType,
-                        isDirectory,
-                        resourceStream,
-                        fileName,
-                        context.getEnricher(),
-                        context.getActorUser()
+                    resourceType,
+                    isDirectory,
+                    resourceStream,
+                    fileName,
+                    context.getEnricher(),
+                    context.getActorUser()
                 );
             } catch (Exception e) {
                 throw new RuntimeException("Unable to upload automation package resource " + resourcePath, e);

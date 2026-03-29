@@ -46,13 +46,13 @@ public class ThreadManagerPluginTest {
     public void before() {
         ThreadManager threadManager = new ThreadManager();
         engine = new ExecutionEngine.Builder()
-                .withPlugin(new BaseArtefactPlugin())
-                .withPlugin(new ThreadPoolPlugin())
-                .withPlugin(new FunctionPlugin())
-                .withPlugin(new LocalFunctionPlugin())
-                .withPlugin(new PerformanceAssertPlugin())
-                .withPlugin(new TokenForecastingExecutionPlugin())
-                .withPlugin(new ThreadManagerPlugin(threadManager)).build();
+            .withPlugin(new BaseArtefactPlugin())
+            .withPlugin(new ThreadPoolPlugin())
+            .withPlugin(new FunctionPlugin())
+            .withPlugin(new LocalFunctionPlugin())
+            .withPlugin(new PerformanceAssertPlugin())
+            .withPlugin(new TokenForecastingExecutionPlugin())
+            .withPlugin(new ThreadManagerPlugin(threadManager)).build();
     }
 
     @After
@@ -63,12 +63,12 @@ public class ThreadManagerPluginTest {
     @Test
     public void testAggregatedReportWithRunningNodesAndCurrentOperations() throws IOException, ExecutionException, InterruptedException {
         Plan plan = PlanBuilder.create()
-                .startBlock(BaseArtefacts.for_(1, 4, 2))
-                .startBlock(FunctionArtefacts.session())
-                .add(echo("'Echo'"))
-                .add(sleep(1000))
-                .endBlock()
-                .endBlock().build();
+            .startBlock(BaseArtefacts.for_(1, 4, 2))
+            .startBlock(FunctionArtefacts.session())
+            .add(echo("'Echo'"))
+            .add(sleep(1000))
+            .endBlock()
+            .endBlock().build();
         ExecutionParameters executionParameters = new ExecutionParameters();
         executionParameters.setPlan(plan);
         String executionId = engine.initializeExecution(executionParameters);
@@ -82,12 +82,12 @@ public class ThreadManagerPluginTest {
         //Poll until running (can take some time)
         ExecutionAccessor executionAccessor = engine.getExecutionEngineContext().getExecutionAccessor();
         pollUntilTrue(() -> executionAccessor.get(executionId).getStatus().equals(ExecutionStatus.RUNNING),
-                100, 10000);
+            100, 10000);
 
         //give some time for the execution to start
         Thread.sleep(500);
         AggregatedReportViewBuilder aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), executionId);
-        AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, null, false, null,  true);
+        AggregatedReportViewRequest aggregatedReportViewRequest = new AggregatedReportViewRequest(null, true, null, false, null, true);
         AggregatedReportView node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         logger.info("----------------------");
@@ -96,10 +96,10 @@ public class ThreadManagerPluginTest {
         logger.info(node.toString());
 
         assertEquals("For: 1x: RUNNING\n" +
-                        " Session: 2x: RUNNING\n" +
-                        "  Echo: 2x: PASSED\n" +
-                        "  Sleep: 2x: RUNNING\n",
-                node.toString());
+                " Session: 2x: RUNNING\n" +
+                "  Echo: 2x: PASSED\n" +
+                "  Sleep: 2x: RUNNING\n",
+            node.toString());
 
         List<Operation> currentOperationsFor = node.currentOperations;
         assertEquals(2, currentOperationsFor.size());
@@ -111,17 +111,17 @@ public class ThreadManagerPluginTest {
         //patral tree with running nodes and operations
         ReportNode reportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(executionId, "step.artefacts.reports.EchoReportNode").findFirst().orElseThrow(() -> new RuntimeException("No echo report node found"));
         AggregatedReportViewRequest partialAggregatedReportViewRequest =
-                new AggregatedReportViewRequest(null, true, reportNode.getId().toString(), false, null, true);
+            new AggregatedReportViewRequest(null, true, reportNode.getId().toString(), false, null, true);
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
 
         PlanRunnerResult result = planRunnerResultCompletableFuture.get();
         aggregatedReportViewBuilder = new AggregatedReportViewBuilder(engine.getExecutionEngineContext(), result.getExecutionId());
         node = aggregatedReportViewBuilder.buildAggregatedReportView(aggregatedReportViewRequest);
         assertEquals("For: 1x: PASSED\n" +
-                        " Session: 4x: PASSED\n" +
-                        "  Echo: 4x: PASSED\n" +
-                        "  Sleep: 4x: PASSED\n",
-                node.toString());
+                " Session: 4x: PASSED\n" +
+                "  Echo: 4x: PASSED\n" +
+                "  Sleep: 4x: PASSED\n",
+            node.toString());
 
         currentOperationsFor = node.currentOperations;
         assertEquals(0, currentOperationsFor.size());

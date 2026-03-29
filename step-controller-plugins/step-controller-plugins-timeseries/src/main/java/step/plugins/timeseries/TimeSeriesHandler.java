@@ -82,9 +82,9 @@ public class TimeSeriesHandler {
         this.timeSeries = timeSeries;
         this.samplingLimit = samplingLimit;
         this.attributesWithPrefix = this.timeSeriesAttributes
-                .stream()
-                .map(x -> ATTRIBUTES_PREFIX + x)
-                .collect(Collectors.toList());
+            .stream()
+            .map(x -> ATTRIBUTES_PREFIX + x)
+            .collect(Collectors.toList());
     }
 
     /**
@@ -95,8 +95,8 @@ public class TimeSeriesHandler {
         step.core.collections.Collection<Bucket> inmemoryBuckets = new InMemoryCollection<>();
         TimeSeriesCollection tsCollection = new TimeSeriesCollection(inmemoryBuckets, resolutionMs);
         try (TimeSeries timeSeries = new TimeSeriesBuilder()
-                .registerCollection(tsCollection)
-                .build()) {
+            .registerCollection(tsCollection)
+            .build()) {
 
             List<String> standardAttributes = new ArrayList<>(timeSeriesAttributes);
             standardAttributes.addAll(fields.stream().map(attributesPrefixRemoval).collect(Collectors.toList()));
@@ -111,8 +111,8 @@ public class TimeSeriesHandler {
                 timestampClauses.add(Filters.lt(TIMESTAMP_ATTRIBUTE, request.getEnd()));
             }
             Filter filter = Filters.and(Arrays.asList(
-                    Filters.and(timestampClauses),
-                    OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter(), attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES)
+                Filters.and(timestampClauses),
+                OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter(), attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES)
             ));
             SearchOrder searchOrder = new SearchOrder(TIMESTAMP_ATTRIBUTE, 1);
             // Iterate over each measurement and ingest it again
@@ -134,7 +134,7 @@ public class TimeSeriesHandler {
     public List<Measurement> getRawMeasurements(String oqlFilter, int skip, int limit) {
         Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES);
         return measurementCollection.find(filter, null, skip, limit, 0)
-                .collect(Collectors.toList());
+            .collect(Collectors.toList());
     }
 
     public MeasurementsStats getRawMeasurementsStats(String oqlFilter) {
@@ -146,8 +146,8 @@ public class TimeSeriesHandler {
         measurementCollection.find(filter, null, 0, samplingLimit, 0).forEach(m -> {
             m.forEach((key, value) -> {
                 if (Objects.equals(key, MeasurementPlugin.BEGIN)
-                        || Objects.equals(key, MeasurementPlugin.VALUE)
-                        || Objects.equals(key, "_id")) {
+                    || Objects.equals(key, MeasurementPlugin.VALUE)
+                    || Objects.equals(key, "_id")) {
                     return;
                 }
                 AttributeValuesStats fieldStats = distinctAttributesStats.computeIfAbsent(key, k -> new AttributeValuesStats());
@@ -165,11 +165,11 @@ public class TimeSeriesHandler {
             Map<Object, AtomicInteger> valueCounts = stats.getValuesCount();
 
             List<AttributeStats> percentages = valueCounts.entrySet().stream()
-                    .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), 100.0 * e.getValue().get() / stats.getTotalCount()))
-                    .sorted(Map.Entry.<Object, Double>comparingByValue().reversed())
-                    .map(e -> new AttributeStats(e.getKey().toString(), e.getValue()))
-                    .limit(20)
-                    .collect(Collectors.toList());
+                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), 100.0 * e.getValue().get() / stats.getTotalCount()))
+                .sorted(Map.Entry.<Object, Double>comparingByValue().reversed())
+                .map(e -> new AttributeStats(e.getKey().toString(), e.getValue()))
+                .limit(20)
+                .collect(Collectors.toList());
 
             topValues.put(attribute, percentages);
         }
@@ -268,9 +268,9 @@ public class TimeSeriesHandler {
             // we need to check if measurements exists
             Equals measurementFilter = Filters.equals(ATTRIBUTE_EXECUTION_ID, executionId);
             Measurement firstMeasurement = measurementCollection.find(measurementFilter,
-                    new SearchOrder(MeasurementPlugin.BEGIN, 1), 0, 1, 0).findFirst().orElse(null);
+                new SearchOrder(MeasurementPlugin.BEGIN, 1), 0, 1, 0).findFirst().orElse(null);
             Measurement lastMeasurement = measurementCollection.find(measurementFilter,
-                    new SearchOrder(MeasurementPlugin.BEGIN, -1), 0, 1, 0).findFirst().orElse(null);
+                new SearchOrder(MeasurementPlugin.BEGIN, -1), 0, 1, 0).findFirst().orElse(null);
             if (firstMeasurement != null && lastMeasurement != null) {
                 return asyncTaskManager.scheduleAsyncTask(t -> {
                     // the flushing period can be a big value, because we will force flush every time.
@@ -300,16 +300,16 @@ public class TimeSeriesHandler {
 
     private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request, TimeSeriesAggregationPipeline pipeline) {
         TimeSeriesAggregationQueryBuilder timeSeriesAggregationQuery = new TimeSeriesAggregationQueryBuilder()
-                .range(request.getStart(), request.getEnd())
-                .withFilter(Filters.and(
-                        Arrays.asList(
-                                TimeSeriesFilterBuilder.buildFilter(request.getOqlFilter()),
-                                TimeSeriesFilterBuilder.buildFilter(request.getParams()))
-                ))
-                .withGroupDimensions(request.getGroupDimensions());
+            .range(request.getStart(), request.getEnd())
+            .withFilter(Filters.and(
+                Arrays.asList(
+                    TimeSeriesFilterBuilder.buildFilter(request.getOqlFilter()),
+                    TimeSeriesFilterBuilder.buildFilter(request.getParams()))
+            ))
+            .withGroupDimensions(request.getGroupDimensions());
         if (request.getCollectAttributeKeys() != null && !request.getCollectAttributeKeys().isEmpty()) {
             timeSeriesAggregationQuery.withAttributeCollection(request.getCollectAttributeKeys(),
-                    Objects.requireNonNullElse(request.getCollectAttributesValuesLimit(), 0));
+                Objects.requireNonNullElse(request.getCollectAttributesValuesLimit(), 0));
         }
         if (request.getIntervalSize() > 0) {
             timeSeriesAggregationQuery.window(request.getIntervalSize());
@@ -336,15 +336,15 @@ public class TimeSeriesHandler {
                 BucketResponse bucketResponse = null;
                 if (b != null) {
                     bucketResponse = new BucketResponseBuilder()
-                            .withBegin(b.getBegin())
-                            .withCount(b.getCount())
-                            .withMin(b.getMin())
-                            .withMax(b.getMax())
-                            .withSum(b.getSum())
-                            .withThroughputPerHour(3600 * 1000 * b.getCount() / (b.getEnd() - b.getBegin()))
-                            .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile, (existing, replacement) -> existing)))
-                            .withAttributes(b.getAttributes())
-                            .build();
+                        .withBegin(b.getBegin())
+                        .withCount(b.getCount())
+                        .withMin(b.getMin())
+                        .withMax(b.getMax())
+                        .withSum(b.getSum())
+                        .withThroughputPerHour(3600 * 1000 * b.getCount() / (b.getEnd() - b.getBegin()))
+                        .withPclValues(request.getPercentiles().stream().collect(Collectors.toMap(p -> p, b::getPercentile, (existing, replacement) -> existing)))
+                        .withAttributes(b.getAttributes())
+                        .build();
                 }
                 bucketResponses.add(bucketResponse);
             }
@@ -353,17 +353,17 @@ public class TimeSeriesHandler {
         });
 
         return new TimeSeriesAPIResponseBuilder()
-                .withStart(start)
-                .withEnd(end)
-                .withInterval(intervalSize)
-                .withMatrixKeys(matrixKeys)
-                .withMatrix(matrix)
-                .withTruncated(series.size() > request.getMaxNumberOfSeries())
-                .withCollectionResolution(response.getCollectionResolution())
-                .withCollectionIgnoredAttributes(response.getCollectionIgnoredAttributes())
-                .withHigherResolutionUsed(response.isHigherResolutionUsed())
-                .withTtlCovered(response.isTtlCovered())
-                .build();
+            .withStart(start)
+            .withEnd(end)
+            .withInterval(intervalSize)
+            .withMatrixKeys(matrixKeys)
+            .withMatrix(matrix)
+            .withTruncated(series.size() > request.getMaxNumberOfSeries())
+            .withCollectionResolution(response.getCollectionResolution())
+            .withCollectionIgnoredAttributes(response.getCollectionIgnoredAttributes())
+            .withHigherResolutionUsed(response.isHigherResolutionUsed())
+            .withTtlCovered(response.isTtlCovered())
+            .build();
     }
 
     private void validateFetchRequest(FetchBucketsRequest request) {

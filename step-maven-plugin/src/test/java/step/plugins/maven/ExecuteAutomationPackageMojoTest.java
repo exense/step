@@ -35,239 +35,326 @@ import static org.junit.Assert.assertEquals;
 
 public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
 
-	public static final String TEST_INCLUDE_CATEGORIES = "PerformanceTest,JMterTest";
-	public static final String TEST_EXCLUDE_CATEGORIES = "CypressTest,OidcTest";
+    public static final String TEST_INCLUDE_CATEGORIES = "PerformanceTest,JMterTest";
+    public static final String TEST_EXCLUDE_CATEGORIES = "CypressTest,OidcTest";
 
-	@Test
-	public void testExecute() throws Exception {
-		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+    @Test
+    public void testExecute() throws Exception {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
 
-		configureMojo(mojo, true);
-		mojo.execute();
-		assertToolCall(mojo, true);
-	}
+        configureMojo(mojo, true);
+        mojo.execute();
+        assertToolCall(mojo, true);
+    }
 
-	private static void assertToolCall(ExecuteAutomationPackageMojoTestable mojo, Boolean ensureExecutionSuccess) throws AutomationPackageClientException {
-		Mockito.verify(mojo.mockedTool, Mockito.times(1)).execute();
-		assertEquals("http://localhost:8080", mojo.url);
-		assertEquals("abc", mojo.params.getAuthToken());
-		assertEquals(TENANT_1.getName(), mojo.params.getStepProjectName());
-		assertEquals("testUser", mojo.params.getUserId());
-		assertEquals((Integer) 3, mojo.params.getExecutionResultTimeoutS());
-		assertEquals(true, mojo.params.getWaitForExecution());
-		assertEquals(ensureExecutionSuccess, mojo.params.getEnsureExecutionSuccess());
+    private static void assertToolCall(ExecuteAutomationPackageMojoTestable mojo, Boolean ensureExecutionSuccess) throws AutomationPackageClientException {
+        Mockito.verify(mojo.mockedTool, Mockito.times(1)).execute();
+        assertEquals("http://localhost:8080", mojo.url);
+        assertEquals("abc", mojo.params.getAuthToken());
+        assertEquals(TENANT_1.getName(), mojo.params.getStepProjectName());
+        assertEquals("testUser", mojo.params.getUserId());
+        assertEquals((Integer) 3, mojo.params.getExecutionResultTimeoutS());
+        assertEquals(true, mojo.params.getWaitForExecution());
+        assertEquals(ensureExecutionSuccess, mojo.params.getEnsureExecutionSuccess());
         assertEquals(ExecuteAutomationPackageTool.ReportType.junit, mojo.params.getReports().get(0).getReportType());
         assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout, ExecuteAutomationPackageTool.ReportOutputMode.file), mojo.params.getReports().get(0).getOutputModes());
-		assertEquals(createTestCustomParams(), mojo.params.getExecutionParameters());
-		assertEquals(TEST_INCLUDE_PLANS, mojo.params.getIncludePlans());
-		Assert.assertNull(TEST_INCLUDE_PLANS, mojo.params.getExcludePlans());
-		assertEquals(TEST_INCLUDE_CATEGORIES, mojo.params.getIncludeCategories());
-		assertEquals(TEST_EXCLUDE_CATEGORIES, mojo.params.getExcludeCategories());
-	}
+        assertEquals(createTestCustomParams(), mojo.params.getExecutionParameters());
+        assertEquals(TEST_INCLUDE_PLANS, mojo.params.getIncludePlans());
+        Assert.assertNull(TEST_INCLUDE_PLANS, mojo.params.getExcludePlans());
+        assertEquals(TEST_INCLUDE_CATEGORIES, mojo.params.getIncludeCategories());
+        assertEquals(TEST_EXCLUDE_CATEGORIES, mojo.params.getExcludeCategories());
+    }
 
-	private void configureMojo(ExecuteAutomationPackageMojoTestable mojo, boolean ensureExecutionSuccess) throws URISyntaxException {
-		mojo.setArtifactId(ARTIFACT_ID);
-		mojo.setArtifactClassifier("jar-with-dependencies");
-		mojo.setArtifactVersion(VERSION_ID);
-		mojo.setArtifactGroupId(GROUP_ID);
-		mojo.setUrl("http://localhost:8080");
-		mojo.setAuthToken("abc");
-		mojo.setBuildFinalName("Test build name");
-		mojo.setProjectVersion("1.0.0");
-		mojo.setExecutionResultTimeoutS(3);
-		mojo.setUserId("testUser");
-		Map<String, String> params = createTestCustomParams();
-		mojo.setExecutionParameters(params);
-		mojo.setWaitForExecution(true);
-		mojo.setEnsureExecutionSuccess(ensureExecutionSuccess);
+    private void configureMojo(ExecuteAutomationPackageMojoTestable mojo, boolean ensureExecutionSuccess) throws URISyntaxException {
+        mojo.setArtifactId(ARTIFACT_ID);
+        mojo.setArtifactClassifier("jar-with-dependencies");
+        mojo.setArtifactVersion(VERSION_ID);
+        mojo.setArtifactGroupId(GROUP_ID);
+        mojo.setUrl("http://localhost:8080");
+        mojo.setAuthToken("abc");
+        mojo.setBuildFinalName("Test build name");
+        mojo.setProjectVersion("1.0.0");
+        mojo.setExecutionResultTimeoutS(3);
+        mojo.setUserId("testUser");
+        Map<String, String> params = createTestCustomParams();
+        mojo.setExecutionParameters(params);
+        mojo.setWaitForExecution(true);
+        mojo.setEnsureExecutionSuccess(ensureExecutionSuccess);
 
-		ExecuteAutomationPackageMojo.ReportParam reportParam = new ExecuteAutomationPackageMojo.ReportParam();
-		reportParam.setType(ExecuteAutomationPackageTool.ReportType.junit);
-		reportParam.setOutput("stdout,file");
-		mojo.setReports(List.of(reportParam));
-		mojo.setReportDir("C://temp");
+        ExecuteAutomationPackageMojo.ReportParam reportParam = new ExecuteAutomationPackageMojo.ReportParam();
+        reportParam.setType(ExecuteAutomationPackageTool.ReportType.junit);
+        reportParam.setOutput("stdout,file");
+        mojo.setReports(List.of(reportParam));
+        mojo.setReportDir("C://temp");
 
-		mojo.setIncludePlans(TEST_INCLUDE_PLANS);
-		mojo.setIncludeCategories(TEST_INCLUDE_CATEGORIES);
-		mojo.setExcludeCategories(TEST_EXCLUDE_CATEGORIES);
+        mojo.setIncludePlans(TEST_INCLUDE_PLANS);
+        mojo.setIncludeCategories(TEST_INCLUDE_CATEGORIES);
+        mojo.setExcludeCategories(TEST_EXCLUDE_CATEGORIES);
 
-		MavenProject mockedProject = Mockito.mock(MavenProject.class);
-		Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
-		Mockito.when(mockedProject.getGroupId()).thenReturn(GROUP_ID);
-		Mockito.when(mockedProject.getVersion()).thenReturn(VERSION_ID);
+        MavenProject mockedProject = Mockito.mock(MavenProject.class);
+        Mockito.when(mockedProject.getArtifactId()).thenReturn(ARTIFACT_ID);
+        Mockito.when(mockedProject.getGroupId()).thenReturn(GROUP_ID);
+        Mockito.when(mockedProject.getVersion()).thenReturn(VERSION_ID);
 
-		Artifact mainArtifact = createArtifactMock();
+        Artifact mainArtifact = createArtifactMock();
 
-		Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
+        Mockito.when(mockedProject.getArtifact()).thenReturn(mainArtifact);
 
-		Artifact jarWithDependenciesArtifact = createArtifactWithDependenciesMock();
+        Artifact jarWithDependenciesArtifact = createArtifactWithDependenciesMock();
 
-		Mockito.when(mockedProject.getArtifacts()).thenReturn(Set.of(mainArtifact, jarWithDependenciesArtifact));
-		Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(mainArtifact, jarWithDependenciesArtifact));
+        Mockito.when(mockedProject.getArtifacts()).thenReturn(Set.of(mainArtifact, jarWithDependenciesArtifact));
+        Mockito.when(mockedProject.getAttachedArtifacts()).thenReturn(Arrays.asList(mainArtifact, jarWithDependenciesArtifact));
 
-		mojo.setProject(mockedProject);
+        mojo.setProject(mockedProject);
 
-		mojo.setStepProjectName(TENANT_1.getName());
-	}
+        mojo.setStepProjectName(TENANT_1.getName());
+    }
 
-	private static Map<String, String> createTestCustomParams() {
-		Map<String, String> params = new HashMap<>();
-		params.put("param1", "value1");
-		params.put("param2", "value2");
-		return params;
-	}
+    private static Map<String, String> createTestCustomParams() {
+        Map<String, String> params = new HashMap<>();
+        params.put("param1", "value1");
+        params.put("param2", "value2");
+        return params;
+    }
 
-	// --- parseReports(String raw) tests ---
+    // --- parseExecutionParameters(String raw) tests ---
 
-	@Test
-	public void parseReportsRaw_withNull_returnsNull() throws MojoExecutionException {
-		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
-		configureMinimalMojoForReportsTest(mojo);
-		Assert.assertNull(mojo.callParseReportsRaw(null));
+    @Test
+    public void parseExecutionParameters_withNull_returnsEmptyMap() {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        assertEquals(Collections.emptyMap(), mojo.parseExecutionParameters(null));
+    }
 
-		mojo.execute();
-	}
+    @Test
+    public void parseExecutionParameters_withBlankString_returnsEmptyMap() {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        assertEquals(Collections.emptyMap(), mojo.parseExecutionParameters("   "));
+    }
 
-	@Test
-	public void parseReportsRaw_withBlankString_returnsNull() throws MojoExecutionException {
-		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
-		configureMinimalMojoForReportsTest(mojo);
-		String raw = "   ";
-		mojo.setReportsRaw(raw);
-		Assert.assertNull(mojo.callParseReportsRaw(raw));
+    @Test
+    public void parseExecutionParameters_withSingleEntry_returnsOneEntry() {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        Map<String, String> result = mojo.parseExecutionParameters("key1=value1");
+        assertEquals(1, result.size());
+        assertEquals("value1", result.get("key1"));
+    }
 
-		mojo.execute();
-	}
+    @Test
+    public void parseExecutionParameters_withMultipleEntries_returnsAllEntries() {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        Map<String, String> result = mojo.parseExecutionParameters("key1=value1;key2=value2");
+        assertEquals(2, result.size());
+        assertEquals("value1", result.get("key1"));
+        assertEquals("value2", result.get("key2"));
+    }
 
-	@Test
-	public void parseReportsRaw_withSingleEntry_returnsOneReport() throws MojoExecutionException {
-		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
-		configureMinimalMojoForReportsTest(mojo);
-		String raw = "junit:file";
-		mojo.setReportsRaw(raw);
-		List<ExecuteAutomationPackageMojo.ReportParam> result = mojo.callParseReportsRaw(raw);
+    @Test
+    public void parseExecutionParameters_withValueContainingEquals_preservesEntireValue() {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        Map<String, String> result = mojo.parseExecutionParameters("key1=val=ue1");
+        assertEquals(1, result.size());
+        assertEquals("val=ue1", result.get("key1"));
+    }
 
-		assertEquals(1, result.size());
-		assertEquals(ExecuteAutomationPackageTool.ReportType.junit, result.get(0).getType());
-		assertEquals("file", result.get(0).getOutput());
+    @Test
+    public void parseExecutionParameters_withInvalidFormat_throwsIllegalArgumentException() {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        IllegalArgumentException e = Assert.assertThrows(IllegalArgumentException.class,
+            () -> mojo.parseExecutionParameters("keyWithoutValue"));
+        assertEquals("Invalid execution parameter format 'keyWithoutValue', expected 'key=value'. " +
+            "Multiple parameters should be separated by a semicolon ';' (ex: key1=value1;key2=value2).", e.getMessage());
+    }
 
-		mojo.execute();
-	}
+    // --- executionParametersRaw merge tests via getExecutionParameters() ---
 
-	@Test
-	public void parseReportsRaw_withMultipleEntries_returnsMultipleReports() throws MojoExecutionException {
-		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
-		configureMinimalMojoForReportsTest(mojo);
-		String raw = "junit:file,stdout;aggregated:file,stdout";
-		mojo.setReportsRaw(raw);
-		List<ExecuteAutomationPackageMojo.ReportParam> result = mojo.callParseReportsRaw(raw);
+    @Test
+    public void getExecutionParameters_withOnlyXml_returnsXmlParams() {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        mojo.setExecutionParameters(Map.of("key1", "xml-value1"));
+        Map<String, String> result = mojo.getExecutionParameters();
+        assertEquals(Map.of("key1", "xml-value1"), result);
+    }
 
-		assertEquals(2, result.size());
-		assertEquals(ExecuteAutomationPackageTool.ReportType.junit, result.get(0).getType());
-		assertEquals("file,stdout", result.get(0).getOutput());
-		assertEquals(ExecuteAutomationPackageTool.ReportType.aggregated, result.get(1).getType());
-		assertEquals("file,stdout", result.get(1).getOutput());
+    @Test
+    public void getExecutionParameters_withOnlyRaw_returnsRawParams() {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        mojo.setExecutionParametersRaw("key1=raw-value1");
+        Map<String, String> result = mojo.getExecutionParameters();
+        assertEquals(Map.of("key1", "raw-value1"), result);
+    }
 
-		mojo.execute();
-	}
+    @Test
+    public void getExecutionParameters_withBothXmlAndRaw_rawOverridesXmlForSameKey() {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        Map<String, String> xmlParams = new HashMap<>();
+        xmlParams.put("key1", "xml-value1");
+        xmlParams.put("key2", "xml-value2");
+        mojo.setExecutionParameters(xmlParams);
+        mojo.setExecutionParametersRaw("key1=raw-value1;key3=raw-value3");
+        Map<String, String> result = mojo.getExecutionParameters();
+        assertEquals(3, result.size());
+        assertEquals("raw-value1", result.get("key1")); // raw overrides xml
+        assertEquals("xml-value2", result.get("key2")); // xml-only key preserved
+        assertEquals("raw-value3", result.get("key3")); // raw-only key added
+    }
 
-	@Test
-	public void parseReportsRaw_withEmptyOutput_returnsReportWithEmptyOutput() throws MojoExecutionException {
-		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
-		configureMinimalMojoForReportsTest(mojo);
-		String raw = "junit:";
-		mojo.setReportsRaw(raw);
-		List<ExecuteAutomationPackageMojo.ReportParam> result = mojo.callParseReportsRaw(raw);
+    @Test
+    public void getExecutionParameters_withBothNull_returnsNull() {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        Assert.assertNull(mojo.getExecutionParameters());
+    }
 
-		assertEquals(1, result.size());
-		assertEquals(ExecuteAutomationPackageTool.ReportType.junit, result.get(0).getType());
-		assertEquals("", result.get(0).getOutput());
+    // --- parseReports(String raw) tests ---
 
-		mojo.execute();
-	}
+    @Test
+    public void parseReportsRaw_withNull_returnsNull() throws MojoExecutionException {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        configureMinimalMojoForReportsTest(mojo);
+        Assert.assertNull(mojo.callParseReportsRaw(null));
 
-	@Test
-	public void parseReportsRaw_withInvalidFormat_throwsIllegalArgumentException() throws MojoExecutionException {
-		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
-		configureMinimalMojoForReportsTest(mojo);
-		String raw = "junit";
-		mojo.setReportsRaw(raw);
-		IllegalArgumentException e = Assert.assertThrows(IllegalArgumentException.class, () -> mojo.callParseReportsRaw(raw));
-		String expectedErrorMessage = "Invalid report format 'junit', expected 'type:outputModes'. Multiple reports should be separated by a semicolon ';', multiple output modes can be separated by a comma ',' (ex: junit:file,stdout;aggregated:stdout).";
-		assertEquals(expectedErrorMessage, e.getMessage());
+        mojo.execute();
+    }
 
-		MojoExecutionException mojoExecutionException = Assert.assertThrows(MojoExecutionException.class, () -> mojo.execute());
-		assertEquals(expectedErrorMessage, mojoExecutionException.getCause().getMessage());
-	}
+    @Test
+    public void parseReportsRaw_withBlankString_returnsNull() throws MojoExecutionException {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        configureMinimalMojoForReportsTest(mojo);
+        String raw = "   ";
+        mojo.setReportsRaw(raw);
+        Assert.assertNull(mojo.callParseReportsRaw(raw));
 
-	// --- reportsRaw precedence tests via execute() ---
+        mojo.execute();
+    }
 
-	@Test
-	public void execute_withReportsRaw_andNoXmlReports_usesRawReports() throws Exception {
-		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
-		configureMinimalMojoForReportsTest(mojo);
-		mojo.setReportsRaw("junit:stdout");
+    @Test
+    public void parseReportsRaw_withSingleEntry_returnsOneReport() throws MojoExecutionException {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        configureMinimalMojoForReportsTest(mojo);
+        String raw = "junit:file";
+        mojo.setReportsRaw(raw);
+        List<ExecuteAutomationPackageMojo.ReportParam> result = mojo.callParseReportsRaw(raw);
 
-		mojo.execute();
+        assertEquals(1, result.size());
+        assertEquals(ExecuteAutomationPackageTool.ReportType.junit, result.get(0).getType());
+        assertEquals("file", result.get(0).getOutput());
 
-		Assert.assertNotNull(mojo.params.getReports());
-		assertEquals(1, mojo.params.getReports().size());
-		assertEquals(ExecuteAutomationPackageTool.ReportType.junit, mojo.params.getReports().get(0).getReportType());
-		assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout), mojo.params.getReports().get(0).getOutputModes());
-	}
+        mojo.execute();
+    }
 
-	@Test
-	public void execute_withBothXmlReportsAndReportsRaw_rawReportsTakePrecedence() throws Exception {
-		ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
-		configureMinimalMojoForReportsTest(mojo);
-		// XML reports: junit with file output (should be ignored)
-		ExecuteAutomationPackageMojo.ReportParam xmlReport = new ExecuteAutomationPackageMojo.ReportParam();
-		xmlReport.setType(ExecuteAutomationPackageTool.ReportType.junit);
-		xmlReport.setOutput("file");
-		mojo.setReports(List.of(xmlReport));
-		// reportsRaw (system property): junit with stdout output — takes precedence
-		mojo.setReportsRaw("junit:stdout");
+    @Test
+    public void parseReportsRaw_withMultipleEntries_returnsMultipleReports() throws MojoExecutionException {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        configureMinimalMojoForReportsTest(mojo);
+        String raw = "junit:file,stdout;aggregated:file,stdout";
+        mojo.setReportsRaw(raw);
+        List<ExecuteAutomationPackageMojo.ReportParam> result = mojo.callParseReportsRaw(raw);
 
-		mojo.execute();
+        assertEquals(2, result.size());
+        assertEquals(ExecuteAutomationPackageTool.ReportType.junit, result.get(0).getType());
+        assertEquals("file,stdout", result.get(0).getOutput());
+        assertEquals(ExecuteAutomationPackageTool.ReportType.aggregated, result.get(1).getType());
+        assertEquals("file,stdout", result.get(1).getOutput());
 
-		assertEquals(1, mojo.params.getReports().size());
-		assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout),
-				mojo.params.getReports().get(0).getOutputModes());
-	}
+        mojo.execute();
+    }
 
-	private void configureMinimalMojoForReportsTest(ExecuteAutomationPackageMojoTestable mojo) {
-		mojo.setArtifactId(ARTIFACT_ID);
-		mojo.setArtifactGroupId(GROUP_ID);
-		mojo.setArtifactVersion(VERSION_ID);
-		mojo.setUrl("http://localhost:8080");
-		mojo.setReportDir("C://temp");
-	}
+    @Test
+    public void parseReportsRaw_withEmptyOutput_returnsReportWithEmptyOutput() throws MojoExecutionException {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        configureMinimalMojoForReportsTest(mojo);
+        String raw = "junit:";
+        mojo.setReportsRaw(raw);
+        List<ExecuteAutomationPackageMojo.ReportParam> result = mojo.callParseReportsRaw(raw);
 
-	private static class ExecuteAutomationPackageMojoTestable extends ExecuteAutomationPackageMojo {
+        assertEquals(1, result.size());
+        assertEquals(ExecuteAutomationPackageTool.ReportType.junit, result.get(0).getType());
+        assertEquals("", result.get(0).getOutput());
 
-		private final ExecuteAutomationPackageTool mockedTool = Mockito.mock(ExecuteAutomationPackageTool.class);
+        mojo.execute();
+    }
 
-		private String url;
-		private ApExecuteParameters params;
+    @Test
+    public void parseReportsRaw_withInvalidFormat_throwsIllegalArgumentException() throws MojoExecutionException {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        configureMinimalMojoForReportsTest(mojo);
+        String raw = "junit";
+        mojo.setReportsRaw(raw);
+        IllegalArgumentException e = Assert.assertThrows(IllegalArgumentException.class, () -> mojo.callParseReportsRaw(raw));
+        String expectedErrorMessage = "Invalid report format 'junit', expected 'type:outputModes'. Multiple reports should be separated by a semicolon ';', multiple output modes can be separated by a comma ',' (ex: junit:file,stdout;aggregated:stdout).";
+        assertEquals(expectedErrorMessage, e.getMessage());
 
-		public ExecuteAutomationPackageMojoTestable() {
-			super();
-		}
+        MojoExecutionException mojoExecutionException = Assert.assertThrows(MojoExecutionException.class, () -> mojo.execute());
+        assertEquals(expectedErrorMessage, mojoExecutionException.getCause().getMessage());
+    }
 
-		public List<ReportParam> callParseReportsRaw(String raw) {
-			return parseReports(raw);
-		}
+    // --- reportsRaw precedence tests via execute() ---
 
-		@Override
-		protected ExecuteAutomationPackageTool createTool(String url, ApExecuteParameters params) {
-			this.url = url;
-			this.params = params;
-			return mockedTool;
-		}
+    @Test
+    public void execute_withReportsRaw_andNoXmlReports_usesRawReports() throws Exception {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        configureMinimalMojoForReportsTest(mojo);
+        mojo.setReportsRaw("junit:stdout");
 
-		@Override
-		protected void checkStepControllerVersion() throws MojoExecutionException {
-			//Mock check
-		}
-	}
+        mojo.execute();
+
+        Assert.assertNotNull(mojo.params.getReports());
+        assertEquals(1, mojo.params.getReports().size());
+        assertEquals(ExecuteAutomationPackageTool.ReportType.junit, mojo.params.getReports().get(0).getReportType());
+        assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout), mojo.params.getReports().get(0).getOutputModes());
+    }
+
+    @Test
+    public void execute_withBothXmlReportsAndReportsRaw_rawReportsTakePrecedence() throws Exception {
+        ExecuteAutomationPackageMojoTestable mojo = new ExecuteAutomationPackageMojoTestable();
+        configureMinimalMojoForReportsTest(mojo);
+        // XML reports: junit with file output (should be ignored)
+        ExecuteAutomationPackageMojo.ReportParam xmlReport = new ExecuteAutomationPackageMojo.ReportParam();
+        xmlReport.setType(ExecuteAutomationPackageTool.ReportType.junit);
+        xmlReport.setOutput("file");
+        mojo.setReports(List.of(xmlReport));
+        // reportsRaw (system property): junit with stdout output — takes precedence
+        mojo.setReportsRaw("junit:stdout");
+
+        mojo.execute();
+
+        assertEquals(1, mojo.params.getReports().size());
+        assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout),
+            mojo.params.getReports().get(0).getOutputModes());
+    }
+
+    private void configureMinimalMojoForReportsTest(ExecuteAutomationPackageMojoTestable mojo) {
+        mojo.setArtifactId(ARTIFACT_ID);
+        mojo.setArtifactGroupId(GROUP_ID);
+        mojo.setArtifactVersion(VERSION_ID);
+        mojo.setUrl("http://localhost:8080");
+        mojo.setReportDir("C://temp");
+    }
+
+    private static class ExecuteAutomationPackageMojoTestable extends ExecuteAutomationPackageMojo {
+
+        private final ExecuteAutomationPackageTool mockedTool = Mockito.mock(ExecuteAutomationPackageTool.class);
+
+        private String url;
+        private ApExecuteParameters params;
+
+        public ExecuteAutomationPackageMojoTestable() {
+            super();
+        }
+
+        public List<ReportParam> callParseReportsRaw(String raw) {
+            return parseReports(raw);
+        }
+
+        @Override
+        protected ExecuteAutomationPackageTool createTool(String url, ApExecuteParameters params) {
+            this.url = url;
+            this.params = params;
+            return mockedTool;
+        }
+
+        @Override
+        protected void checkStepControllerVersion() throws MojoExecutionException {
+            //Mock check
+        }
+    }
 }

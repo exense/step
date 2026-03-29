@@ -40,13 +40,33 @@ public class MavenCacheCleanupScheduler {
             this.active = true;
         }
 
-        public File getRepositoryPath() { return repositoryPath; }
-        public Duration getMaxAge() { return maxAge; }
-        public Duration getCleanupFrequency() { return cleanupFrequency; }
-        public boolean isActive() { return active; }
-        public void setActive(boolean active) { this.active = active; }
-        public ScheduledFuture<?> getScheduledTask() { return scheduledTask; }
-        public void setScheduledTask(ScheduledFuture<?> scheduledTask) { this.scheduledTask = scheduledTask; }
+        public File getRepositoryPath() {
+            return repositoryPath;
+        }
+
+        public Duration getMaxAge() {
+            return maxAge;
+        }
+
+        public Duration getCleanupFrequency() {
+            return cleanupFrequency;
+        }
+
+        public boolean isActive() {
+            return active;
+        }
+
+        public void setActive(boolean active) {
+            this.active = active;
+        }
+
+        public ScheduledFuture<?> getScheduledTask() {
+            return scheduledTask;
+        }
+
+        public void setScheduledTask(ScheduledFuture<?> scheduledTask) {
+            this.scheduledTask = scheduledTask;
+        }
     }
 
     private MavenCacheCleanupScheduler() {
@@ -87,7 +107,7 @@ public class MavenCacheCleanupScheduler {
 
             ScheduledFuture<?> task = scheduler.scheduleAtFixedRate(
                 () -> cleanupRepository(config),
-                    cleanupFrequency.toMillis(), // Start immediately
+                cleanupFrequency.toMillis(), // Start immediately
                 cleanupFrequency.toMillis(),
                 TimeUnit.MILLISECONDS
             );

@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -32,62 +32,62 @@ import step.framework.server.security.Secured;
 @Path("settings")
 @Tag(name = "Settings")
 public class SettingsServices extends AbstractStepServices {
-	
-	protected ControllerSettingAccessor controllerSettingsAccessor;
 
-	@PostConstruct
-	public void init() throws Exception {
-		super.init();
-		controllerSettingsAccessor = getContext().require(ControllerSettingAccessor.class);
-	}
-	
-	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Path("/{id}")
-	@Secured(right="settings-write")
-	public void saveSetting(@PathParam("id") String key, String value) {
-		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
-		if(setting == null) {
-			setting = new ControllerSetting();
-			setting.setKey(key);
-		}
-		setting.setValue(value);
+    protected ControllerSettingAccessor controllerSettingsAccessor;
 
-		try {
-			controllerSettingsAccessor.save(setting);
-		} catch (Exception ex) {
-			// exception can be thrown by step.core.controller.ControllerSettingHook
-			// (for example, when we change the housekeeping job cron and try to save invalid cron expression)
-			throw new ControllerServiceException("Unable to change the value " + value + " for setting " + key, ex);
-		}
-	}
+    @PostConstruct
+    public void init() throws Exception {
+        super.init();
+        controllerSettingsAccessor = getContext().require(ControllerSettingAccessor.class);
+    }
 
-	@DELETE
-	@Path("/{id}")
-	@Secured(right = "settings-delete")
-	public void deleteSetting(@PathParam("id") String key) {
-		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
-		if (setting != null) {
-			try {
-				controllerSettingsAccessor.remove(setting.getId());
-			} catch (Exception ex) {
-				// exception can be thrown by step.core.controller.ControllerSettingHook
-				// (for example, when we change the housekeeping job cron and try to save invalid cron expression)
-				throw new ControllerServiceException("Unable to remove the value for setting " + key, ex);
-			}
-		}
-	}
-	
-	@GET
-	@Path("/{id}")
-	@Produces(MediaType.TEXT_PLAIN)
-	@Secured(right="settings-read")
-	public String getSetting(@PathParam("id") String key) {
-		ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
-		if(setting != null) {
-			return setting.getValue();
-		} else {
-			return null;
-		}
-	}
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/{id}")
+    @Secured(right = "settings-write")
+    public void saveSetting(@PathParam("id") String key, String value) {
+        ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
+        if (setting == null) {
+            setting = new ControllerSetting();
+            setting.setKey(key);
+        }
+        setting.setValue(value);
+
+        try {
+            controllerSettingsAccessor.save(setting);
+        } catch (Exception ex) {
+            // exception can be thrown by step.core.controller.ControllerSettingHook
+            // (for example, when we change the housekeeping job cron and try to save invalid cron expression)
+            throw new ControllerServiceException("Unable to change the value " + value + " for setting " + key, ex);
+        }
+    }
+
+    @DELETE
+    @Path("/{id}")
+    @Secured(right = "settings-delete")
+    public void deleteSetting(@PathParam("id") String key) {
+        ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
+        if (setting != null) {
+            try {
+                controllerSettingsAccessor.remove(setting.getId());
+            } catch (Exception ex) {
+                // exception can be thrown by step.core.controller.ControllerSettingHook
+                // (for example, when we change the housekeeping job cron and try to save invalid cron expression)
+                throw new ControllerServiceException("Unable to remove the value for setting " + key, ex);
+            }
+        }
+    }
+
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Secured(right = "settings-read")
+    public String getSetting(@PathParam("id") String key) {
+        ControllerSetting setting = controllerSettingsAccessor.getSettingByKey(key);
+        if (setting != null) {
+            return setting.getValue();
+        } else {
+            return null;
+        }
+    }
 }

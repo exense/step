@@ -41,7 +41,7 @@ public class AfterBeforeYamlMigrationTask extends AbstractYamlPlanMigrationTask 
     public static final String STEPS = "steps";
 
     public AfterBeforeYamlMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-        super(new Version(1,1,0), collectionFactory, migrationContext);
+        super(new Version(1, 1, 0), collectionFactory, migrationContext);
     }
 
     @Override
@@ -64,7 +64,7 @@ public class AfterBeforeYamlMigrationTask extends AbstractYamlPlanMigrationTask 
             }
         });
 
-        logger.info("Migrated {} Yaml plans successfully", successCount.get() );
+        logger.info("Migrated {} Yaml plans successfully", successCount.get());
         if (errorCount.get() > 0) {
             logger.error("Failed to migrate {} plans. Check previous error for details.", errorCount.get());
         }
@@ -73,14 +73,14 @@ public class AfterBeforeYamlMigrationTask extends AbstractYamlPlanMigrationTask 
     /**
      * Yaml and JSON document are deserialized with different structure. YAML syntax for artefact always start with
      * artefact name followed by the object which is different from Json (DataBase) structure
-     *          YAML structure example as ref
-     *           testCase:
-     *             nodeName: "MainPlan"
-     *             ...
-     *             children:
-     *              - beforeSequence:
-     *                  children:
-     *                    - ...
+     * YAML structure example as ref
+     * testCase:
+     * nodeName: "MainPlan"
+     * ...
+     * children:
+     * - beforeSequence:
+     * children:
+     * - ...
      *
      * @param artifact: the deserilaization of the YAML artefact as DocumentObject to be modified
      */
@@ -131,7 +131,7 @@ public class AfterBeforeYamlMigrationTask extends AbstractYamlPlanMigrationTask 
 
     private void moveToParentSource(DocumentObject sourceArtifactProperties, List<DocumentObject> sourceChildren, String fromArtefactKey, String toPropertyKey, boolean moveChildrenOnly) {
         List<DocumentObject> fromArray = sourceChildren.stream().filter(child -> child.containsKey(fromArtefactKey)).collect(Collectors.toList());
-        for (DocumentObject artifact: fromArray) {
+        for (DocumentObject artifact : fromArray) {
             if (moveChildrenOnly) {
                 //This case is used for legacy beforeSequence... artefacts, we move their children to the corresponding source property (i.e. new before property)
                 Set<String> artefactNames = artifact.keySet();
@@ -156,7 +156,7 @@ public class AfterBeforeYamlMigrationTask extends AbstractYamlPlanMigrationTask 
         sourceChildren.removeAll(fromArray);
     }
 
-    public static List<DocumentObject> getOrInitPropertySteps(DocumentObject sourceArtifactProperties, Object continueOnError, String toPropertyKey){
+    public static List<DocumentObject> getOrInitPropertySteps(DocumentObject sourceArtifactProperties, Object continueOnError, String toPropertyKey) {
         DocumentObject toProperty = sourceArtifactProperties.getObject(toPropertyKey);
         if (toProperty == null) {
             toProperty = new DocumentObject();

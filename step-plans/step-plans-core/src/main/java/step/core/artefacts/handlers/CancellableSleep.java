@@ -39,14 +39,14 @@ public class CancellableSleep {
 
         final String context = makeLogContextString(invocationContext);
 
-        if(logger.isDebugEnabled()) {
-        	logger.debug(context + "Sleeping for " + duration + " ms; checking for cancellation every " + checkIntervalMs + " ms");
+        if (logger.isDebugEnabled()) {
+            logger.debug(context + "Sleeping for " + duration + " ms; checking for cancellation every " + checkIntervalMs + " ms");
         }
 
         while (true) {
             if (cancelCondition.get()) {
                 long actualDuration = System.currentTimeMillis() - startTimestamp;
-                if(logger.isDebugEnabled()) {
+                if (logger.isDebugEnabled()) {
                     logger.debug(context + "Cancelled sleeping; intended duration=" + duration + ", actual duration=" + actualDuration);
                 }
                 return false;
@@ -62,11 +62,11 @@ public class CancellableSleep {
             }
 
             long chunk;
-            if(leftToSleep >= checkIntervalMs) {
-            	chunk = checkIntervalMs;
+            if (leftToSleep >= checkIntervalMs) {
+                chunk = checkIntervalMs;
             } else {
-            	// Sleep at least 1ms to avoid tightly looping multiple times during the same millisecond
-            	chunk = Math.max(1, leftToSleep % checkIntervalMs);
+                // Sleep at least 1ms to avoid tightly looping multiple times during the same millisecond
+                chunk = Math.max(1, leftToSleep % checkIntervalMs);
             }
 
             if (logger.isTraceEnabled()) {

@@ -33,7 +33,7 @@ public class MigrateAggregateTask extends MigrationTask {
     public void runDowngradeScript() {
 
     }
-    
+
     private void updateMetricTypes() {
         metricsCollection.find(Filters.empty(), null, null, null, 0).forEach(metric -> {
             String aggregation = metric.getString("defaultAggregation");
@@ -41,8 +41,8 @@ public class MigrateAggregateTask extends MigrationTask {
             metricsCollection.save(metric);
         });
     }
-    
-     private void updateCustomDashboards() {
+
+    private void updateCustomDashboards() {
         // ignore generated dashboards
         dashboardsCollection.find(Filters.not(Filters.equals(CUSTOM_FIELD_LOCKED, true)), null, null, null, 0).forEach(dashboard -> {
             List<DocumentObject> dashlets = dashboard.getArray("dashlets");
@@ -58,14 +58,15 @@ public class MigrateAggregateTask extends MigrationTask {
                         DocumentObject tableSettings = dashlet.getObject("tableSettings");
                         updateTableSettings(tableSettings);
                         break;
-                    default: throw new IllegalStateException("Invalid dashlet type found: " + dashletType);
+                    default:
+                        throw new IllegalStateException("Invalid dashlet type found: " + dashletType);
                 }
 
             });
             dashboardsCollection.save(dashboard);
         });
     }
-    
+
     private void updateAxesSettings(DocumentObject axesSettings) {
         if (axesSettings == null) {
             return;
@@ -74,9 +75,9 @@ public class MigrateAggregateTask extends MigrationTask {
         axesSettings.remove("pclValue");
         String oldAggregation = axesSettings.getString("aggregation");
         axesSettings.put("aggregation", transformAggregation(oldAggregation, oldPclValue));
-        
+
     }
-    
+
     private DocumentObject transformAggregation(String oldAggregation, Object oldPclValue) {
         DocumentObject newAggregation = new Document();
         newAggregation.put("type", oldAggregation);
@@ -87,7 +88,7 @@ public class MigrateAggregateTask extends MigrationTask {
         }
         return newAggregation;
     }
-    
+
     private void updateTableSettings(DocumentObject tableDashletSettings) {
         List<DocumentObject> columns = tableDashletSettings.getArray("columns");
         columns.forEach(columnSelection -> {
@@ -106,7 +107,7 @@ public class MigrateAggregateTask extends MigrationTask {
             columnSelection.put("aggregation", getAggregationForTableColumn(columnType));
         });
     }
-    
+
     private Document getAggregationForTableColumn(String column) {
         String aggregationType;
         Document params = null;
@@ -148,6 +149,6 @@ public class MigrateAggregateTask extends MigrationTask {
         }
         return finalAggregate;
     }
-    
-    
+
+
 }

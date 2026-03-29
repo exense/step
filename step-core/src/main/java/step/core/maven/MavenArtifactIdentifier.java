@@ -103,11 +103,11 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
         return buffer.toString();
     }
 
-    public boolean isSnapshot(){
+    public boolean isSnapshot() {
         return getVersion() != null && getVersion().endsWith("-SNAPSHOT");
     }
 
-    public boolean isModifiable(){
+    public boolean isModifiable() {
         return isSnapshot();
     }
 
@@ -132,8 +132,8 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
     /**
      * @param shortString the maven identifier in string format ('mvn:artifactId:groupId:version:classifier:type'). Classifier and type are optional
      */
-    public static MavenArtifactIdentifier fromShortString(String shortString){
-        if(isMvnIdentifierShortString(shortString)) {
+    public static MavenArtifactIdentifier fromShortString(String shortString) {
+        if (isMvnIdentifierShortString(shortString)) {
             String[] split = shortString.split(":");
             return new MavenArtifactIdentifier(split[1], split[2], split[3], split.length >= 5 ? split[4] : null, split.length >= 6 ? split[5] : null);
         } else {
@@ -141,22 +141,22 @@ public class MavenArtifactIdentifier implements ResourceOrigin {
         }
     }
 
-    public static boolean isMvnIdentifierShortString(String shortString){
+    public static boolean isMvnIdentifierShortString(String shortString) {
         return shortString != null && shortString.startsWith(MVN_PREFIX + ":");
     }
-    
+
     public String toShortString() {
         String res = String.format(MVN_PREFIX + ":%s:%s:%s",
-                Optional.ofNullable(getGroupId()).orElse(""),
-                Optional.ofNullable(getArtifactId()).orElse(""),
-                Optional.ofNullable(getVersion()).orElse(""));
+            Optional.ofNullable(getGroupId()).orElse(""),
+            Optional.ofNullable(getArtifactId()).orElse(""),
+            Optional.ofNullable(getVersion()).orElse(""));
         if (this.getClassifier() != null || this.getType() != null) {
             res += ":";
             if (this.getClassifier() != null) {
                 res += this.getClassifier();
             }
             if (this.getType() != null) {
-                res +=  ":" + this.getType();
+                res += ":" + this.getType();
             }
         }
         return res;

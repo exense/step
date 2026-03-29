@@ -84,7 +84,7 @@ public class TimeSeriesService extends AbstractStepServices {
             throw new ControllerServiceException(e.getMessage());
         }
     }
-    
+
     @Secured(right = "execution-read")
     @POST
     @Path("/measurements")
@@ -172,10 +172,10 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<Measurement> discoverMeasurements(
-            @QueryParam("filter") String oqlFilter,
-            @QueryParam("limit") int limit,
-            @QueryParam("skip") int skip,
-            @DefaultValue("false") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities
+        @QueryParam("filter") String oqlFilter,
+        @QueryParam("limit") int limit,
+        @QueryParam("skip") int skip,
+        @DefaultValue("false") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities
     ) {
         oqlFilter = enrichOqlFilter(oqlFilter, includeGlobalEntities);
         return handler.getRawMeasurements(oqlFilter, skip, limit);

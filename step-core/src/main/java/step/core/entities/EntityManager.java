@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -33,155 +33,158 @@ import step.core.imports.ImportContext;
 import step.core.objectenricher.EnricheableObject;
 import step.core.objectenricher.ObjectPredicate;
 
-public class EntityManager  {
+public class EntityManager {
 
     private static Logger logger = LoggerFactory.getLogger(EntityManager.class);
 
-    private final Map<String, Entity<?,?>> entities = new ConcurrentHashMap<String, Entity<?,?>>();
-	private final Map<String, Filter> exportAllFilters = new ConcurrentHashMap<>();
+    private final Map<String, Entity<?, ?>> entities = new ConcurrentHashMap<String, Entity<?, ?>>();
+    private final Map<String, Filter> exportAllFilters = new ConcurrentHashMap<>();
 
-	private final List<DependencyTreeVisitorHook> dependencyTreeVisitorHooks = new ArrayList<>();
+    private final List<DependencyTreeVisitorHook> dependencyTreeVisitorHooks = new ArrayList<>();
 
-	private final List<BiConsumer<Object, ImportContext>> importHook = new ArrayList<>();
-	private final List<BiConsumer<Object, ExportContext>> exportHook = new ArrayList<>();
+    private final List<BiConsumer<Object, ImportContext>> importHook = new ArrayList<>();
+    private final List<BiConsumer<Object, ExportContext>> exportHook = new ArrayList<>();
 
-	public EntityManager register(Entity<?,?> entity) {
-		entities.put(entity.getName(), entity);
-		return this;
-	}
+    public EntityManager register(Entity<?, ?> entity) {
+        entities.put(entity.getName(), entity);
+        return this;
+    }
 
-	public Collection<Entity<?, ?>> getEntities() {
-		return entities.values();
-	}
-	
-	public Entity<?,?> getEntityByName(String entityName) {
-		return entities.get(entityName);
-	}
+    public Collection<Entity<?, ?>> getEntities() {
+        return entities.values();
+    }
 
-	public Entity<?,?> getEntityByCollectionName(String collectionName) {
-		return entities.values().stream().filter(e -> e.getCollectionName().equals(collectionName)).findFirst().orElseThrow();
-	}
+    public Entity<?, ?> getEntityByName(String entityName) {
+        return entities.get(entityName);
+    }
 
-	public Class<?> resolveClass(String entityName) {
-		Entity<?, ?> entity = entities.get(entityName);
-		Objects.requireNonNull(entity, "This entity type is not known: " + entityName);
-		return entity.getEntityClass();
-	}
+    public Entity<?, ?> getEntityByCollectionName(String collectionName) {
+        return entities.values().stream().filter(e -> e.getCollectionName().equals(collectionName)).findFirst().orElseThrow();
+    }
 
-	/**
-	 * Retrieve all existing references from the DB for given entity type
-	 * @param entityType type of entities to retrieve
-	 * @param objectPredicate to apply to filter entities (i.e. project)
-	 * @param recursively flag to export references recursively (i.e by exporting a plan recursively the plan will be scanned to find sub references)
-	 * @param refs the map of entity references to be populated during the process
-	 */
-	public void getEntitiesReferences(String entityType, ObjectPredicate objectPredicate, boolean recursively, EntityReferencesMap refs) {
-		Entity<?, ?> entity = getEntityByName(entityType);
-		if (entity == null ) {
-			throw new RuntimeException("Entity of type " + entityType + " is not supported");
-		}
-		//Some entity types may define a filter to exclude/include specific entities when exporting all
-		// (i.e. excludes hidden plans when exporting all plans)
-		Filter exportAllFilters = Objects.requireNonNullElse(getExportAllFilters(entityType), Filters.empty());
-		entity.getAccessor().getCollectionDriver().find(exportAllFilters,null,null,null,0).forEach(a -> {
-			if ((entity.isByPassObjectPredicate() || (!(a instanceof EnricheableObject) || objectPredicate.test((EnricheableObject) a)))) {
-				getEntitiesReferences(entityType,a.getId().toHexString(), objectPredicate, refs, recursively);
-			}
-		});
-	}
+    public Class<?> resolveClass(String entityName) {
+        Entity<?, ?> entity = entities.get(entityName);
+        Objects.requireNonNull(entity, "This entity type is not known: " + entityName);
+        return entity.getEntityClass();
+    }
 
-	/**
-	 * get entities recursively by scanning the given entity (aka artefact), the entity is retrieved and deserialized from the db
-	 * @param entityName name of the type of entity
-	 * @param entityId the id of the entity
-	 * @param references the map of references to be populated
-	 */
-	public void getEntitiesReferences(String entityName, String entityId, ObjectPredicate objectPredicate, EntityReferencesMap references, boolean recursive) {
-		EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
-		EntityDependencyTreeVisitor.VISIT_MODE visitMode = recursive ? EntityDependencyTreeVisitor.VISIT_MODE.RECURSIVE : EntityDependencyTreeVisitor.VISIT_MODE.SINGLE;
-		entityDependencyTreeVisitor.visitEntityDependencyTree(entityName, entityId, new EntityTreeVisitor() {
-			
-			@Override
-			public void onWarning(String warningMessage) {
-				references.addReferenceNotFoundWarning(warningMessage);
-			}
-			
-			@Override
-			public void onResolvedEntity(String entityName, String entityId, Object entity) {
-				references.addElementTo(entityName, entityId);
-			}
+    /**
+     * Retrieve all existing references from the DB for given entity type
+     *
+     * @param entityType      type of entities to retrieve
+     * @param objectPredicate to apply to filter entities (i.e. project)
+     * @param recursively     flag to export references recursively (i.e by exporting a plan recursively the plan will be scanned to find sub references)
+     * @param refs            the map of entity references to be populated during the process
+     */
+    public void getEntitiesReferences(String entityType, ObjectPredicate objectPredicate, boolean recursively, EntityReferencesMap refs) {
+        Entity<?, ?> entity = getEntityByName(entityType);
+        if (entity == null) {
+            throw new RuntimeException("Entity of type " + entityType + " is not supported");
+        }
+        //Some entity types may define a filter to exclude/include specific entities when exporting all
+        // (i.e. excludes hidden plans when exporting all plans)
+        Filter exportAllFilters = Objects.requireNonNullElse(getExportAllFilters(entityType), Filters.empty());
+        entity.getAccessor().getCollectionDriver().find(exportAllFilters, null, null, null, 0).forEach(a -> {
+            if ((entity.isByPassObjectPredicate() || (!(a instanceof EnricheableObject) || objectPredicate.test((EnricheableObject) a)))) {
+                getEntitiesReferences(entityType, a.getId().toHexString(), objectPredicate, refs, recursively);
+            }
+        });
+    }
 
-			@Override
-			public String onResolvedEntityId(String entityName, String resolvedEntityId) {
-				return null;
-			}
-		}, visitMode);
-	}
+    /**
+     * get entities recursively by scanning the given entity (aka artefact), the entity is retrieved and deserialized from the db
+     *
+     * @param entityName name of the type of entity
+     * @param entityId   the id of the entity
+     * @param references the map of references to be populated
+     */
+    public void getEntitiesReferences(String entityName, String entityId, ObjectPredicate objectPredicate, EntityReferencesMap references, boolean recursive) {
+        EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
+        EntityDependencyTreeVisitor.VISIT_MODE visitMode = recursive ? EntityDependencyTreeVisitor.VISIT_MODE.RECURSIVE : EntityDependencyTreeVisitor.VISIT_MODE.SINGLE;
+        entityDependencyTreeVisitor.visitEntityDependencyTree(entityName, entityId, new EntityTreeVisitor() {
 
-	public void updateReferences(Object entity, Map<String, String> references, ObjectPredicate objectPredicate, Set<String> messageCollector) {
-		if(entity!=null) {
-			EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
-			entityDependencyTreeVisitor.visitSingleObject(entity, new EntityTreeVisitor() {
-				
-				@Override
-				public void onWarning(String warningMessage) {
-				}
-				
-				@Override
-				public void onResolvedEntity(String entityName, String entityId, Object entity) {
-				}
+            @Override
+            public void onWarning(String warningMessage) {
+                references.addReferenceNotFoundWarning(warningMessage);
+            }
 
-				@Override
-				public String onResolvedEntityId(String entityName, String resolvedEntityId) {
-					String newEntityId = references.get(resolvedEntityId);
-					if(logger.isDebugEnabled()) {
-						logger.debug("Replacing reference to entity: name = " + entityName + " oldReference = " + resolvedEntityId + " newReference = " + newEntityId);
-					}
-					return newEntityId;
-				}
-			}, messageCollector);
-		}
-	}
+            @Override
+            public void onResolvedEntity(String entityName, String entityId, Object entity) {
+                references.addElementTo(entityName, entityId);
+            }
 
-	/**
-	 * Register a {@link EntityDependencyTreeVisitor} hook
-	 * @param hook the hook instance to be registered
-	 * @return this instance
-	 */
-	public EntityManager addDependencyTreeVisitorHook(DependencyTreeVisitorHook hook) {
-		dependencyTreeVisitorHooks.add(hook);
-		return this;
-	}
+            @Override
+            public String onResolvedEntityId(String entityName, String resolvedEntityId) {
+                return null;
+            }
+        }, visitMode);
+    }
 
-	public List<DependencyTreeVisitorHook> getDependencyTreeVisitorHooks() {
-		return dependencyTreeVisitorHooks;
-	}
+    public void updateReferences(Object entity, Map<String, String> references, ObjectPredicate objectPredicate, Set<String> messageCollector) {
+        if (entity != null) {
+            EntityDependencyTreeVisitor entityDependencyTreeVisitor = new EntityDependencyTreeVisitor(this, objectPredicate);
+            entityDependencyTreeVisitor.visitSingleObject(entity, new EntityTreeVisitor() {
 
-	public void registerExportHook(BiConsumer<Object, ExportContext> exportBiConsumer) {
-		exportHook.add(exportBiConsumer);
-	}
+                @Override
+                public void onWarning(String warningMessage) {
+                }
 
-	public void runExportHooks(Object o, ExportContext exportContext) {
-		exportHook.forEach(h-> h.accept(o, exportContext));
-	}
+                @Override
+                public void onResolvedEntity(String entityName, String entityId, Object entity) {
+                }
 
-	public void registerImportHook(BiConsumer<Object, ImportContext> importBiConsumer) {
-		importHook.add(importBiConsumer);
-	}
+                @Override
+                public String onResolvedEntityId(String entityName, String resolvedEntityId) {
+                    String newEntityId = references.get(resolvedEntityId);
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Replacing reference to entity: name = " + entityName + " oldReference = " + resolvedEntityId + " newReference = " + newEntityId);
+                    }
+                    return newEntityId;
+                }
+            }, messageCollector);
+        }
+    }
 
-	public void runImportHooks(Object o, ImportContext importContext) {
-		importHook.forEach(h-> h.accept(o, importContext));
-		if(o instanceof EnricheableObject) {
-			//apply session object enricher as well
-			importContext.getImportConfiguration().getObjectEnricher().accept((EnricheableObject) o);
-		}
-	}
+    /**
+     * Register a {@link EntityDependencyTreeVisitor} hook
+     *
+     * @param hook the hook instance to be registered
+     * @return this instance
+     */
+    public EntityManager addDependencyTreeVisitorHook(DependencyTreeVisitorHook hook) {
+        dependencyTreeVisitorHooks.add(hook);
+        return this;
+    }
 
-	public void registerExportAllFilters(String entity, Filter filter) {
-		exportAllFilters.put(entity, filter);
-	}
+    public List<DependencyTreeVisitorHook> getDependencyTreeVisitorHooks() {
+        return dependencyTreeVisitorHooks;
+    }
 
-	public Filter getExportAllFilters(String entity) {
-		return exportAllFilters.get(entity);
-	}
+    public void registerExportHook(BiConsumer<Object, ExportContext> exportBiConsumer) {
+        exportHook.add(exportBiConsumer);
+    }
+
+    public void runExportHooks(Object o, ExportContext exportContext) {
+        exportHook.forEach(h -> h.accept(o, exportContext));
+    }
+
+    public void registerImportHook(BiConsumer<Object, ImportContext> importBiConsumer) {
+        importHook.add(importBiConsumer);
+    }
+
+    public void runImportHooks(Object o, ImportContext importContext) {
+        importHook.forEach(h -> h.accept(o, importContext));
+        if (o instanceof EnricheableObject) {
+            //apply session object enricher as well
+            importContext.getImportConfiguration().getObjectEnricher().accept((EnricheableObject) o);
+        }
+    }
+
+    public void registerExportAllFilters(String entity, Filter filter) {
+        exportAllFilters.put(entity, filter);
+    }
+
+    public Filter getExportAllFilters(String entity) {
+        return exportAllFilters.get(entity);
+    }
 }

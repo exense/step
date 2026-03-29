@@ -39,11 +39,11 @@ public class MavenArtifactDownloader {
 
     private static DefaultArtifact getDefaultArtifact(MavenArtifactIdentifier mavenArtifactIdentifier) {
         return new DefaultArtifact(
-                mavenArtifactIdentifier.getGroupId(),
-                mavenArtifactIdentifier.getArtifactId(),
-                mavenArtifactIdentifier.getClassifier(),
-                mavenArtifactIdentifier.getType() == null || mavenArtifactIdentifier.getType().isEmpty() ? "jar" : mavenArtifactIdentifier.getType(),
-                mavenArtifactIdentifier.getVersion());
+            mavenArtifactIdentifier.getGroupId(),
+            mavenArtifactIdentifier.getArtifactId(),
+            mavenArtifactIdentifier.getClassifier(),
+            mavenArtifactIdentifier.getType() == null || mavenArtifactIdentifier.getType().isEmpty() ? "jar" : mavenArtifactIdentifier.getType(),
+            mavenArtifactIdentifier.getVersion());
     }
 
     private static MavenArtifactClient getMavenArtifactClient(AutomationPackageMavenConfig mavenConfig) throws AutomationPackageReadingException, SettingsBuildingException {
@@ -57,7 +57,7 @@ public class MavenArtifactDownloader {
             throw new AutomationPackageManagerException("Maven local file repository is not resolved");
         }
         return new MavenArtifactClient(mavenConfig.getMavenSettingsXml(), mavenConfig.getLocalFileRepository(),
-                mavenConfig.getMaxAge(), mavenConfig.getCleanupFrequency());
+            mavenConfig.getMaxAge(), mavenConfig.getCleanupFrequency());
     }
 
     public static SnapshotMetadata fetchSnapshotMetadata(AutomationPackageMavenConfig mavenConfig, MavenArtifactIdentifier mavenArtifactIdentifier, Long existingSnapshotTimestamp) throws AutomationPackageReadingException {

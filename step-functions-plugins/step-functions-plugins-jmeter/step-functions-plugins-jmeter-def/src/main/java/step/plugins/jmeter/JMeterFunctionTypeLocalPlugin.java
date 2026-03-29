@@ -21,21 +21,22 @@ package step.plugins.jmeter;
 import ch.exense.commons.app.Configuration;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
-import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 
-@Plugin(dependencies= {FunctionPlugin.class})
+import static step.core.execution.OperationMode.isLocal;
+
+@Plugin(dependencies = {FunctionPlugin.class})
 public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin {
     public static final String JMETER_HOME_ENV_VAR = "JMETER_HOME";
     private FunctionTypeRegistry functionTypeRegistry;
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-        if (context.getOperationMode() == OperationMode.LOCAL) {
+        if (isLocal(context.getOperationMode())) {
             Configuration config = context.getConfiguration();
 
             String jMeterHome = System.getenv().get(JMETER_HOME_ENV_VAR);
@@ -43,8 +44,8 @@ public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin
                 config.putProperty(JMeterFunctionType.JMETER_HOME_CONFIG_PROPERTY, jMeterHome);
             }
             config.putProperty(
-                    JMeterFunctionType.MISSING_JMETER_HOME_MESSAGE_PROPERTY,
-                    String.format(AbstractFunctionType.MISSING_ENV_VARIABLE_MESSAGE, JMETER_HOME_ENV_VAR)
+                JMeterFunctionType.MISSING_JMETER_HOME_MESSAGE_PROPERTY,
+                String.format(AbstractFunctionType.MISSING_ENV_VARIABLE_MESSAGE, JMETER_HOME_ENV_VAR)
             );
 
             functionTypeRegistry = context.require(FunctionTypeRegistry.class);

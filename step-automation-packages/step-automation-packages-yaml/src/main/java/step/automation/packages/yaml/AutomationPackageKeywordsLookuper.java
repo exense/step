@@ -43,8 +43,8 @@ public class AutomationPackageKeywordsLookuper {
 
     public List<Class<? extends AbstractYamlFunction<?>>> getAutomationPackageKeywords() {
         return YamlModelUtils.scanNamedYamlModels(AbstractYamlFunction.class).stream()
-                .map(c -> (Class<? extends AbstractYamlFunction<?>>) c)
-                .collect(Collectors.toList());
+            .map(c -> (Class<? extends AbstractYamlFunction<?>>) c)
+            .collect(Collectors.toList());
     }
 
 }

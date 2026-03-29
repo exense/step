@@ -1,18 +1,18 @@
 /*******************************************************************************
  * Copyright (C) 2020, exense GmbH
- *  
+ *
  * This file is part of STEP
- *  
+ *
  * STEP is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *  
+ *
  * STEP is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
- *  
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
@@ -50,165 +50,165 @@ import step.core.objectenricher.ObjectPredicateFactory;
 @Path("screens")
 @Tag(name = "Screens")
 public class ScreenTemplateService extends AbstractStepServices {
-	
-	protected AuthorizationManager authorizationManager;
-	protected ScreenTemplateManager screenTemplateManager;
-	protected ScreenInputAccessor screenInputAccessor;
-	protected ObjectPredicateFactory objectPredicateFactory;
-	private final Set<String> screens = new HashSet<>() {
-		{
-			add(ScreenTemplatePlugin.FUNCTION_SCREEN_ID);
-			add(ScreenTemplatePlugin.EXECUTION_PARAMETERS);
-			add(ScreenTemplatePlugin.PLAN_SCREEN_ID);
-		}
-	};
 
-	@PostConstruct
-	public void init() throws Exception {
-		super.init();
-		GlobalContext context = getContext();
-		authorizationManager = context.get(AuthorizationManager.class);
-		screenInputAccessor = context.get(ScreenInputAccessor.class);
-		screenTemplateManager = context.get(ScreenTemplateManager.class);
-		objectPredicateFactory = context.get(ObjectPredicateFactory.class);
-	}
-	
-	@GET
-	@Secured
-	@Produces(MediaType.APPLICATION_JSON)
-	public Set<String> getScreens() {
-		return screens;
-	}
-	
-	@GET
-	@Secured
-	@Path("/{id}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public List<Input> getInputsForScreenGet(@PathParam("id") String screenId, @Context UriInfo uriInfo) {
-		Map<String, Object> contextBindings = getContextBindings(uriInfo);
-		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
-		return screenTemplateManager.getInputsForScreen(screenId, contextBindings, objectPredicate);
-	}
-	
-	@SuppressWarnings("unchecked")
-	@POST
-	@Secured
-	@Path("/{id}")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public List<Input> getInputsForScreenPost(@PathParam("id") String screenId, Object params) {
-		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
-		Map<String, Object> contextBindings = getContextBindings(null);
-		if(params instanceof Map) {
-			contextBindings.putAll((Map<String, Object>) params);
-		}
-		return screenTemplateManager.getInputsForScreen(screenId, contextBindings, objectPredicate);
-	}
+    protected AuthorizationManager authorizationManager;
+    protected ScreenTemplateManager screenTemplateManager;
+    protected ScreenInputAccessor screenInputAccessor;
+    protected ObjectPredicateFactory objectPredicateFactory;
+    private final Set<String> screens = new HashSet<>() {
+        {
+            add(ScreenTemplatePlugin.FUNCTION_SCREEN_ID);
+            add(ScreenTemplatePlugin.EXECUTION_PARAMETERS);
+            add(ScreenTemplatePlugin.PLAN_SCREEN_ID);
+        }
+    };
 
-	@GET
-	@Secured
-	@Path("/{id}/screen-inputs")
-	@Produces(MediaType.APPLICATION_JSON)
-	public List<ScreenInput> getScreenInputsForScreenGet(@PathParam("id") String screenId, @Context UriInfo uriInfo) {
-		Map<String, Object> contextBindings = getContextBindings(uriInfo);
-		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
-		return screenTemplateManager.getScreenInputsForScreen(screenId, contextBindings, objectPredicate);
-	}
+    @PostConstruct
+    public void init() throws Exception {
+        super.init();
+        GlobalContext context = getContext();
+        authorizationManager = context.get(AuthorizationManager.class);
+        screenInputAccessor = context.get(ScreenInputAccessor.class);
+        screenTemplateManager = context.get(ScreenTemplateManager.class);
+        objectPredicateFactory = context.get(ObjectPredicateFactory.class);
+    }
 
-	@SuppressWarnings("unchecked")
-	@POST
-	@Secured
-	@Path("/{id}/screen-inputs")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public List<ScreenInput> getScreenInputsForScreenPost(@PathParam("id") String screenId, Object params) {
-		ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
-		Map<String, Object> contextBindings = getContextBindings(null);
-		if(params instanceof Map) {
-			contextBindings.putAll((Map<String, Object>) params);
-		}
-		return screenTemplateManager.getScreenInputsForScreen(screenId, contextBindings, objectPredicate);
-	}
-	
-	@GET
-	@Secured
-	@Path("/{screenid}/{inputid}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Input getInputForScreen(@PathParam("screenid") String screenId, @PathParam("inputid") String inputId, @Context UriInfo uriInfo) {		
-		return getInputsForScreenGet(screenId, uriInfo).stream().filter(i->i.getId().equals(inputId)).findFirst().orElse(null);
-	}
-	
-	@GET
-	@Secured
-	@Path("/input/byscreen/{screenid}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public List<ScreenInput> getScreenInputsByScreenId(@PathParam("screenid") String screenId) {		
-		return screenInputAccessor.getScreenInputsByScreenId(screenId);
-	}
-	
-	@GET
-	@Secured
-	@Path("/input/{id}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public ScreenInput getInput(@PathParam("id") String id) {
-		return screenInputAccessor.get(new ObjectId(id));
-	}
-	
-	@POST
-	@Secured(right="screenInputs-write")
-	@Path("/input/{id}/move")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public void moveInput(@PathParam("id") String id, int offset) {
-		screenTemplateManager.moveInput(id, offset);
-	}
-	
-	@DELETE
-	@Secured(right="screenInputs-delete")
-	@Path("/input/{id}")
-	@Produces(MediaType.APPLICATION_JSON)
-	public void deleteInput(@PathParam("id") String id) {
-		ScreenInput screenInput = screenInputAccessor.get(id);
-		if (screenInput.getImmutable()) {
-			throw new ControllerServiceException("This screen input is immutable.");
-		}
-		screenInputAccessor.remove(new ObjectId(id));
-		screenTemplateManager.notifyChange();
-	}
-	
-	@POST
-	@Secured(right="screenInputs-write")
-	@Path("/input")
-	@Produces(MediaType.APPLICATION_JSON)
-	@Consumes(MediaType.APPLICATION_JSON)
-	public void saveInput(ScreenInput screenInput) {
-		ScreenInput screenInputOrig = screenInputAccessor.get(screenInput.getId());
-		if (screenInputOrig != null && screenInputOrig.getImmutable()) {
-			throw new ControllerServiceException("This screen input is immutable.");
-		}
-		screenInputAccessor.save(screenInput);
-		screenTemplateManager.notifyChange();
-	}
+    @GET
+    @Secured
+    @Produces(MediaType.APPLICATION_JSON)
+    public Set<String> getScreens() {
+        return screens;
+    }
 
-	private Map<String, Object> getContextBindings(UriInfo uriInfo) {
-		Map<String, Object> contextBindings = new HashMap<>();
+    @GET
+    @Secured
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Input> getInputsForScreenGet(@PathParam("id") String screenId, @Context UriInfo uriInfo) {
+        Map<String, Object> contextBindings = getContextBindings(uriInfo);
+        ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+        return screenTemplateManager.getInputsForScreen(screenId, contextBindings, objectPredicate);
+    }
 
-		Session<User> session = getSession();
-		if(session!=null) {
-			contextBindings.put("user", session.getUser().getUsername());
-			Role roleInContext = authorizationManager.getRoleInContext(session);
-			if(roleInContext!= null) {
-				String roleName = roleInContext.getAttributes().get(AbstractOrganizableObject.NAME);
-				contextBindings.put("role", roleName);
-			}
-		}
-		
-		if(uriInfo != null) {
-			for(String key:uriInfo.getQueryParameters().keySet()) {
-				contextBindings.put(key, uriInfo.getQueryParameters().getFirst(key));
-			}
-		}
-		return contextBindings;
-	}
+    @SuppressWarnings("unchecked")
+    @POST
+    @Secured
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public List<Input> getInputsForScreenPost(@PathParam("id") String screenId, Object params) {
+        ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+        Map<String, Object> contextBindings = getContextBindings(null);
+        if (params instanceof Map) {
+            contextBindings.putAll((Map<String, Object>) params);
+        }
+        return screenTemplateManager.getInputsForScreen(screenId, contextBindings, objectPredicate);
+    }
+
+    @GET
+    @Secured
+    @Path("/{id}/screen-inputs")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<ScreenInput> getScreenInputsForScreenGet(@PathParam("id") String screenId, @Context UriInfo uriInfo) {
+        Map<String, Object> contextBindings = getContextBindings(uriInfo);
+        ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+        return screenTemplateManager.getScreenInputsForScreen(screenId, contextBindings, objectPredicate);
+    }
+
+    @SuppressWarnings("unchecked")
+    @POST
+    @Secured
+    @Path("/{id}/screen-inputs")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public List<ScreenInput> getScreenInputsForScreenPost(@PathParam("id") String screenId, Object params) {
+        ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());
+        Map<String, Object> contextBindings = getContextBindings(null);
+        if (params instanceof Map) {
+            contextBindings.putAll((Map<String, Object>) params);
+        }
+        return screenTemplateManager.getScreenInputsForScreen(screenId, contextBindings, objectPredicate);
+    }
+
+    @GET
+    @Secured
+    @Path("/{screenid}/{inputid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Input getInputForScreen(@PathParam("screenid") String screenId, @PathParam("inputid") String inputId, @Context UriInfo uriInfo) {
+        return getInputsForScreenGet(screenId, uriInfo).stream().filter(i -> i.getId().equals(inputId)).findFirst().orElse(null);
+    }
+
+    @GET
+    @Secured
+    @Path("/input/byscreen/{screenid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<ScreenInput> getScreenInputsByScreenId(@PathParam("screenid") String screenId) {
+        return screenInputAccessor.getScreenInputsByScreenId(screenId);
+    }
+
+    @GET
+    @Secured
+    @Path("/input/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ScreenInput getInput(@PathParam("id") String id) {
+        return screenInputAccessor.get(new ObjectId(id));
+    }
+
+    @POST
+    @Secured(right = "screenInputs-write")
+    @Path("/input/{id}/move")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void moveInput(@PathParam("id") String id, int offset) {
+        screenTemplateManager.moveInput(id, offset);
+    }
+
+    @DELETE
+    @Secured(right = "screenInputs-delete")
+    @Path("/input/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public void deleteInput(@PathParam("id") String id) {
+        ScreenInput screenInput = screenInputAccessor.get(id);
+        if (screenInput.getImmutable()) {
+            throw new ControllerServiceException("This screen input is immutable.");
+        }
+        screenInputAccessor.remove(new ObjectId(id));
+        screenTemplateManager.notifyChange();
+    }
+
+    @POST
+    @Secured(right = "screenInputs-write")
+    @Path("/input")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void saveInput(ScreenInput screenInput) {
+        ScreenInput screenInputOrig = screenInputAccessor.get(screenInput.getId());
+        if (screenInputOrig != null && screenInputOrig.getImmutable()) {
+            throw new ControllerServiceException("This screen input is immutable.");
+        }
+        screenInputAccessor.save(screenInput);
+        screenTemplateManager.notifyChange();
+    }
+
+    private Map<String, Object> getContextBindings(UriInfo uriInfo) {
+        Map<String, Object> contextBindings = new HashMap<>();
+
+        Session<User> session = getSession();
+        if (session != null) {
+            contextBindings.put("user", session.getUser().getUsername());
+            Role roleInContext = authorizationManager.getRoleInContext(session);
+            if (roleInContext != null) {
+                String roleName = roleInContext.getAttributes().get(AbstractOrganizableObject.NAME);
+                contextBindings.put("role", roleName);
+            }
+        }
+
+        if (uriInfo != null) {
+            for (String key : uriInfo.getQueryParameters().keySet()) {
+                contextBindings.put(key, uriInfo.getQueryParameters().getFirst(key));
+            }
+        }
+        return contextBindings;
+    }
 
 }

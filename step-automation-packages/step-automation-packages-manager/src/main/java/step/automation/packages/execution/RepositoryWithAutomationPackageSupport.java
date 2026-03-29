@@ -106,10 +106,10 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
 
             // keyword library file is not required here
             ctx = createIsolatedPackageExecutionContext(null, objectPredicate, new ObjectId().toString(),
-                    new AutomationPackageFile(artifact, null), false, null, actorUser);
+                new AutomationPackageFile(artifact, null), false, null, actorUser);
             TestSetStatusOverview overview = new TestSetStatusOverview();
             List<TestRunStatus> runs = getFilteredPackagePlans(ctx.getAutomationPackage(), repositoryParameters, ctx.getAutomationPackageManager())
-                    .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
+                .map(plan -> new TestRunStatus(getPlanName(plan), getPlanName(plan), ReportNodeStatus.NORUN)).collect(Collectors.toList());
             overview.setRuns(runs);
             return overview;
         } finally {
@@ -150,9 +150,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 }
                 if (filteredPlans.size() > 1) {
                     result.setErrors(List.of("Automation package " +
-                            automationPackage.getAttribute(AbstractOrganizableObject.NAME) +
-                            " has ambiguous plan for execution: " +
-                            filteredPlans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()))
+                        automationPackage.getAttribute(AbstractOrganizableObject.NAME) +
+                        " has ambiguous plan for execution: " +
+                        filteredPlans.stream().map(p -> p.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.toList()))
                     );
                     return result;
                 }
@@ -250,11 +250,12 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
     /**
      * When wrapping the execution in a TestSet all plan should be called as Test case to benefit of all TestSet features
      * In the plan if already a test case just call it otherwise create a Test Case artefact doing the call plan
-     * @param plan the plan to be called
+     *
+     * @param plan         the plan to be called
      * @param testCaseName the name to be used when creating a test case
      * @return the artefact (Test case or direct call plan) to be added to the TestSet for this plan
      */
-    protected AbstractArtefact wrapCallPlanInTestCaseIfRequired(Plan plan, String testCaseName){
+    protected AbstractArtefact wrapCallPlanInTestCaseIfRequired(Plan plan, String testCaseName) {
         AbstractArtefact root = plan.getRoot();
         CallPlan callPlan = callPlan(plan.getId().toString(), testCaseName);
         if (root instanceof TestCase) {
@@ -325,9 +326,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             // Restore keyword library file
             AutomationPackageFile kwLibFile = restoreLibraryFile(contextId, repositoryParameters, predicate);
             return createIsolatedPackageExecutionContext(
-                    enricher, predicate, contextId, apFile, false,
-                    kwLibFile,
-                    actorUser
+                enricher, predicate, contextId, apFile, false,
+                kwLibFile,
+                actorUser
             );
         } else {
             return current;
@@ -342,7 +343,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return new AutomationPackageFile(artifact, null);
     }
 
-    protected AutomationPackageFile restoreLibraryFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate){
+    protected AutomationPackageFile restoreLibraryFile(String contextId, Map<String, String> repositoryParameters, ObjectPredicate objectPredicate) {
         String maven_source = repositoryParameters.get(PACKAGE_LIBRARY_MAVEN_SOURCE);
         if (maven_source != null && !maven_source.isBlank()) {
             AutomationPackageFileSource libraryFileSource = AutomationPackageFileSource.withMavenIdentifier(MavenArtifactIdentifier.fromShortString(maven_source));
@@ -356,8 +357,8 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
             }
         } else {
             List<Resource> foundResources = resourceManager.findManyByCriteria(
-                    Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB,
-                            "customFields." + CONTEXT_ID_CUSTOM_FIELD, contextId)
+                Map.of("resourceType", ResourceManager.RESOURCE_TYPE_ISOLATED_AP_LIB,
+                    "customFields." + CONTEXT_ID_CUSTOM_FIELD, contextId)
             );
             Resource resource = null;
             if (!foundResources.isEmpty()) {
@@ -396,21 +397,21 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                                                                          AutomationPackageFile keywordLibraryFile, String actorUser) {
         // prepare the isolated in-memory automation package manager with the only one automation package
         AutomationPackageManager inMemoryPackageManager = manager.createIsolated(
-                new ObjectId(contextId), functionTypeRegistry,
-                functionAccessor
+            new ObjectId(contextId), functionTypeRegistry,
+            functionAccessor
         );
 
         // create single automation package in isolated manager
         try (FileInputStream fis = new FileInputStream(apFile.getFile());
-                FileInputStream kwLibFis = (keywordLibraryFile != null && keywordLibraryFile.getFile() != null) ?
-                     new FileInputStream(keywordLibraryFile.getFile()) : null) {
+             FileInputStream kwLibFis = (keywordLibraryFile != null && keywordLibraryFile.getFile() != null) ?
+                 new FileInputStream(keywordLibraryFile.getFile()) : null) {
             // the apVersion is null (we always use the actual version), because we only create the isolated in-memory AP here
             AutomationPackageUpdateParameterBuilder paramBuilder = new AutomationPackageUpdateParameterBuilder()
-                    .withAllowUpdate(false)
-                    .withApSource(AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()))
-                    .withEnricher(enricher).withObjectPredicate(predicate)
-                    .withWriteAccessValidator(NO_CHECKS_VALIDATOR) //this is read only and inMemory anyway
-                    .withActorUser(actorUser);
+                .withAllowUpdate(false)
+                .withApSource(AutomationPackageFileSource.withInputStream(fis, apFile.getFile().getName()))
+                .withEnricher(enricher).withObjectPredicate(predicate)
+                .withWriteAccessValidator(NO_CHECKS_VALIDATOR) //this is read only and inMemory anyway
+                .withActorUser(actorUser);
 
             if (kwLibFis != null) {
                 paramBuilder.withApLibrarySource(AutomationPackageFileSource.withInputStream(kwLibFis, keywordLibraryFile.getFile().getName()));
@@ -427,7 +428,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         return res;
     }
 
-    public void setApNameForResource(Resource resource, String apName){
+    public void setApNameForResource(Resource resource, String apName) {
         resource.addCustomField(AP_NAME_CUSTOM_FIELD, apName);
     }
 
@@ -578,7 +579,7 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 if (automationPackageManager != null) {
                     automationPackageManager.getAutomationPackageManager().cleanup();
                 }
-            //Otherwise directly clean the automation package stored in this context
+                //Otherwise directly clean the automation package stored in this context
             } else {
                 inMemoryManager.cleanup();
             }
