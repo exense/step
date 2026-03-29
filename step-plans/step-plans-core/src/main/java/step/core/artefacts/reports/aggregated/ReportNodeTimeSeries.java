@@ -57,10 +57,6 @@ public class ReportNodeTimeSeries implements AutoCloseable {
             new IndexField(ATTRIBUTES_PREFIX + "canonicalPlanName", Order.ASC, String.class),
             beginIndexField
         )));
-        timeSeries.createCompoundIndex(new LinkedHashSet<>(List.of(
-            new IndexField(ATTRIBUTES_PREFIX + "canonicalPlanName", Order.ASC, String.class),
-            beginIndexField
-        )));
         this.ingestionEnabled = ingestionEnabled;
     }
 

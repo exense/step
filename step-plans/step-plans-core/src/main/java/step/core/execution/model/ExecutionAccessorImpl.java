@@ -203,7 +203,11 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
     public List<Execution> getLastEndedExecutionsByPlanId(String planId, int limit, Long from, Long to) {
         SearchOrder order = new SearchOrder("endTime", -1);
         List<Filter> allFilters = new ArrayList<>();
-        Filter planFilter = Filters.or(List.of(Filters.equals("planId", planId), Filters.equals("importResult.canonicalPlanName", planId)));
+        Filter planFilter = Filters.or(
+            List.of(
+                Filters.equals("planId", planId),
+                Filters.equals("importResult.canonicalPlanName", planId))
+        );
         allFilters.add(planFilter);
         if (from != null) {
             allFilters.add(Filters.gte("startTime", from));
