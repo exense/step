@@ -27,6 +27,8 @@ public interface ResourceRevisionContent {
 
     String getResourceName();
 
+    Resource getResource();
+
     void close() throws IOException;
 
 }

@@ -19,8 +19,11 @@
 package step.core.access;
 
 import java.util.List;
+import java.util.Set;
 
 public interface RoleProvider {
 
-    public List<Role> getRoles();
+    List<Role> getRoles();
+
+    Set<String> getAllRights();
 }
