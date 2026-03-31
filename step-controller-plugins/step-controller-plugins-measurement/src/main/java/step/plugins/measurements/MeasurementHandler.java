@@ -25,7 +25,7 @@ public interface MeasurementHandler {
      *
      * @param metrics enriched metric snapshots, never {@code null}
      */
-    default void processMetrics(List<MetricMeasurement> metrics) {
+    default void processMetrics(List<StepMetricSample> metrics) {
     }
 
     void afterExecutionEnd(ExecutionContext context);

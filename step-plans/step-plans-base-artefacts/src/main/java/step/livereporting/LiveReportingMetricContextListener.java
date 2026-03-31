@@ -19,17 +19,17 @@
 
 package step.livereporting;
 
-import step.core.metrics.MetricSnapshot;
+import step.core.metrics.MetricSample;
 
 import java.util.List;
 
 /**
- * Listener notified when a batch of {@link MetricSnapshot}s is received for a
+ * Listener notified when a batch of {@link MetricSample}s is received for a
  * {@link LiveReportingContext}. Registered by {@code MeasurementPlugin} during
  * {@code beforeFunctionExecution} so that live metric snapshots are processed immediately
  * as they arrive from the agent.
  */
 @FunctionalInterface
 public interface LiveReportingMetricContextListener {
-    void accept(List<MetricSnapshot> metrics);
+    void accept(List<MetricSample> metrics);
 }

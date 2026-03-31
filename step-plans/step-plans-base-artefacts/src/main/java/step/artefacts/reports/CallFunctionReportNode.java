@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
-import step.core.metrics.MetricSnapshot;
+import step.core.metrics.MetricSample;
 import step.core.reports.Measure;
 
 public class CallFunctionReportNode extends ReportNode {
@@ -55,7 +55,7 @@ public class CallFunctionReportNode extends ReportNode {
      * The metrics field is not persisted in DB (it is not required by the client application and would require custom deserialization (cf MetricSnapshotDeserializer)
      */
     @JsonIgnore
-    private List<MetricSnapshot> metrics;
+    private List<MetricSample> metrics;
 
     public CallFunctionReportNode() {
         super();
@@ -125,11 +125,11 @@ public class CallFunctionReportNode extends ReportNode {
         this.measures = measures;
     }
 
-    public List<MetricSnapshot> getMetrics() {
+    public List<MetricSample> getMetrics() {
         return metrics;
     }
 
-    public void setMetrics(List<MetricSnapshot> metrics) {
+    public void setMetrics(List<MetricSample> metrics) {
         this.metrics = metrics;
     }
 

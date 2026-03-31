@@ -28,19 +28,19 @@ import step.core.execution.ExecutionEngineContext;
 import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.MeasurementHandler;
 import step.plugins.measurements.Measurement;
-import step.plugins.measurements.MetricMeasurement;
+import step.plugins.measurements.StepMetricSample;
 
 public class RawMeasurementsHandler implements MeasurementHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(RawMeasurementsHandler.class);
 
     private final MeasurementAccessor accessor;
-    private final MetricAccessor metricAccessor;
+    private final MetricSampleAccessor metricSampleAccessor;
 
-    public RawMeasurementsHandler(MeasurementAccessor accessor, MetricAccessor metricsAccessor) {
+    public RawMeasurementsHandler(MeasurementAccessor accessor, MetricSampleAccessor metricSampleAccessor) {
         super();
         this.accessor = accessor;
-        this.metricAccessor = metricsAccessor;
+        this.metricSampleAccessor = metricSampleAccessor;
         GaugeCollectorRegistry.getInstance().registerHandler(this);
     }
 
@@ -58,9 +58,9 @@ public class RawMeasurementsHandler implements MeasurementHandler {
     }
 
     @Override
-    public void processMetrics(List<MetricMeasurement> metrics) {
+    public void processMetrics(List<StepMetricSample> metrics) {
         if (metrics != null && ! metrics.isEmpty()) {
-            metricAccessor.save(metrics);
+            metricSampleAccessor.save(metrics);
         }
     }
 

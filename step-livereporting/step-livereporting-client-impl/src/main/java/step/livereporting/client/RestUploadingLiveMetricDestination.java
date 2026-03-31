@@ -31,47 +31,42 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.metrics.Metric;
-import step.core.metrics.MetricSnapshot;
+import step.core.metrics.MetricSample;
+import step.core.metrics.MetricSamplesBuilder;
 import step.reporting.impl.LiveMetricDestination;
+import step.streaming.util.BatchProcessor;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
- * Sends {@link MetricSnapshot}s to the controller's live-reporting endpoint.
+ * Sends {@link MetricSample}s to the controller's live-reporting endpoint.
  * <p>
- * Metrics are registered via {@link #accept(Metric)}. This destination owns the flush
- * schedule: it calls {@link Metric#flush()} on each registered metric at a configured
- * interval and POSTs the resulting {@link MetricSnapshot}s to the controller.
+ * Metrics are registered via {@link #accept(Metric)}. A {@link MetricSamplesBuilder} installs
+ * a per-observation consumer on each metric so that every {@code increment()} or
+ * {@code observe()} call immediately feeds a sample into a {@link BatchProcessor}.
+ * The batch is sent to the controller either when it reaches the configured size or when
+ * the flush interval elapses.
  */
 public class RestUploadingLiveMetricDestination implements LiveMetricDestination {
 
     private static final Logger logger = LoggerFactory.getLogger(RestUploadingLiveMetricDestination.class);
+    private static final int DEFAULT_BATCH_SIZE = 500;
     private static final long DEFAULT_FLUSH_INTERVAL_MS = 5000;
 
     private final String endpointUrl;
     private final Client client;
-    private final ScheduledExecutorService scheduler;
-    private final ConcurrentLinkedQueue<Metric> registeredMetrics = new ConcurrentLinkedQueue<>();
+    private final BatchProcessor<MetricSample> batchProcessor;
+    private final MetricSamplesBuilder metricSamplesBuilder;
 
     public RestUploadingLiveMetricDestination(String endpointUrl) {
-        this(endpointUrl, DEFAULT_FLUSH_INTERVAL_MS);
+        this(endpointUrl, DEFAULT_BATCH_SIZE, DEFAULT_FLUSH_INTERVAL_MS);
     }
 
-    public RestUploadingLiveMetricDestination(String endpointUrl, long flushIntervalMs) {
+    public RestUploadingLiveMetricDestination(String endpointUrl, int batchSize, long flushIntervalMs) {
         this.endpointUrl = endpointUrl;
         this.client = createClient();
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "livereporting-metrics-rest");
-            t.setDaemon(true);
-            return t;
-        });
-        this.scheduler.scheduleAtFixedRate(this::scheduledFlushAndSend,
-            flushIntervalMs, flushIntervalMs, TimeUnit.MILLISECONDS);
+        this.batchProcessor = new BatchProcessor<>(batchSize, flushIntervalMs, this::sendMetrics, "livereporting-metrics-rest");
+        this.metricSamplesBuilder = new MetricSamplesBuilder(batchProcessor::add);
     }
 
     private Client createClient() {
@@ -85,21 +80,14 @@ public class RestUploadingLiveMetricDestination implements LiveMetricDestination
 
     @Override
     public void accept(Metric metric) {
-        registeredMetrics.offer(metric);
+        metricSamplesBuilder.register(metric);
     }
 
-    private void scheduledFlushAndSend() {
-        getAndSendMetricSnapshots();
-    }
-
-    private void getAndSendMetricSnapshots() {
-        List<MetricSnapshot> snapshots = registeredMetrics.stream().map(Metric::flush).collect(Collectors.toList());
-        if (!snapshots.isEmpty()) {
-            sendMetrics(snapshots);
+    private void sendMetrics(List<MetricSample> metrics) {
+        if (metrics == null || metrics.isEmpty()) {
+            logger.debug("metrics is null or empty, skipping upload");
+            return;
         }
-    }
-
-    private void sendMetrics(List<MetricSnapshot> metrics) {
         try (Response post = client.target(endpointUrl)
             .request()
             .post(Entity.entity(metrics, MediaType.APPLICATION_JSON_TYPE))) {
@@ -115,17 +103,10 @@ public class RestUploadingLiveMetricDestination implements LiveMetricDestination
 
     @Override
     public void close() {
-        scheduler.shutdown();
-        try {
-            if (!this.scheduler.awaitTermination(5L, TimeUnit.SECONDS)) {
-                this.scheduler.shutdownNow();
-            }
-        } catch (InterruptedException var2) {
-            this.scheduler.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
-        // Final flush to capture any remaining accumulated metric values
-        getAndSendMetricSnapshots();
+        // Final flush: any values accumulated since the last rate-limited flush are forwarded
+        // to the batchProcessor via the forward consumer before the batch is sent.
+        metricSamplesBuilder.close();
+        batchProcessor.close();
         client.close();
     }
 }

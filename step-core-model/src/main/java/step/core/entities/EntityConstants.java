@@ -11,7 +11,7 @@ public class EntityConstants {
     public final static String resourceRevisions = "resourceRevisions";
     public final static String recursive = "recursive";
     public final static String measurements = "measurements";
-    public final static String metrics = "metrics";
+    public final static String metricSamples = "metricSamples";
     public final static String metricTypes = "metricTypes";
     public final static String dashboards = "dashboards";
     public final static String bookmarks = "bookmarks";

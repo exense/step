@@ -11,11 +11,10 @@ import step.artefacts.reports.ThreadReportNode;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
-import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
-import step.core.metrics.MetricSnapshot;
+import step.core.metrics.MetricSample;
 import step.core.plans.Plan;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
@@ -162,10 +161,10 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
             processMeasurements(measurements);
         });
         LiveReportingPlugin.getLiveReportingContext(context).registerMetricListener(snapshots -> {
-            List<MetricMeasurement> metricMeasurements = snapshots.stream()
+            List<StepMetricSample> stepMetricSamples = snapshots.stream()
                 .map(s -> createMetricMeasurement(context, s, (CallFunctionReportNode) node))
                 .collect(Collectors.toList());
-            processMetrics(metricMeasurements);
+            processMetrics(stepMetricSamples);
         });
     }
 
@@ -270,12 +269,12 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
             //For keyword call, process output metrics
             if (node instanceof CallFunctionReportNode) {
                 CallFunctionReportNode functionReport = (CallFunctionReportNode) node;
-                List<MetricSnapshot> outputMetrics = functionReport.getMetrics();
+                List<MetricSample> outputMetrics = functionReport.getMetrics();
                 if (outputMetrics != null && !outputMetrics.isEmpty()) {
-                    List<MetricMeasurement> metricMeasurements = outputMetrics.stream()
+                    List<StepMetricSample> stepMetricSamples = outputMetrics.stream()
                         .map(m -> createMetricMeasurement(executionContext, m, functionReport))
                         .collect(Collectors.toList());
-                    processMetrics(metricMeasurements);
+                    processMetrics(stepMetricSamples);
                 }
             }
         }
@@ -307,8 +306,8 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
         return measurement;
     }
 
-    private MetricMeasurement createMetricMeasurement(ExecutionContext executionContext, MetricSnapshot metric,
-                                                       CallFunctionReportNode functionReport) {
+    private StepMetricSample createMetricMeasurement(ExecutionContext executionContext, MetricSample metric,
+                                                     CallFunctionReportNode functionReport) {
         Plan plan = executionContext.getPlan();
         String planId = plan.getId().toString();
         String planName = Objects.requireNonNullElse(plan.getAttribute(AbstractOrganizableObject.NAME), "");
@@ -318,14 +317,14 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
         String execId = functionReport.getExecutionID();
         String rnId = functionReport.getId().toString();
         String agentUrl = functionReport.getAgentUrl();
-        String status = functionReport.getStatus() != null ? functionReport.getStatus().name() : null;
         Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
+        String origin = (functionAttributes != null) ? functionAttributes.get(AbstractOrganizableObject.NAME) : null;
         TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
-        return new MetricMeasurement(metric, execId, rnId, planId, planName, taskId, schedule, execution,
-            agentUrl, functionAttributes, status, additionalAttributes);
+        return new StepMetricSample(metric, execId, rnId, planId, planName, taskId, schedule, execution,
+            agentUrl, origin, additionalAttributes);
     }
 
-    public void processMetrics(List<MetricMeasurement> metrics) {
+    public void processMetrics(List<StepMetricSample> metrics) {
         for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
             try {
                 measurementHandler.processMetrics(metrics);

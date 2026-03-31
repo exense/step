@@ -26,11 +26,7 @@ import step.core.GlobalContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
-import step.core.metrics.CounterSnapshot;
-import step.core.metrics.GaugeMetric;
-import step.core.metrics.HistogramMetric;
-import step.core.metrics.MetricType;
-import step.core.metrics.SampledSnapshot;
+import step.core.metrics.*;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.engine.plugins.FunctionPlugin;
@@ -48,7 +44,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Tests that running a keyword that adds output metrics via
  * {@code output.addCounter/addGauge/addHistogram} routes those metrics through
  * {@link MeasurementHandler#processMetrics} with correctly enriched
- * {@link MetricMeasurement} objects.
+ * {@link StepMetricSample} objects.
  * <p>
  * This class is intentionally separate from {@link MeasurementPluginTest} to avoid
  * the static {@code measurementHandlers} list accumulating handlers across tests.
@@ -58,12 +54,12 @@ public class MeasurementPluginMetricsTest extends AbstractKeyword {
     private ExecutionEngine engine;
 
     /**
-     * Captures all {@link MetricMeasurement}s delivered to {@link #processMetrics}.
+     * Captures all {@link StepMetricSample}s delivered to {@link #processMetrics}.
      * No-op {@link #processMeasurements} to avoid side effects on shared state.
      */
     private static class CapturingMeasurementHandler implements MeasurementHandler {
 
-        final CopyOnWriteArrayList<MetricMeasurement> capturedMetrics = new CopyOnWriteArrayList<>();
+        final CopyOnWriteArrayList<StepMetricSample> capturedMetrics = new CopyOnWriteArrayList<>();
 
         @Override
         public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
@@ -80,7 +76,7 @@ public class MeasurementPluginMetricsTest extends AbstractKeyword {
         }
 
         @Override
-        public void processMetrics(List<MetricMeasurement> metrics) {
+        public void processMetrics(List<StepMetricSample> metrics) {
             capturedMetrics.addAll(metrics);
         }
 
@@ -116,46 +112,46 @@ public class MeasurementPluginMetricsTest extends AbstractKeyword {
 
         engine.execute(plan);
 
-        List<MetricMeasurement> metrics = capturingHandler.capturedMetrics;
+        List<StepMetricSample> metrics = capturingHandler.capturedMetrics;
 
         // Expect exactly 3 metric measurements: counter, gauge, histogram
         Assert.assertEquals(3, metrics.size());
 
         // Counter
-        MetricMeasurement counterMm = findByName(metrics, "eventCount");
+        StepMetricSample counterMm = findByName(metrics, "eventCount");
         Assert.assertNotNull("Counter metric 'eventCount' not found", counterMm);
-        Assert.assertEquals(MetricType.COUNTER, counterMm.getMetric().getType());
-        CounterSnapshot counter = (CounterSnapshot) counterMm.getMetric();
-        Assert.assertEquals(5, counter.getAccumulatedDiff());
-        Assert.assertEquals(5, counter.getLongRunningTotal());
+        Assert.assertEquals(MetricType.COUNTER, counterMm.sample.getType());
+        MetricSample counter = (MetricSample) counterMm.sample;
+        Assert.assertEquals(5, counter.getCount());
+        Assert.assertEquals(5, counter.getLast());
 
         // Gauge
-        MetricMeasurement gaugeMm = findByName(metrics, "queueDepth");
+        StepMetricSample gaugeMm = findByName(metrics, "queueDepth");
         Assert.assertNotNull("Gauge metric 'queueDepth' not found", gaugeMm);
-        Assert.assertEquals(MetricType.GAUGE, gaugeMm.getMetric().getType());
-        SampledSnapshot gauge = (SampledSnapshot) gaugeMm.getMetric();
+        Assert.assertEquals(MetricType.GAUGE, gaugeMm.sample.getType());
+        MetricSample gauge = gaugeMm.sample;
         Assert.assertEquals(2, gauge.getCount());
         Assert.assertEquals(57, gauge.getSum()); // 42 + 15
         Assert.assertEquals(15, gauge.getMin());
         Assert.assertEquals(42, gauge.getMax());
 
         // Histogram
-        MetricMeasurement histMm = findByName(metrics, "responseTimeMs");
+        StepMetricSample histMm = findByName(metrics, "responseTimeMs");
         Assert.assertNotNull("Histogram metric 'responseTimeMs' not found", histMm);
-        Assert.assertEquals(MetricType.HISTOGRAM, histMm.getMetric().getType());
-        SampledSnapshot hist = (SampledSnapshot) histMm.getMetric();
+        Assert.assertEquals(MetricType.HISTOGRAM, histMm.sample.getType());
+        MetricSample hist = (MetricSample) histMm.sample;
         Assert.assertEquals(2, hist.getCount());
         Assert.assertEquals(350, hist.getSum()); // 100 + 250
 
         // Effective labels must include the execution ID
-        String execId = counterMm.geteId();
+        String execId = counterMm.eId;
         Assert.assertNotNull(execId);
         Assert.assertEquals(execId, counterMm.getEffectiveLabels().get(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID));
     }
 
-    private MetricMeasurement findByName(List<MetricMeasurement> metrics, String name) {
+    private StepMetricSample findByName(List<StepMetricSample> metrics, String name) {
         return metrics.stream()
-            .filter(mm -> name.equals(mm.getMetric().getName()))
+            .filter(mm -> name.equals(mm.sample.getName()))
             .findFirst()
             .orElse(null);
     }

@@ -51,7 +51,8 @@ public class RawMeasurementsHandlerTest {
         parentContext.setPlanAccessor(planAccessor);
         MeasurementPlugin measurementPlugin = new MeasurementPlugin(GaugeCollectorRegistry.getInstance());
         MeasurementAccessor measurementAccessor = new MeasurementAccessor(new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap()));
-        RawMeasurementsHandler handler = new RawMeasurementsHandler(measurementAccessor, metricsAccessor);
+        MetricSampleAccessor metricSampleAccessor = new MetricSampleAccessor(new InMemoryCollection<>());
+        RawMeasurementsHandler handler = new RawMeasurementsHandler(measurementAccessor, metricSampleAccessor);
         MeasurementPlugin.registerMeasurementHandlers(handler);
         try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(measurementPlugin)
             .withPlugin(new BaseArtefactPlugin())
@@ -94,7 +95,8 @@ public class RawMeasurementsHandlerTest {
         parentContext.setPlanAccessor(planAccessor);
         MeasurementPlugin measurementPlugin = new MeasurementPlugin(GaugeCollectorRegistry.getInstance());
         MeasurementAccessor measurementAccessor = new MeasurementAccessor(new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap()));
-        RawMeasurementsHandler handler = new RawMeasurementsHandler(measurementAccessor, metricsAccessor);
+        MetricSampleAccessor metricSampleAccessor = new MetricSampleAccessor(new InMemoryCollection<>());
+        RawMeasurementsHandler handler = new RawMeasurementsHandler(measurementAccessor, metricSampleAccessor);
         MeasurementPlugin.registerMeasurementHandlers(handler);
         try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(measurementPlugin)
             .withPlugin(new BaseArtefactPlugin())

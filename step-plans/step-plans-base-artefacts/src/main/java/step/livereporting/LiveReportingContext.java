@@ -19,7 +19,7 @@
 
 package step.livereporting;
 
-import step.core.metrics.MetricSnapshot;
+import step.core.metrics.MetricSample;
 import step.core.reports.Measure;
 
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class LiveReportingContext {
         metricListeners.add(metricListener);
     }
 
-    public void onMetricsReceived(List<MetricSnapshot> metrics) {
+    public void onMetricsReceived(List<MetricSample> metrics) {
         for (LiveReportingMetricContextListener listener : metricListeners) {
             listener.accept(metrics);
         }

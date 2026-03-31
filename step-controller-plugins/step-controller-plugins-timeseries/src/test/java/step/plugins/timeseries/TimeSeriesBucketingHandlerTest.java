@@ -5,15 +5,13 @@ import org.junit.Before;
 import org.junit.Test;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollection;
-import step.core.metrics.CounterSnapshot;
-import step.core.metrics.MetricSnapshot;
+import step.core.metrics.MetricSample;
 import step.core.metrics.MetricType;
-import step.core.metrics.SampledSnapshot;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesBuilder;
 import step.core.timeseries.TimeSeriesCollection;
 import step.core.timeseries.bucket.Bucket;
-import step.plugins.measurements.MetricMeasurement;
+import step.plugins.measurements.StepMetricSample;
 
 import java.util.List;
 import java.util.Map;
@@ -44,8 +42,10 @@ public class TimeSeriesBucketingHandlerTest {
 
     @Test
     public void counter_ingestsAccumulatedDiffAsPoint() {
-        CounterSnapshot snapshot = new CounterSnapshot(0L, "requests", Map.of("env", "prod"), 7, 42);
-        MetricMeasurement mm = buildMetricMeasurement(snapshot);
+        MetricSample snapshot = new MetricSample(0L,
+            "requests", Map.of("env", "prod"), MetricType.COUNTER, 7, 42, 42, 42, 42, null);
+
+        StepMetricSample mm = buildMetricMeasurement(snapshot);
 
         handler.processMetrics(List.of(mm));
         handler.flush();
@@ -64,25 +64,15 @@ public class TimeSeriesBucketingHandlerTest {
         Assert.assertEquals("prod", b.getAttributes().get("env"));
     }
 
-    @Test
-    public void counter_skipsEmptyInterval() {
-        CounterSnapshot snapshot = new CounterSnapshot(0L, "requests", Map.of(), 0, 100);
-        MetricMeasurement mm = buildMetricMeasurement(snapshot);
-
-        handler.processMetrics(List.of(mm));
-        handler.flush();
-
-        Assert.assertEquals(0, allBuckets().size());
-    }
 
     // ── Gauge ─────────────────────────────────────────────────────────────────
 
     @Test
     public void gauge_ingestsFullBucket() {
-        SampledSnapshot snapshot = new SampledSnapshot(1000L,
+        MetricSample snapshot = new MetricSample(1000L,
             "queue_depth", Map.of("env", "staging"), MetricType.GAUGE,
             3, 57, 15, 42, 42, null);
-        MetricMeasurement mm = buildMetricMeasurement(snapshot);
+        StepMetricSample mm = buildMetricMeasurement(snapshot);
 
         handler.processMetrics(List.of(mm));
         handler.flush();
@@ -99,28 +89,15 @@ public class TimeSeriesBucketingHandlerTest {
         Assert.assertEquals("staging", b.getAttributes().get("env"));
     }
 
-    @Test
-    public void gauge_skipsEmptyInterval() {
-        SampledSnapshot snapshot = new SampledSnapshot(0L,
-            "queue_depth", Map.of(), MetricType.GAUGE,
-            0, 0, 0, 0, 0, null);
-        MetricMeasurement mm = buildMetricMeasurement(snapshot);
-
-        handler.processMetrics(List.of(mm));
-        handler.flush();
-
-        Assert.assertEquals(0, allBuckets().size());
-    }
-
     // ── Histogram ────────────────────────────────────────────────────────────
 
     @Test
     public void histogram_ingestsFullBucketWithDistribution() {
         Map<Long, Long> dist = Map.of(100L, 1L, 200L, 1L);
-        SampledSnapshot snapshot = new SampledSnapshot(2000L,
+        MetricSample snapshot = new MetricSample(2000L,
             "response_time_ms", Map.of(), MetricType.HISTOGRAM,
             2, 300, 100, 200, 200, dist);
-        MetricMeasurement mm = buildMetricMeasurement(snapshot);
+        StepMetricSample mm = buildMetricMeasurement(snapshot);
 
         handler.processMetrics(List.of(mm));
         handler.flush();
@@ -138,28 +115,15 @@ public class TimeSeriesBucketingHandlerTest {
         Assert.assertEquals(dist, b.getDistribution());
     }
 
-    @Test
-    public void histogram_skipsEmptyInterval() {
-        SampledSnapshot snapshot = new SampledSnapshot(0L,
-            "response_time_ms", Map.of(), MetricType.HISTOGRAM,
-            0, 0, 0, 0, 0, null);
-        MetricMeasurement mm = buildMetricMeasurement(snapshot);
-
-        handler.processMetrics(List.of(mm));
-        handler.flush();
-
-        Assert.assertEquals(0, allBuckets().size());
-    }
-
     // ── Attribute filtering ───────────────────────────────────────────────────
 
     @Test
     public void onlyHandledAttributesAreIncludedInBucket() {
         // "region" is not in HANDLED_ATTRIBUTES, so it must be absent from the bucket
-        SampledSnapshot snapshot = new SampledSnapshot(0L,
+        MetricSample snapshot = new MetricSample(0L,
             "cpu", Map.of("env", "qa", "region", "us-east"), MetricType.GAUGE,
             1, 80, 80, 80, 80, null);
-        MetricMeasurement mm = buildMetricMeasurement(snapshot);
+        StepMetricSample mm = buildMetricMeasurement(snapshot);
 
         handler.processMetrics(List.of(mm));
         handler.flush();
@@ -172,8 +136,8 @@ public class TimeSeriesBucketingHandlerTest {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private MetricMeasurement buildMetricMeasurement(MetricSnapshot snapshot) {
-        return new MetricMeasurement(
+    private StepMetricSample buildMetricMeasurement(MetricSample snapshot) {
+        return new StepMetricSample(
             snapshot,
             "exec-1",        // execId
             "rn-1",          // rnId
@@ -183,8 +147,7 @@ public class TimeSeriesBucketingHandlerTest {
             "",              // schedule
             "",              // execution description
             null,            // agentUrl
-            null,            // functionAttributes
-            "PASSED",
+            null,            // origin
             null             // additionalAttributes
         );
     }

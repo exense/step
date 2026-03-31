@@ -20,9 +20,7 @@ package step.functions.handler;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
-import step.core.metrics.MetricSnapshot;
 import step.functions.io.Input;
 import step.functions.io.Output;
 
@@ -36,10 +34,6 @@ public class FunctionIOJavaxObjectMapperFactory {
     public static ObjectMapper createObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JSR353Module());
-        SimpleModule metricModule = new SimpleModule();
-        metricModule.addDeserializer(MetricSnapshot.class, new MetricSnapshotDeserializer());
-        mapper.registerModule(metricModule);
         return mapper;
     }
-
 }

@@ -47,12 +47,10 @@ import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.metrics.CounterMetric;
-import step.core.metrics.CounterSnapshot;
+import step.core.metrics.MetricSample;
 import step.core.metrics.GaugeMetric;
 import step.core.metrics.HistogramMetric;
-import step.core.metrics.MetricSnapshot;
 import step.core.metrics.MetricType;
-import step.core.metrics.SampledSnapshot;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.reports.Measure;
@@ -62,7 +60,6 @@ import step.expressions.ExpressionHandler;
 import step.functions.handler.MeasureTypes;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
-import step.grid.client.AbstractGridClientImpl;
 import step.grid.io.Attachment;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -414,20 +411,20 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
         CallFunctionReportNode node = getCallFunctionReportNode(result);
 
         assertNull(node.getError());
-        List<MetricSnapshot> metrics = node.getMetrics();
+        List<MetricSample> metrics = node.getMetrics();
         assertNotNull(metrics);
         assertEquals(3, metrics.size());
 
         // Counter: 5+3 = 8 increments, label preserved
-        CounterSnapshot counter = (CounterSnapshot) metrics.get(0);
+        MetricSample counter = (MetricSample) metrics.get(0);
         assertEquals("requests", counter.getName());
         assertEquals(MetricType.COUNTER, counter.getType());
-        assertEquals(8, counter.getAccumulatedDiff());
-        assertEquals(8, counter.getLongRunningTotal());
+        assertEquals(8, counter.getCount());
+        assertEquals(8, counter.getLast());
         assertEquals("checkout", counter.getLabels().get("service"));
 
         // Gauge: 3 observations (10, 20, 5)
-        SampledSnapshot gauge = (SampledSnapshot) metrics.get(1);
+        MetricSample gauge = (MetricSample) metrics.get(1);
         assertEquals("queue_depth", gauge.getName());
         assertEquals(MetricType.GAUGE, gauge.getType());
         assertEquals(3, gauge.getCount());
@@ -436,7 +433,7 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
         assertEquals(20, gauge.getMax());
 
         // Histogram: 2 observations (100, 200)
-        SampledSnapshot histogram = (SampledSnapshot) metrics.get(2);
+        MetricSample histogram = (MetricSample) metrics.get(2);
         assertEquals("response_time_ms", histogram.getName());
         assertEquals(MetricType.HISTOGRAM, histogram.getType());
         assertEquals(2, histogram.getCount());
