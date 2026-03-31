@@ -76,17 +76,15 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
         CollectionFactory collectionFactory = context.getCollectionFactory();
 
-        TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION);
-
-        TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(collectionFactory);
-        List<TimeSeriesCollection> enabledCollections = timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, timeSeriesCollectionsSettings, Set.of(ATTRIBUTE_EXECUTION_ID));
-        // timeseries will have a list of registered collection.
+        TimeSeriesConfig timeSeriesConfig = TimeSeriesConfig.fromConfiguration(configuration, TIME_SERIES_MAIN_COLLECTION);
+        warnAboutDisabledCollections(timeSeriesConfig);
         timeSeries = new TimeSeriesBuilder()
-            .setSettings(new TimeSeriesSettings()
-                .setIdealResponseIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_IDEAL_INTERVALS, TimeSeriesSettings.DEFAULT_IDEAL_RESPONSE_INTERVALS))
-                .setResponseMaxIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_MAX_INTERVALS, TimeSeriesSettings.DEFAULT_RESPONSE_MAX_INTERVALS))
+            .withConfig(timeSeriesConfig, collectionFactory, TIME_SERIES_MAIN_COLLECTION, Set.of(ATTRIBUTE_EXECUTION_ID))
+            .setAggregationConfig(new TimeSeriesAggregationConfig()
+                .setIdealResponseIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_IDEAL_INTERVALS, TimeSeriesAggregationConfig.DEFAULT_IDEAL_RESPONSE_INTERVALS))
+                .setResponseMaxIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_MAX_INTERVALS, TimeSeriesAggregationConfig.DEFAULT_RESPONSE_MAX_INTERVALS))
             )
-            .registerCollections(enabledCollections).build();
+            .build();
         mainIngestionPipeline = timeSeries.getIngestionPipeline();
 
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
@@ -172,6 +170,21 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         configurationManager.registerHook(s -> Map.of(PARAM_KEY_ANALYTICS_DASHBOARD_ID, newAnalyticsDashboard.getId().toString()));
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         initTimeSeriesCollectionsData(asyncTaskManager);
+    }
+
+    private void warnAboutDisabledCollections(TimeSeriesConfig config) {
+        if (!config.isPerMinuteEnabled()) {
+            logger.warn("The time-series resolution '_minute' is disabled. To reclaim space you can delete the corresponding DB table.");
+        }
+        if (!config.isHourlyEnabled()) {
+            logger.warn("The time-series resolution '_hour' is disabled. To reclaim space you can delete the corresponding DB table.");
+        }
+        if (!config.isDailyEnabled()) {
+            logger.warn("The time-series resolution '_day' is disabled. To reclaim space you can delete the corresponding DB table.");
+        }
+        if (!config.isWeeklyEnabled()) {
+            logger.warn("The time-series resolution '_week' is disabled. To reclaim space you can delete the corresponding DB table.");
+        }
     }
 
     private void initTimeSeriesCollectionsData(AsyncTaskManager asyncTaskManager) {

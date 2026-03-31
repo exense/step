@@ -13,7 +13,7 @@ import step.core.timeseries.TimeSeries;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
-import step.core.timeseries.ingestion.TimeSeriesIngestionPipelineSettings;
+import step.core.timeseries.TimeSeriesCollectionConfig;
 import step.core.views.ViewManager;
 import step.core.views.ViewPlugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
@@ -62,7 +62,7 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
         //Crete a wrapper of the ingestion pipeline to automatically enrich data with execution attributes
         //This approach is quite error-prone and should be refactored
         TimeSeriesIngestionPipeline ingestionPipeline = new TimeSeriesIngestionPipeline(null,
-            new TimeSeriesIngestionPipelineSettings().setResolution(mainIngestionPipeline.getResolution())) {
+            new TimeSeriesCollectionConfig().setResolution(mainIngestionPipeline.getResolution())) {
             @Override
             public void ingestPoint(Map<String, Object> attributes, long timestamp, long value) {
                 attributes.putAll(additionalAttributes);

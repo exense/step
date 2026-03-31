@@ -20,7 +20,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.threadmanager.ThreadManager;
-import step.core.timeseries.TimeSeriesCollectionsSettings;
+import step.core.timeseries.TimeSeriesConfig;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketBuilder;
 
@@ -174,7 +174,7 @@ public class AggregatedReportViewBuilder {
         //Need to create a configuration with all time series details
         return new ReportNodeTimeSeries(new InMemoryCollectionFactory(new Properties()),
             // to build the report we only need a single time bucket and can flush only once all reports are ingested
-            TimeSeriesCollectionsSettings.buildSingleResolutionSettings(Long.MAX_VALUE, 0), true);
+            TimeSeriesConfig.buildSingleResolutionConfig(Long.MAX_VALUE, 0), true);
     }
 
     /**
