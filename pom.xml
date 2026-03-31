@@ -50,7 +50,7 @@
 
     <!-- external, non-transitive, dependencies -->
     <dep.groovy.version>5.0.4</dep.groovy.version>
-    <dep.apache-jmeter.version>5.4.3</dep.apache-jmeter.version>
+    <dep.apache-jmeter.version>5.6.3</dep.apache-jmeter.version>
     <!-- When updating POI, see where this reference is used and read the comments there! -->
     <dep.apache-poi.version>5.5.1</dep.apache-poi.version>
     <!-- This concerns maven versions referred to in code, not during mvn builds -->
@@ -196,24 +196,6 @@
       </dependency>
 
       <dependency>
-        <groupId>org.ldaptive</groupId>
-        <artifactId>ldaptive</artifactId>
-        <version>2.3.2</version>
-        <exclusions>
-          <exclusion>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-handle</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>io.netty</groupId>
-        <artifactId>netty-handler</artifactId>
-        <version>4.1.118.Final</version>
-      </dependency>
-
-      <dependency>
         <groupId>org.json</groupId>
         <artifactId>json</artifactId>
         <version>20240303</version>
@@ -236,12 +218,6 @@
             <artifactId>jakarta.xml.bind-api</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-
-      <dependency>
-        <groupId>io.jsonwebtoken</groupId>
-        <artifactId>jjwt</artifactId>
-        <version>0.9.1</version>
       </dependency>
 
       <dependency>

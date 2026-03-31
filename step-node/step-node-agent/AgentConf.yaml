@@ -1,14 +1,44 @@
+# Port the agent HTTP server listens on
 agentPort: '8082'
+
+# URL of the Step controller (grid host) this agent registers to
 gridHost: http://localhost:8081
+
+# How often (in ms) the agent sends a heartbeat/registration to the controller
+registrationPeriod: 1000
+
+# Maximum payload size accepted by the agent's REST endpoints (default: 10mb)
+#agentPayloadLimit: 10mb
+
+# Timeout (in ms) for the agent's HTTP server (default: 600000 = 10 minutes)
+#agentServerTimeout: 600000
+
+# JWT security configuration. Must match the controller's grid security settings.
 #gridSecurity:
 #  jwtSecretKey: 6S7lhTV89ENqZqQXFgcpFSX8anpbosW/CSBe30l8NCQ=
-registrationPeriod: 1000
+
+# File manager configuration for keyword file caching
+#fileManagerConfiguration:
+#  path: /path/to/filemanager  # Directory used to store downloaded keyword files
+
+# Token groups define the agent's capacity and how tokens are matched to executions.
 tokenGroups:
+  # The number of tokens to be emitted
   - capacity: 10
     tokenConf:
-      attributes: { }
+      # A list of key-values that identify the agent.
+      # These attributes can then be used to select a specific agent in the grid
+      attributes: {}
+      # Selection patterns restrict which executions this token group can handle
+      # Each key is an attribute name; the value is a regex pattern it must match
+      #selectionPatterns:
+      #  myAttribute: myPattern
+      # Per-token properties accessible within keyword executions
       properties:
         myProp1: myProp1
+
+# Global agent properties accessible within keyword executions.
+# These apply to all tokens and can be overridden per token group.
 properties:
   myProp1: myDefaultValue
   myProp2: myValue2

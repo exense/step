@@ -1,26 +1,41 @@
+const Session = require('../controllers/session');
+const logger = require('../logger').child({ component: 'Runner' })
 module.exports = function (properties = {}) {
-  const tokenId = 'local'
+  const tokenId = 'local';
+  let throwExceptionOnError = true;
 
   const agentContext = {tokens: [], tokenSessions: {}, properties: properties}
-  agentContext.tokenSessions[tokenId] = {}
+  const tokenSession = new Session();
+  agentContext.tokenSessions[tokenId] = tokenSession
 
-  var fileManager = {
-    loadOrGetKeywordFile: function (url, fileId, fileVersion, keywordName) {
-      return new Promise(function (resolve, reject) {
-        resolve('.')
-      })
-    }
+  const fileManager = {
+    loadOrGetKeywordFile: () => Promise.resolve('.')
   }
 
-  const Controller = require('../controllers/controller')
-  const controller = new Controller(agentContext, fileManager)
+  const Controller = require('../controllers/agent')
+  const controller = new Controller(agentContext, fileManager, 'runner')
 
   const api = {}
 
-  api.run = function (keywordName, input) {
-    return new Promise(resolve => {
-      controller.process_(tokenId, keywordName, input, properties, function (output) { resolve(output.payload) })
-    })
+  api.setThrowExceptionOnError = function(isThrowExceptionOnError) {
+    throwExceptionOnError = isThrowExceptionOnError;
+  }
+
+  api.run = async function (keywordName, input) {
+    const output = await controller.process_(tokenId, keywordName, input, properties)
+    const payload = output.payload;
+    if (payload.error) {
+      if(throwExceptionOnError) {
+        throw new Error('The keyword execution returned an error: ' + JSON.stringify(payload.error))
+      } else {
+        logger.warn('The keyword execution returned an error: ' + JSON.stringify(payload.error))
+      }
+    }
+    return output.payload
+  }
+
+  api.close = async function () {
+    return await tokenSession.asyncDispose();
   }
 
   return api
