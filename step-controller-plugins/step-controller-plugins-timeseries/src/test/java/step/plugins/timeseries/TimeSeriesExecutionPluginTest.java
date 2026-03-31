@@ -51,6 +51,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static step.plugins.timeseries.TimeSeriesControllerPlugin.*;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
@@ -62,8 +63,14 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
     TimeSeriesControllerPlugin tsPlugin;
     private GlobalContext globalContext;
 
-    @Before
-    public void setUp() throws Exception {
+    public enum Mode {
+        INCLUDED_ATTRIBUTES,
+        EXCLUDED_ATTRIBUTES,
+        NONE
+    }
+
+
+    public void setUp(Mode timeSeriesAttributeMode) throws Exception {
         globalContext = GlobalContextBuilder.createGlobalContext();
         globalContext.put(MigrationManager.class, new MigrationManager());
         globalContext.setEntityManager(new EntityManager());
@@ -109,6 +116,23 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
         });
         globalContext.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
         MeasurementControllerPlugin mc = new MeasurementControllerPlugin();
+        //Legacy mode before Step 30
+        switch (timeSeriesAttributeMode) {
+            case INCLUDED_ATTRIBUTES:
+                globalContext.getConfiguration().putProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT);
+                globalContext.getConfiguration().putProperty(TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY, "");
+                break;
+            case EXCLUDED_ATTRIBUTES:
+                globalContext.getConfiguration().putProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, "");
+                globalContext.getConfiguration().putProperty(TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY, "customAttr");
+                break;
+            case NONE:
+                globalContext.getConfiguration().putProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, "");
+                globalContext.getConfiguration().putProperty(TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY, "");
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid mode " + timeSeriesAttributeMode);
+        }
         mc.serverStart(globalContext);
         tsPlugin = new TimeSeriesControllerPlugin();
         tsPlugin.serverStart(globalContext);
@@ -130,8 +154,22 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 
 
     @Test
-    public void testTimeSeriesPlugins() throws InterruptedException {
+    public void testTimeSeriesPluginsWithIncludedAttributes() throws Exception {
+        testTimeSeriesPlugins(Mode.INCLUDED_ATTRIBUTES);
+    }
 
+    @Test
+    public void testTimeSeriesPluginsWithExcludedAttributes() throws Exception {
+        testTimeSeriesPlugins(Mode.EXCLUDED_ATTRIBUTES);
+    }
+
+    @Test
+    public void testTimeSeriesPluginsWithoutInclusionAndExclusion() throws Exception {
+        testTimeSeriesPlugins(Mode.NONE);
+    }
+
+    public void testTimeSeriesPlugins(Mode timeSeriesAttributeMode) throws Exception {
+        setUp(timeSeriesAttributeMode);
         ThreadGroup threadGroup = new ThreadGroup();
         threadGroup.setIterations(new DynamicValue<Integer>(10));
         threadGroup.setPacing(new DynamicValue<Integer>(0));
@@ -162,8 +200,6 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
 
         tsPlugin.serverStop(globalContext);
 
-        //Thread.sleep(20000);
-
         TimeSeriesAggregationQuery keywordsQuery = new TimeSeriesAggregationQueryBuilder()
             .range(t1, t2)
             .withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "keyword")))
@@ -183,7 +219,13 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
             .withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "custom")))
             .withGroupDimensions(Set.of("name", "customAttr"))
             .build();
-        Assert.assertEquals(2, customBuckets.getSeries().size());
+        if (timeSeriesAttributeMode.equals(Mode.NONE)) {
+            //In this case we do not reduce the attributes to the included / excluded key, so we have 1 bucket per attributes set
+            Assert.assertEquals(4, customBuckets.getSeries().size());
+        } else {
+            //customAttr is not part of the TS data as not part of the included attributes in the mode INCLUDED_ATTRIBUTES, or explicitly excluded in the mode EXCLUDED_ATTRIBUTES
+            Assert.assertEquals(2, customBuckets.getSeries().size());
+        }
     }
 
     @Keyword

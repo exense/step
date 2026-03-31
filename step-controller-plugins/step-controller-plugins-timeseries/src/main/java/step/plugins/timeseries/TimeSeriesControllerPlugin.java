@@ -15,6 +15,7 @@ import step.core.entities.Entity;
 import step.core.entities.EntityConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
@@ -34,6 +35,7 @@ import step.plugins.timeseries.migration.MigrateDashboardsTask;
 import step.plugins.timeseries.migration.MigrateResolutionsWithIgnoredFieldsTask;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
@@ -47,9 +49,11 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
     public static final String TIME_SERIES_MAIN_COLLECTION = "timeseries";
     public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
+    public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY = "timeseries.attributes.excluded";
     //We should review the usage of the following property default value, it is technically possible to set the value in properties: not sure if that really work.
     //This is used to determine if we fall back to RAW measurement when we filter or group by fields that are not supported by time-series and when reingesting timeseries from RAW measurements
     public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = MetricsConstants.getAllAttributeNames() + ",metricType,origin,project";
+    public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT = "agentUrl,rnId";
 
     // Following properties are used by the UI. In the future we could remove the prefix 'plugins.' to align with other properties
     public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";
@@ -73,7 +77,17 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         migrationManager.register(MigrateResolutionsWithIgnoredFieldsTask.class);
 
         Configuration configuration = context.getConfiguration();
-        List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
+        Set<String> includedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, "").split(","))
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
+        Set<String> excludedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY, TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT).split(","))
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.toSet());
+
+        if (!includedAttributes.isEmpty() && !excludedAttributes.isEmpty()) {
+            throw new PluginCriticalException("Setting both the properties " + TIME_SERIES_ATTRIBUTES_PROPERTY + " and "  + TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY + " is not allowed.");
+        }
+
         CollectionFactory collectionFactory = context.getCollectionFactory();
 
         TimeSeriesConfig timeSeriesConfig = TimeSeriesConfig.fromConfiguration(configuration, TIME_SERIES_MAIN_COLLECTION);
@@ -89,7 +103,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
         MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityConstants.metricTypes, MetricType.class));
-        TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(timeSeries, attributes);
+        TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(timeSeries, includedAttributes, excludedAttributes);
 
         context.put(TimeSeries.class, timeSeries);
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);

@@ -15,6 +15,7 @@ import step.plugins.measurements.StepMetricSample;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 public class TimeSeriesBucketingHandlerTest {
 
     private static final int BUCKET_RESOLUTION = 1000;
-    private static final List<String> HANDLED_ATTRIBUTES = List.of("eId", "name", "env");
+    private static final Set<String> HANDLED_ATTRIBUTES = Set.of("eId", "name", "env");
 
     private InMemoryCollection<Bucket> bucketsCollection;
     private TimeSeriesBucketingHandler handler;
@@ -35,7 +36,7 @@ public class TimeSeriesBucketingHandlerTest {
         TimeSeries timeSeries = new TimeSeriesBuilder()
             .registerCollection(tsCollection)
             .build();
-        handler = new TimeSeriesBucketingHandler(timeSeries, HANDLED_ATTRIBUTES);
+        handler = new TimeSeriesBucketingHandler(timeSeries, HANDLED_ATTRIBUTES, Set.of());
     }
 
     // ── Counter ──────────────────────────────────────────────────────────────

@@ -44,7 +44,9 @@ public class TimeSeriesService extends AbstractStepServices {
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
-        List<String> timeSeriesAttributes = context.get(TimeSeriesBucketingHandler.class).getHandledAttributes();
+        TimeSeriesBucketingHandler timeSeriesBucketingHandler = context.get(TimeSeriesBucketingHandler.class);
+        Set<String> handledAttributes = timeSeriesBucketingHandler.getHandledAttributes();
+        Set<String> excludedAttributes = timeSeriesBucketingHandler.getExcludedAttributes();
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Measurement.class);
         metricTypeAccessor = context.require(MetricTypeAccessor.class);
@@ -54,7 +56,7 @@ public class TimeSeriesService extends AbstractStepServices {
         int fieldsSamplingLimit = configuration.getPropertyAsInteger(TIME_SERIES_SAMPLING_LIMIT, 1000);
         maxNumberOfSeries = configuration.getPropertyAsInteger(TIME_SERIES_MAX_NUMBER_OF_SERIES, 1000);
         ReportNodeTimeSeries reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
-        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, fieldsSamplingLimit);
+        this.handler = new TimeSeriesHandler(resolution, handledAttributes, excludedAttributes, measurementCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, fieldsSamplingLimit);
     }
 
     @Secured(right = "execution-read")
@@ -90,8 +92,8 @@ public class TimeSeriesService extends AbstractStepServices {
     @Path("/measurements")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // TODO this method should be renamed as it doesn't return measurements but a timeseries
-    public TimeSeriesAPIResponse getMeasurements(@NotNull FetchBucketsRequest request) {
+    // TODO this method has been renamed as it either fetch data from time-series and fall back to building it from RAW measurements when required, the endpoint should still be refactored
+    public TimeSeriesAPIResponse getOrBuildTimeSeries(@NotNull FetchBucketsRequest request) {
         enrichRequest(request);
         try {
             return handler.getOrBuildTimeSeries(request);

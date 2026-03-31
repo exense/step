@@ -23,7 +23,6 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
 import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
-import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.core.timeseries.query.OQLTimeSeriesFilterBuilder;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementPlugin;
@@ -52,9 +51,11 @@ public class TimeSeriesHandler {
             return attribute;
         }
     };
-    private final List<String> attributesWithPrefix;
+    private final Set<String> includedAttributesWithPrefix;
+    private final Set<String> exclduedAttributesWithPrefix;
 
-    private final List<String> timeSeriesAttributes;
+    private final Set<String> timeSeriesIncludedAttributes;
+    private final Set<String> timeSeriesExcludedAttributes;
     private final AsyncTaskManager asyncTaskManager;
     private final TimeSeriesAggregationPipeline aggregationPipeline;
     private final TimeSeriesAggregationPipeline reportNodeAggregationPipeline;
@@ -65,7 +66,8 @@ public class TimeSeriesHandler {
     private final int samplingLimit;
 
     public TimeSeriesHandler(int resolution,
-                             List<String> timeSeriesAttributes,
+                             Set<String> timeSeriesIncludedAttributes,
+                             Set<String> timeSeriesExcludedAttributes,
                              step.core.collections.Collection<Measurement> measurementCollection,
                              ExecutionAccessor executionAccessor,
                              TimeSeries timeSeries,
@@ -73,7 +75,8 @@ public class TimeSeriesHandler {
                              AsyncTaskManager asyncTaskManager,
                              int samplingLimit) {
         this.resolution = resolution;
-        this.timeSeriesAttributes = timeSeriesAttributes;
+        this.timeSeriesIncludedAttributes = timeSeriesIncludedAttributes;
+        this.timeSeriesExcludedAttributes = timeSeriesExcludedAttributes;
         this.measurementCollection = measurementCollection;
         this.aggregationPipeline = timeSeries.getAggregationPipeline();
         this.reportNodeAggregationPipeline = reportNodeTimeSeries.getTimeSeries().getAggregationPipeline();
@@ -81,10 +84,14 @@ public class TimeSeriesHandler {
         this.asyncTaskManager = asyncTaskManager;
         this.timeSeries = timeSeries;
         this.samplingLimit = samplingLimit;
-        this.attributesWithPrefix = this.timeSeriesAttributes
+        this.includedAttributesWithPrefix = this.timeSeriesIncludedAttributes
             .stream()
             .map(x -> ATTRIBUTES_PREFIX + x)
-            .collect(Collectors.toList());
+            .collect(Collectors.toSet());
+        this.exclduedAttributesWithPrefix = this.timeSeriesExcludedAttributes
+            .stream()
+            .map(x -> ATTRIBUTES_PREFIX + x)
+            .collect(Collectors.toSet());
     }
 
     /**
@@ -98,10 +105,10 @@ public class TimeSeriesHandler {
             .registerCollection(tsCollection)
             .build()) {
 
-            List<String> standardAttributes = new ArrayList<>(timeSeriesAttributes);
+            Set<String> standardAttributes = new HashSet<>(timeSeriesIncludedAttributes);
             standardAttributes.addAll(fields.stream().map(attributesPrefixRemoval).collect(Collectors.toList()));
             standardAttributes.addAll(request.getGroupDimensions());
-            TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(timeSeries, standardAttributes);
+            TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(timeSeries, standardAttributes, Set.of());
             LongAdder count = new LongAdder();
             ArrayList<Filter> timestampClauses = new ArrayList<>(List.of(Filters.empty()));
             if (request.getStart() != null) {
@@ -203,8 +210,8 @@ public class TimeSeriesHandler {
      * Gets the time series according to the provided request.
      * If the time series doesn't exist for the provided request, builds it based on the raw measurements
      *
-     * @param request
-     * @return
+     * @param request {@link FetchBucketsRequest}
+     * @return {@link TimeSeriesAPIResponse}
      */
     public TimeSeriesAPIResponse getOrBuildTimeSeries(FetchBucketsRequest request) {
         validateFetchRequest(request);
@@ -212,11 +219,19 @@ public class TimeSeriesHandler {
         OQLVerifyResponse oqlVerifyResponse = this.verifyOql(request.getOqlFilter());
         if (!oqlVerifyResponse.isValid()) {
             throw new ControllerServiceException("Invalid OQL filter");
-        } else if (oqlVerifyResponse.hasUnknownFields() || !this.timeSeriesAttributes.containsAll(request.getGroupDimensions())) {
+        } else if (oqlVerifyResponse.hasUnknownFields() || hasUnknownGroupDimensions(request.getGroupDimensions())) {
             // if the filter has attributes which are not indexed, switch to RAW measurements
             return this.getTimeSeriesFromRawMeasurements(request, oqlVerifyResponse.getFields());
         } else {
             return getTimeSeries(request);
+        }
+    }
+
+    public boolean hasUnknownGroupDimensions(Set<String> groupDimensions) {
+        if (timeSeriesIncludedAttributes.isEmpty()) {
+            return groupDimensions.stream().anyMatch(timeSeriesExcludedAttributes::contains);
+        } else {
+            return !timeSeriesIncludedAttributes.containsAll(groupDimensions);
         }
     }
 
@@ -228,7 +243,12 @@ public class TimeSeriesHandler {
         if (StringUtils.isNotEmpty(oql)) {
             try {
                 oqlAttributes = new HashSet<>(OQLTimeSeriesFilterBuilder.getFilterAttributes(oql));
-                hasUnknownFields = !attributesWithPrefix.containsAll(oqlAttributes);
+                //If the time-series are defined to only support a subset of a attributes we make sure all OQL fields are covered by the TS (or ultimately fallback to RAW measurements)
+                if (!includedAttributesWithPrefix.isEmpty()) {
+                    hasUnknownFields = !includedAttributesWithPrefix.containsAll(oqlAttributes);
+                } else if (!exclduedAttributesWithPrefix.isEmpty()) {
+                    hasUnknownFields =  exclduedAttributesWithPrefix.stream().anyMatch(oqlAttributes::contains);
+                }
                 if (oqlAttributes.isEmpty()) { // there are strings like 'abcd' which is a valid OQL by some reason
                     isValid = false;
                 }
@@ -274,7 +294,7 @@ public class TimeSeriesHandler {
             if (firstMeasurement != null && lastMeasurement != null) {
                 return asyncTaskManager.scheduleAsyncTask(t -> {
                     // the flushing period can be a big value, because we will force flush every time.
-                    TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(timeSeries, timeSeriesAttributes);
+                    TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(timeSeries, timeSeriesIncludedAttributes, timeSeriesExcludedAttributes);
                     LongAdder count = new LongAdder();
                     SearchOrder searchOrder = new SearchOrder("begin", 1);
                     // Iterate over each measurement and ingest it again

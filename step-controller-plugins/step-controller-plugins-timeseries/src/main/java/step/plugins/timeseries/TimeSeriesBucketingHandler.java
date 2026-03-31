@@ -1,7 +1,5 @@
 package step.plugins.timeseries;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.metrics.MetricSample;
@@ -13,9 +11,7 @@ import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MeasurementHandler;
 import step.plugins.measurements.StepMetricSample;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class acts as a wrapper over a TimeSeries ingestion. It has special methods which alter the data before ingestion.
@@ -25,17 +21,19 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     private static final String THREAD_GROUP_MEASUREMENT_TYPE = "threadgroup";
     private static final String METRIC_TYPE_KEY = "metricType";
     private static final String METRIC_TYPE_RESPONSE_TIME = "response-time";
-    private static final String METRIC_TYPE_SAMPLER = "sampler";
-
-    private static final Logger logger = LoggerFactory.getLogger(TimeSeriesBucketingHandler.class);
 
     private final TimeSeries timeSeries;
 
-    private final List<String> handledAttributes;
+    private final Set<String> handledAttributes;
+    private final Set<String> excludedAttributes;
 
-    public TimeSeriesBucketingHandler(TimeSeries timeSeries, List<String> handledAttributes) {
+    public TimeSeriesBucketingHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes) {
         this.timeSeries = timeSeries;
-        this.handledAttributes = handledAttributes;
+        this.handledAttributes = Objects.requireNonNull(handledAttributes);
+        this.excludedAttributes = Objects.requireNonNull(excludedAttributes);
+        if (!handledAttributes.isEmpty() &&  !excludedAttributes.isEmpty()) {
+            throw new IllegalArgumentException("Either a set of handled attributes or a set of excluded attributes is required, setting both is not supported.");
+        }
     }
 
     @Override
@@ -60,11 +58,16 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
 
     private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
         Map<String, Object> bucketAttributesMap = new HashMap<>();
-        handledAttributes.forEach(a -> {
-            if (measurement.containsKey(a)) {
-                bucketAttributesMap.put(a, measurement.get(a));
-            }
-        });
+        if (handledAttributes.isEmpty()) {
+            bucketAttributesMap.putAll(measurement);
+            excludedAttributes.forEach(bucketAttributesMap::remove);
+        } else {
+            handledAttributes.forEach(a -> {
+                if (measurement.containsKey(a)) {
+                    bucketAttributesMap.put(a, measurement.get(a));
+                }
+            });
+        }
         return new BucketAttributes(bucketAttributesMap);
     }
 
@@ -110,11 +113,16 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     private BucketAttributes metricMeasurementToBucketAttributes(StepMetricSample mm) {
         Map<String, Object> attributesMap = new HashMap<>();
         Map<String, String> effectiveLabels = mm.getEffectiveLabels();
-        handledAttributes.forEach(a -> {
-            if (effectiveLabels.containsKey(a)) {
-                attributesMap.put(a, effectiveLabels.get(a));
-            }
-        });
+        if (handledAttributes.isEmpty()) {
+            attributesMap.putAll(effectiveLabels);
+            excludedAttributes.forEach(attributesMap::remove);
+        } else {
+            handledAttributes.forEach(a -> {
+                if (effectiveLabels.containsKey(a)) {
+                    attributesMap.put(a, effectiveLabels.get(a));
+                }
+            });
+        }
         // Metric name always present under "name" for consistent time-series grouping
         attributesMap.put("name", mm.sample.getName());
         return new BucketAttributes(attributesMap);
@@ -155,8 +163,12 @@ public class TimeSeriesBucketingHandler implements MeasurementHandler {
     public void afterExecutionEnd(ExecutionContext context) {
     }
 
-    public List<String> getHandledAttributes() {
+    public Set<String> getHandledAttributes() {
         return handledAttributes;
+    }
+
+    public Set<String> getExcludedAttributes() {
+        return excludedAttributes;
     }
 
     public void flush() {

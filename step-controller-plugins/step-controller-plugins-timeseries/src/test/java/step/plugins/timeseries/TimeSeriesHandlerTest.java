@@ -34,7 +34,7 @@ public class TimeSeriesHandlerTest {
     private static final int BUCKET_RESOLUTION = 200;
     private static final long BUCKET_DURATION = 500;
     private static final int SAMPLING_LIMIT = 1000;
-    private static final List<String> TS_ATTRIBUTES = Arrays.asList("key", "field1", "field2", "field3");
+    private static final Set<String> TS_ATTRIBUTES = Set.of("key", "field1", "field2", "field3");
     private static TimeSeriesHandler handler;
 
     private static InMemoryExecutionAccessor executionAccessor;
@@ -52,7 +52,7 @@ public class TimeSeriesHandlerTest {
             .build();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
         ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(new InMemoryCollectionFactory(null), new Configuration());
-        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT);
+        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, Set.of(), measurementsCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT);
     }
 
     @Test
