@@ -1,5 +1,6 @@
 package step.plugins.measurements;
 
+import io.prometheus.client.Counter;
 import io.prometheus.client.Gauge;
 import io.prometheus.client.Histogram;
 import org.slf4j.Logger;
@@ -18,42 +19,32 @@ public class PrometheusCollectorRegistry {
         return INSTANCE;
     }
 
-    Map<String, Histogram> histoCollectors = new HashMap<>();
+    Map<String, Counter> counterCollectors = new HashMap<>();
+    Map<String, Histogram> histogramCollectors = new HashMap<>();
     Map<String, Gauge> gaugeCollectors = new HashMap<>();
 
+    public synchronized Counter getOrCreateCounter(String name, String help, String... labels) {
+        return counterCollectors.computeIfAbsent(name, n ->
+            Counter.build().name(n).help(help).labelNames(labels).register());
+    }
+
     public synchronized Histogram getOrCreateHistogram(String name, String help, double[] buckets, String... labels) {
-        Histogram histo;
-        if (histoCollectors.containsKey(name)) {
-            histo = histoCollectors.get(name);
-        } else {
-            Histogram.Builder builder = Histogram.build()
-                .name(name).help(help)
-                .labelNames(labels);
+        return histogramCollectors.computeIfAbsent(name, n -> {
+            Histogram.Builder builder = Histogram.build().name(n).help(help).labelNames(labels);
             if (buckets != null && buckets.length > 0) {
                 builder.buckets(buckets);
             }
-            histo = builder.register();
-            histoCollectors.put(name, histo);
-        }
-        return histo;
+            return builder.register();
+        });
     }
 
     public boolean containsHistogram(String name) {
-        return histoCollectors.containsKey(name);
+        return histogramCollectors.containsKey(name);
     }
 
     public synchronized Gauge getOrCreateGauge(String name, String help, String... labels) {
-        Gauge gauge;
-        if (gaugeCollectors.containsKey(name)) {
-            gauge = gaugeCollectors.get(name);
-        } else {
-            Gauge.Builder builder = Gauge.build()
-                .name(name).help(help)
-                .labelNames(labels);
-            gauge = builder.register();
-            gaugeCollectors.put(name, gauge);
-        }
-        return gauge;
+        return gaugeCollectors.computeIfAbsent(name, n ->
+            Gauge.build().name(n).help(help).labelNames(labels).register());
     }
 
 }
