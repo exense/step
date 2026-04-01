@@ -5,8 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.collections.*;
 import step.core.collections.Collection;
-import step.core.entities.EntityManager;
-import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.measurements.SamplesExecutionPlugin;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -90,9 +89,9 @@ public class MeasurementAccessor {
 
     private static Document getRawMeasurement(Map o) {
         Document document = new Document(new HashMap<>(o));
-        document.remove(MeasurementPlugin.SCHEDULE);
-        document.remove(MeasurementPlugin.EXECUTION_DESCRIPTION);
-        document.remove(MeasurementPlugin.PLAN);
+        document.remove(SamplesExecutionPlugin.SCHEDULE);
+        document.remove(SamplesExecutionPlugin.EXECUTION_DESCRIPTION);
+        document.remove(SamplesExecutionPlugin.PLAN);
         return document;
     }
 

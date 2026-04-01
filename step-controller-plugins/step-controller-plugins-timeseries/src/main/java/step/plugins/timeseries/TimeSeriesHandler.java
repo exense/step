@@ -25,7 +25,7 @@ import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.query.OQLTimeSeriesFilterBuilder;
 import step.plugins.measurements.Measurement;
-import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.measurements.SamplesExecutionPlugin;
 import step.plugins.timeseries.api.*;
 
 import java.util.*;
@@ -35,7 +35,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static step.plugins.measurements.MeasurementPlugin.ATTRIBUTE_EXECUTION_ID;
+import static step.plugins.measurements.SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandler {
@@ -152,8 +152,8 @@ public class TimeSeriesHandler {
         Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES);
         measurementCollection.find(filter, null, 0, samplingLimit, 0).forEach(m -> {
             m.forEach((key, value) -> {
-                if (Objects.equals(key, MeasurementPlugin.BEGIN)
-                    || Objects.equals(key, MeasurementPlugin.VALUE)
+                if (Objects.equals(key, SamplesExecutionPlugin.BEGIN)
+                    || Objects.equals(key, SamplesExecutionPlugin.VALUE)
                     || Objects.equals(key, "_id")) {
                     return;
                 }
@@ -288,9 +288,9 @@ public class TimeSeriesHandler {
             // we need to check if measurements exists
             Equals measurementFilter = Filters.equals(ATTRIBUTE_EXECUTION_ID, executionId);
             Measurement firstMeasurement = measurementCollection.find(measurementFilter,
-                new SearchOrder(MeasurementPlugin.BEGIN, 1), 0, 1, 0).findFirst().orElse(null);
+                new SearchOrder(SamplesExecutionPlugin.BEGIN, 1), 0, 1, 0).findFirst().orElse(null);
             Measurement lastMeasurement = measurementCollection.find(measurementFilter,
-                new SearchOrder(MeasurementPlugin.BEGIN, -1), 0, 1, 0).findFirst().orElse(null);
+                new SearchOrder(SamplesExecutionPlugin.BEGIN, -1), 0, 1, 0).findFirst().orElse(null);
             if (firstMeasurement != null && lastMeasurement != null) {
                 return asyncTaskManager.scheduleAsyncTask(t -> {
                     // the flushing period can be a big value, because we will force flush every time.

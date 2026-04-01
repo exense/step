@@ -26,18 +26,18 @@ import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.plugins.measurements.GaugeCollectorRegistry;
-import step.plugins.measurements.MeasurementHandler;
+import step.plugins.measurements.SamplesHandler;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.StepMetricSample;
 
-public class RawMeasurementsHandler implements MeasurementHandler {
+public class RawSamplesHandler implements SamplesHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(RawMeasurementsHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(RawSamplesHandler.class);
 
     private final MeasurementAccessor accessor;
     private final MetricSampleAccessor metricSampleAccessor;
 
-    public RawMeasurementsHandler(MeasurementAccessor accessor, MetricSampleAccessor metricSampleAccessor) {
+    public RawSamplesHandler(MeasurementAccessor accessor, MetricSampleAccessor metricSampleAccessor) {
         super();
         this.accessor = accessor;
         this.metricSampleAccessor = metricSampleAccessor;

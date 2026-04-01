@@ -43,13 +43,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Tests that running a keyword that adds output metrics via
  * {@code output.addCounter/addGauge/addHistogram} routes those metrics through
- * {@link MeasurementHandler#processMetrics} with correctly enriched
+ * {@link SamplesHandler#processMetrics} with correctly enriched
  * {@link StepMetricSample} objects.
  * <p>
- * This class is intentionally separate from {@link MeasurementPluginTest} to avoid
+ * This class is intentionally separate from {@link SamplesExecutionPluginTest} to avoid
  * the static {@code measurementHandlers} list accumulating handlers across tests.
  */
-public class MeasurementPluginMetricsTest extends AbstractKeyword {
+public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
 
     private ExecutionEngine engine;
 
@@ -57,7 +57,7 @@ public class MeasurementPluginMetricsTest extends AbstractKeyword {
      * Captures all {@link StepMetricSample}s delivered to {@link #processMetrics}.
      * No-op {@link #processMeasurements} to avoid side effects on shared state.
      */
-    private static class CapturingMeasurementHandler implements MeasurementHandler {
+    private static class CapturingSamplesHandler implements SamplesHandler {
 
         final CopyOnWriteArrayList<StepMetricSample> capturedMetrics = new CopyOnWriteArrayList<>();
 
@@ -85,16 +85,16 @@ public class MeasurementPluginMetricsTest extends AbstractKeyword {
         }
     }
 
-    private CapturingMeasurementHandler capturingHandler;
+    private CapturingSamplesHandler capturingHandler;
 
     @Before
     public void setUp() throws Exception {
-        MeasurementControllerPlugin mc = new MeasurementControllerPlugin();
+        SamplesControllerPlugin mc = new SamplesControllerPlugin();
         mc.initGaugeCollectorRegistry(GlobalContextBuilder.createGlobalContext());
-        capturingHandler = new CapturingMeasurementHandler();
-        MeasurementPlugin.registerMeasurementHandlers(capturingHandler);
+        capturingHandler = new CapturingSamplesHandler();
+        SamplesExecutionPlugin.registerSamplesHandlers(capturingHandler);
         engine = ExecutionEngine.builder()
-            .withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
+            .withPlugin(new SamplesExecutionPlugin(GaugeCollectorRegistry.getInstance()))
             .withPlugin(new FunctionPlugin())
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new LocalFunctionPlugin())
@@ -146,7 +146,7 @@ public class MeasurementPluginMetricsTest extends AbstractKeyword {
         // Effective labels must include the execution ID
         String execId = counterMm.eId;
         Assert.assertNotNull(execId);
-        Assert.assertEquals(execId, counterMm.getEffectiveLabels().get(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID));
+        Assert.assertEquals(execId, counterMm.getEffectiveLabels().get(SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID));
     }
 
     private StepMetricSample findByName(List<StepMetricSample> metrics, String name) {

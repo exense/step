@@ -26,7 +26,7 @@ import step.framework.server.tables.TableRegistry;
 import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
 import step.plugins.measurements.GaugeCollectorRegistry;
-import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.measurements.SamplesExecutionPlugin;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.DashboardView;
@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
-import static step.plugins.measurements.MeasurementPlugin.ATTRIBUTE_EXECUTION_ID;
+import static step.plugins.measurements.SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.plugins.timeseries.MetricsConstants.*;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
 
@@ -122,7 +122,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         TableRegistry tableRegistry = context.get(TableRegistry.class);
         tableRegistry.register(EntityConstants.dashboards, new Table<>(dashboardsCollection, "dashboard-read", true));
 
-        MeasurementPlugin.registerMeasurementHandlers(handler);
+        SamplesExecutionPlugin.registerSamplesHandlers(handler);
         GaugeCollectorRegistry.getInstance().registerHandler(handler);
 
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
@@ -266,7 +266,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                 .setDisplayName("Histogram")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
-                .setUnit("ms")
+                .setUnit("")
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
                 .setRenderingSettings(new MetricRenderingSettings()),
             new MetricType()
@@ -274,7 +274,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                 .setDisplayName("Gauge")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
-                .setUnit("ms")
+                .setUnit("1")
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
                 .setRenderingSettings(new MetricRenderingSettings()),
             new MetricType()
@@ -282,7 +282,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                 .setDisplayName("Counter")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
-                .setUnit("ms")
+                .setUnit("1")
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.COUNT))
                 .setRenderingSettings(new MetricRenderingSettings()),
             new MetricType()

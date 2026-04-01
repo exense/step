@@ -15,7 +15,7 @@ import java.util.TreeMap;
  * as {@link Measurement} is enriched for legacy {@code Measure} objects.
  * <p>
  * Unlike {@link Measurement}, this is a typed flat POJO rather than a {@link java.util.HashMap}
- * subclass. Handlers receive lists of these via {@link MeasurementHandler#processMetrics}.
+ * subclass. Handlers receive lists of these via {@link SamplesHandler#processMetrics}.
  */
 public class StepMetricSample extends AbstractOrganizableObject {
 
@@ -69,26 +69,26 @@ public class StepMetricSample extends AbstractOrganizableObject {
     public Map<String, String> getEffectiveLabels() {
         TreeMap<String, String> labels = new TreeMap<>(sample.getLabels());
         if (origin != null) {
-            labels.put(MeasurementPlugin.ORIGIN, origin);
+            labels.put(SamplesExecutionPlugin.ORIGIN, origin);
         }
         if (attributes != null) {
             labels.putAll(attributes);
         }
         // Context labels are authoritative — set last so they cannot be overridden
-        labels.put(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, eId);
-        labels.put(MeasurementPlugin.PLAN_ID, planId);
-        labels.put(MeasurementPlugin.PLAN, plan);
+        labels.put(SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID, eId);
+        labels.put(SamplesExecutionPlugin.PLAN_ID, planId);
+        labels.put(SamplesExecutionPlugin.PLAN, plan);
         if (agentUrl != null) {
-            labels.put(MeasurementPlugin.AGENT_URL, agentUrl);
+            labels.put(SamplesExecutionPlugin.AGENT_URL, agentUrl);
         }
         if (taskId != null && !taskId.isEmpty()) {
-            labels.put(MeasurementPlugin.TASK_ID, taskId);
+            labels.put(SamplesExecutionPlugin.TASK_ID, taskId);
         }
         if (schedule != null && !schedule.isEmpty()) {
-            labels.put(MeasurementPlugin.SCHEDULE, schedule);
+            labels.put(SamplesExecutionPlugin.SCHEDULE, schedule);
         }
         if (execution != null && !execution.isEmpty()) {
-            labels.put(MeasurementPlugin.EXECUTION_DESCRIPTION, execution);
+            labels.put(SamplesExecutionPlugin.EXECUTION_DESCRIPTION, execution);
         }
         return labels;
     }

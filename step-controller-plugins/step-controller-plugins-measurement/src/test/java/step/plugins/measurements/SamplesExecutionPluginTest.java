@@ -31,7 +31,6 @@ import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
-import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.FunctionPlugin;
 import step.engine.plugins.LocalFunctionPlugin;
 import step.handlers.javahandler.AbstractKeyword;
@@ -49,7 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class MeasurementPluginTest extends AbstractKeyword {
+public class SamplesExecutionPluginTest extends AbstractKeyword {
     private ExecutionEngine engine;
 
     private static Map<String, AtomicInteger> assertMeasurementsCount = new HashMap<>();
@@ -57,10 +56,10 @@ public class MeasurementPluginTest extends AbstractKeyword {
 
     @Before
     public void setUp() throws Exception {
-        MeasurementControllerPlugin mc = new MeasurementControllerPlugin();
+        SamplesControllerPlugin mc = new SamplesControllerPlugin();
         mc.initGaugeCollectorRegistry(GlobalContextBuilder.createGlobalContext());
-        MeasurementPlugin.registerMeasurementHandlers(new TestMeasurementHandler());
-        engine = ExecutionEngine.builder().withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
+        SamplesExecutionPlugin.registerSamplesHandlers(new TestSamplesHandler());
+        engine = ExecutionEngine.builder().withPlugin(new SamplesExecutionPlugin(GaugeCollectorRegistry.getInstance()))
             .withPlugin(new FunctionPlugin())
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new LocalFunctionPlugin())
@@ -109,9 +108,9 @@ public class MeasurementPluginTest extends AbstractKeyword {
         Assert.assertEquals(1000, assertMeasurementsValue.get("myMeasure2").get());
     }
 
-    public class TestMeasurementHandler implements MeasurementHandler {
+    public class TestSamplesHandler implements SamplesHandler {
 
-        public TestMeasurementHandler() {
+        public TestSamplesHandler() {
             GaugeCollectorRegistry.getInstance().registerHandler(this);
         }
 

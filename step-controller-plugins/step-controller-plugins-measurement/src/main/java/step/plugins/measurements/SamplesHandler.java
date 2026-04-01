@@ -5,7 +5,7 @@ import step.core.execution.ExecutionEngineContext;
 
 import java.util.List;
 
-public interface MeasurementHandler {
+public interface SamplesHandler {
 
     void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext);
 

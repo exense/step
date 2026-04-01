@@ -11,91 +11,91 @@ public class Measurement extends HashMap<String, Object> {
     Map<String, String> additionalAttributes = new TreeMap<>();
 
     public long getBegin() {
-        return (long) this.get(MeasurementPlugin.BEGIN);
+        return (long) this.get(SamplesExecutionPlugin.BEGIN);
     }
 
     public void setBegin(long begin) {
-        this.put(MeasurementPlugin.BEGIN, begin);
+        this.put(SamplesExecutionPlugin.BEGIN, begin);
     }
 
     public long getValue() {
-        return (long) this.get(MeasurementPlugin.VALUE);
+        return (long) this.get(SamplesExecutionPlugin.VALUE);
     }
 
     public void setValue(long value) {
-        this.put(MeasurementPlugin.VALUE, value);
+        this.put(SamplesExecutionPlugin.VALUE, value);
     }
 
     public String getName() {
-        return (String) this.get(MeasurementPlugin.NAME);
+        return (String) this.get(SamplesExecutionPlugin.NAME);
     }
 
     public void setName(String name) {
-        this.put(MeasurementPlugin.NAME, name);
+        this.put(SamplesExecutionPlugin.NAME, name);
     }
 
     public String getType() {
-        return (String) this.get(MeasurementPlugin.TYPE);
+        return (String) this.get(SamplesExecutionPlugin.TYPE);
     }
 
     public void setType(String type) {
-        this.put(MeasurementPlugin.TYPE, type);
+        this.put(SamplesExecutionPlugin.TYPE, type);
     }
 
     public String getStatus() {
-        return (String) this.get(MeasurementPlugin.RN_STATUS);
+        return (String) this.get(SamplesExecutionPlugin.RN_STATUS);
     }
 
     public void setStatus(String status) {
-        this.put(MeasurementPlugin.RN_STATUS, status);
+        this.put(SamplesExecutionPlugin.RN_STATUS, status);
     }
 
     public String getExecId() {
-        return (String) this.get(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID);
+        return (String) this.get(SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID);
     }
 
     public void setExecId(String execId) {
-        this.put(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, execId);
+        this.put(SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID, execId);
     }
 
     public String getExecution() {
-        return (String) this.get(MeasurementPlugin.EXECUTION_DESCRIPTION);
+        return (String) this.get(SamplesExecutionPlugin.EXECUTION_DESCRIPTION);
     }
 
     public void setExecution(String execution) {
-        this.put(MeasurementPlugin.EXECUTION_DESCRIPTION, execution);
+        this.put(SamplesExecutionPlugin.EXECUTION_DESCRIPTION, execution);
     }
 
     public String getTaskId() {
-        return (String) this.get(MeasurementPlugin.TASK_ID);
+        return (String) this.get(SamplesExecutionPlugin.TASK_ID);
     }
 
     public void setTaskId(String taskId) {
-        this.put(MeasurementPlugin.TASK_ID, taskId);
+        this.put(SamplesExecutionPlugin.TASK_ID, taskId);
     }
 
     public String getSchedule() {
-        return (String) this.get(MeasurementPlugin.SCHEDULE);
+        return (String) this.get(SamplesExecutionPlugin.SCHEDULE);
     }
 
     public void setSchedule(String schedule) {
-        this.put(MeasurementPlugin.SCHEDULE, schedule);
+        this.put(SamplesExecutionPlugin.SCHEDULE, schedule);
     }
 
     public String getPlanId() {
-        return (String) this.get(MeasurementPlugin.PLAN_ID);
+        return (String) this.get(SamplesExecutionPlugin.PLAN_ID);
     }
 
     public void setPlanId(String planId) {
-        this.put(MeasurementPlugin.PLAN_ID, planId);
+        this.put(SamplesExecutionPlugin.PLAN_ID, planId);
     }
 
     public String getPlan() {
-        return (String) this.get(MeasurementPlugin.PLAN);
+        return (String) this.get(SamplesExecutionPlugin.PLAN);
     }
 
     public void setPlan(String plan) {
-        this.put(MeasurementPlugin.PLAN, plan);
+        this.put(SamplesExecutionPlugin.PLAN, plan);
     }
 
     public Map<String, Object> getCustomFields() {

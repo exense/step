@@ -31,16 +31,16 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
-import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.measurements.SamplesExecutionPlugin;
 import step.plugins.measurements.StepMetricSample;
 
 import java.util.LinkedHashSet;
 import java.util.List;
 
 @Plugin
-public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
+public class RawSamplesControllerPlugin extends AbstractControllerPlugin {
 
-    private static final Logger logger = LoggerFactory.getLogger(RawMeasurementsControllerPlugin.class);
+    private static final Logger logger = LoggerFactory.getLogger(RawSamplesControllerPlugin.class);
 
     private Collection<Document> measurementsCollection;
     private Collection<StepMetricSample> metricSamplesCollection;
@@ -60,7 +60,9 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
         context.put(MetricSampleAccessor.class, metricsAccessor);
         tableRegistry.register(EntityConstants.metricSamples, new Table<>(metricSamplesCollection, null, true));
 
-        MeasurementPlugin.registerMeasurementHandlers(new RawMeasurementsHandler(accessor, metricsAccessor));
+        SamplesExecutionPlugin.registerSamplesHandlers(new RawSamplesHandler(accessor, metricsAccessor));
+
+        context.getServiceRegistrationCallback().registerService(RawSamplesServices.class);
     }
 
     @Override
@@ -69,12 +71,12 @@ public class RawMeasurementsControllerPlugin extends AbstractControllerPlugin {
 
     @Override
     public void initializeData(GlobalContext context) throws Exception {
-        IndexField eidIndex = new IndexField(MeasurementPlugin.ATTRIBUTE_EXECUTION_ID, Order.ASC, String.class);
-        IndexField beginIndex = new IndexField(MeasurementPlugin.BEGIN, Order.ASC, Integer.class);
-        IndexField typeIndex = new IndexField(MeasurementPlugin.TYPE, Order.ASC, String.class);
-        IndexField planIndex = new IndexField(MeasurementPlugin.PLAN_ID, Order.ASC, String.class);
-        IndexField taskIndex = new IndexField(MeasurementPlugin.TASK_ID, Order.ASC, String.class);
-        IndexField rnIdIndex = new IndexField(MeasurementPlugin.RN_ID, Order.ASC, String.class);
+        IndexField eidIndex = new IndexField(SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID, Order.ASC, String.class);
+        IndexField beginIndex = new IndexField(SamplesExecutionPlugin.BEGIN, Order.ASC, Integer.class);
+        IndexField typeIndex = new IndexField(SamplesExecutionPlugin.TYPE, Order.ASC, String.class);
+        IndexField planIndex = new IndexField(SamplesExecutionPlugin.PLAN_ID, Order.ASC, String.class);
+        IndexField taskIndex = new IndexField(SamplesExecutionPlugin.TASK_ID, Order.ASC, String.class);
+        IndexField rnIdIndex = new IndexField(SamplesExecutionPlugin.RN_ID, Order.ASC, String.class);
         measurementsCollection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, beginIndex)));
         measurementsCollection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(eidIndex, typeIndex, beginIndex)));
         measurementsCollection.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(planIndex, beginIndex)));

@@ -22,12 +22,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static step.plugins.measurements.MeasurementPlugin.*;
+import static step.plugins.measurements.SamplesExecutionPlugin.*;
 
 @Plugin(dependencies = {GridPlugin.class})
-public class MeasurementControllerPlugin extends AbstractControllerPlugin {
+public class SamplesControllerPlugin extends AbstractControllerPlugin {
 
-    private static Logger logger = LoggerFactory.getLogger(MeasurementControllerPlugin.class);
+    private static Logger logger = LoggerFactory.getLogger(SamplesControllerPlugin.class);
 
     public static String GridGaugeName = "step_grid_tokens";
     public static String ThreadgroupGaugeName = "step_threadgroup";
@@ -144,6 +144,6 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return new MeasurementPlugin(gaugeCollectorRegistry);
+        return new SamplesExecutionPlugin(gaugeCollectorRegistry);
     }
 }

@@ -24,7 +24,7 @@ import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.plugins.measurements.GaugeCollectorRegistry;
-import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.measurements.SamplesExecutionPlugin;
 
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,7 +33,7 @@ import static org.junit.Assert.*;
 import static step.planbuilder.BaseArtefacts.sequence;
 import static step.planbuilder.BaseArtefacts.sleep;
 
-public class RawMeasurementsHandlerTest {
+public class RawSamplesHandlerTest {
 
     @Test
     public void testRawMeasurementsHandler() {
@@ -49,12 +49,12 @@ public class RawMeasurementsHandlerTest {
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.setExecutionAccessor(executionAccessor);
         parentContext.setPlanAccessor(planAccessor);
-        MeasurementPlugin measurementPlugin = new MeasurementPlugin(GaugeCollectorRegistry.getInstance());
+        SamplesExecutionPlugin samplesExecutionPlugin = new SamplesExecutionPlugin(GaugeCollectorRegistry.getInstance());
         MeasurementAccessor measurementAccessor = new MeasurementAccessor(new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap()));
         MetricSampleAccessor metricSampleAccessor = new MetricSampleAccessor(new InMemoryCollection<>());
-        RawMeasurementsHandler handler = new RawMeasurementsHandler(measurementAccessor, metricSampleAccessor);
-        MeasurementPlugin.registerMeasurementHandlers(handler);
-        try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(measurementPlugin)
+        RawSamplesHandler handler = new RawSamplesHandler(measurementAccessor, metricSampleAccessor);
+        SamplesExecutionPlugin.registerSamplesHandlers(handler);
+        try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(samplesExecutionPlugin)
             .withPlugin(new BaseArtefactPlugin())
             .withObjectHookRegistry(getObjectHookRegistry()).build()) {
             ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, "my test", null, null, true, null);
@@ -70,7 +70,7 @@ public class RawMeasurementsHandlerTest {
             assertFalse(document.containsKey("execution"));
             assertEquals(execute.getExecutionId(), document.get("eId"));
             assertEquals("Sleep", document.get("name"));
-            assertEquals(MeasurementPlugin.TYPE_CUSTOM, document.get("type"));
+            assertEquals(SamplesExecutionPlugin.TYPE_CUSTOM, document.get("type"));
             assertEquals("PASSED", document.get("rnStatus"));
             assertEquals(plan.getId().toHexString(), document.get("planId"));
             assertEquals("", document.get("taskId"));
@@ -93,12 +93,12 @@ public class RawMeasurementsHandlerTest {
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.setExecutionAccessor(executionAccessor);
         parentContext.setPlanAccessor(planAccessor);
-        MeasurementPlugin measurementPlugin = new MeasurementPlugin(GaugeCollectorRegistry.getInstance());
+        SamplesExecutionPlugin samplesExecutionPlugin = new SamplesExecutionPlugin(GaugeCollectorRegistry.getInstance());
         MeasurementAccessor measurementAccessor = new MeasurementAccessor(new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap()));
         MetricSampleAccessor metricSampleAccessor = new MetricSampleAccessor(new InMemoryCollection<>());
-        RawMeasurementsHandler handler = new RawMeasurementsHandler(measurementAccessor, metricSampleAccessor);
-        MeasurementPlugin.registerMeasurementHandlers(handler);
-        try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(measurementPlugin)
+        RawSamplesHandler handler = new RawSamplesHandler(measurementAccessor, metricSampleAccessor);
+        SamplesExecutionPlugin.registerSamplesHandlers(handler);
+        try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(samplesExecutionPlugin)
             .withPlugin(new BaseArtefactPlugin())
             .withObjectHookRegistry(getObjectHookRegistry()).build()) {
             ExecutionParameters executionParameters = new ExecutionParameters(ExecutionMode.RUN, plan, null, null, "my test", null, null, true, null);
@@ -120,7 +120,7 @@ public class RawMeasurementsHandlerTest {
             assertFalse(document.containsKey("execution"));
             assertEquals(execute.getExecutionId(), document.get("eId"));
             assertEquals("Sleep", document.get("name"));
-            assertEquals(MeasurementPlugin.TYPE_CUSTOM, document.get("type"));
+            assertEquals(SamplesExecutionPlugin.TYPE_CUSTOM, document.get("type"));
             assertEquals("PASSED", document.get("rnStatus"));
             assertEquals(plan.getId().toHexString(), document.get("planId"));
             assertEquals(taskParameters.getId().toHexString(), document.get("taskId"));

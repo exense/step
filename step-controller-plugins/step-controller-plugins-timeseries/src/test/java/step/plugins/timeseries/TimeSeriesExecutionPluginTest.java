@@ -7,7 +7,6 @@ import org.junit.Assert;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ThreadGroup;
@@ -41,8 +40,8 @@ import step.migration.MigrationManager;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 import step.plugins.measurements.GaugeCollectorRegistry;
-import step.plugins.measurements.MeasurementControllerPlugin;
-import step.plugins.measurements.MeasurementPlugin;
+import step.plugins.measurements.SamplesControllerPlugin;
+import step.plugins.measurements.SamplesExecutionPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
 import java.util.EnumSet;
@@ -115,7 +114,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
             }
         });
         globalContext.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
-        MeasurementControllerPlugin mc = new MeasurementControllerPlugin();
+        SamplesControllerPlugin mc = new SamplesControllerPlugin();
         //Legacy mode before Step 30
         switch (timeSeriesAttributeMode) {
             case INCLUDED_ATTRIBUTES:
@@ -139,7 +138,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
         TimeSeries timeSeries = globalContext.get(TimeSeries.class);
         timeSeriesAggregationPipeline = globalContext.get(TimeSeriesAggregationPipeline.class);
         engine = ExecutionEngine.builder()
-            .withPlugin(new MeasurementPlugin(GaugeCollectorRegistry.getInstance()))
+            .withPlugin(new SamplesExecutionPlugin(GaugeCollectorRegistry.getInstance()))
             .withPlugin(new FunctionPlugin())
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new LocalFunctionPlugin())

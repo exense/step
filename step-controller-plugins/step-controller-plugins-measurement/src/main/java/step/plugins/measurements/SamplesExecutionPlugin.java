@@ -33,11 +33,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static step.plugins.measurements.MeasurementControllerPlugin.ThreadgroupGaugeName;
+import static step.plugins.measurements.SamplesControllerPlugin.ThreadgroupGaugeName;
 
 @Plugin(dependencies = LiveReportingPlugin.class)
 @IgnoreDuringAutoDiscovery
-public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
+public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
     public static final String ATTRIBUTE_EXECUTION_ID = "eId";
     public static final String TYPE_CUSTOM = "custom";
@@ -60,8 +60,8 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
     public static final String CTX_SCHEDULER_TASK_ID = "$schedulerTaskId";
     public static final String CTX_SCHEDULE_NAME = "$scheduleName";
     public static final String CTX_EXECUTION_DESCRIPTION = "$executionDescription";
-    private static final Logger logger = LoggerFactory.getLogger(MeasurementPlugin.class);
-    private static final List<MeasurementHandler> measurementHandlers = new ArrayList<>();
+    private static final Logger logger = LoggerFactory.getLogger(SamplesExecutionPlugin.class);
+    private static final List<SamplesHandler> SAMPLES_HANDLERS = new ArrayList<>();
     public static final String CTX_GENERATE_EXECUTION_METRICS = "$generateExecutionMetrics";
     public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
 
@@ -76,12 +76,12 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
     private final GaugeCollectorRegistry gaugeCollectorRegistry;
     private GaugeCollector gaugeCollector;
 
-    public MeasurementPlugin(GaugeCollectorRegistry gaugeCollectorRegistry) {
+    public SamplesExecutionPlugin(GaugeCollectorRegistry gaugeCollectorRegistry) {
         this.gaugeCollectorRegistry = gaugeCollectorRegistry;
     }
 
-    public static synchronized void registerMeasurementHandlers(MeasurementHandler handler) {
-        measurementHandlers.add(handler);
+    public static synchronized void registerSamplesHandlers(SamplesHandler handler) {
+        SAMPLES_HANDLERS.add(handler);
     }
 
     @Override
@@ -115,8 +115,8 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
                 labelsByExec.put(executionContext.getExecutionId(), new HashSet<>());
             }
 
-            for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
-                measurementHandler.initializeExecutionContext(executionEngineContext, executionContext);
+            for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
+                samplesHandler.initializeExecutionContext(executionEngineContext, executionContext);
             }
         }
     }
@@ -128,8 +128,8 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
     @Override
     public void afterExecutionEnd(ExecutionContext context) {
         if (generateMetrics(context)) {
-            for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
-                measurementHandler.afterExecutionEnd(context);
+            for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
+                samplesHandler.afterExecutionEnd(context);
             }
             //Clean up gauge metrics for execution id
             GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(ThreadgroupGaugeName);
@@ -214,8 +214,8 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
         }
         labelsByExec.get(context.getExecutionId()).add(labelsArray);
         List<Measurement> measurements = gaugeCollector.collectAsMeasurements();
-        for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
-            measurementHandler.processGauges(measurements);
+        for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
+            samplesHandler.processGauges(measurements);
         }
     }
 
@@ -325,11 +325,11 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
     }
 
     public void processMetrics(List<StepMetricSample> metrics) {
-        for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
+        for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
             try {
-                measurementHandler.processMetrics(metrics);
+                samplesHandler.processMetrics(metrics);
             } catch (Exception e) {
-                logger.error("Metrics could not be processed by " + measurementHandler.getClass().getSimpleName(), e);
+                logger.error("Metrics could not be processed by " + samplesHandler.getClass().getSimpleName(), e);
             }
         }
     }
@@ -358,11 +358,11 @@ public class MeasurementPlugin extends AbstractExecutionEnginePlugin {
     }
 
     public void processMeasurements(List<Measurement> measurements) {
-        for (MeasurementHandler measurementHandler : MeasurementPlugin.measurementHandlers) {
+        for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
             try {
-                measurementHandler.processMeasurements(measurements);
+                samplesHandler.processMeasurements(measurements);
             } catch (Exception e) {
-                logger.error("Measurement count not be processed by " + measurementHandler.getClass().getSimpleName(), e);
+                logger.error("Measurement count not be processed by " + samplesHandler.getClass().getSimpleName(), e);
             }
         }
     }

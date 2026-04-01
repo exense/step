@@ -8,7 +8,7 @@ import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.plugins.measurements.Measurement;
-import step.plugins.measurements.MeasurementHandler;
+import step.plugins.measurements.SamplesHandler;
 import step.plugins.measurements.StepMetricSample;
 
 import java.util.*;
@@ -16,7 +16,7 @@ import java.util.*;
 /**
  * This class acts as a wrapper over a TimeSeries ingestion. It has special methods which alter the data before ingestion.
  */
-public class TimeSeriesBucketingHandler implements MeasurementHandler {
+public class TimeSeriesBucketingHandler implements SamplesHandler {
 
     private static final String THREAD_GROUP_MEASUREMENT_TYPE = "threadgroup";
     private static final String METRIC_TYPE_KEY = "metricType";
