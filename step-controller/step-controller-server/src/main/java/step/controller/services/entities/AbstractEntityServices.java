@@ -8,6 +8,7 @@ import org.bson.types.ObjectId;
 import step.automation.packages.AutomationPackageEntity;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
+import step.core.access.User;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.AbstractTrackedObject;
@@ -152,11 +153,19 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
             AbstractTrackedObject newTrackedEntity = (AbstractTrackedObject) entity;
             ObjectId sourceId = entity.getId();
             T sourceEntity = (sourceId != null) ? accessor.get(sourceId) : null;
-            String username = getSession().getUser().getUsername();
+            User user = getSession().getUser();
+            String username = user.getUsername();
+            String userId = user.getId().toHexString();
             Date lastModificationDate = new Date();
-            if (sourceEntity == null) {
+            //If source is null or not an instance of AbstractTrackedObject, we set creation metadata
+            if (!(sourceEntity instanceof AbstractTrackedObject)) {
                 newTrackedEntity.setCreationDate(lastModificationDate);
                 newTrackedEntity.setCreationUser(username);
+            } else {
+                //In case of update we make sure we keep the creation metadata from the DB info
+                AbstractTrackedObject sourceTrackedEntity = (AbstractTrackedObject) sourceEntity;
+                newTrackedEntity.setCreationDate(sourceTrackedEntity.getCreationDate());
+                newTrackedEntity.setCreationUser(sourceTrackedEntity.getCreationUser());
             }
             newTrackedEntity.setLastModificationDate(lastModificationDate);
             newTrackedEntity.setLastModificationUser(username);
