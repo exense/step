@@ -18,6 +18,18 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.OptBoolean;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+
 public class AutomationPackageFragmentYamlImpl extends AbstractAutomationPackageFragmentYaml {
 
+    @JsonCreator
+    public AutomationPackageFragmentYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) ObjectMapper mapper, @JacksonInject(useInput = OptBoolean.FALSE) AutomationPackageSerializationRegistry serializationRegistry) {
+        super(mapper, serializationRegistry);
+    }
+    
+    public AutomationPackageFragmentYamlImpl() { super();}
 }

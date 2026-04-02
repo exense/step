@@ -18,10 +18,16 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.core.yaml.PatchableYamlList;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
+import javax.json.Json;
+import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +35,7 @@ public interface AutomationPackageFragmentYaml {
 
     List<YamlAutomationPackageKeyword> getKeywords();
 
-    List<YamlPlan> getPlans();
+    PatchableYamlList<YamlPlan> getPlans();
 
     List<YamlPlainTextPlan> getPlansPlainText();
 
@@ -40,4 +46,14 @@ public interface AutomationPackageFragmentYaml {
     default <T> List<T> getAdditionalField(String k) {
         return (List<T>) getAdditionalFields().get(k);
     }
+
+    void setAdditionalFields(String key, JsonNode value) throws IOException;
+
+    URL getFragmentUrl();
+
+    void setFragmentUrl(URL url);
+
+    String getCurrentYaml();
+
+    void setCurrentYaml(String yaml);
 }

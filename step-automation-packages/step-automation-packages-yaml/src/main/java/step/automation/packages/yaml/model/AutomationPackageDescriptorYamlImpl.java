@@ -18,6 +18,12 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.OptBoolean;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,6 +34,15 @@ public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPacka
     private Map<String, String> attributes = new HashMap<>();
 
     private String name;
+
+    @JsonCreator
+    public AutomationPackageDescriptorYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) ObjectMapper mapper, @JacksonInject(useInput = OptBoolean.FALSE) AutomationPackageSerializationRegistry serializationRegistry) {
+        super(mapper, serializationRegistry);
+    }
+    
+    public AutomationPackageDescriptorYamlImpl() {
+        super();
+    }
 
     @Override
     public String getName() {

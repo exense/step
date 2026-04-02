@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import step.automation.packages.model.ScriptAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.plans.Plan;
@@ -122,7 +123,8 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
         // apply imported fragments recursively
         if (descriptor != null) {
-            fillAutomationPackageWithImportedFragments(res, descriptor, archive);
+            Map<String, AutomationPackageFragmentYaml> fragmentMap = new HashMap<>();
+            fillAutomationPackageWithImportedFragments(res, descriptor, archive, fragmentMap);
         }
         return res;
     }
@@ -173,7 +175,22 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
     abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, AutomationPackageContent res) throws AutomationPackageReadingException;
 
-    public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
+    public AutomationPackageYamlFragmentManager provideAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
+        AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
+        URL descriptorURL = archive.getDescriptorYamlUrl();
+        try (InputStream inputStream = descriptorURL.openStream()){
+            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
+            descriptor.setFragmentUrl(descriptorURL);
+            AutomationPackageContent res = newContentInstance();
+            Map<String, AutomationPackageFragmentYaml> fragmentMap = new HashMap<>();
+            fillAutomationPackageWithImportedFragments(res, descriptor, archive, fragmentMap);
+            return new AutomationPackageYamlFragmentManager(descriptor, fragmentMap, getOrCreateDescriptorReader());
+        } catch (IOException e) {
+            throw new AutomationPackageReadingException("Failed to read automation package for editing", e);
+        }
+    }
+
+    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Map<String, AutomationPackageFragmentYaml> fragmentYamlMap) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
         if (!fragment.getFragments().isEmpty()) {
@@ -182,7 +199,9 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = resource.openStream()) {
                         fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getAutomationPackageName());
-                        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive);
+                        fragmentYamlMap.put(resource.toString(), fragment);
+                        fragment.setFragmentUrl(resource);
+                        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragmentYamlMap);
                     } catch (IOException e) {
                         throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
                     }

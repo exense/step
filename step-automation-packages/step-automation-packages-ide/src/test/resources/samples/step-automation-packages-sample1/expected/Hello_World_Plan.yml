@@ -1,0 +1,11 @@
+---
+plans:
+- version: "1.2.0"
+  name: "Hello World Plan"
+  root:
+    sequence:
+      children:
+      - echo:
+          text: "Hello World"
+  agents: null
+  categories: null

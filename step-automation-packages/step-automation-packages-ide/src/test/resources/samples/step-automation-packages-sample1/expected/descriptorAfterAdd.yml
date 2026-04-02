@@ -1,0 +1,31 @@
+schemaVersion: 1.0.0
+name: "My package"
+alertingRules:
+  - name: "Rule1"
+    description: "My test alerting rule"
+    eventClass: ExecutionEndedEvent
+    conditions:
+      - BindingCondition:
+          description: "condition 1"
+          bindingKey: "myKey"
+          negate: false
+          predicate:
+            BindingValueEqualsPredicate:
+              value: "myValue"
+plans:
+- version: "1.2.0"
+  name: "New Name"
+  root:
+    sequence:
+      children:
+      - echo:
+          text: "Hello World"
+  agents: null
+  categories: null
+fragments:
+  - "keywords.yml"
+  - "plans/*.yml"
+  - "schedules.yml"
+  - "parameters.yml"
+  - "parameters2.yml"
+  - "unknown.yml"
