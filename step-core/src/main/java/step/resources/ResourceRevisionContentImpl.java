@@ -48,6 +48,10 @@ public class ResourceRevisionContentImpl implements Closeable, ResourceRevisionC
         return resourceName;
     }
 
+    public Resource getResource() {
+        return resource;
+    }
+
     @Override
     public void close() throws IOException {
         resourceStream.close();

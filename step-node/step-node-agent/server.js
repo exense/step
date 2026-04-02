@@ -1,38 +1,41 @@
 const minimist = require('minimist')
 const path = require('path')
 const YAML = require('yaml')
+const logger = require('./api/logger').child({ component: 'Agent' })
 
 let args = minimist(process.argv.slice(2), {
   default: {
     f: path.join(__dirname, 'AgentConf.yaml')
   }
 })
-console.log('[Agent] Using arguments ' + JSON.stringify(args))
+logger.info('Using arguments ' + JSON.stringify(args))
 
 const agentConfFile = args.f
-console.log('[Agent] Reading agent configuration ' + agentConfFile)
+logger.info('Reading agent configuration ' + agentConfFile)
 const fs = require('fs')
 const content = fs.readFileSync(agentConfFile, 'utf8')
 const agentConfFileExt = path.extname(agentConfFile)
-var agentConf
-if(agentConfFileExt === '.yaml') {
-  agentConf = YAML.parse(content)
-} else if(agentConfFileExt === '.json') {
-  agentConf = JSON.parse(content)
-} else {
-  throw new Error('Unsupported extension ' + agentConfFileExt + " for agent configuration " + content);
+const agentConf = parseAgentConf();
+
+function parseAgentConf() {
+  if (agentConfFileExt === '.yaml') {
+    return YAML.parse(content)
+  } else if (agentConfFileExt === '.json') {
+    return JSON.parse(content)
+  } else {
+    throw new Error('Unsupported extension ' + agentConfFileExt + " for agent configuration " + content);
+  }
 }
 
-console.log('[Agent] Creating agent context and tokens')
+logger.info('Creating agent context and tokens')
 const uuid = require('uuid/v4')
-const _ = require('underscore')
 const jwtUtils = require('./utils/jwtUtils')
 const agentType = 'node'
 const agent = {id: uuid()}
-let agentContext = { tokens: [], tokenSessions: [], tokenProperties: [], properties: agentConf.properties, controllerUrl: agentConf.gridHost, gridSecurity: agentConf.gridSecurity }
-_.each(agentConf.tokenGroups, function (tokenGroup) {
-  const tokenConf = tokenGroup.tokenConf
-  let attributes = tokenConf.attributes
+const agentContext = { tokens: [], tokenSessions: [], tokenProperties: [], properties: agentConf.properties || {}, controllerUrl: agentConf.gridHost, gridSecurity: agentConf.gridSecurity, workingDir: agentConf.workingDir, npmProjectWorkspaceCleanupIdleTimeMs: agentConf.npmProjectWorkspaceCleanupIdleTimeMs, filemanagerPath: agentConf.fileManagerConfiguration?.path }
+agentConf.tokenGroups.forEach(function (tokenGroup) {
+  const tokenConf = tokenGroup.tokenConf || {}
+  let attributes = tokenConf.attributes || {}
   // Transform the selectionPatterns map <String, String> to <String, Interest>
   let selectionPatterns = tokenConf.selectionPatterns;
   const tokenSelectionPatterns = {};
@@ -41,25 +44,24 @@ _.each(agentConf.tokenGroups, function (tokenGroup) {
       tokenSelectionPatterns[key] = { must: true, selectionPattern: selectionPatterns[key] };
     });
   }
-  let additionalProperties = tokenConf.properties
+  let additionalProperties = tokenConf.properties || {}
   attributes['$agenttype'] = agentType
   for (let i = 0; i < tokenGroup.capacity; i++) {
     const token = { id: uuid(), agentid: agent.id, attributes: attributes, selectionPatterns: tokenSelectionPatterns }
     agentContext.tokens.push(token)
-    agentContext.tokenSessions[token.id] = {}
+    agentContext.tokenSessions[token.id] = null
     agentContext.tokenProperties[token.id] = additionalProperties
   }
 })
 
-console.log('[Agent] Starting agent services')
+logger.info('Starting agent services')
 const express = require('express')
 const app = express()
 const port = agentConf.agentPort || 3000
 const timeout = agentConf.agentServerTimeout || 600000
-const bodyParser = require('body-parser')
-
-app.use(bodyParser.urlencoded({extended: true}))
-app.use(bodyParser.json())
+const payloadLimit = agentConf.agentPayloadLimit || '10mb'
+app.use(express.urlencoded({extended: true, limit: payloadLimit}))
+app.use(express.json({limit: payloadLimit}))
 
 // Apply JWT authentication middleware
 const createJwtAuthMiddleware = require('./middleware/jwtAuth')
@@ -69,41 +71,39 @@ app.use(jwtAuthMiddleware)
 const routes = require('./api/routes/routes')
 routes(app, agentContext)
 
-var server = app.listen(port)
+const server = app.listen(port)
 server.setTimeout(timeout)
 
-startWithAgentUrl = function(agentUrl) {
-  console.log('[Agent] Registering agent as ' + agentUrl + ' to grid ' + agentConf.gridHost)
-  console.log('[Agent] Creating registration timer')
+const startWithAgentUrl = async function(agentUrl) {
+  logger.info('Registering agent as ' + agentUrl + ' to grid ' + agentConf.gridHost)
+  logger.info('Creating registration timer')
   const registrationPeriod = agentConf.registrationPeriod || 5000
-  const request = require('request')
-  setInterval(function () {
-    const requestOptions = {
-      uri: agentConf.gridHost + '/grid/register',
-      method: 'POST',
-      json: true,
-      body: { agentRef: { agentId: agent.id, agentUrl: agentUrl, agentType: agentType }, tokens: agentContext.tokens }
-    };
+  setInterval(async () => {
+    const body = { agentRef: { agentId: agent.id, agentUrl: agentUrl, agentType: agentType }, tokens: agentContext.tokens }
 
+    const headers = { 'Content-Type': 'application/json' }
     // Add bearer token if gridSecurity is configured
     const token = jwtUtils.generateJwtToken(agentConf.gridSecurity, 3600); // 1 hour expiration
     if (token) {
-      requestOptions.headers = {
-        'Authorization': 'Bearer ' + token
-      };
+      headers['Authorization'] = 'Bearer ' + token;
     }
 
-    request(requestOptions, function (err, res, body) {
-      if (err) {
-        console.log("[Agent] Error while registering agent to grid")
-        console.log(err)
-      } else if (res.statusCode !== 204) {
-        console.log("[Agent] Failed to register agent: grid responded with status " + res.statusCode + (body != null ? ". Response body: " + JSON.stringify(body) : ""))
+    try {
+      const res = await fetch(agentConf.gridHost + '/grid/register', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body)
+      })
+      if (res.status !== 204) {
+        const responseBody = await res.text().catch(() => null)
+        logger.warn('Failed to register agent: grid responded with status ' + res.status + (responseBody != null ? '. Response body: ' + responseBody : ''))
       }
-    })
+    } catch (err) {
+      logger.error('Error while registering agent to grid:', err)
+    }
   }, registrationPeriod)
 
-  console.log('[Agent] Successfully started on: ' + port)
+  logger.info('Successfully started on port ' + port)
 }
 
 if(agentConf.agentUrl) {
@@ -113,6 +113,14 @@ if(agentConf.agentUrl) {
   getFQDN().then(FQDN => {
     startWithAgentUrl('http://' + FQDN + ':' + port)
   }).catch(e => {
-    console.log('[Agent] Error while getting FQDN ' + e)
+    logger.error('Error while getting FQDN:', e)
   })
 }
+
+const v8 = require('v8');
+
+process.on('SIGUSR2', () => {
+  const fileName = `/tmp/heap-${process.pid}-${Date.now()}.heapsnapshot`;
+  v8.writeHeapSnapshot(fileName);
+  logger.info('Heap dump written to ' + fileName)
+});

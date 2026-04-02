@@ -229,6 +229,11 @@ public class RemoteResourceManager extends AbstractRemoteClient implements Resou
             }
 
             @Override
+            public Resource getResource() {
+                return resource;
+            }
+
+            @Override
             public void close() throws IOException {
                 // TODO Auto-generated method stub
 
