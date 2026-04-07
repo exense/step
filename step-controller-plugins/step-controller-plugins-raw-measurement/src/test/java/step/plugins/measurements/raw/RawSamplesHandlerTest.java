@@ -49,7 +49,7 @@ public class RawSamplesHandlerTest {
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.setExecutionAccessor(executionAccessor);
         parentContext.setPlanAccessor(planAccessor);
-        SamplesExecutionPlugin samplesExecutionPlugin = new SamplesExecutionPlugin(GaugeCollectorRegistry.getInstance());
+        SamplesExecutionPlugin samplesExecutionPlugin = new SamplesExecutionPlugin();
         MeasurementAccessor measurementAccessor = new MeasurementAccessor(new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap()));
         MetricSampleAccessor metricSampleAccessor = new MetricSampleAccessor(new InMemoryCollection<>());
         RawSamplesHandler handler = new RawSamplesHandler(measurementAccessor, metricSampleAccessor);
@@ -93,7 +93,7 @@ public class RawSamplesHandlerTest {
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.setExecutionAccessor(executionAccessor);
         parentContext.setPlanAccessor(planAccessor);
-        SamplesExecutionPlugin samplesExecutionPlugin = new SamplesExecutionPlugin(GaugeCollectorRegistry.getInstance());
+        SamplesExecutionPlugin samplesExecutionPlugin = new SamplesExecutionPlugin();
         MeasurementAccessor measurementAccessor = new MeasurementAccessor(new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap()));
         MetricSampleAccessor metricSampleAccessor = new MetricSampleAccessor(new InMemoryCollection<>());
         RawSamplesHandler handler = new RawSamplesHandler(measurementAccessor, metricSampleAccessor);

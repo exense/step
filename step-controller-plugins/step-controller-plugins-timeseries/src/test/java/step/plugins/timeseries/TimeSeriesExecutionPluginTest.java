@@ -138,7 +138,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
         TimeSeries timeSeries = globalContext.get(TimeSeries.class);
         timeSeriesAggregationPipeline = globalContext.get(TimeSeriesAggregationPipeline.class);
         engine = ExecutionEngine.builder()
-            .withPlugin(new SamplesExecutionPlugin(GaugeCollectorRegistry.getInstance()))
+            .withPlugin(new SamplesExecutionPlugin())
             .withPlugin(new FunctionPlugin())
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new LocalFunctionPlugin())

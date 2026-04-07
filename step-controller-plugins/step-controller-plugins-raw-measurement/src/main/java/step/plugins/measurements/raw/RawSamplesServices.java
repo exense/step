@@ -8,7 +8,7 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import step.core.deployment.AbstractStepServices;
 import step.core.metrics.MetricSample;
-import step.core.metrics.MetricType;
+import step.core.metrics.InstrumentType;
 import step.framework.server.security.Secured;
 import step.plugins.measurements.StepMetricSample;
 
@@ -70,7 +70,7 @@ public class RawSamplesServices extends AbstractStepServices {
         long count = existing.getCount() + incoming.getCount();
         long sum, min, max, last;
         Map<Long, Long> distribution;
-        if (existing.getType() == MetricType.COUNTER) {
+        if (existing.getType() == InstrumentType.COUNTER) {
             // Running total comes from the most recent sample's sum field
             long runningTotal = incoming.getSampleTime() >= existing.getSampleTime()
                     ? incoming.getSum() : existing.getSum();

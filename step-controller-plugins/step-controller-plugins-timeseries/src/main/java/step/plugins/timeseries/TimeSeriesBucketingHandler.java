@@ -8,6 +8,7 @@ import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.plugins.measurements.Measurement;
+import step.plugins.measurements.MetricHeartbeatRegistry;
 import step.plugins.measurements.SamplesHandler;
 import step.plugins.measurements.StepMetricSample;
 
@@ -34,6 +35,7 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
         if (!handledAttributes.isEmpty() &&  !excludedAttributes.isEmpty()) {
             throw new IllegalArgumentException("Either a set of handled attributes or a set of excluded attributes is required, setting both is not supported.");
         }
+        MetricHeartbeatRegistry.getInstance().registerHandler(this);
     }
 
     @Override
@@ -105,7 +107,9 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
         MetricSample sample = mm.sample;
         long begin = sample.getSampleTime();
         BucketAttributes attributes = metricMeasurementToBucketAttributes(mm);
-        attributes.put(METRIC_TYPE_KEY, sample.getType().toLowerCase());
+        String instrumentType = sample.getType().toLowerCase();
+        attributes.put(METRIC_TYPE_KEY, mm.metricType != null ? mm.metricType : instrumentType);
+        attributes.put("instrumentType", instrumentType);
         TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.getIngestionPipeline();
         ingestionPipeline.ingestBucket(buildMetricBucket(attributes, begin, sample));
     }

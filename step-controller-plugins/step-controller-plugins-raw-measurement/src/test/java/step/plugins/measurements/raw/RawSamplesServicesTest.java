@@ -4,7 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.metrics.MetricSample;
-import step.core.metrics.MetricType;
+import step.core.metrics.InstrumentType;
 import step.plugins.measurements.StepMetricSample;
 
 import java.util.Arrays;
@@ -115,7 +115,7 @@ public class RawSamplesServicesTest {
 
         MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
 
-        assertEquals(MetricType.COUNTER, merged.getType());
+        assertEquals(InstrumentType.COUNTER, merged.getType());
         assertEquals(8, merged.getCount());       // 5 + 3
     }
 
@@ -157,7 +157,7 @@ public class RawSamplesServicesTest {
 
         MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
 
-        assertEquals(MetricType.GAUGE, merged.getType());
+        assertEquals(InstrumentType.GAUGE, merged.getType());
         assertEquals(5, merged.getCount());    // 2 + 3
         assertEquals(410, merged.getSum());    // 140 + 270
         assertEquals(60, merged.getMin());     // min(60, 70)
@@ -186,7 +186,7 @@ public class RawSamplesServicesTest {
 
         MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
 
-        assertEquals(MetricType.HISTOGRAM, merged.getType());
+        assertEquals(InstrumentType.HISTOGRAM, merged.getType());
         assertEquals(10, merged.getCount());
         assertEquals(62000, merged.getSum());
         assertEquals(3000, merged.getMin());
@@ -260,32 +260,32 @@ public class RawSamplesServicesTest {
 
     private void save(String rnId, MetricSample sample) {
         StepMetricSample sms = new StepMetricSample(sample, EXEC_ID, rnId, PLAN_ID,
-                "myPlan", "", "", "my test", null, null, null);
+                "myPlan", "", "", "my test", null, null, null, null);
         accessor.save(Collections.singletonList(sms));
     }
 
     private static MetricSample counter(String name, Map<String, String> labels,
                                         long sampleTime, long count, long runningTotal) {
-        return new MetricSample(sampleTime, name, labels, MetricType.COUNTER,
+        return new MetricSample(sampleTime, name, labels, InstrumentType.COUNTER,
                 count, runningTotal, runningTotal, runningTotal, runningTotal, null);
     }
 
     private static MetricSample gauge(String name, Map<String, String> labels,
                                       long sampleTime, long count, long sum, long min, long max, long last) {
-        return new MetricSample(sampleTime, name, labels, MetricType.GAUGE,
+        return new MetricSample(sampleTime, name, labels, InstrumentType.GAUGE,
                 count, sum, min, max, last, null);
     }
 
     private static MetricSample histogram(String name, Map<String, String> labels,
                                           long sampleTime, long count, long sum, long min, long max, long last) {
-        return new MetricSample(sampleTime, name, labels, MetricType.HISTOGRAM,
+        return new MetricSample(sampleTime, name, labels, InstrumentType.HISTOGRAM,
                 count, sum, min, max, last, null);
     }
 
     private static MetricSample histogramWithDist(String name, Map<String, String> labels,
                                                   long sampleTime, long count, long sum, long min, long max, long last,
                                                   Map<Long, Long> distribution) {
-        return new MetricSample(sampleTime, name, labels, MetricType.HISTOGRAM,
+        return new MetricSample(sampleTime, name, labels, InstrumentType.HISTOGRAM,
                 count, sum, min, max, last, distribution);
     }
 }

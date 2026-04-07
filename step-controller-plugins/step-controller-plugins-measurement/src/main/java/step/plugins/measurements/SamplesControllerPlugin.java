@@ -135,15 +135,20 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         //Start the gauge scheduler
         int interval = context.getConfiguration().getPropertyAsInteger("plugins.measurements.gaugecollector.interval", 15);
         gaugeCollectorRegistry.start(interval);
+
+        //Start the metric heartbeat scheduler
+        int heartbeatIntervalSec = context.getConfiguration().getPropertyAsInteger("plugins.measurements.metricheartbeat.interval", 15);
+        MetricHeartbeatRegistry.getInstance().start(heartbeatIntervalSec * 1000L);
     }
 
     @Override
     public void serverStop(GlobalContext context) {
         gaugeCollectorRegistry.stop();
+        MetricHeartbeatRegistry.getInstance().stop();
     }
 
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return new SamplesExecutionPlugin(gaugeCollectorRegistry);
+        return new SamplesExecutionPlugin();
     }
 }

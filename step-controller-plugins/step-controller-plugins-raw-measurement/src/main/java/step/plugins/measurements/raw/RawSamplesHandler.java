@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.plugins.measurements.GaugeCollectorRegistry;
+import step.plugins.measurements.MetricHeartbeatRegistry;
 import step.plugins.measurements.SamplesHandler;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.StepMetricSample;
@@ -42,6 +43,7 @@ public class RawSamplesHandler implements SamplesHandler {
         this.accessor = accessor;
         this.metricSampleAccessor = metricSampleAccessor;
         GaugeCollectorRegistry.getInstance().registerHandler(this);
+        MetricHeartbeatRegistry.getInstance().registerHandler(this);
     }
 
     @Override

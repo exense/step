@@ -262,7 +262,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
                 .setRenderingSettings(new MetricRenderingSettings()),
             new MetricType()
-                .setName(step.core.metrics.MetricType.HISTOGRAM.toLowerCase())
+                .setName(step.core.metrics.InstrumentType.HISTOGRAM.toLowerCase())
                 .setDisplayName("Histogram")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
@@ -270,7 +270,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
                 .setRenderingSettings(new MetricRenderingSettings()),
             new MetricType()
-                .setName(step.core.metrics.MetricType.GAUGE.toLowerCase())
+                .setName(step.core.metrics.InstrumentType.GAUGE.toLowerCase())
                 .setDisplayName("Gauge")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
@@ -278,7 +278,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
                 .setRenderingSettings(new MetricRenderingSettings()),
             new MetricType()
-                .setName(step.core.metrics.MetricType.COUNTER.toLowerCase())
+                .setName(step.core.metrics.InstrumentType.COUNTER.toLowerCase())
                 .setDisplayName("Counter")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))

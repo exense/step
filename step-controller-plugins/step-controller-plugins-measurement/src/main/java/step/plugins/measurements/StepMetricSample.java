@@ -29,6 +29,16 @@ public class StepMetricSample extends AbstractOrganizableObject {
     public final String execution;
     public final String agentUrl;
     public final String origin;
+    /**
+     * Optional time-series category override. When non-null, handlers that write a
+     * {@code metricType} attribute (e.g. {@link step.plugins.timeseries.TimeSeriesBucketingHandler})
+     * use this value instead of {@code sample.getType().toLowerCase()}, allowing a metric
+     * that is mechanically a {@code GAUGE} to appear under a distinct category such as
+     * {@code "threadgroup"} without polluting the instrument-type enum.
+     * Prometheus and heartbeat handling always use the instrument type from
+     * {@code sample.getType()} and are unaffected by this field.
+     */
+    public final String metricType;
 
     @JsonCreator
     public StepMetricSample(@JsonProperty("sample") MetricSample sample,
@@ -41,7 +51,8 @@ public class StepMetricSample extends AbstractOrganizableObject {
                             @JsonProperty("execution") String execution,
                             @JsonProperty("agentUrl") String agentUrl,
                             @JsonProperty("origin") String origin,
-                            @JsonProperty("attributes") Map<String, String> attributes) {
+                            @JsonProperty("attributes") Map<String, String> attributes,
+                            @JsonProperty("metricType") String metricType) {
         this.sample = sample;
         this.eId = eId;
         this.rnId = rnId;
@@ -53,6 +64,7 @@ public class StepMetricSample extends AbstractOrganizableObject {
         this.agentUrl = agentUrl;
         this.origin = origin;
         this.attributes = attributes;
+        this.metricType = metricType;
     }
 
     /**

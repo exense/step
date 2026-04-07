@@ -50,7 +50,7 @@ import step.core.metrics.CounterMetric;
 import step.core.metrics.MetricSample;
 import step.core.metrics.GaugeMetric;
 import step.core.metrics.HistogramMetric;
-import step.core.metrics.MetricType;
+import step.core.metrics.InstrumentType;
 import step.core.reports.Error;
 import step.core.reports.ErrorType;
 import step.core.reports.Measure;
@@ -418,7 +418,7 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
         // Counter: 5+3 = 8 increments, label preserved
         MetricSample counter = (MetricSample) metrics.get(0);
         assertEquals("requests", counter.getName());
-        assertEquals(MetricType.COUNTER, counter.getType());
+        assertEquals(InstrumentType.COUNTER, counter.getType());
         assertEquals(8, counter.getCount());
         assertEquals(8, counter.getLast());
         assertEquals("checkout", counter.getLabels().get("service"));
@@ -426,7 +426,7 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
         // Gauge: 3 observations (10, 20, 5)
         MetricSample gauge = (MetricSample) metrics.get(1);
         assertEquals("queue_depth", gauge.getName());
-        assertEquals(MetricType.GAUGE, gauge.getType());
+        assertEquals(InstrumentType.GAUGE, gauge.getType());
         assertEquals(3, gauge.getCount());
         assertEquals(35, gauge.getSum());
         assertEquals(5, gauge.getMin());
@@ -435,7 +435,7 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
         // Histogram: 2 observations (100, 200)
         MetricSample histogram = (MetricSample) metrics.get(2);
         assertEquals("response_time_ms", histogram.getName());
-        assertEquals(MetricType.HISTOGRAM, histogram.getType());
+        assertEquals(InstrumentType.HISTOGRAM, histogram.getType());
         assertEquals(2, histogram.getCount());
         assertEquals(300, histogram.getSum());
     }

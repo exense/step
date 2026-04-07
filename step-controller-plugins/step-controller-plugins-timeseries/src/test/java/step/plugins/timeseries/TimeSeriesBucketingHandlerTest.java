@@ -6,7 +6,7 @@ import org.junit.Test;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.metrics.MetricSample;
-import step.core.metrics.MetricType;
+import step.core.metrics.InstrumentType;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesBuilder;
 import step.core.timeseries.TimeSeriesCollection;
@@ -44,7 +44,7 @@ public class TimeSeriesBucketingHandlerTest {
     @Test
     public void counter_ingestsAccumulatedDiffAsPoint() {
         MetricSample snapshot = new MetricSample(0L,
-            "requests", Map.of("env", "prod"), MetricType.COUNTER, 7, 42, 42, 42, 42, null);
+            "requests", Map.of("env", "prod"), InstrumentType.COUNTER, 7, 42, 42, 42, 42, null);
 
         StepMetricSample mm = buildMetricMeasurement(snapshot);
 
@@ -71,7 +71,7 @@ public class TimeSeriesBucketingHandlerTest {
     @Test
     public void gauge_ingestsFullBucket() {
         MetricSample snapshot = new MetricSample(1000L,
-            "queue_depth", Map.of("env", "staging"), MetricType.GAUGE,
+            "queue_depth", Map.of("env", "staging"), InstrumentType.GAUGE,
             3, 57, 15, 42, 42, null);
         StepMetricSample mm = buildMetricMeasurement(snapshot);
 
@@ -96,7 +96,7 @@ public class TimeSeriesBucketingHandlerTest {
     public void histogram_ingestsFullBucketWithDistribution() {
         Map<Long, Long> dist = Map.of(100L, 1L, 200L, 1L);
         MetricSample snapshot = new MetricSample(2000L,
-            "response_time_ms", Map.of(), MetricType.HISTOGRAM,
+            "response_time_ms", Map.of(), InstrumentType.HISTOGRAM,
             2, 300, 100, 200, 200, dist);
         StepMetricSample mm = buildMetricMeasurement(snapshot);
 
@@ -122,7 +122,7 @@ public class TimeSeriesBucketingHandlerTest {
     public void onlyHandledAttributesAreIncludedInBucket() {
         // "region" is not in HANDLED_ATTRIBUTES, so it must be absent from the bucket
         MetricSample snapshot = new MetricSample(0L,
-            "cpu", Map.of("env", "qa", "region", "us-east"), MetricType.GAUGE,
+            "cpu", Map.of("env", "qa", "region", "us-east"), InstrumentType.GAUGE,
             1, 80, 80, 80, 80, null);
         StepMetricSample mm = buildMetricMeasurement(snapshot);
 
@@ -149,7 +149,8 @@ public class TimeSeriesBucketingHandlerTest {
             "",              // execution description
             null,            // agentUrl
             null,            // origin
-            null             // additionalAttributes
+            null,            // additionalAttributes
+            null             // metricType
         );
     }
 

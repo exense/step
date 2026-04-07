@@ -47,6 +47,11 @@ public class MetricsConstants {
         .setName("errorCode")
         .setType(MetricAttributeType.TEXT)
         .setDisplayName("Error Code");
+    public static final MetricAttribute INSTRUMENT_TYPE_ATTRIBUTE = new MetricAttribute()
+        .setName("instrumentType")
+        .setType(MetricAttributeType.TEXT)
+        .setMetadata(Map.of("knownValues", Arrays.asList("counter", "gauge", "histogram")))
+        .setDisplayName("Instrument Type");
     public static final MetricAttribute EXECUTION_BOOLEAN_RESULT = new MetricAttribute()
         .setName("booleanResult")
         .setType(MetricAttributeType.TEXT)
@@ -67,7 +72,8 @@ public class MetricsConstants {
                 NAME_ATTRIBUTE,
                 ERROR_CODE_ATTRIBUTE,
                 EXECUTION_BOOLEAN_RESULT,
-                EXECUTION_RESULT
+                EXECUTION_RESULT,
+                INSTRUMENT_TYPE_ATTRIBUTE
             )
             .map(MetricAttribute::getName)
             .collect(Collectors.joining(","));

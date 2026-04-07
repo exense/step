@@ -1,7 +1,5 @@
 package step.plugins.measurements;
 
-import groovy.transform.Synchronized;
-import io.prometheus.client.Collector;
 import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +12,7 @@ import step.core.artefacts.reports.ReportNode;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
+import step.core.metrics.InstrumentType;
 import step.core.metrics.MetricSample;
 import step.core.plans.Plan;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
@@ -28,12 +27,9 @@ import step.livereporting.LiveReportingPlugin;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import static step.plugins.measurements.SamplesControllerPlugin.ThreadgroupGaugeName;
 
 @Plugin(dependencies = LiveReportingPlugin.class)
 @IgnoreDuringAutoDiscovery
@@ -64,6 +60,7 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     private static final List<SamplesHandler> SAMPLES_HANDLERS = new ArrayList<>();
     public static final String CTX_GENERATE_EXECUTION_METRICS = "$generateExecutionMetrics";
     public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
+    public static final String TYPE_THREADGROUP = "threadgroup";
 
     // These are used by the MeasurementControllerPlugin to "reconstruct" measures from measurements, and indicate the
     // "internal" fields which should NOT be added to the measure data field. Keep this in sync with the fields defined above.
@@ -72,12 +69,11 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     // Same use, but for defining which fields SHOULD be directly copied to the top-level fields of a measure.
     static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE, STATUS);
 
-    private final Map<String, Set<String[]>> labelsByExec = new ConcurrentHashMap<>();
-    private final GaugeCollectorRegistry gaugeCollectorRegistry;
-    private GaugeCollector gaugeCollector;
+    // Tracks the live thread count per execution+threadGroup key ("execId|threadGroupName").
+    // Incremented/decremented by processThreadReportNode; cleaned up in afterExecutionEnd.
+    private final ConcurrentHashMap<String, AtomicLong> threadGroupCounts = new ConcurrentHashMap<>();
 
-    public SamplesExecutionPlugin(GaugeCollectorRegistry gaugeCollectorRegistry) {
-        this.gaugeCollectorRegistry = gaugeCollectorRegistry;
+    public SamplesExecutionPlugin() {
     }
 
     public static synchronized void registerSamplesHandlers(SamplesHandler handler) {
@@ -108,12 +104,7 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
                 executionContext.put(CTX_SCHEDULE_NAME, scheduleName);
             }
             TreeMap<String, String> additionalAttributes = Objects.requireNonNullElse(executionContext.getObjectEnricher().getAdditionalAttributes(), new TreeMap<>());
-            getOrInitThreadGauge(additionalAttributes);
             executionContext.put(CTX_ADDITIONAL_ATTRIBUTES, additionalAttributes);
-
-            if (!labelsByExec.containsKey(executionContext.getExecutionId())) {
-                labelsByExec.put(executionContext.getExecutionId(), new HashSet<>());
-            }
 
             for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
                 samplesHandler.initializeExecutionContext(executionEngineContext, executionContext);
@@ -131,19 +122,11 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
             for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
                 samplesHandler.afterExecutionEnd(context);
             }
-            //Clean up gauge metrics for execution id
-            GaugeCollector gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(ThreadgroupGaugeName);
-            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-            Runnable task = new Runnable() {
-                public void run() {
-                    for (String[] labels : labelsByExec.remove(context.getExecutionId())) {
-                        gaugeCollector.getGauge().remove(labels);
-                    }
-                }
-            };
-            int delay = 70;
-            scheduler.schedule(task, delay, TimeUnit.SECONDS);
-            scheduler.shutdown();
+            MetricHeartbeatRegistry.getInstance().removeExecution(context.getExecutionId());
+            // Clean up thread group counters for this execution.
+            // Prometheus label cleanup (with the 70s scrape-window delay) is handled by PrometheusHandler.
+            String prefix = context.getExecutionId() + "|";
+            threadGroupCounts.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
         }
     }
 
@@ -173,50 +156,35 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
     }
 
-    @Synchronized
-    private GaugeCollector getOrInitThreadGauge(Map<String, String> additionalAttributes) {
-        gaugeCollector = gaugeCollectorRegistry.getGaugeCollector(ThreadgroupGaugeName);
-        if (gaugeCollector == null) {
-            List<String> labelsThreadGroup = new ArrayList<>(Arrays.asList(ATTRIBUTE_EXECUTION_ID, "execution", NAME, PLAN_ID,
-                "plan", "scheduleId", "schedule"));
-            labelsThreadGroup.addAll(additionalAttributes.keySet());
-
-            gaugeCollector = new GaugeCollector(ThreadgroupGaugeName,
-                "step thread group active threads count", labelsThreadGroup.toArray(String[]::new)) {
-                @Override
-                public List<Collector.MetricFamilySamples> collect() {
-                    return getGauge().collect();
-                }
-            };
-            //Register thread group gauge metrics
-            gaugeCollectorRegistry.registerCollector(ThreadgroupGaugeName, gaugeCollector);
-        }
-        return gaugeCollector;
-    }
-
     private void processThreadReportNode(ExecutionContext context, ThreadReportNode node, boolean inc) {
+        String execId = context.getExecutionId();
+        String threadGroupName = node.getThreadGroupName();
+        AtomicLong counter = threadGroupCounts.computeIfAbsent(execId + "|" + threadGroupName, k -> new AtomicLong(0));
+        long count = inc ? counter.incrementAndGet() : Math.max(0, counter.decrementAndGet());
+
         String scheduleId = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULER_TASK_ID), "");
         String schedule = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULE_NAME), "");
         String planId = context.getPlan().getId().toString();
         String plan = Objects.requireNonNullElse(context.getPlan().getAttribute(AbstractOrganizableObject.NAME), "");
-        String executionID = context.getExecutionId();
         String execution = Objects.requireNonNullElse((String) context.get(CTX_EXECUTION_DESCRIPTION), "");
-        List<String> labels = new ArrayList<>(Arrays.asList(executionID, execution, node.getThreadGroupName(), planId, plan, scheduleId, schedule));
+        @SuppressWarnings("unchecked")
         Map<String, String> additionalAttributes = (Map<String, String>) context.get(CTX_ADDITIONAL_ATTRIBUTES);
-        if (additionalAttributes != null) {
-            labels.addAll((additionalAttributes).values());
-        }
-        String[] labelsArray = labels.toArray(String[]::new);
-        if (inc) {
-            gaugeCollector.getGauge().labels(labelsArray).inc();
-        } else {
-            gaugeCollector.getGauge().labels(labelsArray).dec();
-        }
-        labelsByExec.get(context.getExecutionId()).add(labelsArray);
-        List<Measurement> measurements = gaugeCollector.collectAsMeasurements();
-        for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
-            samplesHandler.processGauges(measurements);
-        }
+
+        MetricSample sample = new MetricSample(
+            System.currentTimeMillis(), threadGroupName,
+            Map.of(TYPE, TYPE_THREADGROUP),
+            InstrumentType.GAUGE,
+            1, count, count, count, count, null);
+
+        StepMetricSample stepSample = new StepMetricSample(
+            sample, execId, node.getId().toString(),
+            planId, plan, scheduleId, schedule, execution,
+            null, null, additionalAttributes, TYPE_THREADGROUP);
+
+        processMetrics(List.of(stepSample));
+        // Thread group metrics span the whole execution lifetime (unlike keyword metrics),
+        // so they are eligible for heartbeat re-emission when no new value arrives.
+        MetricHeartbeatRegistry.getInstance().update(stepSample);
     }
 
     private Measurement transformToMeasurement(ExecutionContext executionContext, ReportNode node) {
@@ -321,7 +289,7 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
         String origin = (functionAttributes != null) ? functionAttributes.get(AbstractOrganizableObject.NAME) : null;
         TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
         return new StepMetricSample(metric, execId, rnId, planId, planName, taskId, schedule, execution,
-            agentUrl, origin, additionalAttributes);
+            agentUrl, origin, additionalAttributes, null);
     }
 
     public void processMetrics(List<StepMetricSample> metrics) {
@@ -332,6 +300,8 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
                 logger.error("Metrics could not be processed by " + samplesHandler.getClass().getSimpleName(), e);
             }
         }
+        // For now, do not produce heartbeat for keywords' related metrics as it may get more confusing that brining additional values: metrics produced by a keyword have the lifetime of that keyword not the whole execution
+        // metrics.forEach(MetricHeartbeatRegistry.getInstance()::update);
     }
 
     private static String getMeasureTypeOrDefault(Measure measure) {

@@ -94,7 +94,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         capturingHandler = new CapturingSamplesHandler();
         SamplesExecutionPlugin.registerSamplesHandlers(capturingHandler);
         engine = ExecutionEngine.builder()
-            .withPlugin(new SamplesExecutionPlugin(GaugeCollectorRegistry.getInstance()))
+            .withPlugin(new SamplesExecutionPlugin())
             .withPlugin(new FunctionPlugin())
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new LocalFunctionPlugin())
@@ -120,7 +120,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         // Counter
         StepMetricSample counterMm = findByName(metrics, "eventCount");
         Assert.assertNotNull("Counter metric 'eventCount' not found", counterMm);
-        Assert.assertEquals(MetricType.COUNTER, counterMm.sample.getType());
+        Assert.assertEquals(InstrumentType.COUNTER, counterMm.sample.getType());
         MetricSample counter = (MetricSample) counterMm.sample;
         Assert.assertEquals(5, counter.getCount());
         Assert.assertEquals(5, counter.getLast());
@@ -128,7 +128,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         // Gauge
         StepMetricSample gaugeMm = findByName(metrics, "queueDepth");
         Assert.assertNotNull("Gauge metric 'queueDepth' not found", gaugeMm);
-        Assert.assertEquals(MetricType.GAUGE, gaugeMm.sample.getType());
+        Assert.assertEquals(InstrumentType.GAUGE, gaugeMm.sample.getType());
         MetricSample gauge = gaugeMm.sample;
         Assert.assertEquals(2, gauge.getCount());
         Assert.assertEquals(57, gauge.getSum()); // 42 + 15
@@ -138,7 +138,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         // Histogram
         StepMetricSample histMm = findByName(metrics, "responseTimeMs");
         Assert.assertNotNull("Histogram metric 'responseTimeMs' not found", histMm);
-        Assert.assertEquals(MetricType.HISTOGRAM, histMm.sample.getType());
+        Assert.assertEquals(InstrumentType.HISTOGRAM, histMm.sample.getType());
         MetricSample hist = (MetricSample) histMm.sample;
         Assert.assertEquals(2, hist.getCount());
         Assert.assertEquals(350, hist.getSum()); // 100 + 250

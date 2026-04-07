@@ -48,6 +48,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static step.plugins.measurements.SamplesExecutionPlugin.TYPE_THREADGROUP;
+
 public class SamplesExecutionPluginTest extends AbstractKeyword {
     private ExecutionEngine engine;
 
@@ -59,7 +61,7 @@ public class SamplesExecutionPluginTest extends AbstractKeyword {
         SamplesControllerPlugin mc = new SamplesControllerPlugin();
         mc.initGaugeCollectorRegistry(GlobalContextBuilder.createGlobalContext());
         SamplesExecutionPlugin.registerSamplesHandlers(new TestSamplesHandler());
-        engine = ExecutionEngine.builder().withPlugin(new SamplesExecutionPlugin(GaugeCollectorRegistry.getInstance()))
+        engine = ExecutionEngine.builder().withPlugin(new SamplesExecutionPlugin())
             .withPlugin(new FunctionPlugin())
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new LocalFunctionPlugin())
@@ -145,6 +147,20 @@ public class SamplesExecutionPluginTest extends AbstractKeyword {
         @Override
         public void processGauges(List<Measurement> measurements) {
             processMeasurements(measurements);
+        }
+
+        @Override
+        public void processMetrics(List<StepMetricSample> metrics) {
+            synchronized (assertMeasurementsCount) {
+                for (StepMetricSample mm : metrics) {
+                    if (mm.metricType != null) {
+                        // Thread group and other categorized metrics
+                        incValue(mm.eId, mm.sample.getLast());
+                        incValue(mm.sample.getName(), mm.sample.getLast());
+                        incValue(mm.metricType, mm.sample.getLast());
+                    }
+                }
+            }
         }
 
         @Override
