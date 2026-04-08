@@ -18,10 +18,7 @@ import step.core.deployment.ControllerServiceException;
 import step.core.entities.Entity;
 import step.framework.server.audit.AuditLogger;
 import step.framework.server.security.Secured;
-import step.framework.server.tables.service.TableRequest;
-import step.framework.server.tables.service.TableResponse;
-import step.framework.server.tables.service.TableService;
-import step.framework.server.tables.service.TableServiceException;
+import step.framework.server.tables.service.*;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
@@ -29,6 +26,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 
 public abstract class AbstractEntityServices<T extends AbstractIdentifiableObject> extends AbstractStepAsyncServices {
 
@@ -233,8 +232,14 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-read")
-    public TableResponse<T> request(TableRequest request) throws TableServiceException {
-        return tableService.request(entityName, request, getSession());
+    public TableResponse<T> request(TableRequest request) {
+        try {
+            return tableService.request(entityName, request, getSession());
+        } catch (TableServiceAuthorizationException e) {
+            throw new ControllerServiceException(FORBIDDEN.getStatusCode(), e.getMessage(), e);
+        } catch (TableServiceException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
     }
 
     @Operation(operationId = "get{Entity}Versions", description = "Retrieves the versions of the entity with the given id")

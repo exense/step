@@ -30,11 +30,13 @@ import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.deployment.AbstractStepServices;
+import step.core.deployment.ControllerServiceException;
 import step.core.deployment.RestrictedScopeSession;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
 import step.framework.server.tables.service.TableRequest;
 import step.framework.server.tables.service.TableResponse;
+import step.framework.server.tables.service.TableServiceAuthorizationException;
 import step.framework.server.tables.service.TableServiceException;
 import step.plugins.table.settings.TableSettings;
 import step.plugins.table.settings.TableSettingsAccessor;
@@ -44,6 +46,7 @@ import step.resources.ResourceManager;
 import java.util.List;
 import java.util.Map;
 
+import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 import static step.core.Controller.USER;
 import static step.plugins.table.settings.TableSettings.SETTINGS_BASE_SCOPE_KEY;
 
@@ -74,12 +77,18 @@ public class TableService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured
-    public TableResponse<?> request(@PathParam("tableName") String tableName, @DefaultValue("true") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities, TableRequest request) throws TableServiceException {
+    public TableResponse<?> request(@PathParam("tableName") String tableName, @DefaultValue("true") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities, TableRequest request) {
         Session<User> session = getSession();
         if (!includeGlobalEntities) {
             session = new RestrictedScopeSession(getSession());
         }
-        return tableService.request(tableName, request, session);
+        try {
+            return tableService.request(tableName, request, session);
+        } catch (TableServiceAuthorizationException e) {
+            throw new ControllerServiceException(FORBIDDEN.getStatusCode(), e.getMessage(), e);
+        } catch (TableServiceException e) {
+            throw new ControllerServiceException(e.getMessage(), e);
+        }
     }
 
     @POST
