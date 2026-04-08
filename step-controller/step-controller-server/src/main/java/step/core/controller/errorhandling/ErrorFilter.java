@@ -18,8 +18,10 @@
  ******************************************************************************/
 package step.core.controller.errorhandling;
 
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 
@@ -37,11 +39,18 @@ public class ErrorFilter extends AbstractStepServices implements ExceptionMapper
 
     private static final Logger logger = LoggerFactory.getLogger(ErrorFilter.class);
 
+    @Context
+    private UriInfo uriInfo;
+
     @Override
     public Response toResponse(Exception exception) {
+        // Full request path including host, but without query parameters as they could potentially be sensitive.
+        // .getRequestUri() would include query parameters too...
+        String failedUrl = uriInfo.getAbsolutePath().toString();
+
         if (exception instanceof ControllerServiceException) {
             if (((ControllerServiceException) exception).isTechnicalError()) {
-                logger.warn("A controller service exception occurred: {}", exception.toString());
+                logger.warn("A controller service exception occurred at {}: {}", failedUrl, exception.toString());
             }
             ControllerServiceException controllerServiceException = (ControllerServiceException) exception;
             ControllerServiceError controllerServiceError = new ControllerServiceError();
@@ -51,7 +60,7 @@ public class ErrorFilter extends AbstractStepServices implements ExceptionMapper
             return Response.status(controllerServiceException.getHttpErrorCode()).entity(controllerServiceError)
                 .type(MediaType.APPLICATION_JSON).build();
         } else {
-            logger.error("Unexpected error while processing request", exception);
+            logger.error("Unexpected error while processing request at {}", failedUrl, exception);
             return Response.status(500).entity("Unexpected server error occurred: " + exception.getClass().getName() + ":" + exception.getMessage()).type("text/plain").build();
         }
     }
