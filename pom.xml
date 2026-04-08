@@ -92,24 +92,25 @@
   </repositories>
 
   <modules>
-    <module>step-commons</module>
     <module>step-agent</module>
-    <module>step-constants</module>
-    <module>step-core-model</module>
-    <module>step-core</module>
+    <module>step-ap-ide</module>
     <module>step-automation-packages</module>
-    <module>step-functions</module>
-    <module>step-functions-plugins</module>
-    <module>step-plans</module>
+    <module>step-cli</module>
+    <module>step-commons</module>
+    <module>step-constants</module>
     <module>step-controller</module>
     <module>step-controller-plugins</module>
-    <module>step-maven-plugin</module>
-    <module>step-repositories</module>
+    <module>step-core</module>
+    <module>step-core-model</module>
+    <module>step-functions</module>
+    <module>step-functions-plugins</module>
     <module>step-ide</module>
-    <module>step-libs-maven-client</module>
     <module>step-json-schema</module>
-    <module>step-cli</module>
+    <module>step-libs-maven-client</module>
     <module>step-livereporting</module>
+    <module>step-maven-plugin</module>
+    <module>step-plans</module>
+    <module>step-repositories</module>
   </modules>
 
   <!-- available dependencies, can be used in modules and dependent projects WITHOUT specifying a version number -->
