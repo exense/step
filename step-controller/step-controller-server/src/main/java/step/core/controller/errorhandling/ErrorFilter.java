@@ -24,10 +24,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceError;
 import step.core.deployment.ControllerServiceException;
@@ -46,7 +44,7 @@ public class ErrorFilter extends AbstractStepServices implements ExceptionMapper
     public Response toResponse(Exception exception) {
         // Full request path including host, but without query parameters as they could potentially be sensitive.
         // .getRequestUri() would include query parameters too...
-String failedUrl = (uriInfo != null && uriInfo.getAbsolutePath() != null) ? uriInfo.getAbsolutePath().toString() : "unknown URL";
+        String failedUrl = (uriInfo != null && uriInfo.getAbsolutePath() != null) ? uriInfo.getAbsolutePath().toString() : "unknown URL";
 
         if (exception instanceof ControllerServiceException) {
             if (((ControllerServiceException) exception).isTechnicalError()) {
