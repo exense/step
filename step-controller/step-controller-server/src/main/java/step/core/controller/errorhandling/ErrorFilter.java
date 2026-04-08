@@ -46,7 +46,7 @@ public class ErrorFilter extends AbstractStepServices implements ExceptionMapper
     public Response toResponse(Exception exception) {
         // Full request path including host, but without query parameters as they could potentially be sensitive.
         // .getRequestUri() would include query parameters too...
-        String failedUrl = uriInfo.getAbsolutePath().toString();
+String failedUrl = (uriInfo != null && uriInfo.getAbsolutePath() != null) ? uriInfo.getAbsolutePath().toString() : "unknown URL";
 
         if (exception instanceof ControllerServiceException) {
             if (((ControllerServiceException) exception).isTechnicalError()) {
