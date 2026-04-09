@@ -2,7 +2,11 @@ package step.plugins.timeseries.migration;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import step.core.Version;
-import step.core.collections.*;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.DocumentObject;
+import step.core.collections.Filters;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 
@@ -67,10 +71,5 @@ public class MigrateDashboardsTask extends MigrationTask {
             });
             dashboardsCollection.save(dashboard);
         });
-    }
-
-    @Override
-    public void runDowngradeScript() {
-
     }
 }

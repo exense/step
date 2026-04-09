@@ -65,9 +65,4 @@ public class ScreenEntityIconMigrationTask extends MigrationTask {
 
         logger.info("Migrated screen inputs with Entity Icons");
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
 }

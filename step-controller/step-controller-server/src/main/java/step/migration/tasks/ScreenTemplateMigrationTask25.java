@@ -19,10 +19,16 @@
 package step.migration.tasks;
 
 import step.core.Version;
-import step.core.collections.*;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.Filters;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
-import step.plugins.screentemplating.*;
+import step.plugins.screentemplating.Input;
+import step.plugins.screentemplating.InputType;
+import step.plugins.screentemplating.ScreenInput;
+import step.plugins.screentemplating.ScreenInputAccessorImpl;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -78,10 +84,5 @@ public class ScreenTemplateMigrationTask25 extends MigrationTask {
         if (!inputExists.get()) {
             screenInputAccessor.save(new ScreenInput(0, newScreenId, nameInput, true));
         }
-    }
-
-    @Override
-    public void runDowngradeScript() {
-
     }
 }
