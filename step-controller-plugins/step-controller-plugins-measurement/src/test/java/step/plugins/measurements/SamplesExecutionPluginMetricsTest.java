@@ -44,7 +44,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Tests that running a keyword that adds output metrics via
  * {@code output.addCounter/addGauge/addHistogram} routes those metrics through
  * {@link SamplesHandler#processMetrics} with correctly enriched
- * {@link StepMetricSample} objects.
+ * {@link ExecutionMetricSample} objects.
  * <p>
  * This class is intentionally separate from {@link SamplesExecutionPluginTest} to avoid
  * the static {@code measurementHandlers} list accumulating handlers across tests.
@@ -54,12 +54,12 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
     private ExecutionEngine engine;
 
     /**
-     * Captures all {@link StepMetricSample}s delivered to {@link #processMetrics}.
+     * Captures all {@link ExecutionMetricSample}s delivered to {@link #processMetrics}.
      * No-op {@link #processMeasurements} to avoid side effects on shared state.
      */
     private static class CapturingSamplesHandler implements SamplesHandler {
 
-        final CopyOnWriteArrayList<StepMetricSample> capturedMetrics = new CopyOnWriteArrayList<>();
+        final CopyOnWriteArrayList<ExecutionMetricSample> capturedMetrics = new CopyOnWriteArrayList<>();
 
         @Override
         public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
@@ -76,7 +76,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         }
 
         @Override
-        public void processMetrics(List<StepMetricSample> metrics) {
+        public void processMetrics(List<ExecutionMetricSample> metrics) {
             capturedMetrics.addAll(metrics);
         }
 
@@ -90,7 +90,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
     @Before
     public void setUp() throws Exception {
         SamplesControllerPlugin mc = new SamplesControllerPlugin();
-        mc.initGaugeCollectorRegistry(GlobalContextBuilder.createGlobalContext());
+        mc.initMetricSamplingAndHeartbeat(GlobalContextBuilder.createGlobalContext());
         capturingHandler = new CapturingSamplesHandler();
         SamplesExecutionPlugin.registerSamplesHandlers(capturingHandler);
         engine = ExecutionEngine.builder()
@@ -112,13 +112,13 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
 
         engine.execute(plan);
 
-        List<StepMetricSample> metrics = capturingHandler.capturedMetrics;
+        List<ExecutionMetricSample> metrics = capturingHandler.capturedMetrics;
 
         // Expect exactly 3 metric measurements: counter, gauge, histogram
         Assert.assertEquals(3, metrics.size());
 
         // Counter
-        StepMetricSample counterMm = findByName(metrics, "eventCount");
+        ExecutionMetricSample counterMm = findByName(metrics, "eventCount");
         Assert.assertNotNull("Counter metric 'eventCount' not found", counterMm);
         Assert.assertEquals(InstrumentType.COUNTER, counterMm.sample.getType());
         MetricSample counter = (MetricSample) counterMm.sample;
@@ -126,7 +126,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         Assert.assertEquals(5, counter.getLast());
 
         // Gauge
-        StepMetricSample gaugeMm = findByName(metrics, "queueDepth");
+        ExecutionMetricSample gaugeMm = findByName(metrics, "queueDepth");
         Assert.assertNotNull("Gauge metric 'queueDepth' not found", gaugeMm);
         Assert.assertEquals(InstrumentType.GAUGE, gaugeMm.sample.getType());
         MetricSample gauge = gaugeMm.sample;
@@ -136,7 +136,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         Assert.assertEquals(42, gauge.getMax());
 
         // Histogram
-        StepMetricSample histMm = findByName(metrics, "responseTimeMs");
+        ExecutionMetricSample histMm = findByName(metrics, "responseTimeMs");
         Assert.assertNotNull("Histogram metric 'responseTimeMs' not found", histMm);
         Assert.assertEquals(InstrumentType.HISTOGRAM, histMm.sample.getType());
         MetricSample hist = (MetricSample) histMm.sample;
@@ -149,7 +149,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         Assert.assertEquals(execId, counterMm.getEffectiveLabels().get(SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID));
     }
 
-    private StepMetricSample findByName(List<StepMetricSample> metrics, String name) {
+    private ExecutionMetricSample findByName(List<ExecutionMetricSample> metrics, String name) {
         return metrics.stream()
             .filter(mm -> name.equals(mm.sample.getName()))
             .findFirst()

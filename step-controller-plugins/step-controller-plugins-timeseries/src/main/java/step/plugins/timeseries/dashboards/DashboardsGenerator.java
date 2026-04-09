@@ -9,13 +9,13 @@ import step.plugins.timeseries.TimeSeriesControllerPlugin;
 import step.plugins.timeseries.dashboards.model.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static step.controller.services.entities.AbstractEntityServices.CUSTOM_FIELD_LOCKED;
-import static step.plugins.timeseries.MetricsConstants.*;
+import static step.plugins.measurements.MetricsConstants.*;
+import static step.plugins.measurements.SamplesControllerPlugin.RESPONSE_TIME;
+import static step.plugins.measurements.SamplesControllerPlugin.THREAD_GROUP;
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.GENERATION_NAME;
-import static step.plugins.timeseries.TimeSeriesExecutionPlugin.RESPONSE_TIME;
-import static step.plugins.timeseries.TimeSeriesExecutionPlugin.THREAD_GROUP;
+
 
 public class DashboardsGenerator {
 

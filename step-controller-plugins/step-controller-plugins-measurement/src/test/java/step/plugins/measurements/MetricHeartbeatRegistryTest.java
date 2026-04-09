@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
 public class MetricHeartbeatRegistryTest {
 
     private MetricHeartbeatRegistry registry;
-    private List<StepMetricSample> captured;
+    private List<ExecutionMetricSample> captured;
 
     @Before
     public void setUp() {
@@ -121,7 +121,7 @@ public class MetricHeartbeatRegistryTest {
 
     @Test
     public void heartbeatPreservesExecutionMetadata() {
-        StepMetricSample original = new StepMetricSample(
+        ExecutionMetricSample original = new ExecutionMetricSample(
                 gauge("cpu", 1, 70, 70, 70, 70),
                 "exec-42", "rn-99", "plan-7",
                 "MyPlan", "task-1", "sched-1", "exec desc",
@@ -131,7 +131,7 @@ public class MetricHeartbeatRegistryTest {
         registry.tick();
 
         assertEquals(1, captured.size());
-        StepMetricSample hb = captured.get(0);
+        ExecutionMetricSample hb = captured.get(0);
         assertEquals("exec-42", hb.eId);
         assertEquals("rn-99",   hb.rnId);
         assertEquals("plan-7",  hb.planId);
@@ -181,7 +181,7 @@ public class MetricHeartbeatRegistryTest {
 
     @Test
     public void allRegisteredHandlersReceiveHeartbeat() {
-        List<StepMetricSample> captured2 = new ArrayList<>();
+        List<ExecutionMetricSample> captured2 = new ArrayList<>();
         registry.registerHandler(capturingHandler(captured2));
 
         registry.update(stepSample("exec-1", gauge("cpu", 1, 80, 80, 80, 80)));
@@ -268,14 +268,14 @@ public class MetricHeartbeatRegistryTest {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private StepMetricSample stepSample(String execId, MetricSample sample) {
-        return new StepMetricSample(sample, execId, "rn-1", "plan-1",
+    private ExecutionMetricSample stepSample(String execId, MetricSample sample) {
+        return new ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
                 "MyPlan", "", "", "my execution", null, null, null, null);
     }
 
-    private StepMetricSample stepSampleFull(String execId, MetricSample sample,
-                                            String agentUrl, String origin) {
-        return new StepMetricSample(sample, execId, "rn-1", "plan-1",
+    private ExecutionMetricSample stepSampleFull(String execId, MetricSample sample,
+                                                 String agentUrl, String origin) {
+        return new ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
                 "MyPlan", "", "", "my execution", agentUrl, origin, null, null);
     }
 
@@ -294,7 +294,7 @@ public class MetricHeartbeatRegistryTest {
                 InstrumentType.HISTOGRAM, count, sum, 0, sum, sum, null);
     }
 
-    private static SamplesHandler capturingHandler(List<StepMetricSample> sink) {
+    private static SamplesHandler capturingHandler(List<ExecutionMetricSample> sink) {
         return new SamplesHandler() {
             @Override
             public void initializeExecutionContext(ExecutionEngineContext ctx, ExecutionContext execCtx) {}
@@ -303,7 +303,7 @@ public class MetricHeartbeatRegistryTest {
             @Override
             public void processGauges(List<Measurement> measurements) {}
             @Override
-            public void processMetrics(List<StepMetricSample> metrics) { sink.addAll(metrics); }
+            public void processMetrics(List<ExecutionMetricSample> metrics) { sink.addAll(metrics); }
             @Override
             public void afterExecutionEnd(ExecutionContext context) {}
         };

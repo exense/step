@@ -23,10 +23,11 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
-import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.SamplesExecutionPlugin;
 
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.Assert.*;
@@ -156,6 +157,11 @@ public class RawSamplesHandlerTest {
                         treeMap.put("attr1", "val1");
                         treeMap.put("attr2", "val2");
                         return treeMap;
+                    }
+
+                    @Override
+                    public TreeSet<String> getAdditionalAttributeKeys() {
+                        return new TreeSet<>(Set.of("attr1", "attr2"));
                     }
 
                     @Override

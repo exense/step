@@ -5,14 +5,14 @@ import step.core.collections.Collection;
 import step.core.collections.Filters;
 import step.core.collections.filters.Equals;
 import step.plugins.measurements.SamplesExecutionPlugin;
-import step.plugins.measurements.StepMetricSample;
+import step.plugins.measurements.ExecutionMetricSample;
 
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class MetricSampleAccessor extends AbstractAccessor<StepMetricSample> {
+public class MetricSampleAccessor extends AbstractAccessor<ExecutionMetricSample> {
 
-    public MetricSampleAccessor(Collection<StepMetricSample> collectionDriver) {
+    public MetricSampleAccessor(Collection<ExecutionMetricSample> collectionDriver) {
         super(collectionDriver);
     }
 
@@ -21,7 +21,7 @@ public class MetricSampleAccessor extends AbstractAccessor<StepMetricSample> {
         this.collectionDriver.remove(executionIdFilter);
     }
 
-    public Stream<StepMetricSample> findByReportNodeId(String rnId) {
+    public Stream<ExecutionMetricSample> findByReportNodeId(String rnId) {
         Equals executionIdFilter = Filters.equals(SamplesExecutionPlugin.RN_ID, rnId);
         return this.findManyByCriteria(Map.of(SamplesExecutionPlugin.RN_ID, rnId));
     }

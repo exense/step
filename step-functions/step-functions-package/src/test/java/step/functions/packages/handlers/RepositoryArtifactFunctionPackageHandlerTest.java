@@ -90,18 +90,7 @@ public class RepositoryArtifactFunctionPackageHandlerTest {
                 + "<scope>test</scope>"
                 + "</dependency>");
 
-        List<Function> functions = handler.buildFunctions(functionPackage, false, new ObjectEnricher() {
-
-            @Override
-            public void accept(EnricheableObject t) {
-                t.addAttribute("attribute1", "attributeValue1");
-            }
-
-            @Override
-            public TreeMap<String, String> getAdditionalAttributes() {
-                return null;
-            }
-        });
+        List<Function> functions = handler.buildFunctions(functionPackage, false, t -> t.addAttribute("attribute1", "attributeValue1"));
         Assert.assertEquals(2, functions.size());
 
         Resource resource = resourceManager.getResource(FileResolver.resolveResourceId(functionPackage.getPackageLocation()));

@@ -3,7 +3,6 @@ package step.plugins.measurements;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.metrics.MetricSample;
 
 import java.util.Map;
@@ -17,9 +16,8 @@ import java.util.TreeMap;
  * Unlike {@link Measurement}, this is a typed flat POJO rather than a {@link java.util.HashMap}
  * subclass. Handlers receive lists of these via {@link SamplesHandler#processMetrics}.
  */
-public class StepMetricSample extends AbstractOrganizableObject {
+public class ExecutionMetricSample extends AbstractMetricSample {
 
-    public final MetricSample sample;
     public final String eId;
     public final String rnId;
     public final String planId;
@@ -29,31 +27,21 @@ public class StepMetricSample extends AbstractOrganizableObject {
     public final String execution;
     public final String agentUrl;
     public final String origin;
-    /**
-     * Optional time-series category override. When non-null, handlers that write a
-     * {@code metricType} attribute (e.g. {@link step.plugins.timeseries.TimeSeriesBucketingHandler})
-     * use this value instead of {@code sample.getType().toLowerCase()}, allowing a metric
-     * that is mechanically a {@code GAUGE} to appear under a distinct category such as
-     * {@code "threadgroup"} without polluting the instrument-type enum.
-     * Prometheus and heartbeat handling always use the instrument type from
-     * {@code sample.getType()} and are unaffected by this field.
-     */
-    public final String metricType;
 
     @JsonCreator
-    public StepMetricSample(@JsonProperty("sample") MetricSample sample,
-                            @JsonProperty("eId") String eId,
-                            @JsonProperty("rnId") String rnId,
-                            @JsonProperty("planId") String planId,
-                            @JsonProperty("plan") String plan,
-                            @JsonProperty("taskId") String taskId,
-                            @JsonProperty("schedule") String schedule,
-                            @JsonProperty("execution") String execution,
-                            @JsonProperty("agentUrl") String agentUrl,
-                            @JsonProperty("origin") String origin,
-                            @JsonProperty("attributes") Map<String, String> attributes,
-                            @JsonProperty("metricType") String metricType) {
-        this.sample = sample;
+    public ExecutionMetricSample(@JsonProperty("sample") MetricSample sample,
+                                 @JsonProperty("eId") String eId,
+                                 @JsonProperty("rnId") String rnId,
+                                 @JsonProperty("planId") String planId,
+                                 @JsonProperty("plan") String plan,
+                                 @JsonProperty("taskId") String taskId,
+                                 @JsonProperty("schedule") String schedule,
+                                 @JsonProperty("execution") String execution,
+                                 @JsonProperty("agentUrl") String agentUrl,
+                                 @JsonProperty("origin") String origin,
+                                 @JsonProperty("attributes") Map<String, String> attributes,
+                                 @JsonProperty("metricType") String metricType) {
+        super(sample, metricType);
         this.eId = eId;
         this.rnId = rnId;
         this.planId = planId;
@@ -64,7 +52,6 @@ public class StepMetricSample extends AbstractOrganizableObject {
         this.agentUrl = agentUrl;
         this.origin = origin;
         this.attributes = attributes;
-        this.metricType = metricType;
     }
 
     /**
@@ -78,6 +65,7 @@ public class StepMetricSample extends AbstractOrganizableObject {
      * Context labels are set last so they cannot be overridden by user labels.
      */
     @JsonIgnore
+    @Override
     public Map<String, String> getEffectiveLabels() {
         TreeMap<String, String> labels = new TreeMap<>(sample.getLabels());
         if (origin != null) {

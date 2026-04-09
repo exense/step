@@ -11,7 +11,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
- * Periodically re-emits the last known {@link StepMetricSample} for each active
+ * Periodically re-emits the last known {@link ExecutionMetricSample} for each active
  * COUNTER and GAUGE metric to handlers that require a continuous stream of data points
  * (e.g. RAW storage, time-series) so that charts can plot values during intervals
  * where no new observation arrived from the agent.
@@ -45,10 +45,10 @@ public class MetricHeartbeatRegistry {
     volatile long intervalMs;
 
     private static final class LastSampleEntry {
-        final StepMetricSample sample;
+        final ExecutionMetricSample sample;
         final long lastUpdatedMs;
 
-        LastSampleEntry(StepMetricSample sample, long lastUpdatedMs) {
+        LastSampleEntry(ExecutionMetricSample sample, long lastUpdatedMs) {
             this.sample = sample;
             this.lastUpdatedMs = lastUpdatedMs;
         }
@@ -63,12 +63,12 @@ public class MetricHeartbeatRegistry {
      * {@link SamplesExecutionPlugin#processMetrics} after each real dispatch.
      * HISTOGRAM samples are silently ignored.
      */
-    public void update(StepMetricSample stepMetricSample) {
-        if (stepMetricSample.sample.getType() == InstrumentType.HISTOGRAM) {
+    public void update(ExecutionMetricSample executionMetricSample) {
+        if (executionMetricSample.sample.getType() == InstrumentType.HISTOGRAM) {
             return;
         }
-        String key = buildKey(stepMetricSample);
-        lastSamples.put(key, new LastSampleEntry(stepMetricSample, System.currentTimeMillis()));
+        String key = buildKey(executionMetricSample);
+        lastSamples.put(key, new LastSampleEntry(executionMetricSample, System.currentTimeMillis()));
     }
 
     /**
@@ -99,7 +99,7 @@ public class MetricHeartbeatRegistry {
     void tick() {
         try {
             long now = System.currentTimeMillis();
-            List<StepMetricSample> heartbeats = lastSamples.values().stream()
+            List<ExecutionMetricSample> heartbeats = lastSamples.values().stream()
                     .filter(entry -> now - entry.lastUpdatedMs >= intervalMs)
                     .map(entry -> buildHeartbeat(entry.sample, now))
                     .collect(Collectors.toList());
@@ -117,7 +117,7 @@ public class MetricHeartbeatRegistry {
         }
     }
 
-    private static String buildKey(StepMetricSample mm) {
+    private static String buildKey(ExecutionMetricSample mm) {
         String execId = mm.eId != null ? mm.eId : "";
         String agentUrl = mm.agentUrl != null ? mm.agentUrl : "";
         String origin = mm.origin != null ? mm.origin : "";
@@ -137,7 +137,7 @@ public class MetricHeartbeatRegistry {
      *       the last known value as a single synthetic observation.</li>
      * </ul>
      */
-    private static StepMetricSample buildHeartbeat(StepMetricSample original, long now) {
+    private static ExecutionMetricSample buildHeartbeat(ExecutionMetricSample original, long now) {
         MetricSample orig = original.sample;
         MetricSample heartbeatSample;
         if (orig.getType() == InstrumentType.COUNTER) {
@@ -150,7 +150,7 @@ public class MetricHeartbeatRegistry {
             heartbeatSample = new MetricSample(now, orig.getName(), orig.getLabels(), InstrumentType.GAUGE,
                     1, last, last, last, last, null);
         }
-        return new StepMetricSample(heartbeatSample, original.eId, original.rnId, original.planId,
+        return new ExecutionMetricSample(heartbeatSample, original.eId, original.rnId, original.planId,
                 original.plan, original.taskId, original.schedule, original.execution,
                 original.agentUrl, original.origin, original.getAttributes(), original.metricType);
     }

@@ -39,7 +39,6 @@ import step.handlers.javahandler.Keyword;
 import step.migration.MigrationManager;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
-import step.plugins.measurements.GaugeCollectorRegistry;
 import step.plugins.measurements.SamplesControllerPlugin;
 import step.plugins.measurements.SamplesExecutionPlugin;
 import step.threadpool.ThreadPoolPlugin;

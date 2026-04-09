@@ -35,15 +35,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
+import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
+import static step.plugins.measurements.AbstractMetricSample.METRIC_TYPE;
 import static step.plugins.measurements.SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandler {
 
-    private static final String ATTRIBUTES_PREFIX = "attributes.";
-    private static final String METRIC_TYPE_ATTRIBUTE = "metricType";
-    private static final String TIMESTAMP_ATTRIBUTE = "begin";
-    private static final List<String> MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES = Arrays.asList(METRIC_TYPE_ATTRIBUTE);
+    private static final List<String> MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES = List.of(METRIC_TYPE);
     private static final Function<String, String> attributesPrefixRemoval = (attribute) -> {
         if (attribute.startsWith(ATTRIBUTES_PREFIX)) {
             return attribute.replaceFirst(ATTRIBUTES_PREFIX, "");
@@ -131,7 +131,7 @@ public class TimeSeriesHandler {
             }
             timeSeriesBucketingHandler.flush();
             TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
-            TimeSeriesAggregationQuery query = mapToQuery(request, aggregationPipeline);
+            TimeSeriesAggregationQuery query = mapToQuery(request);
             TimeSeriesAggregationResponse response = aggregationPipeline.collect(query);
 
             return mapToApiResponse(request, response);
@@ -188,20 +188,20 @@ public class TimeSeriesHandler {
             return (int) request.getIntervalSize();
         }
         int nbBuckets = Math.max(100, request.getNumberOfBuckets());
-        int calculatedResolution = (int) Math.floor((request.getEnd() - request.getStart()) / nbBuckets);
+        int calculatedResolution = (int) Math.floor((double) (request.getEnd() - request.getStart()) / nbBuckets);
         return Math.max(resolution, calculatedResolution);
     }
 
     public TimeSeriesAPIResponse getTimeSeries(FetchBucketsRequest request) {
         validateFetchRequest(request);
-        TimeSeriesAggregationQuery query = mapToQuery(request, this.aggregationPipeline);
+        TimeSeriesAggregationQuery query = mapToQuery(request);
         TimeSeriesAggregationResponse response = this.aggregationPipeline.collect(query);
         return mapToApiResponse(request, response);
     }
 
     public TimeSeriesAPIResponse getReportNodeTimeSeries(FetchBucketsRequest request) {
         validateFetchRequest(request);
-        TimeSeriesAggregationQuery query = mapToQuery(request, this.reportNodeAggregationPipeline);
+        TimeSeriesAggregationQuery query = mapToQuery(request);
         TimeSeriesAggregationResponse response = this.reportNodeAggregationPipeline.collect(query);
         return mapToApiResponse(request, response);
     }
@@ -262,9 +262,7 @@ public class TimeSeriesHandler {
     public Set<String> getMeasurementsAttributes(String oqlFilter) {
         Filter filter = OQLTimeSeriesFilterBuilder.getFilter(oqlFilter, attributesPrefixRemoval, Collections.emptySet());
         Set<String> fields = new HashSet<>();
-        measurementCollection.find(filter, null, 0, samplingLimit, 0).forEach(measurement -> {
-            fields.addAll(measurement.keySet());
-        });
+        measurementCollection.find(filter, null, 0, samplingLimit, 0).forEach(measurement -> fields.addAll(measurement.keySet()));
         return fields;
     }
 
@@ -318,7 +316,7 @@ public class TimeSeriesHandler {
         }
     }
 
-    private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request, TimeSeriesAggregationPipeline pipeline) {
+    private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request) {
         TimeSeriesAggregationQueryBuilder timeSeriesAggregationQuery = new TimeSeriesAggregationQueryBuilder()
             .range(request.getStart(), request.getEnd())
             .withFilter(Filters.and(
@@ -329,7 +327,7 @@ public class TimeSeriesHandler {
             .withGroupDimensions(request.getGroupDimensions());
         if (request.getCollectAttributeKeys() != null && !request.getCollectAttributeKeys().isEmpty()) {
             timeSeriesAggregationQuery.withAttributeCollection(request.getCollectAttributeKeys(),
-                Objects.requireNonNullElse(request.getCollectAttributesValuesLimit(), 0));
+                request.getCollectAttributesValuesLimit());
         }
         if (request.getIntervalSize() > 0) {
             timeSeriesAggregationQuery.window(request.getIntervalSize());

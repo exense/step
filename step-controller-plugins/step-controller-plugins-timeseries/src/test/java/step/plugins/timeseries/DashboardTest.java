@@ -18,11 +18,10 @@ import step.plugins.timeseries.dashboards.model.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import static step.plugins.timeseries.TimeSeriesExecutionPlugin.EXECUTIONS_COUNT;
-import static step.plugins.timeseries.TimeSeriesExecutionPlugin.RESPONSE_TIME;
+import static step.plugins.measurements.SamplesControllerPlugin.EXECUTIONS_COUNT;
+import static step.plugins.measurements.SamplesControllerPlugin.RESPONSE_TIME;
 
 public class DashboardTest {
 

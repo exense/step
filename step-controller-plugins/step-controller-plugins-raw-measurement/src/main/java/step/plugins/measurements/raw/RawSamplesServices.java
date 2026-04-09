@@ -10,7 +10,7 @@ import step.core.deployment.AbstractStepServices;
 import step.core.metrics.MetricSample;
 import step.core.metrics.InstrumentType;
 import step.framework.server.security.Secured;
-import step.plugins.measurements.StepMetricSample;
+import step.plugins.measurements.ExecutionMetricSample;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -45,7 +45,7 @@ public class RawSamplesServices extends AbstractStepServices {
     public List<MetricSample> getAggregatedMetricSamples(@PathParam("rnId") String rnId) {
         // Registry: one aggregated MetricSample per unique (name, labels) combination
         Map<String, MetricSample> registry = new LinkedHashMap<>();
-        try (Stream<StepMetricSample> stream = metricSampleAccessor.findByReportNodeId(rnId)) {
+        try (Stream<ExecutionMetricSample> stream = metricSampleAccessor.findByReportNodeId(rnId)) {
             stream.forEach(stepMetricSample -> {
                 MetricSample sample = stepMetricSample.sample;
                 String key = sample.getName() + "|" + new TreeMap<>(sample.getLabels());

@@ -11,7 +11,7 @@ import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesBuilder;
 import step.core.timeseries.TimeSeriesCollection;
 import step.core.timeseries.bucket.Bucket;
-import step.plugins.measurements.StepMetricSample;
+import step.plugins.measurements.ExecutionMetricSample;
 
 import java.util.List;
 import java.util.Map;
@@ -46,7 +46,7 @@ public class TimeSeriesBucketingHandlerTest {
         MetricSample snapshot = new MetricSample(0L,
             "requests", Map.of("env", "prod"), InstrumentType.COUNTER, 7, 42, 42, 42, 42, null);
 
-        StepMetricSample mm = buildMetricMeasurement(snapshot);
+        ExecutionMetricSample mm = buildMetricMeasurement(snapshot);
 
         handler.processMetrics(List.of(mm));
         handler.flush();
@@ -73,7 +73,7 @@ public class TimeSeriesBucketingHandlerTest {
         MetricSample snapshot = new MetricSample(1000L,
             "queue_depth", Map.of("env", "staging"), InstrumentType.GAUGE,
             3, 57, 15, 42, 42, null);
-        StepMetricSample mm = buildMetricMeasurement(snapshot);
+        ExecutionMetricSample mm = buildMetricMeasurement(snapshot);
 
         handler.processMetrics(List.of(mm));
         handler.flush();
@@ -98,7 +98,7 @@ public class TimeSeriesBucketingHandlerTest {
         MetricSample snapshot = new MetricSample(2000L,
             "response_time_ms", Map.of(), InstrumentType.HISTOGRAM,
             2, 300, 100, 200, 200, dist);
-        StepMetricSample mm = buildMetricMeasurement(snapshot);
+        ExecutionMetricSample mm = buildMetricMeasurement(snapshot);
 
         handler.processMetrics(List.of(mm));
         handler.flush();
@@ -124,7 +124,7 @@ public class TimeSeriesBucketingHandlerTest {
         MetricSample snapshot = new MetricSample(0L,
             "cpu", Map.of("env", "qa", "region", "us-east"), InstrumentType.GAUGE,
             1, 80, 80, 80, 80, null);
-        StepMetricSample mm = buildMetricMeasurement(snapshot);
+        ExecutionMetricSample mm = buildMetricMeasurement(snapshot);
 
         handler.processMetrics(List.of(mm));
         handler.flush();
@@ -137,8 +137,8 @@ public class TimeSeriesBucketingHandlerTest {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private StepMetricSample buildMetricMeasurement(MetricSample snapshot) {
-        return new StepMetricSample(
+    private ExecutionMetricSample buildMetricMeasurement(MetricSample snapshot) {
+        return new ExecutionMetricSample(
             snapshot,
             "exec-1",        // execId
             "rn-1",          // rnId

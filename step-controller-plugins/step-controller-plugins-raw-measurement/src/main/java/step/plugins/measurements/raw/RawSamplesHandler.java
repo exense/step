@@ -25,11 +25,11 @@ import org.slf4j.LoggerFactory;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
-import step.plugins.measurements.GaugeCollectorRegistry;
+import step.plugins.measurements.MetricSamplerRegistry;
 import step.plugins.measurements.MetricHeartbeatRegistry;
 import step.plugins.measurements.SamplesHandler;
 import step.plugins.measurements.Measurement;
-import step.plugins.measurements.StepMetricSample;
+import step.plugins.measurements.ExecutionMetricSample;
 
 public class RawSamplesHandler implements SamplesHandler {
 
@@ -42,7 +42,7 @@ public class RawSamplesHandler implements SamplesHandler {
         super();
         this.accessor = accessor;
         this.metricSampleAccessor = metricSampleAccessor;
-        GaugeCollectorRegistry.getInstance().registerHandler(this);
+        MetricSamplerRegistry.getInstance().registerHandler(this);
         MetricHeartbeatRegistry.getInstance().registerHandler(this);
     }
 
@@ -60,7 +60,7 @@ public class RawSamplesHandler implements SamplesHandler {
     }
 
     @Override
-    public void processMetrics(List<StepMetricSample> metrics) {
+    public void processMetrics(List<ExecutionMetricSample> metrics) {
         if (metrics != null && ! metrics.isEmpty()) {
             metricSampleAccessor.save(metrics);
         }

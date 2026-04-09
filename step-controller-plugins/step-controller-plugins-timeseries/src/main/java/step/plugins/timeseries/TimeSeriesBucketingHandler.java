@@ -7,21 +7,23 @@ import step.core.timeseries.TimeSeries;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
+import step.plugins.measurements.AbstractMetricSample;
+import step.plugins.measurements.ControllerMetricSample;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.MetricHeartbeatRegistry;
 import step.plugins.measurements.SamplesHandler;
-import step.plugins.measurements.StepMetricSample;
+import step.plugins.measurements.ExecutionMetricSample;
 
 import java.util.*;
+
+import static step.plugins.measurements.AbstractMetricSample.METRIC_TYPE;
+import static step.plugins.measurements.SamplesControllerPlugin.RESPONSE_TIME;
+import static step.plugins.measurements.SamplesControllerPlugin.THREAD_GROUP;
 
 /**
  * This class acts as a wrapper over a TimeSeries ingestion. It has special methods which alter the data before ingestion.
  */
 public class TimeSeriesBucketingHandler implements SamplesHandler {
-
-    private static final String THREAD_GROUP_MEASUREMENT_TYPE = "threadgroup";
-    private static final String METRIC_TYPE_KEY = "metricType";
-    private static final String METRIC_TYPE_RESPONSE_TIME = "response-time";
 
     private final TimeSeries timeSeries;
 
@@ -53,7 +55,7 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
         long value = measurement.getValue();
 
         BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
-        bucketAttributes.put(METRIC_TYPE_KEY, METRIC_TYPE_RESPONSE_TIME);
+        bucketAttributes.put(METRIC_TYPE, RESPONSE_TIME);
         TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
         ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
     }
@@ -78,7 +80,7 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
         measurements.forEach(measurement -> {
             if (measurement != null) {
                 BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
-                bucketAttributes.put(METRIC_TYPE_KEY, measurement.getType());
+                bucketAttributes.put(METRIC_TYPE, measurement.getType());
                 TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
                 ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
             }
@@ -86,7 +88,7 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
     }
 
     /**
-     * Ingests a batch of enriched metric snapshots into the time series.
+     * Ingests a batch of enriched metric samples into the time series.
      * <p>
      * {@link MetricSample} (counter): bucket where {@code count = accumulatedDiff}
      * (increments since last flush, for per-interval rate calculations) and
@@ -99,22 +101,27 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
      * full distribution for percentile queries. Empty intervals (count == 0) are skipped.
      */
     @Override
-    public void processMetrics(List<StepMetricSample> metrics) {
+    public void processMetrics(List<ExecutionMetricSample> metrics) {
         metrics.forEach(this::processMetric);
     }
 
-    private void processMetric(StepMetricSample mm) {
+    @Override
+    public void processControllerMetrics(List<ControllerMetricSample> metrics) {
+        metrics.forEach(this::processMetric);
+    }
+
+    private void processMetric(AbstractMetricSample mm) {
         MetricSample sample = mm.sample;
         long begin = sample.getSampleTime();
-        BucketAttributes attributes = metricMeasurementToBucketAttributes(mm);
+        BucketAttributes attributes = metricSampleToBucketAttributes(mm);
         String instrumentType = sample.getType().toLowerCase();
-        attributes.put(METRIC_TYPE_KEY, mm.metricType != null ? mm.metricType : instrumentType);
+        attributes.put(METRIC_TYPE, mm.metricType != null ? mm.metricType : instrumentType);
         attributes.put("instrumentType", instrumentType);
         TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.getIngestionPipeline();
         ingestionPipeline.ingestBucket(buildMetricBucket(attributes, begin, sample));
     }
 
-    private BucketAttributes metricMeasurementToBucketAttributes(StepMetricSample mm) {
+    private BucketAttributes metricSampleToBucketAttributes(AbstractMetricSample mm) {
         Map<String, Object> attributesMap = new HashMap<>();
         Map<String, String> effectiveLabels = mm.getEffectiveLabels();
         if (handledAttributes.isEmpty()) {
@@ -132,16 +139,16 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
         return new BucketAttributes(attributesMap);
     }
 
-    private static Bucket buildMetricBucket(BucketAttributes attributes, long begin, MetricSample snapshot) {
+    private static Bucket buildMetricBucket(BucketAttributes attributes, long begin, MetricSample sample) {
         Bucket bucket = new Bucket();
         bucket.setBegin(begin);
         bucket.setAttributes(attributes);
-        bucket.setCount(snapshot.getCount());
-        bucket.setSum(snapshot.getSum());
-        bucket.setMin(snapshot.getMin());
-        bucket.setMax(snapshot.getMax());
-        if (snapshot.getDistribution() != null) {
-            bucket.setDistribution(snapshot.getDistribution());
+        bucket.setCount(sample.getCount());
+        bucket.setSum(sample.getSum());
+        bucket.setMin(sample.getMin());
+        bucket.setMax(sample.getMax());
+        if (sample.getDistribution() != null) {
+            bucket.setDistribution(sample.getDistribution());
         }
         return bucket;
     }
@@ -156,7 +163,7 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
             return;
         }
         measurement.remove("_id"); // because these measurements come with a generated id and can't be grouped into buckets.
-        if (measurement.getType().equals(THREAD_GROUP_MEASUREMENT_TYPE)) {
+        if (measurement.getType().equals(THREAD_GROUP)) {
             this.processGauges(List.of(measurement));
         } else {
             this.processMeasurement(measurement);

@@ -9,26 +9,39 @@ import step.artefacts.reports.ThreadReportNode;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.type.ExecutionTypeManager;
+import step.core.metrics.GaugeMetric;
+import step.core.metrics.HistogramMetric;
 import step.core.metrics.InstrumentType;
 import step.core.metrics.MetricSample;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.reports.Measure;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
+import step.core.views.ViewManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
 import step.functions.handler.MeasureTypes;
-import step.functions.io.Output;
 import step.livereporting.LiveReportingPlugin;
+import step.plugins.views.functions.ErrorDistribution;
+import step.plugins.views.functions.ErrorDistributionView;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+
+import static step.plugins.measurements.MetricsConstants.EXECUTION_BOOLEAN_RESULT;
+import static step.plugins.measurements.MetricsConstants.EXECUTION_RESULT;
+import static step.plugins.measurements.SamplesControllerPlugin.*;
 
 
 @Plugin(dependencies = LiveReportingPlugin.class)
@@ -60,14 +73,13 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     private static final List<SamplesHandler> SAMPLES_HANDLERS = new ArrayList<>();
     public static final String CTX_GENERATE_EXECUTION_METRICS = "$generateExecutionMetrics";
     public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
-    public static final String TYPE_THREADGROUP = "threadgroup";
 
     // These are used by the MeasurementControllerPlugin to "reconstruct" measures from measurements, and indicate the
     // "internal" fields which should NOT be added to the measure data field. Keep this in sync with the fields defined above.
-    static final Set<String> MEASURE_NOT_DATA_KEYS = Set.of("_id", PROJECT, "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
+    static final Set<String> MEASURE_NOT_DATA_KEYS = java.util.Set.of("_id", PROJECT, "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
         ORIGIN, RN_STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
     // Same use, but for defining which fields SHOULD be directly copied to the top-level fields of a measure.
-    static final Set<String> MEASURE_FIELDS = Set.of(NAME, BEGIN, VALUE, STATUS);
+    static final Set<String> MEASURE_FIELDS = java.util.Set.of(NAME, BEGIN, VALUE, STATUS);
 
     // Tracks the live thread count per execution+threadGroup key ("execId|threadGroupName").
     // Incremented/decremented by processThreadReportNode; cleaned up in afterExecutionEnd.
@@ -117,20 +129,6 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     }
 
     @Override
-    public void afterExecutionEnd(ExecutionContext context) {
-        if (generateMetrics(context)) {
-            for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
-                samplesHandler.afterExecutionEnd(context);
-            }
-            MetricHeartbeatRegistry.getInstance().removeExecution(context.getExecutionId());
-            // Clean up thread group counters for this execution.
-            // Prometheus label cleanup (with the 70s scrape-window delay) is handled by PrometheusHandler.
-            String prefix = context.getExecutionId() + "|";
-            threadGroupCounts.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
-        }
-    }
-
-    @Override
     public void beforeReportNodeExecution(ExecutionContext context, ReportNode node) {
         if (generateMetrics(context) && node instanceof ThreadReportNode) {
             processThreadReportNode(context, (ThreadReportNode) node, true);
@@ -144,16 +142,11 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
             processMeasurements(measurements);
         });
         LiveReportingPlugin.getLiveReportingContext(context).registerMetricListener(snapshots -> {
-            List<StepMetricSample> stepMetricSamples = snapshots.stream()
-                .map(s -> createMetricMeasurement(context, s, (CallFunctionReportNode) node))
+            List<ExecutionMetricSample> executionMetricSamples = snapshots.stream()
+                .map(s -> createExecutionMetricSample(context, s, (CallFunctionReportNode) node, null))
                 .collect(Collectors.toList());
-            processMetrics(stepMetricSamples);
+            processMetrics(executionMetricSamples);
         });
-    }
-
-    @Override
-    public void afterFunctionExecution(ExecutionContext context, ReportNode node, Function function, Output<JsonObject> output) {
-
     }
 
     private void processThreadReportNode(ExecutionContext context, ThreadReportNode node, boolean inc) {
@@ -172,14 +165,14 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
         MetricSample sample = new MetricSample(
             System.currentTimeMillis(), threadGroupName,
-            Map.of(TYPE, TYPE_THREADGROUP),
+            Map.of(TYPE, THREAD_GROUP),
             InstrumentType.GAUGE,
             1, count, count, count, count, null);
 
-        StepMetricSample stepSample = new StepMetricSample(
+        ExecutionMetricSample stepSample = new ExecutionMetricSample(
             sample, execId, node.getId().toString(),
             planId, plan, scheduleId, schedule, execution,
-            null, null, additionalAttributes, TYPE_THREADGROUP);
+            null, null, additionalAttributes, THREAD_GROUP);
 
         processMetrics(List.of(stepSample));
         // Thread group metrics span the whole execution lifetime (unlike keyword metrics),
@@ -239,10 +232,10 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
                 CallFunctionReportNode functionReport = (CallFunctionReportNode) node;
                 List<MetricSample> outputMetrics = functionReport.getMetrics();
                 if (outputMetrics != null && !outputMetrics.isEmpty()) {
-                    List<StepMetricSample> stepMetricSamples = outputMetrics.stream()
-                        .map(m -> createMetricMeasurement(executionContext, m, functionReport))
+                    List<ExecutionMetricSample> executionMetricSamples = outputMetrics.stream()
+                        .map(m -> createExecutionMetricSample(executionContext, m, functionReport, null))
                         .collect(Collectors.toList());
-                    processMetrics(stepMetricSamples);
+                    processMetrics(executionMetricSamples);
                 }
             }
         }
@@ -251,6 +244,13 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
         }
     }
 
+    /**
+     * Create a {@link Measurement} from keyword Measure, used both when processing Keyword's output and live measure
+     * @param executionContext the execution context of the functionReport
+     * @param measure the measure to be converted to Step Measurement
+     * @param functionReport the function report of the function call producing the Measure
+     * @return the created Measurement
+     */
     private Measurement createMeasurement(ExecutionContext executionContext, Measure measure, CallFunctionReportNode functionReport) {
         Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
         Measurement measurement = initMeasurement(executionContext);
@@ -274,25 +274,32 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
         return measurement;
     }
 
-    private StepMetricSample createMetricMeasurement(ExecutionContext executionContext, MetricSample metric,
-                                                     CallFunctionReportNode functionReport) {
+    /**
+     * Create a {@link ExecutionMetricSample} from the keyword's {@link MetricSample}, used both when processing Keyword's output and live metric samples
+     * @param executionContext the execution context of the functionReport
+     * @param metric the Metric Sample to be converted to Step ExecutionMetricSample
+     * @param functionReport the function report of the function call producing the samples, null for samples not produced by call keywords
+     * @return the created ExecutionMetricSample
+     */
+    private ExecutionMetricSample createExecutionMetricSample(ExecutionContext executionContext, MetricSample metric,
+                                                              CallFunctionReportNode functionReport, String metricType) {
         Plan plan = executionContext.getPlan();
         String planId = plan.getId().toString();
         String planName = Objects.requireNonNullElse(plan.getAttribute(AbstractOrganizableObject.NAME), "");
         String taskId = Objects.requireNonNullElse((String) executionContext.get(CTX_SCHEDULER_TASK_ID), "");
         String schedule = Objects.requireNonNullElse((String) executionContext.get(CTX_SCHEDULE_NAME), "");
         String execution = Objects.requireNonNullElse((String) executionContext.get(CTX_EXECUTION_DESCRIPTION), "");
-        String execId = functionReport.getExecutionID();
-        String rnId = functionReport.getId().toString();
-        String agentUrl = functionReport.getAgentUrl();
-        Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
+        String execId = executionContext.getExecutionId();
+        String rnId = (functionReport != null) ? functionReport.getId().toString() : null;
+        String agentUrl = (functionReport != null) ? functionReport.getAgentUrl() : null;
+        Map<String, String> functionAttributes = (functionReport != null) ? functionReport.getFunctionAttributes(): null;
         String origin = (functionAttributes != null) ? functionAttributes.get(AbstractOrganizableObject.NAME) : null;
         TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
-        return new StepMetricSample(metric, execId, rnId, planId, planName, taskId, schedule, execution,
-            agentUrl, origin, additionalAttributes, null);
+        return new ExecutionMetricSample(metric, execId, rnId, planId, planName, taskId, schedule, execution,
+            agentUrl, origin, additionalAttributes, metricType);
     }
 
-    public void processMetrics(List<StepMetricSample> metrics) {
+    public void processMetrics(List<ExecutionMetricSample> metrics) {
         for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
             try {
                 samplesHandler.processMetrics(metrics);
@@ -300,8 +307,6 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
                 logger.error("Metrics could not be processed by " + samplesHandler.getClass().getSimpleName(), e);
             }
         }
-        // For now, do not produce heartbeat for keywords' related metrics as it may get more confusing that brining additional values: metrics produced by a keyword have the lifetime of that keyword not the whole execution
-        // metrics.forEach(MetricHeartbeatRegistry.getInstance()::update);
     }
 
     private static String getMeasureTypeOrDefault(Measure measure) {
@@ -376,5 +381,58 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
         }
     }
 
+    @Override
+    public void afterExecutionEnd(ExecutionContext context) {
+        if (generateMetrics(context)) {
+            // 1. generate execution metrics
+            createExecutionMetrics(context);
+            // 2. notify handler
+            for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
+                samplesHandler.afterExecutionEnd(context);
+            }
+            // 3. Cleanup
+            MetricHeartbeatRegistry.getInstance().removeExecution(context.getExecutionId());
+            // Clean up thread group counters for this execution.
+            // Prometheus label cleanup (with the 70s scrape-window delay) is handled by PrometheusHandler.
+            String prefix = context.getExecutionId() + "|";
+            threadGroupCounts.entrySet().removeIf(e -> e.getKey().startsWith(prefix));
+        }
+    }
 
+    private void createExecutionMetrics(ExecutionContext context) {
+        ExecutionAccessor executionAccessor = context.getExecutionAccessor();
+        Execution execution = executionAccessor.get(context.getExecutionId());
+        ViewManager viewManager = context.require(ViewManager.class);
+        ExecutionTypeManager executionTypeManager = context.require(ExecutionTypeManager.class);
+
+        if (executionTypeManager.get(execution.getExecutionType()).generateExecutionMetrics()) {
+            boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
+            long startTime = execution.getStartTime();
+            List<ExecutionMetricSample> samples = new ArrayList<>();
+            MetricSample executionCount = new GaugeMetric(EXECUTIONS_COUNT).observe(1, startTime).flush();
+            samples.add(createExecutionMetricSample(context, executionCount, null, EXECUTIONS_COUNT));
+            MetricSample failurePercentage = new GaugeMetric(FAILURE_PERCENTAGE).observe(executionPassed ? 0 : 100, startTime).flush();
+            samples.add(createExecutionMetricSample(context, failurePercentage, null, FAILURE_PERCENTAGE));
+            MetricSample failureCount = new GaugeMetric(FAILURE_COUNT).observe(executionPassed ? 0 : 1, startTime).flush();
+            samples.add(createExecutionMetricSample(context, failureCount, null, FAILURE_COUNT));
+
+            long duration = System.currentTimeMillis() - startTime;
+            MetricSample executionDuration = new HistogramMetric(EXECUTIONS_DURATION,
+                Map.of(EXECUTION_RESULT.getName(), execution.getResult().toString(), EXECUTION_BOOLEAN_RESULT.getName(), executionPassed ? "PASSED" : "FAILED"))
+                .observe(duration, startTime).flush();
+            samples.add(createExecutionMetricSample(context, executionDuration, null, EXECUTIONS_DURATION));
+
+            ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
+            errorDistribution.getCountByErrorCode().entrySet().forEach(entry -> {
+                MetricSample failureCountByErrorCode = new GaugeMetric(FAILURES_COUNT_BY_ERROR_CODE,
+                    Map.of(ERROR_CODE, entry.getKey()))
+                    .observe(entry.getValue() > 0 ? 1 : 0, startTime).flush();
+                samples.add(createExecutionMetricSample(context, failureCountByErrorCode, null, FAILURES_COUNT_BY_ERROR_CODE));
+            });
+
+            processMetrics(samples);
+
+
+        }
+    }
 }

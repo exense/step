@@ -32,7 +32,7 @@ import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.plugins.measurements.SamplesExecutionPlugin;
-import step.plugins.measurements.StepMetricSample;
+import step.plugins.measurements.ExecutionMetricSample;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -43,7 +43,7 @@ public class RawSamplesControllerPlugin extends AbstractControllerPlugin {
     private static final Logger logger = LoggerFactory.getLogger(RawSamplesControllerPlugin.class);
 
     private Collection<Document> measurementsCollection;
-    private Collection<StepMetricSample> metricSamplesCollection;
+    private Collection<ExecutionMetricSample> metricSamplesCollection;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
@@ -55,7 +55,7 @@ public class RawSamplesControllerPlugin extends AbstractControllerPlugin {
         TableRegistry tableRegistry = context.get(TableRegistry.class);
         tableRegistry.register(EntityConstants.measurements, new Table<>(measurementsCollection, null, false));
 
-        metricSamplesCollection = context.getCollectionFactory().getCollection(EntityConstants.metricSamples, StepMetricSample.class);
+        metricSamplesCollection = context.getCollectionFactory().getCollection(EntityConstants.metricSamples, ExecutionMetricSample.class);
         MetricSampleAccessor metricsAccessor = new MetricSampleAccessor(metricSamplesCollection);
         context.put(MetricSampleAccessor.class, metricsAccessor);
         tableRegistry.register(EntityConstants.metricSamples, new Table<>(metricSamplesCollection, null, true));
@@ -63,10 +63,6 @@ public class RawSamplesControllerPlugin extends AbstractControllerPlugin {
         SamplesExecutionPlugin.registerSamplesHandlers(new RawSamplesHandler(accessor, metricsAccessor));
 
         context.getServiceRegistrationCallback().registerService(RawSamplesServices.class);
-    }
-
-    @Override
-    public void serverStop(GlobalContext context) {
     }
 
     @Override

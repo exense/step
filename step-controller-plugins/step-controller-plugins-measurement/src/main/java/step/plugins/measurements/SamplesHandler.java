@@ -25,7 +25,19 @@ public interface SamplesHandler {
      *
      * @param metrics enriched metric snapshots, never {@code null}
      */
-    default void processMetrics(List<StepMetricSample> metrics) {
+    default void processMetrics(List<ExecutionMetricSample> metrics) {
+    }
+
+    /**
+     * Processes a batch of controller-level metric snapshots that carry no execution
+     * context (e.g. grid token usage, system gauges).
+     * <p>
+     * The default no-op implementation allows handlers that do not need controller
+     * metrics to remain unchanged.
+     *
+     * @param metrics controller-level metric snapshots, never {@code null}
+     */
+    default void processControllerMetrics(List<ControllerMetricSample> metrics) {
     }
 
     void afterExecutionEnd(ExecutionContext context);

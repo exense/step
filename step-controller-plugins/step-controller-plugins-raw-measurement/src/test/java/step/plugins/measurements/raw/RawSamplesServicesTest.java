@@ -5,9 +5,8 @@ import org.junit.Test;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.metrics.MetricSample;
 import step.core.metrics.InstrumentType;
-import step.plugins.measurements.StepMetricSample;
+import step.plugins.measurements.ExecutionMetricSample;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -259,7 +258,7 @@ public class RawSamplesServicesTest {
     // -------------------------------------------------------------------------
 
     private void save(String rnId, MetricSample sample) {
-        StepMetricSample sms = new StepMetricSample(sample, EXEC_ID, rnId, PLAN_ID,
+        ExecutionMetricSample sms = new ExecutionMetricSample(sample, EXEC_ID, rnId, PLAN_ID,
                 "myPlan", "", "", "my test", null, null, null, null);
         accessor.save(Collections.singletonList(sms));
     }
