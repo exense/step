@@ -15,4 +15,5 @@ public class EntityConstants {
     public final static String metricTypes = "metricTypes";
     public final static String dashboards = "dashboards";
     public final static String bookmarks = "bookmarks";
+    public final static String reportLayouts = "reportLayouts";
 }
