@@ -271,6 +271,23 @@ describe('runner', () => {
   })
 
   // ---------------------------------------------------------------------------
+  // Bundler-compiled CJS interop (issue #628)
+  // ---------------------------------------------------------------------------
+
+  describe('bundler-compiled CJS keywords (.default interop)', () => {
+    test('finds and executes a keyword from a module.exports wrapper', async () => {
+      const output = await runner.run('BundledEcho', { Param1: 'BundledVal' })
+      expect(output.payload.Param1).toBe('BundledVal')
+    })
+
+    test('onError hook works for bundler-compiled CJS keywords', async () => {
+      const output = await runner.run('BundledErrorKW', { ErrorMsg: 'bundled error', rethrow_error: true })
+      expect(output.error.msg).toBe('bundled error')
+      expect(output.payload.onErrorCalled).toBe(true)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
   // beforeKeyword and afterKeyword hooks
   // ---------------------------------------------------------------------------
 
