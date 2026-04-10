@@ -18,11 +18,7 @@
  ******************************************************************************/
 package step.migration.tasks;
 
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.bson.types.ObjectId;
-
 import step.core.Version;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
@@ -33,6 +29,9 @@ import step.core.collections.Filters;
 import step.core.imports.converter.ArtefactsToPlans;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
+
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This task migrates the collection 'artefacts' to the collection 'plans' which has been introduced in 3.13
@@ -198,9 +197,5 @@ public class MigrateArtefactsToPlans extends MigrationTask {
                 tasksCollection.save(t);
             }
         });
-    }
-
-    @Override
-    public void runDowngradeScript() {
     }
 }

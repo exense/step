@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.migration.tasks;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
@@ -29,6 +27,8 @@ import step.core.collections.DocumentObject;
 import step.core.collections.Filters;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class SetSchedulerTaskAttributes extends MigrationTask {
 
@@ -55,10 +55,4 @@ public class SetSchedulerTaskAttributes extends MigrationTask {
         logger.info("Migrated " + i.get() + " tasks.");
 
     }
-
-    @Override
-    public void runDowngradeScript() {
-        // TODO Auto-generated method stub
-    }
-
 }
