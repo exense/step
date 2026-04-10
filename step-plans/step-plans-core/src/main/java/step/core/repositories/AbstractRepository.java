@@ -40,6 +40,20 @@ public abstract class AbstractRepository implements Repository {
     }
 
     @Override
+    public String getCanonicalPlanName(Map<String, String> repositoryParameters) {
+        if (repositoryParameters == null || repositoryParameters.isEmpty()) {
+            return null;
+        }
+
+        return repositoryParameters.entrySet().stream()
+                .filter(entry -> this.canonicalRepositoryParameters.contains(entry.getKey()))
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining("&"));
+    }
+
+
+    @Override
     public Set<String> getCanonicalRepositoryParameters() {
         return canonicalRepositoryParameters;
     }
