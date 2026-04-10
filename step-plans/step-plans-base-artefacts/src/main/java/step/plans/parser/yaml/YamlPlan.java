@@ -18,7 +18,11 @@
  ******************************************************************************/
 package step.plans.parser.yaml;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.OptBoolean;
 import step.core.yaml.PatchableAbstractYamlModel;
+import step.core.yaml.deserialization.PatchingContext;
 import step.core.yaml.model.NamedYamlArtefact;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -45,6 +49,11 @@ public class YamlPlan extends PatchableAbstractYamlModel {
     private AgentProvisioningConfiguration agents;
 
     private List<String> categories;
+
+    @JsonCreator
+    public YamlPlan(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext context) {
+        super(context);
+    }
 
     public String getName() {
         return name;

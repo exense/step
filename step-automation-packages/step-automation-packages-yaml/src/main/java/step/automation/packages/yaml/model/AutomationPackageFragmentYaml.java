@@ -18,14 +18,13 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.core.yaml.PatchableYamlList;
+import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchingContext;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
-import javax.json.Json;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
@@ -53,7 +52,9 @@ public interface AutomationPackageFragmentYaml {
 
     void setFragmentUrl(URL url);
 
-    String getCurrentYaml();
+    PatchingContext getPatchingContext();
 
-    void setCurrentYaml(String yaml);
+    void setPatchingContext(PatchingContext context);
+
+    void writeToDisk();
 }

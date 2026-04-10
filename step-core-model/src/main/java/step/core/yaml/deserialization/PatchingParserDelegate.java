@@ -1,11 +1,10 @@
-package step.automation.packages.yaml.deserialization;
+package step.core.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.util.JsonParserDelegate;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import step.automation.packages.yaml.LocatedJsonNode;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -15,14 +14,18 @@ import java.util.Map;
 
 public class PatchingParserDelegate extends JsonParserDelegate {
 
-    private final Map<JsonToken, JsonLocation> distinctLocationBeforeToken = new HashMap<>();
+    private final Map<JsonToken, JsonLocation> locationForToken = new HashMap<>();
 
     private JsonLocation lastDistinctLocation;
 
     private final Deque<LocatedJsonNode> nodeStack = new ArrayDeque<>();
 
-    public PatchingParserDelegate(JsonParser d) {
+    protected final PatchingContext patchingContext;
+
+    public PatchingParserDelegate(JsonParser d, PatchingContext context) {
+
         super(d);
+        patchingContext = context;
     }
 
     @Override
@@ -32,18 +35,18 @@ public class PatchingParserDelegate extends JsonParserDelegate {
         if (!preLocation.equals(currentLocation())) {
             lastDistinctLocation = preLocation;
         }
-        distinctLocationBeforeToken.put(token, lastDistinctLocation);
+        locationForToken.put(token, preLocation);
 
         if (token == JsonToken.END_OBJECT && !nodeStack.isEmpty()) {
             LocatedJsonNode currentNode = nodeStack.pop();
-            currentNode.setEndLocation(currentLocation());
+            currentNode.setEndLocation(currentTokenLocation());
         }
 
         return token;
     }
 
-    protected JsonLocation getDistinctLocationBeforeToken(JsonToken token) {
-        return distinctLocationBeforeToken.get(token);
+    protected JsonLocation getLastLocationForToken(JsonToken token) {
+        return locationForToken.get(token);
     }
 
     protected JsonLocation getLastDistinctLocation() {
@@ -54,5 +57,9 @@ public class PatchingParserDelegate extends JsonParserDelegate {
         jsonNode.setStartLocation(currentLocation());
         nodeStack.add(jsonNode);
         return jsonNode;
+    }
+
+    protected PatchingContext getPatchingContext() {
+        return this.patchingContext;
     }
 }

@@ -1,8 +1,8 @@
-package step.automation.packages.yaml;
+package step.core.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
-import step.automation.packages.yaml.deserialization.PatchingParserDelegate;
+import com.fasterxml.jackson.core.util.JsonParserDelegate;
 
 
 public class LocationAwareTreeTraversingParser extends PatchingParserDelegate {
@@ -11,7 +11,7 @@ public class LocationAwareTreeTraversingParser extends PatchingParserDelegate {
 
     public LocationAwareTreeTraversingParser(JsonParser delegate,
                                              LocatedJsonNode sourceNode) {
-        super(delegate);
+        super(delegate, sourceNode.getPatchingContext());
         this.sourceNode = sourceNode;
     }
 

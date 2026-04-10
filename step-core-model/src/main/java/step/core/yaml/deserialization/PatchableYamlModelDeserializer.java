@@ -1,4 +1,4 @@
-package step.automation.packages.yaml.deserialization;
+package step.core.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
@@ -25,16 +25,9 @@ public class PatchableYamlModelDeserializer<T extends PatchableYamlModel> extend
     public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         if (p instanceof PatchingParserDelegate) {
             PatchingParserDelegate patchingParser = (PatchingParserDelegate) p;
-            int startListItemOffset;
-            if (p.getLastClearedToken() == JsonToken.END_OBJECT) {
-                startListItemOffset = (int) patchingParser.getDistinctLocationBeforeToken(JsonToken.END_OBJECT).getCharOffset();
-            } else {
-                startListItemOffset = (int) patchingParser.getDistinctLocationBeforeToken(JsonToken.START_ARRAY).getCharOffset() + 1;
-            }
             JsonLocation startItem = patchingParser.currentLocation();
             T entity = delegate.deserialize(p, ctxt);
-            entity.setPatchingBounds(startItem, startListItemOffset, patchingParser.getLastDistinctLocation());
-
+            entity.setPatchingBounds(startItem, patchingParser.getLastDistinctLocation());
             return entity;
         }
         return delegate.deserialize(p, ctxt);

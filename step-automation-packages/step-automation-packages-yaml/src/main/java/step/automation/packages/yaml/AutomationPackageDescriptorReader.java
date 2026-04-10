@@ -32,16 +32,16 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.yaml.deserialization.PatchableYamlListDeserializer;
-import step.automation.packages.yaml.deserialization.PatchableYamlModelDeserializer;
-import step.automation.packages.yaml.deserialization.PatchingParserDelegate;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.yaml.PatchableYamlModel;
+import step.core.yaml.deserialization.*;
+import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.YamlPlanReader;
+import step.plans.parser.yaml.deserializers.UpgradableYamlPlanDeserializer;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
@@ -109,11 +109,16 @@ public class AutomationPackageDescriptorReader {
                     throw new YamlPlanValidationException(message, ex);
                 }
             }
-
-            PatchingParserDelegate parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString));
+            PatchingContext context = new PatchingContext(yamlDescriptorString, yamlObjectMapper);
+            PatchingParserDelegate parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString), context);
             yamlObjectMapper.setNodeFactory(new LocatedYamlObjectFactory(parser));
+            yamlObjectMapper.setInjectableValues(new InjectableValues.Std()
+                .addValue(ObjectMapper.class, yamlObjectMapper)
+                .addValue(AutomationPackageSerializationRegistry.class, serializationRegistry)
+                .addValue(PatchingContext.class, context)
+            );
             T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(parser, targetClass);
-            res.setCurrentYaml(yamlDescriptorString);
+            res.setPatchingContext(context);
             logAfterRead(packageName, res);
             return res;
         } catch (IOException | YamlPlanValidationException e) {
@@ -156,39 +161,10 @@ public class AutomationPackageDescriptorReader {
         // Disable native type id to enable conversion to generic Documents
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
         ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
-        yamlMapper.setInjectableValues(new InjectableValues.Std()
-                .addValue(ObjectMapper.class, yamlMapper)
-                .addValue(AutomationPackageSerializationRegistry.class, serializationRegistry)
-        );
-        // configure custom deserializers
-        SimpleModule module = new SimpleModule() {
-            @Override
-            public void setupModule(SetupContext context) {
-                super.setupModule(context);
 
-                context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
-                    @Override
-                    public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
-                        if (PatchableYamlModel.class.isAssignableFrom(beanDesc.getBeanClass())
-                            && !beanDesc.getBeanClass().equals(PatchableYamlModel.class)) {
-                            return new PatchableYamlModelDeserializer<>(deserializer);
-                        }
-                        return super.modifyDeserializer(config, beanDesc, deserializer);
-                    }
-
-                    @Override
-                    public JsonDeserializer<?> modifyCollectionDeserializer(DeserializationConfig config, CollectionType type, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
-                        if (deserializer instanceof CollectionDeserializer) {
-                            return new PatchableYamlListDeserializer((CollectionDeserializer) deserializer);
-                        }
-                        return deserializer;
-                    }
-                });
-            }
-        };
 
         // register deserializers to read yaml plans
-        planReader.registerAllSerializersAndDeserializers(module, yamlMapper, true);
+        SimpleModule module = planReader.registerAllSerializersAndDeserializers(yamlMapper, true);
         yamlMapper.registerModule(module);
 
         return yamlMapper;

@@ -20,34 +20,32 @@ package step.core.yaml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonLocation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import step.core.ReflectionUtils;
-
-import java.lang.reflect.Field;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import step.core.yaml.deserialization.PatchingContext;
 
 public class PatchableAbstractYamlModel extends AbstractYamlModel implements PatchableYamlModel {
+
+    private PatchingContext context;
 
     @JsonIgnore
     private int startOffset = -1;
 
     @JsonIgnore
-    private int startFieldOffset = -1;
-
-    @JsonIgnore
-    private int startColumn = -1;
+    private int indent = -1;
 
     @JsonIgnore
     private int endOffset = -1;
 
+    public PatchableAbstractYamlModel(PatchingContext context) {
+        this.context = context;
+    }
+
     @JsonIgnore
-    public void setPatchingBounds(JsonLocation startLocation, int startFieldLocation, JsonLocation endLocation) {
-        startFieldOffset = startFieldLocation;
+    public void setPatchingBounds(JsonLocation startLocation, JsonLocation endLocation) {
         startOffset = (int) startLocation.getCharOffset();
-        endOffset = (int) endLocation.getCharOffset();
-        startColumn = startLocation.getColumnNr() -1;
+        endOffset = context.ensureNextEndOfLineOffset((int) endLocation.getCharOffset());
+        indent = startLocation.getColumnNr() -1;
+        context.getPatchables().add(this);
     }
 
     @JsonIgnore
@@ -57,7 +55,7 @@ public class PatchableAbstractYamlModel extends AbstractYamlModel implements Pat
 
     @JsonIgnore
     public int getIndent() {
-        return startColumn;
+        return indent;
     }
 
     @JsonIgnore
@@ -65,17 +63,28 @@ public class PatchableAbstractYamlModel extends AbstractYamlModel implements Pat
         return endOffset;
     }
 
-    @JsonIgnore
-    public void setPatchingBounds(PatchableYamlModel newBoundedArtefact) {
-        startFieldOffset = newBoundedArtefact.getStartFieldOffset();
-        startOffset = newBoundedArtefact.getStartOffset();
-        startColumn = newBoundedArtefact.getIndent();
-        endOffset = newBoundedArtefact.getEndOffset();
+    @Override
+    public void setStartOffset(int startOffset) {
+        this.startOffset = startOffset;
     }
 
     @Override
-    public int getStartFieldOffset() {
-        return startFieldOffset;
+    public void setEndOffset(int endOffset) {
+        this.endOffset = endOffset;
     }
 
+
+    @JsonIgnore
+    @Override
+    public void setIndent(int indent) {
+        this.indent = indent;
+    }
+
+
+
+    @JsonIgnore
+    @Override
+    public void setContext(PatchingContext context) {
+        this.context = context;
+    }
 }

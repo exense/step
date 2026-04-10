@@ -21,42 +21,46 @@ package step.automation.packages.yaml.model;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.FileUtils;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.core.yaml.PatchableYamlList;
+import step.automation.packages.yaml.AutomationPackageWriteToDiskException;
+import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
+import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchingContext;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.*;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractAutomationPackageFragmentYaml implements AutomationPackageFragmentYaml {
     private final ObjectMapper mapper;
     private final AutomationPackageSerializationRegistry serializationRegistry;
     private List<String> fragments = new ArrayList<>();
     private List<YamlAutomationPackageKeyword> keywords = new ArrayList<>();
-    private PatchableYamlList<YamlPlan> plans = new PatchableYamlList<>();
+    private PatchableYamlList<YamlPlan> plans;
     private List<YamlPlainTextPlan> plansPlainText = new ArrayList<>();
 
     private final Map<String, List<?>> additionalFields = new HashMap<>();
+    private PatchingContext context;
+    private long fileLastModified = 0;
 
-    @JsonCreator
-    public AbstractAutomationPackageFragmentYaml(@JacksonInject(useInput = OptBoolean.FALSE) ObjectMapper mapper, @JacksonInject(useInput = OptBoolean.FALSE) AutomationPackageSerializationRegistry serializationRegistry) {
+    public AbstractAutomationPackageFragmentYaml(ObjectMapper mapper, AutomationPackageSerializationRegistry serializationRegistry, PatchingContext patchingContext) {
         this.mapper = mapper;
         this.serializationRegistry = serializationRegistry;
-    }
-
-    public AbstractAutomationPackageFragmentYaml() {
-        this.mapper = null;
-        this.serializationRegistry = null;
+        context = patchingContext;
+        plans = new PatchableYamlList<>(patchingContext, YamlPlan.PLANS_ENTITY_NAME);
     }
 
     @JsonIgnore
     private URL url;
-
-    @JsonIgnore
-    private String currentYaml;
 
     @Override
     public List<YamlAutomationPackageKeyword> getKeywords() {
@@ -118,7 +122,12 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
 
     @JsonIgnore
     public void setFragmentUrl(URL url) {
+        resetLastModified();
         this.url = url;
+    }
+
+    private void resetLastModified() {
+        fileLastModified = System.currentTimeMillis();
     }
 
     @JsonIgnore
@@ -127,12 +136,29 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @JsonIgnore
-    public void setCurrentYaml(String yaml) {
-        this.currentYaml = yaml;
+    @Override
+    public void setPatchingContext(PatchingContext context) {
+        this.context = context;
     }
 
     @JsonIgnore
-    public String getCurrentYaml() {
-        return currentYaml;
+    @Override
+    public PatchingContext getPatchingContext() {
+        return context;
+    }
+
+
+    @Override
+    public void writeToDisk() {
+        try {
+            File file = new File(url.toURI());
+            if (file.exists() && file.lastModified() > fileLastModified) {
+                throw new AutomationPackageConcurrentEditException(MessageFormat.format("Automation package fragment {0} was edited outside the editor.", url));
+            }
+            FileUtils.writeStringToFile(file, context.getYaml(), StandardCharsets.UTF_8);
+            resetLastModified();
+        } catch (IOException | URISyntaxException e) {
+            throw new AutomationPackageWriteToDiskException(MessageFormat.format("Error when writing automation package fragment {0} back to disk.", url), e);
+        }
     }
 }

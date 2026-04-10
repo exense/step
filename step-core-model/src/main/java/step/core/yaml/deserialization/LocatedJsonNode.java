@@ -1,21 +1,21 @@
-package step.automation.packages.yaml;
+package step.core.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TreeTraversingParser;
 
-import javax.json.Json;
 
 public class LocatedJsonNode extends ObjectNode {
 
+    private final PatchingContext patchingContext;
     private JsonLocation startLocation;
     private JsonLocation endLocation;
 
-    public LocatedJsonNode(JsonNodeFactory nodeFactory) {
+    public LocatedJsonNode(JsonNodeFactory nodeFactory, PatchingContext context) {
         super(nodeFactory);
+        this.patchingContext = context;
     }
 
     @Override
@@ -39,5 +39,9 @@ public class LocatedJsonNode extends ObjectNode {
 
     public void setStartLocation(JsonLocation startLocation) {
         this.startLocation = startLocation;
+    }
+
+    public PatchingContext getPatchingContext() {
+        return patchingContext;
     }
 }

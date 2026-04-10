@@ -1,6 +1,5 @@
-package step.automation.packages.yaml.deserialization;
+package step.core.yaml.deserialization;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -9,26 +8,29 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.deser.NullValueProvider;
 import com.fasterxml.jackson.databind.deser.std.CollectionDeserializer;
 import com.fasterxml.jackson.databind.jsontype.TypeDeserializer;
-import step.core.yaml.PatchableYamlList;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class PatchableYamlListDeserializer extends CollectionDeserializer {
 
+
+    private final CollectionDeserializer delegate;
+
     public PatchableYamlListDeserializer(CollectionDeserializer delegate) {
         super(delegate);
+        this.delegate = delegate;
     }
 
     @Override
     public Collection<Object> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         if (p instanceof PatchingParserDelegate) {
             PatchingParserDelegate patchingParser = (PatchingParserDelegate) p;
-            JsonLocation startFieldLocation = patchingParser.getDistinctLocationBeforeToken(JsonToken.FIELD_NAME);
-            JsonLocation startLocation = patchingParser.getDistinctLocationBeforeToken(JsonToken.START_ARRAY);
-            Collection<Object> entity = super.deserialize(p, ctxt);
-            PatchableYamlList<Object> patchableYamlList = new PatchableYamlList<>(entity);
-            patchableYamlList.setPatchingBounds(startLocation, (int) startFieldLocation.getCharOffset(), patchingParser.currentLocation());
+            JsonLocation startLocation = patchingParser.getLastLocationForToken(JsonToken.FIELD_NAME);
+            Collection<Object> entity = delegate.deserialize(p, ctxt, new ArrayList<>());
+            PatchableYamlList<Object> patchableYamlList = new PatchableYamlList<>(entity, patchingParser.getPatchingContext(), patchingParser.currentName());
+            patchableYamlList.setPatchingBounds(startLocation, patchingParser.getLastDistinctLocation());
             return patchableYamlList;
         }
         return super.deserialize(p, ctxt);
@@ -43,7 +45,6 @@ public class PatchableYamlListDeserializer extends CollectionDeserializer {
         NullValueProvider nuller,
         Boolean unwrapSingle) {
         CollectionDeserializer resolved = super.withResolved(keyDeser, valueDeser, valueTypeDeser, nuller, unwrapSingle);
-        // Return your custom instance instead of the default one
         return new PatchableYamlListDeserializer(resolved);
     }
 }

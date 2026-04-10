@@ -23,13 +23,20 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.OptBoolean;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.core.yaml.deserialization.PatchingContext;
 
 public class AutomationPackageFragmentYamlImpl extends AbstractAutomationPackageFragmentYaml {
 
     @JsonCreator
-    public AutomationPackageFragmentYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) ObjectMapper mapper, @JacksonInject(useInput = OptBoolean.FALSE) AutomationPackageSerializationRegistry serializationRegistry) {
-        super(mapper, serializationRegistry);
+    public AutomationPackageFragmentYamlImpl(
+        @JacksonInject(useInput = OptBoolean.FALSE) ObjectMapper mapper,
+        @JacksonInject(useInput = OptBoolean.FALSE) AutomationPackageSerializationRegistry serializationRegistry,
+        @JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext
+        ) {
+        super(mapper, serializationRegistry, patchingContext);
     }
-    
-    public AutomationPackageFragmentYamlImpl() { super();}
+
+    public AutomationPackageFragmentYamlImpl(PatchingContext context) {
+        this(null, null, context);
+    }
 }

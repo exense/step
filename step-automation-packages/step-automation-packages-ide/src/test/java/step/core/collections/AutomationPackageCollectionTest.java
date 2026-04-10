@@ -30,7 +30,7 @@ import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.yaml.AutomationPackageConcurrentEditException;
+import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.dynamicbeans.DynamicValue;
@@ -291,7 +291,6 @@ public class AutomationPackageCollectionTest {
         planCollection.save(plan);
 
         assertFilesEqual(expectedFilesPath.resolve("Hello_World_Plan.yml"), destinationDirectory.toPath().resolve("plans").resolve("Hello_World_Plan.yml"));
-
     }
 
     private void assertFilesEqual(Path expected, Path actual) throws IOException {

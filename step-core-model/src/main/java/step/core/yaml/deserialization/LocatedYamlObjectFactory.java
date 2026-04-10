@@ -1,8 +1,7 @@
-package step.automation.packages.yaml;
+package step.core.yaml.deserialization;
 
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import step.automation.packages.yaml.deserialization.PatchingParserDelegate;
 
 public class LocatedYamlObjectFactory extends JsonNodeFactory {
     private final PatchingParserDelegate parser;
@@ -14,6 +13,6 @@ public class LocatedYamlObjectFactory extends JsonNodeFactory {
 
     @Override
     public ObjectNode objectNode() {
-        return parser.setCurrentObjectNode(new LocatedJsonNode(this));
+        return parser.setCurrentObjectNode(new LocatedJsonNode(this, parser.getPatchingContext()));
     }
 }

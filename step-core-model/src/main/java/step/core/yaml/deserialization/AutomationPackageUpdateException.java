@@ -1,4 +1,4 @@
-package step.automation.packages.yaml;
+package step.core.yaml.deserialization;
 
 public class AutomationPackageUpdateException extends RuntimeException {
     public AutomationPackageUpdateException(String s, Exception e) {
