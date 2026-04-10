@@ -27,7 +27,7 @@ public interface SamplesHandler {
      * @param metrics enriched metric snapshots, never {@code null}
      */
     default void processMetrics(List<ExecutionMetricSample> metrics) {
-        processMetrics(metrics, null);
+
     }
 
     /**
@@ -44,6 +44,7 @@ public interface SamplesHandler {
      * @param optionalLabels Map of optional labels that be used to further enrich the metric snapshots, can be {@code null}
      */
     default void processMetrics(List<ExecutionMetricSample> metrics, Map<String, String> optionalLabels) {
+        processMetrics(metrics);
     }
 
     /**

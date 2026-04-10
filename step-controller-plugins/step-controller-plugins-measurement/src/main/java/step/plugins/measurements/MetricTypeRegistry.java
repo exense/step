@@ -17,14 +17,13 @@ public class MetricTypeRegistry {
         this.metricTypeAccessor = metricTypeAccessor;
     }
 
-    public MetricType registerMetricType(MetricType metricType) {
+    public void registerMetricType(MetricType metricType) {
         metrics.put(metricType.getName(), metricType);
         MetricType existingMetric = metricTypeAccessor.findByCriteria(Map.of("name", metricType.getName()));
         if (existingMetric != null) {
             metricType.setId(existingMetric.getId()); // update the metric
         }
         metricTypeAccessor.save(metricType);
-        return metricType;
     }
 
     public List<MetricType> getMetrics() {

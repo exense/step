@@ -146,7 +146,8 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
     }
 
     public String getControllerUrl() {
-        return this.get(CONTROLLER_URL_KEY).toString();
+        Object controllerUrl = this.get(CONTROLLER_URL_KEY);
+        return (controllerUrl instanceof String) ? (String) controllerUrl : null;
     }
 
     public void setControllerUrl(String controllerUrl) {
@@ -154,7 +155,8 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
     }
 
     public String getControllerServiceUrl() {
-        return this.get(CONTROLLER_SERVICE_URL_KEY).toString();
+        Object controllerUrl = this.get(CONTROLLER_SERVICE_URL_KEY);
+        return (controllerUrl instanceof String) ? (String) controllerUrl : null;
     }
 
     public void setControllerServiceUrl(String controllerUrl) {

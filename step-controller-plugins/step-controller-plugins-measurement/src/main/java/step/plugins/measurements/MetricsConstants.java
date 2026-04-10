@@ -60,6 +60,15 @@ public class MetricsConstants {
         .setName("result")
         .setType(MetricAttributeType.TEXT)
         .setDisplayName("Result");
+    public static final MetricAttribute GRID_TOKEN_STATE = new MetricAttribute()
+        .setName("state")
+        .setType(MetricAttributeType.TEXT)
+        .setDisplayName("State");
+    public static final MetricAttribute GRID_TOKEN_AGENT_TYPE = new MetricAttribute()
+        .setName("$agenttype")
+        .setType(MetricAttributeType.TEXT)
+        .setDisplayName("Agent type");
+
 
 
     public static String getAllAttributeNames() {

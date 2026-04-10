@@ -98,7 +98,7 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
-        controllerUrl = parentContext.getControllerUrl();
+        controllerUrl = Objects.requireNonNullElse(parentContext.getControllerUrl(), "");
     }
 
     @Override

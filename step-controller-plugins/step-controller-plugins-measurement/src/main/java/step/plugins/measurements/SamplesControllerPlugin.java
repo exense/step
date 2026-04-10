@@ -8,12 +8,12 @@ import step.core.collections.Collection;
 import step.core.entities.EntityConstants;
 import step.core.metrics.InstrumentType;
 import step.core.metrics.MetricSample;
-import step.core.metrics.MetricType;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.metric.MetricAggregation;
 import step.core.timeseries.metric.MetricAggregationType;
 import step.core.timeseries.metric.MetricRenderingSettings;
+import step.core.timeseries.metric.MetricType;
 import step.core.timeseries.metric.MetricTypeAccessor;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
@@ -42,18 +42,16 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
     public static final String THREAD_GROUP = "threadgroup";
     public static final String ERROR_CODE = "errorCode";
 
-    public static String GridSamplerName = "step_grid_tokens";
-    public static String GridByStateMetricName = "step_grid_tokens_by_state";
-    public static String GridCapacityMetricName = "step_grid_tokens_capacity";
+    public static String GRID_SAMPLER_NAME = "grid_tokens_sampler";
+    public static String GRID_BY_STATE_METRIC_NAME = "grid_tokens_by_state";
+    public static String GRID_CAPACITY_METRIC_NAME = "grid_tokens_capacity";
     public static String ReportMeasurementsTableName = "reportMeasurements";
     private MetricSamplerRegistry metricSamplerRegistry;
     private MetricTypeRegistry metricTypeRegistry;
-    private String controllerUrl;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
-        controllerUrl = context.getControllerUrl();
 
         Collection<Measurement> collection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Measurement.class);
         context.require(TableRegistry.class).register(ReportMeasurementsTableName,
@@ -114,10 +112,15 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         MetricHeartbeatRegistry.getInstance().start(heartbeatIntervalSec * 1000L);
     }
 
+    /**
+     * This method should be moved to the GridPlugin class but that would currently create circular dependencies. Some classes such as MetricSampler, MetricSamplerRegistry should be move to step.core or similar
+     * This method register the collector to monitor the grid usage
+     * @param context the controller global context
+     */
     private void configureGridMonitoring(GlobalContext context) {
         // make sure we have a grid client in the current context
         if (context.get(GridClient.class) != null) {
-            metricSamplerRegistry.registerSampler(GridSamplerName, new MetricSampler(GridSamplerName,
+            metricSamplerRegistry.registerSampler(GRID_SAMPLER_NAME, new MetricSampler(GRID_SAMPLER_NAME,
                 "step grid token usage and capacity") {
                 final GridReportBuilder gridReportBuilder = new GridReportBuilder(context.require(GridClient.class));
                 @Override
@@ -129,17 +132,19 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
                     long now = System.currentTimeMillis();
                     for (TokenGroupCapacity tokenGroupCapacity : usageByIdentity) {
                         int capacity = tokenGroupCapacity.getCapacity();
-                        Map<String, String> labels = tokenGroupCapacity.getKey();
+                        Map<String, String> labels = new TreeMap<>(tokenGroupCapacity.getKey());
                         gridMetricSamples.add(new ControllerMetricSample(
-                            new MetricSample(now, "capacity", labels, InstrumentType.GAUGE,
+                            new MetricSample(now, "grid_token_capacity", labels, InstrumentType.GAUGE,
                                 1, capacity, capacity, capacity, capacity, null),
-                            GridCapacityMetricName));
+                            GRID_CAPACITY_METRIC_NAME));
                         for (TokenWrapperState state : TokenWrapperState.values()) {
                             int valueByState = Objects.requireNonNullElse(tokenGroupCapacity.getCountByState().get(state), 0);
+                            TreeMap<String, String> labelsWithState = new TreeMap<>(labels);
+                            labelsWithState.put(GRID_TOKEN_STATE.getName(), state.name());
                             gridMetricSamples.add(new ControllerMetricSample(
-                                new MetricSample(now, state.name(), labels, InstrumentType.GAUGE,
+                                new MetricSample(now, "grid_token_" + state.name(), labelsWithState, InstrumentType.GAUGE,
                                 1, valueByState, valueByState, valueByState, valueByState, null),
-                                GridByStateMetricName));
+                                GRID_BY_STATE_METRIC_NAME));
                         }
                     }
                     return gridMetricSamples;
@@ -229,6 +234,22 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
                 .setUnit("1")
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.MAX))
                 .setRenderingSettings(new MetricRenderingSettings()));
+        metricTypeRegistry.registerMetricType(new MetricType()
+            .setName(GRID_BY_STATE_METRIC_NAME)
+            .setDisplayName("Grid tokens by state")
+            .setAttributes(Arrays.asList(GRID_TOKEN_STATE, GRID_TOKEN_AGENT_TYPE))
+            .setDefaultGroupingAttributes(List.of(GRID_TOKEN_STATE.getName(), GRID_TOKEN_AGENT_TYPE.getName()))
+            .setUnit("1")
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+            .setRenderingSettings(new MetricRenderingSettings()));
+        metricTypeRegistry.registerMetricType(new MetricType()
+            .setName(GRID_CAPACITY_METRIC_NAME)
+            .setDisplayName("Grid tokens capacity")
+            .setAttributes(List.of(GRID_TOKEN_AGENT_TYPE))
+            .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
+            .setUnit("1")
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+            .setRenderingSettings(new MetricRenderingSettings()));
     }
 
     @Override
