@@ -100,8 +100,11 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
   }
 
   function searchKeyword(kwModules, keywordName) {
-    const kwModule = kwModules.find(m => m[keywordName]);
-    return kwModule ? {keywordFunction: kwModule[keywordName], keywordModule: kwModule} : undefined;
+    for (const m of kwModules) {
+      if (m[keywordName]) return { keywordFunction: m[keywordName], keywordModule: m };
+      if (m.default?.[keywordName]) return { keywordFunction: m.default[keywordName], keywordModule: m.default };
+    }
+    return undefined;
   }
 });
 
