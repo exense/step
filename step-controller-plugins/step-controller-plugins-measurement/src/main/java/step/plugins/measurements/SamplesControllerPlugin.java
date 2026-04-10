@@ -5,14 +5,16 @@ import org.slf4j.LoggerFactory;
 import step.controller.grid.GridPlugin;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
-import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.entities.EntityConstants;
 import step.core.metrics.InstrumentType;
 import step.core.metrics.MetricSample;
-import step.core.objectenricher.ObjectHookRegistry;
+import step.core.metrics.MetricType;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
-import step.core.timeseries.metric.*;
+import step.core.timeseries.metric.MetricAggregation;
+import step.core.timeseries.metric.MetricAggregationType;
+import step.core.timeseries.metric.MetricRenderingSettings;
+import step.core.timeseries.metric.MetricTypeAccessor;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
@@ -46,10 +48,12 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
     public static String ReportMeasurementsTableName = "reportMeasurements";
     private MetricSamplerRegistry metricSamplerRegistry;
     private MetricTypeRegistry metricTypeRegistry;
+    private String controllerUrl;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
+        controllerUrl = context.getControllerUrl();
 
         Collection<Measurement> collection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Measurement.class);
         context.require(TableRegistry.class).register(ReportMeasurementsTableName,
@@ -124,16 +128,18 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
                     List<ControllerMetricSample> gridMetricSamples = new ArrayList<>();
                     long now = System.currentTimeMillis();
                     for (TokenGroupCapacity tokenGroupCapacity : usageByIdentity) {
+                        int capacity = tokenGroupCapacity.getCapacity();
+                        Map<String, String> labels = tokenGroupCapacity.getKey();
+                        gridMetricSamples.add(new ControllerMetricSample(
+                            new MetricSample(now, "capacity", labels, InstrumentType.GAUGE,
+                                1, capacity, capacity, capacity, capacity, null),
+                            GridCapacityMetricName));
                         for (TokenWrapperState state : TokenWrapperState.values()) {
                             int valueByState = Objects.requireNonNullElse(tokenGroupCapacity.getCountByState().get(state), 0);
                             gridMetricSamples.add(new ControllerMetricSample(
-                                new MetricSample(now, state.name(), tokenGroupCapacity.getKey(), InstrumentType.GAUGE,
+                                new MetricSample(now, state.name(), labels, InstrumentType.GAUGE,
                                 1, valueByState, valueByState, valueByState, valueByState, null),
                                 GridByStateMetricName));
-                            gridMetricSamples.add(new ControllerMetricSample(
-                                new MetricSample(now, "capacity", tokenGroupCapacity.getKey(), InstrumentType.GAUGE,
-                                1, valueByState, valueByState, valueByState, valueByState, null),
-                                GridCapacityMetricName));
                         }
                     }
                     return gridMetricSamples;

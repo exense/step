@@ -4,6 +4,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 
 import java.util.List;
+import java.util.Map;
 
 public interface SamplesHandler {
 
@@ -26,6 +27,23 @@ public interface SamplesHandler {
      * @param metrics enriched metric snapshots, never {@code null}
      */
     default void processMetrics(List<ExecutionMetricSample> metrics) {
+        processMetrics(metrics, null);
+    }
+
+    /**
+     * Processes a batch of enriched metric snapshots (counter, gauge, histogram) providing a set of optional labels as keys/values.
+     * The optional labels are usually redundant for internal handlers but can be used for external handlers to enrich the metrics (i.e. the Prometheus handler)
+     * <p>
+     * Called both for end-of-keyword output metrics (from
+     * {@link step.functions.io.OutputBuilder#addMetric}) and for live metric snapshots
+     * dispatched periodically during keyword execution.
+     * <p>
+     * The default implementation invoke {@link #processMetrics(List)} discarding the optionalLabels
+     *
+     * @param metrics enriched metric snapshots, never {@code null}
+     * @param optionalLabels Map of optional labels that be used to further enrich the metric snapshots, can be {@code null}
+     */
+    default void processMetrics(List<ExecutionMetricSample> metrics, Map<String, String> optionalLabels) {
     }
 
     /**

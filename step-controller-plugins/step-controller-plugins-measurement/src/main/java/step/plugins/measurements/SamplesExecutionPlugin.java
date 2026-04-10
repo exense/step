@@ -1,15 +1,18 @@
 package step.plugins.measurements;
 
-import jakarta.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.artefacts.reports.TestCaseReportNode;
 import step.artefacts.reports.ThreadReportNode;
+import step.automation.packages.AutomationPackage;
+import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.accessors.AbstractTrackedObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
@@ -19,13 +22,11 @@ import step.core.metrics.GaugeMetric;
 import step.core.metrics.HistogramMetric;
 import step.core.metrics.InstrumentType;
 import step.core.metrics.MetricSample;
-import step.core.objectenricher.ObjectHookRegistry;
 import step.core.plans.Plan;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.reports.Measure;
 import step.core.scheduler.ExecutiontTaskParameters;
-import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
 import step.core.views.ViewManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
@@ -39,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
+import static step.automation.packages.AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
 import static step.plugins.measurements.MetricsConstants.EXECUTION_BOOLEAN_RESULT;
 import static step.plugins.measurements.MetricsConstants.EXECUTION_RESULT;
 import static step.plugins.measurements.SamplesControllerPlugin.*;
@@ -60,6 +62,7 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     public static final String AGENT_URL = "agentUrl";
     public static final String ORIGIN = "origin";
     public static final String TASK_ID = "taskId";
+    public static final String SCHEDULE_ID = "scheduleId"; //only use by prometheus handler for now
     public static final String PLAN_ID = "planId";
     public static final String PLAN = "plan";
     public static final String SCHEDULE = "schedule";
@@ -84,12 +87,18 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     // Tracks the live thread count per execution+threadGroup key ("execId|threadGroupName").
     // Incremented/decremented by processThreadReportNode; cleaned up in afterExecutionEnd.
     private final ConcurrentHashMap<String, AtomicLong> threadGroupCounts = new ConcurrentHashMap<>();
+    private String controllerUrl;
 
     public SamplesExecutionPlugin() {
     }
 
     public static synchronized void registerSamplesHandlers(SamplesHandler handler) {
         SAMPLES_HANDLERS.add(handler);
+    }
+
+    @Override
+    public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
+        controllerUrl = parentContext.getControllerUrl();
     }
 
     @Override
@@ -300,9 +309,13 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     }
 
     public void processMetrics(List<ExecutionMetricSample> metrics) {
+        processMetrics(metrics, null);
+    }
+
+    public void processMetrics(List<ExecutionMetricSample> metrics, Map<String, String> optionalLabels) {
         for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
             try {
-                samplesHandler.processMetrics(metrics);
+                samplesHandler.processMetrics(metrics, optionalLabels);
             } catch (Exception e) {
                 logger.error("Metrics could not be processed by " + samplesHandler.getClass().getSimpleName(), e);
             }
@@ -366,8 +379,8 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
                         if ((val instanceof Number)) {
                             measurement.addCustomField(key, ((Integer) val).longValue());
                         } /*else {
-							// ignore improper types
-						}*/
+                            // ignore improper types
+                        }*/
                     }
                 }
             });
@@ -401,7 +414,8 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
     private void createExecutionMetrics(ExecutionContext context) {
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
-        Execution execution = executionAccessor.get(context.getExecutionId());
+        String executionId = context.getExecutionId();
+        Execution execution = executionAccessor.get(executionId);
         ViewManager viewManager = context.require(ViewManager.class);
         ExecutionTypeManager executionTypeManager = context.require(ExecutionTypeManager.class);
 
@@ -416,13 +430,14 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
             MetricSample failureCount = new GaugeMetric(FAILURE_COUNT).observe(executionPassed ? 0 : 1, startTime).flush();
             samples.add(createExecutionMetricSample(context, failureCount, null, FAILURE_COUNT));
 
-            long duration = System.currentTimeMillis() - startTime;
+            long endTime = Objects.requireNonNullElse(execution.getEndTime(), System.currentTimeMillis());
+            long duration = endTime - startTime;
             MetricSample executionDuration = new HistogramMetric(EXECUTIONS_DURATION,
                 Map.of(EXECUTION_RESULT.getName(), execution.getResult().toString(), EXECUTION_BOOLEAN_RESULT.getName(), executionPassed ? "PASSED" : "FAILED"))
                 .observe(duration, startTime).flush();
             samples.add(createExecutionMetricSample(context, executionDuration, null, EXECUTIONS_DURATION));
 
-            ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, context.getExecutionId());
+            ErrorDistribution errorDistribution = (ErrorDistribution) viewManager.queryView(ErrorDistributionView.ERROR_DISTRIBUTION_VIEW, executionId);
             errorDistribution.getCountByErrorCode().entrySet().forEach(entry -> {
                 MetricSample failureCountByErrorCode = new GaugeMetric(FAILURES_COUNT_BY_ERROR_CODE,
                     Map.of(ERROR_CODE, entry.getKey()))
@@ -430,9 +445,22 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
                 samples.add(createExecutionMetricSample(context, failureCountByErrorCode, null, FAILURES_COUNT_BY_ERROR_CODE));
             });
 
-            processMetrics(samples);
-
-
+            //Optional labels only used for now by the Prometheus handler
+            Map<String, String> optionalLabelsMap = new TreeMap<>();
+            optionalLabelsMap.put("executionUrl", String.format("%s/#/executions/%s", controllerUrl, executionId));
+            optionalLabelsMap.put("startTime", String.valueOf(startTime));
+            optionalLabelsMap.put("endtime", String.valueOf(endTime));
+            ExecutiontTaskParameters executiontTaskParameters = execution.getExecutiontTaskParameters();
+            optionalLabelsMap.put("cronExpression", (executiontTaskParameters != null) ? executiontTaskParameters.getCronExpression() : "");
+            optionalLabelsMap.put("user", execution.getExecutionParameters().getUserID());
+            Object automationPackageId = context.getPlan().getCustomField(AUTOMATION_PACKAGE_ID);
+            optionalLabelsMap.put("apId", (automationPackageId != null) ? automationPackageId.toString() : "");
+            AutomationPackageAccessor automationPackageAccessor = context.require(AutomationPackageAccessor.class);
+            AutomationPackage automationPackage = (automationPackageId != null) ? automationPackageAccessor.get(automationPackageId.toString()) : null;
+            optionalLabelsMap.put("apName", Optional.ofNullable(automationPackage).map(ap -> ap.getAttribute(AbstractOrganizableObject.NAME)).orElse(""));
+            optionalLabelsMap.put("apVersionName", Optional.ofNullable(automationPackage).map(AutomationPackage::getVersionName).orElse(""));
+            optionalLabelsMap.put("apLastModified", Optional.ofNullable(automationPackage).map(AbstractTrackedObject::getLastModificationDate).map(d -> String.valueOf(d.toInstant().toEpochMilli())).orElse(""));
+            processMetrics(samples, optionalLabelsMap);
         }
     }
 }
