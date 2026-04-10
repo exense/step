@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.migration.tasks;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import step.core.Version;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
@@ -28,6 +26,8 @@ import step.core.collections.DocumentObject;
 import step.core.collections.Filters;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This task migrates the screen inputs from screen 'artefactTable' to 'planTable'
@@ -74,10 +74,4 @@ public class ScreenTemplateArtefactTableMigrationTask extends MigrationTask {
         });
         return result.get();
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
-
 }

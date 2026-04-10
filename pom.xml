@@ -211,13 +211,6 @@
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
         <version>2.5.1</version>
-        <exclusions>
-          <!-- unneeded, and conflicting, dependency from Quartz to Java EE 10-->
-          <exclusion>
-            <groupId>jakarta.xml.bind</groupId>
-            <artifactId>jakarta.xml.bind-api</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>
@@ -268,7 +261,7 @@
       <dependency>
         <groupId>org.codehaus.plexus</groupId>
         <artifactId>plexus-utils</artifactId>
-        <version>3.5.1</version>
+        <version>3.6.1</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.plexus</groupId>
@@ -537,11 +530,7 @@
                     <exclude>org.testng</exclude>
                   </excludes>
                 </bannedDependencies>
-                <requireUpperBoundDeps>
-                  <excludes>
-                    <exclude>jakarta.xml.bind:jakarta.xml.bind-api</exclude>
-                  </excludes>
-                </requireUpperBoundDeps>
+                <requireUpperBoundDeps/>
               </rules>
               <fail>true</fail>
             </configuration>
