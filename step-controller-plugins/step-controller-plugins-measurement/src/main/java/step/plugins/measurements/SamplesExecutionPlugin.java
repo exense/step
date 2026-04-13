@@ -455,8 +455,8 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
             optionalLabelsMap.put("user", execution.getExecutionParameters().getUserID());
             Object automationPackageId = context.getPlan().getCustomField(AUTOMATION_PACKAGE_ID);
             optionalLabelsMap.put("apId", (automationPackageId != null) ? automationPackageId.toString() : "");
-            AutomationPackageAccessor automationPackageAccessor = context.require(AutomationPackageAccessor.class);
-            AutomationPackage automationPackage = (automationPackageId != null) ? automationPackageAccessor.get(automationPackageId.toString()) : null;
+            AutomationPackageAccessor automationPackageAccessor = context.get(AutomationPackageAccessor.class);
+            AutomationPackage automationPackage = (automationPackageAccessor != null && automationPackageId != null) ? automationPackageAccessor.get(automationPackageId.toString()) : null;
             optionalLabelsMap.put("apName", Optional.ofNullable(automationPackage).map(ap -> ap.getAttribute(AbstractOrganizableObject.NAME)).orElse(""));
             optionalLabelsMap.put("apVersionName", Optional.ofNullable(automationPackage).map(AutomationPackage::getVersionName).orElse(""));
             optionalLabelsMap.put("apLastModified", Optional.ofNullable(automationPackage).map(AbstractTrackedObject::getLastModificationDate).map(d -> String.valueOf(d.toInstant().toEpochMilli())).orElse(""));
