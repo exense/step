@@ -25,6 +25,7 @@ import step.core.yaml.deserialization.PatchingContext;
 
 public class PatchableAbstractYamlModel extends AbstractYamlModel implements PatchableYamlModel {
 
+    @JsonIgnore
     private PatchingContext context;
 
     @JsonIgnore
@@ -80,9 +81,6 @@ public class PatchableAbstractYamlModel extends AbstractYamlModel implements Pat
         this.indent = indent;
     }
 
-
-
-    @JsonIgnore
     @Override
     public void setContext(PatchingContext context) {
         this.context = context;

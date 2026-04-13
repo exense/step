@@ -40,7 +40,7 @@ public class YamlPlainTextPlan extends PatchableAbstractYamlModel {
     private String file;
 
     @JsonCreator
-    public YamlPlainTextPlan(@JacksonInject(useInput = OptBoolean.FALSE)  PatchingContext context) {
+    public YamlPlainTextPlan(@JacksonInject(useInput = OptBoolean.FALSE, optional = OptBoolean.TRUE)  PatchingContext context) {
         super(context);
     }
 

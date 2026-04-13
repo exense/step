@@ -51,7 +51,7 @@ public class YamlPlan extends PatchableAbstractYamlModel {
     private List<String> categories;
 
     @JsonCreator
-    public YamlPlan(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext context) {
+    public YamlPlan(@JacksonInject(useInput = OptBoolean.FALSE, optional = OptBoolean.TRUE) PatchingContext context) {
         super(context);
     }
 

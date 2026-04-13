@@ -51,7 +51,10 @@ public class YamlKeywordDeserializer extends StepYamlDeserializer<YamlAutomation
 
         try {
             Class<?> clazz = Class.forName(keywordsLookuper.yamlKeywordClassToJava(yamlName));
-            return new YamlAutomationPackageKeyword((AbstractYamlFunction<?>) deserializationContext.readValue(jsonParser, clazz));
+            jsonParser.nextToken();
+            YamlAutomationPackageKeyword keyword = new YamlAutomationPackageKeyword((AbstractYamlFunction<?>) deserializationContext.readValue(jsonParser, clazz));
+            jsonParser.nextToken();
+            return keyword;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
