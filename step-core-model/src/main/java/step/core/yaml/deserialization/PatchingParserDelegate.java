@@ -17,8 +17,6 @@ public class PatchingParserDelegate extends JsonParserDelegate {
 
     private JsonLocation lastDistinctLocation;
 
-    private final Deque<LocatedJsonNode> nodeStack = new ArrayDeque<>();
-
     protected final PatchingContext patchingContext;
 
     public PatchingParserDelegate(JsonParser d, PatchingContext context) {
@@ -36,11 +34,6 @@ public class PatchingParserDelegate extends JsonParserDelegate {
         }
         locationForToken.put(token, preLocation);
 
-        if (token == JsonToken.END_OBJECT && !nodeStack.isEmpty()) {
-            LocatedJsonNode currentNode = nodeStack.pop();
-            currentNode.setEndLocation(currentTokenLocation());
-        }
-
         return token;
     }
 
@@ -50,11 +43,6 @@ public class PatchingParserDelegate extends JsonParserDelegate {
 
     protected JsonLocation getLastDistinctLocation() {
         return lastDistinctLocation;
-    }
-
-    public void setCurrentObjectNode(LocatedJsonNode jsonNode) {
-        jsonNode.setStartLocation(currentLocation());
-        nodeStack.add(jsonNode);
     }
 
     protected PatchingContext getPatchingContext() {

@@ -112,7 +112,6 @@ public class AutomationPackageDescriptorReader {
             }
             PatchingContext context = new PatchingContext(yamlDescriptorString, yamlObjectMapper);
             PatchingParserDelegate parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString), context);
-            yamlObjectMapper.setNodeFactory(new LocatedYamlObjectFactory(parser));
 
             Map<Class<?>, Object> injections = new HashMap<>();
             injections.put(AutomationPackageSerializationRegistry.class, serializationRegistry);
