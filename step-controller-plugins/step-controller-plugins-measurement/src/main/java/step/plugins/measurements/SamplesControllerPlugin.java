@@ -134,7 +134,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
                         int capacity = tokenGroupCapacity.getCapacity();
                         Map<String, String> labels = new TreeMap<>(tokenGroupCapacity.getKey());
                         gridMetricSamples.add(new ControllerMetricSample(
-                            new MetricSample(now, "grid_token_capacity", labels, InstrumentType.GAUGE,
+                            new MetricSample(now, "grid_tokens_capacity", labels, InstrumentType.GAUGE,
                                 1, capacity, capacity, capacity, capacity, null),
                             GRID_CAPACITY_METRIC_NAME));
                         for (TokenWrapperState state : TokenWrapperState.values()) {
@@ -159,6 +159,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         metricTypeRegistry.registerMetricType(new MetricType()
                 .setName(EXECUTIONS_COUNT)
                 .setDisplayName("Execution count")
+                .setDescription("Total number of plan executions ended over the selected time range.")
                 .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
                 .setUnit("1")
@@ -167,6 +168,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         metricTypeRegistry.registerMetricType(new MetricType()
                 .setName(EXECUTIONS_DURATION)
                 .setDisplayName("Execution duration")
+                .setDescription("Wall-clock duration of each plan execution in milliseconds. Can be filtered by simplified result (FAILED/PASSED) or detailed result.")
                 .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE, EXECUTION_BOOLEAN_RESULT, EXECUTION_RESULT))
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
                 .setUnit("ms")
@@ -175,6 +177,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
                 // AVG calculation is enough here. the value is either 0 or 100 for each exec.
                 .setName(FAILURE_PERCENTAGE)
                 .setDisplayName("Execution failure percentage")
+                .setDescription("Failure rate of plan executions as a percentage. Each execution contributes 0 (success) or 100 (failure); the average over the selected time range yields the overall failure rate.")
                 .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setUnit("%")
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
@@ -183,12 +186,14 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
                 .setName(FAILURE_COUNT)
                 .setUnit("1")
                 .setDisplayName("Execution failure count")
+                .setDescription("Number of plan executions that ended with a failure result over the selected time range.")
                 .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
                 .setRenderingSettings(new MetricRenderingSettings()));
         metricTypeRegistry.registerMetricType(new MetricType()
                 .setName(FAILURES_COUNT_BY_ERROR_CODE)
                 .setDisplayName("Execution failure count by error code")
+                .setDescription("Number of failed executions broken down by error code, allowing identification of the most frequent failure reasons.")
                 .setUnit("1")
                 .setDefaultGroupingAttributes(List.of(ERROR_CODE_ATTRIBUTE.getName()))
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
@@ -197,6 +202,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         metricTypeRegistry.registerMetricType(new MetricType()
                 .setName(RESPONSE_TIME)
                 .setDisplayName("Response time")
+                .setDescription("Response time in milliseconds of individual steps or keywords measured during plan execution.")
                 .setAttributes(Arrays.asList(STATUS_ATTRIBUTE, TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
                 .setUnit("ms")
@@ -205,6 +211,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         metricTypeRegistry.registerMetricType(new MetricType()
                 .setName(step.core.metrics.InstrumentType.HISTOGRAM.toLowerCase())
                 .setDisplayName("Histogram")
+                .setDescription("Custom histogram metrics recorded by keywords in plan executions.")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
                 .setUnit("")
@@ -213,6 +220,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         metricTypeRegistry.registerMetricType(new MetricType()
                 .setName(step.core.metrics.InstrumentType.GAUGE.toLowerCase())
                 .setDisplayName("Gauge")
+                .setDescription("Custom gauge metrics recorded by keywords in plan executions, representing instantaneous numeric values.")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
                 .setUnit("1")
@@ -221,6 +229,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         metricTypeRegistry.registerMetricType(new MetricType()
                 .setName(step.core.metrics.InstrumentType.COUNTER.toLowerCase())
                 .setDisplayName("Counter")
+                .setDescription("Custom counter metrics recorded by keywords in plan executions, tracking cumulative event counts.")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
                 .setUnit("1")
@@ -229,6 +238,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         metricTypeRegistry.registerMetricType(new MetricType()
                 .setName(THREAD_GROUP)
                 .setDisplayName("Thread group")
+                .setDescription("Number of concurrent virtual users or threads active in a thread group at a given point in time. The max value is the default aggregation.")
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
                 .setUnit("1")
@@ -237,6 +247,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         metricTypeRegistry.registerMetricType(new MetricType()
             .setName(GRID_BY_STATE_METRIC_NAME)
             .setDisplayName("Grid tokens by state")
+            .setDescription("Number of grid tokens (agent execution slots) currently in each lifecycle state, broken down by state and agent type.")
             .setAttributes(Arrays.asList(GRID_TOKEN_STATE, GRID_TOKEN_AGENT_TYPE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_STATE.getName(), GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")
@@ -245,6 +256,7 @@ public class SamplesControllerPlugin extends AbstractControllerPlugin {
         metricTypeRegistry.registerMetricType(new MetricType()
             .setName(GRID_CAPACITY_METRIC_NAME)
             .setDisplayName("Grid tokens capacity")
+            .setDescription("Total number of available grid token slots per agent type, representing the maximum execution concurrency of the grid.")
             .setAttributes(List.of(GRID_TOKEN_AGENT_TYPE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")

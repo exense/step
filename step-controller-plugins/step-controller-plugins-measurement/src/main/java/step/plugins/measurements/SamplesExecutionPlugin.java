@@ -18,6 +18,7 @@ import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.type.ExecutionTypeManager;
+import step.core.metrics.CounterMetric;
 import step.core.metrics.GaugeMetric;
 import step.core.metrics.HistogramMetric;
 import step.core.metrics.InstrumentType;
@@ -423,11 +424,11 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
             boolean executionPassed = execution.getResult() == ReportNodeStatus.PASSED;
             long startTime = execution.getStartTime();
             List<ExecutionMetricSample> samples = new ArrayList<>();
-            MetricSample executionCount = new GaugeMetric(EXECUTIONS_COUNT).observe(1, startTime).flush();
+            MetricSample executionCount = new CounterMetric(EXECUTIONS_COUNT).increment(1, startTime).flush();
             samples.add(createExecutionMetricSample(context, executionCount, null, EXECUTIONS_COUNT));
             MetricSample failurePercentage = new GaugeMetric(FAILURE_PERCENTAGE).observe(executionPassed ? 0 : 100, startTime).flush();
             samples.add(createExecutionMetricSample(context, failurePercentage, null, FAILURE_PERCENTAGE));
-            MetricSample failureCount = new GaugeMetric(FAILURE_COUNT).observe(executionPassed ? 0 : 1, startTime).flush();
+            MetricSample failureCount = new CounterMetric(FAILURE_COUNT).increment(executionPassed ? 0 : 1, startTime).flush();
             samples.add(createExecutionMetricSample(context, failureCount, null, FAILURE_COUNT));
 
             long endTime = Objects.requireNonNullElse(execution.getEndTime(), System.currentTimeMillis());
