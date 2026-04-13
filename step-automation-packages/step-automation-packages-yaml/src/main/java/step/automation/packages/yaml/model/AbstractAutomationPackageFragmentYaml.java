@@ -41,8 +41,6 @@ import java.util.*;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractAutomationPackageFragmentYaml implements AutomationPackageFragmentYaml {
-    private final ObjectMapper mapper;
-    private final AutomationPackageSerializationRegistry serializationRegistry;
     private List<String> fragments = new ArrayList<>();
     private List<YamlAutomationPackageKeyword> keywords = new ArrayList<>();
     private PatchableYamlList<YamlPlan> plans;
@@ -52,9 +50,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     private PatchingContext context;
     private long fileLastModified = 0;
 
-    public AbstractAutomationPackageFragmentYaml(ObjectMapper mapper, AutomationPackageSerializationRegistry serializationRegistry, PatchingContext patchingContext) {
-        this.mapper = mapper;
-        this.serializationRegistry = serializationRegistry;
+    public AbstractAutomationPackageFragmentYaml(PatchingContext patchingContext) {
         context = patchingContext;
         plans = new PatchableYamlList<>(patchingContext, YamlPlan.PLANS_ENTITY_NAME);
     }
@@ -97,16 +93,8 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
         return additionalFields;
     }
 
-    @JsonAnySetter
     @Override
-    public void setAdditionalFields(String key, JsonNode node) throws IOException {
-        if (mapper == null || serializationRegistry == null) return;
-
-        // acquire reader for the right type
-        Class<?> targetClass = serializationRegistry.resolveClassForYamlField(key);
-        if (targetClass == null) return;
-
-        List<?> list = mapper.readerForListOf(targetClass).readValue(node);
+    public void setAdditionalFields(String key, List<?> list) {
         additionalFields.put(key,  list);
     }
 

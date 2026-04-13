@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.BeanDeserializer;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerBase;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.std.CollectionDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -33,6 +35,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
@@ -43,9 +46,12 @@ import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfigurat
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.PatchableYamlModel;
+import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlListDeserializer;
 import step.core.yaml.deserialization.PatchableYamlModelDeserializer;
 import step.core.yaml.deserialization.PatchingContext;
+import step.core.yaml.deserializers.StepYamlDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.core.yaml.serializers.StepYamlSerializersScanner;
 import step.migration.MigrationManager;
@@ -63,6 +69,7 @@ import step.repositories.parser.StepsParser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -216,15 +223,13 @@ public class YamlPlanReader {
         return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
     }
 
-    private SimpleModule registerBasicSerializersAndDeserializers(SimpleModule module, ObjectMapper resultingMapper) {
-        SimpleModule res = StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, resultingMapper);
-        res = StepYamlSerializersScanner.addAllSerializerAddonsToModule(res, resultingMapper);
-        return res;
-    }
-
     public SimpleModule registerAllSerializersAndDeserializers(ObjectMapper resultingMapper, boolean upgradablePlan) {
         ObjectMapper nonUpgradableYamlMapper = createDefaultYamlMapper().registerModule(createModuleForNonUpgradablePlans(resultingMapper));
         // configure custom deserializers
+
+        Map<Class<?>, Class<?>> deserializers = StepYamlDeserializersScanner.scanDeserializerAddons();
+
+
         SimpleModule module = new SimpleModule() {
             @Override
             public void setupModule(SetupContext context) {
@@ -233,8 +238,28 @@ public class YamlPlanReader {
                 context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
                     @Override
                     public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
+
                         if (YamlPlan.class == beanDesc.getBeanClass()) {
                             deserializer = new UpgradableYamlPlanDeserializer(upgradablePlan ? currentVersion : null, jsonSchema, migrationManager, nonUpgradableYamlMapper, deserializer);
+                        }
+
+                        if (deserializers.containsKey(beanDesc.getBeanClass())) {
+                            try {
+                                Class<?> deserializerClass = deserializers.get(beanDesc.getBeanClass());
+                                if (StepYamlDeserializer.class.isAssignableFrom(deserializerClass)) {
+                                    deserializer = (JsonDeserializer<?>) deserializerClass.getConstructor(JsonDeserializer.class, ObjectMapper.class).newInstance(deserializer, resultingMapper);
+                                } else if (BeanDeserializer.class.isAssignableFrom(deserializerClass) && BeanDeserializer.class.isAssignableFrom(deserializer.getClass())) {
+                                    deserializer = (JsonDeserializer<?>) deserializerClass.getConstructor(BeanDeserializer.class).newInstance((BeanDeserializer) deserializer);
+                                }
+                            } catch (InstantiationException e) {
+                                throw new RuntimeException(e);
+                            } catch (IllegalAccessException e) {
+                                throw new RuntimeException(e);
+                            } catch (InvocationTargetException e) {
+                                throw new RuntimeException(e);
+                            } catch (NoSuchMethodException e) {
+                                throw new RuntimeException(e);
+                            }
                         }
 
                         if (PatchableYamlModel.class.isAssignableFrom(beanDesc.getBeanClass())
@@ -246,7 +271,7 @@ public class YamlPlanReader {
 
                     @Override
                     public JsonDeserializer<?> modifyCollectionDeserializer(DeserializationConfig config, CollectionType type, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
-                        if (deserializer instanceof CollectionDeserializer) {
+                        if (deserializer instanceof CollectionDeserializer && beanDesc.getBeanClass().equals(PatchableYamlList.class)) {
                             return new PatchableYamlListDeserializer((CollectionDeserializer) deserializer);
                         }
                         return deserializer;
@@ -254,13 +279,12 @@ public class YamlPlanReader {
                 });
             }
         };
-        return registerBasicSerializersAndDeserializers(module, resultingMapper);
+        return StepYamlSerializersScanner.addAllSerializerAddonsToModule(module, resultingMapper);
     }
 
     private SimpleModule createModuleForNonUpgradablePlans(ObjectMapper resultingMapper) {
         SimpleModule module = new SimpleModule();
-        registerBasicSerializersAndDeserializers(module, resultingMapper);
-        return module;
+        return StepYamlSerializersScanner.addAllSerializerAddonsToModule(module, resultingMapper);
     }
 
     protected ObjectMapper getYamlMapper() {

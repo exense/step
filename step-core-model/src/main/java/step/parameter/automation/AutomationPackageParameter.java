@@ -18,16 +18,21 @@
  ******************************************************************************/
 package step.parameter.automation;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.OptBoolean;
 import step.commons.activation.Expression;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;
+import step.core.yaml.PatchableAbstractYamlModel;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
+import step.core.yaml.deserialization.PatchingContext;
 import step.parameter.Parameter;
 import step.parameter.ParameterScope;
 
 @YamlModel(named = false)
-public class AutomationPackageParameter extends AbstractYamlModel {
+public class AutomationPackageParameter extends PatchableAbstractYamlModel {
 
     protected String key;
     protected DynamicValue<String> value;
@@ -40,6 +45,11 @@ public class AutomationPackageParameter extends AbstractYamlModel {
     protected Boolean protectedValue = false;
     protected ParameterScope scope = ParameterScope.GLOBAL;
     protected String scopeEntity;
+
+    @JsonCreator
+    public AutomationPackageParameter(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext context) {
+        super(context);
+    }
 
     public Parameter toParameter() {
         Parameter res = new Parameter();

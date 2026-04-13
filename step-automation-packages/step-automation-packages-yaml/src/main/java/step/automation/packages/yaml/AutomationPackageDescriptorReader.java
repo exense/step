@@ -48,6 +48,7 @@ import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -112,12 +113,22 @@ public class AutomationPackageDescriptorReader {
             PatchingContext context = new PatchingContext(yamlDescriptorString, yamlObjectMapper);
             PatchingParserDelegate parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString), context);
             yamlObjectMapper.setNodeFactory(new LocatedYamlObjectFactory(parser));
-            yamlObjectMapper.setInjectableValues(new InjectableValues.Std()
-                .addValue(ObjectMapper.class, yamlObjectMapper)
-                .addValue(AutomationPackageSerializationRegistry.class, serializationRegistry)
-                .addValue(PatchingContext.class, context)
-            );
-            T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(parser, targetClass);
+
+            Map<Class<?>, Object> injections = new HashMap<>();
+            injections.put(AutomationPackageSerializationRegistry.class, serializationRegistry);
+            injections.put(PatchingContext.class, context);
+            injections.put(ObjectMapper.class, yamlObjectMapper);
+
+            InjectableValues.Std injectableValues = new InjectableValues.Std();
+            injections.forEach(injectableValues::addValue);
+
+            yamlObjectMapper.setInjectableValues(injectableValues);
+
+            T res = yamlObjectMapper.reader()
+                .withAttributes(injections)
+                .withAttribute("version", version)
+                .readValue(parser, targetClass);
+
             res.setPatchingContext(context);
             logAfterRead(packageName, res);
             return res;

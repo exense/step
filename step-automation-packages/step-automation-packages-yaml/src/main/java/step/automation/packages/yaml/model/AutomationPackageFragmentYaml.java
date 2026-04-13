@@ -46,7 +46,7 @@ public interface AutomationPackageFragmentYaml {
         return (List<T>) getAdditionalFields().get(k);
     }
 
-    void setAdditionalFields(String key, JsonNode value) throws IOException;
+    void setAdditionalFields(String key, List<?> value) throws IOException;
 
     URL getFragmentUrl();
 

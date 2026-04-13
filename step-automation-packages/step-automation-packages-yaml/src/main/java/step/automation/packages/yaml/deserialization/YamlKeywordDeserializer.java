@@ -20,6 +20,7 @@ package step.automation.packages.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.model.AbstractYamlFunction;
@@ -34,15 +35,10 @@ import java.io.IOException;
 @StepYamlDeserializerAddOn(targetClasses = {YamlAutomationPackageKeyword.class})
 public class YamlKeywordDeserializer extends StepYamlDeserializer<YamlAutomationPackageKeyword> {
 
-    private final AutomationPackageKeywordsLookuper keywordsLookuper;
+    private final AutomationPackageKeywordsLookuper keywordsLookuper = new AutomationPackageKeywordsLookuper();
 
-    public YamlKeywordDeserializer() {
-        this(null);
-    }
-
-    public YamlKeywordDeserializer(ObjectMapper yamlObjectMapper) {
-        super(yamlObjectMapper);
-        this.keywordsLookuper = new AutomationPackageKeywordsLookuper();
+    public YamlKeywordDeserializer(JsonDeserializer<?> deserializer, ObjectMapper yamlObjectMapper) {
+        super(deserializer, yamlObjectMapper);
     }
 
     @Override

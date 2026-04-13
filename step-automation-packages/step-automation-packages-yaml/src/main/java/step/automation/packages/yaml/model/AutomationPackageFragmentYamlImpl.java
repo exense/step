@@ -27,16 +27,7 @@ import step.core.yaml.deserialization.PatchingContext;
 
 public class AutomationPackageFragmentYamlImpl extends AbstractAutomationPackageFragmentYaml {
 
-    @JsonCreator
-    public AutomationPackageFragmentYamlImpl(
-        @JacksonInject(useInput = OptBoolean.FALSE) ObjectMapper mapper,
-        @JacksonInject(useInput = OptBoolean.FALSE) AutomationPackageSerializationRegistry serializationRegistry,
-        @JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext
-        ) {
-        super(mapper, serializationRegistry, patchingContext);
-    }
-
-    public AutomationPackageFragmentYamlImpl(PatchingContext context) {
-        this(null, null, context);
+    public AutomationPackageFragmentYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
+        super(patchingContext);
     }
 }

@@ -18,10 +18,16 @@
  ******************************************************************************/
 package step.core.scheduler.automation;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.OptBoolean;
+import step.core.yaml.PatchableAbstractYamlModel;
+import step.core.yaml.deserialization.PatchingContext;
+
 import java.util.Map;
 import java.util.List;
 
-public class AutomationPackageSchedule {
+public class AutomationPackageSchedule extends PatchableAbstractYamlModel {
 
     public static final String SCHEDULE_DEF = "ScheduleDef";
     public static final String FIELD_NAME_IN_AP = "schedules";
@@ -34,10 +40,13 @@ public class AutomationPackageSchedule {
     private String assertionPlanName;
     private Map<String, String> executionParameters;
 
-    public AutomationPackageSchedule() {
+    @JsonCreator
+    public AutomationPackageSchedule(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
+        super(patchingContext);
     }
 
     public AutomationPackageSchedule(String name, String cron, String planName, Map<String, String> executionParameters) {
+        super(new PatchingContext());
         this.name = name;
         this.cron = cron;
         this.planName = planName;

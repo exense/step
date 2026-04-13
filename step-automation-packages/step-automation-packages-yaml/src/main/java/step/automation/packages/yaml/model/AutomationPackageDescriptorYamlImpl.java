@@ -36,17 +36,8 @@ public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPacka
 
     private String name;
 
-    @JsonCreator
-    public AutomationPackageDescriptorYamlImpl(
-        @JacksonInject(useInput = OptBoolean.FALSE) ObjectMapper mapper,
-        @JacksonInject(useInput = OptBoolean.FALSE) AutomationPackageSerializationRegistry serializationRegistry,
-        @JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext
-        ) {
-        super(mapper, serializationRegistry, patchingContext);
-    }
-
-    public AutomationPackageDescriptorYamlImpl(PatchingContext context) {
-        this(null, null, context);
+    public AutomationPackageDescriptorYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
+        super(patchingContext);
     }
 
     @Override

@@ -100,8 +100,7 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> i
                     if (log.isDebugEnabled()) {
                         log.debug("Yaml plan after migrations: {}", bufferedYamlPlan);
                     }
-
-                    planJsonNode = yamlMapper.readTree(bufferedYamlPlan);
+                    planJsonNode = yamlMapper.valueToTree(migratedDocument);
                 }
             }
         }
