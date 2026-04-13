@@ -57,11 +57,7 @@
             <configuration combine.self="override">
               <rules>
                 <!-- no bannedDependencies here -->
-                <requireUpperBoundDeps>
-                  <excludes>
-                    <exclude>jakarta.xml.bind:jakarta.xml.bind-api</exclude>
-                  </excludes>
-                </requireUpperBoundDeps>
+                <requireUpperBoundDeps/>
               </rules>
               <fail>true</fail>
             </configuration>
