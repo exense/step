@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.util.JsonParserDelegate;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -53,10 +52,9 @@ public class PatchingParserDelegate extends JsonParserDelegate {
         return lastDistinctLocation;
     }
 
-    public ObjectNode setCurrentObjectNode(LocatedJsonNode jsonNode) {
+    public void setCurrentObjectNode(LocatedJsonNode jsonNode) {
         jsonNode.setStartLocation(currentLocation());
         nodeStack.add(jsonNode);
-        return jsonNode;
     }
 
     protected PatchingContext getPatchingContext() {
