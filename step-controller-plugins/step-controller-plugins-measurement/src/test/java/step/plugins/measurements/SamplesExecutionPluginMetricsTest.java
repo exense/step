@@ -71,11 +71,6 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         }
 
         @Override
-        public void processGauges(List<Measurement> measurements) {
-            // no-op
-        }
-
-        @Override
         public void processMetrics(List<ExecutionMetricSample> metrics) {
             capturedMetrics.addAll(metrics);
         }

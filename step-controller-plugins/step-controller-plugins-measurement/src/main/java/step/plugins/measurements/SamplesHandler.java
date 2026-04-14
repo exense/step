@@ -12,8 +12,6 @@ public interface SamplesHandler {
 
     void processMeasurements(List<Measurement> measurements);
 
-    void processGauges(List<Measurement> measurements);
-
     /**
      * Processes a batch of enriched metric snapshots (counter, gauge, histogram).
      * <p>

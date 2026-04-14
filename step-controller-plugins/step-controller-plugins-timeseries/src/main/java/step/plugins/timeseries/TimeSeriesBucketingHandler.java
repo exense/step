@@ -2,6 +2,7 @@ package step.plugins.timeseries;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
+import step.core.metrics.InstrumentType;
 import step.core.metrics.MetricSample;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.bucket.Bucket;
@@ -75,16 +76,14 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
         return new BucketAttributes(bucketAttributesMap);
     }
 
-    @Override
-    public void processGauges(List<Measurement> measurements) {
-        measurements.forEach(measurement -> {
-            if (measurement != null) {
-                BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
-                bucketAttributes.put(METRIC_TYPE, measurement.getType());
-                TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
-                ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
-            }
-        });
+    public void processThreadGroupAsMeasurement(Measurement measurement) {
+        if (measurement != null) {
+            BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
+            bucketAttributes.put(METRIC_TYPE, measurement.getType());
+            bucketAttributes.put("instrumentType", InstrumentType.GAUGE.toLowerCase());
+            TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
+            ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
+        }
     }
 
     /**
@@ -164,7 +163,8 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
         }
         measurement.remove("_id"); // because these measurements come with a generated id and can't be grouped into buckets.
         if (measurement.getType().equals(THREAD_GROUP)) {
-            this.processGauges(List.of(measurement));
+            //Convert to the ThreadGroup Metric Sample
+            processThreadGroupAsMeasurement(measurement);
         } else {
             this.processMeasurement(measurement);
         }

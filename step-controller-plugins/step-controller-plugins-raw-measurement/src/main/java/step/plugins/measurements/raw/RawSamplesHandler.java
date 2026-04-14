@@ -55,11 +55,6 @@ public class RawSamplesHandler implements SamplesHandler {
     }
 
     @Override
-    public void processGauges(List<Measurement> measurements) {
-        processMeasurements(measurements);
-    }
-
-    @Override
     public void processMetrics(List<ExecutionMetricSample> metrics) {
         if (metrics != null && ! metrics.isEmpty()) {
             metricSampleAccessor.save(metrics);

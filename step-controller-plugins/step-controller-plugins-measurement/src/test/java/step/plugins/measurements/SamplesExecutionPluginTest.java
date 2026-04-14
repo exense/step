@@ -143,11 +143,6 @@ public class SamplesExecutionPluginTest extends AbstractKeyword {
         }
 
         @Override
-        public void processGauges(List<Measurement> measurements) {
-            processMeasurements(measurements);
-        }
-
-        @Override
         public void processMetrics(List<ExecutionMetricSample> metrics) {
             synchronized (assertMeasurementsCount) {
                 for (ExecutionMetricSample mm : metrics) {

@@ -301,8 +301,6 @@ public class MetricHeartbeatRegistryTest {
             @Override
             public void processMeasurements(List<Measurement> measurements) {}
             @Override
-            public void processGauges(List<Measurement> measurements) {}
-            @Override
             public void processMetrics(List<ExecutionMetricSample> metrics) { sink.addAll(metrics); }
             @Override
             public void afterExecutionEnd(ExecutionContext context) {}
