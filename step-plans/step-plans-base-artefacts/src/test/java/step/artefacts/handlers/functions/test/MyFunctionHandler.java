@@ -1,10 +1,10 @@
 package step.artefacts.handlers.functions.test;
 
+import jakarta.json.JsonObject;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;
 
-import javax.json.JsonObject;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;

@@ -20,21 +20,27 @@ package step.functions.handler;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import step.functions.io.Input;
 import step.functions.io.Output;
 
 /**
  * Factory used to create the {@link ObjectMapper} used to serialize/deserialize
- * {@link Input} and {@link Output} instances
+ * {@link Input} and {@link Output} instances (legacy, javax.json, version)
  *
  */
 public class FunctionIOJavaxObjectMapperFactory {
 
     public static ObjectMapper createObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JSR353Module());
+        try {
+            // We need to use reflection as these artifacts are (knowingly) declared as a runtime dependency, to discourage use of legacy javax.json packages.
+            SimpleModule jsr353Module = (SimpleModule) Class.forName("com.fasterxml.jackson.datatype.jsr353.JSR353Module").getDeclaredConstructor().newInstance();
+            mapper.registerModule(jsr353Module);
+        } catch (Exception e) {
+            // Unexpected, this class should always be present as it's declared as a runtime dependency.
+            throw new RuntimeException(e);
+        }
         return mapper;
     }
 }

@@ -18,18 +18,10 @@
  ******************************************************************************/
 package step.plugins.java.handler;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-
-import org.junit.Test;
-
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import org.junit.Assert;
+import org.junit.Test;
 import step.functions.handler.FunctionHandlerFactory;
 import step.functions.io.Input;
 import step.functions.io.Output;
@@ -42,6 +34,12 @@ import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
 import step.plugins.js223.handler.ScriptHandler;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 

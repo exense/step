@@ -18,17 +18,14 @@
  ******************************************************************************/
 package step.functions.io;
 
-import java.io.IOException;
-
-import javax.json.JsonObject;
-
-import org.junit.Test;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import jakarta.json.JsonObject;
+import org.junit.Test;
 import step.functions.handler.FunctionIOJakartaObjectMapperFactory;
 import step.functions.handler.FunctionIOJavaxObjectMapperFactory;
+
+import java.io.IOException;
 
 public class OutputSerializationTest {
 
@@ -37,9 +34,9 @@ public class OutputSerializationTest {
         OutputBuilder builder = new OutputBuilder();
         builder.add("test", "test");
         Output<JsonObject> output = builder.build();
-        ObjectMapper mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
-        String value = mapper.writeValueAsString(output);
-        mapper.readValue(value, new TypeReference<Output<JsonObject>>() {
+        ObjectMapper javaxMapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
+        String value = javaxMapper.writeValueAsString(output);
+        javaxMapper.readValue(value, new TypeReference<Output<javax.json.JsonObject>>() {
         });
 
         ObjectMapper jakartaMapper = FunctionIOJakartaObjectMapperFactory.createObjectMapper();

@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.functions.handler;
 
-import javax.json.JsonObject;
+import jakarta.json.JsonObject;
 
 public abstract class JsonBasedFunctionHandler extends AbstractFunctionHandler<JsonObject, JsonObject> {
 

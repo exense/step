@@ -18,9 +18,8 @@
  ******************************************************************************/
 package step.functions.runner;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
 import step.functions.io.Output;

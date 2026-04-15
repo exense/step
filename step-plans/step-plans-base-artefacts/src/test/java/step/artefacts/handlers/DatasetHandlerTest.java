@@ -18,12 +18,16 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.*;
+import step.artefacts.BaseArtefactPlugin;
+import step.artefacts.CallFunction;
+import step.artefacts.DataSetArtefact;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.reports.CallFunctionReportNode;
@@ -42,8 +46,6 @@ import step.expressions.ExpressionHandler;
 import step.functions.io.Output;
 import step.threadpool.ThreadPoolPlugin;
 
-import javax.json.Json;
-import javax.json.JsonObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

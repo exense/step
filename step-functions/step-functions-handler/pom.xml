@@ -65,17 +65,29 @@
       <artifactId>jackson-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.datatype</groupId>
-      <artifactId>jackson-datatype-jsr353</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.glassfish</groupId>
       <artifactId>jakarta.json</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.eclipse.parsson</groupId>
+      <artifactId>parsson</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jakarta-jsonp</artifactId>
-      <scope>compile</scope>
+    </dependency>
+    <!-- dependencies below use runtime scope to avoid (transitively) exposing the legacy javax.json package everywhere -->
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-api-javax-json</artifactId>
+      <version>1.0.0</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr353</artifactId>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 

@@ -27,7 +27,7 @@ import step.functions.io.Output;
 
 /**
  * Factory used to create the {@link ObjectMapper} used to serialize/deserialize
- * {@link Input} and {@link Output} instances
+ * {@link Input} and {@link Output} instances (current, jakarta.json, version)
  *
  */
 public class FunctionIOJakartaObjectMapperFactory {

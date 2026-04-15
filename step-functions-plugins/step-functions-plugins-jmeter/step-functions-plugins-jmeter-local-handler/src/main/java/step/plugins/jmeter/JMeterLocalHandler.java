@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.jmeter;
 
+import jakarta.json.JsonObject;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.engine.StandardJMeterEngine;
 import org.apache.jmeter.save.SaveService;
@@ -35,7 +36,6 @@ import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.grid.filemanager.FileManagerException;
 import step.grid.io.AttachmentHelper;
 
-import javax.json.JsonObject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;

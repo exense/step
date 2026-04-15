@@ -32,7 +32,6 @@ import step.grid.agent.tokenpool.AgentTokenWrapper;
 import step.grid.agent.tokenpool.TokenReservationSession;
 import step.grid.bootstrap.ResourceExtractor;
 import step.grid.contextbuilder.ApplicationContextBuilder;
-import step.grid.contextbuilder.ApplicationContextControl;
 import step.grid.contextbuilder.RemoteApplicationContextFactory;
 import step.grid.filemanager.FileVersionId;
 import step.grid.io.InputMessage;
@@ -50,7 +49,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class FunctionMessageHandler extends AbstractMessageHandler {
@@ -76,7 +79,7 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
     public FunctionMessageHandler() {
         super();
 
-        mapper = FunctionIOJavaxObjectMapperFactory.createObjectMapper();
+        mapper = FunctionIOJakartaObjectMapperFactory.createObjectMapper();
     }
 
     private int getFromAgentPropsOrDefault(String configKey, int defaultValue) {

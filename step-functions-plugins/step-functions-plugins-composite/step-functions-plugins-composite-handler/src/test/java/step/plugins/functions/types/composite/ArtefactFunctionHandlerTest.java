@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.plugins.functions.types.composite;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,8 +48,6 @@ import step.grid.contextbuilder.ApplicationContextBuilder;
 import step.grid.contextbuilder.ExecutionContextCacheConfiguration;
 import step.planbuilder.BaseArtefacts;
 
-import javax.json.Json;
-import javax.json.JsonObject;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;

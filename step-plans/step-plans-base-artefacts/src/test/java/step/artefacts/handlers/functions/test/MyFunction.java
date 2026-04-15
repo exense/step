@@ -1,10 +1,9 @@
 package step.artefacts.handlers.functions.test;
 
+import jakarta.json.JsonObject;
 import step.functions.Function;
 import step.functions.io.Input;
 import step.functions.io.Output;
-
-import javax.json.JsonObject;
 
 public class MyFunction extends Function {
 

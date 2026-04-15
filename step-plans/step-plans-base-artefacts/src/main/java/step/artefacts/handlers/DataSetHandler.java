@@ -18,6 +18,9 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
+import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
+import jakarta.json.JsonObjectBuilder;
 import step.artefacts.DataSetArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
@@ -29,9 +32,6 @@ import step.datapool.DataPoolRow;
 import step.datapool.DataSet;
 import step.datapool.DataSetHandle;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObjectBuilder;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;

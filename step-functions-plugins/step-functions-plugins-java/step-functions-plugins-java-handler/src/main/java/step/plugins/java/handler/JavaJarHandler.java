@@ -18,13 +18,7 @@
  ******************************************************************************/
 package step.plugins.java.handler;
 
-import java.lang.reflect.Method;
-import java.net.URLClassLoader;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.json.JsonObject;
-
+import jakarta.json.JsonObject;
 import step.core.scanner.AnnotationScanner;
 import step.functions.handler.JsonBasedFunctionHandler;
 import step.functions.io.Input;
@@ -33,6 +27,11 @@ import step.grid.contextbuilder.ApplicationContextBuilder.ApplicationContext;
 import step.handlers.javahandler.Keyword;
 import step.handlers.javahandler.KeywordExecutor;
 import step.plugins.js223.handler.ScriptHandler;
+
+import java.lang.reflect.Method;
+import java.net.URLClassLoader;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class JavaJarHandler extends JsonBasedFunctionHandler {
 

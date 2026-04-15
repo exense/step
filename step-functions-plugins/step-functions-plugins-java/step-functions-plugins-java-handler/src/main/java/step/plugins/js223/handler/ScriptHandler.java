@@ -18,6 +18,17 @@
  ******************************************************************************/
 package step.plugins.js223.handler;
 
+import jakarta.json.JsonObject;
+import step.functions.handler.AbstractFunctionHandler;
+import step.functions.handler.JsonBasedFunctionHandler;
+import step.functions.io.Input;
+import step.functions.io.Output;
+import step.functions.io.OutputBuilder;
+
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.SimpleBindings;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -28,18 +39,6 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.json.JsonObject;
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.SimpleBindings;
-
-import step.functions.handler.AbstractFunctionHandler;
-import step.functions.handler.JsonBasedFunctionHandler;
-import step.functions.io.Input;
-import step.functions.io.Output;
-import step.functions.io.OutputBuilder;
 
 public class ScriptHandler extends JsonBasedFunctionHandler {
 

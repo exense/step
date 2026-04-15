@@ -18,8 +18,7 @@
  ******************************************************************************/
 package step.plugins.functions.types.composite;
 
-import javax.json.JsonObject;
-
+import jakarta.json.JsonObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ParentSource;

@@ -19,6 +19,8 @@
 package step.artefacts.handlers;
 
 import ch.exense.commons.app.Configuration;
+import jakarta.json.Json;
+import jakarta.json.JsonObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,8 +57,6 @@ import step.planbuilder.BaseArtefacts;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
-import javax.json.Json;
-import javax.json.JsonObject;
 import java.io.IOException;
 import java.util.List;
 

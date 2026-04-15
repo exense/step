@@ -19,6 +19,9 @@
 package step.artefacts.handlers;
 
 import ch.exense.commons.app.Configuration;
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
 import jakarta.json.stream.JsonParsingException;
 import org.junit.After;
 import org.junit.Before;
@@ -36,7 +39,9 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.collections.inmemory.InMemoryCollection;
-import step.core.dynamicbeans.*;
+import step.core.dynamicbeans.DynamicBeanResolver;
+import step.core.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.DynamicValueResolver;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
@@ -55,7 +60,6 @@ import step.expressions.ExpressionHandler;
 import step.functions.handler.MeasureTypes;
 import step.functions.io.Output;
 import step.functions.io.OutputBuilder;
-import step.grid.client.AbstractGridClientImpl;
 import step.grid.io.Attachment;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
@@ -64,9 +68,6 @@ import step.planbuilder.FunctionArtefacts;
 import step.plugins.parametermanager.ParameterManagerPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
-import javax.json.Json;
-import javax.json.JsonArray;
-import javax.json.JsonObject;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -75,9 +76,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
-import static step.planbuilder.BaseArtefacts.*;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static step.planbuilder.BaseArtefacts.assertEqualArtefact;
+import static step.planbuilder.BaseArtefacts.check;
+import static step.planbuilder.BaseArtefacts.sequence;
 import static step.plugins.parametermanager.ParameterManagerPlugin.CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS;
 
 public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {

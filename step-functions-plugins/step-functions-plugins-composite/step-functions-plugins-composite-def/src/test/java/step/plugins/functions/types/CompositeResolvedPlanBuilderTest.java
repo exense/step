@@ -1,5 +1,6 @@
 package step.plugins.functions.types;
 
+import jakarta.json.JsonObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,7 +35,6 @@ import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 import step.threadpool.ThreadPoolPlugin;
 
-import javax.json.JsonObject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
