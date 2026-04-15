@@ -24,6 +24,7 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.query.OQLTimeSeriesFilterBuilder;
+import step.plugins.measurements.ExecutionMetricSample;
 import step.plugins.measurements.Measurement;
 import step.plugins.measurements.SamplesExecutionPlugin;
 import step.plugins.timeseries.api.*;
@@ -51,6 +52,26 @@ public class TimeSeriesHandler {
             return attribute;
         }
     };
+    //Ugly implementation
+    private static final List<String> executionMetricSampleBaseFields = List.of("eId","rnId","planId","plan","taskId","schedule","execution","agentUrl","origin", "metricType");
+    private static final List<String> executionMetricSampleAttributesFields = List.of("project","projectName");
+    private static final Function<String, String> attributesPrefixRemovalSamples = (attribute) -> {
+        if (attribute.startsWith(ATTRIBUTES_PREFIX)) {
+            String attributeRenamed = attribute.replaceFirst(ATTRIBUTES_PREFIX, "");
+            if (executionMetricSampleBaseFields.contains(attributeRenamed)) {
+                return attributeRenamed;
+            } else if (executionMetricSampleAttributesFields.contains(attributeRenamed)) {
+                return attribute;
+            } else if ("name".equals(attributeRenamed)){
+                return "sample.name";
+            } else {
+                return "sample.labels." + attributeRenamed;
+            }
+        } else {
+            return attribute;
+        }
+    };
+    public static final String SAMPLE_SAMPLE_TIME = "sample.sampleTime";
     private final Set<String> includedAttributesWithPrefix;
     private final Set<String> exclduedAttributesWithPrefix;
 
@@ -60,6 +81,7 @@ public class TimeSeriesHandler {
     private final TimeSeriesAggregationPipeline aggregationPipeline;
     private final TimeSeriesAggregationPipeline reportNodeAggregationPipeline;
     private final step.core.collections.Collection<Measurement> measurementCollection;
+    private final step.core.collections.Collection<ExecutionMetricSample> metricSampleCollection;
     private final ExecutionAccessor executionAccessor;
     private final TimeSeries timeSeries;
     private final int resolution;
@@ -69,6 +91,7 @@ public class TimeSeriesHandler {
                              Set<String> timeSeriesIncludedAttributes,
                              Set<String> timeSeriesExcludedAttributes,
                              step.core.collections.Collection<Measurement> measurementCollection,
+                             step.core.collections.Collection<ExecutionMetricSample> metricSampleCollection,
                              ExecutionAccessor executionAccessor,
                              TimeSeries timeSeries,
                              ReportNodeTimeSeries reportNodeTimeSeries,
@@ -78,6 +101,7 @@ public class TimeSeriesHandler {
         this.timeSeriesIncludedAttributes = timeSeriesIncludedAttributes;
         this.timeSeriesExcludedAttributes = timeSeriesExcludedAttributes;
         this.measurementCollection = measurementCollection;
+        this.metricSampleCollection = metricSampleCollection;
         this.aggregationPipeline = timeSeries.getAggregationPipeline();
         this.reportNodeAggregationPipeline = reportNodeTimeSeries.getTimeSeries().getAggregationPipeline();
         this.executionAccessor = executionAccessor;
@@ -110,24 +134,43 @@ public class TimeSeriesHandler {
             standardAttributes.addAll(request.getGroupDimensions());
             TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(timeSeries, standardAttributes, Set.of());
             LongAdder count = new LongAdder();
-            ArrayList<Filter> timestampClauses = new ArrayList<>(List.of(Filters.empty()));
-            if (request.getStart() != null) {
-                timestampClauses.add(Filters.gte(TIMESTAMP_ATTRIBUTE, request.getStart()));
+            Filter timestampClauses = Filters.empty();
+            Filter samplesTimestampClauses = Filters.empty();
+            Long start = request.getStart();
+            Long end = request.getEnd();
+            if (start != null && end != null) {
+                timestampClauses = Filters.and(List.of(Filters.gte(TIMESTAMP_ATTRIBUTE, start), Filters.lt(TIMESTAMP_ATTRIBUTE, end)));
+                samplesTimestampClauses = Filters.and(List.of(Filters.gte(SAMPLE_SAMPLE_TIME, start), Filters.lt(SAMPLE_SAMPLE_TIME, end)));
+            } else if (start != null) {
+                timestampClauses = Filters.gte(TIMESTAMP_ATTRIBUTE, start);
+                samplesTimestampClauses = Filters.gte(SAMPLE_SAMPLE_TIME, start);
+            } else if (end != null) {
+                timestampClauses = Filters.lt(TIMESTAMP_ATTRIBUTE, end);
+                samplesTimestampClauses = Filters.lt(SAMPLE_SAMPLE_TIME, end);
             }
-            if (request.getEnd() != null) {
-                timestampClauses.add(Filters.lt(TIMESTAMP_ATTRIBUTE, request.getEnd()));
-            }
-            Filter filter = Filters.and(Arrays.asList(
-                Filters.and(timestampClauses),
-                OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter(), attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES)
-            ));
+            Filter oqlFilterMeasurements = OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter(), attributesPrefixRemoval, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES);
+            Filter oqlFilterMetricSamples = OQLTimeSeriesFilterBuilder.getFilter(request.getOqlFilter(), attributesPrefixRemovalSamples, MEASUREMENTS_FILTER_IGNORE_ATTRIBUTES);
+            Filter filterMeasurements = Filters.and(List.of(timestampClauses, oqlFilterMeasurements));
+            Filter filterMetricSamples = Filters.and(List.of(samplesTimestampClauses, oqlFilterMetricSamples));
             SearchOrder searchOrder = new SearchOrder(TIMESTAMP_ATTRIBUTE, 1);
+            SearchOrder metricsSearchOrder = new SearchOrder(SAMPLE_SAMPLE_TIME, 1);
             // Iterate over each measurement and ingest it again
-            try (Stream<Measurement> stream = measurementCollection.findLazy(filter, searchOrder, null, null, 0)) {
+            try (Stream<Measurement> stream = measurementCollection.findLazy(filterMeasurements, searchOrder, null, null, 0)) {
                 stream.forEach(measurement -> {
                     count.increment();
                     timeSeriesBucketingHandler.ingestExistingMeasurement(measurement);
                 });
+            }
+            // Iterate over each metric samples and ingest it again if metricSampleCollection exists
+            if (metricSampleCollection != null) {
+                try (Stream<ExecutionMetricSample> stream = metricSampleCollection.findLazy(filterMetricSamples, metricsSearchOrder, null, null, 0)) {
+                    stream.forEach(metricSample -> {
+                        if (metricSample != null) {
+                            count.increment();
+                            timeSeriesBucketingHandler.processMetric(metricSample);
+                        }
+                    });
+                }
             }
             timeSeriesBucketingHandler.flush();
             TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();

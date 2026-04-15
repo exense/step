@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractAccessor;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
@@ -21,7 +22,10 @@ import step.core.timeseries.*;
 import step.core.timeseries.metric.MetricType;
 import step.core.timeseries.metric.MetricTypeAccessor;
 import step.framework.server.security.Secured;
+import step.plugins.measurements.ExecutionMetricSample;
 import step.plugins.measurements.Measurement;
+import step.plugins.measurements.raw.MeasurementAccessor;
+import step.plugins.measurements.raw.MetricSampleAccessor;
 import step.plugins.timeseries.api.*;
 
 import java.util.*;
@@ -50,13 +54,14 @@ public class TimeSeriesService extends AbstractStepServices {
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Measurement.class);
         metricTypeAccessor = context.require(MetricTypeAccessor.class);
+        Collection<ExecutionMetricSample> metricSampleCollection = Optional.ofNullable(context.get(MetricSampleAccessor.class)).map(AbstractAccessor::getCollectionDriver).orElse(null);
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         int resolution = (int) timeSeries.getIngestionPipeline().getResolution();
         int fieldsSamplingLimit = configuration.getPropertyAsInteger(TIME_SERIES_SAMPLING_LIMIT, 1000);
         maxNumberOfSeries = configuration.getPropertyAsInteger(TIME_SERIES_MAX_NUMBER_OF_SERIES, 1000);
         ReportNodeTimeSeries reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
-        this.handler = new TimeSeriesHandler(resolution, handledAttributes, excludedAttributes, measurementCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, fieldsSamplingLimit);
+        this.handler = new TimeSeriesHandler(resolution, handledAttributes, excludedAttributes, measurementCollection, metricSampleCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, fieldsSamplingLimit);
     }
 
     @Secured(right = "execution-read")

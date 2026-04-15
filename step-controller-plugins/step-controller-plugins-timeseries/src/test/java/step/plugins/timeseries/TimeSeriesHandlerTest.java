@@ -16,9 +16,9 @@ import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesBuilder;
 import step.core.timeseries.TimeSeriesCollection;
-import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
+import step.plugins.measurements.ExecutionMetricSample;
 import step.plugins.measurements.Measurement;
 import step.plugins.timeseries.api.BucketResponse;
 import step.plugins.timeseries.api.FetchBucketsRequest;
@@ -40,10 +40,12 @@ public class TimeSeriesHandlerTest {
     private static InMemoryExecutionAccessor executionAccessor;
     private static Collection<Bucket> bucketsCollection;
     private static Collection<Measurement> measurementsCollection;
+    private static Collection<ExecutionMetricSample> metricSamplesCollection;
 
     @BeforeClass
     public static void init() {
         measurementsCollection = new InMemoryCollection<>();
+        metricSamplesCollection = new InMemoryCollection<>();
         executionAccessor = new InMemoryExecutionAccessor();
         bucketsCollection = new InMemoryCollection<>();
         TimeSeriesCollection tsCollection = new TimeSeriesCollection(bucketsCollection, BUCKET_RESOLUTION);
@@ -52,7 +54,7 @@ public class TimeSeriesHandlerTest {
             .build();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
         ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(new InMemoryCollectionFactory(null), new Configuration());
-        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, Set.of(), measurementsCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT);
+        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, Set.of(), measurementsCollection, metricSamplesCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT);
     }
 
     @Test

@@ -109,7 +109,7 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
         metrics.forEach(this::processMetric);
     }
 
-    private void processMetric(AbstractMetricSample mm) {
+    public void processMetric(AbstractMetricSample mm) {
         MetricSample sample = mm.sample;
         long begin = sample.getSampleTime();
         BucketAttributes attributes = metricSampleToBucketAttributes(mm);
@@ -155,7 +155,7 @@ public class TimeSeriesBucketingHandler implements SamplesHandler {
     /**
      * This method will handle existing measurements, and will check if it is a gauge or normal measurement
      *
-     * @param measurement
+     * @param measurement the RAW measurement to be ingested
      */
     public void ingestExistingMeasurement(Measurement measurement) {
         if (measurement == null) {
