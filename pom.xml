@@ -41,9 +41,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <!-- compiler settings -->
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
-    <maven.compiler.release>11</maven.compiler.release>
+    <maven.compiler.release>21</maven.compiler.release>
     <!-- internal dependencies -->
     <step-grid.version>0.0.0-MASTER-SNAPSHOT</step-grid.version>
     <step-framework.version>0.0.0-MASTER-SNAPSHOT</step-framework.version>
@@ -56,24 +54,6 @@
     <!-- This concerns maven versions referred to in code, not during mvn builds -->
     <dep.maven.version>3.8.6</dep.maven.version>
     <dep.maven-resolver.version>1.6.3</dep.maven-resolver.version>
-
-    <!-- maven build dependencies -->
-    <dep.mvn.assembly.version>3.7.1</dep.mvn.assembly.version>
-    <dep.mvn.clean.version>3.1.0</dep.mvn.clean.version>
-    <dep.mvn.compiler.version>3.14.0</dep.mvn.compiler.version>
-    <dep.mvn.dependency.version>3.1.1</dep.mvn.dependency.version>
-    <dep.mvn.dependency-check.version>10.0.3</dep.mvn.dependency-check.version>
-    <dep.mvn.deploy.version>3.0.0-M1</dep.mvn.deploy.version>
-    <dep.mvn.download.version>1.2.1</dep.mvn.download.version>
-    <dep.mvn.enforcer.version>3.1.0</dep.mvn.enforcer.version>
-    <dep.mvn.gpg.version>1.6</dep.mvn.gpg.version>
-    <dep.mvn.jacoco.version>0.8.14</dep.mvn.jacoco.version>
-    <dep.mvn.jar.version>3.1.1</dep.mvn.jar.version>
-    <dep.mvn.javadoc.version>3.3.2</dep.mvn.javadoc.version>
-    <dep.mvn.resources.version>3.1.0</dep.mvn.resources.version>
-    <dep.mvn.shade.version>3.1.0</dep.mvn.shade.version>
-    <dep.mvn.source.version>3.0.1</dep.mvn.source.version>
-    <dep.mvn.surefire.version>2.22.1</dep.mvn.surefire.version>
 
     <excluded.jmeter.group>step.junit.categories.LocalJMeter</excluded.jmeter.group>
   </properties>
@@ -211,13 +191,6 @@
         <groupId>org.quartz-scheduler</groupId>
         <artifactId>quartz</artifactId>
         <version>2.5.1</version>
-        <exclusions>
-          <!-- unneeded, and conflicting, dependency from Quartz to Java EE 10-->
-          <exclusion>
-            <groupId>jakarta.xml.bind</groupId>
-            <artifactId>jakarta.xml.bind-api</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
 
       <dependency>
@@ -268,7 +241,7 @@
       <dependency>
         <groupId>org.codehaus.plexus</groupId>
         <artifactId>plexus-utils</artifactId>
-        <version>3.5.1</version>
+        <version>3.6.1</version>
       </dependency>
       <dependency>
         <groupId>org.codehaus.plexus</groupId>
@@ -416,72 +389,27 @@
       <plugins>
         <!-- Central maven plugins versions management -->
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-assembly-plugin</artifactId>
-          <version>${dep.mvn.assembly.version}</version>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>0.8.0</version>
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-clean-plugin</artifactId>
-          <version>${dep.mvn.clean.version}</version>
+          <groupId>org.owasp</groupId>
+          <artifactId>dependency-check-maven</artifactId>
+          <version>12.1.0</version>
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>${dep.mvn.compiler.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-dependency-plugin</artifactId>
-          <version>${dep.mvn.dependency.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>${dep.mvn.deploy.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-enforcer-plugin</artifactId>
-          <version>${dep.mvn.enforcer.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>${dep.mvn.gpg.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>${dep.mvn.jar.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>${dep.mvn.javadoc.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-resources-plugin</artifactId>
-          <version>${dep.mvn.resources.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-shade-plugin</artifactId>
-          <version>${dep.mvn.shade.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>${dep.mvn.source.version}</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>${dep.mvn.surefire.version}</version>
+          <groupId>org.jacoco</groupId>
+          <artifactId>jacoco-maven-plugin</artifactId>
+          <version>0.8.12</version>
+          <configuration>
+            <excludes>
+              <exclude>*.jar</exclude>
+            </excludes>
+          </configuration>
         </plugin>
         <!--This plugin's configuration is used to store Eclipse m2e settings
-          only. It has no influence on the Maven build itself. -->
+        only. It has no influence on the Maven build itself. -->
         <plugin>
           <groupId>org.eclipse.m2e</groupId>
           <artifactId>lifecycle-mapping</artifactId>
@@ -507,14 +435,74 @@
           </configuration>
         </plugin>
         <plugin>
-          <groupId>org.jacoco</groupId>
-          <artifactId>jacoco-maven-plugin</artifactId>
-          <version>${dep.mvn.jacoco.version}</version>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.7.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.4.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.14.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.8.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.3</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>3.2.7</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.4.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.11.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.3.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.6.0</version>
           <configuration>
-            <excludes>
-              <exclude>*.jar</exclude>
-            </excludes>
+            <!-- do NOT modify the POM, but keep information on transitive dependencies -->
+            <!-- TODO: find out how to make it work with the default (true) -->
+            <createDependencyReducedPom>false</createDependencyReducedPom>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.3.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.2</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -537,11 +525,7 @@
                     <exclude>org.testng</exclude>
                   </excludes>
                 </bannedDependencies>
-                <requireUpperBoundDeps>
-                  <excludes>
-                    <exclude>jakarta.xml.bind:jakarta.xml.bind-api</exclude>
-                  </excludes>
-                </requireUpperBoundDeps>
+                <requireUpperBoundDeps/>
               </rules>
               <fail>true</fail>
             </configuration>
@@ -581,7 +565,7 @@
           <detectOfflineLinks>false</detectOfflineLinks>
 
           <quiet>true</quiet>
-          <source>11</source>
+          <release>21</release>
           <additionalOptions>
             <additionalOption>-Xdoclint:none</additionalOption>
           </additionalOptions>
@@ -702,7 +686,6 @@
           <plugin>
             <groupId>org.owasp</groupId>
             <artifactId>dependency-check-maven</artifactId>
-            <version>${dep.mvn.dependency-check.version}</version>
             <configuration>
               <formats>HTML,CSV</formats>
               <skipDependencyManagement>false</skipDependencyManagement>
@@ -775,7 +758,6 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.8.0</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>sonatype</publishingServerId>

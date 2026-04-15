@@ -55,7 +55,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
     private String resolvedPlanRootNodeId;
     private String agentsInvolved;
     private Version stepVersion;
-    private List<ExecutionResultSnapshot> historyResults;
+	private List<ExecutionResultSnapshot> historyResults;
 
     public Execution() {
         super();

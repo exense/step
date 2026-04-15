@@ -19,7 +19,11 @@
 package step.migration.tasks;
 
 import step.core.Version;
-import step.core.collections.*;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.DocumentObject;
+import step.core.collections.Filters;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 
@@ -111,10 +115,5 @@ public class MigrateAgentProvisioningConfiguration extends MigrationTask {
         if (errorCount.get() > 0) {
             logger.error("Got {} errors while migrating auto scaling configuration. See previous error logs for details.", errorCount);
         }
-    }
-
-    @Override
-    public void runDowngradeScript() {
-        // DowngradeScript not implemented
     }
 }

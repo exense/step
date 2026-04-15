@@ -164,27 +164,6 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
     }
 
     @Override
-    public Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long searchBeforeTimestamp, Set<String> excludeExecutionsIds) {
-        SearchOrder order = new SearchOrder("endTime", -1);
-
-        List<Filter> filters = new ArrayList<>(List.of(
-                Filters.equals("importResult.canonicalPlanName", canonicalPlanName),
-                Filters.equals("status", ExecutionStatus.ENDED.name())
-        ));
-
-        if (searchBeforeTimestamp != null) {
-            filters.add(Filters.lte("endTime", searchBeforeTimestamp));
-        }
-        if (CollectionUtils.isNotEmpty(excludeExecutionsIds)) {
-            Filter ignoreExecutionsFilter = Filters.in("_id", new ArrayList<>(excludeExecutionsIds));
-            filters.add(Filters.not(ignoreExecutionsFilter));
-        }
-
-        return collectionDriver
-                .find(Filters.and(filters), order, 0, limit, 0);
-    }
-
-    @Override
     public List<Execution> getLastEndedExecutionsBySchedulerTaskID(String schedulerTaskID, int limit, Long from, Long to) {
         SearchOrder order = new SearchOrder("endTime", -1);
         List<Filter> filters = new ArrayList<>(List.of(Filters.equals("executionTaskID", schedulerTaskID), Filters.equals("status", "ENDED")));
@@ -217,4 +196,25 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
         }
         return collectionDriver.find(Filters.and(allFilters), order, 0, limit, 0).collect(Collectors.toList());
     }
+
+	@Override
+	public Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long searchBeforeTimestamp, Set<String> excludeExecutionsIds) {
+		SearchOrder order = new SearchOrder("endTime", -1);
+
+		List<Filter> filters = new ArrayList<>(List.of(
+				Filters.equals("importResult.canonicalPlanName", canonicalPlanName),
+				Filters.equals("status", ExecutionStatus.ENDED.name())
+		));
+
+		if (searchBeforeTimestamp != null) {
+			filters.add(Filters.lte("endTime", searchBeforeTimestamp));
+		}
+		if (CollectionUtils.isNotEmpty(excludeExecutionsIds)) {
+			Filter ignoreExecutionsFilter = Filters.in("_id", new ArrayList<>(excludeExecutionsIds));
+			filters.add(Filters.not(ignoreExecutionsFilter));
+		}
+
+		return collectionDriver
+				.find(Filters.and(filters), order, 0, limit, 0);
+	}
 }
