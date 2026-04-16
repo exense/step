@@ -89,6 +89,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @JsonAnyGetter
+    @Override
     public Map<String, List<?>> getAdditionalFields() {
         return additionalFields;
     }

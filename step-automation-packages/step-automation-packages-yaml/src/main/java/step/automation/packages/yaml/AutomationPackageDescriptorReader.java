@@ -165,7 +165,7 @@ public class AutomationPackageDescriptorReader {
         }
     }
 
-    public ObjectMapper createYamlObjectMapper() {
+    private ObjectMapper createYamlObjectMapper() {
         YAMLFactory yamlFactory = new YAMLFactory();
 
         // Disable native type id to enable conversion to generic Documents
@@ -178,10 +178,6 @@ public class AutomationPackageDescriptorReader {
         yamlMapper.registerModule(module);
 
         return yamlMapper;
-    }
-
-    public ObjectMapper getYamlObjectMapper() {
-        return yamlObjectMapper;
     }
 
     public YamlPlanReader getPlanReader() {

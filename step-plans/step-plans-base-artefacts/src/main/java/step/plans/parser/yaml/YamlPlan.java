@@ -21,7 +21,7 @@ package step.plans.parser.yaml;
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.OptBoolean;
-import step.core.yaml.PatchableAbstractYamlModel;
+import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.deserialization.PatchingContext;
 import step.core.yaml.model.NamedYamlArtefact;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -32,7 +32,7 @@ import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 
 import java.util.List;
 
-public class YamlPlan extends PatchableAbstractYamlModel {
+public class YamlPlan extends PatchableYamlModelBase {
 
     public static final String PLANS_ENTITY_NAME = "plans";
 

@@ -20,10 +20,9 @@ package step.core.yaml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonLocation;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import step.core.yaml.deserialization.PatchingContext;
 
-public class PatchableAbstractYamlModel extends AbstractYamlModel implements PatchableYamlModel {
+public class PatchableYamlModelBase extends AbstractYamlModel implements PatchableYamlModel {
 
     @JsonIgnore
     private PatchingContext context;
@@ -37,7 +36,7 @@ public class PatchableAbstractYamlModel extends AbstractYamlModel implements Pat
     @JsonIgnore
     private int endOffset = -1;
 
-    public PatchableAbstractYamlModel(PatchingContext context) {
+    public PatchableYamlModelBase(PatchingContext context) {
         this.context = context;
     }
 

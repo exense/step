@@ -30,6 +30,7 @@ import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
@@ -74,9 +75,9 @@ public class AutomationPackageCollectionTest {
         destinationDirectory = Files.createTempDirectory("automationPackageCollectionTest").toFile();
         FileUtils.copyDirectory(sourceDirectory, destinationDirectory);
 
-        fragmentManager = reader.provideAutomationPackageYamlFragmentManager(destinationDirectory);
+        fragmentManager = reader.getAutomationPackageYamlFragmentManager(destinationDirectory);
         AutomationPackageCollectionFactory collectionFactory = new AutomationPackageCollectionFactory(properties, fragmentManager);
-        planCollection = collectionFactory.getCollection("plan", Plan.class);
+        planCollection = collectionFactory.getCollection(AbstractOrganizableObject.NAME, Plan.class);
     }
 
     @After

@@ -34,6 +34,8 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.text.MessageFormat;
@@ -71,9 +73,9 @@ public class AutomationPackageYamlFragmentManager {
 
     public void initializeMaps(AutomationPackageFragmentYaml fragment) {
         pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
-        for (YamlPlan p: fragment.getPlans()) {
-            Plan plan = descriptorReader.getPlanReader().yamlPlanToPlan(p);
-            planToYamlPlan.put(plan, p);
+        for (YamlPlan yamlPlan: fragment.getPlans()) {
+            Plan plan = descriptorReader.getPlanReader().yamlPlanToPlan(yamlPlan);
+            planToYamlPlan.put(plan, yamlPlan);
             planToYamlFragment.put(plan, fragment);
         }
     }
@@ -82,22 +84,22 @@ public class AutomationPackageYamlFragmentManager {
         return planToYamlPlan.keySet();
     }
 
-    public Plan savePlan(Plan p) {
-        YamlPlan newYamlPlan = descriptorReader.getPlanReader().planToYamlPlan(p);
+    public synchronized Plan savePlan(Plan plan) {
+        YamlPlan newYamlPlan = descriptorReader.getPlanReader().planToYamlPlan(plan);
 
-        AutomationPackageFragmentYaml fragment = planToYamlFragment.get(p);
+        AutomationPackageFragmentYaml fragment = planToYamlFragment.get(plan);
         if (fragment == null) {
-            fragment = fragmentForNewPlan(p);
-            planToYamlFragment.put(p, fragment);
+            fragment = fragmentForNewPlan(plan);
+            planToYamlFragment.put(plan, fragment);
             pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
             addFragmentEntity(fragment, fragment.getPlans(), newYamlPlan);
         } else {
-            YamlPlan yamlPlan = planToYamlPlan.get(p);
+            YamlPlan yamlPlan = planToYamlPlan.get(plan);
             modifyFragmentEntity(fragment, fragment.getPlans(), yamlPlan, newYamlPlan);
         }
-        planToYamlPlan.put(p, newYamlPlan);
+        planToYamlPlan.put(plan, newYamlPlan);
 
-        return p;
+        return plan;
     }
 
     private <T extends PatchableYamlModel>  void addFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T newEntity) {
@@ -126,7 +128,9 @@ public class AutomationPackageYamlFragmentManager {
             URL url = path.toUri().toURL();
 
 
-            if (pathToYamlFragment.containsKey(url.toString())) return pathToYamlFragment.get(url.toString());
+            if (pathToYamlFragment.containsKey(url.toString())) {
+                return pathToYamlFragment.get(url.toString());
+            }
             PatchingContext context = new PatchingContext("---", descriptorYaml.getPatchingContext().getMapper());
             AutomationPackageFragmentYaml fragment =  new AutomationPackageFragmentYamlImpl(context);
             fragment.setFragmentUrl(url);
@@ -138,7 +142,7 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     public String sanitizeFilename(String inputName) {
-        return inputName.replaceAll("[^a-zA-Z0-9-_.]", "_");
+        return URLEncoder.encode(inputName, Charset.defaultCharset()).replace("+", " ");
     }
 
     public void removePlan(Plan p) {

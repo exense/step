@@ -238,31 +238,14 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
         return annotation.planReference() != null && !annotation.planReference().isBlank();
     }
 
-    /**
-     * Convenient method for test
-     *
+    /** Reads automation package into a yaml fragment manager
      * @param automationPackage the JAR file to be read
-     * @param apVersion         the automation package version
-     * @param keywordLib        the package library file
-     * @return the automation package content read from the provided files
+     * @return the automation package fragment manager read from the provided files for editing
      * @throws AutomationPackageReadingException in case of error
      */
-    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {
-        try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, keywordLib, null)) {
-            return readAutomationPackage(automationPackageArchive, apVersion);
-        } catch (IOException e) {
-            throw new AutomationPackageReadingException("IO Exception", e);
-        }
-    }
-
-    /** Convenient method for test
-     * @param automationPackage the JAR file to be read
-     * @return the automation package content read from the provided files for editing
-     * @throws AutomationPackageReadingException in case of error
-     */
-    public AutomationPackageYamlFragmentManager provideAutomationPackageYamlFragmentManager(File automationPackage) throws AutomationPackageReadingException {
+    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(File automationPackage) throws AutomationPackageReadingException {
         try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, null, null)) {
-            return provideAutomationPackageYamlFragmentManager(automationPackageArchive);
+            return getAutomationPackageYamlFragmentManager(automationPackageArchive);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
         }

@@ -21,13 +21,13 @@ package step.core.scheduler.automation;
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.OptBoolean;
-import step.core.yaml.PatchableAbstractYamlModel;
+import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.deserialization.PatchingContext;
 
 import java.util.Map;
 import java.util.List;
 
-public class AutomationPackageSchedule extends PatchableAbstractYamlModel {
+public class AutomationPackageSchedule extends PatchableYamlModelBase {
 
     public static final String SCHEDULE_DEF = "ScheduleDef";
     public static final String FIELD_NAME_IN_AP = "schedules";

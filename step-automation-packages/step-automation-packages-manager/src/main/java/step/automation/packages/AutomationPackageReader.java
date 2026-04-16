@@ -21,26 +21,31 @@ package step.automation.packages;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.ScriptAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.plans.Plan;
 import step.functions.Function;
+import step.plans.automation.YamlPlainTextPlan;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
-import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlanReader;
-import step.plugins.java.GeneralScriptFunction;
 import step.repositories.parser.StepsParser;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -123,8 +128,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
         // apply imported fragments recursively
         if (descriptor != null) {
-            Map<String, AutomationPackageFragmentYaml> fragmentMap = new HashMap<>();
-            fillAutomationPackageWithImportedFragments(res, descriptor, archive, fragmentMap);
+            fillAutomationPackageWithImportedFragments(res, descriptor, archive, new HashMap<>());
         }
         return res;
     }
@@ -175,15 +179,15 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
     abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, AutomationPackageContent res) throws AutomationPackageReadingException;
 
-    public AutomationPackageYamlFragmentManager provideAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
+    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
         URL descriptorURL = archive.getDescriptorYamlUrl();
         try (InputStream inputStream = descriptorURL.openStream()){
             AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
             descriptor.setFragmentUrl(descriptorURL);
-            AutomationPackageContent res = newContentInstance();
-            Map<String, AutomationPackageFragmentYaml> fragmentMap = new HashMap<>();
-            fillAutomationPackageWithImportedFragments(res, descriptor, archive, fragmentMap);
+            AutomationPackageContent content = newContentInstance();
+            Map<String, AutomationPackageFragmentYaml> fragmentMap = new ConcurrentHashMap<>();
+            fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragmentMap);
             return new AutomationPackageYamlFragmentManager(descriptor, fragmentMap, getOrCreateDescriptorReader());
         } catch (IOException e) {
             throw new AutomationPackageReadingException("Failed to read automation package for editing", e);
