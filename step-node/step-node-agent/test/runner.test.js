@@ -303,6 +303,27 @@ describe('runner', () => {
       expect(calls).toContain('after:ErrorTestKW')
     })
   })
+
+  // ---------------------------------------------------------------------------
+  // Module format support
+  // ---------------------------------------------------------------------------
+
+  describe('module format support', () => {
+    test('.js CJS — exports via indirect module.exports assignment fall back to .default', async () => {
+      const output = await runner.run('DefaultInteropKW', {})
+      expect(output.payload.ok).toBe(true)
+    })
+
+    test('.mjs native ESM module is loaded and its keyword is executed', async () => {
+      const output = await runner.run('EsmKW', {})
+      expect(output.payload.ok).toBe(true)
+    })
+
+    test('.cjs module is loaded and its keyword is executed', async () => {
+      const output = await runner.run('CjsKW', {})
+      expect(output.payload.ok).toBe(true)
+    })
+  })
 })
 
 // ---------------------------------------------------------------------------
