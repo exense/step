@@ -153,13 +153,13 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
 
     @Keyword
     public void TestKeywordWithMetrics() {
-        output.addCounter("eventCount").increment(5);
+        output.newCounter("eventCount").increment(5);
 
-        GaugeMetric gauge = output.addGauge("queueDepth");
+        GaugeMetric gauge = output.newGauge("queueDepth");
         gauge.observe(42);
         gauge.observe(15);
 
-        HistogramMetric hist = output.addHistogram("responseTimeMs");
+        HistogramMetric hist = output.newHistogram("responseTimeMs");
         hist.observe(100);
         hist.observe(250);
     }

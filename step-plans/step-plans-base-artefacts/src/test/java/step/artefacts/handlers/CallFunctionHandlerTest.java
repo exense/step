@@ -419,7 +419,8 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
         MetricSample counter = (MetricSample) metrics.get(0);
         assertEquals("requests", counter.getName());
         assertEquals(InstrumentType.COUNTER, counter.getType());
-        assertEquals(8, counter.getCount());
+        assertEquals(2, counter.getCount());
+        assertEquals(8, counter.getSum());
         assertEquals(8, counter.getLast());
         assertEquals("checkout", counter.getLabels().get("service"));
 
@@ -550,16 +551,16 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
         MyFunction function = new MyFunction(input -> {
             OutputBuilder builder = new OutputBuilder();
 
-            CounterMetric requests = builder.addCounter("requests", Map.of("service", "checkout"));
+            CounterMetric requests = builder.newCounter("requests", Map.of("service", "checkout"));
             requests.increment(5);
             requests.increment(3);
 
-            GaugeMetric queueDepth = builder.addGauge("queue_depth");
+            GaugeMetric queueDepth = builder.newGauge("queue_depth");
             queueDepth.observe(10);
             queueDepth.observe(20);
             queueDepth.observe(5);
 
-            HistogramMetric responseTimes = builder.addHistogram("response_time_ms");
+            HistogramMetric responseTimes = builder.newHistogram("response_time_ms");
             responseTimes.observe(100);
             responseTimes.observe(200);
 

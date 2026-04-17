@@ -75,11 +75,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
     @Override
     public void serverStart(GlobalContext context) {
-        MigrationManager migrationManager = context.require(MigrationManager.class);
-        migrationManager.register(MigrateDashboardsTask.class);
-        migrationManager.register(MigrateAggregateTask.class);
-        migrationManager.register(MigrateResolutionsWithIgnoredFieldsTask.class);
-
         Configuration configuration = context.getConfiguration();
         Set<String> includedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, "").split(","))
                 .filter(s -> !s.isEmpty())
@@ -91,6 +86,11 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         if (!includedAttributes.isEmpty() && !excludedAttributes.isEmpty()) {
             throw new PluginCriticalException("Setting both the properties " + TIME_SERIES_ATTRIBUTES_PROPERTY + " and "  + TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY + " is not allowed.");
         }
+
+        MigrationManager migrationManager = context.require(MigrationManager.class);
+        migrationManager.register(MigrateDashboardsTask.class);
+        migrationManager.register(MigrateAggregateTask.class);
+        migrationManager.register(MigrateResolutionsWithIgnoredFieldsTask.class);
 
         CollectionFactory collectionFactory = context.getCollectionFactory();
 
