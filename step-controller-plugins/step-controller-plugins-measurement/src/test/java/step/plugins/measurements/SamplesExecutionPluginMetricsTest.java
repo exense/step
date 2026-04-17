@@ -117,7 +117,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         Assert.assertNotNull("Counter metric 'eventCount' not found", counterMm);
         Assert.assertEquals(InstrumentType.COUNTER, counterMm.sample.getType());
         MetricSample counter = (MetricSample) counterMm.sample;
-        Assert.assertEquals(5, counter.getCount());
+        Assert.assertEquals(5, counter.getSum());
         Assert.assertEquals(5, counter.getLast());
 
         // Gauge
