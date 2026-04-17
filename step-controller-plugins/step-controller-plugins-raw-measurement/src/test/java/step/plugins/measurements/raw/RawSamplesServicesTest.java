@@ -115,7 +115,7 @@ public class RawSamplesServicesTest {
         MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
 
         assertEquals(InstrumentType.COUNTER, merged.getType());
-        assertEquals(8, merged.getCount());       // 5 + 3
+        assertEquals(8, merged.getSum());       // 5 + 3
     }
 
     @Test
@@ -126,8 +126,8 @@ public class RawSamplesServicesTest {
 
         MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
 
-        assertEquals(103, merged.getSum());
-        assertEquals(103, merged.getMin());
+        assertEquals(8, merged.getSum());
+        assertEquals(95, merged.getMin());
         assertEquals(103, merged.getMax());
         assertEquals(103, merged.getLast());
         assertNull(merged.getDistribution());
@@ -141,8 +141,9 @@ public class RawSamplesServicesTest {
 
         MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
 
-        assertEquals(8, merged.getCount());
-        assertEquals(200, merged.getSum());  // s1 is more recent
+        assertEquals(8, merged.getSum());
+        assertEquals(200, merged.getMax());  // s1 is more recent
+        assertEquals(200, merged.getLast());  // s1 is more recent
     }
 
     // -------------------------------------------------------------------------
@@ -264,9 +265,9 @@ public class RawSamplesServicesTest {
     }
 
     private static MetricSample counter(String name, Map<String, String> labels,
-                                        long sampleTime, long count, long runningTotal) {
+                                        long sampleTime, long increment, long runningTotal) {
         return new MetricSample(sampleTime, name, labels, InstrumentType.COUNTER,
-                count, runningTotal, runningTotal, runningTotal, runningTotal, null);
+                1, increment, runningTotal-increment, runningTotal, runningTotal, null);
     }
 
     private static MetricSample gauge(String name, Map<String, String> labels,
