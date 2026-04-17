@@ -101,8 +101,8 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
 
   function searchKeyword(kwModules, keywordName) {
     for (const m of kwModules) {
-      if (m[keywordName]) return { keywordFunction: m[keywordName], keywordModule: m };
-      if (m.default?.[keywordName]) return { keywordFunction: m.default[keywordName], keywordModule: m.default };
+      if (typeof m[keywordName] === 'function') return { keywordFunction: m[keywordName], keywordModule: m };
+      if (typeof m.default?.[keywordName] === 'function') return { keywordFunction: m.default[keywordName], keywordModule: m.default };
     }
     return undefined;
   }
