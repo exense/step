@@ -70,23 +70,13 @@ public class RawSamplesServices extends AbstractStepServices {
         long count = existing.getCount() + incoming.getCount();
         long sum, min, max, last;
         Map<Long, Long> distribution;
-        if (existing.getType() == InstrumentType.COUNTER) {
-            // Running total comes from the most recent sample's sum field
-            long runningTotal = incoming.getSampleTime() >= existing.getSampleTime()
-                    ? incoming.getSum() : existing.getSum();
-            sum = runningTotal;
-            min = runningTotal;
-            max = runningTotal;
-            last = runningTotal;
-            distribution = null;
-        } else {
-            sum = existing.getSum() + incoming.getSum();
-            min = Math.min(existing.getMin(), incoming.getMin());
-            max = Math.max(existing.getMax(), incoming.getMax());
-            last = incoming.getSampleTime() >= existing.getSampleTime()
-                    ? incoming.getLast() : existing.getLast();
-            distribution = mergeDistributions(existing.getDistribution(), incoming.getDistribution());
-        }
+        sum = existing.getSum() + incoming.getSum();
+        min = Math.min(existing.getMin(), incoming.getMin());
+        max = Math.max(existing.getMax(), incoming.getMax());
+        last = incoming.getSampleTime() >= existing.getSampleTime()
+            ? incoming.getLast() : existing.getLast();
+        distribution =  (existing.getType() == InstrumentType.COUNTER) ? null :
+            mergeDistributions(existing.getDistribution(), incoming.getDistribution());
         return new MetricSample(sampleTime, existing.getName(), existing.getLabels(),
                 existing.getType(), count, sum, min, max, last, distribution);
     }
