@@ -77,7 +77,7 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
       }
     } catch (e) {
       console.log("[Agent fork] Unexpected error occurred while executing keyword", e)
-      outputBuilder.fail("An unexpected error occurred while executing keyword: " + e.message, e)
+      outputBuilder.fail("An unexpected error occurred while executing keyword: " + (e?.message || String(e)), e)
     } finally {
       // Flush the event loop so unhandledRejection / uncaughtException from the keyword
       // (e.g. fire-and-forget promises, nextTick throws) land before we send the result.
@@ -120,7 +120,19 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
     console.log("[Agent fork] Exiting...")
     if (closeErrors.length > 0) {
       // Use the send callback to ensure the message is flushed before we exit.
-      process.send({ type: 'CLOSE_RESULT', errors: closeErrors }, () => process.exit(0));
+      // The timeout is a safety net: if the IPC channel closes before the callback
+      // fires (e.g. the parent process dies), the fork exits instead of hanging.
+      const exitNow = () => process.exit(0);
+      const fallback = setTimeout(exitNow, 5000);
+      try {
+        process.send({ type: 'CLOSE_RESULT', errors: closeErrors }, () => {
+          clearTimeout(fallback);
+          exitNow();
+        });
+      } catch {
+        clearTimeout(fallback);
+        exitNow();
+      }
     } else {
       process.exit(0);
     }
@@ -143,7 +155,7 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
           let module = await import(kwModule);
           kwModules.push(module);
         } catch (e) {
-          throw new Error("Error while importing keyword module " + kwFile + ": " + e.message, { cause: e })
+          throw new Error("Error while importing keyword module " + kwFile + ": " + (e?.message || String(e)), { cause: e })
         }
       }
     }

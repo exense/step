@@ -56,7 +56,7 @@ class Agent {
       res.json({})
     } catch (e) {
       logger.error('Error while releasing token ' + req.params.tokenId + ':', e)
-      res.status(500).type('text/plain').send(e.message)
+      res.status(500).type('text/plain').send((e?.message || String(e)))
     }
   }
 
@@ -216,7 +216,7 @@ class Agent {
         forkedAgentProcessOutputAttachment = e.processOutputAttachment;
       } else {
         logger.error('Unexpected error occurred while executing keyword:', e)
-        outputBuilder.fail('Unexpected error: ' + e.message, e)
+        outputBuilder.fail('Unexpected error: ' + (e?.message || String(e)), e)
       }
     } finally {
       if (npmAttachment) {
