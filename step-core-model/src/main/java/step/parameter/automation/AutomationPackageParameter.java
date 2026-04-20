@@ -18,9 +18,7 @@
  ******************************************************************************/
 package step.parameter.automation;
 
-import com.fasterxml.jackson.annotation.JacksonInject;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.OptBoolean;
+import com.fasterxml.jackson.annotation.*;
 import step.commons.activation.Expression;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.PatchableYamlModelBase;
@@ -31,6 +29,7 @@ import step.parameter.Parameter;
 import step.parameter.ParameterScope;
 
 @YamlModel(named = false)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class AutomationPackageParameter extends PatchableYamlModelBase {
 
     protected String key;
@@ -42,7 +41,17 @@ public class AutomationPackageParameter extends PatchableYamlModelBase {
 
     protected Integer priority;
     protected Boolean protectedValue = false;
+
+    @JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = ScopeFilter.class)
     protected ParameterScope scope = ParameterScope.GLOBAL;
+
+    public static class ScopeFilter {
+        @Override
+        public boolean equals(Object obj) {
+            return obj == ParameterScope.GLOBAL;
+        }
+    }
+
     protected String scopeEntity;
 
     @JsonCreator
@@ -89,5 +98,17 @@ public class AutomationPackageParameter extends PatchableYamlModelBase {
 
     public String getScopeEntity() {
         return scopeEntity;
+    }
+
+    public static AutomationPackageParameter forContext(PatchingContext context, Parameter parameter) {
+        AutomationPackageParameter yamlParameter = new AutomationPackageParameter(context);
+        yamlParameter.copyFieldsFromObject(parameter, true);
+        Expression expression = parameter.getActivationExpression();
+        if (expression == null) {
+            yamlParameter.activationScript = null;
+        } else {
+            yamlParameter.activationScript = expression.getScript();
+        }
+        return yamlParameter;
     }
 }

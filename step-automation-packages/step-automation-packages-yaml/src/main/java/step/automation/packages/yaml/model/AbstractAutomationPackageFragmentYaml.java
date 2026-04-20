@@ -46,7 +46,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     private PatchableYamlList<YamlPlan> plans;
     private List<YamlPlainTextPlan> plansPlainText = new ArrayList<>();
 
-    private final Map<String, List<?>> additionalFields = new HashMap<>();
+    private final Map<String, PatchableYamlList<?>> additionalFields = new HashMap<>();
     private PatchingContext context;
     private long fileLastModified = 0;
 
@@ -90,12 +90,12 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
 
     @JsonAnyGetter
     @Override
-    public Map<String, List<?>> getAdditionalFields() {
+    public Map<String, PatchableYamlList<?>> getAdditionalFields() {
         return additionalFields;
     }
 
     @Override
-    public void setAdditionalFields(String key, List<?> list) {
+    public void setAdditionalFields(String key, PatchableYamlList<?> list) {
         additionalFields.put(key,  list);
     }
 

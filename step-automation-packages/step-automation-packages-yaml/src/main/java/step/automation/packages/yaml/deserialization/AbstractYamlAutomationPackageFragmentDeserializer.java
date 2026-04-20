@@ -54,7 +54,7 @@ public abstract class AbstractYamlAutomationPackageFragmentDeserializer extends 
             Class<?> targetClass = registry.resolveClassForYamlField(propName);
             JavaType listType = ctxt.getTypeFactory()
                 .constructCollectionType(PatchableYamlList.class, targetClass);
-            List<?> list = ctxt.readValue(p, listType);
+            PatchableYamlList<?> list = ctxt.readValue(p, listType);
 
             AbstractAutomationPackageFragmentYaml fragment = (AbstractAutomationPackageFragmentYaml) intoValue;
             fragment.setAdditionalFields(propName, list);

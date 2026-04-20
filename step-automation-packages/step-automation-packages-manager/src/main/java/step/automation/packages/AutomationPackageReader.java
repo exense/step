@@ -28,6 +28,7 @@ import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.plans.Plan;
+import step.core.yaml.deserialization.PatchableYamlList;
 import step.functions.Function;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.nl.RootArtefactType;
@@ -220,7 +221,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
         readPlainTextPlans(targetPackage, fragment, archive);
 
-        for (Map.Entry<String, List<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
+        for (Map.Entry<String, PatchableYamlList<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
             boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage);
             if (!hooked) {
                 log.warn("Hook not found for additional field " + additionalField.getKey() + ". The additional field has been skipped");

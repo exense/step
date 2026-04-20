@@ -40,13 +40,13 @@ public interface AutomationPackageFragmentYaml {
 
     List<String> getFragments();
 
-    Map<String, List<?>> getAdditionalFields();
+    Map<String, PatchableYamlList<?>> getAdditionalFields();
 
-    default <T> List<T> getAdditionalField(String k) {
-        return (List<T>) getAdditionalFields().get(k);
+    default <T> PatchableYamlList<T> getAdditionalField(String k) {
+        return (PatchableYamlList<T>) getAdditionalFields().get(k);
     }
 
-    void setAdditionalFields(String key, List<?> value) throws IOException;
+    void setAdditionalFields(String key, PatchableYamlList<?> value) throws IOException;
 
     URL getFragmentUrl();
 

@@ -7,8 +7,8 @@ parameters:
     protectedValue: true
     scope: APPLICATION
     scopeEntity: entity
-  - key: mySimpleKey
-    value: mySimpleValue
+  - key: "mySimpleKey"
+    value: "myModifiedValue"
   - key: myDynamicParam
     value:
       expression: "mySimpleKey"
