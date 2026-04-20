@@ -89,7 +89,7 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
     console.log("[Agent fork] Searching keywords in: " + kwDir)
     const kwFiles = fs.readdirSync(kwDir);
     for (const kwFile of kwFiles) {
-      if (kwFile.endsWith('.js')) {
+      if (kwFile.endsWith('.js') || kwFile.endsWith('.mjs') || kwFile.endsWith('.cjs')) {
         let kwModule = "file://" + path.resolve(kwDir, kwFile);
         console.log("[Agent fork] Importing keywords from module: " + kwModule)
         let module = await import(kwModule);
@@ -100,8 +100,11 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
   }
 
   function searchKeyword(kwModules, keywordName) {
-    const kwModule = kwModules.find(m => m[keywordName]);
-    return kwModule ? {keywordFunction: kwModule[keywordName], keywordModule: kwModule} : undefined;
+    for (const m of kwModules) {
+      if (typeof m[keywordName] === 'function') return { keywordFunction: m[keywordName], keywordModule: m };
+      if (typeof m.default?.[keywordName] === 'function') return { keywordFunction: m.default[keywordName], keywordModule: m.default };
+    }
+    return undefined;
   }
 });
 
