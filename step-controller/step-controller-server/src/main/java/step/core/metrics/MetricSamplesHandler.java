@@ -1,4 +1,4 @@
-package step.plugins.metrics;
+package step.core.metrics;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;

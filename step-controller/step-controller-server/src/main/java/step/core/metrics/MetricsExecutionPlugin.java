@@ -1,4 +1,4 @@
-package step.plugins.metrics;
+package step.core.metrics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,11 +18,6 @@ import step.core.execution.ExecutionEngineContext;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.type.ExecutionTypeManager;
-import step.core.metrics.CounterMetric;
-import step.core.metrics.GaugeMetric;
-import step.core.metrics.HistogramMetric;
-import step.core.metrics.InstrumentType;
-import step.core.metrics.MetricSample;
 import step.core.plans.Plan;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
@@ -42,9 +37,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static step.automation.packages.AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
-import static step.plugins.metrics.MetricsConstants.EXECUTION_BOOLEAN_RESULT;
-import static step.plugins.metrics.MetricsConstants.EXECUTION_RESULT;
-import static step.plugins.metrics.MetricsControllerPlugin.*;
+import static step.core.metrics.MetricsConstants.EXECUTION_BOOLEAN_RESULT;
+import static step.core.metrics.MetricsConstants.EXECUTION_RESULT;
+import static step.core.metrics.MetricsControllerPlugin.*;
 
 
 @Plugin(dependencies = LiveReportingPlugin.class)

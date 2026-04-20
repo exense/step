@@ -1,4 +1,4 @@
-package step.plugins.metrics;
+package step.core.metrics;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;

@@ -4,8 +4,8 @@ import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
 import step.core.collections.filters.Equals;
-import step.plugins.metrics.MetricsExecutionPlugin;
-import step.plugins.metrics.ExecutionMetricSample;
+import step.core.metrics.MetricsExecutionPlugin;
+import step.core.metrics.ExecutionMetricSample;
 
 import java.util.Map;
 import java.util.stream.Stream;

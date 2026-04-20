@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.metrics;
+package step.core.metrics;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -56,10 +56,10 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
 
     @Before
     public void setUp() throws Exception {
-        MetricsControllerPlugin mc = new MetricsControllerPlugin();
+        step.core.metrics.MetricsControllerPlugin mc = new step.core.metrics.MetricsControllerPlugin();
         mc.initMetricSamplingAndHeartbeat(GlobalContextBuilder.createGlobalContext());
-        MetricsExecutionPlugin.registerSamplesHandlers(new TestMetricSamplesHandler());
-        engine = ExecutionEngine.builder().withPlugin(new MetricsExecutionPlugin())
+        step.core.metrics.MetricsExecutionPlugin.registerSamplesHandlers(new TestMetricSamplesHandler());
+        engine = ExecutionEngine.builder().withPlugin(new step.core.metrics.MetricsExecutionPlugin())
             .withPlugin(new FunctionPlugin())
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new LocalFunctionPlugin())
@@ -108,10 +108,10 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
         Assert.assertEquals(1000, assertMeasurementsValue.get("myMeasure2").get());
     }
 
-    public class TestMetricSamplesHandler implements MetricSamplesHandler {
+    public class TestMetricSamplesHandler implements step.core.metrics.MetricSamplesHandler {
 
         public TestMetricSamplesHandler() {
-            MetricSamplerRegistry.getInstance().registerHandler(this);
+            step.core.metrics.MetricSamplerRegistry.getInstance().registerHandler(this);
         }
 
         @Override
@@ -120,9 +120,9 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
         }
 
         @Override
-        public void processMeasurements(List<Measurement> measurements) {
+        public void processMeasurements(List<step.core.metrics.Measurement> measurements) {
             synchronized (assertMeasurementsCount) {
-                for (Measurement measurement : measurements) {
+                for (step.core.metrics.Measurement measurement : measurements) {
                     incValue(measurement.getExecId(), measurement.getValue());
                     incValue(measurement.getName(), measurement.getValue());
                     incValue(measurement.getType(), measurement.getValue());
@@ -143,9 +143,9 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
         }
 
         @Override
-        public void processMetrics(List<ExecutionMetricSample> metrics) {
+        public void processMetrics(List<step.core.metrics.ExecutionMetricSample> metrics) {
             synchronized (assertMeasurementsCount) {
-                for (ExecutionMetricSample mm : metrics) {
+                for (step.core.metrics.ExecutionMetricSample mm : metrics) {
                     if (mm.metricType != null) {
                         // Thread group and other categorized metrics
                         incValue(mm.eId, mm.sample.getLast());

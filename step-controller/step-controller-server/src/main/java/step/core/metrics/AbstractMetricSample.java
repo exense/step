@@ -1,9 +1,8 @@
-package step.plugins.metrics;
+package step.core.metrics;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.metrics.MetricSample;
 
 import java.util.Map;
 

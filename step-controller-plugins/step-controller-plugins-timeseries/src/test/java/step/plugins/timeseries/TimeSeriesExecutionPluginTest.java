@@ -39,8 +39,8 @@ import step.handlers.javahandler.Keyword;
 import step.migration.MigrationManager;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
-import step.plugins.metrics.MetricsControllerPlugin;
-import step.plugins.metrics.MetricsExecutionPlugin;
+import step.core.metrics.MetricsControllerPlugin;
+import step.core.metrics.MetricsExecutionPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
 import java.util.EnumSet;

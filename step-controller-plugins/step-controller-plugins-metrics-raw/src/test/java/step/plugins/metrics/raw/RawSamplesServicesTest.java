@@ -5,7 +5,7 @@ import org.junit.Test;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.metrics.MetricSample;
 import step.core.metrics.InstrumentType;
-import step.plugins.metrics.ExecutionMetricSample;
+import step.core.metrics.ExecutionMetricSample;
 
 import java.util.Collections;
 import java.util.HashMap;

@@ -10,7 +10,7 @@ import step.core.deployment.AbstractStepServices;
 import step.core.metrics.MetricSample;
 import step.core.metrics.InstrumentType;
 import step.framework.server.security.Secured;
-import step.plugins.metrics.ExecutionMetricSample;
+import step.core.metrics.ExecutionMetricSample;
 
 import java.util.*;
 import java.util.stream.Stream;

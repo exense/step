@@ -24,9 +24,9 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.query.OQLTimeSeriesFilterBuilder;
-import step.plugins.metrics.ExecutionMetricSample;
-import step.plugins.metrics.Measurement;
-import step.plugins.metrics.MetricsExecutionPlugin;
+import step.core.metrics.ExecutionMetricSample;
+import step.core.metrics.Measurement;
+import step.core.metrics.MetricsExecutionPlugin;
 import step.plugins.timeseries.api.*;
 
 import java.util.*;
@@ -38,8 +38,8 @@ import java.util.stream.Stream;
 
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
-import static step.plugins.metrics.AbstractMetricSample.METRIC_TYPE;
-import static step.plugins.metrics.MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
+import static step.core.metrics.AbstractMetricSample.METRIC_TYPE;
+import static step.core.metrics.MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandler {

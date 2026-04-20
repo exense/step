@@ -1,6 +1,4 @@
-package step.plugins.metrics;
-
-import step.core.metrics.MetricSample;
+package step.core.metrics;
 
 import java.util.Map;
 import java.util.TreeMap;

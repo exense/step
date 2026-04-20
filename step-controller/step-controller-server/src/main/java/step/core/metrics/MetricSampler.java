@@ -1,4 +1,4 @@
-package step.plugins.metrics;
+package step.core.metrics;
 
 import java.util.List;
 

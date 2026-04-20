@@ -25,11 +25,11 @@ import org.slf4j.LoggerFactory;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
-import step.plugins.metrics.MetricSamplerRegistry;
-import step.plugins.metrics.MetricHeartbeatRegistry;
-import step.plugins.metrics.MetricSamplesHandler;
-import step.plugins.metrics.Measurement;
-import step.plugins.metrics.ExecutionMetricSample;
+import step.core.metrics.MetricSamplerRegistry;
+import step.core.metrics.MetricHeartbeatRegistry;
+import step.core.metrics.MetricSamplesHandler;
+import step.core.metrics.Measurement;
+import step.core.metrics.ExecutionMetricSample;
 
 public class RawMetricSamplesHandler implements MetricSamplesHandler {
 

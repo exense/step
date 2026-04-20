@@ -31,8 +31,8 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
-import step.plugins.metrics.MetricsExecutionPlugin;
-import step.plugins.metrics.ExecutionMetricSample;
+import step.core.metrics.MetricsExecutionPlugin;
+import step.core.metrics.ExecutionMetricSample;
 
 import java.util.LinkedHashSet;
 import java.util.List;

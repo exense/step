@@ -11,7 +11,7 @@ import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesBuilder;
 import step.core.timeseries.TimeSeriesCollection;
 import step.core.timeseries.bucket.Bucket;
-import step.plugins.metrics.ExecutionMetricSample;
+import step.core.metrics.ExecutionMetricSample;
 
 import java.util.List;
 import java.util.Map;

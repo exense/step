@@ -8,18 +8,18 @@ import step.core.timeseries.TimeSeries;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
-import step.plugins.metrics.AbstractMetricSample;
-import step.plugins.metrics.ControllerMetricSample;
-import step.plugins.metrics.Measurement;
-import step.plugins.metrics.MetricHeartbeatRegistry;
-import step.plugins.metrics.MetricSamplesHandler;
-import step.plugins.metrics.ExecutionMetricSample;
+import step.core.metrics.AbstractMetricSample;
+import step.core.metrics.ControllerMetricSample;
+import step.core.metrics.Measurement;
+import step.core.metrics.MetricHeartbeatRegistry;
+import step.core.metrics.MetricSamplesHandler;
+import step.core.metrics.ExecutionMetricSample;
 
 import java.util.*;
 
-import static step.plugins.metrics.AbstractMetricSample.METRIC_TYPE;
-import static step.plugins.metrics.MetricsControllerPlugin.RESPONSE_TIME;
-import static step.plugins.metrics.MetricsControllerPlugin.THREAD_GROUP;
+import static step.core.metrics.AbstractMetricSample.METRIC_TYPE;
+import static step.core.metrics.MetricsControllerPlugin.RESPONSE_TIME;
+import static step.core.metrics.MetricsControllerPlugin.THREAD_GROUP;
 
 /**
  * This class acts as a wrapper over a TimeSeries ingestion. It has special methods which alter the data before ingestion.

@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.metrics;
+package step.core.metrics;
 
 import org.junit.Assert;
 import org.junit.Before;

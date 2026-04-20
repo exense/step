@@ -1,4 +1,4 @@
-package step.plugins.metrics;
+package step.core.metrics;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -14,7 +14,7 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 /**
- * Unit tests for {@link MetricHeartbeatRegistry}.
+ * Unit tests for {@link step.core.metrics.MetricHeartbeatRegistry}.
  *
  * <p>Each test creates its own registry instance to avoid singleton state leakage.
  * The package-private {@code tick()} method and {@code intervalMs} field are
@@ -27,12 +27,12 @@ import static org.junit.Assert.*;
  */
 public class MetricHeartbeatRegistryTest {
 
-    private MetricHeartbeatRegistry registry;
-    private List<ExecutionMetricSample> captured;
+    private step.core.metrics.MetricHeartbeatRegistry registry;
+    private List<step.core.metrics.ExecutionMetricSample> captured;
 
     @Before
     public void setUp() {
-        registry = new MetricHeartbeatRegistry();
+        registry = new step.core.metrics.MetricHeartbeatRegistry();
         captured = new ArrayList<>();
         registry.registerHandler(capturingHandler(captured));
     }
@@ -121,7 +121,7 @@ public class MetricHeartbeatRegistryTest {
 
     @Test
     public void heartbeatPreservesExecutionMetadata() {
-        ExecutionMetricSample original = new ExecutionMetricSample(
+        step.core.metrics.ExecutionMetricSample original = new step.core.metrics.ExecutionMetricSample(
                 gauge("cpu", 1, 70, 70, 70, 70),
                 "exec-42", "rn-99", "plan-7",
                 "MyPlan", "task-1", "sched-1", "exec desc",
@@ -131,7 +131,7 @@ public class MetricHeartbeatRegistryTest {
         registry.tick();
 
         assertEquals(1, captured.size());
-        ExecutionMetricSample hb = captured.get(0);
+        step.core.metrics.ExecutionMetricSample hb = captured.get(0);
         assertEquals("exec-42", hb.eId);
         assertEquals("rn-99",   hb.rnId);
         assertEquals("plan-7",  hb.planId);
@@ -181,7 +181,7 @@ public class MetricHeartbeatRegistryTest {
 
     @Test
     public void allRegisteredHandlersReceiveHeartbeat() {
-        List<ExecutionMetricSample> captured2 = new ArrayList<>();
+        List<step.core.metrics.ExecutionMetricSample> captured2 = new ArrayList<>();
         registry.registerHandler(capturingHandler(captured2));
 
         registry.update(stepSample("exec-1", gauge("cpu", 1, 80, 80, 80, 80)));
@@ -268,14 +268,14 @@ public class MetricHeartbeatRegistryTest {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private ExecutionMetricSample stepSample(String execId, MetricSample sample) {
-        return new ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
+    private step.core.metrics.ExecutionMetricSample stepSample(String execId, MetricSample sample) {
+        return new step.core.metrics.ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
                 "MyPlan", "", "", "my execution", null, null, null, null);
     }
 
-    private ExecutionMetricSample stepSampleFull(String execId, MetricSample sample,
-                                                 String agentUrl, String origin) {
-        return new ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
+    private step.core.metrics.ExecutionMetricSample stepSampleFull(String execId, MetricSample sample,
+                                                                   String agentUrl, String origin) {
+        return new step.core.metrics.ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
                 "MyPlan", "", "", "my execution", agentUrl, origin, null, null);
     }
 
@@ -294,14 +294,14 @@ public class MetricHeartbeatRegistryTest {
                 InstrumentType.HISTOGRAM, count, sum, 0, sum, sum, null);
     }
 
-    private static MetricSamplesHandler capturingHandler(List<ExecutionMetricSample> sink) {
-        return new MetricSamplesHandler() {
+    private static step.core.metrics.MetricSamplesHandler capturingHandler(List<step.core.metrics.ExecutionMetricSample> sink) {
+        return new step.core.metrics.MetricSamplesHandler() {
             @Override
             public void initializeExecutionContext(ExecutionEngineContext ctx, ExecutionContext execCtx) {}
             @Override
-            public void processMeasurements(List<Measurement> measurements) {}
+            public void processMeasurements(List<step.core.metrics.Measurement> measurements) {}
             @Override
-            public void processMetrics(List<ExecutionMetricSample> metrics) { sink.addAll(metrics); }
+            public void processMetrics(List<step.core.metrics.ExecutionMetricSample> metrics) { sink.addAll(metrics); }
             @Override
             public void afterExecutionEnd(ExecutionContext context) {}
         };

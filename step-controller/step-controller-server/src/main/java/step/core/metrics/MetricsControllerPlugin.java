@@ -1,4 +1,4 @@
-package step.plugins.metrics;
+package step.core.metrics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -6,8 +6,6 @@ import step.controller.grid.GridPlugin;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.entities.EntityConstants;
-import step.core.metrics.InstrumentType;
-import step.core.metrics.MetricSample;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.metric.MetricAggregation;
@@ -25,8 +23,8 @@ import step.grid.client.reports.TokenGroupCapacity;
 
 import java.util.*;
 
-import static step.plugins.metrics.MetricsConstants.*;
-import static step.plugins.metrics.MetricsExecutionPlugin.*;
+import static step.core.metrics.MetricsConstants.*;
+import static step.core.metrics.MetricsExecutionPlugin.*;
 
 @Plugin(dependencies = {GridPlugin.class})
 public class MetricsControllerPlugin extends AbstractControllerPlugin {

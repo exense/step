@@ -23,7 +23,7 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
-import step.plugins.metrics.MetricsExecutionPlugin;
+import step.core.metrics.MetricsExecutionPlugin;
 
 import java.util.Set;
 import java.util.TreeMap;

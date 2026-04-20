@@ -22,8 +22,8 @@ import step.core.timeseries.*;
 import step.core.timeseries.metric.MetricType;
 import step.core.timeseries.metric.MetricTypeAccessor;
 import step.framework.server.security.Secured;
-import step.plugins.metrics.ExecutionMetricSample;
-import step.plugins.metrics.Measurement;
+import step.core.metrics.ExecutionMetricSample;
+import step.core.metrics.Measurement;
 import step.plugins.metrics.raw.MetricSampleAccessor;
 import step.plugins.timeseries.api.*;
 

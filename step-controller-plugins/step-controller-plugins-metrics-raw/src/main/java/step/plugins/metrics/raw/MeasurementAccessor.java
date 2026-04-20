@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.collections.*;
 import step.core.collections.Collection;
-import step.plugins.metrics.MetricsExecutionPlugin;
+import step.core.metrics.MetricsExecutionPlugin;
 
 import java.util.*;
 import java.util.stream.Stream;

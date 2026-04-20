@@ -13,6 +13,7 @@ import step.core.collections.Order;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.Entity;
 import step.core.entities.EntityConstants;
+import step.core.metrics.MetricsConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
@@ -24,10 +25,10 @@ import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
-import step.plugins.metrics.MetricSamplerRegistry;
-import step.plugins.metrics.MetricTypeRegistry;
-import step.plugins.metrics.MetricsControllerPlugin;
-import step.plugins.metrics.MetricsExecutionPlugin;
+import step.core.metrics.MetricSamplerRegistry;
+import step.core.metrics.MetricTypeRegistry;
+import step.core.metrics.MetricsControllerPlugin;
+import step.core.metrics.MetricsExecutionPlugin;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.DashboardView;
@@ -40,9 +41,9 @@ import java.util.stream.Collectors;
 
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
-import static step.plugins.metrics.AbstractMetricSample.METRIC_TYPE;
-import static step.plugins.metrics.MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
-import static step.plugins.metrics.MetricsConstants.*;
+import static step.core.metrics.AbstractMetricSample.METRIC_TYPE;
+import static step.core.metrics.MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
+import static step.core.metrics.MetricsConstants.*;
 
 @Plugin(dependencies = {MigrationManagerPlugin.class, AsyncTaskManagerPlugin.class, MetricsControllerPlugin.class})
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
@@ -57,7 +58,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     // Before Step 30, the list of supported attributed by the time-series were defined with below default values and could be customized via step.properties
     // This was used to determine if we had to fall back to RAW measurement when a filter or group by used unknown fields
     public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
-    public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = step.plugins.metrics.MetricsConstants.getAllAttributeNames() + ",metricType,origin,project";
+    public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = MetricsConstants.getAllAttributeNames() + ",metricType,origin,project";
 
     // Following properties are used by the UI. In the future we could remove the prefix 'plugins.' to align with other properties
     public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";
