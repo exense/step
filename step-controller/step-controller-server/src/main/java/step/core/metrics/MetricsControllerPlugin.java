@@ -2,7 +2,6 @@ package step.core.metrics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.controller.grid.GridPlugin;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.entities.EntityConstants;
@@ -12,21 +11,16 @@ import step.core.timeseries.metric.MetricAggregation;
 import step.core.timeseries.metric.MetricAggregationType;
 import step.core.timeseries.metric.MetricRenderingSettings;
 import step.core.timeseries.metric.MetricType;
-import step.core.timeseries.metric.MetricTypeAccessor;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
-import step.grid.TokenWrapperState;
-import step.grid.client.GridClient;
-import step.grid.client.reports.GridReportBuilder;
-import step.grid.client.reports.TokenGroupCapacity;
 
 import java.util.*;
 
 import static step.core.metrics.MetricsConstants.*;
 import static step.core.metrics.MetricsExecutionPlugin.*;
 
-@Plugin(dependencies = {GridPlugin.class})
+@Plugin
 public class MetricsControllerPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(MetricsControllerPlugin.class);
@@ -40,12 +34,8 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
     public static final String THREAD_GROUP = "threadgroup";
     public static final String ERROR_CODE = "errorCode";
 
-    public static String GRID_SAMPLER_NAME = "grid_tokens_sampler";
-    public static String GRID_BY_STATE_METRIC_NAME = "grid_tokens_by_state";
-    public static String GRID_CAPACITY_METRIC_NAME = "grid_tokens_capacity";
     public static String ReportMeasurementsTableName = "reportMeasurements";
     private MetricSamplerRegistry metricSamplerRegistry;
-    private MetricTypeRegistry metricTypeRegistry;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
@@ -57,12 +47,7 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
                 .withResultItemTransformer((m, session) -> convertToPseudoMeasure(m))
         );
 
-        MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityConstants.metricTypes, MetricType.class));
-        context.put(MetricTypeAccessor.class, metricTypeAccessor);
-
-        metricTypeRegistry = new MetricTypeRegistry(metricTypeAccessor);
-        context.put(MetricTypeRegistry.class, metricTypeRegistry);
-        createOrUpdateMetrics();
+        createOrUpdateMetrics(context.require(MetricTypeRegistry.class));
 
         initMetricSamplingAndHeartbeat(context);
     }
@@ -99,7 +84,6 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
 
     protected void initMetricSamplingAndHeartbeat(GlobalContext context) {
         metricSamplerRegistry = MetricSamplerRegistry.getInstance();
-        configureGridMonitoring(context);
 
         //Start the metric sampling scheduler
         int interval = context.getConfiguration().getPropertyAsInteger("plugins.measurements.gaugecollector.interval", 15);
@@ -110,50 +94,7 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
         MetricHeartbeatRegistry.getInstance().start(heartbeatIntervalSec * 1000L);
     }
 
-    /**
-     * This method should be moved to the GridPlugin class but that would currently create circular dependencies. Some classes such as MetricSampler, MetricSamplerRegistry should be move to step.core or similar
-     * This method register the collector to monitor the grid usage
-     * @param context the controller global context
-     */
-    private void configureGridMonitoring(GlobalContext context) {
-        // make sure we have a grid client in the current context
-        if (context.get(GridClient.class) != null) {
-            metricSamplerRegistry.registerSampler(GRID_SAMPLER_NAME, new MetricSampler(GRID_SAMPLER_NAME,
-                "step grid token usage and capacity") {
-                final GridReportBuilder gridReportBuilder = new GridReportBuilder(context.require(GridClient.class));
-                @Override
-                public List<ControllerMetricSample> collectMetricSamples() {
-                    Set<String> tokenAttributeKeys = new HashSet<>(gridReportBuilder.getTokenAttributeKeys());
-                    tokenAttributeKeys.removeAll(List.of("$agentid", "$tokenid"));
-                    List<TokenGroupCapacity> usageByIdentity = gridReportBuilder.getUsageByIdentity(tokenAttributeKeys);
-                    List<ControllerMetricSample> gridMetricSamples = new ArrayList<>();
-                    long now = System.currentTimeMillis();
-                    for (TokenGroupCapacity tokenGroupCapacity : usageByIdentity) {
-                        int capacity = tokenGroupCapacity.getCapacity();
-                        Map<String, String> labels = new TreeMap<>(tokenGroupCapacity.getKey());
-                        gridMetricSamples.add(new ControllerMetricSample(
-                            new MetricSample(now, "grid_tokens_capacity", labels, InstrumentType.GAUGE,
-                                1, capacity, capacity, capacity, capacity, null),
-                            GRID_CAPACITY_METRIC_NAME));
-                        for (TokenWrapperState state : TokenWrapperState.values()) {
-                            int valueByState = Objects.requireNonNullElse(tokenGroupCapacity.getCountByState().get(state), 0);
-                            TreeMap<String, String> labelsWithState = new TreeMap<>(labels);
-                            labelsWithState.put(GRID_TOKEN_STATE.getName(), state.name());
-                            gridMetricSamples.add(new ControllerMetricSample(
-                                new MetricSample(now, "grid_token_" + state.name(), labelsWithState, InstrumentType.GAUGE,
-                                1, valueByState, valueByState, valueByState, valueByState, null),
-                                GRID_BY_STATE_METRIC_NAME));
-                        }
-                    }
-                    return gridMetricSamples;
-                }
-            });
-        } else {
-            logger.warn("No grid instance found in context, the measurements of the grid token usage will be disabled");
-        }
-    }
-
-    private void createOrUpdateMetrics() {
+    private void createOrUpdateMetrics(MetricTypeRegistry metricTypeRegistry) {
         metricTypeRegistry.registerMetricType(new MetricType()
                 .setName(EXECUTIONS_COUNT)
                 .setDisplayName("Execution count")
@@ -242,24 +183,6 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
                 .setUnit("1")
                 .setDefaultAggregation(new MetricAggregation(MetricAggregationType.MAX))
                 .setRenderingSettings(new MetricRenderingSettings()));
-        metricTypeRegistry.registerMetricType(new MetricType()
-            .setName(GRID_BY_STATE_METRIC_NAME)
-            .setDisplayName("Grid tokens by state")
-            .setDescription("Number of grid tokens (agent execution slots) currently in each lifecycle state, broken down by state and agent type.")
-            .setAttributes(Arrays.asList(GRID_TOKEN_STATE, GRID_TOKEN_AGENT_TYPE))
-            .setDefaultGroupingAttributes(List.of(GRID_TOKEN_STATE.getName(), GRID_TOKEN_AGENT_TYPE.getName()))
-            .setUnit("1")
-            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-            .setRenderingSettings(new MetricRenderingSettings()));
-        metricTypeRegistry.registerMetricType(new MetricType()
-            .setName(GRID_CAPACITY_METRIC_NAME)
-            .setDisplayName("Grid tokens capacity")
-            .setDescription("Total number of available grid token slots per agent type, representing the maximum execution concurrency of the grid.")
-            .setAttributes(List.of(GRID_TOKEN_AGENT_TYPE))
-            .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
-            .setUnit("1")
-            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-            .setRenderingSettings(new MetricRenderingSettings()));
     }
 
     @Override

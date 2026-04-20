@@ -47,6 +47,7 @@ import step.core.entities.EntityConstants;
 import step.core.entities.EntityManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessorImpl;
+import step.core.metrics.MetricTypeRegistry;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
 import step.core.plans.PlanEntity;
@@ -56,6 +57,8 @@ import step.core.repositories.RepositoryObjectManager;
 import step.core.scheduler.ExecutionTaskAccessorImpl;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.ScheduleEntity;
+import step.core.timeseries.metric.MetricType;
+import step.core.timeseries.metric.MetricTypeAccessor;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
 import step.framework.server.ServiceRegistrationCallback;
@@ -206,6 +209,10 @@ public class Controller {
         entityManager.registerImportHook(new ResourceImporter(context.getResourceManager()));
 
         context.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
+
+        MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityConstants.metricTypes, MetricType.class));
+        context.put(MetricTypeAccessor.class, metricTypeAccessor);
+        context.put(MetricTypeRegistry.class, new MetricTypeRegistry(metricTypeAccessor));
 
         createOrUpdateIndexes();
 

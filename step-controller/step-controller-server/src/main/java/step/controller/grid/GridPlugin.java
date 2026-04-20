@@ -23,17 +23,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.controller.grid.services.GridServices;
 import step.core.GlobalContext;
+import step.core.metrics.ControllerMetricSample;
+import step.core.metrics.InstrumentType;
+import step.core.metrics.MetricSample;
+import step.core.metrics.MetricSampler;
+import step.core.metrics.MetricSamplerRegistry;
+import step.core.metrics.MetricTypeRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
+import step.core.timeseries.metric.MetricAggregation;
+import step.core.timeseries.metric.MetricAggregationType;
+import step.core.timeseries.metric.MetricRenderingSettings;
+import step.core.timeseries.metric.MetricType;
 import step.functions.execution.ConfigurableTokenLifecycleStrategy;
 import step.grid.Grid;
 import step.grid.GridImpl;
 import step.grid.GridImpl.GridImplConfig;
+import step.grid.TokenWrapperState;
 import step.grid.client.GridClient;
 import step.grid.client.GridClientConfiguration;
 import step.grid.client.LocalGridClientImpl;
 import step.grid.client.TokenLifecycleStrategy;
+import step.grid.client.reports.GridReportBuilder;
+import step.grid.client.reports.TokenGroupCapacity;
 import step.grid.contextbuilder.ExecutionContextCacheConfiguration;
 import step.grid.filemanager.FileManagerConfiguration;
 import step.grid.filemanager.FileManagerImplConfig;
@@ -43,11 +56,19 @@ import step.grid.security.SymmetricSecurityConfiguration;
 import step.resources.ResourceManagerControllerPlugin;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static step.core.metrics.MetricsConstants.GRID_TOKEN_AGENT_TYPE;
+import static step.core.metrics.MetricsConstants.GRID_TOKEN_STATE;
 
 @Plugin(dependencies = {ResourceManagerControllerPlugin.class})
 public class GridPlugin extends AbstractControllerPlugin {
@@ -59,6 +80,10 @@ public class GridPlugin extends AbstractControllerPlugin {
     public static final String GRID_FILENAMANGER_FILE_CLEANUP_INTERVAL_MINUTES = "grid.filenamanger.file.cleanup.interval.minutes";
     public static final String GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES = "grid.filemanager.file.cleanup.last.access.threshold.minutes";
     public static final String GRID_SECURITY_JWT_SECRET_KEY = "grid.security.jwtSecretKey";
+
+    public static String GRID_SAMPLER_NAME = "grid_tokens_sampler";
+    public static String GRID_BY_STATE_METRIC_NAME = "grid_tokens_by_state";
+    public static String GRID_CAPACITY_METRIC_NAME = "grid_tokens_capacity";
 
     private GridImpl grid;
     private GridClient client;
@@ -124,6 +149,8 @@ public class GridPlugin extends AbstractControllerPlugin {
         context.put(GridClient.class, client);
 
         context.getServiceRegistrationCallback().registerService(GridServices.class);
+
+        configureGridMonitoring(client, context.require(MetricTypeRegistry.class));
     }
 
     protected ConfigurableTokenLifecycleStrategy getTokenLifecycleStrategy(Configuration configuration) {
@@ -157,6 +184,64 @@ public class GridPlugin extends AbstractControllerPlugin {
         gridClientConfiguration.setLocalTokenExecutionContextCacheConfiguration(new ExecutionContextCacheConfiguration());
         gridClientConfiguration.setGridSecurity(gridSecurity);
         return gridClientConfiguration;
+    }
+
+    /**
+     * Start the grid monitoring and register grid metric types
+     * @param client the grid client to be monitored
+     * @param metricTypeRegistry the registry used to register the grid metric type
+     */
+    private void configureGridMonitoring(GridClient client, MetricTypeRegistry metricTypeRegistry) {
+        MetricSamplerRegistry metricSamplerRegistry = MetricSamplerRegistry.getInstance();
+        metricSamplerRegistry.registerSampler(GRID_SAMPLER_NAME, new MetricSampler(GRID_SAMPLER_NAME,
+            "step grid token usage and capacity") {
+            final GridReportBuilder gridReportBuilder = new GridReportBuilder(client);
+            @Override
+            public List<ControllerMetricSample> collectMetricSamples() {
+                Set<String> tokenAttributeKeys = new HashSet<>(gridReportBuilder.getTokenAttributeKeys());
+                tokenAttributeKeys.removeAll(List.of("$agentid", "$tokenid"));
+                List<TokenGroupCapacity> usageByIdentity = gridReportBuilder.getUsageByIdentity(tokenAttributeKeys);
+                List<ControllerMetricSample> gridMetricSamples = new ArrayList<>();
+                long now = System.currentTimeMillis();
+                for (TokenGroupCapacity tokenGroupCapacity : usageByIdentity) {
+                    int capacity = tokenGroupCapacity.getCapacity();
+                    Map<String, String> labels = new TreeMap<>(tokenGroupCapacity.getKey());
+                    gridMetricSamples.add(new ControllerMetricSample(
+                        new MetricSample(now, "grid_tokens_capacity", labels, InstrumentType.GAUGE,
+                            1, capacity, capacity, capacity, capacity, null),
+                        GRID_CAPACITY_METRIC_NAME));
+                    for (TokenWrapperState state : TokenWrapperState.values()) {
+                        int valueByState = Objects.requireNonNullElse(tokenGroupCapacity.getCountByState().get(state), 0);
+                        TreeMap<String, String> labelsWithState = new TreeMap<>(labels);
+                        labelsWithState.put(GRID_TOKEN_STATE.getName(), state.name());
+                        gridMetricSamples.add(new ControllerMetricSample(
+                            new MetricSample(now, "grid_token_" + state.name(), labelsWithState, InstrumentType.GAUGE,
+                                1, valueByState, valueByState, valueByState, valueByState, null),
+                            GRID_BY_STATE_METRIC_NAME));
+                    }
+                }
+                return gridMetricSamples;
+            }
+        });
+
+        metricTypeRegistry.registerMetricType(new MetricType()
+            .setName(GRID_BY_STATE_METRIC_NAME)
+            .setDisplayName("Grid tokens by state")
+            .setDescription("Number of grid tokens (agent execution slots) currently in each lifecycle state, broken down by state and agent type.")
+            .setAttributes(Arrays.asList(GRID_TOKEN_STATE, GRID_TOKEN_AGENT_TYPE))
+            .setDefaultGroupingAttributes(List.of(GRID_TOKEN_STATE.getName(), GRID_TOKEN_AGENT_TYPE.getName()))
+            .setUnit("1")
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+            .setRenderingSettings(new MetricRenderingSettings()));
+        metricTypeRegistry.registerMetricType(new MetricType()
+            .setName(GRID_CAPACITY_METRIC_NAME)
+            .setDisplayName("Grid tokens capacity")
+            .setDescription("Total number of available grid token slots per agent type, representing the maximum execution concurrency of the grid.")
+            .setAttributes(List.of(GRID_TOKEN_AGENT_TYPE))
+            .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
+            .setUnit("1")
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+            .setRenderingSettings(new MetricRenderingSettings()));
     }
 
     @Override
