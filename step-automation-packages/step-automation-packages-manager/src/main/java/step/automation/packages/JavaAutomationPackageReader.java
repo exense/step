@@ -4,11 +4,11 @@ import ch.exense.commons.app.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.ScriptAutomationPackageKeyword;
+import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
-import step.engine.plugins.LocalFunctionPlugin;
 import step.functions.Function;
 import step.functions.manager.FunctionManagerImpl;
 import step.handlers.javahandler.Keyword;
@@ -22,7 +22,10 @@ import step.plans.parser.yaml.YamlPlanReader;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -235,18 +238,14 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
         return annotation.planReference() != null && !annotation.planReference().isBlank();
     }
 
-    /**
-     * Convenient method for test
-     *
+    /** Reads automation package into a yaml fragment manager
      * @param automationPackage the JAR file to be read
-     * @param apVersion         the automation package version
-     * @param keywordLib        the package library file
-     * @return the automation package content raed from the provided files
+     * @return the automation package fragment manager read from the provided files for editing
      * @throws AutomationPackageReadingException in case of error
      */
-    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {
-        try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, keywordLib, null)) {
-            return readAutomationPackage(automationPackageArchive, apVersion);
+    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(File automationPackage) throws AutomationPackageReadingException {
+        try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, null, null)) {
+            return getAutomationPackageYamlFragmentManager(automationPackageArchive);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
         }

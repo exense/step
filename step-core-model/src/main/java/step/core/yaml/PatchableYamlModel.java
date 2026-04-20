@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2020, exense GmbH
+ * Copyright (C) 2026, exense GmbH
  *
  * This file is part of STEP
  *
@@ -16,9 +16,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.deserialization;
+package step.core.yaml;
 
-public interface AutomationPackageSerializationRegistryAware {
+import com.fasterxml.jackson.core.JsonLocation;
+import step.core.yaml.deserialization.PatchingContext;
 
-    void setSerializationRegistry(AutomationPackageSerializationRegistry registry);
+public interface PatchableYamlModel {
+
+    void setPatchingBounds(JsonLocation startLocation, JsonLocation endLocation);
+
+    int getStartOffset();
+
+    int getIndent();
+
+    int getEndOffset();
+
+    void setStartOffset(int startOffset);
+
+    void setEndOffset(int endOffset);
+
+    void setIndent(int indent);
+
+    void setContext(PatchingContext context);
 }

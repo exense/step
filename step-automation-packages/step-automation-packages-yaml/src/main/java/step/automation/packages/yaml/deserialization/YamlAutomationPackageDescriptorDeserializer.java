@@ -18,20 +18,38 @@
  ******************************************************************************/
 package step.automation.packages.yaml.deserialization;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.BeanProperty;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.deser.BeanDeserializer;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
+import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
+import step.core.yaml.deserialization.PatchingContext;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 
-@StepYamlDeserializerAddOn(targetClasses = {AutomationPackageDescriptorYamlImpl.class})
-public class YamlAutomationPackageDescriptorDeserializer extends YamlAutomationPackageFragmentDeserializer<AutomationPackageDescriptorYamlImpl> {
+import java.io.IOException;
 
-    public YamlAutomationPackageDescriptorDeserializer(ObjectMapper yamlObjectMapper) {
-        super(yamlObjectMapper);
+@StepYamlDeserializerAddOn(targetClasses = {AutomationPackageDescriptorYamlImpl.class})
+public class YamlAutomationPackageDescriptorDeserializer extends AbstractYamlAutomationPackageFragmentDeserializer {
+
+    private final BeanDeserializer delegate;
+
+    public YamlAutomationPackageDescriptorDeserializer(BeanDeserializer deserializer) {
+        super(deserializer);
+        delegate = deserializer;
     }
 
     @Override
-    protected Class<?> getObjectClass() {
-        return AutomationPackageDescriptorYamlImpl.class;
+    public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        return deserialize(p, ctxt, new AutomationPackageDescriptorYamlImpl((PatchingContext) ctxt.getAttribute(PatchingContext.class)));
     }
 
+    @Override
+    public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {
+        BeanDeserializer resolved = (BeanDeserializer) delegate.createContextual(ctxt, property);
+        resolved.resolve(ctxt);
+        return new YamlAutomationPackageDescriptorDeserializer(resolved);
+    }
 }

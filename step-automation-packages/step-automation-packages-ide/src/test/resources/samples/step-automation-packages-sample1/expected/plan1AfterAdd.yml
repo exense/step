@@ -1,0 +1,35 @@
+---
+fragments: []
+keywords: []
+plans:
+- name: "Test Plan"
+  root:
+    testCase:
+      children:
+      - echo:
+          text: "Just echo"
+      - echo:
+          text:
+            expression: "mySimpleKey"
+      - callKeyword:
+          nodeName: "CallMyKeyword2"
+          inputs:
+          - myInput: "myValue"
+          keyword: "MyKeyword2"
+  categories:
+  - "Yaml Plan"
+- version: "1.2.0"
+  name: "New Name"
+  root:
+    sequence:
+      children:
+      - echo:
+          text: "Hello World"
+  agents: null
+  categories: null
+plansPlainText:
+- name: "Plain text plan"
+  rootType: "Sequence"
+  categories:
+  - "PlainTextPlan"
+  file: "plans/plan2.plan"

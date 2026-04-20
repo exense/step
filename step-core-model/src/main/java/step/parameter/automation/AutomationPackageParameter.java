@@ -18,16 +18,19 @@
  ******************************************************************************/
 package step.parameter.automation;
 
+import com.fasterxml.jackson.annotation.*;
 import step.commons.activation.Expression;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.yaml.AbstractYamlModel;
+import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
+import step.core.yaml.deserialization.PatchingContext;
 import step.parameter.Parameter;
 import step.parameter.ParameterScope;
 
 @YamlModel(named = false)
-public class AutomationPackageParameter extends AbstractYamlModel {
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+public class AutomationPackageParameter extends PatchableYamlModelBase {
 
     protected String key;
     protected DynamicValue<String> value;
@@ -38,8 +41,23 @@ public class AutomationPackageParameter extends AbstractYamlModel {
 
     protected Integer priority;
     protected Boolean protectedValue = false;
+
+    @JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = ScopeFilter.class)
     protected ParameterScope scope = ParameterScope.GLOBAL;
+
+    public static class ScopeFilter {
+        @Override
+        public boolean equals(Object obj) {
+            return obj == ParameterScope.GLOBAL;
+        }
+    }
+
     protected String scopeEntity;
+
+    @JsonCreator
+    public AutomationPackageParameter(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext context) {
+        super(context);
+    }
 
     public Parameter toParameter() {
         Parameter res = new Parameter();
@@ -80,5 +98,17 @@ public class AutomationPackageParameter extends AbstractYamlModel {
 
     public String getScopeEntity() {
         return scopeEntity;
+    }
+
+    public static AutomationPackageParameter forContext(PatchingContext context, Parameter parameter) {
+        AutomationPackageParameter yamlParameter = new AutomationPackageParameter(context);
+        yamlParameter.copyFieldsFromObject(parameter, true);
+        Expression expression = parameter.getActivationExpression();
+        if (expression == null) {
+            yamlParameter.activationScript = null;
+        } else {
+            yamlParameter.activationScript = expression.getScript();
+        }
+        return yamlParameter;
     }
 }

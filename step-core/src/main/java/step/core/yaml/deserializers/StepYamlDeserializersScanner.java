@@ -18,16 +18,11 @@
  ******************************************************************************/
 package step.core.yaml.deserializers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.scanner.CachedAnnotationScanner;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Consumer;
+import java.util.*;
 
 public class StepYamlDeserializersScanner {
 
@@ -36,57 +31,20 @@ public class StepYamlDeserializersScanner {
     /**
      * Scans and returns all {@link StepYamlDeserializer} classes annotated with {@link StepYamlDeserializerAddOn}
      */
-    public static List<DeserializerBind<?>> scanDeserializerAddons(ObjectMapper yamlObjectMapper, List<Consumer<StepYamlDeserializer<?>>> configurators) {
-        List<DeserializerBind<?>> result = new ArrayList<>();
+    public static Map<Class<?>, Class<?>> scanDeserializerAddons() {
+        Map<Class<?>, Class<?>>  result = new HashMap<>();
         List<Class<?>> annotatedClasses = new ArrayList<>(CachedAnnotationScanner.getClassesWithAnnotation(StepYamlDeserializerAddOn.LOCATION, StepYamlDeserializerAddOn.class, Thread.currentThread().getContextClassLoader()));
         for (Class<?> annotatedClass : annotatedClasses) {
-            if (StepYamlDeserializer.class.isAssignableFrom(annotatedClass)) {
-                StepYamlDeserializerAddOn annotation = annotatedClass.getAnnotation(StepYamlDeserializerAddOn.class);
-                Arrays.stream(annotation.targetClasses()).forEach(aClass -> {
-                    try {
-                        StepYamlDeserializer<Object> newDeserializer = (StepYamlDeserializer<Object>) annotatedClass.getConstructor(ObjectMapper.class).newInstance(yamlObjectMapper);
-                        if (configurators != null) {
-                            for (Consumer<StepYamlDeserializer<?>> configurator : configurators) {
-                                configurator.accept(newDeserializer);
-                            }
-                        }
-                        result.add(new DeserializerBind<>((Class<Object>) aClass, newDeserializer));
-                    } catch (Exception e) {
-                        throw new RuntimeException("Cannot prepare deserializer", e);
-                    }
-                });
-            }
+            StepYamlDeserializerAddOn annotation = annotatedClass.getAnnotation(StepYamlDeserializerAddOn.class);
+            Arrays.stream(annotation.targetClasses()).forEach(aClass -> {
+                try {
+                    result.put(aClass, annotatedClass);
+                } catch (Exception e) {
+                    throw new RuntimeException("Cannot prepare deserializer", e);
+                }
+            });
         }
 
         return result;
-    }
-
-    /**
-     * Scans and returns all {@link StepYamlDeserializer} classes annotated with {@link StepYamlDeserializerAddOn}
-     */
-    public static List<DeserializerBind<?>> scanDeserializerAddons(ObjectMapper yamlObjectMapper) {
-        return scanDeserializerAddons(yamlObjectMapper, null);
-    }
-
-    public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper) {
-        return addAllDeserializerAddonsToModule(module, yamlObjectMapper, null);
-    }
-
-    public static SimpleModule addAllDeserializerAddonsToModule(SimpleModule module, ObjectMapper yamlObjectMapper, List<Consumer<StepYamlDeserializer<?>>> configurators) {
-        SimpleModule res = module;
-        for (StepYamlDeserializersScanner.DeserializerBind<?> deser : StepYamlDeserializersScanner.scanDeserializerAddons(yamlObjectMapper, configurators)) {
-            res = module.addDeserializer((Class<Object>) deser.clazz, deser.deserializer);
-        }
-        return res;
-    }
-
-    public static class DeserializerBind<T> {
-        public Class<T> clazz;
-        public StepYamlDeserializer<T> deserializer;
-
-        public DeserializerBind(Class<T> clazz, StepYamlDeserializer<T> deserializer) {
-            this.clazz = clazz;
-            this.deserializer = deserializer;
-        }
     }
 }
