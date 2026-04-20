@@ -18,8 +18,8 @@ import step.plugins.metrics.ExecutionMetricSample;
 import java.util.*;
 
 import static step.plugins.metrics.AbstractMetricSample.METRIC_TYPE;
-import static step.plugins.metrics.SamplesControllerPlugin.RESPONSE_TIME;
-import static step.plugins.metrics.SamplesControllerPlugin.THREAD_GROUP;
+import static step.plugins.metrics.MetricsControllerPlugin.RESPONSE_TIME;
+import static step.plugins.metrics.MetricsControllerPlugin.THREAD_GROUP;
 
 /**
  * This class acts as a wrapper over a TimeSeries ingestion. It has special methods which alter the data before ingestion.

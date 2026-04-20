@@ -26,8 +26,8 @@ import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
 import step.plugins.metrics.MetricSamplerRegistry;
 import step.plugins.metrics.MetricTypeRegistry;
-import step.plugins.metrics.SamplesControllerPlugin;
-import step.plugins.metrics.SamplesExecutionPlugin;
+import step.plugins.metrics.MetricsControllerPlugin;
+import step.plugins.metrics.MetricsExecutionPlugin;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.DashboardView;
@@ -41,10 +41,10 @@ import java.util.stream.Collectors;
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
 import static step.plugins.metrics.AbstractMetricSample.METRIC_TYPE;
-import static step.plugins.metrics.SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
+import static step.plugins.metrics.MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.plugins.metrics.MetricsConstants.*;
 
-@Plugin(dependencies = {MigrationManagerPlugin.class, AsyncTaskManagerPlugin.class, SamplesControllerPlugin.class})
+@Plugin(dependencies = {MigrationManagerPlugin.class, AsyncTaskManagerPlugin.class, MetricsControllerPlugin.class})
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
@@ -124,7 +124,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         TableRegistry tableRegistry = context.get(TableRegistry.class);
         tableRegistry.register(EntityConstants.dashboards, new Table<>(dashboardsCollection, "dashboard-read", true));
 
-        SamplesExecutionPlugin.registerSamplesHandlers(handler);
+        MetricsExecutionPlugin.registerSamplesHandlers(handler);
         MetricSamplerRegistry.getInstance().registerHandler(handler);
 
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);

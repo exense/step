@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static step.plugins.metrics.SamplesControllerPlugin.EXECUTIONS_COUNT;
-import static step.plugins.metrics.SamplesControllerPlugin.RESPONSE_TIME;
+import static step.plugins.metrics.MetricsControllerPlugin.EXECUTIONS_COUNT;
+import static step.plugins.metrics.MetricsControllerPlugin.RESPONSE_TIME;
 
 public class DashboardTest {
 

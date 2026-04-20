@@ -39,8 +39,8 @@ import step.handlers.javahandler.Keyword;
 import step.migration.MigrationManager;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
-import step.plugins.metrics.SamplesControllerPlugin;
-import step.plugins.metrics.SamplesExecutionPlugin;
+import step.plugins.metrics.MetricsControllerPlugin;
+import step.plugins.metrics.MetricsExecutionPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
 import java.util.EnumSet;
@@ -113,7 +113,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
             }
         });
         globalContext.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
-        SamplesControllerPlugin mc = new SamplesControllerPlugin();
+        MetricsControllerPlugin mc = new MetricsControllerPlugin();
         //Legacy mode before Step 30
         switch (timeSeriesAttributeMode) {
             case INCLUDED_ATTRIBUTES:
@@ -137,7 +137,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
         TimeSeries timeSeries = globalContext.get(TimeSeries.class);
         timeSeriesAggregationPipeline = globalContext.get(TimeSeriesAggregationPipeline.class);
         engine = ExecutionEngine.builder()
-            .withPlugin(new SamplesExecutionPlugin())
+            .withPlugin(new MetricsExecutionPlugin())
             .withPlugin(new FunctionPlugin())
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new LocalFunctionPlugin())

@@ -16,10 +16,11 @@
   You should have received a copy of the GNU Affero General Public License
   along with STEP.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>step-controller-plugins-timeseries</artifactId>
+  <artifactId>step-controller-plugins-metrics</artifactId>
   <name>${project.groupId}:${project.artifactId}</name>
   <packaging>jar</packaging>
 
@@ -32,34 +33,24 @@
   <dependencies>
     <dependency>
       <groupId>ch.exense.step</groupId>
-      <artifactId>step-controller-plugins-metrics</artifactId>
+      <artifactId>step-controller-server</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>ch.exense.step</groupId>
-      <artifactId>step-framework-timeseries</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ch.exense.step</groupId>
-      <artifactId>step-controller-plugins-metrics-raw</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>ch.exense.step</groupId>
-      <artifactId>step-controller-base-plugins</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>ch.exense.step</groupId>
-      <artifactId>step-framework-collections-mongodb</artifactId>
-      <scope>test</scope>
-    </dependency>
+
     <dependency>
       <groupId>ch.exense.step</groupId>
       <artifactId>step-controller-server</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-api-reporting</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-framework-timeseries</artifactId>
     </dependency>
   </dependencies>
 
