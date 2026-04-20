@@ -1,4 +1,4 @@
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * <p>HISTOGRAM metrics are deliberately excluded: repeating a distribution snapshot
  * is semantically misleading because it implies new observations occurred.
  *
- * <p>Handlers opt-in by calling {@link #registerHandler(SamplesHandler)}, typically
+ * <p>Handlers opt-in by calling {@link #registerHandler(MetricSamplesHandler)}, typically
  * in their constructor. Prometheus is intentionally excluded because it retains values
  * in-memory between scrapes and would double-count counter increments if heartbeated.
  */
@@ -38,7 +38,7 @@ public class MetricHeartbeatRegistry {
     }
 
     private final ConcurrentHashMap<String, LastSampleEntry> lastSamples = new ConcurrentHashMap<>();
-    private final List<SamplesHandler> handlers = new CopyOnWriteArrayList<>();
+    private final List<MetricSamplesHandler> handlers = new CopyOnWriteArrayList<>();
     private final ScheduledExecutorService scheduler =
             Executors.newScheduledThreadPool(1, new BasicThreadFactory.Builder()
                     .namingPattern("metric-heartbeat-%d").build());
@@ -54,7 +54,7 @@ public class MetricHeartbeatRegistry {
         }
     }
 
-    public void registerHandler(SamplesHandler handler) {
+    public void registerHandler(MetricSamplesHandler handler) {
         handlers.add(handler);
     }
 
@@ -104,7 +104,7 @@ public class MetricHeartbeatRegistry {
                     .map(entry -> buildHeartbeat(entry.sample, now))
                     .collect(Collectors.toList());
             if (!heartbeats.isEmpty()) {
-                for (SamplesHandler handler : handlers) {
+                for (MetricSamplesHandler handler : handlers) {
                     try {
                         handler.processMetrics(heartbeats);
                     } catch (Exception e) {

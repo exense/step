@@ -1,4 +1,4 @@
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
@@ -24,13 +24,13 @@ public class MetricSamplerRegistry {
         Executors.newScheduledThreadPool(1, BasicThreadFactory.builder().namingPattern("metric-sampler-%d").build());
 
     Map<String, MetricSampler> samplers = new ConcurrentHashMap<>();
-    List<SamplesHandler> handlers = new CopyOnWriteArrayList<>();
+    List<MetricSamplesHandler> handlers = new CopyOnWriteArrayList<>();
 
     public void registerSampler(String name, MetricSampler sampler) {
         samplers.put(name, sampler);
     }
 
-    public void registerHandler(SamplesHandler handler) {
+    public void registerHandler(MetricSamplesHandler handler) {
         handlers.add(handler);
     }
 

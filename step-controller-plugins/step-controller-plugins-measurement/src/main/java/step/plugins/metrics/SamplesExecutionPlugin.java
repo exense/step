@@ -1,4 +1,4 @@
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +42,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static step.automation.packages.AutomationPackageEntity.AUTOMATION_PACKAGE_ID;
-import static step.plugins.measurements.MetricsConstants.EXECUTION_BOOLEAN_RESULT;
-import static step.plugins.measurements.MetricsConstants.EXECUTION_RESULT;
-import static step.plugins.measurements.SamplesControllerPlugin.*;
+import static step.plugins.metrics.MetricsConstants.EXECUTION_BOOLEAN_RESULT;
+import static step.plugins.metrics.MetricsConstants.EXECUTION_RESULT;
+import static step.plugins.metrics.SamplesControllerPlugin.*;
 
 
 @Plugin(dependencies = LiveReportingPlugin.class)
@@ -74,7 +74,7 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     public static final String CTX_SCHEDULE_NAME = "$scheduleName";
     public static final String CTX_EXECUTION_DESCRIPTION = "$executionDescription";
     private static final Logger logger = LoggerFactory.getLogger(SamplesExecutionPlugin.class);
-    private static final List<SamplesHandler> SAMPLES_HANDLERS = new ArrayList<>();
+    private static final List<MetricSamplesHandler> SAMPLES_HANDLERS = new ArrayList<>();
     public static final String CTX_GENERATE_EXECUTION_METRICS = "$generateExecutionMetrics";
     public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
 
@@ -93,7 +93,7 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     public SamplesExecutionPlugin() {
     }
 
-    public static synchronized void registerSamplesHandlers(SamplesHandler handler) {
+    public static synchronized void registerSamplesHandlers(MetricSamplesHandler handler) {
         SAMPLES_HANDLERS.add(handler);
     }
 
@@ -128,8 +128,8 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
             TreeMap<String, String> additionalAttributes = Objects.requireNonNullElse(executionContext.getObjectEnricher().getAdditionalAttributes(), new TreeMap<>());
             executionContext.put(CTX_ADDITIONAL_ATTRIBUTES, additionalAttributes);
 
-            for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
-                samplesHandler.initializeExecutionContext(executionEngineContext, executionContext);
+            for (MetricSamplesHandler metricSamplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
+                metricSamplesHandler.initializeExecutionContext(executionEngineContext, executionContext);
             }
         }
     }
@@ -314,11 +314,11 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     }
 
     public void processMetrics(List<ExecutionMetricSample> metrics, Map<String, String> optionalLabels) {
-        for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
+        for (MetricSamplesHandler metricSamplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
             try {
-                samplesHandler.processMetrics(metrics, optionalLabels);
+                metricSamplesHandler.processMetrics(metrics, optionalLabels);
             } catch (Exception e) {
-                logger.error("Metrics could not be processed by " + samplesHandler.getClass().getSimpleName(), e);
+                logger.error("Metrics could not be processed by " + metricSamplesHandler.getClass().getSimpleName(), e);
             }
         }
     }
@@ -347,11 +347,11 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
     }
 
     public void processMeasurements(List<Measurement> measurements) {
-        for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
+        for (MetricSamplesHandler metricSamplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
             try {
-                samplesHandler.processMeasurements(measurements);
+                metricSamplesHandler.processMeasurements(measurements);
             } catch (Exception e) {
-                logger.error("Measurement count not be processed by " + samplesHandler.getClass().getSimpleName(), e);
+                logger.error("Measurement count not be processed by " + metricSamplesHandler.getClass().getSimpleName(), e);
             }
         }
     }
@@ -401,8 +401,8 @@ public class SamplesExecutionPlugin extends AbstractExecutionEnginePlugin {
             // 1. generate execution metrics
             createExecutionMetrics(context);
             // 2. notify handler
-            for (SamplesHandler samplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
-                samplesHandler.afterExecutionEnd(context);
+            for (MetricSamplesHandler metricSamplesHandler : SamplesExecutionPlugin.SAMPLES_HANDLERS) {
+                metricSamplesHandler.afterExecutionEnd(context);
             }
             // 3. Cleanup
             MetricHeartbeatRegistry.getInstance().removeExecution(context.getExecutionId());

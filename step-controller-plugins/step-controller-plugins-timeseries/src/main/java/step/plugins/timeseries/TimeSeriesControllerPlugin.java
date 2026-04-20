@@ -24,10 +24,10 @@ import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
-import step.plugins.measurements.MetricSamplerRegistry;
-import step.plugins.measurements.MetricTypeRegistry;
-import step.plugins.measurements.SamplesControllerPlugin;
-import step.plugins.measurements.SamplesExecutionPlugin;
+import step.plugins.metrics.MetricSamplerRegistry;
+import step.plugins.metrics.MetricTypeRegistry;
+import step.plugins.metrics.SamplesControllerPlugin;
+import step.plugins.metrics.SamplesExecutionPlugin;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.DashboardView;
@@ -40,10 +40,9 @@ import java.util.stream.Collectors;
 
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
-import static step.plugins.measurements.AbstractMetricSample.METRIC_TYPE;
-import static step.plugins.measurements.SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
-import static step.plugins.measurements.MetricsConstants.*;
-import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
+import static step.plugins.metrics.AbstractMetricSample.METRIC_TYPE;
+import static step.plugins.metrics.SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
+import static step.plugins.metrics.MetricsConstants.*;
 
 @Plugin(dependencies = {MigrationManagerPlugin.class, AsyncTaskManagerPlugin.class, SamplesControllerPlugin.class})
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
@@ -58,7 +57,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     // Before Step 30, the list of supported attributed by the time-series were defined with below default values and could be customized via step.properties
     // This was used to determine if we had to fall back to RAW measurement when a filter or group by used unknown fields
     public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
-    public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = step.plugins.measurements.MetricsConstants.getAllAttributeNames() + ",metricType,origin,project";
+    public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = step.plugins.metrics.MetricsConstants.getAllAttributeNames() + ",metricType,origin,project";
 
     // Following properties are used by the UI. In the future we could remove the prefix 'plugins.' to align with other properties
     public static final String PARAM_KEY_EXECUTION_DASHBOARD_ID = "plugins.timeseries.execution.dashboard.id";
@@ -106,13 +105,13 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getIngestionPipeline();
 
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
-        TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(timeSeries, includedAttributes, excludedAttributes);
+        TimeSeriesMetricSamplesHandler handler = new TimeSeriesMetricSamplesHandler(timeSeries, includedAttributes, excludedAttributes);
 
         context.put(TimeSeries.class, timeSeries);
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
         context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
 
-        context.put(TimeSeriesBucketingHandler.class, handler);
+        context.put(TimeSeriesMetricSamplesHandler.class, handler);
         context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
 
         // dashboards

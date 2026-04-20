@@ -7,7 +7,6 @@ import org.eclipse.jetty.ee10.servlet.FilterHolder;
 import org.eclipse.jetty.ee10.servlet.ServletHolder;
 import org.eclipse.jetty.server.Handler;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ThreadGroup;
@@ -40,8 +39,8 @@ import step.handlers.javahandler.Keyword;
 import step.migration.MigrationManager;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
-import step.plugins.measurements.SamplesControllerPlugin;
-import step.plugins.measurements.SamplesExecutionPlugin;
+import step.plugins.metrics.SamplesControllerPlugin;
+import step.plugins.metrics.SamplesExecutionPlugin;
 import step.threadpool.ThreadPoolPlugin;
 
 import java.util.EnumSet;

@@ -1,4 +1,4 @@
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -9,7 +9,7 @@ import java.util.Map;
 
 /**
  * Base class for all metric envelopes dispatched via
- * {@link SamplesHandler#processMetrics} and {@link SamplesHandler#processControllerMetrics}.
+ * {@link MetricSamplesHandler#processMetrics} and {@link MetricSamplesHandler#processControllerMetrics}.
  * <p>
  * Extends {@link AbstractOrganizableObject} so that subclasses (in particular
  * {@link ExecutionMetricSample}) can be persisted by framework accessors that require an

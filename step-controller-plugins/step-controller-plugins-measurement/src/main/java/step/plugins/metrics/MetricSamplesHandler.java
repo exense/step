@@ -1,4 +1,4 @@
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
@@ -6,7 +6,7 @@ import step.core.execution.ExecutionEngineContext;
 import java.util.List;
 import java.util.Map;
 
-public interface SamplesHandler {
+public interface MetricSamplesHandler {
 
     void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext);
 

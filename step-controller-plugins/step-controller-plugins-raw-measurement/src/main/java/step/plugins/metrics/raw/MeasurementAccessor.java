@@ -1,11 +1,11 @@
-package step.plugins.measurements.raw;
+package step.plugins.metrics.raw;
 
 import com.mongodb.BasicDBObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.collections.*;
 import step.core.collections.Collection;
-import step.plugins.measurements.SamplesExecutionPlugin;
+import step.plugins.metrics.SamplesExecutionPlugin;
 
 import java.util.*;
 import java.util.stream.Stream;

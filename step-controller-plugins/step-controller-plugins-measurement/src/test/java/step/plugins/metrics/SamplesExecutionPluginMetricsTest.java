@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -43,7 +43,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Tests that running a keyword that adds output metrics via
  * {@code output.addCounter/addGauge/addHistogram} routes those metrics through
- * {@link SamplesHandler#processMetrics} with correctly enriched
+ * {@link MetricSamplesHandler#processMetrics} with correctly enriched
  * {@link ExecutionMetricSample} objects.
  * <p>
  * This class is intentionally separate from {@link SamplesExecutionPluginTest} to avoid
@@ -57,7 +57,7 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
      * Captures all {@link ExecutionMetricSample}s delivered to {@link #processMetrics}.
      * No-op {@link #processMeasurements} to avoid side effects on shared state.
      */
-    private static class CapturingSamplesHandler implements SamplesHandler {
+    private static class CapturingMetricSamplesHandler implements MetricSamplesHandler {
 
         final CopyOnWriteArrayList<ExecutionMetricSample> capturedMetrics = new CopyOnWriteArrayList<>();
 
@@ -80,13 +80,13 @@ public class SamplesExecutionPluginMetricsTest extends AbstractKeyword {
         }
     }
 
-    private CapturingSamplesHandler capturingHandler;
+    private CapturingMetricSamplesHandler capturingHandler;
 
     @Before
     public void setUp() throws Exception {
         SamplesControllerPlugin mc = new SamplesControllerPlugin();
         mc.initMetricSamplingAndHeartbeat(GlobalContextBuilder.createGlobalContext());
-        capturingHandler = new CapturingSamplesHandler();
+        capturingHandler = new CapturingMetricSamplesHandler();
         SamplesExecutionPlugin.registerSamplesHandlers(capturingHandler);
         engine = ExecutionEngine.builder()
             .withPlugin(new SamplesExecutionPlugin())

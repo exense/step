@@ -1,4 +1,4 @@
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +25,8 @@ import step.grid.client.reports.TokenGroupCapacity;
 
 import java.util.*;
 
-import static step.plugins.measurements.MetricsConstants.*;
-import static step.plugins.measurements.SamplesExecutionPlugin.*;
+import static step.plugins.metrics.MetricsConstants.*;
+import static step.plugins.metrics.SamplesExecutionPlugin.*;
 
 @Plugin(dependencies = {GridPlugin.class})
 public class SamplesControllerPlugin extends AbstractControllerPlugin {

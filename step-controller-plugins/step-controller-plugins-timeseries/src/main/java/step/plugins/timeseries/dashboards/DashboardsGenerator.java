@@ -11,9 +11,9 @@ import step.plugins.timeseries.dashboards.model.*;
 import java.util.*;
 
 import static step.controller.services.entities.AbstractEntityServices.CUSTOM_FIELD_LOCKED;
-import static step.plugins.measurements.MetricsConstants.*;
-import static step.plugins.measurements.SamplesControllerPlugin.RESPONSE_TIME;
-import static step.plugins.measurements.SamplesControllerPlugin.THREAD_GROUP;
+import static step.plugins.metrics.MetricsConstants.*;
+import static step.plugins.metrics.SamplesControllerPlugin.RESPONSE_TIME;
+import static step.plugins.metrics.SamplesControllerPlugin.THREAD_GROUP;
 import static step.plugins.timeseries.TimeSeriesControllerPlugin.GENERATION_NAME;
 
 

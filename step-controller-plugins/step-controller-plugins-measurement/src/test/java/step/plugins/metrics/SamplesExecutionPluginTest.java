@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -58,7 +58,7 @@ public class SamplesExecutionPluginTest extends AbstractKeyword {
     public void setUp() throws Exception {
         SamplesControllerPlugin mc = new SamplesControllerPlugin();
         mc.initMetricSamplingAndHeartbeat(GlobalContextBuilder.createGlobalContext());
-        SamplesExecutionPlugin.registerSamplesHandlers(new TestSamplesHandler());
+        SamplesExecutionPlugin.registerSamplesHandlers(new TestMetricSamplesHandler());
         engine = ExecutionEngine.builder().withPlugin(new SamplesExecutionPlugin())
             .withPlugin(new FunctionPlugin())
             .withPlugin(new ThreadPoolPlugin())
@@ -108,9 +108,9 @@ public class SamplesExecutionPluginTest extends AbstractKeyword {
         Assert.assertEquals(1000, assertMeasurementsValue.get("myMeasure2").get());
     }
 
-    public class TestSamplesHandler implements SamplesHandler {
+    public class TestMetricSamplesHandler implements MetricSamplesHandler {
 
-        public TestSamplesHandler() {
+        public TestMetricSamplesHandler() {
             MetricSamplerRegistry.getInstance().registerHandler(this);
         }
 

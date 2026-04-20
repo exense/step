@@ -5,7 +5,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
-import step.core.collections.Filter;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.timeseries.metric.MetricAggregation;
@@ -20,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static step.plugins.measurements.SamplesControllerPlugin.EXECUTIONS_COUNT;
-import static step.plugins.measurements.SamplesControllerPlugin.RESPONSE_TIME;
+import static step.plugins.metrics.SamplesControllerPlugin.EXECUTIONS_COUNT;
+import static step.plugins.metrics.SamplesControllerPlugin.RESPONSE_TIME;
 
 public class DashboardTest {
 

@@ -24,9 +24,9 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.query.OQLTimeSeriesFilterBuilder;
-import step.plugins.measurements.ExecutionMetricSample;
-import step.plugins.measurements.Measurement;
-import step.plugins.measurements.SamplesExecutionPlugin;
+import step.plugins.metrics.ExecutionMetricSample;
+import step.plugins.metrics.Measurement;
+import step.plugins.metrics.SamplesExecutionPlugin;
 import step.plugins.timeseries.api.*;
 
 import java.util.*;
@@ -38,8 +38,8 @@ import java.util.stream.Stream;
 
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
-import static step.plugins.measurements.AbstractMetricSample.METRIC_TYPE;
-import static step.plugins.measurements.SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
+import static step.plugins.metrics.AbstractMetricSample.METRIC_TYPE;
+import static step.plugins.metrics.SamplesExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
 public class TimeSeriesHandler {
@@ -132,7 +132,7 @@ public class TimeSeriesHandler {
             Set<String> standardAttributes = new HashSet<>(timeSeriesIncludedAttributes);
             standardAttributes.addAll(fields.stream().map(attributesPrefixRemoval).collect(Collectors.toList()));
             standardAttributes.addAll(request.getGroupDimensions());
-            TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(timeSeries, standardAttributes, Set.of());
+            TimeSeriesMetricSamplesHandler timeSeriesBucketingHandler = new TimeSeriesMetricSamplesHandler(timeSeries, standardAttributes, Set.of());
             LongAdder count = new LongAdder();
             Filter timestampClauses = Filters.empty();
             Filter samplesTimestampClauses = Filters.empty();
@@ -335,7 +335,7 @@ public class TimeSeriesHandler {
             if (firstMeasurement != null && lastMeasurement != null) {
                 return asyncTaskManager.scheduleAsyncTask(t -> {
                     // the flushing period can be a big value, because we will force flush every time.
-                    TimeSeriesBucketingHandler timeSeriesBucketingHandler = new TimeSeriesBucketingHandler(timeSeries, timeSeriesIncludedAttributes, timeSeriesExcludedAttributes);
+                    TimeSeriesMetricSamplesHandler timeSeriesBucketingHandler = new TimeSeriesMetricSamplesHandler(timeSeries, timeSeriesIncludedAttributes, timeSeriesExcludedAttributes);
                     LongAdder count = new LongAdder();
                     SearchOrder searchOrder = new SearchOrder("begin", 1);
                     // Iterate over each measurement and ingest it again

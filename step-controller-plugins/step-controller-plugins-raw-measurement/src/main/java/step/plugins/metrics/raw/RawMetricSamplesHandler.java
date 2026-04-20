@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.measurements.raw;
+package step.plugins.metrics.raw;
 
 import java.util.*;
 
@@ -25,20 +25,20 @@ import org.slf4j.LoggerFactory;
 
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
-import step.plugins.measurements.MetricSamplerRegistry;
-import step.plugins.measurements.MetricHeartbeatRegistry;
-import step.plugins.measurements.SamplesHandler;
-import step.plugins.measurements.Measurement;
-import step.plugins.measurements.ExecutionMetricSample;
+import step.plugins.metrics.MetricSamplerRegistry;
+import step.plugins.metrics.MetricHeartbeatRegistry;
+import step.plugins.metrics.MetricSamplesHandler;
+import step.plugins.metrics.Measurement;
+import step.plugins.metrics.ExecutionMetricSample;
 
-public class RawSamplesHandler implements SamplesHandler {
+public class RawMetricSamplesHandler implements MetricSamplesHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(RawSamplesHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(RawMetricSamplesHandler.class);
 
     private final MeasurementAccessor accessor;
     private final MetricSampleAccessor metricSampleAccessor;
 
-    public RawSamplesHandler(MeasurementAccessor accessor, MetricSampleAccessor metricSampleAccessor) {
+    public RawMetricSamplesHandler(MeasurementAccessor accessor, MetricSampleAccessor metricSampleAccessor) {
         super();
         this.accessor = accessor;
         this.metricSampleAccessor = metricSampleAccessor;

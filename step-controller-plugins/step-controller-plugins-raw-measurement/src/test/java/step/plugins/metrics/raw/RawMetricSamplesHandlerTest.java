@@ -1,4 +1,4 @@
-package step.plugins.measurements.raw;
+package step.plugins.metrics.raw;
 
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
@@ -23,7 +23,7 @@ import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
-import step.plugins.measurements.SamplesExecutionPlugin;
+import step.plugins.metrics.SamplesExecutionPlugin;
 
 import java.util.Set;
 import java.util.TreeMap;
@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 import static step.planbuilder.BaseArtefacts.sequence;
 import static step.planbuilder.BaseArtefacts.sleep;
 
-public class RawSamplesHandlerTest {
+public class RawMetricSamplesHandlerTest {
 
     @Test
     public void testRawMeasurementsHandler() {
@@ -53,7 +53,7 @@ public class RawSamplesHandlerTest {
         SamplesExecutionPlugin samplesExecutionPlugin = new SamplesExecutionPlugin();
         MeasurementAccessor measurementAccessor = new MeasurementAccessor(new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap()));
         MetricSampleAccessor metricSampleAccessor = new MetricSampleAccessor(new InMemoryCollection<>());
-        RawSamplesHandler handler = new RawSamplesHandler(measurementAccessor, metricSampleAccessor);
+        RawMetricSamplesHandler handler = new RawMetricSamplesHandler(measurementAccessor, metricSampleAccessor);
         SamplesExecutionPlugin.registerSamplesHandlers(handler);
         try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(samplesExecutionPlugin)
             .withPlugin(new BaseArtefactPlugin())
@@ -97,7 +97,7 @@ public class RawSamplesHandlerTest {
         SamplesExecutionPlugin samplesExecutionPlugin = new SamplesExecutionPlugin();
         MeasurementAccessor measurementAccessor = new MeasurementAccessor(new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap()));
         MetricSampleAccessor metricSampleAccessor = new MetricSampleAccessor(new InMemoryCollection<>());
-        RawSamplesHandler handler = new RawSamplesHandler(measurementAccessor, metricSampleAccessor);
+        RawMetricSamplesHandler handler = new RawMetricSamplesHandler(measurementAccessor, metricSampleAccessor);
         SamplesExecutionPlugin.registerSamplesHandlers(handler);
         try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(samplesExecutionPlugin)
             .withPlugin(new BaseArtefactPlugin())

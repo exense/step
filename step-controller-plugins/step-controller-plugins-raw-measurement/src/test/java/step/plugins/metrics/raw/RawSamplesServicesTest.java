@@ -1,11 +1,11 @@
-package step.plugins.measurements.raw;
+package step.plugins.metrics.raw;
 
 import org.junit.Before;
 import org.junit.Test;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.core.metrics.MetricSample;
 import step.core.metrics.InstrumentType;
-import step.plugins.measurements.ExecutionMetricSample;
+import step.plugins.metrics.ExecutionMetricSample;
 
 import java.util.Collections;
 import java.util.HashMap;

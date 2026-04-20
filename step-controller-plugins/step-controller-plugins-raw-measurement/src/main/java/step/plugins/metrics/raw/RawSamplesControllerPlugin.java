@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plugins.measurements.raw;
+package step.plugins.metrics.raw;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +31,8 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
-import step.plugins.measurements.SamplesExecutionPlugin;
-import step.plugins.measurements.ExecutionMetricSample;
+import step.plugins.metrics.SamplesExecutionPlugin;
+import step.plugins.metrics.ExecutionMetricSample;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -60,7 +60,7 @@ public class RawSamplesControllerPlugin extends AbstractControllerPlugin {
         context.put(MetricSampleAccessor.class, metricsAccessor);
         tableRegistry.register(EntityConstants.metricSamples, new Table<>(metricSamplesCollection, null, true));
 
-        SamplesExecutionPlugin.registerSamplesHandlers(new RawSamplesHandler(accessor, metricsAccessor));
+        SamplesExecutionPlugin.registerSamplesHandlers(new RawMetricSamplesHandler(accessor, metricsAccessor));
 
         context.getServiceRegistrationCallback().registerService(RawSamplesServices.class);
     }

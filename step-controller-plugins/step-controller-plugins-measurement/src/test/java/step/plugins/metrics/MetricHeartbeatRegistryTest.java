@@ -1,4 +1,4 @@
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -294,8 +294,8 @@ public class MetricHeartbeatRegistryTest {
                 InstrumentType.HISTOGRAM, count, sum, 0, sum, sum, null);
     }
 
-    private static SamplesHandler capturingHandler(List<ExecutionMetricSample> sink) {
-        return new SamplesHandler() {
+    private static MetricSamplesHandler capturingHandler(List<ExecutionMetricSample> sink) {
+        return new MetricSamplesHandler() {
             @Override
             public void initializeExecutionContext(ExecutionEngineContext ctx, ExecutionContext execCtx) {}
             @Override

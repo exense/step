@@ -1,4 +1,4 @@
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import step.core.timeseries.metric.MetricAttribute;
 import step.core.timeseries.metric.MetricAttributeType;

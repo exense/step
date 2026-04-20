@@ -1,4 +1,4 @@
-package step.plugins.measurements.raw;
+package step.plugins.metrics.raw;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -10,7 +10,7 @@ import step.core.deployment.AbstractStepServices;
 import step.core.metrics.MetricSample;
 import step.core.metrics.InstrumentType;
 import step.framework.server.security.Secured;
-import step.plugins.measurements.ExecutionMetricSample;
+import step.plugins.metrics.ExecutionMetricSample;
 
 import java.util.*;
 import java.util.stream.Stream;

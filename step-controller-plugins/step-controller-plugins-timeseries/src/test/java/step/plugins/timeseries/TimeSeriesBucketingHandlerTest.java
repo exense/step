@@ -11,7 +11,7 @@ import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesBuilder;
 import step.core.timeseries.TimeSeriesCollection;
 import step.core.timeseries.bucket.Bucket;
-import step.plugins.measurements.ExecutionMetricSample;
+import step.plugins.metrics.ExecutionMetricSample;
 
 import java.util.List;
 import java.util.Map;
@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Unit tests for {@link TimeSeriesBucketingHandler#processMetrics}.
+ * Unit tests for {@link TimeSeriesMetricSamplesHandler#processMetrics}.
  */
 public class TimeSeriesBucketingHandlerTest {
 
@@ -27,7 +27,7 @@ public class TimeSeriesBucketingHandlerTest {
     private static final Set<String> HANDLED_ATTRIBUTES = Set.of("eId", "name", "env");
 
     private InMemoryCollection<Bucket> bucketsCollection;
-    private TimeSeriesBucketingHandler handler;
+    private TimeSeriesMetricSamplesHandler handler;
 
     @Before
     public void setUp() {
@@ -36,7 +36,7 @@ public class TimeSeriesBucketingHandlerTest {
         TimeSeries timeSeries = new TimeSeriesBuilder()
             .registerCollection(tsCollection)
             .build();
-        handler = new TimeSeriesBucketingHandler(timeSeries, HANDLED_ATTRIBUTES, Set.of());
+        handler = new TimeSeriesMetricSamplesHandler(timeSeries, HANDLED_ATTRIBUTES, Set.of());
     }
 
     // ── Counter ──────────────────────────────────────────────────────────────

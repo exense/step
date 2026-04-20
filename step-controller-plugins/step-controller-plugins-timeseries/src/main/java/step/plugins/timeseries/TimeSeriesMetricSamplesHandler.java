@@ -8,30 +8,30 @@ import step.core.timeseries.TimeSeries;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
-import step.plugins.measurements.AbstractMetricSample;
-import step.plugins.measurements.ControllerMetricSample;
-import step.plugins.measurements.Measurement;
-import step.plugins.measurements.MetricHeartbeatRegistry;
-import step.plugins.measurements.SamplesHandler;
-import step.plugins.measurements.ExecutionMetricSample;
+import step.plugins.metrics.AbstractMetricSample;
+import step.plugins.metrics.ControllerMetricSample;
+import step.plugins.metrics.Measurement;
+import step.plugins.metrics.MetricHeartbeatRegistry;
+import step.plugins.metrics.MetricSamplesHandler;
+import step.plugins.metrics.ExecutionMetricSample;
 
 import java.util.*;
 
-import static step.plugins.measurements.AbstractMetricSample.METRIC_TYPE;
-import static step.plugins.measurements.SamplesControllerPlugin.RESPONSE_TIME;
-import static step.plugins.measurements.SamplesControllerPlugin.THREAD_GROUP;
+import static step.plugins.metrics.AbstractMetricSample.METRIC_TYPE;
+import static step.plugins.metrics.SamplesControllerPlugin.RESPONSE_TIME;
+import static step.plugins.metrics.SamplesControllerPlugin.THREAD_GROUP;
 
 /**
  * This class acts as a wrapper over a TimeSeries ingestion. It has special methods which alter the data before ingestion.
  */
-public class TimeSeriesBucketingHandler implements SamplesHandler {
+public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
 
     private final TimeSeries timeSeries;
 
     private final Set<String> handledAttributes;
     private final Set<String> excludedAttributes;
 
-    public TimeSeriesBucketingHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes) {
+    public TimeSeriesMetricSamplesHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes) {
         this.timeSeries = timeSeries;
         this.handledAttributes = Objects.requireNonNull(handledAttributes);
         this.excludedAttributes = Objects.requireNonNull(excludedAttributes);

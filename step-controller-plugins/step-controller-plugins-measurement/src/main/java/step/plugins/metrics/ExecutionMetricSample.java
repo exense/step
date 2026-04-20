@@ -1,4 +1,4 @@
-package step.plugins.measurements;
+package step.plugins.metrics;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -14,7 +14,7 @@ import java.util.TreeMap;
  * as {@link Measurement} is enriched for legacy {@code Measure} objects.
  * <p>
  * Unlike {@link Measurement}, this is a typed flat POJO rather than a {@link java.util.HashMap}
- * subclass. Handlers receive lists of these via {@link SamplesHandler#processMetrics}.
+ * subclass. Handlers receive lists of these via {@link MetricSamplesHandler#processMetrics}.
  */
 public class ExecutionMetricSample extends AbstractMetricSample {
 

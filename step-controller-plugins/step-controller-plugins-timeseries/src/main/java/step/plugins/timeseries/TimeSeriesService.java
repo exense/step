@@ -22,10 +22,9 @@ import step.core.timeseries.*;
 import step.core.timeseries.metric.MetricType;
 import step.core.timeseries.metric.MetricTypeAccessor;
 import step.framework.server.security.Secured;
-import step.plugins.measurements.ExecutionMetricSample;
-import step.plugins.measurements.Measurement;
-import step.plugins.measurements.raw.MeasurementAccessor;
-import step.plugins.measurements.raw.MetricSampleAccessor;
+import step.plugins.metrics.ExecutionMetricSample;
+import step.plugins.metrics.Measurement;
+import step.plugins.metrics.raw.MetricSampleAccessor;
 import step.plugins.timeseries.api.*;
 
 import java.util.*;
@@ -48,7 +47,7 @@ public class TimeSeriesService extends AbstractStepServices {
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
-        TimeSeriesBucketingHandler timeSeriesBucketingHandler = context.get(TimeSeriesBucketingHandler.class);
+        TimeSeriesMetricSamplesHandler timeSeriesBucketingHandler = context.get(TimeSeriesMetricSamplesHandler.class);
         Set<String> handledAttributes = timeSeriesBucketingHandler.getHandledAttributes();
         Set<String> excludedAttributes = timeSeriesBucketingHandler.getExcludedAttributes();
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
