@@ -60,8 +60,12 @@ class Session extends Map {
       }
     }
 
-    await Promise.allSettled(promises);
+    const results = await Promise.allSettled(promises);
     this.clear();
+    const failures = results.filter(r => r.status === 'rejected');
+    if (failures.length > 0) {
+      throw new Error(failures.map(f => f.reason?.message || String(f.reason)).join('; '));
+    }
   }
 }
 module.exports = Session;
