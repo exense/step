@@ -27,6 +27,7 @@ import step.core.views.ViewManager;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.functions.Function;
 import step.functions.handler.MeasureTypes;
+import step.livereporting.LiveReportingContext;
 import step.livereporting.LiveReportingPlugin;
 import step.plugins.views.functions.ErrorDistribution;
 import step.plugins.views.functions.ErrorDistributionView;
@@ -94,7 +95,8 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
-        controllerUrl = Objects.requireNonNullElse(parentContext.getControllerUrl(), "");
+        controllerUrl = Optional.ofNullable(parentContext).map(AbstractExecutionEngineContext::getControllerUrl).orElse("");
+        executionEngineContext.setControllerUrl(controllerUrl);
     }
 
     @Override
@@ -142,16 +144,19 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
 
     @Override
     public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {
-        LiveReportingPlugin.getLiveReportingContext(context).registerListener(measures -> {
-            List<Measurement> measurements = measures.stream().map(m -> createMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
-            processMeasurements(measurements);
-        });
-        LiveReportingPlugin.getLiveReportingContext(context).registerMetricListener(snapshots -> {
-            List<ExecutionMetricSample> executionMetricSamples = snapshots.stream()
-                .map(s -> createExecutionMetricSample(context, s, (CallFunctionReportNode) node, null))
-                .collect(Collectors.toList());
-            processMetrics(executionMetricSamples);
-        });
+        LiveReportingContext liveReportingContext = LiveReportingPlugin.getLiveReportingContext(context);
+        if (liveReportingContext != null) {
+            liveReportingContext.registerListener(measures -> {
+                List<Measurement> measurements = measures.stream().map(m -> createMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
+                processMeasurements(measurements);
+            });
+            liveReportingContext.registerMetricListener(snapshots -> {
+                List<ExecutionMetricSample> executionMetricSamples = snapshots.stream()
+                    .map(s -> createExecutionMetricSample(context, s, (CallFunctionReportNode) node, null))
+                    .collect(Collectors.toList());
+                processMetrics(executionMetricSamples);
+            });
+        }
     }
 
     private void processThreadReportNode(ExecutionContext context, ThreadReportNode node, boolean inc) {

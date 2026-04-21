@@ -19,6 +19,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityManager;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.model.Execution;
+import step.core.execution.type.ExecutionTypeControllerPlugin;
 import step.core.execution.type.ExecutionTypePlugin;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
@@ -36,11 +37,13 @@ import step.framework.server.ServiceRegistrationCallback;
 import step.framework.server.tables.TableRegistry;
 import step.handlers.javahandler.AbstractKeyword;
 import step.handlers.javahandler.Keyword;
+import step.livereporting.LiveReportingPlugin;
 import step.migration.MigrationManager;
 import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 import step.core.metrics.MetricsControllerPlugin;
 import step.core.metrics.MetricsExecutionPlugin;
+import step.plugins.executiontypes.BaseExecutionTypePlugin;
 import step.threadpool.ThreadPoolPlugin;
 
 import java.util.EnumSet;
@@ -146,6 +149,9 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
             .withPlugin(new ViewPlugin())
             .withPlugin(new TimeSeriesExecutionPlugin(timeSeries))
             .withPlugin(new ViewPlugin())
+            .withPlugin(new LiveReportingPlugin())
+            .withPlugin(new ExecutionTypePlugin())
+            .withPlugin(new BaseExecutionTypePlugin())
             .build();
 
     }
@@ -178,7 +184,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
         Plan plan = PlanBuilder.create()
             .startBlock(BaseArtefacts.sequence())
             .startBlock(threadGroup)
-            .startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurements"))
+            .startBlock(FunctionArtefacts.keyword("TestKeywordWithMeasurementsAndCustomAttributes"))
             .endBlock()
             .endBlock()
             .endBlock()
@@ -205,18 +211,13 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
             .build();
         TimeSeriesAggregationResponse keywordsBuckets = timeSeriesAggregationPipeline.collect(keywordsQuery);
         Assert.assertEquals(1, keywordsBuckets.getSeries().size());
-        //assertEquals(50,keywordsBuckets.getSeries().values().stream().findFirst().get().values().stream().findFirst().get().getCount());
+
         TimeSeriesAggregationQuery customBucketsQuery = new TimeSeriesAggregationQueryBuilder()
             .range(t1, t2)
             .withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "custom")))
             .withGroupDimensions(Set.of("name", "customAttr"))
             .build();
         TimeSeriesAggregationResponse customBuckets = timeSeriesAggregationPipeline.collect(customBucketsQuery);
-        new TimeSeriesAggregationQueryBuilder()
-            .range(t1, t2)
-            .withFilter(TimeSeriesFilterBuilder.buildFilter(Map.of("type", "custom")))
-            .withGroupDimensions(Set.of("name", "customAttr"))
-            .build();
         if (timeSeriesAttributeMode.equals(Mode.NONE)) {
             //In this case we do not reduce the attributes to the included / excluded key, so we have 1 bucket per attributes set
             Assert.assertEquals(4, customBuckets.getSeries().size());
@@ -227,7 +228,7 @@ public class TimeSeriesExecutionPluginTest extends AbstractKeyword {
     }
 
     @Keyword
-    public void TestKeywordWithMeasurements() {
+    public void TestKeywordWithMeasurementsAndCustomAttributes() throws Exception {
         output.addMeasure("myMeasure1", 1000, Map.of("customAttr", "val1"));
         output.addMeasure("myMeasure2", 1000, Map.of("customAttr", "val2"));
         output.addMeasure("myMeasure2", 100, Map.of("customAttr", "val3"));
