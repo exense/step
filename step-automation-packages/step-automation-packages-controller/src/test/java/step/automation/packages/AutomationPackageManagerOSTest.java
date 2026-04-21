@@ -1521,6 +1521,10 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
                     assertNotEquals(generalScriptFunction.getScriptFile().get(), r.storedPackage.getAutomationPackageLibraryResource());
                 } else if (automationPackageFileSource == null) {
                     assertEquals("", generalScriptFunction.getLibrariesFile().get());
+                } else if ("KeywordInLib".equals(kwName)) {
+                    //this is a KW declared in a library, its script file should be the AP library
+                    assertEquals(r.storedPackage.getAutomationPackageLibraryResourceRevision(), generalScriptFunction.getScriptFile().get());
+                    assertTrue(generalScriptFunction.getLibrariesFile().get().isEmpty());
                 } else {
                     assertEquals(r.storedPackage.getAutomationPackageResourceRevision(), generalScriptFunction.getScriptFile().get());
                     assertEquals(r.storedPackage.getAutomationPackageLibraryResourceRevision(), generalScriptFunction.getLibrariesFile().get());
