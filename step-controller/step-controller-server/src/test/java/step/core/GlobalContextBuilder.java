@@ -131,7 +131,6 @@ public class GlobalContextBuilder {
         context.setArtefactHandlerRegistry(new ArtefactHandlerRegistry());
 
         MetricTypeAccessor accessor = new MetricTypeAccessor(new InMemoryCollection<>());
-        context.put(MetricTypeAccessor.class, accessor);
         context.put(MetricTypeRegistry.class, new MetricTypeRegistry(accessor));
         return context;
     }

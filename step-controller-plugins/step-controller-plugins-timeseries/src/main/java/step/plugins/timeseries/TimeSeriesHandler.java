@@ -250,13 +250,13 @@ public class TimeSeriesHandler {
     }
 
     /**
-     * Gets the time series according to the provided request.
-     * If the time series doesn't exist for the provided request, builds it based on the raw measurements
+     * Gets the time series data according to the provided request.
+     * If the time series data doesn't exist for the provided request, builds it based on the raw measurements
      *
      * @param request {@link FetchBucketsRequest}
      * @return {@link TimeSeriesAPIResponse}
      */
-    public TimeSeriesAPIResponse getOrBuildTimeSeries(FetchBucketsRequest request) {
+    public TimeSeriesAPIResponse fetchBucketsWithFallback(FetchBucketsRequest request) {
         validateFetchRequest(request);
 
         OQLVerifyResponse oqlVerifyResponse = this.verifyOql(request.getOqlFilter());

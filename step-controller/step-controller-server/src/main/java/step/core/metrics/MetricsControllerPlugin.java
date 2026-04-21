@@ -25,6 +25,7 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(MetricsControllerPlugin.class);
 
+    public static final String IS_CONTROLLER_METRIC = "IS_CONTROLLER_METRIC";
     public static final String EXECUTIONS_DURATION = "executions/duration";
     public static final String EXECUTIONS_COUNT = "executions/count";
     public static final String FAILURE_PERCENTAGE = "executions/failure-percentage";

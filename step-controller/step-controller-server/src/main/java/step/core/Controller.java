@@ -211,7 +211,6 @@ public class Controller {
         context.put(WebApplicationConfigurationManager.class, new WebApplicationConfigurationManager());
 
         MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityConstants.metricTypes, MetricType.class));
-        context.put(MetricTypeAccessor.class, metricTypeAccessor);
         context.put(MetricTypeRegistry.class, new MetricTypeRegistry(metricTypeAccessor));
 
         createOrUpdateIndexes();

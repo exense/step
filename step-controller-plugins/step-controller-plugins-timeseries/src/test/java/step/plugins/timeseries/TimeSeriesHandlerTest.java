@@ -117,7 +117,7 @@ public class TimeSeriesHandlerTest {
         request.setOqlFilter("");
         request.setParams(Map.of("eId", "abc"));
         request.setMaxNumberOfSeries(100);
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(BUCKET_RESOLUTION, response.getEnd());
         Assert.assertTrue(response.getMatrix().isEmpty());
@@ -140,7 +140,7 @@ public class TimeSeriesHandlerTest {
         request.setParams(Map.of("key", key));
         request.setMaxNumberOfSeries(100);
 
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(bucketsCount * 1000, response.getEnd());
         Assert.assertEquals(1, response.getMatrix().size());
@@ -176,7 +176,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.key = " + key);
 
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(bucketsCount * 1000, response.getEnd());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
@@ -218,7 +218,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.key = " + key + " or attributes.key = " + key2);
 
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(bucketsCount * 1000, response.getEnd());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
@@ -234,7 +234,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.key = " + key);
 
-        response = handler.getOrBuildTimeSeries(request);
+        response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(bucketsCount * 1000, response.getEnd());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
@@ -258,13 +258,13 @@ public class TimeSeriesHandlerTest {
         request.setOqlFilter("attributes.unknownKey = " + key); // this is not a known field, so it will fall over on RAW data.
         request.setMaxNumberOfSeries(100);
 
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getMatrix().size()); // we don't have measurements with unknown key
         Assert.assertEquals(0, response.getMatrixKeys().size());
 
         List<Measurement> measurements = generateMeasurements(100, "unknownKey", key);
         measurementsCollection.save(measurements);
-        response = handler.getOrBuildTimeSeries(request);
+        response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(1, response.getMatrix().size()); // w have measurements with unknown key
         Assert.assertEquals(1, response.getMatrixKeys().size());
 
@@ -289,7 +289,7 @@ public class TimeSeriesHandlerTest {
         request.setOqlFilter("attributes.key = " + key);
         request.setMaxNumberOfSeries(100);
 
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(1, response.getMatrix().size());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
         Assert.assertEquals(1, response.getMatrixKeys().size());

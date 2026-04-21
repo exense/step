@@ -69,6 +69,7 @@ import java.util.stream.Stream;
 
 import static step.core.metrics.MetricsConstants.GRID_TOKEN_AGENT_TYPE;
 import static step.core.metrics.MetricsConstants.GRID_TOKEN_STATE;
+import static step.core.metrics.MetricsControllerPlugin.IS_CONTROLLER_METRIC;
 
 @Plugin(dependencies = {ResourceManagerControllerPlugin.class})
 public class GridPlugin extends AbstractControllerPlugin {
@@ -224,7 +225,7 @@ public class GridPlugin extends AbstractControllerPlugin {
             }
         });
 
-        metricTypeRegistry.registerMetricType(new MetricType()
+        MetricType gridTokensByState = new MetricType()
             .setName(GRID_BY_STATE_METRIC_NAME)
             .setDisplayName("Grid tokens by state")
             .setDescription("Number of grid tokens (agent execution slots) currently in each lifecycle state, broken down by state and agent type.")
@@ -232,8 +233,11 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_STATE.getName(), GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")
             .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-            .setRenderingSettings(new MetricRenderingSettings()));
-        metricTypeRegistry.registerMetricType(new MetricType()
+            .setRenderingSettings(new MetricRenderingSettings());
+        gridTokensByState.addCustomField(IS_CONTROLLER_METRIC, true);
+        metricTypeRegistry.registerMetricType(gridTokensByState);
+
+        MetricType gridTokensCapacity = new MetricType()
             .setName(GRID_CAPACITY_METRIC_NAME)
             .setDisplayName("Grid tokens capacity")
             .setDescription("Total number of available grid token slots per agent type, representing the maximum execution concurrency of the grid.")
@@ -241,7 +245,9 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")
             .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-            .setRenderingSettings(new MetricRenderingSettings()));
+            .setRenderingSettings(new MetricRenderingSettings());
+        gridTokensCapacity.addCustomField(IS_CONTROLLER_METRIC, true);
+        metricTypeRegistry.registerMetricType(gridTokensCapacity);
     }
 
     @Override
