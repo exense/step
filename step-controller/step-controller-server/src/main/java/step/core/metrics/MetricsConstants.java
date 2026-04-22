@@ -65,7 +65,7 @@ public class MetricsConstants {
         .setType(MetricAttributeType.TEXT)
         .setDisplayName("State");
     public static final MetricAttribute GRID_TOKEN_AGENT_TYPE = new MetricAttribute()
-        .setName("$agenttype")
+        .setName("agentType")
         .setType(MetricAttributeType.TEXT)
         .setDisplayName("Agent type");
 

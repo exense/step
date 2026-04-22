@@ -173,7 +173,7 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
                 .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
                 .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
                 .setUnit("1")
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.COUNT))
+                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
                 .setRenderingSettings(new MetricRenderingSettings()));
         metricTypeRegistry.registerMetricType(new MetricType()
                 .setName(THREAD_GROUP)

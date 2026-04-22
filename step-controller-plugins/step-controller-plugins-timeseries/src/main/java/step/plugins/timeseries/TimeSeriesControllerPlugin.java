@@ -68,6 +68,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
     public static final String EXECUTION_DASHBOARD_PREPOPULATED_NAME = "Execution Dashboard";
     public static final String ANALYTICS_DASHBOARD_PREPOPULATED_NAME = "Analytics Dashboard";
+    public static final String GRID_MONITORING_DASHBOARD_PREPOPULATED_NAME = "Grid Monitoring";
+    public static final String EXECUTIONS_OVERVIEW_DASHBOARD_PREPOPULATED_NAME = "Executions Overview";
     public static final String GENERATION_NAME = "generationName";
 
     private DashboardAccessor dashboardAccessor;
@@ -167,19 +169,35 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         DashboardView existingAnalyticsDashboard = dashboardAccessor.findByCriteria(
             Map.of("attributes.name", ANALYTICS_DASHBOARD_PREPOPULATED_NAME,
                 "customFields." + GENERATION_NAME, ANALYTICS_DASHBOARD_PREPOPULATED_NAME));
+        DashboardView existingGridMonitoringDashboard = dashboardAccessor.findByCriteria(
+            Map.of("attributes.name", GRID_MONITORING_DASHBOARD_PREPOPULATED_NAME,
+                "customFields." + GENERATION_NAME, GRID_MONITORING_DASHBOARD_PREPOPULATED_NAME));
+        DashboardView existingExecutionsOverviewDashboard = dashboardAccessor.findByCriteria(
+            Map.of("attributes.name", EXECUTIONS_OVERVIEW_DASHBOARD_PREPOPULATED_NAME,
+                "customFields." + GENERATION_NAME, EXECUTIONS_OVERVIEW_DASHBOARD_PREPOPULATED_NAME));
 
         MetricTypeRegistry metricTypeRegistry = context.require(MetricTypeRegistry.class);
         DashboardsGenerator dashboardsGenerator = new DashboardsGenerator(metricTypeRegistry.getMetrics());
         DashboardView newExecutionDashboard = dashboardsGenerator.createExecutionDashboard();
         DashboardView newAnalyticsDashboard = dashboardsGenerator.createAnalyticsDashboard();
+        DashboardView newGridMonitoringDashboard = dashboardsGenerator.createGridMonitoringDashboard();
+        DashboardView newExecutionsOverviewDashboard = dashboardsGenerator.createExecutionsOverviewDashboard();
         if (existingExecutionDashboard != null) {
             newExecutionDashboard.setId(existingExecutionDashboard.getId());
         }
         if (existingAnalyticsDashboard != null) {
             newAnalyticsDashboard.setId(existingAnalyticsDashboard.getId());
         }
+        if (existingGridMonitoringDashboard != null) {
+            newGridMonitoringDashboard.setId(existingGridMonitoringDashboard.getId());
+        }
+        if (existingExecutionsOverviewDashboard != null) {
+            newExecutionsOverviewDashboard.setId(existingExecutionsOverviewDashboard.getId());
+        }
         dashboardAccessor.save(newExecutionDashboard);
         dashboardAccessor.save(newAnalyticsDashboard);
+        dashboardAccessor.save(newGridMonitoringDashboard);
+        dashboardAccessor.save(newExecutionsOverviewDashboard);
 
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
         configurationManager.registerHook(s -> Map.of(PARAM_KEY_EXECUTION_DASHBOARD_ID, newExecutionDashboard.getId().toString()));

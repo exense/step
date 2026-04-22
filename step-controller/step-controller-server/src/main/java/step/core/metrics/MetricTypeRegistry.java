@@ -4,13 +4,15 @@ import step.core.timeseries.metric.MetricType;
 import step.core.timeseries.metric.MetricTypeAccessor;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class MetricTypeRegistry {
 
-    private final Map<String, MetricType> metrics = new ConcurrentHashMap<>();
+    //Preserve insertion order when returning the list of the metrics to clients
+    private final Map<String, MetricType> metrics = Collections.synchronizedMap(new LinkedHashMap<>());
     private final MetricTypeAccessor metricTypeAccessor;
 
     public MetricTypeRegistry(MetricTypeAccessor metricTypeAccessor) {
@@ -27,7 +29,11 @@ public class MetricTypeRegistry {
     }
 
     public List<MetricType> getMetrics() {
-        return new ArrayList<>(metrics.values());
+        // The explicit synchronized (metrics) block in getMetrics() is only needed because iterating over metrics.values() — which new ArrayList<>(...) does internally — is a multi-step operation that the wrapper doesn't protect atomically. From the Javadoc:
+        // It is imperative that the user manually synchronize on the returned map when traversing any of its collection views via Iterator, Spliterator or Stream.
+        synchronized (metrics) {
+            return new ArrayList<>(metrics.values());
+        }
     }
 
     public MetricType getMetricType(String name) {

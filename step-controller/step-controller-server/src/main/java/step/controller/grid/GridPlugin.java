@@ -70,6 +70,7 @@ import java.util.stream.Stream;
 import static step.core.metrics.MetricsConstants.GRID_TOKEN_AGENT_TYPE;
 import static step.core.metrics.MetricsConstants.GRID_TOKEN_STATE;
 import static step.core.metrics.MetricsControllerPlugin.IS_CONTROLLER_METRIC;
+import static step.grid.agent.AgentTypes.AGENT_TYPE_KEY;
 
 @Plugin(dependencies = {ResourceManagerControllerPlugin.class})
 public class GridPlugin extends AbstractControllerPlugin {
@@ -85,6 +86,8 @@ public class GridPlugin extends AbstractControllerPlugin {
     public static String GRID_SAMPLER_NAME = "grid_tokens_sampler";
     public static String GRID_BY_STATE_METRIC_NAME = "grid_tokens_by_state";
     public static String GRID_CAPACITY_METRIC_NAME = "grid_tokens_capacity";
+
+    private final Map<String,String> agentTypeMapping = Map.of("default", "Java", "node", "Node.js", "dotnet", ".NET");
 
     private GridImpl grid;
     private GridClient client;
@@ -207,6 +210,10 @@ public class GridPlugin extends AbstractControllerPlugin {
                 for (TokenGroupCapacity tokenGroupCapacity : usageByIdentity) {
                     int capacity = tokenGroupCapacity.getCapacity();
                     Map<String, String> labels = new TreeMap<>(tokenGroupCapacity.getKey());
+                    if (labels.containsKey(AGENT_TYPE_KEY)) {
+                        String value = labels.remove(AGENT_TYPE_KEY);
+                        labels.put(GRID_TOKEN_AGENT_TYPE.getName(), agentTypeMapping.getOrDefault(value, value));
+                    }
                     gridMetricSamples.add(new ControllerMetricSample(
                         new MetricSample(now, "grid_tokens_capacity", labels, InstrumentType.GAUGE,
                             1, capacity, capacity, capacity, capacity, null),
@@ -228,7 +235,7 @@ public class GridPlugin extends AbstractControllerPlugin {
         MetricType gridTokensByState = new MetricType()
             .setName(GRID_BY_STATE_METRIC_NAME)
             .setDisplayName("Grid tokens by state")
-            .setDescription("Number of grid tokens (agent execution slots) currently in each lifecycle state, broken down by state and agent type.")
+            .setDescription("Number of grid tokens currently in each lifecycle state, broken down by state and agent type.")
             .setAttributes(Arrays.asList(GRID_TOKEN_STATE, GRID_TOKEN_AGENT_TYPE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_STATE.getName(), GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")
@@ -240,7 +247,7 @@ public class GridPlugin extends AbstractControllerPlugin {
         MetricType gridTokensCapacity = new MetricType()
             .setName(GRID_CAPACITY_METRIC_NAME)
             .setDisplayName("Grid tokens capacity")
-            .setDescription("Total number of available grid token slots per agent type, representing the maximum execution concurrency of the grid.")
+            .setDescription("Total number of available grid tokens per agent type, representing the maximum execution concurrency of the grid.")
             .setAttributes(List.of(GRID_TOKEN_AGENT_TYPE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")
