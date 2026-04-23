@@ -20,11 +20,12 @@ package step.automation.packages.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
+import step.core.yaml.AutomationPackageKeywordsLookuper;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
@@ -34,39 +35,25 @@ import java.io.IOException;
 @StepYamlDeserializerAddOn(targetClasses = {YamlAutomationPackageKeyword.class})
 public class YamlKeywordDeserializer extends StepYamlDeserializer<YamlAutomationPackageKeyword> {
 
-    private final AutomationPackageKeywordsLookuper keywordsLookuper;
+    private final AutomationPackageKeywordsLookuper keywordsLookuper = new AutomationPackageKeywordsLookuper();
 
-    public YamlKeywordDeserializer() {
-        this(null);
-    }
-
-    public YamlKeywordDeserializer(ObjectMapper yamlObjectMapper) {
-        super(yamlObjectMapper);
-        this.keywordsLookuper = new AutomationPackageKeywordsLookuper();
+    public YamlKeywordDeserializer(JsonDeserializer<?> deserializer, ObjectMapper yamlObjectMapper) {
+        super(deserializer, yamlObjectMapper);
     }
 
     @Override
     public YamlAutomationPackageKeyword deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-        JsonNode node = jsonParser.getCodec().readTree(jsonParser);
-        NamedEntityYamlDeserializer<AbstractYamlFunction<?>> nameEntityDeserializer = new NamedEntityYamlDeserializer<>() {
-            @Override
-            protected String resolveTargetClassNameByYamlName(String yamlName) {
-                return null;
-            }
+        String yamlName = jsonParser.nextFieldName();
 
-            protected Class<?> resolveTargetClassByYamlName(String yamlName) {
-                try {
-                    String className = keywordsLookuper.yamlKeywordClassToJava(yamlName);
-                    if (className == null) {
-                        throw new RuntimeException("Unable to resolve keyword class for '" + yamlName + "'");
-                    }
-                    return Class.forName(className);
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException("Unable to resolve keyword class for '" + yamlName + "'");
-                }
-            }
-        };
-        return new YamlAutomationPackageKeyword(nameEntityDeserializer.deserialize(node, jsonParser.getCodec()));
+        try {
+            Class<?> clazz = Class.forName(keywordsLookuper.yamlKeywordClassToJava(yamlName));
+            jsonParser.nextToken();
+            YamlAutomationPackageKeyword keyword = new YamlAutomationPackageKeyword((AbstractYamlFunction<?>) deserializationContext.readValue(jsonParser, clazz));
+            jsonParser.nextToken();
+            return keyword;
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

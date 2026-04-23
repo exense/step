@@ -20,40 +20,42 @@ package step.core.collections;
 
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.collections.inmemory.InMemoryCollection;
-import step.core.plans.Plan;
-import step.plans.parser.yaml.YamlPlan;
+import step.parameter.Parameter;
+import step.parameter.automation.AutomationPackageParameter;
 
-public class AutomationPackagePlanCollection extends InMemoryCollection<Plan> implements Collection<Plan>  {
+public class AutomationPackageParameterCollection extends InMemoryCollection<Parameter> implements Collection<Parameter>  {
 
 
     private final AutomationPackageYamlFragmentManager fragmentManager;
 
-    public AutomationPackagePlanCollection(AutomationPackageYamlFragmentManager fragmentManager) {
-        super(true, YamlPlan.PLANS_ENTITY_NAME);
+    public AutomationPackageParameterCollection(AutomationPackageYamlFragmentManager fragmentManager) {
+        super(true, Parameter.ENTITY_NAME);
         this.fragmentManager = fragmentManager;
         initialzeRecordsFromFragments(fragmentManager);
     }
 
     private void initialzeRecordsFromFragments(AutomationPackageYamlFragmentManager fragmentManager) {
         // initialization into the collection memory. Calls super save to avoid calling fragmentManager.savePlan
-        fragmentManager.getBusinessObjects(Plan.class).forEach(super::save);
+        fragmentManager.getBusinessObjects(Parameter.class).forEach(super::save);
     }
 
     @Override
-    public Plan save(Plan p){
-        return super.save(fragmentManager.savePlan(p));
+    public Parameter save(Parameter parameter){
+        return super.save(fragmentManager.saveAdditionalFieldObject(parameter, context -> AutomationPackageParameter.forContext(context, parameter), Parameter.ENTITY_NAME));
     }
 
     @Override
-    public void save(Iterable<Plan> iterable) {
-        for (Plan p : iterable) {
+    public void save(Iterable<Parameter> iterable) {
+        for (Parameter p : iterable) {
             save(p);
         }
     }
 
     @Override
     public void remove(Filter filter) {
-        find(filter, null, null, null, 0).forEach(fragmentManager::removePlan);
+        find(filter, null, null, null, 0).forEach(parameter ->
+            fragmentManager.removeAdditionalFieldObject(parameter, Parameter.ENTITY_NAME)
+        );
         super.remove(filter);
     }
 }

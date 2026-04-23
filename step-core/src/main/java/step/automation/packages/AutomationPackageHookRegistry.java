@@ -3,6 +3,7 @@ package step.automation.packages;
 import step.core.AbstractStepContext;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.repositories.ImportResult;
+import step.core.yaml.deserialization.PatchableYamlList;
 
 import java.util.*;
 
@@ -25,7 +26,7 @@ public class AutomationPackageHookRegistry {
     /**
      * On reading the additional fields in yaml representation (additional data should be stored in AutomationPackageContent)
      */
-    public boolean onAdditionalDataRead(String fieldName, List<?> yamlData, AutomationPackageContent targetContent) {
+    public boolean onAdditionalDataRead(String fieldName, PatchableYamlList<?> yamlData, AutomationPackageContent targetContent) {
         AutomationPackageHook<?> hook = getHook(fieldName);
         if (hook != null) {
             hook.onAdditionalDataRead(fieldName, yamlData, targetContent);

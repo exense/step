@@ -32,22 +32,23 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.yaml.deserialization.PatchableYamlListDeserializer;
-import step.automation.packages.yaml.deserialization.PatchableYamlModelDeserializer;
-import step.automation.packages.yaml.deserialization.PatchingParserDelegate;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.yaml.PatchableYamlModel;
+import step.core.yaml.deserialization.*;
+import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.YamlPlanReader;
+import step.plans.parser.yaml.deserializers.UpgradableYamlPlanDeserializer;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -109,11 +110,25 @@ public class AutomationPackageDescriptorReader {
                     throw new YamlPlanValidationException(message, ex);
                 }
             }
+            PatchingContext context = new PatchingContext(yamlDescriptorString, yamlObjectMapper);
+            PatchingParserDelegate parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString), context);
 
-            PatchingParserDelegate parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString));
-            yamlObjectMapper.setNodeFactory(new LocatedYamlObjectFactory(parser));
-            T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(parser, targetClass);
-            res.setCurrentYaml(yamlDescriptorString);
+            Map<Class<?>, Object> injections = new HashMap<>();
+            injections.put(AutomationPackageSerializationRegistry.class, serializationRegistry);
+            injections.put(PatchingContext.class, context);
+            injections.put(ObjectMapper.class, yamlObjectMapper);
+
+            InjectableValues.Std injectableValues = new InjectableValues.Std();
+            injections.forEach(injectableValues::addValue);
+
+            yamlObjectMapper.setInjectableValues(injectableValues);
+
+            T res = yamlObjectMapper.reader()
+                .withAttributes(injections)
+                .withAttribute("version", version)
+                .readValue(parser, targetClass);
+
+            res.setPatchingContext(context);
             logAfterRead(packageName, res);
             return res;
         } catch (IOException | YamlPlanValidationException e) {
@@ -131,7 +146,7 @@ public class AutomationPackageDescriptorReader {
         if (!res.getPlansPlainText().isEmpty()) {
             log.info("{} plain text plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageName));
         }
-        for (Map.Entry<String, List<?>> additionalEntry : res.getAdditionalFields().entrySet()) {
+        for (Map.Entry<String, PatchableYamlList<?>> additionalEntry : res.getAdditionalFields().entrySet()) {
             log.info("{} {} found in automation package {}", additionalEntry.getValue().size(), additionalEntry.getKey(), StringUtils.defaultString(packageName));
         }
         if (!res.getFragments().isEmpty()) {
@@ -150,52 +165,19 @@ public class AutomationPackageDescriptorReader {
         }
     }
 
-    public ObjectMapper createYamlObjectMapper() {
+    private ObjectMapper createYamlObjectMapper() {
         YAMLFactory yamlFactory = new YAMLFactory();
 
         // Disable native type id to enable conversion to generic Documents
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
         ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
-        yamlMapper.setInjectableValues(new InjectableValues.Std()
-                .addValue(ObjectMapper.class, yamlMapper)
-                .addValue(AutomationPackageSerializationRegistry.class, serializationRegistry)
-        );
-        // configure custom deserializers
-        SimpleModule module = new SimpleModule() {
-            @Override
-            public void setupModule(SetupContext context) {
-                super.setupModule(context);
 
-                context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
-                    @Override
-                    public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
-                        if (PatchableYamlModel.class.isAssignableFrom(beanDesc.getBeanClass())
-                            && !beanDesc.getBeanClass().equals(PatchableYamlModel.class)) {
-                            return new PatchableYamlModelDeserializer<>(deserializer);
-                        }
-                        return super.modifyDeserializer(config, beanDesc, deserializer);
-                    }
-
-                    @Override
-                    public JsonDeserializer<?> modifyCollectionDeserializer(DeserializationConfig config, CollectionType type, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
-                        if (deserializer instanceof CollectionDeserializer) {
-                            return new PatchableYamlListDeserializer((CollectionDeserializer) deserializer);
-                        }
-                        return deserializer;
-                    }
-                });
-            }
-        };
 
         // register deserializers to read yaml plans
-        planReader.registerAllSerializersAndDeserializers(module, yamlMapper, true);
+        SimpleModule module = planReader.registerAllSerializersAndDeserializers(yamlMapper, true);
         yamlMapper.registerModule(module);
 
         return yamlMapper;
-    }
-
-    public ObjectMapper getYamlObjectMapper() {
-        return yamlObjectMapper;
     }
 
     public YamlPlanReader getPlanReader() {

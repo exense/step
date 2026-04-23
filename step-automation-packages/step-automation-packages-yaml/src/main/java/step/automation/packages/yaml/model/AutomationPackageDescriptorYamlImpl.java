@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.OptBoolean;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.core.yaml.deserialization.PatchingContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,13 +36,8 @@ public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPacka
 
     private String name;
 
-    @JsonCreator
-    public AutomationPackageDescriptorYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) ObjectMapper mapper, @JacksonInject(useInput = OptBoolean.FALSE) AutomationPackageSerializationRegistry serializationRegistry) {
-        super(mapper, serializationRegistry);
-    }
-    
-    public AutomationPackageDescriptorYamlImpl() {
-        super();
+    public AutomationPackageDescriptorYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
+        super(patchingContext);
     }
 
     @Override
@@ -70,4 +66,5 @@ public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPacka
     public void setAttributes(Map<String, String> attributes) {
         this.attributes = attributes;
     }
+
 }

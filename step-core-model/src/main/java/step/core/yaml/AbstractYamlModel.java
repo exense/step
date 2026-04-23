@@ -19,7 +19,6 @@
 package step.core.yaml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.ReflectionUtils;
@@ -30,8 +29,7 @@ import java.util.stream.Collectors;
 
 public class AbstractYamlModel {
     private static final Logger log = LoggerFactory.getLogger(AbstractYamlModel.class);
-
-
+    
     protected void copyFieldsToObject(Object to, boolean ignoreNulls) {
         List<Field> allFieldsYaml = getAutoCopyFields();
         List<Field> allFieldsTo = ReflectionUtils.getAllFieldsInHierarchy(to.getClass(), null);

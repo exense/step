@@ -30,13 +30,16 @@ import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.yaml.AutomationPackageConcurrentEditException;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
+import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.automation.AutomationPackageParametersRegistration;
+import step.plans.parser.yaml.YamlPlan;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,6 +58,7 @@ public class AutomationPackageCollectionTest {
     private final File sourceDirectory = new File("src/test/resources/samples/step-automation-packages-sample1");
     private File destinationDirectory;
     private Collection<Plan> planCollection;
+    private Collection<Parameter> parameterCollection;
     private final Path expectedFilesPath = sourceDirectory.toPath().resolve("expected");
     private AutomationPackageYamlFragmentManager fragmentManager;
 
@@ -74,9 +78,10 @@ public class AutomationPackageCollectionTest {
         destinationDirectory = Files.createTempDirectory("automationPackageCollectionTest").toFile();
         FileUtils.copyDirectory(sourceDirectory, destinationDirectory);
 
-        fragmentManager = reader.provideAutomationPackageYamlFragmentManager(destinationDirectory);
+        fragmentManager = reader.getAutomationPackageYamlFragmentManager(destinationDirectory);
         AutomationPackageCollectionFactory collectionFactory = new AutomationPackageCollectionFactory(properties, fragmentManager);
-        planCollection = collectionFactory.getCollection("plan", Plan.class);
+        planCollection = collectionFactory.getCollection(YamlPlan.PLANS_ENTITY_NAME, Plan.class);
+        parameterCollection = collectionFactory.getCollection(Parameter.ENTITY_NAME, Parameter.class);
     }
 
     @After
@@ -173,9 +178,9 @@ public class AutomationPackageCollectionTest {
         attributes.put("name", "New Name");
         plan.setAttributes(attributes);
 
-        Properties properties = new Properties();
-        properties.setProperty(AutomationPackageYamlFragmentManager.PROPERTY_NEW_PLAN_FRAGMENT_PATH, "plans/plan1.yml");
-        fragmentManager.setProperties(properties);
+
+        setPropertiesWriteToFragment("plans/plan1.yml");
+
         planCollection.save(plan);
 
         assertFilesEqual(expectedFilesPath.resolve("plan1AfterAdd.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
@@ -206,9 +211,8 @@ public class AutomationPackageCollectionTest {
         attributes.put("name", "New Name");
         plan.setAttributes(attributes);
 
-        Properties properties = new Properties();
-        properties.setProperty(AutomationPackageYamlFragmentManager.PROPERTY_NEW_PLAN_FRAGMENT_PATH, "plans/plan1.yml");
-        fragmentManager.setProperties(properties);
+        setPropertiesWriteToFragment("plans/plan1.yml");
+
         planCollection.save(plan);
 
         assertFilesEqual(expectedFilesPath.resolve("plan1AfterModifyAndAdd.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
@@ -239,9 +243,9 @@ public class AutomationPackageCollectionTest {
         attributes.put("name", "New Name");
         plan.setAttributes(attributes);
 
-        Properties properties = new Properties();
-        properties.setProperty(AutomationPackageYamlFragmentManager.PROPERTY_NEW_PLAN_FRAGMENT_PATH, "plans/plan1.yml");
-        fragmentManager.setProperties(properties);
+
+        setPropertiesWriteToFragment("plans/plan1.yml");
+
         planCollection.save(plan);
 
         assertFilesEqual(expectedFilesPath.resolve("plan1AfterModifyAndAdd.yml"), destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"));
@@ -265,6 +269,8 @@ public class AutomationPackageCollectionTest {
         attributes.put("name", "New Name");
         plan.setAttributes(attributes);
 
+        setPropertiesWriteToFragment("automation-package.yml");
+
         planCollection.save(plan);
 
         assertFilesEqual(expectedFilesPath.resolve("descriptorAfterAdd.yml"), destinationDirectory.toPath().resolve("automation-package.yml"));
@@ -284,14 +290,23 @@ public class AutomationPackageCollectionTest {
         attributes.put("name", "Hello World Plan");
         plan.setAttributes(attributes);
 
-
-        Properties properties = new Properties();
-        properties.setProperty(AutomationPackageYamlFragmentManager.PROPERTY_NEW_PLAN_FRAGMENT_PATH, "plans/%name%.yml");
-        fragmentManager.setProperties(properties);
         planCollection.save(plan);
 
-        assertFilesEqual(expectedFilesPath.resolve("Hello_World_Plan.yml"), destinationDirectory.toPath().resolve("plans").resolve("Hello_World_Plan.yml"));
+        assertFilesEqual(expectedFilesPath.resolve("Hello World Plan.yml"), destinationDirectory.toPath().resolve("plans").resolve("Hello World Plan.yml"));
+    }
 
+    @Test
+    public void testParameterModify() throws IOException {
+        Optional<Parameter> optionalParameter = parameterCollection.find(Filters.equals("key", "mySimpleKey"), null, null, null, 100).findFirst();
+
+        assertTrue(optionalParameter.isPresent());
+
+        Parameter parameter = optionalParameter.get();
+
+        parameter.getValue().setValue("myModifiedValue");
+        parameterCollection.save(parameter);
+
+        assertFilesEqual(expectedFilesPath.resolve("parametersAfterModification.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
     }
 
     private void assertFilesEqual(Path expected, Path actual) throws IOException {
@@ -299,5 +314,13 @@ public class AutomationPackageCollectionTest {
         String actualLines = Files.readString(actual);
 
         assertEquals(expectedLines, actualLines);
+    }
+
+    private void setPropertiesWriteToFragment(String fragment) {
+        Properties properties = new Properties();
+        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, YamlPlan.PLANS_ENTITY_NAME), fragment);
+        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, YamlPlan.PLANS_ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+
+        fragmentManager.setProperties(properties);
     }
 }

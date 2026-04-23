@@ -18,16 +18,28 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.OptBoolean;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.StagingAutomationPackageContext;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.core.yaml.AutomationPackageKeywordsLookuper;
 import step.functions.Function;
+
+import java.io.IOException;
 
 public class YamlAutomationPackageKeyword implements AutomationPackageKeyword {
 
     private AbstractYamlFunction<?> yamlKeyword;
 
+
+
     public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword) {
         this.yamlKeyword = yamlKeyword;
     }
+
 
     public AbstractYamlFunction<?> getYamlKeyword() {
         return yamlKeyword;
@@ -41,4 +53,5 @@ public class YamlAutomationPackageKeyword implements AutomationPackageKeyword {
     public Function prepareKeyword(StagingAutomationPackageContext context) {
         return yamlKeyword.applyAutomationPackageContext(context);
     }
+
 }
