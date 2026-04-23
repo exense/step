@@ -3,6 +3,8 @@ const { OutputBuilder, MeasureStatus } = require('../api/controllers/output')
 describe('runner', () => {
   let runner
 
+  // For performance reasons we reuse the same runner instance for most of the tests.
+  // The tests that corrupt the runner with uncaught errors use their own runner
   beforeAll(() => {
     runner = require('../api/runner/runner')({ Property1: 'Prop1' })
     runner.setThrowExceptionOnError(false)
@@ -77,14 +79,114 @@ describe('runner', () => {
   // Unhandled async errors
   // ---------------------------------------------------------------------------
 
-  test('rejected promises do not surface as output error', async () => {
-    const output = await runner.run('ErrorRejectedPromiseTestKW', { Param1: 'Val1' })
-    expect(output.error).toBeUndefined()
+  describe('uncaught errors', () => {
+    let runner
+
+    // These tests corrupt the runner with uncaught errors. They create their own runner instance
+    beforeEach(() => {
+      runner = require('../api/runner/runner')({Property1: 'Prop1'})
+      runner.setThrowExceptionOnError(false)
+    })
+
+    afterEach(async () => {
+      await runner.close()
+    })
+
+    test('unhandled promise rejections surface as output error', async () => {
+      const output = await runner.run('ErrorRejectedPromiseTestKW', { Param1: 'Val1' })
+      expect(output.error).toBeDefined()
+      expect(output.error.msg).toContain('Unhandled promise rejection')
+    })
+
+    test('uncaught exceptions surface as output error', async () => {
+      const output = await runner.run('ErrorUncaughtExceptionTestKW', { Param1: 'Val1' })
+      expect(output.error).toBeDefined()
+      expect(output.error.msg).toContain('Uncaught exception')
+    })
   })
 
-  test('uncaught exceptions do not surface as output error', async () => {
-    const output = await runner.run('ErrorUncaughtExceptionTestKW', { Param1: 'Val1' })
-    expect(output.error).toBeUndefined()
+  // ---------------------------------------------------------------------------
+  // Inter-keyword uncaught errors
+  // Errors fired via setTimeout(50) land after the setImmediate flush, so they
+  // are NOT caught by the triggering keyword but by the next keyword's snapshot.
+  // ---------------------------------------------------------------------------
+
+  describe('inter-keyword uncaught errors', () => {
+    let runner
+
+    beforeEach(() => {
+      runner = require('../api/runner/runner')()
+      runner.setThrowExceptionOnError(false)
+    })
+
+    afterEach(async () => {
+      // Echo consumed the inter-keyword error, so close() should succeed.
+      // The try/catch guards against test pollution if a previous assertion failed.
+      try { await runner.close() } catch { /* ignore */ }
+    })
+
+    test('unhandled rejection between keywords is attributed to the previous keyword', async () => {
+      await runner.run('FireAndForgetRejectionKW', {})
+      // Wait for the rejection to fire inside the fork (setTimeout 50 ms + margin).
+      await new Promise(r => setTimeout(r, 100))
+      const output = await runner.run('Echo', {})
+      expect(output.error).toBeDefined()
+      expect(output.error.msg).toContain('Unhandled promise rejection from a previous keyword')
+      expect(output.error.msg).toContain('inter-keyword rejection')
+    })
+
+    test('uncaught exception between keywords is attributed to the previous keyword', async () => {
+      await runner.run('FireAndForgetExceptionKW', {})
+      // Wait for the exception to fire inside the fork (setTimeout 50 ms + margin).
+      await new Promise(r => setTimeout(r, 100))
+      const output = await runner.run('Echo', {})
+      expect(output.error).toBeDefined()
+      expect(output.error.msg).toContain('Uncaught exception from a previous keyword')
+      expect(output.error.msg).toContain('inter-keyword exception')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // Uncaught errors after the last keyword
+  // ---------------------------------------------------------------------------
+
+  describe('uncaught errors after last keyword', () => {
+    test('unhandled rejection after last keyword causes runner.close() to throw', async () => {
+      const r = require('../api/runner/runner')()
+      r.setThrowExceptionOnError(false)
+      await r.run('FireAndForgetRejectionKW', {})
+      // Wait for the rejection to fire inside the fork before closing.
+      await new Promise(resolve => setTimeout(resolve, 100))
+      await expect(r.close()).rejects.toThrow('inter-keyword rejection')
+    })
+
+    test('uncaught exception after last keyword causes runner.close() to throw', async () => {
+      const r = require('../api/runner/runner')()
+      r.setThrowExceptionOnError(false)
+      await r.run('FireAndForgetExceptionKW', {})
+      // Wait for the exception to fire inside the fork before closing.
+      await new Promise(resolve => setTimeout(resolve, 100))
+      await expect(r.close()).rejects.toThrow('inter-keyword exception')
+    })
+  })
+
+  describe('syntax error', () => {
+    let runner
+
+    beforeEach(() => {
+      runner = require('../api/runner/runner')({Property1: 'Prop1'}, {keywordDirectory: 'test/keywords-with-syntax-error'})
+      runner.setThrowExceptionOnError(false)
+    })
+
+    afterEach(async () => {
+      await runner.close()
+    })
+
+    test('keyword file with syntax error', async () => {
+      const output = await runner.run('SyntaxErrorKW', {Param1: 'Val1'})
+      expect(output.error.msg).toContain('Error while importing keyword module keywordsWithSyntaxError.js: Unexpected identifier \'syntax\'')
+      expect(output.error.type).toBe('TECHNICAL')
+    })
   })
 
   // ---------------------------------------------------------------------------
@@ -301,6 +403,27 @@ describe('runner', () => {
       await runner.run('ErrorTestKW', { ErrorMsg: 'test error', rethrow_error: false })
       const { payload: { calls } } = await runner.run('GetHookCallsKW')
       expect(calls).toContain('after:ErrorTestKW')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // Module format support
+  // ---------------------------------------------------------------------------
+
+  describe('module format support', () => {
+    test('.js CJS — exports via indirect module.exports assignment fall back to .default', async () => {
+      const output = await runner.run('DefaultInteropKW', {})
+      expect(output.payload.ok).toBe(true)
+    })
+
+    test('.mjs native ESM module is loaded and its keyword is executed', async () => {
+      const output = await runner.run('EsmKW', {})
+      expect(output.payload.ok).toBe(true)
+    })
+
+    test('.cjs module is loaded and its keyword is executed', async () => {
+      const output = await runner.run('CjsKW', {})
+      expect(output.payload.ok).toBe(true)
     })
   })
 })

@@ -22,9 +22,16 @@ const Session = require("./session");
 const fs = require("fs");
 const path = require('path')
 const session = new Session();
+let pendingUnhandledRejection = null;
+let pendingUncaughtException = null;
 
 process.on('message', async ({ type, projectPath, functionName, input, properties, keywordDirectory }) => {
   if (type === 'KEYWORD') {
+    // Snapshot any errors that fired between keywords, then clear for this execution.
+    const prevUnhandledRejection = pendingUnhandledRejection;
+    const prevUncaughtException = pendingUncaughtException;
+    pendingUnhandledRejection = null;
+    pendingUncaughtException = null;
     console.log("[Agent fork] Calling keyword " + functionName)
     const outputBuilder = new OutputBuilder();
     try {
@@ -68,15 +75,67 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
           }
         }
       }
+    } catch (e) {
+      console.log("[Agent fork] Unexpected error occurred while executing keyword", e)
+      outputBuilder.fail("An unexpected error occurred while executing keyword: " + (e?.message || String(e)), e)
     } finally {
+      // Flush the event loop so unhandledRejection / uncaughtException from the keyword
+      // (e.g. fire-and-forget promises, nextTick throws) land before we send the result.
+      await new Promise(resolve => setImmediate(resolve));
+      // Surface inter-keyword errors first, labelled clearly as coming from a previous keyword.
+      if (prevUnhandledRejection) {
+        const sep = outputBuilder.hasError() ? '\n' : '';
+        outputBuilder.appendError(`${sep}Unhandled promise rejection from a previous keyword: ${prevUnhandledRejection.message || prevUnhandledRejection}`);
+      }
+      if (prevUncaughtException) {
+        const sep = outputBuilder.hasError() ? '\n' : '';
+        outputBuilder.appendError(`${sep}Uncaught exception from a previous keyword: ${prevUncaughtException.message || prevUncaughtException}`);
+      }
+      // Then surface errors from the current keyword execution.
+      if (pendingUnhandledRejection) {
+        const sep = outputBuilder.hasError() ? '\n' : '';
+        outputBuilder.appendError(`${sep}Unhandled promise rejection: ${pendingUnhandledRejection.message || pendingUnhandledRejection}`);
+        pendingUnhandledRejection = null;
+      }
+      if (pendingUncaughtException) {
+        const sep = outputBuilder.hasError() ? '\n' : '';
+        outputBuilder.appendError(`${sep}Uncaught exception: ${pendingUncaughtException.message || pendingUncaughtException}`);
+        pendingUncaughtException = null;
+      }
       console.log("[Agent fork] Returning output")
       process.send(outputBuilder.build());
     }
   } else if (type === 'KILL') {
+    const closeErrors = [];
+    if (pendingUnhandledRejection) {
+      console.error('[Agent fork] Unhandled promise rejection occurred after last keyword:', pendingUnhandledRejection);
+      closeErrors.push({ message: 'An unhandled promise rejection occurred after the last keyword call: ' + (pendingUnhandledRejection.message || String(pendingUnhandledRejection)) });
+    }
+    if (pendingUncaughtException) {
+      console.error('[Agent fork] Uncaught exception occurred after last keyword:', pendingUncaughtException);
+      closeErrors.push({ message: 'An uncaught exception occurred after the last keyword call: ' + (pendingUncaughtException.message || String(pendingUncaughtException)) });
+    }
     console.log("[Agent fork] Releasing session...")
     await session.asyncDispose();
     console.log("[Agent fork] Exiting...")
-    process.exit(0)
+    if (closeErrors.length > 0) {
+      // Use the send callback to ensure the message is flushed before we exit.
+      // The timeout is a safety net: if the IPC channel closes before the callback
+      // fires (e.g. the parent process dies), the fork exits instead of hanging.
+      const exitNow = () => process.exit(0);
+      const fallback = setTimeout(exitNow, 5000);
+      try {
+        process.send({ type: 'CLOSE_RESULT', errors: closeErrors }, () => {
+          clearTimeout(fallback);
+          exitNow();
+        });
+      } catch {
+        clearTimeout(fallback);
+        exitNow();
+      }
+    } else {
+      process.exit(0);
+    }
   }
 
   function keywordDirectoryExists(projectPath, keywordDirectory) {
@@ -89,28 +148,37 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
     console.log("[Agent fork] Searching keywords in: " + kwDir)
     const kwFiles = fs.readdirSync(kwDir);
     for (const kwFile of kwFiles) {
-      if (kwFile.endsWith('.js')) {
+      if (kwFile.endsWith('.js') || kwFile.endsWith('.mjs') || kwFile.endsWith('.cjs')) {
         let kwModule = "file://" + path.resolve(kwDir, kwFile);
         console.log("[Agent fork] Importing keywords from module: " + kwModule)
-        let module = await import(kwModule);
-        kwModules.push(module);
+        try {
+          let module = await import(kwModule);
+          kwModules.push(module);
+        } catch (e) {
+          throw new Error("Error while importing keyword module " + kwFile + ": " + (e?.message || String(e)), { cause: e })
+        }
       }
     }
     return kwModules;
   }
 
   function searchKeyword(kwModules, keywordName) {
-    const kwModule = kwModules.find(m => m[keywordName]);
-    return kwModule ? {keywordFunction: kwModule[keywordName], keywordModule: kwModule} : undefined;
+    for (const m of kwModules) {
+      if (typeof m[keywordName] === 'function') return { keywordFunction: m[keywordName], keywordModule: m };
+      if (typeof m.default?.[keywordName] === 'function') return { keywordFunction: m.default[keywordName], keywordModule: m.default };
+    }
+    return undefined;
   }
 });
 
 process.on('unhandledRejection', error => {
-  console.log('[Agent fork] Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported', error)
+  console.log('[Agent fork] Unhandled promise rejection:', error)
+  pendingUnhandledRejection = error;
 })
 
 process.on('uncaughtException', error => {
-  console.log('[Agent fork] Critical: an unhandled error (uncaught exception) occurred and might not have been reported', error)
+  console.log('[Agent fork] Uncaught exception:', error)
+  pendingUncaughtException = error;
 })
 
 process.on('SIGTERM', () => {

@@ -18,12 +18,6 @@
  ******************************************************************************/
 package step.migration.tasks;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import step.core.Version;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
@@ -32,6 +26,12 @@ import step.core.collections.DocumentObject;
 import step.core.collections.Filters;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This function ensures that all the artefacts have their name saved properly in the attribute map.
@@ -103,10 +103,5 @@ public class MigrateAssertNegation extends MigrationTask {
         if (children != null) {
             children.forEach(child -> retrieveAssertNodeRecursively(child, assertNodesToBeUpdated));
         }
-    }
-
-    @Override
-    public void runDowngradeScript() {
-        // TODO Auto-generated method stub
     }
 }

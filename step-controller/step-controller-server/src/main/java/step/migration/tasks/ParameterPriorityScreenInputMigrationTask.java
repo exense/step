@@ -49,9 +49,4 @@ public class ParameterPriorityScreenInputMigrationTask extends MigrationTask {
             Filters.equals("input.id", "priority")));
         screenInputs.remove(priorityInputFilter);
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
 }

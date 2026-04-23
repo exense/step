@@ -33,9 +33,4 @@ public class MigrateResolutionsWithIgnoredFieldsTask extends MigrationTask {
         collectionFactory.getCollection("reportNodeTimeSeries_day", Document.class);
         collectionFactory.getCollection("reportNodeTimeSeries_week", Document.class);
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
 }

@@ -19,7 +19,11 @@
 package step.migration.tasks;
 
 import step.core.Version;
-import step.core.collections.*;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.DocumentObject;
+import step.core.collections.Filters;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
 
@@ -28,7 +32,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static step.core.collections.CollectionFactory.VERSION_COLLECTION_SUFFIX;
-import static step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask.*;
+import static step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask.ARTEFACT_AFTER_PROPERTY;
+import static step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask.ARTEFACT_AFTER_THREAD_PROPERTY;
+import static step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask.ARTEFACT_BEFORE_PROPERTY;
+import static step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask.ARTEFACT_BEFORE_THREAD_PROPERTY;
+import static step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask.ARTEFACT_CHILDREN;
+import static step.plans.parser.yaml.migrations.AfterBeforeYamlMigrationTask.getOrInitPropertySteps;
 
 /**
  * This migration task will migrate all plans to be compatible with the new artefact properties (before and after for
@@ -153,11 +162,6 @@ public class MigrateBeforeAfterAndPropertiesArtefactInPlans extends MigrationTas
         if (errorCount.get() > 0) {
             logger.error("Got {} errors while migrating before and after controls for composite keywords versions. See previous error logs for details.", errorCount);
         }
-    }
-
-    @Override
-    public void runDowngradeScript() {
-
     }
 
     /**

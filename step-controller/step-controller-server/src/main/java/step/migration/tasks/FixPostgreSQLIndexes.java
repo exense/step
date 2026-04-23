@@ -45,9 +45,4 @@ public class FixPostgreSQLIndexes extends MigrationTask {
             logger.info("Index removed.");
         }
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
 }

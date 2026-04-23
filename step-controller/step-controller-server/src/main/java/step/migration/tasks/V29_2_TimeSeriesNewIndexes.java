@@ -3,7 +3,6 @@ package step.migration.tasks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.Version;
-
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
@@ -37,10 +36,5 @@ public class V29_2_TimeSeriesNewIndexes extends MigrationTask {
                 log.info("Time-series index migration - dropped index {}", indexName);
             }
         });
-    }
-
-    @Override
-    public void runDowngradeScript() {
-
     }
 }

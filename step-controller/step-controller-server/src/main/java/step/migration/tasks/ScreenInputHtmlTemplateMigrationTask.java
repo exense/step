@@ -56,9 +56,4 @@ public class ScreenInputHtmlTemplateMigrationTask extends MigrationTask {
             }
         });
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
 }

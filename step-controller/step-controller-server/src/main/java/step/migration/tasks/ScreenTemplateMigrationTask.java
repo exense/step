@@ -53,9 +53,4 @@ public class ScreenTemplateMigrationTask extends MigrationTask {
             screenInputs.save(t);
         });
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
 }

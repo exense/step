@@ -35,9 +35,4 @@ public abstract class AbstractYamlPlanMigrationTask extends MigrationTask {
         super(asOfVersion, collectionFactory, migrationContext);
         yamlPlansCollection = collectionFactory.getCollection(YAML_PLANS_COLLECTION_NAME, Document.class);
     }
-
-    @Override
-    public void runDowngradeScript() {
-        throw new UnsupportedOperationException("Yaml plan downgrading is not supported");
-    }
 }

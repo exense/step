@@ -67,9 +67,4 @@ public class PlansInCompositeFunctionsMigrationTask extends MigrationTask {
         }
         logger.info("{} plans have been removed", plansCount);
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
 }

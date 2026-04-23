@@ -125,6 +125,9 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
             if (!authorizationManager.checkRightInContext(stepSession, "resource-read")) {
                 throw new AuthorizationException("Access denied - insufficient rights");
             }
+            if (!authorizationManager.checkRightInContextIfDefined(stepSession, "resource-attachment-read")) {
+                throw new AuthorizationException("Access denied - insufficient rights");
+            }
             // ... and this will check that the current context actually allows access to the object
             if (!objectHookRegistry.getObjectPredicate(stepSession).test(resource)) {
                 throw new AuthorizationException("Access denied - wrong session context");

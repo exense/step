@@ -46,7 +46,7 @@
       <groupId>ch.exense.step</groupId>
       <artifactId>step-plans-runners</artifactId>
       <version>${project.version}</version>
-      <type>test-jar</type>
+      <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
     <dependency>

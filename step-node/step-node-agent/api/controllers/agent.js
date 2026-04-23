@@ -51,8 +51,13 @@ class Agent {
   }
 
   async releaseToken(req, res) {
-    await this.releaseToken_(req.params.tokenId)
-    res.json({})
+    try {
+      await this.releaseToken_(req.params.tokenId)
+      res.json({})
+    } catch (e) {
+      logger.error('Error while releasing token ' + req.params.tokenId + ':', e)
+      res.status(500).type('text/plain').send((e?.message || String(e)))
+    }
   }
 
   async releaseToken_(tokenId) {
@@ -194,7 +199,7 @@ class Agent {
           }
         }
 
-        session.set('keywordDirectory', await readStepKeywordDirectory(npmProjectPath));
+        session.set('keywordDirectory', this.agentContext.keywordDirectory ?? await readStepKeywordDirectory(npmProjectPath));
       }
 
       const keywordDirectory = session.get('keywordDirectory');
@@ -211,7 +216,7 @@ class Agent {
         forkedAgentProcessOutputAttachment = e.processOutputAttachment;
       } else {
         logger.error('Unexpected error occurred while executing keyword:', e)
-        outputBuilder.fail('Unexpected error: ' + e.message, e)
+        outputBuilder.fail('Unexpected error: ' + (e?.message || String(e)), e)
       }
     } finally {
       if (npmAttachment) {
@@ -441,10 +446,20 @@ class ForkedAgent {
   }
 
   async close() {
-    const exitPromise = new Promise(resolve => {
+    let closeErrors = null;
+    const closePromise = new Promise(resolve => {
       if (this.forkProcess.exitCode !== null) {
         resolve();
       } else {
+        // Listen for close errors reported by the fork before it exits.
+        const messageListener = (msg) => {
+          if (msg && msg.type === 'CLOSE_RESULT') {
+            closeErrors = msg.errors;
+            this.forkProcess.removeListener('message', messageListener);
+          }
+        };
+        this.forkProcess.removeAllListeners('message');
+        this.forkProcess.on('message', messageListener);
         this.forkProcess.once('exit', resolve);
       }
     });
@@ -453,8 +468,11 @@ class ForkedAgent {
     } catch {
       this.forkProcess.kill();
     }
-    await exitPromise;
+    await closePromise;
     fs.rmSync(this.agentForkerLibPath, {recursive: true, force: true});
+    if (closeErrors && closeErrors.length > 0) {
+      throw new Error(closeErrors.map(e => e.message).join('; '));
+    }
   }
 }
 

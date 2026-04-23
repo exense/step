@@ -40,9 +40,4 @@ public class ScreenTemplateFunctionTableExtensionsMigrationTask extends Migratio
                 }
             });
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
 }

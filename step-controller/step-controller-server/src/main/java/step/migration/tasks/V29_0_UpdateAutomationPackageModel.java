@@ -58,9 +58,4 @@ public class V29_0_UpdateAutomationPackageModel extends MigrationTask {
         });
         logger.info("Migrated " + successCount.get() + " automation packages.");
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
 }

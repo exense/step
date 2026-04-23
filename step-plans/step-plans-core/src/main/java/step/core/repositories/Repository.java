@@ -59,4 +59,7 @@ public interface Repository {
     default ArtefactLinks getArtefactLinks(Map<String, String> repositoryParameters) throws Exception {
         return new ArtefactLinks(List.of());
     }
+
+	String getCanonicalPlanName(Map<String, String> repositoryParameters);
+
 }

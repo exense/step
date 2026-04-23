@@ -1,10 +1,10 @@
 const Session = require('../controllers/session');
 const logger = require('../logger').child({ component: 'Runner' })
-module.exports = function (properties = {}) {
+module.exports = function (properties = {}, options = {}) {
   const tokenId = 'local';
   let throwExceptionOnError = true;
 
-  const agentContext = {tokens: [], tokenSessions: {}, properties: properties}
+  const agentContext = {tokens: [], tokenSessions: {}, properties: properties, keywordDirectory: options.keywordDirectory}
   const tokenSession = new Session();
   agentContext.tokenSessions[tokenId] = tokenSession
 

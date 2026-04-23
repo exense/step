@@ -55,10 +55,4 @@ public class RemoveLocalFunctions extends MigrationTask {
 
         logger.info("Removed " + count + " keywords of type 'LocalFunction'");
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
-
 }

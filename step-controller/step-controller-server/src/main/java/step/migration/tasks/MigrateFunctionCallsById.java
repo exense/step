@@ -18,14 +18,17 @@
  ******************************************************************************/
 package step.migration.tasks;
 
+import jakarta.json.Json;
+import jakarta.json.JsonObjectBuilder;
 import step.core.Version;
-import step.core.collections.*;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.DocumentObject;
+import step.core.collections.Filters;
 import step.core.plans.Plan;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
-
-import jakarta.json.Json;
-import jakarta.json.JsonObjectBuilder;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -108,9 +111,5 @@ public class MigrateFunctionCallsById extends MigrationTask {
             }
         }
         return changed;
-    }
-
-    @Override
-    public void runDowngradeScript() {
     }
 }

@@ -34,10 +34,4 @@ public class V27_4_DropResolvedPlanNodesIndexForPSQLMigrationTask extends Migrat
             new ResolvedPlanNodeAccessor(collectionFactory);
         }
     }
-
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
 }

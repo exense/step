@@ -19,8 +19,6 @@
 package step.migration.tasks;
 
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import step.core.Version;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
@@ -29,6 +27,8 @@ import step.core.collections.Filters;
 import step.core.collections.filters.Equals;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This task removes the functions of type 'LocalFunction'
@@ -58,10 +58,4 @@ public class MigrateSeleniumFunctions extends MigrationTask {
 
         logger.info("Migrated " + count.get() + " keywords of type 'SeleniumFunction'");
     }
-
-    @Override
-    public void runDowngradeScript() {
-
-    }
-
 }
