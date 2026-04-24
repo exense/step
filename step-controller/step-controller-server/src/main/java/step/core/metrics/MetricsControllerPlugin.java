@@ -94,7 +94,7 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
         metricSamplerRegistry.start(interval);
 
         //Start the metric heartbeat scheduler
-        int heartbeatIntervalSec = context.getConfiguration().getPropertyAsInteger("plugins.measurements.metricheartbeat.interval", 15);
+        int heartbeatIntervalSec = context.getConfiguration().getPropertyAsInteger("plugins.metrics.metricheartbeat.interval", 15);
         MetricHeartbeatRegistry.getInstance().start(heartbeatIntervalSec * 1000L);
     }
 
