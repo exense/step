@@ -60,7 +60,7 @@
       <groupId>ch.exense.step</groupId>
       <artifactId>step-plans-core</artifactId>
       <version>${project.version}</version>
-      <type>test-jar</type>
+      <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -134,13 +134,19 @@
     <dependency>
       <groupId>org.xmlunit</groupId>
       <artifactId>xmlunit-core</artifactId>
-      <version>2.10.0</version>
+      <version>2.11.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>3.27.7</version> <!-- xmlunit-assertj3 depends on older version; anything below 3.27.7 has a high-prio vulnerability, so override with fixed version -->
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.xmlunit</groupId>
-      <artifactId>xmlunit-assertj</artifactId>
-      <version>2.10.0</version>
+      <artifactId>xmlunit-assertj3</artifactId>
+      <version>2.11.0</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
