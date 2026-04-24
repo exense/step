@@ -67,6 +67,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static step.core.metrics.InstrumentType.GAUGE;
 import static step.core.metrics.MetricsConstants.GRID_TOKEN_AGENT_TYPE;
 import static step.core.metrics.MetricsConstants.GRID_TOKEN_STATE;
 import static step.core.metrics.MetricsControllerPlugin.IS_CONTROLLER_METRIC;
@@ -215,7 +216,7 @@ public class GridPlugin extends AbstractControllerPlugin {
                         labels.put(GRID_TOKEN_AGENT_TYPE.getName(), agentTypeMapping.getOrDefault(value, value));
                     }
                     gridMetricSamples.add(new ControllerMetricSample(
-                        new MetricSample(now, "grid_tokens_capacity", labels, InstrumentType.GAUGE,
+                        new MetricSample(now, "grid_tokens_capacity", labels, GAUGE,
                             1, capacity, capacity, capacity, capacity, null),
                         GRID_CAPACITY_METRIC_NAME));
                     for (TokenWrapperState state : TokenWrapperState.values()) {
@@ -223,7 +224,7 @@ public class GridPlugin extends AbstractControllerPlugin {
                         TreeMap<String, String> labelsWithState = new TreeMap<>(labels);
                         labelsWithState.put(GRID_TOKEN_STATE.getName(), state.name());
                         gridMetricSamples.add(new ControllerMetricSample(
-                            new MetricSample(now, "grid_token_" + state.name(), labelsWithState, InstrumentType.GAUGE,
+                            new MetricSample(now, "grid_token_" + state.name(), labelsWithState, GAUGE,
                                 1, valueByState, valueByState, valueByState, valueByState, null),
                             GRID_BY_STATE_METRIC_NAME));
                     }
@@ -236,6 +237,7 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setName(GRID_BY_STATE_METRIC_NAME)
             .setDisplayName("Grid tokens by state")
             .setDescription("Number of grid tokens currently in each lifecycle state, broken down by state and agent type.")
+            .setInstrumentType(GAUGE.toLowerCase())
             .setAttributes(Arrays.asList(GRID_TOKEN_STATE, GRID_TOKEN_AGENT_TYPE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_STATE.getName(), GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")
@@ -248,6 +250,7 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setName(GRID_CAPACITY_METRIC_NAME)
             .setDisplayName("Grid tokens capacity")
             .setDescription("Total number of available grid tokens per agent type, representing the maximum execution concurrency of the grid.")
+            .setInstrumentType(GAUGE.toLowerCase())
             .setAttributes(List.of(GRID_TOKEN_AGENT_TYPE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")

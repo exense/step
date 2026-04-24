@@ -214,7 +214,11 @@ public class DashboardsGenerator {
                             .setAggregation(new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "h")))
                             .setUnit("ms")
                             .setDisplayType(AxesDisplayType.LINE)
-                            .setColorizationType(AxesColorizationType.STROKE))),
+                            .setColorizationType(AxesColorizationType.STROKE))
+                        .setSecondaryAxes(new AxesSettings()
+                            .setDisplayType(AxesDisplayType.BAR_CHART)
+                            .setAggregation(new MetricAggregation(MetricAggregationType.RATE, Map.of(RATE_UNIT_KEY, "h"))))
+                    ),
                 new DashboardItem()
                     .setName("Execution count")
                     .setType(DashletType.CHART)
@@ -231,8 +235,8 @@ public class DashboardsGenerator {
                         .setPrimaryAxes(new AxesSettings()
                             .setAggregation(new MetricAggregation(MetricAggregationType.SUM))
                             .setUnit("1")
-                            .setDisplayType(AxesDisplayType.BAR_CHART)
-                            .setColorizationType(AxesColorizationType.STROKE))),
+                            .setDisplayType(AxesDisplayType.STACKED_BAR)
+                            .setColorizationType(AxesColorizationType.FILL))),
                 new DashboardItem()
                     .setName("Execution failure count")
                     .setType(DashletType.CHART)
@@ -249,8 +253,8 @@ public class DashboardsGenerator {
                         .setPrimaryAxes(new AxesSettings()
                             .setAggregation(new MetricAggregation(MetricAggregationType.SUM))
                             .setUnit("1")
-                            .setDisplayType(AxesDisplayType.BAR_CHART)
-                            .setColorizationType(AxesColorizationType.STROKE))),
+                            .setDisplayType(AxesDisplayType.STACKED_BAR)
+                            .setColorizationType(AxesColorizationType.FILL))),
                 new DashboardItem()
                     .setName("Execution failure percentage")
                     .setType(DashletType.CHART)
@@ -267,7 +271,7 @@ public class DashboardsGenerator {
                         .setPrimaryAxes(new AxesSettings()
                             .setAggregation(new MetricAggregation(MetricAggregationType.AVG))
                             .setUnit("%")
-                            .setDisplayType(AxesDisplayType.BAR_CHART)
+                            .setDisplayType(AxesDisplayType.LINE)
                             .setColorizationType(AxesColorizationType.FILL))),
                 new DashboardItem()
                     .setName("Execution failure count by error code")
@@ -285,8 +289,8 @@ public class DashboardsGenerator {
                         .setPrimaryAxes(new AxesSettings()
                             .setAggregation(new MetricAggregation(MetricAggregationType.SUM))
                             .setUnit("1")
-                            .setDisplayType(AxesDisplayType.BAR_CHART)
-                            .setColorizationType(AxesColorizationType.STROKE))),
+                            .setDisplayType(AxesDisplayType.STACKED_BAR)
+                            .setColorizationType(AxesColorizationType.FILL))),
                 new DashboardItem()
                     .setId(UUID.randomUUID().toString())
                     .setName("Execution duration")
@@ -367,7 +371,7 @@ public class DashboardsGenerator {
                 .setPrimaryAxes(new AxesSettings()
                     .setAggregation(new MetricAggregation(MetricAggregationType.AVG))
                     .setUnit("1")
-                    .setDisplayType(AxesDisplayType.LINE)
+                    .setDisplayType(AxesDisplayType.STACKED_BAR)
                     .setColorizationType(AxesColorizationType.FILL)));
     }
 
@@ -533,7 +537,7 @@ public class DashboardsGenerator {
                 .setPrimaryAxes(new AxesSettings()
                     .setAggregation(new MetricAggregation(MetricAggregationType.MAX))
                     .setUnit("1")
-                    .setDisplayType(AxesDisplayType.LINE)
+                    .setDisplayType(AxesDisplayType.STEPPED)
                     .setColorizationType(AxesColorizationType.STROKE))
                 .setSecondaryAxes(new AxesSettings().setAggregation(new MetricAggregation(MetricAggregationType.MAX))));
     }

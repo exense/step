@@ -164,7 +164,11 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         String threadGroupName = node.getThreadGroupName();
         AtomicLong counter = threadGroupCounts.computeIfAbsent(execId + "|" + threadGroupName, k -> new AtomicLong(0));
         long count = inc ? counter.incrementAndGet() : Math.max(0, counter.decrementAndGet());
-
+        if (inc) {
+            logger.info("Thread group {} starting one new thread, new count is {}", threadGroupName, count);
+        } else {
+            logger.info("Thread group {} stopping one thread, new count is {}", threadGroupName, count);
+        }
         String scheduleId = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULER_TASK_ID), "");
         String schedule = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULE_NAME), "");
         String planId = context.getPlan().getId().toString();
@@ -187,7 +191,24 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         processMetrics(List.of(stepSample));
         // Thread group metrics span the whole execution lifetime (unlike keyword metrics),
         // so they are eligible for heartbeat re-emission when no new value arrives.
-        MetricHeartbeatRegistry.getInstance().update(stepSample);
+        // Synchronized on counter to serialize heartbeat updates: concurrent threads may
+        // complete their atomic increment/decrement in order but reach update() in a
+        // different order, leaving the heartbeat with a stale count (e.g. count=1
+        // overwriting count=3). Re-reading counter.get() inside the lock ensures the
+        // heartbeat always reflects the true current count regardless of which thread wins.
+        synchronized (counter) {
+            long currentCount = Math.max(0, counter.get());
+            MetricSample heartbeatSample = new MetricSample(
+                    System.currentTimeMillis(), threadGroupName,
+                    Map.of(TYPE, THREAD_GROUP),
+                    InstrumentType.GAUGE,
+                    1, currentCount, currentCount, currentCount, currentCount, null);
+            ExecutionMetricSample heartbeatStepSample = new ExecutionMetricSample(
+                    heartbeatSample, execId, node.getId().toString(),
+                    planId, plan, scheduleId, schedule, execution,
+                    null, null, additionalAttributes, THREAD_GROUP);
+            MetricHeartbeatRegistry.getInstance().update(heartbeatStepSample);
+        }
     }
 
     private Measurement transformToMeasurement(ExecutionContext executionContext, ReportNode node) {

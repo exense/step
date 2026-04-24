@@ -17,6 +17,9 @@ import step.framework.server.tables.TableRegistry;
 
 import java.util.*;
 
+import static step.core.metrics.InstrumentType.COUNTER;
+import static step.core.metrics.InstrumentType.GAUGE;
+import static step.core.metrics.InstrumentType.HISTOGRAM;
 import static step.core.metrics.MetricsConstants.*;
 import static step.core.metrics.MetricsExecutionPlugin.*;
 
@@ -97,93 +100,103 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
 
     private void createOrUpdateMetrics(MetricTypeRegistry metricTypeRegistry) {
         metricTypeRegistry.registerMetricType(new MetricType()
-                .setName(EXECUTIONS_COUNT)
-                .setDisplayName("Execution count")
-                .setDescription("Total number of plan executions ended over the selected time range.")
-                .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-                .setUnit("1")
-                .setRenderingSettings(new MetricRenderingSettings()
-                ));
+            .setName(EXECUTIONS_COUNT)
+            .setDisplayName("Execution count")
+            .setDescription("Total number of plan executions ended over the selected time range.")
+            .setInstrumentType(HISTOGRAM.toLowerCase())//Not a gauge because no values doesn't mean last values still applies and not a counter value can increment and decrement
+            .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+            .setUnit("1")
+            .setRenderingSettings(new MetricRenderingSettings()
+            ));
         metricTypeRegistry.registerMetricType(new MetricType()
-                .setName(EXECUTIONS_DURATION)
-                .setDisplayName("Execution duration")
-                .setDescription("Wall-clock duration of each plan execution in milliseconds. Can be filtered by simplified result (FAILED/PASSED) or detailed result.")
-                .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE, EXECUTION_BOOLEAN_RESULT, EXECUTION_RESULT))
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
-                .setUnit("ms")
-                .setRenderingSettings(new MetricRenderingSettings()));
+            .setName(EXECUTIONS_DURATION)
+            .setDisplayName("Execution duration")
+            .setDescription("Wall-clock duration of each plan execution in milliseconds. Can be filtered by simplified result (FAILED/PASSED) or detailed result.")
+            .setInstrumentType(HISTOGRAM.toLowerCase())
+            .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE, EXECUTION_BOOLEAN_RESULT, EXECUTION_RESULT))
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
+            .setUnit("ms")
+            .setRenderingSettings(new MetricRenderingSettings()));
         metricTypeRegistry.registerMetricType(new MetricType()
-                // AVG calculation is enough here. the value is either 0 or 100 for each exec.
-                .setName(FAILURE_PERCENTAGE)
-                .setDisplayName("Execution failure percentage")
-                .setDescription("Failure rate of plan executions as a percentage. Each execution contributes 0 (success) or 100 (failure); the average over the selected time range yields the overall failure rate.")
-                .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setUnit("%")
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
-                .setRenderingSettings(new MetricRenderingSettings()));
+            // AVG calculation is enough here. the value is either 0 or 100 for each exec.
+            .setName(FAILURE_PERCENTAGE)
+            .setDisplayName("Execution failure percentage")
+            .setDescription("Failure rate of plan executions as a percentage. Each execution contributes 0 (success) or 100 (failure); the average over the selected time range yields the overall failure rate.")
+            .setInstrumentType(HISTOGRAM.toLowerCase())//Not a gauge because no values doesn't mean last values still applies and not a counter value can increment and decrement
+            .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+            .setUnit("%")
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
+            .setRenderingSettings(new MetricRenderingSettings()));
         metricTypeRegistry.registerMetricType(new MetricType()
-                .setName(FAILURE_COUNT)
-                .setUnit("1")
-                .setDisplayName("Execution failure count")
-                .setDescription("Number of plan executions that ended with a failure result over the selected time range.")
-                .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-                .setRenderingSettings(new MetricRenderingSettings()));
+            .setName(FAILURE_COUNT)
+            .setUnit("1")
+            .setDisplayName("Execution failure count")
+            .setDescription("Number of plan executions that ended with a failure result over the selected time range.")
+            .setInstrumentType(HISTOGRAM.toLowerCase())//Not a gauge because no values doesn't mean last values still applies and not a counter value can increment and decrement
+            .setAttributes(List.of(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+            .setRenderingSettings(new MetricRenderingSettings()));
         metricTypeRegistry.registerMetricType(new MetricType()
-                .setName(FAILURES_COUNT_BY_ERROR_CODE)
-                .setDisplayName("Execution failure count by error code")
-                .setDescription("Number of failed executions broken down by error code, allowing identification of the most frequent failure reasons.")
-                .setUnit("1")
-                .setDefaultGroupingAttributes(List.of(ERROR_CODE_ATTRIBUTE.getName()))
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-                .setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE, ERROR_CODE_ATTRIBUTE))
-                .setRenderingSettings(new MetricRenderingSettings()));
+            .setName(FAILURES_COUNT_BY_ERROR_CODE)
+            .setDisplayName("Execution failure count by error code")
+            .setDescription("Number of failed executions broken down by error code, allowing identification of the most frequent failure reasons.")
+            .setInstrumentType(HISTOGRAM.toLowerCase())//Not a gauge because no values doesn't mean last values still applies and not a counter value can increment and decrement
+            .setUnit("1")
+            .setDefaultGroupingAttributes(List.of(ERROR_CODE_ATTRIBUTE.getName()))
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+            .setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE, ERROR_CODE_ATTRIBUTE))
+            .setRenderingSettings(new MetricRenderingSettings()));
         metricTypeRegistry.registerMetricType(new MetricType()
-                .setName(RESPONSE_TIME)
-                .setDisplayName("Response time")
-                .setDescription("Response time in milliseconds of individual steps or keywords measured during plan execution.")
-                .setAttributes(Arrays.asList(STATUS_ATTRIBUTE, TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
-                .setUnit("ms")
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
-                .setRenderingSettings(new MetricRenderingSettings()));
+            .setName(RESPONSE_TIME)
+            .setDisplayName("Response time")
+            .setDescription("Response time in milliseconds of individual steps or keywords measured during plan execution.")
+            .setInstrumentType(HISTOGRAM.toLowerCase())
+            .setAttributes(Arrays.asList(STATUS_ATTRIBUTE, TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+            .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
+            .setUnit("ms")
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
+            .setRenderingSettings(new MetricRenderingSettings()));
         metricTypeRegistry.registerMetricType(new MetricType()
-                .setName(step.core.metrics.InstrumentType.HISTOGRAM.toLowerCase())
-                .setDisplayName("Histogram")
-                .setDescription("Custom histogram metrics recorded by keywords in plan executions.")
-                .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
-                .setUnit("")
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
-                .setRenderingSettings(new MetricRenderingSettings()));
+            .setName(step.core.metrics.InstrumentType.HISTOGRAM.toLowerCase())
+            .setDisplayName("Histogram")
+            .setDescription("Custom histogram metrics recorded by keywords in plan executions.")
+            .setInstrumentType(HISTOGRAM.toLowerCase())
+            .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+            .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
+            .setUnit("")
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
+            .setRenderingSettings(new MetricRenderingSettings()));
         metricTypeRegistry.registerMetricType(new MetricType()
-                .setName(step.core.metrics.InstrumentType.GAUGE.toLowerCase())
-                .setDisplayName("Gauge")
-                .setDescription("Custom gauge metrics recorded by keywords in plan executions, representing instantaneous numeric values.")
-                .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
-                .setUnit("1")
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
-                .setRenderingSettings(new MetricRenderingSettings()));
+            .setName(step.core.metrics.InstrumentType.GAUGE.toLowerCase())
+            .setDisplayName("Gauge")
+            .setDescription("Custom gauge metrics recorded by keywords in plan executions, representing instantaneous numeric values.")
+            .setInstrumentType(GAUGE.toLowerCase())
+            .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+            .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
+            .setUnit("1")
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
+            .setRenderingSettings(new MetricRenderingSettings()));
         metricTypeRegistry.registerMetricType(new MetricType()
-                .setName(step.core.metrics.InstrumentType.COUNTER.toLowerCase())
-                .setDisplayName("Counter")
-                .setDescription("Custom counter metrics recorded by keywords in plan executions, tracking cumulative event counts.")
-                .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
-                .setUnit("1")
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-                .setRenderingSettings(new MetricRenderingSettings()));
+            .setName(COUNTER.toLowerCase())
+            .setDisplayName("Counter")
+            .setDescription("Custom counter metrics recorded by keywords in plan executions, tracking cumulative event counts.")
+            .setInstrumentType(COUNTER.toLowerCase())
+            .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+            .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
+            .setUnit("1")
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+            .setRenderingSettings(new MetricRenderingSettings()));
         metricTypeRegistry.registerMetricType(new MetricType()
-                .setName(THREAD_GROUP)
-                .setDisplayName("Thread group")
-                .setDescription("Number of concurrent virtual users or threads active in a thread group at a given point in time. The max value is the default aggregation.")
-                .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
-                .setUnit("1")
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.MAX))
-                .setRenderingSettings(new MetricRenderingSettings()));
+            .setName(THREAD_GROUP)
+            .setDisplayName("Thread group")
+            .setDescription("Number of concurrent virtual users or threads active in a thread group at a given point in time. The max value is the default aggregation.")
+            .setInstrumentType(GAUGE.toLowerCase())
+            .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
+            .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
+            .setUnit("1")
+            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.MAX))
+            .setRenderingSettings(new MetricRenderingSettings()));
     }
 
     @Override
