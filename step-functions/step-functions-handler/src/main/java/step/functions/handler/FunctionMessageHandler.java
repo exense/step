@@ -221,7 +221,9 @@ public class FunctionMessageHandler extends AbstractMessageHandler {
                     }
                 }
             );
-            return new LiveReporting(liveReportingClientProxy.getStreamingUploadProvider(), liveReportingClientProxy.getLiveMeasureDestination());
+            return new LiveReporting(liveReportingClientProxy.getStreamingUploadProvider(),
+                liveReportingClientProxy.getLiveMeasureDestination(),
+                liveReportingClientProxy.getLiveMetricDestination());
         });
     }
 

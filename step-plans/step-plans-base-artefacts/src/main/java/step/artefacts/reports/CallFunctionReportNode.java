@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.reports.ReportNode;
+import step.core.metrics.MetricSample;
 import step.core.reports.Measure;
 
 public class CallFunctionReportNode extends ReportNode {
@@ -47,6 +48,14 @@ public class CallFunctionReportNode extends ReportNode {
     protected JsonObject outputObject;
 
     private List<Measure> measures;
+
+    /**
+     * Metric snapshots reported by the keyword via {@link step.functions.io.OutputBuilder#addMetric}.
+     * Null when the keyword was compiled against an older API version — handled defensively throughout.
+     * The metrics field is not persisted in DB (it is not required by the client application and would require custom deserialization (cf MetricSnapshotDeserializer)
+     */
+    @JsonIgnore
+    private List<MetricSample> metrics;
 
     public CallFunctionReportNode() {
         super();
@@ -114,6 +123,14 @@ public class CallFunctionReportNode extends ReportNode {
 
     public void setMeasures(List<Measure> measures) {
         this.measures = measures;
+    }
+
+    public List<MetricSample> getMetrics() {
+        return metrics;
+    }
+
+    public void setMetrics(List<MetricSample> metrics) {
+        this.metrics = metrics;
     }
 
     @Override

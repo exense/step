@@ -34,8 +34,8 @@ public class StepControllerPlugin extends AbstractControllerPlugin {
 
     @Override
     public void init(GlobalContext context) throws Exception {
-        // Only used for validation here, blows up if there is something wrong with the configuration.
-        getControllerUrl(context.getConfiguration(), false, true);
+        context.setControllerUrl(getControllerUrl(context.getConfiguration(), false, true));
+        context.setControllerServiceUrl(getControllerUrl(context.getConfiguration(), true, true));
         controller = new Controller(context);
         controller.init(context.getServiceRegistrationCallback());
         context.put(Controller.class, controller);
@@ -59,7 +59,7 @@ public class StepControllerPlugin extends AbstractControllerPlugin {
      * @return the corresponding URL
      * @throws PluginCriticalException if the configuration is invalid.
      */
-    public static String getControllerUrl(Configuration conf, boolean forBackend, boolean validate) throws PluginCriticalException {
+    private String getControllerUrl(Configuration conf, boolean forBackend, boolean validate) throws PluginCriticalException {
         String paramName = "controller.url";
         String url = conf.getProperty(paramName, null);
         if (url == null) {

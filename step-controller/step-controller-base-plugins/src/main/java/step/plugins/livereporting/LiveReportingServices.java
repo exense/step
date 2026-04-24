@@ -7,6 +7,7 @@ import jakarta.ws.rs.core.MediaType;
 import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.Unfiltered;
+import step.core.metrics.MetricSample;
 import step.core.reports.Measure;
 import step.framework.server.security.NoSession;
 import step.livereporting.LiveReportingContexts;
@@ -16,6 +17,7 @@ import java.util.List;
 @Path("/live-reporting")
 @Tag(name = "Live Reporting")
 public class LiveReportingServices extends AbstractStepServices {
+
 
     private LiveReportingContexts liveReportingContexts;
 
@@ -33,5 +35,14 @@ public class LiveReportingServices extends AbstractStepServices {
     @NoSession
     public void injectMeasures(List<Measure> measures, @PathParam("contextId") String contextId) {
         liveReportingContexts.onMeasuresReceived(contextId, measures);
+    }
+
+    @POST
+    @Path("/{contextId}/metrics")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Unfiltered
+    @NoSession
+    public void injectMetrics(List<MetricSample> snapshots, @PathParam("contextId") String contextId) {
+        liveReportingContexts.onMetricsReceived(contextId, snapshots);
     }
 }

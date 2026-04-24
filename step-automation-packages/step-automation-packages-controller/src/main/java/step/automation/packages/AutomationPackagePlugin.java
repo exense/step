@@ -69,6 +69,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     private static final Integer DEFAULT_MAX_VERSIONS_PER_AP = 0; //quota disabled
     private static final String CONFIGURATION_MAX_VERSIONS_PER_AP = "automation.packages.max.versions.per.package";
     protected AutomationPackageLocks automationPackageLocks;
+    private AutomationPackageAccessor packageAccessor;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
@@ -84,7 +85,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         Collection<AutomationPackageTableRecord> extendedCollection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackageTableRecord.class);
         Collection<AutomationPackage> collection = context.getCollectionFactory().getCollection(AutomationPackageEntity.entityName, AutomationPackage.class);
 
-        AutomationPackageAccessor packageAccessor = new AutomationPackageAccessorImpl(collection);
+        packageAccessor = new AutomationPackageAccessorImpl(collection);
         context.put(AutomationPackageAccessor.class, packageAccessor);
         context.getEntityManager().register(new AutomationPackageEntity(packageAccessor));
         context.getEntityManager().registerImportHook(new AutomationPackageImportHook());
@@ -180,7 +181,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return new AutomationPackageExecutionPlugin(automationPackageLocks);
+        return new AutomationPackageExecutionPlugin(automationPackageLocks, packageAccessor);
     }
 
     private static class MavenConfigProviderImpl implements AutomationPackageMavenConfig.ConfigProvider {

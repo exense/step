@@ -52,7 +52,7 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     public void serverStart(GlobalContext context) throws Exception {
         super.serverStart(context);
 
-        controllerUrl = StepControllerPlugin.getControllerUrl(context.getConfiguration(), true, true);
+        controllerUrl = context.getControllerServiceUrl();
         // We need the websocket variant for websockets
         URI websocketBaseUri = URI.create(controllerUrl.replaceFirst("^http", "ws"));
 
