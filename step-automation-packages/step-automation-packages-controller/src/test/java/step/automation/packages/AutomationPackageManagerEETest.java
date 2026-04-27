@@ -527,6 +527,11 @@ public class AutomationPackageManagerEETest extends AbstractAutomationPackageMan
                 return additionalAttributes;
             }
 
+            @Override
+            public TreeSet<String> getAdditionalAttributeKeys() {
+                return new TreeSet<>(Set.of(ATTRIBUTE_PROJECT_NAME));
+            }
+
             private void enrichObject(EnricheableObject object) {
                 if (object != null) {
                     if (projectName != null) {

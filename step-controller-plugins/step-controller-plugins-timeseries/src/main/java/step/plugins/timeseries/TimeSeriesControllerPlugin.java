@@ -13,19 +13,22 @@ import step.core.collections.Order;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.Entity;
 import step.core.entities.EntityConstants;
+import step.core.metrics.MetricsConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.timeseries.*;
 import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
-import step.core.timeseries.metric.*;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
-import step.plugins.measurements.GaugeCollectorRegistry;
-import step.plugins.measurements.MeasurementPlugin;
+import step.core.metrics.MetricSamplerRegistry;
+import step.core.metrics.MetricTypeRegistry;
+import step.core.metrics.MetricsControllerPlugin;
+import step.core.metrics.MetricsExecutionPlugin;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.dashboards.DashboardsGenerator;
 import step.plugins.timeseries.dashboards.model.DashboardView;
@@ -34,21 +37,27 @@ import step.plugins.timeseries.migration.MigrateDashboardsTask;
 import step.plugins.timeseries.migration.MigrateResolutionsWithIgnoredFieldsTask;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
-import static step.plugins.measurements.MeasurementPlugin.ATTRIBUTE_EXECUTION_ID;
-import static step.plugins.timeseries.MetricsConstants.*;
-import static step.plugins.timeseries.TimeSeriesExecutionPlugin.*;
+import static step.core.metrics.AbstractMetricSample.METRIC_TYPE;
+import static step.core.metrics.MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
+import static step.core.metrics.MetricsConstants.*;
 
-@Plugin(dependencies = {MigrationManagerPlugin.class, AsyncTaskManagerPlugin.class})
+@Plugin(dependencies = {MigrationManagerPlugin.class, AsyncTaskManagerPlugin.class, MetricsControllerPlugin.class})
 public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(TimeSeriesControllerPlugin.class);
     public static final String TIME_SERIES_MAIN_COLLECTION = "timeseries";
+    // Starting with Step 30, timeseries attributes are open and only a subset of known attributes are excluded (agent url, rnId).
+    // The list of excluded attributes can be customized via step.properties
+    // If a query filter or groupBy use an excluded attribute we fall back to RAW measurements
+    public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY = "timeseries.attributes.excluded";
+    public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT = "agentUrl,rnId";
+    // Before Step 30, the list of supported attributed by the time-series were defined with below default values and could be customized via step.properties
+    // This was used to determine if we had to fall back to RAW measurement when a filter or group by used unknown fields
     public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
-    //We should review the usage of the following property default value, it is technically possible to set the value in properties: not sure if that really work.
-    //This is used to determine if we fall back to RAW measurement when we filter or group by fields that are not supported by time-series and when reingesting timeseries from RAW measurements
     public static final String TIME_SERIES_ATTRIBUTES_DEFAULT = MetricsConstants.getAllAttributeNames() + ",metricType,origin,project";
 
     // Following properties are used by the UI. In the future we could remove the prefix 'plugins.' to align with other properties
@@ -59,45 +68,53 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
     public static final String EXECUTION_DASHBOARD_PREPOPULATED_NAME = "Execution Dashboard";
     public static final String ANALYTICS_DASHBOARD_PREPOPULATED_NAME = "Analytics Dashboard";
+    public static final String GRID_MONITORING_DASHBOARD_PREPOPULATED_NAME = "Grid Monitoring";
+    public static final String EXECUTIONS_OVERVIEW_DASHBOARD_PREPOPULATED_NAME = "Executions Overview";
     public static final String GENERATION_NAME = "generationName";
 
-    private TimeSeriesIngestionPipeline mainIngestionPipeline;
     private DashboardAccessor dashboardAccessor;
     private TimeSeries timeSeries;
 
     @Override
     public void serverStart(GlobalContext context) {
+        Configuration configuration = context.getConfiguration();
+        Set<String> includedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, "").split(","))
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
+        Set<String> excludedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY, TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT).split(","))
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.toSet());
+
+        if (!includedAttributes.isEmpty() && !excludedAttributes.isEmpty()) {
+            throw new PluginCriticalException("Setting both the properties " + TIME_SERIES_ATTRIBUTES_PROPERTY + " and "  + TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY + " is not allowed.");
+        }
+
         MigrationManager migrationManager = context.require(MigrationManager.class);
         migrationManager.register(MigrateDashboardsTask.class);
         migrationManager.register(MigrateAggregateTask.class);
         migrationManager.register(MigrateResolutionsWithIgnoredFieldsTask.class);
 
-        Configuration configuration = context.getConfiguration();
-        List<String> attributes = Arrays.asList(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, TIME_SERIES_ATTRIBUTES_DEFAULT).split(","));
         CollectionFactory collectionFactory = context.getCollectionFactory();
 
-        TimeSeriesCollectionsSettings timeSeriesCollectionsSettings = TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION);
-
-        TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(collectionFactory);
-        List<TimeSeriesCollection> enabledCollections = timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, timeSeriesCollectionsSettings, Set.of(ATTRIBUTE_EXECUTION_ID));
-        // timeseries will have a list of registered collection.
+        TimeSeriesConfig timeSeriesConfig = TimeSeriesConfig.fromConfiguration(configuration, TIME_SERIES_MAIN_COLLECTION);
+        warnAboutDisabledCollections(timeSeriesConfig);
         timeSeries = new TimeSeriesBuilder()
-            .setSettings(new TimeSeriesSettings()
-                .setIdealResponseIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_IDEAL_INTERVALS, TimeSeriesSettings.DEFAULT_IDEAL_RESPONSE_INTERVALS))
-                .setResponseMaxIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_MAX_INTERVALS, TimeSeriesSettings.DEFAULT_RESPONSE_MAX_INTERVALS))
+            .withConfig(timeSeriesConfig, collectionFactory, TIME_SERIES_MAIN_COLLECTION, Set.of(ATTRIBUTE_EXECUTION_ID))
+            .setAggregationConfig(new TimeSeriesAggregationConfig()
+                .setIdealResponseIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_IDEAL_INTERVALS, TimeSeriesAggregationConfig.DEFAULT_IDEAL_RESPONSE_INTERVALS))
+                .setResponseMaxIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_MAX_INTERVALS, TimeSeriesAggregationConfig.DEFAULT_RESPONSE_MAX_INTERVALS))
             )
-            .registerCollections(enabledCollections).build();
-        mainIngestionPipeline = timeSeries.getIngestionPipeline();
+            .build();
+        TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getIngestionPipeline();
 
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
-        MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityConstants.metricTypes, MetricType.class));
-        TimeSeriesBucketingHandler handler = new TimeSeriesBucketingHandler(timeSeries, attributes);
+        TimeSeriesMetricSamplesHandler handler = new TimeSeriesMetricSamplesHandler(timeSeries, includedAttributes, excludedAttributes);
 
         context.put(TimeSeries.class, timeSeries);
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
         context.put(TimeSeriesAggregationPipeline.class, aggregationPipeline);
-        context.put(MetricTypeAccessor.class, metricTypeAccessor);
-        context.put(TimeSeriesBucketingHandler.class, handler);
+
+        context.put(TimeSeriesMetricSamplesHandler.class, handler);
         context.getServiceRegistrationCallback().registerService(TimeSeriesService.class);
 
         // dashboards
@@ -110,8 +127,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         TableRegistry tableRegistry = context.get(TableRegistry.class);
         tableRegistry.register(EntityConstants.dashboards, new Table<>(dashboardsCollection, "dashboard-read", true));
 
-        MeasurementPlugin.registerMeasurementHandlers(handler);
-        GaugeCollectorRegistry.getInstance().registerHandler(handler);
+        MetricsExecutionPlugin.registerSamplesHandlers(handler);
+        MetricSamplerRegistry.getInstance().registerHandler(handler);
 
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
         // Following property is used by the UI. We could align its name with the configuration property in the future
@@ -144,8 +161,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
             beginIndexField
         )));
 
-        List<MetricType> metrics = createOrUpdateMetrics(context.require(MetricTypeAccessor.class));
-
         DashboardView existingExecutionDashboard = dashboardAccessor.findByCriteria(
             Map.of(
                 "attributes.name", EXECUTION_DASHBOARD_PREPOPULATED_NAME,
@@ -154,24 +169,56 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         DashboardView existingAnalyticsDashboard = dashboardAccessor.findByCriteria(
             Map.of("attributes.name", ANALYTICS_DASHBOARD_PREPOPULATED_NAME,
                 "customFields." + GENERATION_NAME, ANALYTICS_DASHBOARD_PREPOPULATED_NAME));
+        DashboardView existingGridMonitoringDashboard = dashboardAccessor.findByCriteria(
+            Map.of("attributes.name", GRID_MONITORING_DASHBOARD_PREPOPULATED_NAME,
+                "customFields." + GENERATION_NAME, GRID_MONITORING_DASHBOARD_PREPOPULATED_NAME));
+        DashboardView existingExecutionsOverviewDashboard = dashboardAccessor.findByCriteria(
+            Map.of("attributes.name", EXECUTIONS_OVERVIEW_DASHBOARD_PREPOPULATED_NAME,
+                "customFields." + GENERATION_NAME, EXECUTIONS_OVERVIEW_DASHBOARD_PREPOPULATED_NAME));
 
-        DashboardsGenerator dashboardsGenerator = new DashboardsGenerator(metrics);
+        MetricTypeRegistry metricTypeRegistry = context.require(MetricTypeRegistry.class);
+        DashboardsGenerator dashboardsGenerator = new DashboardsGenerator(metricTypeRegistry.getMetrics());
         DashboardView newExecutionDashboard = dashboardsGenerator.createExecutionDashboard();
         DashboardView newAnalyticsDashboard = dashboardsGenerator.createAnalyticsDashboard();
+        DashboardView newGridMonitoringDashboard = dashboardsGenerator.createGridMonitoringDashboard();
+        DashboardView newExecutionsOverviewDashboard = dashboardsGenerator.createExecutionsOverviewDashboard();
         if (existingExecutionDashboard != null) {
             newExecutionDashboard.setId(existingExecutionDashboard.getId());
         }
         if (existingAnalyticsDashboard != null) {
             newAnalyticsDashboard.setId(existingAnalyticsDashboard.getId());
         }
+        if (existingGridMonitoringDashboard != null) {
+            newGridMonitoringDashboard.setId(existingGridMonitoringDashboard.getId());
+        }
+        if (existingExecutionsOverviewDashboard != null) {
+            newExecutionsOverviewDashboard.setId(existingExecutionsOverviewDashboard.getId());
+        }
         dashboardAccessor.save(newExecutionDashboard);
         dashboardAccessor.save(newAnalyticsDashboard);
+        dashboardAccessor.save(newGridMonitoringDashboard);
+        dashboardAccessor.save(newExecutionsOverviewDashboard);
 
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
         configurationManager.registerHook(s -> Map.of(PARAM_KEY_EXECUTION_DASHBOARD_ID, newExecutionDashboard.getId().toString()));
         configurationManager.registerHook(s -> Map.of(PARAM_KEY_ANALYTICS_DASHBOARD_ID, newAnalyticsDashboard.getId().toString()));
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         initTimeSeriesCollectionsData(asyncTaskManager);
+    }
+
+    private void warnAboutDisabledCollections(TimeSeriesConfig config) {
+        if (!config.isPerMinuteEnabled()) {
+            logger.warn("The time-series resolution '_minute' is disabled. To reclaim space you can delete the corresponding DB table.");
+        }
+        if (!config.isHourlyEnabled()) {
+            logger.warn("The time-series resolution '_hour' is disabled. To reclaim space you can delete the corresponding DB table.");
+        }
+        if (!config.isDailyEnabled()) {
+            logger.warn("The time-series resolution '_day' is disabled. To reclaim space you can delete the corresponding DB table.");
+        }
+        if (!config.isWeeklyEnabled()) {
+            logger.warn("The time-series resolution '_week' is disabled. To reclaim space you can delete the corresponding DB table.");
+        }
     }
 
     private void initTimeSeriesCollectionsData(AsyncTaskManager asyncTaskManager) {
@@ -184,74 +231,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     }
 
 
-    private List<MetricType> createOrUpdateMetrics(MetricTypeAccessor metricTypeAccessor) {
-        // TODO create a builder for units
-        // TODO metrics shouldn't be defined centrally but in each plugin they belong to. Implement a central registration service
-        List<MetricType> metrics = Arrays.asList(
-            new MetricType()
-                .setName(EXECUTIONS_COUNT)
-                .setDisplayName("Execution count")
-                .setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-                .setUnit("1")
-                .setRenderingSettings(new MetricRenderingSettings()
-                ),
-            new MetricType()
-                .setName(EXECUTIONS_DURATION)
-                .setDisplayName("Execution duration")
-                .setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE, EXECUTION_BOOLEAN_RESULT, EXECUTION_RESULT))
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
-                .setUnit("ms")
-                .setRenderingSettings(new MetricRenderingSettings()),
-            new MetricType()
-                // AVG calculation is enough here. the value is either 0 or 100 for each exec.
-                .setName(FAILURE_PERCENTAGE)
-                .setDisplayName("Execution failure percentage")
-                .setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setUnit("%")
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
-                .setRenderingSettings(new MetricRenderingSettings()),
-            new MetricType()
-                .setName(FAILURE_COUNT)
-                .setUnit("1")
-                .setDisplayName("Execution failure count")
-                .setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-                .setRenderingSettings(new MetricRenderingSettings()),
-            new MetricType()
-                .setName(FAILURES_COUNT_BY_ERROR_CODE)
-                .setDisplayName("Execution failure count by error code")
-                .setUnit("1")
-                .setDefaultGroupingAttributes(Arrays.asList(ERROR_CODE_ATTRIBUTE.getName()))
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
-                .setAttributes(Arrays.asList(TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE, ERROR_CODE_ATTRIBUTE))
-                .setRenderingSettings(new MetricRenderingSettings()),
-            new MetricType()
-                .setName(RESPONSE_TIME)
-                .setDisplayName("Response time")
-                .setAttributes(Arrays.asList(STATUS_ATTRIBUTE, TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
-                .setUnit("ms")
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.AVG))
-                .setRenderingSettings(new MetricRenderingSettings()),
-            new MetricType()
-                .setName(THREAD_GROUP)
-                .setDisplayName("Thread group")
-                .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
-                .setDefaultGroupingAttributes(Arrays.asList(NAME_ATTRIBUTE.getName()))
-                .setUnit("1")
-                .setDefaultAggregation(new MetricAggregation(MetricAggregationType.MAX))
-                .setRenderingSettings(new MetricRenderingSettings())
-        );
-        metrics.forEach(m -> {
-            MetricType existingMetric = metricTypeAccessor.findByCriteria(Map.of("name", m.getName()));
-            if (existingMetric != null) {
-                m.setId(existingMetric.getId()); // update the metric
-            }
-            metricTypeAccessor.save(m);
-        });
-        return metrics;
-    }
+
 
     @Override
     public void serverStop(GlobalContext context) {

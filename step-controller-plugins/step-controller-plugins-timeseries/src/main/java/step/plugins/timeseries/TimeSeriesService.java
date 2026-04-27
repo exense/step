@@ -11,58 +11,64 @@ import org.apache.commons.lang3.StringUtils;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.GlobalContext;
+import step.core.accessors.AbstractAccessor;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.collections.Collection;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.entities.EntityConstants;
 import step.core.execution.model.ExecutionAccessor;
+import step.core.metrics.MetricTypeRegistry;
 import step.core.timeseries.*;
 import step.core.timeseries.metric.MetricType;
-import step.core.timeseries.metric.MetricTypeAccessor;
 import step.framework.server.security.Secured;
-import step.plugins.measurements.Measurement;
+import step.core.metrics.ExecutionMetricSample;
+import step.core.metrics.Measurement;
+import step.plugins.metrics.raw.MetricSampleAccessor;
 import step.plugins.timeseries.api.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
+
+import static step.core.metrics.MetricsControllerPlugin.IS_CONTROLLER_METRIC;
 
 @Singleton
 @Path("/time-series")
 @Tag(name = "TimeSeries")
 public class TimeSeriesService extends AbstractStepServices {
 
-
     private TimeSeriesHandler handler;
-    private MetricTypeAccessor metricTypeAccessor;
     private int maxNumberOfSeries;
 
     public static final String TIME_SERIES_SAMPLING_LIMIT = "timeseries.sampling.limit";
     public static final String TIME_SERIES_MAX_NUMBER_OF_SERIES = "timeseries.response.series.limit";
+    private MetricTypeRegistry metricTypeRegistry;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         GlobalContext context = getContext();
-        List<String> timeSeriesAttributes = context.get(TimeSeriesBucketingHandler.class).getHandledAttributes();
+        TimeSeriesMetricSamplesHandler timeSeriesBucketingHandler = context.get(TimeSeriesMetricSamplesHandler.class);
+        Set<String> handledAttributes = timeSeriesBucketingHandler.getHandledAttributes();
+        Set<String> excludedAttributes = timeSeriesBucketingHandler.getExcludedAttributes();
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Measurement.class);
-        metricTypeAccessor = context.require(MetricTypeAccessor.class);
+        metricTypeRegistry = context.require(MetricTypeRegistry.class);
+        Collection<ExecutionMetricSample> metricSampleCollection = Optional.ofNullable(context.get(MetricSampleAccessor.class)).map(AbstractAccessor::getCollectionDriver).orElse(null);
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         int resolution = (int) timeSeries.getIngestionPipeline().getResolution();
         int fieldsSamplingLimit = configuration.getPropertyAsInteger(TIME_SERIES_SAMPLING_LIMIT, 1000);
         maxNumberOfSeries = configuration.getPropertyAsInteger(TIME_SERIES_MAX_NUMBER_OF_SERIES, 1000);
         ReportNodeTimeSeries reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
-        this.handler = new TimeSeriesHandler(resolution, timeSeriesAttributes, measurementCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, fieldsSamplingLimit);
+        this.handler = new TimeSeriesHandler(resolution, handledAttributes, excludedAttributes, measurementCollection, metricSampleCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, fieldsSamplingLimit);
     }
 
     @Secured(right = "execution-read")
     @POST
-    @Path("")
+    @Path("/buckets")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public TimeSeriesAPIResponse getTimeSeries(@NotNull FetchBucketsRequest request) {
+    public TimeSeriesAPIResponse fetchBuckets(@NotNull FetchBucketsRequest request) {
         enrichRequest(request);
         try {
             return handler.getTimeSeries(request);
@@ -87,30 +93,35 @@ public class TimeSeriesService extends AbstractStepServices {
 
     @Secured(right = "execution-read")
     @POST
-    @Path("/measurements")
+    @Path("/buckets/with-fallback")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    // TODO this method should be renamed as it doesn't return measurements but a timeseries
-    public TimeSeriesAPIResponse getMeasurements(@NotNull FetchBucketsRequest request) {
+    public TimeSeriesAPIResponse fetchBucketsWithFallback(@NotNull FetchBucketsRequest request) {
         enrichRequest(request);
         try {
-            return handler.getOrBuildTimeSeries(request);
+            return handler.fetchBucketsWithFallback(request);
         } catch (Exception e) {
             throw new ControllerServiceException(e.getMessage());
         }
     }
 
     private void enrichRequest(FetchBucketsRequest request) {
-        request.setOqlFilter(enrichOqlFilter(request.getOqlFilter(), request.isIncludeGlobalEntities()));
+        Boolean controllerMetric = Optional.ofNullable(request.getMetricType())
+            .map(mt -> metricTypeRegistry.getMetricType(mt))
+            .map(metricType -> metricType.getCustomField(IS_CONTROLLER_METRIC, Boolean.class)).orElse(false);
+
+        request.setOqlFilter(enrichOqlFilter(request.getOqlFilter(), request.isIncludeGlobalEntities(), controllerMetric));
         if (request.getMaxNumberOfSeries() <= 0) {
             request.setMaxNumberOfSeries(maxNumberOfSeries);
         }
     }
 
-    private String enrichOqlFilter(String oqlFilter, boolean includeGlobalEntities) {
+    private String enrichOqlFilter(String oqlFilter, boolean includeGlobalEntities, Boolean controllerMetric) {
         String additionalOqlFilter = "";
-        if (includeGlobalEntities) {
-            additionalOqlFilter = getObjectFilter().getOQLFilter();
+        if (controllerMetric) {
+            additionalOqlFilter = getUnscopedObjectFilter().getOQLFilter();
+        } else if (includeGlobalEntities) {
+                additionalOqlFilter = getObjectFilter().getOQLFilter();
         } else {
             additionalOqlFilter = getRestrictedObjectFilter().getOQLFilter();
         }
@@ -162,7 +173,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public Set<String> getMeasurementsAttributes(@QueryParam("filter") String oqlFilter,
                                                  @DefaultValue("false") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities) {
-        oqlFilter = enrichOqlFilter(oqlFilter, includeGlobalEntities);
+        oqlFilter = enrichOqlFilter(oqlFilter, includeGlobalEntities, false);
         return handler.getMeasurementsAttributes(oqlFilter);
     }
 
@@ -177,7 +188,7 @@ public class TimeSeriesService extends AbstractStepServices {
         @QueryParam("skip") int skip,
         @DefaultValue("false") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities
     ) {
-        oqlFilter = enrichOqlFilter(oqlFilter, includeGlobalEntities);
+        oqlFilter = enrichOqlFilter(oqlFilter, includeGlobalEntities, false);
         return handler.getRawMeasurements(oqlFilter, skip, limit);
     }
 
@@ -188,7 +199,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     public MeasurementsStats getRawMeasurementsStats(@QueryParam("filter") String oqlFilter,
                                                      @DefaultValue("false") @QueryParam("includeGlobalEntities") boolean includeGlobalEntities) {
-        oqlFilter = enrichOqlFilter(oqlFilter, includeGlobalEntities);
+        oqlFilter = enrichOqlFilter(oqlFilter, includeGlobalEntities, false);
         return handler.getRawMeasurementsStats(oqlFilter);
     }
 
@@ -199,7 +210,7 @@ public class TimeSeriesService extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public List<MetricType> getMetricTypes() {
-        return metricTypeAccessor.stream().collect(Collectors.toList());
+        return metricTypeRegistry.getMetrics();
     }
 
 

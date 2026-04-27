@@ -32,6 +32,7 @@ import step.core.artefacts.handlers.ArtefactHandlerRegistry;
 import step.core.artefacts.reports.InMemoryReportNodeAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
+import step.core.collections.inmemory.InMemoryCollection;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
@@ -42,17 +43,16 @@ import step.core.entities.EntityManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.InMemoryExecutionAccessor;
+import step.core.metrics.MetricTypeRegistry;
 import step.core.plans.InMemoryPlanAccessor;
-import step.core.plans.Plan;
-import step.core.plans.PlanAccessor;
 import step.core.plans.PlanEntity;
 import step.core.plugins.ControllerPluginManager;
 import step.core.plugins.PluginManager.Builder.CircularDependencyException;
 import step.core.repositories.RepositoryObjectManager;
-import step.core.scheduler.ExecutionTaskAccessor;
 import step.core.scheduler.ExecutiontTaskParameters;
 import step.core.scheduler.InMemoryExecutionTaskAccessor;
 import step.core.scheduler.ScheduleEntity;
+import step.core.timeseries.metric.MetricTypeAccessor;
 import step.expressions.ExpressionHandler;
 import step.framework.server.ServerPluginManager;
 import step.framework.server.tables.TableRegistry;
@@ -129,6 +129,9 @@ public class GlobalContextBuilder {
                 resourceRevisionAccessor, ResourceRevision.class));
 
         context.setArtefactHandlerRegistry(new ArtefactHandlerRegistry());
+
+        MetricTypeAccessor accessor = new MetricTypeAccessor(new InMemoryCollection<>());
+        context.put(MetricTypeRegistry.class, new MetricTypeRegistry(accessor));
         return context;
     }
 }

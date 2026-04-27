@@ -34,6 +34,9 @@ import step.core.repositories.RepositoryObjectManager;
 
 public abstract class AbstractExecutionEngineContext extends AbstractStepContext {
 
+    public static final String CONTROLLER_URL_KEY = "CONTROLLER_URL_KEY";
+    public static final String CONTROLLER_SERVICE_URL_KEY = "CONTROLLER_SERVICE_URL_KEY";
+
     private OperationMode operationMode;
     private ArtefactHandlerRegistry artefactHandlerRegistry;
 
@@ -140,5 +143,23 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
 
     public void setRepositoryObjectManager(RepositoryObjectManager repositoryObjectManager) {
         this.repositoryObjectManager = repositoryObjectManager;
+    }
+
+    public String getControllerUrl() {
+        Object controllerUrl = this.get(CONTROLLER_URL_KEY);
+        return (controllerUrl instanceof String) ? (String) controllerUrl : null;
+    }
+
+    public void setControllerUrl(String controllerUrl) {
+        this.put(CONTROLLER_URL_KEY, controllerUrl);
+    }
+
+    public String getControllerServiceUrl() {
+        Object controllerUrl = this.get(CONTROLLER_SERVICE_URL_KEY);
+        return (controllerUrl instanceof String) ? (String) controllerUrl : null;
+    }
+
+    public void setControllerServiceUrl(String controllerUrl) {
+        this.put(CONTROLLER_SERVICE_URL_KEY, controllerUrl);
     }
 }

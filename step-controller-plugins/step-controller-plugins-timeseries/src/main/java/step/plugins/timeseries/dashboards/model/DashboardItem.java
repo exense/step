@@ -53,6 +53,7 @@ public class DashboardItem { // T = 'ChartSettings'. class: 'ChartSettings' @Jso
     private int size = 1; // full width is 2
     // one setting for each type
 
+    private boolean omitWhenEmpty;
 
     public String getName() {
         return name;
@@ -213,6 +214,15 @@ public class DashboardItem { // T = 'ChartSettings'. class: 'ChartSettings' @Jso
 
     public DashboardItem setSpecificFiltersToInherit(List<String> specificFiltersToInherit) {
         this.specificFiltersToInherit = specificFiltersToInherit;
+        return this;
+    }
+
+    public boolean isOmitWhenEmpty() {
+        return omitWhenEmpty;
+    }
+
+    public DashboardItem setOmitWhenEmpty(boolean omitWhenEmpty) {
+        this.omitWhenEmpty = omitWhenEmpty;
         return this;
     }
 }
