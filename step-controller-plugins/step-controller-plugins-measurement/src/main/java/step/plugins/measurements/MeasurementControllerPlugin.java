@@ -17,12 +17,19 @@ import step.grid.GridReportBuilder;
 import step.grid.TokenWrapperState;
 import step.grid.reports.TokenGroupCapacity;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static step.plugins.measurements.MeasurementPlugin.*;
+import static step.plugins.measurements.MeasurementPlugin.MEASURE_FIELDS;
+import static step.plugins.measurements.MeasurementPlugin.MEASURE_NOT_DATA_KEYS;
+import static step.plugins.measurements.MeasurementPlugin.VALUE;
 
 @Plugin(dependencies = {GridPlugin.class})
 public class MeasurementControllerPlugin extends AbstractControllerPlugin {
@@ -139,7 +146,9 @@ public class MeasurementControllerPlugin extends AbstractControllerPlugin {
 
     @Override
     public void serverStop(GlobalContext context) {
-        gaugeCollectorRegistry.stop();
+        if (gaugeCollectorRegistry != null) {
+            gaugeCollectorRegistry.stop();
+        }
     }
 
     @Override
