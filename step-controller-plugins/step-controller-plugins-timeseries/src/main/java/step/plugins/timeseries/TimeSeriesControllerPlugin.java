@@ -79,14 +79,14 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     public void serverStart(GlobalContext context) {
         Configuration configuration = context.getConfiguration();
         Set<String> includedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, "").split(","))
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toSet());
+            .filter(s -> !s.isEmpty())
+            .collect(Collectors.toSet());
         Set<String> excludedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY, TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT).split(","))
             .filter(s -> !s.isEmpty())
             .collect(Collectors.toSet());
 
         if (!includedAttributes.isEmpty() && !excludedAttributes.isEmpty()) {
-            throw new PluginCriticalException("Setting both the properties " + TIME_SERIES_ATTRIBUTES_PROPERTY + " and "  + TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY + " is not allowed.");
+            throw new PluginCriticalException("Setting both the properties " + TIME_SERIES_ATTRIBUTES_PROPERTY + " and " + TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY + " is not allowed.");
         }
 
         MigrationManager migrationManager = context.require(MigrationManager.class);
@@ -100,7 +100,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         warnAboutDisabledCollections(timeSeriesConfig);
         timeSeries = new TimeSeriesBuilder()
             .withConfig(timeSeriesConfig, collectionFactory, TIME_SERIES_MAIN_COLLECTION, Set.of(ATTRIBUTE_EXECUTION_ID))
-            .setAggregationConfig(new TimeSeriesAggregationConfig()
+            .withAggregationConfig(new TimeSeriesAggregationConfig()
                 .setIdealResponseIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_IDEAL_INTERVALS, TimeSeriesAggregationConfig.DEFAULT_IDEAL_RESPONSE_INTERVALS))
                 .setResponseMaxIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_MAX_INTERVALS, TimeSeriesAggregationConfig.DEFAULT_RESPONSE_MAX_INTERVALS))
             )
@@ -132,7 +132,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
 
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
         // Following property is used by the UI. We could align its name with the configuration property in the future
-        configurationManager.registerHook(s -> Map.of("plugins.timeseries.resolution.period", String.valueOf(timeSeries.getDefaultCollection().getResolution())));
+        configurationManager.registerHook(s -> Map.of("plugins.timeseries.resolution.period", String.valueOf(timeSeries.getDefaultCollection().getResolutionMs())));
     }
 
     @Override
@@ -229,8 +229,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
             return null;
         });
     }
-
-
 
 
     @Override
