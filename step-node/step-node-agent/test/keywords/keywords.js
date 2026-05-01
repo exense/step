@@ -37,6 +37,16 @@ exports.ErrorUncaughtExceptionTestKW = async (input, output, session, properties
   })
 }
 
+// Fires after the setImmediate flush (timer phase comes after check phase in the *next* iteration),
+// so the error lands between keywords or after the last keyword — not in the triggering keyword's output.
+exports.FireAndForgetRejectionKW = async (input, output, session, properties) => {
+  setTimeout(() => Promise.reject(new Error('inter-keyword rejection')), 50)
+}
+
+exports.FireAndForgetExceptionKW = async (input, output, session, properties) => {
+  setTimeout(() => { throw new Error('inter-keyword exception') }, 50)
+}
+
 exports.onError = async (exception, input, output, session, properties) => {
   console.log('[onError] Exception is: \'' + exception + '\'')
   output.builder.payload.payload.onErrorCalled = true
