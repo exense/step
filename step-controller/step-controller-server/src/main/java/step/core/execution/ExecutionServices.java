@@ -419,7 +419,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     @Secured(right = "execution-delete")
     public void deleteExecution(@PathParam("id") String id) {
         Execution execution = executionAccessor.get(id);
-        if (execution.getStatus().equals(ExecutionStatus.ENDED)) {
+        if (!execution.getStatus().equals(ExecutionStatus.ENDED)) {
             throw new ControllerServiceException("Only ended executions can be deleted.");
         }
         executionAccessor.remove(new ObjectId(id));
