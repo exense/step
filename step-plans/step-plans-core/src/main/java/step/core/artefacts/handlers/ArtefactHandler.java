@@ -269,10 +269,14 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
     private Map<String, Object> getTimeSeriesContextAttributes(ExecutionContext executionContext) {
         Map<String, Object> attributes = new HashMap<>();
-        if (context.getPlan() != null) {
-            attributes.put("planId", context.getPlan().getId().toString());
+		String canonicalPlanName = executionContext.getExecutionManager().getExecution().getImportResult().getCanonicalPlanName();
+		if (canonicalPlanName != null) {
+			attributes.put("canonicalPlanName", canonicalPlanName);
+		}
+		if (executionContext.getPlan() != null) {
+            attributes.put("planId", executionContext.getPlan().getId().toString());
         }
-        attributes.put("taskId", Objects.requireNonNullElse(context.get("$schedulerTaskId"), ""));
+        attributes.put("taskId", Objects.requireNonNullElse(executionContext.get("$schedulerTaskId"), ""));
 
         TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
         if (additionalAttributes != null) {

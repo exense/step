@@ -217,24 +217,38 @@ public class ExecutionServices extends AbstractStepAsyncServices {
             param.getSkip(), param.getLimit());
     }
 
-    @Operation(description = "Returns the report nodes of the given execution and matching the given class.")
+	@Operation(description = "Returns the report nodes of the given execution and matching the given class.")
+	@GET
+	@Path("/{id}/reportnodes")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Secured(right="execution-read")
+	public List<ReportNode> getReportNodesByExecutionID(@PathParam("id") String executionID, @QueryParam("class") String reportNodeClass, @QueryParam("limit") int limit) {
+		List<ReportNode> result = new ArrayList<>();
+		Iterator<ReportNode> iterator;
+		if(reportNodeClass!=null) {
+			try (Stream<ReportNode> reportNodesByExecutionID = getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionID, reportNodeClass, limit)) {
+				result = reportNodesByExecutionID.collect(Collectors.toList());
+			}
+		} else {
+			try (Stream<ReportNode> reportNodesByExecutionID = getContext().getReportAccessor().getReportNodesByExecutionID(executionID, limit)) {
+				result = reportNodesByExecutionID.collect(Collectors.toList());
+			}
+		}
+		return result;
+	}
+
+    @Operation(description = "Returns the last executions by planId/canonicalPlanName")
     @GET
-    @Path("/{id}/reportnodes")
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/search/last/by/plan/{id}")
     @Secured(right = "execution-read")
-    public List<ReportNode> getReportNodesByExecutionID(@PathParam("id") String executionID, @QueryParam("class") String reportNodeClass, @QueryParam("limit") int limit) {
-        List<ReportNode> result = new ArrayList<>();
-        Iterator<ReportNode> iterator;
-        if (reportNodeClass != null) {
-            try (Stream<ReportNode> reportNodesByExecutionID = getContext().getReportAccessor().getReportNodesByExecutionIDAndClass(executionID, reportNodeClass, limit)) {
-                result = reportNodesByExecutionID.collect(Collectors.toList());
-            }
-        } else {
-            try (Stream<ReportNode> reportNodesByExecutionID = getContext().getReportAccessor().getReportNodesByExecutionID(executionID, limit)) {
-                result = reportNodesByExecutionID.collect(Collectors.toList());
-            }
-        }
-        return result;
+    public List<Execution> getLastExecutionsByPlan(
+            @PathParam("id") String planId,
+            @QueryParam("limit") int limit,
+            @QueryParam("from") Long from,
+            @QueryParam("to") Long to) {
+        return ((ExecutionAccessorImpl) getContext().getExecutionAccessor()).getLastEndedExecutionsByPlanId(planId, limit, from, to);
     }
 
     @Operation(description = "Returns the list of report nodes with contributing errors for the given execution")
@@ -405,7 +419,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     @Secured(right = "execution-delete")
     public void deleteExecution(@PathParam("id") String id) {
         Execution execution = executionAccessor.get(id);
-        if (execution.getStatus().equals(ExecutionStatus.ENDED)) {
+        if (!execution.getStatus().equals(ExecutionStatus.ENDED)) {
             throw new ControllerServiceException("Only ended executions can be deleted.");
         }
         executionAccessor.remove(new ObjectId(id));

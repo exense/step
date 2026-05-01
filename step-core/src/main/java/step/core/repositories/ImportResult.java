@@ -26,10 +26,9 @@ public class ImportResult implements Serializable {
     private static final long serialVersionUID = 3711110316457339962L;
 
     protected boolean successful = false;
-    ;
 
     protected String planId;
-	protected String canonicalPlanName;
+    protected String canonicalPlanName;
 
     List<String> errors;
 
@@ -57,9 +56,9 @@ public class ImportResult implements Serializable {
 		this.canonicalPlanName = canonicalPlanName;
 	}
 
-    public List<String> getErrors() {
-        return errors;
-    }
+	public List<String> getErrors() {
+		return errors;
+	}
 
     public void setErrors(List<String> errors) {
         this.errors = errors;

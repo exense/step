@@ -45,13 +45,13 @@ public class RepositoryObjectManager {
         repositories.put(id, repository);
     }
 
-    public ImportResult importPlan(ExecutionContext context, RepositoryObjectReference artefact) throws Exception {
-        String respositoryId = artefact.getRepositoryID();
-        Repository repository = getRepository(respositoryId);
-		ImportResult importResult = repository.importArtefact(context, artefact.getRepositoryParameters());
-		importResult.setCanonicalPlanName(repository.getCanonicalPlanName(artefact.getRepositoryParameters()));
-		return importResult;
-    }
+	public ImportResult importPlan(ExecutionContext context, RepositoryObjectReference artefact) throws Exception  {
+		String respositoryId = artefact.getRepositoryID();
+		Repository repository = getRepository(respositoryId);
+        ImportResult importResult = repository.importArtefact(context, artefact.getRepositoryParameters());
+        importResult.setCanonicalPlanName(repository.getCanonicalPlanName(artefact.getRepositoryParameters()));
+        return importResult;
+	}
 
     public Repository getRepository(String respositoryId) {
         Repository repository = repositories.get(respositoryId);
