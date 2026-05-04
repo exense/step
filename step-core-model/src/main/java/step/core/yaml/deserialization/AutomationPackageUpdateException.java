@@ -19,11 +19,11 @@
 package step.core.yaml.deserialization;
 
 public class AutomationPackageUpdateException extends RuntimeException {
-    public AutomationPackageUpdateException(String s, Exception e) {
-        super(s, e);
+    public AutomationPackageUpdateException(String message, Exception e) {
+        super(message, e);
     }
 
-    public AutomationPackageUpdateException(String s) {
-        super(s);
+    public AutomationPackageUpdateException(String message) {
+        super(message);
     }
 }

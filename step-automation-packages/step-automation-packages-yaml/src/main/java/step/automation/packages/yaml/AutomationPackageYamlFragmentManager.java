@@ -172,7 +172,12 @@ public class AutomationPackageYamlFragmentManager {
 
 
         if (mode== NewObjectFragmentMode.PER_OBJECT && !p.hasAttribute(AbstractOrganizableObject.NAME)) {
-            throw new AutomationPackagePerObjectSaveUnsupportedException("Saving by object name is unsupported for " + fieldName + ", please configure the entity to be stored in a specified single fragment.");
+            throw new AutomationPackagePerObjectSaveUnsupportedException(String.format("""
+                Saving by object name is unsupported for %1$s, please configure the entity to be stored in a specified single fragment, i.e.
+
+                %2$s = %1$s.yml
+                %3$s = %4$s
+                """, fieldName, String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, fieldName), String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, fieldName), NewObjectFragmentMode.FRAGMENT.name()));
         }
 
         String relativeFragmentPath = properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, fieldName), defaultRelativeFragmentPath);

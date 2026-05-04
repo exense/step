@@ -20,7 +20,7 @@ package step.core.yaml.deserialization;
  ******************************************************************************/
 public class AutomationPackagePerObjectSaveUnsupportedException extends AutomationPackageUpdateException {
 
-    public AutomationPackagePerObjectSaveUnsupportedException(String s) {
-        super(s);
+    public AutomationPackagePerObjectSaveUnsupportedException(String message) {
+        super(message);
     }
 }
