@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
@@ -46,6 +47,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class AutomationPackageYamlFragmentManager {
+
+
 
     public enum NewObjectFragmentMode {
         /**
@@ -110,6 +113,7 @@ public class AutomationPackageYamlFragmentManager {
             .map(businessObject -> (BO) businessObject).collect(Collectors.toList());
     }
 
+
     public synchronized Plan savePlan(Plan plan) {
         YamlPlan newYamlPlan = descriptorReader.getPlanReader().planToYamlPlan(plan);
 
@@ -126,6 +130,25 @@ public class AutomationPackageYamlFragmentManager {
         patchableMap.put(plan, newYamlPlan);
 
         return plan;
+    }
+
+
+
+    public synchronized step.functions.Function saveFunction(step.functions.Function function) {
+        AutomationPackageFragmentYaml fragment = fragmentMap.get(function);
+        YamlAutomationPackageKeyword newYamlKeyword = new YamlAutomationPackageKeyword(null , fragment.getPatchingContext());
+        if (fragment == null) {
+            fragment = fragmentForNewObject(function, YamlPlan.PLANS_ENTITY_NAME);
+            fragmentMap.put(function, fragment);
+            pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
+            addFragmentEntity(fragment, fragment.getKeywords(), newYamlKeyword);
+        } else {
+            YamlAutomationPackageKeyword yamlKeyword = (YamlAutomationPackageKeyword) patchableMap.get(function);
+            modifyFragmentEntity(fragment, fragment.getKeywords(), yamlKeyword, newYamlKeyword);
+        }
+        patchableMap.put(function, newYamlKeyword);
+
+        return function;
     }
 
     private <T extends PatchableYamlModel>  void addFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T newEntity) {
@@ -178,17 +201,30 @@ public class AutomationPackageYamlFragmentManager {
         return URLEncoder.encode(inputName, Charset.defaultCharset()).replace("+", " ");
     }
 
-    public void removePlan(Plan p) {
-        AutomationPackageFragmentYaml fragment = fragmentMap.get(p);
-        YamlPlan yamlPlan = (YamlPlan) patchableMap.get(p);
+    public void removePlan(Plan plan) {
+        AutomationPackageFragmentYaml fragment = fragmentMap.get(plan);
+        YamlPlan yamlPlan = (YamlPlan) patchableMap.get(plan);
 
         fragment.getPlans().remove(yamlPlan);
 
-        patchableMap.remove(p);
-        fragmentMap.remove(p);
+        patchableMap.remove(plan);
+        fragmentMap.remove(plan);
 
         fragment.writeToDisk();
     }
+
+    public void removeFunction(step.functions.Function function) {
+        AutomationPackageFragmentYaml fragment = fragmentMap.get(function);
+        YamlAutomationPackageKeyword yamlKeyword = (YamlAutomationPackageKeyword) patchableMap.get(function);
+
+        fragment.getPlans().remove(yamlKeyword);
+
+        patchableMap.remove(function);
+        fragmentMap.remove(function);
+
+        fragment.writeToDisk();
+    }
+
 
     public <BO extends AbstractOrganizableObject> void removeAdditionalFieldObject(BO object, String fieldName) {
 
@@ -221,4 +257,6 @@ public class AutomationPackageYamlFragmentManager {
         }
         return object;
     }
+
+
 }

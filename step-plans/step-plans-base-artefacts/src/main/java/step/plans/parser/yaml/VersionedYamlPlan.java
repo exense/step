@@ -16,36 +16,28 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.model;
+package step.plans.parser.yaml;
 
-import step.automation.packages.StagingAutomationPackageContext;
-import step.core.yaml.PatchableYamlModelBase;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import step.core.yaml.deserialization.PatchingContext;
-import step.functions.Function;
 
-public class YamlAutomationPackageKeyword extends PatchableYamlModelBase implements AutomationPackageKeyword {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonPropertyOrder(VersionedYamlPlan.VERSION_FIELD_NAME)
+public class VersionedYamlPlan extends YamlPlan {
 
-    private AbstractYamlFunction<?> yamlKeyword;
+    // this name should be kept untouched to support the migrations for old versions
+    public static final String VERSION_FIELD_NAME = "version";
 
+    private String version;
 
+    public VersionedYamlPlan(PatchingContext context, String version) {
 
-    public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword, PatchingContext context) {
         super(context);
-        this.yamlKeyword = yamlKeyword;
+        this.version = version;
     }
 
-
-    public AbstractYamlFunction<?> getYamlKeyword() {
-        return yamlKeyword;
+    public String getVersion() {
+        return version;
     }
-
-    public void setYamlKeyword(AbstractYamlFunction<?> yamlKeyword) {
-        this.yamlKeyword = yamlKeyword;
-    }
-
-    @Override
-    public Function prepareKeyword(StagingAutomationPackageContext context) {
-        return yamlKeyword.applyAutomationPackageContext(context);
-    }
-
 }

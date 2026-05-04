@@ -18,15 +18,15 @@
  ******************************************************************************/
 package step.automation.packages.yaml.deserialization;
 
+import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.core.yaml.AutomationPackageKeywordsLookuper;
-import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
+import step.core.yaml.deserialization.PatchingParserDelegate;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 
@@ -46,9 +46,12 @@ public class YamlKeywordDeserializer extends StepYamlDeserializer<YamlAutomation
         String yamlName = jsonParser.nextFieldName();
 
         try {
+            PatchingParserDelegate patchingParser = (PatchingParserDelegate) jsonParser;
             Class<?> clazz = Class.forName(keywordsLookuper.yamlKeywordClassToJava(yamlName));
+            JsonLocation startItem = patchingParser.currentLocation();
             jsonParser.nextToken();
-            YamlAutomationPackageKeyword keyword = new YamlAutomationPackageKeyword((AbstractYamlFunction<?>) deserializationContext.readValue(jsonParser, clazz));
+            YamlAutomationPackageKeyword keyword = new YamlAutomationPackageKeyword((AbstractYamlFunction<?>) deserializationContext.readValue(jsonParser, clazz), patchingParser.getPatchingContext());
+            keyword.setPatchingBounds(startItem, patchingParser.getLastDistinctLocation());
             jsonParser.nextToken();
             return keyword;
         } catch (ClassNotFoundException e) {

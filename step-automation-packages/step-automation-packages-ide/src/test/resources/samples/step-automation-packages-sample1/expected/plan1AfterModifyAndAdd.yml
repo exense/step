@@ -2,8 +2,7 @@
 fragments: []
 keywords: []
 plans:
-- version: "1.2.0"
-  name: "Test Plan"
+- name: "Test Plan"
   root:
     testCase:
       nodeName: "Test Plan"
@@ -19,18 +18,14 @@ plans:
           inputs:
           - myInput: "myValue"
           keyword: "MyKeyword2"
-  agents: null
   categories:
   - "Yaml Plan"
-- version: "1.2.0"
-  name: "New Name"
+- name: "New Name"
   root:
     sequence:
       children:
       - echo:
           text: "Hello World"
-  agents: null
-  categories: null
 plansPlainText:
 - name: "Plain text plan"
   rootType: "Sequence"

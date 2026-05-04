@@ -13,15 +13,12 @@ alertingRules:
             BindingValueEqualsPredicate:
               value: "myValue"
 plans:
-- version: "1.2.0"
-  name: "New Name"
+- name: "New Name"
   root:
     sequence:
       children:
       - echo:
           text: "Hello World"
-  agents: null
-  categories: null
 fragments:
   - "keywords.yml"
   - "plans/*.yml"

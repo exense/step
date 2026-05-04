@@ -20,26 +20,24 @@ package step.plans.parser.yaml;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.OptBoolean;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
+import step.core.plans.agents.configuration.AgentProvisioningConfigurationDeserializer;
+import step.core.plans.agents.configuration.AgentProvisioningConfigurationSerializer;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.deserialization.PatchingContext;
 import step.core.yaml.model.NamedYamlArtefact;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import step.core.plans.agents.configuration.AgentProvisioningConfigurationDeserializer;
-import step.core.plans.agents.configuration.AgentProvisioningConfigurationSerializer;
-import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class YamlPlan extends PatchableYamlModelBase {
 
     public static final String PLANS_ENTITY_NAME = "plans";
 
-    // this name should be kept untouched to support the migrations for old versions
-    public static final String VERSION_FIELD_NAME = "version";
-
-    private String version;
     private String name;
 
     private NamedYamlArtefact root;
@@ -69,14 +67,6 @@ public class YamlPlan extends PatchableYamlModelBase {
 
     public void setRoot(NamedYamlArtefact root) {
         this.root = root;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
     }
 
     public AgentProvisioningConfiguration getAgents() {

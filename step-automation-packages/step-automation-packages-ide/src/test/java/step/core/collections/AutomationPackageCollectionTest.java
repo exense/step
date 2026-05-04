@@ -44,8 +44,10 @@ import step.plans.parser.yaml.YamlPlan;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -85,7 +87,9 @@ public class AutomationPackageCollectionTest {
     }
 
     @After
-    public void tearDown() throws IOException {
+    public void tearDown() throws IOException, AutomationPackageReadingException {
+        // Attempt to re-read the just written Automation package from scratch
+        reader.getAutomationPackageYamlFragmentManager(destinationDirectory);
         FileUtils.deleteDirectory(destinationDirectory);
     }
 
@@ -135,7 +139,9 @@ public class AutomationPackageCollectionTest {
         text.setDynamic(true);
         text.setExpression("new Date().toString();");
 
-        Files.writeString(destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"), "This file was edited", StandardCharsets.UTF_8);
+        Files.copy(sourceDirectory.toPath().resolve("plans").resolve("plan1.yml"),
+            destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"),
+            StandardCopyOption.REPLACE_EXISTING);
 
         assertThrows(AutomationPackageConcurrentEditException.class, () -> planCollection.save(plan));
 

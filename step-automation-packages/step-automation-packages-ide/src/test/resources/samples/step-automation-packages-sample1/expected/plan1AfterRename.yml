@@ -2,8 +2,7 @@
 fragments: []
 keywords: []
 plans:
-- version: "1.2.0"
-  name: "New Plan Name"
+- name: "New Plan Name"
   root:
     testCase:
       nodeName: "Test Plan"
@@ -18,7 +17,6 @@ plans:
           inputs:
           - myInput: "myValue"
           keyword: "MyKeyword2"
-  agents: null
   categories:
   - "Yaml Plan"
 plansPlainText:

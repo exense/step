@@ -25,17 +25,14 @@ import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.BeanDeserializer;
-import com.fasterxml.jackson.databind.deser.BeanDeserializerBase;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.std.CollectionDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
@@ -51,7 +48,6 @@ import step.core.yaml.deserialization.PatchableYamlListDeserializer;
 import step.core.yaml.deserialization.PatchableYamlModelDeserializer;
 import step.core.yaml.deserialization.PatchingContext;
 import step.core.yaml.deserializers.StepYamlDeserializer;
-import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.core.yaml.serializers.StepYamlSerializersScanner;
 import step.migration.MigrationManager;
@@ -172,7 +168,7 @@ public class YamlPlanReader {
      * Writes the plan as YAML
      */
     public void writeYamlPlan(OutputStream os, Plan plan) throws IOException {
-        yamlMapper.writeValue(os, planToYamlPlan(plan));
+        yamlMapper.writeValue(os, planToVersionedYamlPlan(plan));
     }
 
     public void convertFromPlainTextToYaml(String planName, InputStream planTextInputStream, OutputStream yamlOutputStream) throws IOException, StepsParser.ParsingException {
@@ -333,10 +329,20 @@ public class YamlPlanReader {
         return plan;
     }
 
+    public VersionedYamlPlan planToVersionedYamlPlan(Plan plan) {
+        VersionedYamlPlan yamlPlan = new VersionedYamlPlan(new PatchingContext("", yamlMapper), currentVersion.toString());
+        setYamlPlanFieldsFromPlan(yamlPlan, plan);
+        return yamlPlan;
+    }
+
     public YamlPlan planToYamlPlan(Plan plan) {
         YamlPlan yamlPlan = new YamlPlan(new PatchingContext("", yamlMapper));
+        setYamlPlanFieldsFromPlan(yamlPlan, plan);
+        return yamlPlan;
+    }
+
+    private void setYamlPlanFieldsFromPlan(YamlPlan yamlPlan, Plan plan) {
         yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
-        yamlPlan.setVersion(currentVersion.toString());
         yamlPlan.setCategories(plan.getCategories());
         yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
         AgentProvisioningConfiguration agents = plan.getAgents();
@@ -345,7 +351,6 @@ public class YamlPlanReader {
             !((AutomaticAgentProvisioningConfiguration) agents).mode.equals(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect)) {
             yamlPlan.setAgents(plan.getAgents());
         }
-        return yamlPlan;
     }
 
 }
