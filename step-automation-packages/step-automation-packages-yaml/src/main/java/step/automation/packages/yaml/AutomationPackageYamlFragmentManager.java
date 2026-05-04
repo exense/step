@@ -26,6 +26,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchableYamlModelBase;
+import step.core.yaml.deserialization.AutomationPackagePerObjectSaveUnsupportedException;
 import step.core.yaml.deserialization.AutomationPackageUpdateException;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchingContext;
@@ -168,6 +169,12 @@ public class AutomationPackageYamlFragmentManager {
         if (mode == NewObjectFragmentMode.FRAGMENT) {
             defaultRelativeFragmentPath = defaultRelativeFragmentPath + ".yml";
         }
+
+
+        if (mode== NewObjectFragmentMode.PER_OBJECT && !p.hasAttribute(AbstractOrganizableObject.NAME)) {
+            throw new AutomationPackagePerObjectSaveUnsupportedException("Saving by object name is unsupported for " + fieldName + ", please configure the entity to be stored in a specified single fragment.");
+        }
+
         String relativeFragmentPath = properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, fieldName), defaultRelativeFragmentPath);
         Path path = new File(relativeFragmentPath).toPath();
         if (!path.isAbsolute()) {
@@ -242,15 +249,19 @@ public class AutomationPackageYamlFragmentManager {
 
     public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModelBase> BO saveAdditionalFieldObject(BO object, Function<PatchingContext, YO> newYamlObjectCreator, String fieldName) {
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
-        YO newYamlObject = newYamlObjectCreator.apply(fragment.getPatchingContext());
-        PatchableYamlList<YO> list = (PatchableYamlList<YO>) fragment.getAdditionalFields().getOrDefault(fieldName, new PatchableYamlList<YO>(fragment.getPatchingContext(), fieldName));
         if (fragment == null) {
             fragment = fragmentForNewObject(object, fieldName);
+
+            YO newYamlObject = newYamlObjectCreator.apply(fragment.getPatchingContext());
+            PatchableYamlList<YO> list = (PatchableYamlList<YO>) fragment.getAdditionalFields().getOrDefault(fieldName, new PatchableYamlList<YO>(fragment.getPatchingContext(), fieldName));
+
             fragmentMap.put(object, fragment);
             pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
             addFragmentEntity(fragment, list, newYamlObject);
             patchableMap.put(object, newYamlObject);
         } else {
+            YO newYamlObject = newYamlObjectCreator.apply(fragment.getPatchingContext());
+            PatchableYamlList<YO> list = (PatchableYamlList<YO>) fragment.getAdditionalFields().getOrDefault(fieldName, new PatchableYamlList<YO>(fragment.getPatchingContext(), fieldName));
 
             YO oldYamlObject = (YO) patchableMap.get(object);
             modifyFragmentEntity(fragment, list, oldYamlObject, newYamlObject);

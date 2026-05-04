@@ -30,12 +30,12 @@ import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
+import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
+import step.core.yaml.deserialization.AutomationPackagePerObjectSaveUnsupportedException;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.automation.AutomationPackageParametersRegistration;
@@ -43,8 +43,6 @@ import step.plans.parser.yaml.YamlPlan;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -185,7 +183,7 @@ public class AutomationPackageCollectionTest {
         plan.setAttributes(attributes);
 
 
-        setPropertiesWriteToFragment("plans/plan1.yml");
+        setPropertiesWriteToFragment(YamlPlan.PLANS_ENTITY_NAME, "plans/plan1.yml");
 
         planCollection.save(plan);
 
@@ -217,7 +215,7 @@ public class AutomationPackageCollectionTest {
         attributes.put("name", "New Name");
         plan.setAttributes(attributes);
 
-        setPropertiesWriteToFragment("plans/plan1.yml");
+        setPropertiesWriteToFragment(YamlPlan.PLANS_ENTITY_NAME, "plans/plan1.yml");
 
         planCollection.save(plan);
 
@@ -250,7 +248,7 @@ public class AutomationPackageCollectionTest {
         plan.setAttributes(attributes);
 
 
-        setPropertiesWriteToFragment("plans/plan1.yml");
+        setPropertiesWriteToFragment(YamlPlan.PLANS_ENTITY_NAME, "plans/plan1.yml");
 
         planCollection.save(plan);
 
@@ -275,7 +273,7 @@ public class AutomationPackageCollectionTest {
         attributes.put("name", "New Name");
         plan.setAttributes(attributes);
 
-        setPropertiesWriteToFragment("automation-package.yml");
+        setPropertiesWriteToFragment(YamlPlan.PLANS_ENTITY_NAME, "automation-package.yml");
 
         planCollection.save(plan);
 
@@ -315,6 +313,28 @@ public class AutomationPackageCollectionTest {
         assertFilesEqual(expectedFilesPath.resolve("parametersAfterModification.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
     }
 
+
+    @Test
+    public void testParameterAddAndModify() throws IOException {
+
+
+        Parameter parameter = new Parameter(null, "addedParameter", "test", "This is an added Parameter before modification");
+        assertThrows(AutomationPackagePerObjectSaveUnsupportedException.class, () -> parameterCollection.save(parameter));
+
+
+        setPropertiesWriteToFragment(Parameter.ENTITY_NAME, "parameters.yml");
+        parameterCollection.save(parameter);
+
+        assertFilesEqual(expectedFilesPath.resolve("parametersAfterAdd.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
+
+        parameter.setDescription("This is an added Parameter after modification");
+        parameter.setValue(new DynamicValue<>("foo"));
+        parameterCollection.save(parameter);
+
+        assertFilesEqual(expectedFilesPath.resolve("parametersAfterAddAndModification.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
+    }
+
+
     private void assertFilesEqual(Path expected, Path actual) throws IOException {
         String expectedLines = Files.readString(expected);
         String actualLines = Files.readString(actual);
@@ -322,10 +342,10 @@ public class AutomationPackageCollectionTest {
         assertEquals(expectedLines, actualLines);
     }
 
-    private void setPropertiesWriteToFragment(String fragment) {
+    private void setPropertiesWriteToFragment(String entityName, String fragment) {
         Properties properties = new Properties();
-        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, YamlPlan.PLANS_ENTITY_NAME), fragment);
-        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, YamlPlan.PLANS_ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), fragment);
+        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
 
         fragmentManager.setProperties(properties);
     }
