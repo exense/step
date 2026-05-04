@@ -35,6 +35,7 @@ import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.repositories.parser.StepsParser;
+import step.resources.LocalResourceManagerImpl;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +43,7 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -189,7 +191,8 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
             AutomationPackageContent content = newContentInstance();
             Map<String, AutomationPackageFragmentYaml> fragmentMap = new ConcurrentHashMap<>();
             fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragmentMap);
-            return new AutomationPackageYamlFragmentManager(descriptor, fragmentMap, getOrCreateDescriptorReader());
+            StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(null, AutomationPackageOperationMode.LOCAL, new LocalResourceManagerImpl(Path.of(descriptorURL.getPath()).getParent().toFile()), archive, content, null, null, new HashMap<>());
+            return new AutomationPackageYamlFragmentManager(descriptor, fragmentMap, getOrCreateDescriptorReader(), stagingContext);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("Failed to read automation package for editing", e);
         }

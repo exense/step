@@ -42,7 +42,7 @@ public class AutomationPackageCollectionFactory implements CollectionFactory {
 
         if (Plan.class.isAssignableFrom(entityClass))  {
             return (Collection<T>) new AutomationPackagePlanCollection(fragmentManager);
-        } else if (Parameter.class.isAssignableFrom(Parameter.class)) {
+        } else if (Parameter.class.isAssignableFrom(entityClass)) {
             return (Collection<T>) new AutomationPackageParameterCollection(fragmentManager);
         } else if (Function.class.isAssignableFrom(entityClass)) {
             return (Collection<T>) new AutomationPackageFunctionCollection(fragmentManager);

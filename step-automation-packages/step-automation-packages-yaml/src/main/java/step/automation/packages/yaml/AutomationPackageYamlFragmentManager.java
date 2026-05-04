@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
+import step.automation.packages.AutomationPackageOperationMode;
+import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
@@ -30,9 +32,12 @@ import step.core.yaml.deserialization.AutomationPackagePerObjectSaveUnsupportedE
 import step.core.yaml.deserialization.AutomationPackageUpdateException;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchingContext;
+import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.automation.AutomationPackageParameter;
 import step.plans.parser.yaml.YamlPlan;
+import step.resources.LocalResourceManagerImpl;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -41,15 +46,17 @@ import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.text.MessageFormat;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class AutomationPackageYamlFragmentManager {
 
 
+    private final Path apRoot;
+    private final StagingAutomationPackageContext stagingContext;
 
     public enum NewObjectFragmentMode {
         /**
@@ -73,13 +80,16 @@ public class AutomationPackageYamlFragmentManager {
     private Properties properties = new Properties();
     private final AutomationPackageFragmentYaml descriptorYaml;
 
-    public AutomationPackageYamlFragmentManager(AutomationPackageDescriptorYaml descriptorYaml, Map<String, AutomationPackageFragmentYaml> fragmentMap, AutomationPackageDescriptorReader descriptorReader) {
+    public AutomationPackageYamlFragmentManager(AutomationPackageDescriptorYaml descriptorYaml, Map<String, AutomationPackageFragmentYaml> fragmentMap, AutomationPackageDescriptorReader descriptorReader, StagingAutomationPackageContext stagingContext) {
 
         this.descriptorReader = descriptorReader;
         this.descriptorYaml = descriptorYaml;
 
         pathToYamlFragment = fragmentMap;
+        apRoot = Path.of(descriptorYaml.getFragmentUrl().getPath())
+            .getParent();
 
+        this.stagingContext = stagingContext;
         initializeMaps(descriptorYaml);
 
         pathToYamlFragment.values().forEach(this::initializeMaps);
@@ -95,6 +105,19 @@ public class AutomationPackageYamlFragmentManager {
             Plan plan = descriptorReader.getPlanReader().yamlPlanToPlan(yamlPlan);
             patchableMap.put(plan, yamlPlan);
             fragmentMap.put(plan, fragment);
+        }
+
+        for (YamlAutomationPackageKeyword keyword : fragment.getKeywords()) {
+            try {
+                Function function = keyword.prepareKeyword(stagingContext);
+                patchableMap.put(function, keyword);
+                fragmentMap.put(function, fragment);
+            } catch (Exception e) {
+                /* TODO: requires proper handling of keywords
+                    which map to resources or require StagingAutomationPackageContext in another way.
+                 */
+                System.out.println(e);
+            }
         }
 
         PatchableYamlList<Object> parameters = fragment.getAdditionalField(Parameter.ENTITY_NAME);
@@ -137,17 +160,17 @@ public class AutomationPackageYamlFragmentManager {
 
     public synchronized step.functions.Function saveFunction(step.functions.Function function) {
         AutomationPackageFragmentYaml fragment = fragmentMap.get(function);
-        YamlAutomationPackageKeyword newYamlKeyword = new YamlAutomationPackageKeyword(null , fragment.getPatchingContext());
         if (fragment == null) {
             fragment = fragmentForNewObject(function, YamlPlan.PLANS_ENTITY_NAME);
             fragmentMap.put(function, fragment);
             pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
-            addFragmentEntity(fragment, fragment.getKeywords(), newYamlKeyword);
+            //addFragmentEntity(fragment, fragment.getKeywords(), newYamlKeyword);
         } else {
             YamlAutomationPackageKeyword yamlKeyword = (YamlAutomationPackageKeyword) patchableMap.get(function);
-            modifyFragmentEntity(fragment, fragment.getKeywords(), yamlKeyword, newYamlKeyword);
+            yamlKeyword.getYamlKeyword().updateFromFunction(function);
+            modifyFragmentEntity(fragment, fragment.getKeywords(), yamlKeyword, yamlKeyword);
         }
-        patchableMap.put(function, newYamlKeyword);
+        //patchableMap.put(function, y);
 
         return function;
     }
@@ -183,8 +206,6 @@ public class AutomationPackageYamlFragmentManager {
         String relativeFragmentPath = properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, fieldName), defaultRelativeFragmentPath);
         Path path = new File(relativeFragmentPath).toPath();
         if (!path.isAbsolute()) {
-            Path apRoot = Path.of(descriptorYaml.getFragmentUrl().getPath())
-                    .getParent();
             path = apRoot.resolve(path);
         }
 
@@ -252,7 +273,7 @@ public class AutomationPackageYamlFragmentManager {
         fragment.writeToDisk();
     }
 
-    public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModelBase> BO saveAdditionalFieldObject(BO object, Function<PatchingContext, YO> newYamlObjectCreator, String fieldName) {
+    public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModelBase> BO saveAdditionalFieldObject(BO object, java.util.function.Function<PatchingContext, YO> newYamlObjectCreator, String fieldName) {
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
         if (fragment == null) {
             fragment = fragmentForNewObject(object, fieldName);

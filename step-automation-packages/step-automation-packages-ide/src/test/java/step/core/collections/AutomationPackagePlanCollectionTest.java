@@ -18,77 +18,37 @@
  ******************************************************************************/
 package step.core.collections;
 
-import ch.exense.commons.app.Configuration;
-import org.apache.commons.io.FileUtils;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
-import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.JavaAutomationPackageReader;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
-import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
-import step.core.yaml.deserialization.AutomationPackagePerObjectSaveUnsupportedException;
-import step.parameter.Parameter;
-import step.parameter.ParameterManager;
-import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plans.parser.yaml.YamlPlan;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
-public class AutomationPackageCollectionTest {
+public class AutomationPackagePlanCollectionTest extends AutomationPackageCollectionTestBase {
 
-    private final JavaAutomationPackageReader reader;
-
-    private final File sourceDirectory = new File("src/test/resources/samples/step-automation-packages-sample1");
-    private File destinationDirectory;
     private Collection<Plan> planCollection;
-    private Collection<Parameter> parameterCollection;
-    private final Path expectedFilesPath = sourceDirectory.toPath().resolve("expected");
-    private AutomationPackageYamlFragmentManager fragmentManager;
 
-    public AutomationPackageCollectionTest() {
-        AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
-        AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
-
-        // accessor is not required in this test - we only read the yaml and don't store the result anywhere
-        AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, Mockito.mock(ParameterManager.class));
-
-        this.reader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, new Configuration());
+    public AutomationPackagePlanCollectionTest() {
+        super();
     }
 
     @Before
     public void setUp() throws IOException, AutomationPackageReadingException {
-        Properties properties = new Properties();
-        destinationDirectory = Files.createTempDirectory("automationPackageCollectionTest").toFile();
-        FileUtils.copyDirectory(sourceDirectory, destinationDirectory);
-
-        fragmentManager = reader.getAutomationPackageYamlFragmentManager(destinationDirectory);
-        AutomationPackageCollectionFactory collectionFactory = new AutomationPackageCollectionFactory(properties, fragmentManager);
+        super.setUp();
+        AutomationPackageCollectionFactory collectionFactory = new AutomationPackageCollectionFactory(new Properties(), fragmentManager);
         planCollection = collectionFactory.getCollection(YamlPlan.PLANS_ENTITY_NAME, Plan.class);
-        parameterCollection = collectionFactory.getCollection(Parameter.ENTITY_NAME, Parameter.class);
-    }
-
-    @After
-    public void tearDown() throws IOException, AutomationPackageReadingException {
-        // Attempt to re-read the just written Automation package from scratch
-        reader.getAutomationPackageYamlFragmentManager(destinationDirectory);
-        FileUtils.deleteDirectory(destinationDirectory);
     }
 
     @Test
@@ -297,56 +257,5 @@ public class AutomationPackageCollectionTest {
         planCollection.save(plan);
 
         assertFilesEqual(expectedFilesPath.resolve("Hello World Plan.yml"), destinationDirectory.toPath().resolve("plans").resolve("Hello World Plan.yml"));
-    }
-
-    @Test
-    public void testParameterModify() throws IOException {
-        Optional<Parameter> optionalParameter = parameterCollection.find(Filters.equals("key", "mySimpleKey"), null, null, null, 100).findFirst();
-
-        assertTrue(optionalParameter.isPresent());
-
-        Parameter parameter = optionalParameter.get();
-
-        parameter.getValue().setValue("myModifiedValue");
-        parameterCollection.save(parameter);
-
-        assertFilesEqual(expectedFilesPath.resolve("parametersAfterModification.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
-    }
-
-
-    @Test
-    public void testParameterAddAndModify() throws IOException {
-
-
-        Parameter parameter = new Parameter(null, "addedParameter", "test", "This is an added Parameter before modification");
-        assertThrows(AutomationPackagePerObjectSaveUnsupportedException.class, () -> parameterCollection.save(parameter));
-
-
-        setPropertiesWriteToFragment(Parameter.ENTITY_NAME, "parameters.yml");
-        parameterCollection.save(parameter);
-
-        assertFilesEqual(expectedFilesPath.resolve("parametersAfterAdd.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
-
-        parameter.setDescription("This is an added Parameter after modification");
-        parameter.setValue(new DynamicValue<>("foo"));
-        parameterCollection.save(parameter);
-
-        assertFilesEqual(expectedFilesPath.resolve("parametersAfterAddAndModification.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
-    }
-
-
-    private void assertFilesEqual(Path expected, Path actual) throws IOException {
-        String expectedLines = Files.readString(expected);
-        String actualLines = Files.readString(actual);
-
-        assertEquals(expectedLines, actualLines);
-    }
-
-    private void setPropertiesWriteToFragment(String entityName, String fragment) {
-        Properties properties = new Properties();
-        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), fragment);
-        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
-
-        fragmentManager.setProperties(properties);
     }
 }

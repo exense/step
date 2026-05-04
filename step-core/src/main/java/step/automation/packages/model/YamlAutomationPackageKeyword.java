@@ -20,6 +20,7 @@ package step.automation.packages.model;
 
 import step.automation.packages.StagingAutomationPackageContext;
 import step.core.yaml.PatchableYamlModelBase;
+import step.core.yaml.YamlModelUtils;
 import step.core.yaml.deserialization.PatchingContext;
 import step.functions.Function;
 
@@ -47,5 +48,4 @@ public class YamlAutomationPackageKeyword extends PatchableYamlModelBase impleme
     public Function prepareKeyword(StagingAutomationPackageContext context) {
         return yamlKeyword.applyAutomationPackageContext(context);
     }
-
 }
