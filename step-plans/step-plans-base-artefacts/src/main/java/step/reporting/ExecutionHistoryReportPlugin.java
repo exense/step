@@ -6,10 +6,12 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionResultSnapshot;
 import step.core.plugins.Plugin;
+import step.core.repositories.ImportResult;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,6 +26,10 @@ public class ExecutionHistoryReportPlugin extends AbstractExecutionEnginePlugin 
         Integer countItems = configuration.getPropertyAsInteger(EXECUTIONS_HISTORY_COLLECT_COUNT, 10);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         Execution execution = context.getExecutionManager().getExecution();
+        if (Optional.ofNullable(execution).map(Execution::getImportResult).map(ImportResult::getCanonicalPlanName).isEmpty()) {
+            // If anything in the path above is null, abort early
+            return;
+        }
         long searchBeforeTimestamp = execution.getEndTime() != null ? execution.getEndTime() : System.currentTimeMillis();
         List<ExecutionResultSnapshot> pastExecutionsSnapshots = executionAccessor.getLastEndedExecutionsByCanonicalPlanName(execution.getImportResult().getCanonicalPlanName(), countItems, searchBeforeTimestamp, Set.of(execution.getId().toString()))
                 .map(e -> {
