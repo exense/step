@@ -91,7 +91,7 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
     }
 
     protected ObjectFilter getUnscopedObjectFilter() {
-        Session<User> session = new UnScopedSession(getSession());
+        Session<User> session = new UnscopedSession(getSession());
         return objectHookRegistry.getObjectFilter(session);
     }
 

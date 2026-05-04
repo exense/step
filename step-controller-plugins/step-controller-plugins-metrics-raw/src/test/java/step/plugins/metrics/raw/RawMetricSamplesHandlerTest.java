@@ -52,8 +52,8 @@ public class RawMetricSamplesHandlerTest {
         parentContext.setPlanAccessor(planAccessor);
         MetricsExecutionPlugin metricsExecutionPlugin = new MetricsExecutionPlugin();
         MeasurementAccessor measurementAccessor = new MeasurementAccessor(new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap()));
-        MetricSampleAccessor metricSampleAccessor = new MetricSampleAccessor(new InMemoryCollection<>());
-        RawMetricSamplesHandler handler = new RawMetricSamplesHandler(measurementAccessor, metricSampleAccessor);
+        ExecutionMetricSampleAccessor executionMetricSampleAccessor = new ExecutionMetricSampleAccessor(new InMemoryCollection<>());
+        RawMetricSamplesHandler handler = new RawMetricSamplesHandler(measurementAccessor, executionMetricSampleAccessor);
         MetricsExecutionPlugin.registerSamplesHandlers(handler);
         try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(metricsExecutionPlugin)
             .withPlugin(new BaseArtefactPlugin())
@@ -96,8 +96,8 @@ public class RawMetricSamplesHandlerTest {
         parentContext.setPlanAccessor(planAccessor);
         MetricsExecutionPlugin metricsExecutionPlugin = new MetricsExecutionPlugin();
         MeasurementAccessor measurementAccessor = new MeasurementAccessor(new InMemoryCollection<>(null, "measurements", Document.class, new ConcurrentHashMap()));
-        MetricSampleAccessor metricSampleAccessor = new MetricSampleAccessor(new InMemoryCollection<>());
-        RawMetricSamplesHandler handler = new RawMetricSamplesHandler(measurementAccessor, metricSampleAccessor);
+        ExecutionMetricSampleAccessor executionMetricSampleAccessor = new ExecutionMetricSampleAccessor(new InMemoryCollection<>());
+        RawMetricSamplesHandler handler = new RawMetricSamplesHandler(measurementAccessor, executionMetricSampleAccessor);
         MetricsExecutionPlugin.registerSamplesHandlers(handler);
         try (ExecutionEngine engine = ExecutionEngine.builder().withParentContext(parentContext).withPlugin(metricsExecutionPlugin)
             .withPlugin(new BaseArtefactPlugin())

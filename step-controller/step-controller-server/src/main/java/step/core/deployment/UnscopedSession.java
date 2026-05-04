@@ -32,9 +32,9 @@ import step.framework.server.Session;
  * In the future we might introduce a request parameter object to perform such operations without having to
  * "misuse" the context
  */
-public class UnScopedSession extends Session<User> {
+public class UnscopedSession extends Session<User> {
 
-    public UnScopedSession(Session<User> session) {
+    public UnscopedSession(Session<User> session) {
         session.getKeys().stream().forEach(k -> put(k, session.get(k)));
         setAuthenticated(session.isAuthenticated());
         setUser(session.getUser());

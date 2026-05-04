@@ -146,12 +146,12 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
     public void beforeFunctionExecution(ExecutionContext context, ReportNode node, Function function) {
         LiveReportingContext liveReportingContext = LiveReportingPlugin.getLiveReportingContext(context);
         if (liveReportingContext != null) {
-            liveReportingContext.registerListener(measures -> {
+            liveReportingContext.registerMeasureListener(measures -> {
                 List<Measurement> measurements = measures.stream().map(m -> createMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
                 processMeasurements(measurements);
             });
-            liveReportingContext.registerMetricListener(snapshots -> {
-                List<ExecutionMetricSample> executionMetricSamples = snapshots.stream()
+            liveReportingContext.registerMetricListener(metricSamples -> {
+                List<ExecutionMetricSample> executionMetricSamples = metricSamples.stream()
                     .map(s -> createExecutionMetricSample(context, s, (CallFunctionReportNode) node, null))
                     .collect(Collectors.toList());
                 processMetrics(executionMetricSamples);
@@ -163,32 +163,6 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         String execId = context.getExecutionId();
         String threadGroupName = node.getThreadGroupName();
         AtomicLong counter = threadGroupCounts.computeIfAbsent(execId + "|" + threadGroupName, k -> new AtomicLong(0));
-        long count = inc ? counter.incrementAndGet() : Math.max(0, counter.decrementAndGet());
-        if (inc) {
-            logger.info("Thread group {} starting one new thread, new count is {}", threadGroupName, count);
-        } else {
-            logger.info("Thread group {} stopping one thread, new count is {}", threadGroupName, count);
-        }
-        String scheduleId = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULER_TASK_ID), "");
-        String schedule = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULE_NAME), "");
-        String planId = context.getPlan().getId().toString();
-        String plan = Objects.requireNonNullElse(context.getPlan().getAttribute(AbstractOrganizableObject.NAME), "");
-        String execution = Objects.requireNonNullElse((String) context.get(CTX_EXECUTION_DESCRIPTION), "");
-        @SuppressWarnings("unchecked")
-        Map<String, String> additionalAttributes = (Map<String, String>) context.get(CTX_ADDITIONAL_ATTRIBUTES);
-
-        MetricSample sample = new MetricSample(
-            System.currentTimeMillis(), threadGroupName,
-            Map.of(TYPE, THREAD_GROUP),
-            InstrumentType.GAUGE,
-            1, count, count, count, count, null);
-
-        ExecutionMetricSample stepSample = new ExecutionMetricSample(
-            sample, execId, node.getId().toString(),
-            planId, plan, scheduleId, schedule, execution,
-            null, null, additionalAttributes, THREAD_GROUP);
-
-        processMetrics(List.of(stepSample));
         // Thread group metrics span the whole execution lifetime (unlike keyword metrics),
         // so they are eligible for heartbeat re-emission when no new value arrives.
         // Synchronized on counter to serialize heartbeat updates: concurrent threads may
@@ -197,16 +171,43 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         // overwriting count=3). Re-reading counter.get() inside the lock ensures the
         // heartbeat always reflects the true current count regardless of which thread wins.
         synchronized (counter) {
+            long count = inc ? counter.incrementAndGet() : Math.max(0, counter.decrementAndGet());
+            if (inc) {
+                logger.info("Thread group {} starting one new thread, new count is {}", threadGroupName, count);
+            } else {
+                logger.info("Thread group {} stopping one thread, new count is {}", threadGroupName, count);
+            }
+            String scheduleId = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULER_TASK_ID), "");
+            String schedule = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULE_NAME), "");
+            String planId = context.getPlan().getId().toString();
+            String plan = Objects.requireNonNullElse(context.getPlan().getAttribute(AbstractOrganizableObject.NAME), "");
+            String execution = Objects.requireNonNullElse((String) context.get(CTX_EXECUTION_DESCRIPTION), "");
+            @SuppressWarnings("unchecked")
+            Map<String, String> additionalAttributes = (Map<String, String>) context.get(CTX_ADDITIONAL_ATTRIBUTES);
+
+            MetricSample sample = new MetricSample(
+                System.currentTimeMillis(), threadGroupName,
+                Map.of(TYPE, THREAD_GROUP),
+                InstrumentType.GAUGE,
+                1, count, count, count, count, null);
+
+            ExecutionMetricSample stepSample = new ExecutionMetricSample(
+                sample, execId, node.getId().toString(),
+                planId, plan, scheduleId, schedule, execution,
+                null, null, additionalAttributes, THREAD_GROUP);
+
+            processMetrics(List.of(stepSample));
+
             long currentCount = Math.max(0, counter.get());
             MetricSample heartbeatSample = new MetricSample(
-                    System.currentTimeMillis(), threadGroupName,
-                    Map.of(TYPE, THREAD_GROUP),
-                    InstrumentType.GAUGE,
-                    1, currentCount, currentCount, currentCount, currentCount, null);
+                System.currentTimeMillis(), threadGroupName,
+                Map.of(TYPE, THREAD_GROUP),
+                InstrumentType.GAUGE,
+                1, currentCount, currentCount, currentCount, currentCount, null);
             ExecutionMetricSample heartbeatStepSample = new ExecutionMetricSample(
-                    heartbeatSample, execId, node.getId().toString(),
-                    planId, plan, scheduleId, schedule, execution,
-                    null, null, additionalAttributes, THREAD_GROUP);
+                heartbeatSample, execId, node.getId().toString(),
+                planId, plan, scheduleId, schedule, execution,
+                null, null, additionalAttributes, THREAD_GROUP);
             MetricHeartbeatRegistry.getInstance().update(heartbeatStepSample);
         }
     }
@@ -277,9 +278,10 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
 
     /**
      * Create a {@link Measurement} from keyword Measure, used both when processing Keyword's output and live measure
+     *
      * @param executionContext the execution context of the functionReport
-     * @param measure the measure to be converted to Step Measurement
-     * @param functionReport the function report of the function call producing the Measure
+     * @param measure          the measure to be converted to Step Measurement
+     * @param functionReport   the function report of the function call producing the Measure
      * @return the created Measurement
      */
     private Measurement createMeasurement(ExecutionContext executionContext, Measure measure, CallFunctionReportNode functionReport) {
@@ -307,12 +309,13 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
 
     /**
      * Create a {@link ExecutionMetricSample} from the keyword's {@link MetricSample}, used both when processing Keyword's output and live metric samples
+     *
      * @param executionContext the execution context of the functionReport
-     * @param metric the Metric Sample to be converted to Step ExecutionMetricSample
-     * @param functionReport the function report of the function call producing the samples, null for samples not produced by call keywords
+     * @param metricSample     the Metric Sample to be converted to Step ExecutionMetricSample
+     * @param functionReport   the function report of the function call producing the samples, null for samples not produced by call keywords
      * @return the created ExecutionMetricSample
      */
-    private ExecutionMetricSample createExecutionMetricSample(ExecutionContext executionContext, MetricSample metric,
+    private ExecutionMetricSample createExecutionMetricSample(ExecutionContext executionContext, MetricSample metricSample,
                                                               CallFunctionReportNode functionReport, String metricType) {
         Plan plan = executionContext.getPlan();
         String planId = plan.getId().toString();
@@ -323,10 +326,10 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         String execId = executionContext.getExecutionId();
         String rnId = (functionReport != null) ? functionReport.getId().toString() : null;
         String agentUrl = (functionReport != null) ? functionReport.getAgentUrl() : null;
-        Map<String, String> functionAttributes = (functionReport != null) ? functionReport.getFunctionAttributes(): null;
+        Map<String, String> functionAttributes = (functionReport != null) ? functionReport.getFunctionAttributes() : null;
         String origin = (functionAttributes != null) ? functionAttributes.get(AbstractOrganizableObject.NAME) : null;
         TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
-        return new ExecutionMetricSample(metric, execId, rnId, planId, planName, taskId, schedule, execution,
+        return new ExecutionMetricSample(metricSample, execId, rnId, planId, planName, taskId, schedule, execution,
             agentUrl, origin, additionalAttributes, metricType);
     }
 

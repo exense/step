@@ -24,7 +24,7 @@ import step.core.timeseries.metric.MetricType;
 import step.framework.server.security.Secured;
 import step.core.metrics.ExecutionMetricSample;
 import step.core.metrics.Measurement;
-import step.plugins.metrics.raw.MetricSampleAccessor;
+import step.plugins.metrics.raw.ExecutionMetricSampleAccessor;
 import step.plugins.timeseries.api.*;
 
 import java.util.*;
@@ -53,7 +53,7 @@ public class TimeSeriesService extends AbstractStepServices {
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         Collection<Measurement> measurementCollection = context.getCollectionFactory().getCollection(EntityConstants.measurements, Measurement.class);
         metricTypeRegistry = context.require(MetricTypeRegistry.class);
-        Collection<ExecutionMetricSample> metricSampleCollection = Optional.ofNullable(context.get(MetricSampleAccessor.class)).map(AbstractAccessor::getCollectionDriver).orElse(null);
+        Collection<ExecutionMetricSample> metricSampleCollection = Optional.ofNullable(context.get(ExecutionMetricSampleAccessor.class)).map(AbstractAccessor::getCollectionDriver).orElse(null);
         TimeSeries timeSeries = context.require(TimeSeries.class);
         ExecutionAccessor executionAccessor = context.getExecutionAccessor();
         int resolution = (int) timeSeries.getIngestionPipeline().getResolution();
@@ -106,9 +106,10 @@ public class TimeSeriesService extends AbstractStepServices {
     }
 
     private void enrichRequest(FetchBucketsRequest request) {
-        Boolean controllerMetric = Optional.ofNullable(request.getMetricType())
+        boolean controllerMetric = Optional.ofNullable(request.getMetricType())
             .map(mt -> metricTypeRegistry.getMetricType(mt))
-            .map(metricType -> metricType.getCustomField(IS_CONTROLLER_METRIC, Boolean.class)).orElse(false);
+            .map(metricType -> metricType.getCustomField(IS_CONTROLLER_METRIC, Boolean.class))
+            .orElse(false);
 
         request.setOqlFilter(enrichOqlFilter(request.getOqlFilter(), request.isIncludeGlobalEntities(), controllerMetric));
         if (request.getMaxNumberOfSeries() <= 0) {
@@ -116,12 +117,12 @@ public class TimeSeriesService extends AbstractStepServices {
         }
     }
 
-    private String enrichOqlFilter(String oqlFilter, boolean includeGlobalEntities, Boolean controllerMetric) {
+    private String enrichOqlFilter(String oqlFilter, boolean includeGlobalEntities, boolean controllerMetric) {
         String additionalOqlFilter = "";
         if (controllerMetric) {
             additionalOqlFilter = getUnscopedObjectFilter().getOQLFilter();
         } else if (includeGlobalEntities) {
-                additionalOqlFilter = getObjectFilter().getOQLFilter();
+            additionalOqlFilter = getObjectFilter().getOQLFilter();
         } else {
             additionalOqlFilter = getRestrictedObjectFilter().getOQLFilter();
         }

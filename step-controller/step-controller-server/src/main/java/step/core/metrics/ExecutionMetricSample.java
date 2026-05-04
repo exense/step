@@ -15,7 +15,7 @@ import java.util.TreeMap;
  * Unlike {@link Measurement}, this is a typed flat POJO rather than a {@link java.util.HashMap}
  * subclass. Handlers receive lists of these via {@link MetricSamplesHandler#processMetrics}.
  */
-public class ExecutionMetricSample extends AbstractMetricSample {
+public class ExecutionMetricSample extends StepMetricSample {
 
     public final String eId;
     public final String rnId;
@@ -65,30 +65,26 @@ public class ExecutionMetricSample extends AbstractMetricSample {
      */
     @JsonIgnore
     @Override
-    public Map<String, String> getEffectiveLabels() {
+    public TreeMap<String, String> getEffectiveLabels() {
         TreeMap<String, String> labels = new TreeMap<>(sample.getLabels());
-        if (origin != null) {
-            labels.put(MetricsExecutionPlugin.ORIGIN, origin);
-        }
+        putIfNotEmpty(labels, MetricsExecutionPlugin.ORIGIN, origin);
         if (attributes != null) {
             labels.putAll(attributes);
         }
         // Context labels are authoritative — set last so they cannot be overridden
-        labels.put(MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID, eId);
-        labels.put(MetricsExecutionPlugin.PLAN_ID, planId);
-        labels.put(MetricsExecutionPlugin.PLAN, plan);
-        if (agentUrl != null) {
-            labels.put(MetricsExecutionPlugin.AGENT_URL, agentUrl);
-        }
-        if (taskId != null && !taskId.isEmpty()) {
-            labels.put(MetricsExecutionPlugin.TASK_ID, taskId);
-        }
-        if (schedule != null && !schedule.isEmpty()) {
-            labels.put(MetricsExecutionPlugin.SCHEDULE, schedule);
-        }
-        if (execution != null && !execution.isEmpty()) {
-            labels.put(MetricsExecutionPlugin.EXECUTION_DESCRIPTION, execution);
-        }
+        putIfNotEmpty(labels, MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID, eId);
+        putIfNotEmpty(labels, MetricsExecutionPlugin.PLAN_ID, planId);
+        putIfNotEmpty(labels, MetricsExecutionPlugin.PLAN, plan);
+        putIfNotEmpty(labels, MetricsExecutionPlugin.AGENT_URL, agentUrl);
+        putIfNotEmpty(labels, MetricsExecutionPlugin.TASK_ID, taskId);
+        putIfNotEmpty(labels, MetricsExecutionPlugin.SCHEDULE, schedule);
+        putIfNotEmpty(labels, MetricsExecutionPlugin.EXECUTION_DESCRIPTION, execution);
         return labels;
+    }
+
+    private void putIfNotEmpty(Map<String, String> map, String key, String value) {
+        if (value != null && !value.isEmpty()) {
+            map.put(key, value);
+        }
     }
 }

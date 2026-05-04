@@ -62,10 +62,6 @@ public class MetricsExecutionPluginMetricsTest extends AbstractKeyword {
         final CopyOnWriteArrayList<ExecutionMetricSample> capturedMetrics = new CopyOnWriteArrayList<>();
 
         @Override
-        public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-        }
-
-        @Override
         public void processMeasurements(List<Measurement> measurements) {
             // no-op — not under test here
         }
@@ -75,9 +71,6 @@ public class MetricsExecutionPluginMetricsTest extends AbstractKeyword {
             capturedMetrics.addAll(metrics);
         }
 
-        @Override
-        public void afterExecutionEnd(ExecutionContext context) {
-        }
     }
 
     private CapturingMetricSamplesHandler capturingHandler;

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import step.core.accessors.AbstractOrganizableObject;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 
 /**
  * Base class for all metric envelopes dispatched via
@@ -26,7 +28,7 @@ import java.util.Map;
     @JsonSubTypes.Type(ControllerMetricSample.class),
     @JsonSubTypes.Type(ExecutionMetricSample.class),
 })
-public abstract class AbstractMetricSample extends AbstractOrganizableObject {
+public abstract class StepMetricSample extends AbstractOrganizableObject {
 
     public static final String METRIC_TYPE = "metricType";
 
@@ -39,8 +41,8 @@ public abstract class AbstractMetricSample extends AbstractOrganizableObject {
      */
     public final String metricType;
 
-    protected AbstractMetricSample(MetricSample sample, String metricType) {
-        this.sample = sample;
+    protected StepMetricSample(MetricSample sample, String metricType) {
+        this.sample = Objects.requireNonNull(sample, "sample cannot be null");
         this.metricType = metricType;
     }
 
@@ -50,5 +52,5 @@ public abstract class AbstractMetricSample extends AbstractOrganizableObject {
      * the underlying {@link MetricSample} and any context-specific labels added by the
      * concrete subclass (e.g. execution ID, agent URL).
      */
-    public abstract Map<String, String> getEffectiveLabels();
+    public abstract TreeMap<String, String> getEffectiveLabels();
 }

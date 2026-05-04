@@ -90,8 +90,8 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
         metricSamplerRegistry = MetricSamplerRegistry.getInstance();
 
         //Start the metric sampling scheduler
-        int interval = context.getConfiguration().getPropertyAsInteger("plugins.measurements.gaugecollector.interval", 15);
-        metricSamplerRegistry.start(interval);
+        int intervalSeconds = context.getConfiguration().getPropertyAsInteger("plugins.measurements.gaugecollector.interval", 15);
+        metricSamplerRegistry.start(intervalSeconds * 1000L);
 
         //Start the metric heartbeat scheduler
         int heartbeatIntervalSec = context.getConfiguration().getPropertyAsInteger("plugins.metrics.metricheartbeat.interval", 15);

@@ -1,14 +1,13 @@
 package step.plugins.timeseries;
 
 import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionEngineContext;
 import step.core.metrics.InstrumentType;
 import step.core.metrics.MetricSample;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.ingestion.TimeSeriesIngestionPipeline;
-import step.core.metrics.AbstractMetricSample;
+import step.core.metrics.StepMetricSample;
 import step.core.metrics.ControllerMetricSample;
 import step.core.metrics.Measurement;
 import step.core.metrics.MetricHeartbeatRegistry;
@@ -17,7 +16,8 @@ import step.core.metrics.ExecutionMetricSample;
 
 import java.util.*;
 
-import static step.core.metrics.AbstractMetricSample.METRIC_TYPE;
+import static step.core.metrics.StepMetricSample.METRIC_TYPE;
+import static step.core.metrics.MetricsConstants.INSTRUMENT_TYPE_ATTRIBUTE;
 import static step.core.metrics.MetricsControllerPlugin.RESPONSE_TIME;
 import static step.core.metrics.MetricsControllerPlugin.THREAD_GROUP;
 
@@ -31,19 +31,30 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
     private final Set<String> handledAttributes;
     private final Set<String> excludedAttributes;
 
+    /**
+     * @param timeSeries         the time series to ingest metric samples into
+     * @param handledAttributes  allowlist of attribute keys to retain when building bucket
+     *                           attributes from a measurement or metric sample label set.
+     *                           If non-empty, only these keys are forwarded; all others are
+     *                           dropped. Must be empty when {@code excludedAttributes} is
+     *                           non-empty.
+     * @param excludedAttributes denylist of attribute keys to strip when building bucket
+     *                           attributes. If non-empty, all keys from the source are
+     *                           forwarded <em>except</em> those listed here. Must be empty
+     *                           when {@code handledAttributes} is non-empty.
+     *                           <p>
+     *                           When both sets are empty, all attributes are forwarded
+     *                           without filtering. Providing both as non-empty sets is not
+     *                           supported and throws {@link IllegalArgumentException}.
+     */
     public TimeSeriesMetricSamplesHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes) {
         this.timeSeries = timeSeries;
         this.handledAttributes = Objects.requireNonNull(handledAttributes);
         this.excludedAttributes = Objects.requireNonNull(excludedAttributes);
-        if (!handledAttributes.isEmpty() &&  !excludedAttributes.isEmpty()) {
+        if (!handledAttributes.isEmpty() && !excludedAttributes.isEmpty()) {
             throw new IllegalArgumentException("Either a set of handled attributes or a set of excluded attributes is required, setting both is not supported.");
         }
         MetricHeartbeatRegistry.getInstance().registerHandler(this);
-    }
-
-    @Override
-    public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-
     }
 
     @Override
@@ -76,11 +87,11 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
         return new BucketAttributes(bucketAttributesMap);
     }
 
-    public void processThreadGroupAsMeasurement(Measurement measurement) {
+    private void processThreadGroupAsMeasurement(Measurement measurement) {
         if (measurement != null) {
             BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
             bucketAttributes.put(METRIC_TYPE, measurement.getType());
-            bucketAttributes.put("instrumentType", InstrumentType.GAUGE.toLowerCase());
+            bucketAttributes.put(INSTRUMENT_TYPE_ATTRIBUTE.getName(), InstrumentType.GAUGE.toLowerCase());
             TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
             ingestionPipeline.ingestPoint(bucketAttributes, measurement.getBegin(), measurement.getValue());
         }
@@ -109,18 +120,18 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
         metrics.forEach(this::processMetric);
     }
 
-    public void processMetric(AbstractMetricSample mm) {
+    public void processMetric(StepMetricSample mm) {
         MetricSample sample = mm.sample;
         long begin = sample.getSampleTime();
         BucketAttributes attributes = metricSampleToBucketAttributes(mm);
         String instrumentType = sample.getType().toLowerCase();
         attributes.put(METRIC_TYPE, mm.metricType != null ? mm.metricType : instrumentType);
-        attributes.put("instrumentType", instrumentType);
+        attributes.put(INSTRUMENT_TYPE_ATTRIBUTE.getName(), instrumentType);
         TimeSeriesIngestionPipeline ingestionPipeline = timeSeries.getIngestionPipeline();
         ingestionPipeline.ingestBucket(buildMetricBucket(attributes, begin, sample));
     }
 
-    private BucketAttributes metricSampleToBucketAttributes(AbstractMetricSample mm) {
+    private BucketAttributes metricSampleToBucketAttributes(StepMetricSample mm) {
         Map<String, Object> attributesMap = new HashMap<>();
         Map<String, String> effectiveLabels = mm.getEffectiveLabels();
         if (handledAttributes.isEmpty()) {

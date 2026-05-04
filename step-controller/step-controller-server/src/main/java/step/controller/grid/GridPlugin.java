@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import step.controller.grid.services.GridServices;
 import step.core.GlobalContext;
 import step.core.metrics.ControllerMetricSample;
-import step.core.metrics.InstrumentType;
 import step.core.metrics.MetricSample;
 import step.core.metrics.MetricSampler;
 import step.core.metrics.MetricSamplerRegistry;
@@ -88,7 +87,7 @@ public class GridPlugin extends AbstractControllerPlugin {
     public static String GRID_BY_STATE_METRIC_NAME = "grid_tokens_by_state";
     public static String GRID_CAPACITY_METRIC_NAME = "grid_tokens_capacity";
 
-    private final Map<String,String> agentTypeMapping = Map.of("default", "Java", "node", "Node.js", "dotnet", ".NET");
+    private final Map<String, String> agentTypeMapping = Map.of("default", "Java", "node", "Node.js", "dotnet", ".NET");
 
     private GridImpl grid;
     private GridClient client;
@@ -193,7 +192,8 @@ public class GridPlugin extends AbstractControllerPlugin {
 
     /**
      * Start the grid monitoring and register grid metric types
-     * @param client the grid client to be monitored
+     *
+     * @param client             the grid client to be monitored
      * @param metricTypeRegistry the registry used to register the grid metric type
      */
     private void configureGridMonitoring(GridClient client, MetricTypeRegistry metricTypeRegistry) {
@@ -201,6 +201,7 @@ public class GridPlugin extends AbstractControllerPlugin {
         metricSamplerRegistry.registerSampler(GRID_SAMPLER_NAME, new MetricSampler(GRID_SAMPLER_NAME,
             "step grid token usage and capacity") {
             final GridReportBuilder gridReportBuilder = new GridReportBuilder(client);
+
             @Override
             public List<ControllerMetricSample> collectMetricSamples() {
                 Set<String> tokenAttributeKeys = new HashSet<>(gridReportBuilder.getTokenAttributeKeys());

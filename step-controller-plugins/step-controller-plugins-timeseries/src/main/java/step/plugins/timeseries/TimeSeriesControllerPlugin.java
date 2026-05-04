@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
-import static step.core.metrics.AbstractMetricSample.METRIC_TYPE;
+import static step.core.metrics.StepMetricSample.METRIC_TYPE;
 import static step.core.metrics.MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.core.metrics.MetricsConstants.*;
 
@@ -97,7 +97,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         CollectionFactory collectionFactory = context.getCollectionFactory();
 
         TimeSeriesConfig timeSeriesConfig = TimeSeriesConfig.fromConfiguration(configuration, TIME_SERIES_MAIN_COLLECTION);
-        warnAboutDisabledCollections(timeSeriesConfig);
         timeSeries = new TimeSeriesBuilder()
             .withConfig(timeSeriesConfig, collectionFactory, TIME_SERIES_MAIN_COLLECTION, Set.of(ATTRIBUTE_EXECUTION_ID))
             .withAggregationConfig(new TimeSeriesAggregationConfig()
@@ -204,21 +203,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         configurationManager.registerHook(s -> Map.of(PARAM_KEY_ANALYTICS_DASHBOARD_ID, newAnalyticsDashboard.getId().toString()));
         AsyncTaskManager asyncTaskManager = context.require(AsyncTaskManager.class);
         initTimeSeriesCollectionsData(asyncTaskManager);
-    }
-
-    private void warnAboutDisabledCollections(TimeSeriesConfig config) {
-        if (!config.isPerMinuteEnabled()) {
-            logger.warn("The time-series resolution '_minute' is disabled. To reclaim space you can delete the corresponding DB table.");
-        }
-        if (!config.isHourlyEnabled()) {
-            logger.warn("The time-series resolution '_hour' is disabled. To reclaim space you can delete the corresponding DB table.");
-        }
-        if (!config.isDailyEnabled()) {
-            logger.warn("The time-series resolution '_day' is disabled. To reclaim space you can delete the corresponding DB table.");
-        }
-        if (!config.isWeeklyEnabled()) {
-            logger.warn("The time-series resolution '_week' is disabled. To reclaim space you can delete the corresponding DB table.");
-        }
     }
 
     private void initTimeSeriesCollectionsData(AsyncTaskManager asyncTaskManager) {

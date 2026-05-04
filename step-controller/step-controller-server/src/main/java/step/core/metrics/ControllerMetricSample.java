@@ -13,14 +13,14 @@ import java.util.TreeMap;
  * {@link MetricSample}, so handlers receive exactly the dimensions supplied by the
  * metric producer.
  */
-public class ControllerMetricSample extends AbstractMetricSample {
+public class ControllerMetricSample extends StepMetricSample {
 
     public ControllerMetricSample(MetricSample sample, String metricType) {
         super(sample, metricType);
     }
 
     @Override
-    public Map<String, String> getEffectiveLabels() {
+    public TreeMap<String, String> getEffectiveLabels() {
         return new TreeMap<>(sample.getLabels());
     }
 }

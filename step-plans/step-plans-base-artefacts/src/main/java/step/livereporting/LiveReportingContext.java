@@ -32,25 +32,25 @@ public class LiveReportingContext {
      * The unique ID of this context
      */
     public final String id = UUID.randomUUID().toString();
-    private final List<LiveReportingContextListener> listeners = new ArrayList<>();
-    private final List<LiveReportingMetricContextListener> metricListeners = new ArrayList<>();
+    private final List<LiveReportingContextMeasureListener> listeners = new ArrayList<>();
+    private final List<LiveReportingContextMetricListener> metricListeners = new ArrayList<>();
 
-    public void registerListener(LiveReportingContextListener contextListener) {
+    public void registerMeasureListener(LiveReportingContextMeasureListener contextListener) {
         listeners.add(contextListener);
     }
 
     public void onMeasuresReceived(List<Measure> measures) {
-        for (LiveReportingContextListener listener : listeners) {
+        for (LiveReportingContextMeasureListener listener : listeners) {
             listener.accept(measures);
         }
     }
 
-    public void registerMetricListener(LiveReportingMetricContextListener metricListener) {
+    public void registerMetricListener(LiveReportingContextMetricListener metricListener) {
         metricListeners.add(metricListener);
     }
 
     public void onMetricsReceived(List<MetricSample> metrics) {
-        for (LiveReportingMetricContextListener listener : metricListeners) {
+        for (LiveReportingContextMetricListener listener : metricListeners) {
             listener.accept(metrics);
         }
     }

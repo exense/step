@@ -34,8 +34,8 @@ import step.core.repositories.RepositoryObjectManager;
 
 public abstract class AbstractExecutionEngineContext extends AbstractStepContext {
 
-    public static final String CONTROLLER_URL_KEY = "CONTROLLER_URL_KEY";
-    public static final String CONTROLLER_SERVICE_URL_KEY = "CONTROLLER_SERVICE_URL_KEY";
+    private static final String CONTROLLER_URL_KEY = "CONTROLLER_URL_KEY";
+    private static final String CONTROLLER_SERVICE_URL_KEY = "CONTROLLER_SERVICE_URL_KEY";
 
     private OperationMode operationMode;
     private ArtefactHandlerRegistry artefactHandlerRegistry;

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class MetricSamplerRegistry {
@@ -21,7 +22,7 @@ public class MetricSamplerRegistry {
     }
 
     private final ScheduledExecutorService scheduler =
-        Executors.newScheduledThreadPool(1, BasicThreadFactory.builder().namingPattern("metric-sampler-%d").build());
+        Executors.newScheduledThreadPool(1, BasicThreadFactory.builder().namingPattern("metric-sampler-%d").daemon().build());
 
     Map<String, MetricSampler> samplers = new ConcurrentHashMap<>();
     List<MetricSamplesHandler> handlers = new CopyOnWriteArrayList<>();
@@ -34,30 +35,31 @@ public class MetricSamplerRegistry {
         handlers.add(handler);
     }
 
-    public void start(int interval) {
-        Runnable collect = () -> {
-            try {
-                samplers.forEach((c, t) -> {
-                    try {
-                        List<ControllerMetricSample> controllerMetrics = t.collectMetricSamples();
-                            if (!controllerMetrics.isEmpty()) {
-                                handlers.forEach(h -> {
-                                    try {
-                                        h.processControllerMetrics(controllerMetrics);
-                                    } catch (Exception e) {
-                                        logger.error("Exception occurred while processing metric sampling.", e);
-                                    }
-                                });
+    public void start(long intervalMs) {
+        scheduler.scheduleAtFixedRate(this::collectAndForwardMetricSamples, intervalMs, intervalMs, MILLISECONDS);
+    }
+
+    private void collectAndForwardMetricSamples() {
+        try {
+            samplers.forEach((c, t) -> {
+                try {
+                    List<ControllerMetricSample> controllerMetrics = t.collectMetricSamples();
+                    if (!controllerMetrics.isEmpty()) {
+                        handlers.forEach(h -> {
+                            try {
+                                h.processControllerMetrics(controllerMetrics);
+                            } catch (Exception e) {
+                                logger.error("Exception occurred while processing metric sampling.", e);
                             }
-                    } catch (Exception e) {
-                        logger.error("Exception occurred while collecting metric samples.", e);
+                        });
                     }
-                });
-            } catch (Exception e) {
-                logger.error("Exception occurred during metric sampling.", e);
-            }
-        };
-        scheduler.scheduleAtFixedRate(collect, 15, interval, SECONDS);
+                } catch (Exception e) {
+                    logger.error("Exception occurred while collecting metric samples.", e);
+                }
+            });
+        } catch (Exception e) {
+            logger.error("Exception occurred during metric sampling.", e);
+        }
     }
 
     public void stop() {

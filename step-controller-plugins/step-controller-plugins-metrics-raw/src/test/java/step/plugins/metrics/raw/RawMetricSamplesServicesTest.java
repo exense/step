@@ -14,19 +14,19 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 
-public class RawSamplesServicesTest {
+public class RawMetricSamplesServicesTest {
 
     private static final String RN_ID = "rnId-1";
     private static final String EXEC_ID = "exec-1";
     private static final String PLAN_ID = "plan-1";
 
-    private MetricSampleAccessor accessor;
-    private RawSamplesServices service;
+    private ExecutionMetricSampleAccessor accessor;
+    private RawMetricSamplesServices service;
 
     @Before
     public void setUp() {
-        accessor = new MetricSampleAccessor(new InMemoryCollection<>());
-        service = new RawSamplesServices(accessor);
+        accessor = new ExecutionMetricSampleAccessor(new InMemoryCollection<>());
+        service = new RawMetricSamplesServices(accessor);
     }
 
     // -------------------------------------------------------------------------
@@ -112,7 +112,7 @@ public class RawSamplesServicesTest {
         MetricSample s1 = counter("events", Map.of(), 1000, 5, 100);
         MetricSample s2 = counter("events", Map.of(), 2000, 3, 103);
 
-        MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
+        MetricSample merged = RawMetricSamplesServices.mergeSamples(s1, s2);
 
         assertEquals(InstrumentType.COUNTER, merged.getType());
         assertEquals(8, merged.getSum());       // 5 + 3
@@ -124,7 +124,7 @@ public class RawSamplesServicesTest {
         MetricSample s1 = counter("events", Map.of(), 1000, 5, 100);
         MetricSample s2 = counter("events", Map.of(), 2000, 3, 103);
 
-        MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
+        MetricSample merged = RawMetricSamplesServices.mergeSamples(s1, s2);
 
         assertEquals(8, merged.getSum());
         assertEquals(95, merged.getMin());
@@ -139,7 +139,7 @@ public class RawSamplesServicesTest {
         MetricSample s1 = counter("events", Map.of(), 3000, 5, 200);
         MetricSample s2 = counter("events", Map.of(), 1000, 3, 100);
 
-        MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
+        MetricSample merged = RawMetricSamplesServices.mergeSamples(s1, s2);
 
         assertEquals(8, merged.getSum());
         assertEquals(200, merged.getMax());  // s1 is more recent
@@ -155,7 +155,7 @@ public class RawSamplesServicesTest {
         MetricSample s1 = gauge("cpu", Map.of(), 1000, 2, 140, 60, 80, 75);
         MetricSample s2 = gauge("cpu", Map.of(), 2000, 3, 270, 70, 100, 95);
 
-        MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
+        MetricSample merged = RawMetricSamplesServices.mergeSamples(s1, s2);
 
         assertEquals(InstrumentType.GAUGE, merged.getType());
         assertEquals(5, merged.getCount());    // 2 + 3
@@ -169,7 +169,7 @@ public class RawSamplesServicesTest {
         MetricSample s1 = gauge("cpu", Map.of(), 1000, 2, 140, 60, 80, 75);
         MetricSample s2 = gauge("cpu", Map.of(), 2000, 3, 270, 70, 100, 95);
 
-        MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
+        MetricSample merged = RawMetricSamplesServices.mergeSamples(s1, s2);
 
         assertEquals(95, merged.getLast());    // s2 is more recent
         assertEquals(2000, merged.getSampleTime());
@@ -184,7 +184,7 @@ public class RawSamplesServicesTest {
         MetricSample s1 = histogram("resp", Map.of(), 1000, 4, 20000, 3000, 6000, 5500);
         MetricSample s2 = histogram("resp", Map.of(), 2000, 6, 42000, 4000, 9000, 8000);
 
-        MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
+        MetricSample merged = RawMetricSamplesServices.mergeSamples(s1, s2);
 
         assertEquals(InstrumentType.HISTOGRAM, merged.getType());
         assertEquals(10, merged.getCount());
@@ -200,17 +200,17 @@ public class RawSamplesServicesTest {
 
     @Test
     public void testMergeDistributionsBothNull() {
-        assertNull(RawSamplesServices.mergeDistributions(null, null));
+        assertNull(RawMetricSamplesServices.mergeDistributions(null, null));
     }
 
     @Test
     public void testMergeDistributionsOneNull() {
         Map<Long, Long> dist = Map.of(100L, 3L, 200L, 5L);
 
-        Map<Long, Long> resultA = RawSamplesServices.mergeDistributions(dist, null);
+        Map<Long, Long> resultA = RawMetricSamplesServices.mergeDistributions(dist, null);
         assertEquals(dist, resultA);
 
-        Map<Long, Long> resultB = RawSamplesServices.mergeDistributions(null, dist);
+        Map<Long, Long> resultB = RawMetricSamplesServices.mergeDistributions(null, dist);
         assertEquals(dist, resultB);
     }
 
@@ -224,7 +224,7 @@ public class RawSamplesServicesTest {
         b.put(200L, 2L);
         b.put(300L, 4L);
 
-        Map<Long, Long> merged = RawSamplesServices.mergeDistributions(a, b);
+        Map<Long, Long> merged = RawMetricSamplesServices.mergeDistributions(a, b);
 
         assertEquals(3L, (long) merged.get(100L));   // only in a
         assertEquals(7L, (long) merged.get(200L));   // 5 + 2
@@ -245,7 +245,7 @@ public class RawSamplesServicesTest {
         MetricSample s1 = histogramWithDist("resp", Map.of(), 1000, 3, 5000, 1000, 3000, 2500, dist1);
         MetricSample s2 = histogramWithDist("resp", Map.of(), 2000, 7, 17000, 1500, 4000, 3500, dist2);
 
-        MetricSample merged = RawSamplesServices.mergeSamples(s1, s2);
+        MetricSample merged = RawMetricSamplesServices.mergeSamples(s1, s2);
 
         Map<Long, Long> dist = merged.getDistribution();
         assertNotNull(dist);
@@ -260,32 +260,32 @@ public class RawSamplesServicesTest {
 
     private void save(String rnId, MetricSample sample) {
         ExecutionMetricSample sms = new ExecutionMetricSample(sample, EXEC_ID, rnId, PLAN_ID,
-                "myPlan", "", "", "my test", null, null, null, null);
+            "myPlan", "", "", "my test", null, null, null, null);
         accessor.save(Collections.singletonList(sms));
     }
 
     private static MetricSample counter(String name, Map<String, String> labels,
                                         long sampleTime, long increment, long runningTotal) {
         return new MetricSample(sampleTime, name, labels, InstrumentType.COUNTER,
-                1, increment, runningTotal-increment, runningTotal, runningTotal, null);
+            1, increment, runningTotal - increment, runningTotal, runningTotal, null);
     }
 
     private static MetricSample gauge(String name, Map<String, String> labels,
                                       long sampleTime, long count, long sum, long min, long max, long last) {
         return new MetricSample(sampleTime, name, labels, InstrumentType.GAUGE,
-                count, sum, min, max, last, null);
+            count, sum, min, max, last, null);
     }
 
     private static MetricSample histogram(String name, Map<String, String> labels,
                                           long sampleTime, long count, long sum, long min, long max, long last) {
         return new MetricSample(sampleTime, name, labels, InstrumentType.HISTOGRAM,
-                count, sum, min, max, last, null);
+            count, sum, min, max, last, null);
     }
 
     private static MetricSample histogramWithDist(String name, Map<String, String> labels,
                                                   long sampleTime, long count, long sum, long min, long max, long last,
                                                   Map<Long, Long> distribution) {
         return new MetricSample(sampleTime, name, labels, InstrumentType.HISTOGRAM,
-                count, sum, min, max, last, distribution);
+            count, sum, min, max, last, distribution);
     }
 }

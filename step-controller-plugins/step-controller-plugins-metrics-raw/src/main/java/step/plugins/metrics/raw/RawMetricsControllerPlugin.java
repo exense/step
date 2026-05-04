@@ -56,13 +56,13 @@ public class RawMetricsControllerPlugin extends AbstractControllerPlugin {
         tableRegistry.register(EntityConstants.measurements, new Table<>(measurementsCollection, null, false));
 
         metricSamplesCollection = context.getCollectionFactory().getCollection(EntityConstants.metricSamples, ExecutionMetricSample.class);
-        MetricSampleAccessor metricsAccessor = new MetricSampleAccessor(metricSamplesCollection);
-        context.put(MetricSampleAccessor.class, metricsAccessor);
+        ExecutionMetricSampleAccessor metricsAccessor = new ExecutionMetricSampleAccessor(metricSamplesCollection);
+        context.put(ExecutionMetricSampleAccessor.class, metricsAccessor);
         tableRegistry.register(EntityConstants.metricSamples, new Table<>(metricSamplesCollection, null, true));
 
         MetricsExecutionPlugin.registerSamplesHandlers(new RawMetricSamplesHandler(accessor, metricsAccessor));
 
-        context.getServiceRegistrationCallback().registerService(RawSamplesServices.class);
+        context.getServiceRegistrationCallback().registerService(RawMetricSamplesServices.class);
     }
 
     @Override

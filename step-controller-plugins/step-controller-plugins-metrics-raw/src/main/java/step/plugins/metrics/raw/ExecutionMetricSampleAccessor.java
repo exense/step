@@ -10,9 +10,9 @@ import step.core.metrics.ExecutionMetricSample;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class MetricSampleAccessor extends AbstractAccessor<ExecutionMetricSample> {
+public class ExecutionMetricSampleAccessor extends AbstractAccessor<ExecutionMetricSample> {
 
-    public MetricSampleAccessor(Collection<ExecutionMetricSample> collectionDriver) {
+    public ExecutionMetricSampleAccessor(Collection<ExecutionMetricSample> collectionDriver) {
         super(collectionDriver);
     }
 

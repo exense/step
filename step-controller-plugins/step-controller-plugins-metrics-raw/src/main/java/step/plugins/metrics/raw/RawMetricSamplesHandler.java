@@ -36,12 +36,12 @@ public class RawMetricSamplesHandler implements MetricSamplesHandler {
     private static final Logger logger = LoggerFactory.getLogger(RawMetricSamplesHandler.class);
 
     private final MeasurementAccessor accessor;
-    private final MetricSampleAccessor metricSampleAccessor;
+    private final ExecutionMetricSampleAccessor executionMetricSampleAccessor;
 
-    public RawMetricSamplesHandler(MeasurementAccessor accessor, MetricSampleAccessor metricSampleAccessor) {
+    public RawMetricSamplesHandler(MeasurementAccessor accessor, ExecutionMetricSampleAccessor executionMetricSampleAccessor) {
         super();
         this.accessor = accessor;
-        this.metricSampleAccessor = metricSampleAccessor;
+        this.executionMetricSampleAccessor = executionMetricSampleAccessor;
         MetricSamplerRegistry.getInstance().registerHandler(this);
         MetricHeartbeatRegistry.getInstance().registerHandler(this);
     }
@@ -56,15 +56,12 @@ public class RawMetricSamplesHandler implements MetricSamplesHandler {
 
     @Override
     public void processMetrics(List<ExecutionMetricSample> metrics) {
-        if (metrics != null && ! metrics.isEmpty()) {
-            metricSampleAccessor.save(metrics);
+        if (metrics != null && !metrics.isEmpty()) {
+            executionMetricSampleAccessor.save(metrics);
         }
     }
 
     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
         executionContext.put(MeasurementAccessor.class, accessor);
-    }
-
-    public void afterExecutionEnd(ExecutionContext context) {
     }
 }

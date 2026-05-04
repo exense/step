@@ -56,10 +56,10 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
 
     @Before
     public void setUp() throws Exception {
-        step.core.metrics.MetricsControllerPlugin mc = new step.core.metrics.MetricsControllerPlugin();
+        MetricsControllerPlugin mc = new MetricsControllerPlugin();
         mc.initMetricSamplingAndHeartbeat(GlobalContextBuilder.createGlobalContext());
-        step.core.metrics.MetricsExecutionPlugin.registerSamplesHandlers(new TestMetricSamplesHandler());
-        engine = ExecutionEngine.builder().withPlugin(new step.core.metrics.MetricsExecutionPlugin())
+        MetricsExecutionPlugin.registerSamplesHandlers(new TestMetricSamplesHandler());
+        engine = ExecutionEngine.builder().withPlugin(new MetricsExecutionPlugin())
             .withPlugin(new FunctionPlugin())
             .withPlugin(new ThreadPoolPlugin())
             .withPlugin(new LocalFunctionPlugin())
@@ -108,21 +108,16 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
         Assert.assertEquals(1000, assertMeasurementsValue.get("myMeasure2").get());
     }
 
-    public class TestMetricSamplesHandler implements step.core.metrics.MetricSamplesHandler {
+    public class TestMetricSamplesHandler implements MetricSamplesHandler {
 
         public TestMetricSamplesHandler() {
-            step.core.metrics.MetricSamplerRegistry.getInstance().registerHandler(this);
+            MetricSamplerRegistry.getInstance().registerHandler(this);
         }
 
         @Override
-        public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
-
-        }
-
-        @Override
-        public void processMeasurements(List<step.core.metrics.Measurement> measurements) {
+        public void processMeasurements(List<Measurement> measurements) {
             synchronized (assertMeasurementsCount) {
-                for (step.core.metrics.Measurement measurement : measurements) {
+                for (Measurement measurement : measurements) {
                     incValue(measurement.getExecId(), measurement.getValue());
                     incValue(measurement.getName(), measurement.getValue());
                     incValue(measurement.getType(), measurement.getValue());
@@ -143,9 +138,9 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
         }
 
         @Override
-        public void processMetrics(List<step.core.metrics.ExecutionMetricSample> metrics) {
+        public void processMetrics(List<ExecutionMetricSample> metrics) {
             synchronized (assertMeasurementsCount) {
-                for (step.core.metrics.ExecutionMetricSample mm : metrics) {
+                for (ExecutionMetricSample mm : metrics) {
                     if (mm.metricType != null) {
                         // Thread group and other categorized metrics
                         incValue(mm.eId, mm.sample.getLast());
@@ -154,11 +149,6 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
                     }
                 }
             }
-        }
-
-        @Override
-        public void afterExecutionEnd(ExecutionContext context) {
-
         }
     }
 

@@ -38,8 +38,8 @@ public class MetricHeartbeatRegistry {
     private final ConcurrentHashMap<String, LastSampleEntry> lastSamples = new ConcurrentHashMap<>();
     private final List<MetricSamplesHandler> handlers = new CopyOnWriteArrayList<>();
     private final ScheduledExecutorService scheduler =
-            Executors.newScheduledThreadPool(1, new BasicThreadFactory.Builder()
-                    .namingPattern("metric-heartbeat-%d").build());
+        Executors.newScheduledThreadPool(1, BasicThreadFactory.builder()
+            .namingPattern("metric-heartbeat-%d").daemon().build());
     volatile long intervalMs;
 
     private static final class LastSampleEntry {
@@ -98,9 +98,9 @@ public class MetricHeartbeatRegistry {
         try {
             long now = System.currentTimeMillis();
             List<ExecutionMetricSample> heartbeats = lastSamples.values().stream()
-                    .filter(entry -> now - entry.lastUpdatedMs >= intervalMs)
-                    .map(entry -> buildHeartbeat(entry.sample, now))
-                    .collect(Collectors.toList());
+                .filter(entry -> now - entry.lastUpdatedMs >= intervalMs)
+                .map(entry -> buildHeartbeat(entry.sample, now))
+                .collect(Collectors.toList());
             if (!heartbeats.isEmpty()) {
                 for (MetricSamplesHandler handler : handlers) {
                     try {
@@ -116,12 +116,12 @@ public class MetricHeartbeatRegistry {
     }
 
     private static String buildKey(ExecutionMetricSample mm) {
-        String execId = mm.eId != null ? mm.eId : "";
-        String agentUrl = mm.agentUrl != null ? mm.agentUrl : "";
-        String origin = mm.origin != null ? mm.origin : "";
+        String execId = Objects.requireNonNullElse(mm.eId, "");
+        String agentUrl = Objects.requireNonNullElse(mm.agentUrl, "");
+        String origin = Objects.requireNonNullElse(mm.origin, "");
         Map<String, String> labels = mm.sample.getLabels();
         String labelsKey = labels != null ? new TreeMap<>(labels).toString() : "{}";
-        return execId + "|" + agentUrl + "|" + origin + "|" + mm.sample.getName() + "|" + labelsKey;
+        return String.join("|", execId, agentUrl, origin, mm.sample.getName(), labelsKey);
     }
 
     /**
@@ -141,15 +141,15 @@ public class MetricHeartbeatRegistry {
         if (orig.getType() == InstrumentType.COUNTER) {
             long runningTotal = orig.getSum();
             heartbeatSample = new MetricSample(now, orig.getName(), orig.getLabels(), InstrumentType.COUNTER,
-                    0, runningTotal, runningTotal, runningTotal, runningTotal, null);
+                0, runningTotal, runningTotal, runningTotal, runningTotal, null);
         } else {
             // GAUGE
             long last = orig.getLast();
             heartbeatSample = new MetricSample(now, orig.getName(), orig.getLabels(), InstrumentType.GAUGE,
-                    1, last, last, last, last, null);
+                1, last, last, last, last, null);
         }
         return new ExecutionMetricSample(heartbeatSample, original.eId, original.rnId, original.planId,
-                original.plan, original.taskId, original.schedule, original.execution,
-                original.agentUrl, original.origin, original.getAttributes(), original.metricType);
+            original.plan, original.taskId, original.schedule, original.execution,
+            original.agentUrl, original.origin, original.getAttributes(), original.metricType);
     }
 }

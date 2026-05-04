@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
-import static step.core.metrics.AbstractMetricSample.METRIC_TYPE;
+import static step.core.metrics.StepMetricSample.METRIC_TYPE;
 import static step.core.metrics.MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID;
 import static step.plugins.timeseries.TimeSeriesExecutionPlugin.TIMESERIES_FLAG;
 
@@ -53,8 +53,8 @@ public class TimeSeriesHandler {
         }
     };
     //Ugly implementation
-    private static final List<String> executionMetricSampleBaseFields = List.of("eId","rnId","planId","plan","taskId","schedule","execution","agentUrl","origin", "metricType");
-    private static final List<String> executionMetricSampleAttributesFields = List.of("project","projectName");
+    private static final List<String> executionMetricSampleBaseFields = List.of("eId", "rnId", "planId", "plan", "taskId", "schedule", "execution", "agentUrl", "origin", "metricType");
+    private static final List<String> executionMetricSampleAttributesFields = List.of("project", "projectName");
     private static final Function<String, String> attributesPrefixRemovalSamples = (attribute) -> {
         if (attribute.startsWith(ATTRIBUTES_PREFIX)) {
             String attributeRenamed = attribute.replaceFirst(ATTRIBUTES_PREFIX, "");
@@ -62,7 +62,7 @@ public class TimeSeriesHandler {
                 return attributeRenamed;
             } else if (executionMetricSampleAttributesFields.contains(attributeRenamed)) {
                 return attribute;
-            } else if ("name".equals(attributeRenamed)){
+            } else if ("name".equals(attributeRenamed)) {
                 return "sample.name";
             } else {
                 return "sample.labels." + attributeRenamed;
@@ -73,7 +73,7 @@ public class TimeSeriesHandler {
     };
     public static final String SAMPLE_SAMPLE_TIME = "sample.sampleTime";
     private final Set<String> includedAttributesWithPrefix;
-    private final Set<String> exclduedAttributesWithPrefix;
+    private final Set<String> excludedAttributesWithPrefix;
 
     private final Set<String> timeSeriesIncludedAttributes;
     private final Set<String> timeSeriesExcludedAttributes;
@@ -112,7 +112,7 @@ public class TimeSeriesHandler {
             .stream()
             .map(x -> ATTRIBUTES_PREFIX + x)
             .collect(Collectors.toSet());
-        this.exclduedAttributesWithPrefix = this.timeSeriesExcludedAttributes
+        this.excludedAttributesWithPrefix = this.timeSeriesExcludedAttributes
             .stream()
             .map(x -> ATTRIBUTES_PREFIX + x)
             .collect(Collectors.toSet());
@@ -164,11 +164,9 @@ public class TimeSeriesHandler {
             // Iterate over each metric samples and ingest it again if metricSampleCollection exists
             if (metricSampleCollection != null) {
                 try (Stream<ExecutionMetricSample> stream = metricSampleCollection.findLazy(filterMetricSamples, metricsSearchOrder, null, null, 0)) {
-                    stream.forEach(metricSample -> {
-                        if (metricSample != null) {
-                            count.increment();
-                            timeSeriesBucketingHandler.processMetric(metricSample);
-                        }
+                    stream.filter(Objects::nonNull).forEach(metricSample -> {
+                        count.increment();
+                        timeSeriesBucketingHandler.processMetric(metricSample);
                     });
                 }
             }
@@ -289,8 +287,8 @@ public class TimeSeriesHandler {
                 //If the time-series are defined to only support a subset of a attributes we make sure all OQL fields are covered by the TS (or ultimately fallback to RAW measurements)
                 if (!includedAttributesWithPrefix.isEmpty()) {
                     hasUnknownFields = !includedAttributesWithPrefix.containsAll(oqlAttributes);
-                } else if (!exclduedAttributesWithPrefix.isEmpty()) {
-                    hasUnknownFields =  exclduedAttributesWithPrefix.stream().anyMatch(oqlAttributes::contains);
+                } else if (!excludedAttributesWithPrefix.isEmpty()) {
+                    hasUnknownFields = excludedAttributesWithPrefix.stream().anyMatch(oqlAttributes::contains);
                 }
                 if (oqlAttributes.isEmpty()) { // there are strings like 'abcd' which is a valid OQL by some reason
                     isValid = false;

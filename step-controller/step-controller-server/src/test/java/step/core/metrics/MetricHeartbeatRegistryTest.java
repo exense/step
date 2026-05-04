@@ -58,7 +58,7 @@ public class MetricHeartbeatRegistryTest {
         assertEquals(1, captured.size());
         MetricSample hb = captured.get(0).sample;
         assertEquals(InstrumentType.COUNTER, hb.getType());
-        assertEquals(0,   hb.getCount()); // no new increments in a heartbeat interval
+        assertEquals(0, hb.getCount()); // no new increments in a heartbeat interval
         assertEquals(100, hb.getSum());   // running total preserved
         assertEquals(100, hb.getMin());
         assertEquals(100, hb.getMax());
@@ -76,7 +76,7 @@ public class MetricHeartbeatRegistryTest {
         assertEquals(1, captured.size());
         MetricSample hb = captured.get(0).sample;
         assertEquals(InstrumentType.GAUGE, hb.getType());
-        assertEquals(1,   hb.getCount()); // synthetic single observation
+        assertEquals(1, hb.getCount()); // synthetic single observation
         assertEquals(110, hb.getSum());   // last known value
         assertEquals(110, hb.getMin());
         assertEquals(110, hb.getMax());
@@ -122,10 +122,10 @@ public class MetricHeartbeatRegistryTest {
     @Test
     public void heartbeatPreservesExecutionMetadata() {
         step.core.metrics.ExecutionMetricSample original = new step.core.metrics.ExecutionMetricSample(
-                gauge("cpu", 1, 70, 70, 70, 70),
-                "exec-42", "rn-99", "plan-7",
-                "MyPlan", "task-1", "sched-1", "exec desc",
-                "http://agent", "MyKeyword", null, null);
+            gauge("cpu", 1, 70, 70, 70, 70),
+            "exec-42", "rn-99", "plan-7",
+            "MyPlan", "task-1", "sched-1", "exec desc",
+            "http://agent", "MyKeyword", null, null);
         registry.update(original);
         registry.intervalMs = 0;
         registry.tick();
@@ -133,10 +133,10 @@ public class MetricHeartbeatRegistryTest {
         assertEquals(1, captured.size());
         step.core.metrics.ExecutionMetricSample hb = captured.get(0);
         assertEquals("exec-42", hb.eId);
-        assertEquals("rn-99",   hb.rnId);
-        assertEquals("plan-7",  hb.planId);
-        assertEquals("MyPlan",  hb.plan);
-        assertEquals("task-1",  hb.taskId);
+        assertEquals("rn-99", hb.rnId);
+        assertEquals("plan-7", hb.planId);
+        assertEquals("MyPlan", hb.plan);
+        assertEquals("task-1", hb.taskId);
     }
 
     @Test
@@ -150,7 +150,7 @@ public class MetricHeartbeatRegistryTest {
         assertFalse(captured.isEmpty());
         long hbTime = captured.get(0).sample.getSampleTime();
         assertTrue("Heartbeat sampleTime should be >= start of tick", hbTime >= before);
-        assertTrue("Heartbeat sampleTime should be <= end of tick",   hbTime <= after);
+        assertTrue("Heartbeat sampleTime should be <= end of tick", hbTime <= after);
     }
 
     // ── removeExecution ───────────────────────────────────────────────────────
@@ -188,7 +188,7 @@ public class MetricHeartbeatRegistryTest {
         registry.intervalMs = 0;
         registry.tick();
 
-        assertEquals("First handler should receive the heartbeat",  1, captured.size());
+        assertEquals("First handler should receive the heartbeat", 1, captured.size());
         assertEquals("Second handler should receive the heartbeat", 1, captured2.size());
     }
 
@@ -215,9 +215,9 @@ public class MetricHeartbeatRegistryTest {
     @Test
     public void differentLabelsSameNameAreDistinctEntries() {
         MetricSample g1 = new MetricSample(System.currentTimeMillis(), "cpu",
-                Map.of("env", "prod"), InstrumentType.GAUGE, 1, 80, 80, 80, 80, null);
+            Map.of("env", "prod"), InstrumentType.GAUGE, 1, 80, 80, 80, 80, null);
         MetricSample g2 = new MetricSample(System.currentTimeMillis(), "cpu",
-                Map.of("env", "staging"), InstrumentType.GAUGE, 1, 40, 40, 40, 40, null);
+            Map.of("env", "staging"), InstrumentType.GAUGE, 1, 40, 40, 40, 40, null);
 
         registry.update(stepSample("exec-1", g1));
         registry.update(stepSample("exec-1", g2));
@@ -253,10 +253,10 @@ public class MetricHeartbeatRegistryTest {
 
     @Test
     public void sameAgentAndOriginSameMetricMergesEntry() {
-        MetricSample first  = gauge("cpu", 1, 80, 80, 80, 80);
+        MetricSample first = gauge("cpu", 1, 80, 80, 80, 80);
         MetricSample second = gauge("cpu", 1, 90, 90, 90, 90);
 
-        registry.update(stepSampleFull("exec-1", first,  "http://agent-1", "KeywordA"));
+        registry.update(stepSampleFull("exec-1", first, "http://agent-1", "KeywordA"));
         registry.update(stepSampleFull("exec-1", second, "http://agent-1", "KeywordA"));
         registry.intervalMs = 0;
         registry.tick();
@@ -270,40 +270,40 @@ public class MetricHeartbeatRegistryTest {
 
     private step.core.metrics.ExecutionMetricSample stepSample(String execId, MetricSample sample) {
         return new step.core.metrics.ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
-                "MyPlan", "", "", "my execution", null, null, null, null);
+            "MyPlan", "", "", "my execution", null, null, null, null);
     }
 
     private step.core.metrics.ExecutionMetricSample stepSampleFull(String execId, MetricSample sample,
                                                                    String agentUrl, String origin) {
         return new step.core.metrics.ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
-                "MyPlan", "", "", "my execution", agentUrl, origin, null, null);
+            "MyPlan", "", "", "my execution", agentUrl, origin, null, null);
     }
 
     private static MetricSample counter(String name, long count, long runningTotal) {
         return new MetricSample(System.currentTimeMillis(), name, Map.of(),
-                InstrumentType.COUNTER, count, runningTotal, runningTotal, runningTotal, runningTotal, null);
+            InstrumentType.COUNTER, count, runningTotal, runningTotal, runningTotal, runningTotal, null);
     }
 
     private static MetricSample gauge(String name, long count, long sum, long min, long max, long last) {
         return new MetricSample(System.currentTimeMillis(), name, Map.of(),
-                InstrumentType.GAUGE, count, sum, min, max, last, null);
+            InstrumentType.GAUGE, count, sum, min, max, last, null);
     }
 
     private static MetricSample histogram(String name, long count, long sum) {
         return new MetricSample(System.currentTimeMillis(), name, Map.of(),
-                InstrumentType.HISTOGRAM, count, sum, 0, sum, sum, null);
+            InstrumentType.HISTOGRAM, count, sum, 0, sum, sum, null);
     }
 
     private static step.core.metrics.MetricSamplesHandler capturingHandler(List<step.core.metrics.ExecutionMetricSample> sink) {
         return new step.core.metrics.MetricSamplesHandler() {
             @Override
-            public void initializeExecutionContext(ExecutionEngineContext ctx, ExecutionContext execCtx) {}
+            public void processMeasurements(List<step.core.metrics.Measurement> measurements) {
+            }
+
             @Override
-            public void processMeasurements(List<step.core.metrics.Measurement> measurements) {}
-            @Override
-            public void processMetrics(List<step.core.metrics.ExecutionMetricSample> metrics) { sink.addAll(metrics); }
-            @Override
-            public void afterExecutionEnd(ExecutionContext context) {}
+            public void processMetrics(List<step.core.metrics.ExecutionMetricSample> metrics) {
+                sink.addAll(metrics);
+            }
         };
     }
 }

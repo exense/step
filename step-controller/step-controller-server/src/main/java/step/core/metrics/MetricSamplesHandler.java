@@ -8,7 +8,9 @@ import java.util.Map;
 
 public interface MetricSamplesHandler {
 
-    void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext);
+    default void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
+
+    }
 
     void processMeasurements(List<Measurement> measurements);
 
@@ -38,7 +40,7 @@ public interface MetricSamplesHandler {
      * <p>
      * The default implementation invoke {@link #processMetrics(List)} discarding the optionalLabels
      *
-     * @param metrics enriched metric snapshots, never {@code null}
+     * @param metrics        enriched metric snapshots, never {@code null}
      * @param optionalLabels Map of optional labels that be used to further enrich the metric snapshots, can be {@code null}
      */
     default void processMetrics(List<ExecutionMetricSample> metrics, Map<String, String> optionalLabels) {
@@ -57,6 +59,8 @@ public interface MetricSamplesHandler {
     default void processControllerMetrics(List<ControllerMetricSample> metrics) {
     }
 
-    void afterExecutionEnd(ExecutionContext context);
+    default void afterExecutionEnd(ExecutionContext context) {
+
+    }
 
 }

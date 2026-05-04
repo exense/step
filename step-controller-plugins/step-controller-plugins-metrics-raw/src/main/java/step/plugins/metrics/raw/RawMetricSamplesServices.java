@@ -18,22 +18,22 @@ import java.util.stream.Stream;
 @Singleton
 @Path("raw-samples")
 @Tag(name = "RawMetricSamples")
-public class RawSamplesServices extends AbstractStepServices {
+public class RawMetricSamplesServices extends AbstractStepServices {
 
-    private MetricSampleAccessor metricSampleAccessor;
+    private ExecutionMetricSampleAccessor executionMetricSampleAccessor;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
-        metricSampleAccessor = getContext().require(MetricSampleAccessor.class);
+        executionMetricSampleAccessor = getContext().require(ExecutionMetricSampleAccessor.class);
     }
 
-    public RawSamplesServices() {
+    public RawMetricSamplesServices() {
     }
 
     // for unit testing only
-    RawSamplesServices(MetricSampleAccessor metricSampleAccessor) {
-        this.metricSampleAccessor = metricSampleAccessor;
+    RawMetricSamplesServices(ExecutionMetricSampleAccessor executionMetricSampleAccessor) {
+        this.executionMetricSampleAccessor = executionMetricSampleAccessor;
     }
 
     @Operation(description = "Returns the aggregated metric samples for the provided report node id")
@@ -45,11 +45,11 @@ public class RawSamplesServices extends AbstractStepServices {
     public List<MetricSample> getAggregatedMetricSamples(@PathParam("rnId") String rnId) {
         // Registry: one aggregated MetricSample per unique (name, labels) combination
         Map<String, MetricSample> registry = new LinkedHashMap<>();
-        try (Stream<ExecutionMetricSample> stream = metricSampleAccessor.findByReportNodeId(rnId)) {
+        try (Stream<ExecutionMetricSample> stream = executionMetricSampleAccessor.findByReportNodeId(rnId)) {
             stream.forEach(stepMetricSample -> {
                 MetricSample sample = stepMetricSample.sample;
                 String key = sample.getName() + "|" + new TreeMap<>(sample.getLabels());
-                registry.merge(key, sample, RawSamplesServices::mergeSamples);
+                registry.merge(key, sample, RawMetricSamplesServices::mergeSamples);
             });
         }
         return new ArrayList<>(registry.values());
@@ -75,10 +75,10 @@ public class RawSamplesServices extends AbstractStepServices {
         max = Math.max(existing.getMax(), incoming.getMax());
         last = incoming.getSampleTime() >= existing.getSampleTime()
             ? incoming.getLast() : existing.getLast();
-        distribution =  (existing.getType() == InstrumentType.COUNTER) ? null :
+        distribution = (existing.getType() == InstrumentType.COUNTER) ? null :
             mergeDistributions(existing.getDistribution(), incoming.getDistribution());
         return new MetricSample(sampleTime, existing.getName(), existing.getLabels(),
-                existing.getType(), count, sum, min, max, last, distribution);
+            existing.getType(), count, sum, min, max, last, distribution);
     }
 
     static Map<Long, Long> mergeDistributions(Map<Long, Long> a, Map<Long, Long> b) {
