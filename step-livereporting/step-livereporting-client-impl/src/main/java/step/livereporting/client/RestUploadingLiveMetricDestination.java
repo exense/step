@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.metrics.Metric;
 import step.core.metrics.MetricSample;
-import step.core.metrics.MetricSamplesBuilder;
+import step.core.metrics.MetricSamplesCollector;
 import step.reporting.impl.LiveMetricDestination;
 import step.streaming.util.BatchProcessor;
 
@@ -41,7 +41,7 @@ import java.util.List;
 /**
  * Sends {@link MetricSample}s to the controller's live-reporting endpoint.
  * <p>
- * Metrics are registered via {@link #accept(Metric)}. A {@link MetricSamplesBuilder} installs
+ * Metrics are registered via {@link #accept(Metric)}. A {@link MetricSamplesCollector} installs
  * a per-observation consumer on each metric so that every {@code increment()} or
  * {@code observe()} call immediately feeds a sample into a {@link BatchProcessor}.
  * The batch is sent to the controller either when it reaches the configured size or when
@@ -56,7 +56,7 @@ public class RestUploadingLiveMetricDestination implements LiveMetricDestination
     private final String endpointUrl;
     private final Client client;
     private final BatchProcessor<MetricSample> batchProcessor;
-    private final MetricSamplesBuilder metricSamplesBuilder;
+    private final MetricSamplesCollector metricSamplesCollector;
 
     public RestUploadingLiveMetricDestination(String endpointUrl) {
         this(endpointUrl, DEFAULT_BATCH_SIZE, DEFAULT_FLUSH_INTERVAL_MS);
@@ -66,7 +66,7 @@ public class RestUploadingLiveMetricDestination implements LiveMetricDestination
         this.endpointUrl = endpointUrl;
         this.client = createClient();
         this.batchProcessor = new BatchProcessor<>(batchSize, flushIntervalMs, this::sendMetrics, "livereporting-metrics-rest");
-        this.metricSamplesBuilder = new MetricSamplesBuilder(batchProcessor::add);
+        this.metricSamplesCollector = new MetricSamplesCollector(batchProcessor::add);
     }
 
     private Client createClient() {
@@ -80,7 +80,7 @@ public class RestUploadingLiveMetricDestination implements LiveMetricDestination
 
     @Override
     public void accept(Metric metric) {
-        metricSamplesBuilder.register(metric);
+        metricSamplesCollector.register(metric);
     }
 
     private void sendMetrics(List<MetricSample> metrics) {
@@ -105,7 +105,7 @@ public class RestUploadingLiveMetricDestination implements LiveMetricDestination
     public void close() {
         // Final flush: any values accumulated since the last rate-limited flush are forwarded
         // to the batchProcessor via the forward consumer before the batch is sent.
-        metricSamplesBuilder.close();
+        metricSamplesCollector.close();
         batchProcessor.close();
         client.close();
     }
