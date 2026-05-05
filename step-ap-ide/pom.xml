@@ -1,0 +1,59 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>step-ap-ide</artifactId>
+  <name>${project.groupId}:${project.artifactId}</name>
+  <packaging>jar</packaging>
+
+  <parent>
+    <groupId>ch.exense.step</groupId>
+    <artifactId>step</artifactId>
+    <version>0.0.0-SNAPSHOT</version>
+  </parent>
+
+  <dependencies>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-framework-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-controller-backend</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-automation-packages-ide</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!--    <dependency>-->
+    <!--      <groupId>org.openjfx</groupId>-->
+    <!--      <artifactId>javafx-controls</artifactId>-->
+    <!--      <version>21.0.2</version>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.openjfx</groupId>-->
+    <!--      <artifactId>javafx-web</artifactId>-->
+    <!--      <version>21.0.2</version>-->
+    <!--    </dependency>-->
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!--      <plugin>-->
+      <!--        <groupId>org.openjfx</groupId>-->
+      <!--        <artifactId>javafx-maven-plugin</artifactId>-->
+      <!--        <version>0.0.8</version>-->
+      <!--        <configuration>-->
+      <!--          <mainClass>your.package.App</mainClass>-->
+      <!--        </configuration>-->
+      <!--      </plugin>-->
+    </plugins>
+  </build>
+</project>
