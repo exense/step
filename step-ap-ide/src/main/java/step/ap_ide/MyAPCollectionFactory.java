@@ -5,12 +5,15 @@ import org.apache.commons.io.FileUtils;
 import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.collections.AutomationPackageCollectionFactory;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.EntityVersion;
+import step.parameter.Parameter;
 import step.parameter.automation.AutomationPackageParametersRegistration;
+import step.plans.parser.yaml.YamlPlan;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +24,7 @@ public class MyAPCollectionFactory implements CollectionFactory {
 
     private static final String workDirName = "work";
     private static final String initialDirName = "src/main/resources/work-initial";
+    private final AutomationPackageYamlFragmentManager fragmentManager;
     private final AutomationPackageCollectionFactory automationPackageCollectionFactory;
 
     public MyAPCollectionFactory(Properties properties) {
@@ -47,12 +51,23 @@ public class MyAPCollectionFactory implements CollectionFactory {
                 System.err.println("Work directory is present at: " + workDir.getAbsolutePath());
                 System.err.println("You may delete this directory to start over from scratch");
             }
-            var fragmentManager = reader.getAutomationPackageYamlFragmentManager(workDir);
+            fragmentManager = reader.getAutomationPackageYamlFragmentManager(workDir);
             automationPackageCollectionFactory = new AutomationPackageCollectionFactory(properties, fragmentManager);
+
+            setPropertiesWriteToFragment(YamlPlan.PLANS_ENTITY_NAME, "plans.yml");
+            setPropertiesWriteToFragment(Parameter.ENTITY_NAME, "parameters4.yml");
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
+    protected void setPropertiesWriteToFragment(String entityName, String fragment) {
+        Properties properties = new Properties();
+        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), fragment);
+        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+        fragmentManager.setProperties(properties);
+    }
+
 
     @Override
     public <T> Collection<T> getCollection(String name, Class<T> entityClass) {
