@@ -13,8 +13,8 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionStatus;
 import step.core.plugins.AbstractControllerPlugin;
-import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.plugins.Plugin;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.scheduler.ExecutionScheduler;
 import step.core.scheduler.SchedulerServices;
 import step.framework.server.CORSRequestResponseFilter;
@@ -33,9 +33,14 @@ public class StepControllerPlugin extends AbstractControllerPlugin {
     private Controller controller;
 
     @Override
-    public void init(GlobalContext context) throws Exception {
+    public void bootstrapAndValidate(GlobalContext context) throws Exception {
+        // both used for validation (as early as possible) and for setting context variables, blows up if there is something wrong with the configuration.
         context.setControllerUrl(getControllerUrl(context.getConfiguration(), false, true));
         context.setControllerServiceUrl(getControllerUrl(context.getConfiguration(), true, true));
+    }
+
+    @Override
+    public void init(GlobalContext context) throws Exception {
         controller = new Controller(context);
         controller.init(context.getServiceRegistrationCallback());
         context.put(Controller.class, controller);
