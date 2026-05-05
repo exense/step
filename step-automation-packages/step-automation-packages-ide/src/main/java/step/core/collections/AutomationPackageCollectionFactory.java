@@ -18,19 +18,22 @@
  ******************************************************************************/
 package step.core.collections;
 
-import java.io.IOException;
-import java.util.Properties;
-
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.plans.Plan;
 import step.functions.Function;
 import step.parameter.Parameter;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class AutomationPackageCollectionFactory implements CollectionFactory {
 
     private final InMemoryCollectionFactory baseFactory;
     private final AutomationPackageYamlFragmentManager fragmentManager;
+    private final Map<String, Collection<?>> collectionsByName = new ConcurrentHashMap<>();
 
     public AutomationPackageCollectionFactory(Properties properties, AutomationPackageYamlFragmentManager fragmentManager) {
         this.fragmentManager = fragmentManager;
@@ -38,24 +41,27 @@ public class AutomationPackageCollectionFactory implements CollectionFactory {
     }
 
     @Override
-	public <T> Collection<T> getCollection(String name, Class<T> entityClass) {
+    @SuppressWarnings("unchecked")
+    public <T> Collection<T> getCollection(String name, Class<T> entityClass) {
+        return (Collection<T>) collectionsByName.computeIfAbsent(name, (_name) -> {
+            if (Plan.class.isAssignableFrom(entityClass)) {
+                return new AutomationPackagePlanCollection(fragmentManager);
+            } else if (Parameter.class.isAssignableFrom(entityClass)) {
+                return new AutomationPackageParameterCollection(fragmentManager);
+            } else if (Function.class.isAssignableFrom(entityClass)) {
+                return new AutomationPackageFunctionCollection(fragmentManager);
+            }
+            return baseFactory.getCollection(name, entityClass);
+        });
+    }
 
-        if (Plan.class.isAssignableFrom(entityClass))  {
-            return (Collection<T>) new AutomationPackagePlanCollection(fragmentManager);
-        } else if (Parameter.class.isAssignableFrom(entityClass)) {
-            return (Collection<T>) new AutomationPackageParameterCollection(fragmentManager);
-        } else if (Function.class.isAssignableFrom(entityClass)) {
-            return (Collection<T>) new AutomationPackageFunctionCollection(fragmentManager);
-        }
-
-        return baseFactory.getCollection(name, entityClass);
-	}
-
-	@Override
-	public Collection<EntityVersion> getVersionedCollection(String name) {
-        Collection<EntityVersion> baseCollection = baseFactory.getCollection(name, EntityVersion.class);
-        return baseCollection;
-	}
+    @SuppressWarnings("rawtypes")
+    @Override
+    public Collection<EntityVersion> getVersionedCollection(String name) {
+        // TODO: I'm pretty sure the previous implementation was incorrect.
+        // Fix this once we need it and know what the correct implementation is.
+        throw new UnsupportedOperationException();
+    }
 
     @Override
     public void close() throws IOException {
