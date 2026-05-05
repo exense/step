@@ -78,13 +78,21 @@ public class App extends Application {
         root.setCenter(webView);
 
         Scene scene = new Scene(root, 1024, 768);
-        primaryStage.setTitle("Native Web App Wrapper");
+        primaryStage.setTitle("StepUp");
+        // Force the JVM to terminate when the window is closed
+        primaryStage.setOnCloseRequest(event -> {
+            System.out.println("Window closed, terminating JVM...");
+            System.exit(0);
+        });
         primaryStage.setScene(scene);
         primaryStage.show();
         webView.getEngine().load("http://127.0.0.1:4201");
     }
 
     public static void main(String[] args) {
+        // absolutely required when using dev frontend, otherwise
+        // FX webview will (wrongly) try to upgrade non-SSL HTTP requests to HTTP2,
+        // and Frontend will (wrongly) never answer these upgrade requests. State of IT in 2026.
         System.setProperty("com.sun.webkit.useHTTP2Loader", "false");
         launch(args);
     }
