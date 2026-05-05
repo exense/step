@@ -7,6 +7,7 @@ import java.util.List;
 public class ReportNodesTableParameters extends TableParameters {
     private String eid;
     private List<String> testcases;
+    private boolean enrichCallKeywordWithAssertionErrors;
 
     public String getEid() {
         return eid;
@@ -22,5 +23,13 @@ public class ReportNodesTableParameters extends TableParameters {
 
     public void setTestcases(List<String> testcases) {
         this.testcases = testcases;
+    }
+
+    public boolean isEnrichCallKeywordWithAssertionErrors() {
+        return enrichCallKeywordWithAssertionErrors;
+    }
+
+    public void setEnrichCallKeywordWithAssertionErrors(boolean enrichCallKeywordWithAssertionErrors) {
+        this.enrichCallKeywordWithAssertionErrors = enrichCallKeywordWithAssertionErrors;
     }
 }

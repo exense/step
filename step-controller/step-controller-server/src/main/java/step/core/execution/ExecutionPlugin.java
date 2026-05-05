@@ -65,12 +65,20 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
         }));
 
 
-        tableRegistry.register("leafReports", new Table<>(reportsCollection, "execution-read", false)
-            .withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context)).withResultListFactory(() -> new ArrayList<>() {
-            }));
+        tableRegistry.register("leafReports", getLeafReportTable(context, reportsCollection)
+        );
         tableRegistry.register("reports", new Table<>(reportsCollection, "execution-read", false)
             .withTableFiltersFactory(new ReportNodeTableFilterFactory()).withResultListFactory(() -> new ArrayList<>() {
             }));
         context.getServiceRegistrationCallback().registerService(ExecutionServices.class);
+    }
+
+    // also used by junit tests
+    protected static Table<ReportNode> getLeafReportTable(GlobalContext context, Collection<ReportNode> reportsCollection) {
+        return new Table<>(reportsCollection, "execution-read", false)
+            .withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context))
+            .withResultListFactory(() -> new ArrayList<>() {
+            })
+            .withResultItemEnricher(new ReportNodeTableEnricher(reportsCollection));
     }
 }
