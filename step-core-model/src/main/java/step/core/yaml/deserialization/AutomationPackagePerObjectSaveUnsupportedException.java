@@ -1,3 +1,5 @@
+package step.core.yaml.deserialization;
+
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -16,14 +18,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.core.yaml.deserialization;
+public class AutomationPackagePerObjectSaveUnsupportedException extends AutomationPackageUpdateException {
 
-public class AutomationPackageUpdateException extends RuntimeException {
-    public AutomationPackageUpdateException(String message, Exception e) {
-        super(message, e);
-    }
-
-    public AutomationPackageUpdateException(String message) {
+    public AutomationPackagePerObjectSaveUnsupportedException(String message) {
         super(message);
     }
 }

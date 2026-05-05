@@ -42,7 +42,7 @@ import java.util.*;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractAutomationPackageFragmentYaml implements AutomationPackageFragmentYaml {
     private List<String> fragments = new ArrayList<>();
-    private List<YamlAutomationPackageKeyword> keywords = new ArrayList<>();
+    private PatchableYamlList<YamlAutomationPackageKeyword> keywords;
     private PatchableYamlList<YamlPlan> plans;
     private List<YamlPlainTextPlan> plansPlainText = new ArrayList<>();
 
@@ -53,13 +53,14 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     public AbstractAutomationPackageFragmentYaml(PatchingContext patchingContext) {
         context = patchingContext;
         plans = new PatchableYamlList<>(patchingContext, YamlPlan.PLANS_ENTITY_NAME);
+        keywords = new PatchableYamlList<>(patchingContext, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
     }
 
     @JsonIgnore
     private URL url;
 
     @Override
-    public List<YamlAutomationPackageKeyword> getKeywords() {
+    public PatchableYamlList<YamlAutomationPackageKeyword> getKeywords() {
         return keywords;
     }
 

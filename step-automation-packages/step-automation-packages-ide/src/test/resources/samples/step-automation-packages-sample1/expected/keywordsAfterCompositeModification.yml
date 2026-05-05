@@ -12,13 +12,13 @@ keywords:
         root:
           testCase:
             children:
-              - echo:
-                  text: "Just echo"
-              - return:
-                  output:
-                    - output1: "value"
-                    - output2:
-                        expression: "'some thing dynamic'"
+            - echo:
+                text: "Modified Echo"
+            - return:
+                output:
+                - output1: "value"
+                - output2:
+                    expression: "'some thing dynamic'"
   - GeneralScript:
       name: "GeneralScript keyword from AP"
       scriptLanguage: javascript

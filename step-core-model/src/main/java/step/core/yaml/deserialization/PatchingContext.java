@@ -57,7 +57,7 @@ public class PatchingContext {
         this.yaml = yaml;
     }
 
-    private String entityStringWithIndent(Object entity, int indent) {
+    private String entityStringWithIndent(PatchableYamlModel entity, int indent) {
         try {
             String indentString = " ".repeat(indent);
             return mapper
@@ -161,5 +161,6 @@ public class PatchingContext {
         patchable.setEndOffset(yaml.length());
         patchable.setIndent(0);
         patchables.add(patchable);
+        yaml += "\n";
     }
 }

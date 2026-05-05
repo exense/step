@@ -32,7 +32,7 @@ import java.util.Map;
 
 public interface AutomationPackageFragmentYaml {
 
-    List<YamlAutomationPackageKeyword> getKeywords();
+    PatchableYamlList<YamlAutomationPackageKeyword> getKeywords();
 
     PatchableYamlList<YamlPlan> getPlans();
 

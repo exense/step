@@ -33,6 +33,7 @@ import step.core.collections.Document;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.migration.MigrationManager;
+import step.plans.parser.yaml.VersionedYamlPlan;
 import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
@@ -65,7 +66,7 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> i
 
         if (currentVersion != null) {
             Document yamlPlanDocument = p.getCodec().treeToValue(planJsonNode, Document.class);
-            String planVersionString = yamlPlanDocument.getString(YamlPlan.VERSION_FIELD_NAME);
+            String planVersionString = yamlPlanDocument.getString(VersionedYamlPlan.VERSION_FIELD_NAME);
 
             if (planVersionString == null) {
                 planVersionString = (String) ctxt.getAttribute("version");
@@ -89,7 +90,7 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> i
                     Document migratedDocument = tempCollection.find(Filters.id(planDocument.getId()), null, null, null, 0).findFirst().orElseThrow();
 
                     // set actual version
-                    migratedDocument.replace(YamlPlan.VERSION_FIELD_NAME, currentVersion.toString());
+                    migratedDocument.replace(VersionedYamlPlan.VERSION_FIELD_NAME, currentVersion.toString());
 
                     // remove automatically generated document id
                     migratedDocument.remove(AbstractIdentifiableObject.ID);
@@ -120,11 +121,6 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> i
 
         return (YamlPlan) delegate.deserialize(p, ctxt);
     }
-/*
-    @Override
-    public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty beanProperty) throws JsonMappingException {
-        ctxt.findNonContextualValueDeserializer(ctxt.constructType(YamlPlan.class));
-    }*/
 
     @Override
     public void resolve(DeserializationContext ctxt) throws JsonMappingException {

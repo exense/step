@@ -24,6 +24,7 @@ import java.util.Properties;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.plans.Plan;
+import step.functions.Function;
 import step.parameter.Parameter;
 
 public class AutomationPackageCollectionFactory implements CollectionFactory {
@@ -39,10 +40,12 @@ public class AutomationPackageCollectionFactory implements CollectionFactory {
     @Override
 	public <T> Collection<T> getCollection(String name, Class<T> entityClass) {
 
-        if (entityClass == Plan.class)  {
+        if (Plan.class.isAssignableFrom(entityClass))  {
             return (Collection<T>) new AutomationPackagePlanCollection(fragmentManager);
-        } else if (entityClass == Parameter.class) {
+        } else if (Parameter.class.isAssignableFrom(entityClass)) {
             return (Collection<T>) new AutomationPackageParameterCollection(fragmentManager);
+        } else if (Function.class.isAssignableFrom(entityClass)) {
+            return (Collection<T>) new AutomationPackageFunctionCollection(fragmentManager);
         }
 
         return baseFactory.getCollection(name, entityClass);

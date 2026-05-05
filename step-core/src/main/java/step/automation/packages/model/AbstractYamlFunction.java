@@ -38,8 +38,8 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
     @JsonSchema(defaultProvider = DefaultYamlFunctionNameProvider.class)
     private String name;
 
-    private DynamicValue<Integer> callTimeout;
-    private JsonObject schema;
+    private DynamicValue<Integer> callTimeout = Function.DEFAULT_CALL_TIMEOUT;
+    private JsonObject schema = Function.DEFAULT_SCHEMA;
 
     private boolean executeLocally;
 
@@ -119,6 +119,11 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
         fillDeclaredFields(res, context);
         return res;
     }
+
+    public void updateFromFunction(Function function) {
+        copyFieldsFromObject(function, false);
+    }
+
 
     public static class DefaultYamlFunctionNameProvider implements JsonSchemaDefaultValueProvider {
 

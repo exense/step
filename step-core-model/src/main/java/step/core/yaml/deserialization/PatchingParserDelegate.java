@@ -59,11 +59,11 @@ public class PatchingParserDelegate extends JsonParserDelegate {
         return locationForToken.get(token);
     }
 
-    protected JsonLocation getLastDistinctLocation() {
+    public JsonLocation getLastDistinctLocation() {
         return lastDistinctLocation;
     }
 
-    protected PatchingContext getPatchingContext() {
+    public PatchingContext getPatchingContext() {
         return this.patchingContext;
     }
 }
