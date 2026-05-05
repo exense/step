@@ -201,7 +201,9 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
 
     @Override
     public void serverStop(GlobalContext context) {
-        metricSamplerRegistry.stop();
+        if (metricSamplerRegistry != null) {
+            metricSamplerRegistry.stop();
+        }
         MetricHeartbeatRegistry.getInstance().stop();
     }
 
