@@ -181,10 +181,6 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
         }
     }
 
-    @Override
-    public void afterExecutionEnd(ExecutionContext context) {
-    }
-
     public Set<String> getHandledAttributes() {
         return handledAttributes;
     }
