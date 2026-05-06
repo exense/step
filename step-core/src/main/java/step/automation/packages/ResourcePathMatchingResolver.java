@@ -38,28 +38,22 @@ public class ResourcePathMatchingResolver {
     public List<URL> getResourcesByPattern(String resourcePathPattern) {
         List<URL> res = new ArrayList<>();
         if (!containsWildcard(resourcePathPattern)) {
-            addIfNotNull(res, classLoader.getResource(resourcePathPattern), resourcePathPattern);
+            URL url = classLoader.getResource(resourcePathPattern);
+            if (url != null) {
+                res.add(url);
+            } else {
+                logger.warn("Ignoring resource because it cannot be resolved: {}", resourcePathPattern);
+            }
         } else {
             for (URL resource : findPathMatchingResources(resourcePathPattern)) {
-                if (addIfNotNull(res, resource, resourcePathPattern)) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Obtained resource from automation package: {}", resource);
-                    }
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Obtained resource from automation package: {}", resource);
                 }
+                res.add(resource);
             }
         }
 
         return res;
-    }
-
-    private boolean addIfNotNull(List<URL> res, URL url, String resourcePathPattern) {
-        if (url != null) {
-            res.add(url);
-            return true;
-        } else {
-            logger.warn("Ignoring resource because it cannot be resolved: {}", resourcePathPattern);
-            return false;
-        }
     }
 
     public static boolean containsWildcard(String resourcePathPattern) {

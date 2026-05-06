@@ -59,9 +59,8 @@ import java.util.stream.Collectors;
  * these resources are not stored yet).
  */
 public abstract class AutomationPackageReader<T extends AutomationPackageArchive> {
-    protected static final Logger logger = LoggerFactory.getLogger(AutomationPackageReader.class);
+    private static final Logger logger = LoggerFactory.getLogger(AutomationPackageReader.class);
     public static final String AP_VERSION_SEPARATOR = ".";
-    protected static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
     private final PlanParser planTextPlanParser;
     protected String jsonSchemaPath;
     protected final AutomationPackageHookRegistry hookRegistry;
@@ -205,11 +204,6 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
             for (String importedFragmentReference : fragment.getFragments()) {
                 List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
                 for (URL resource : resources) {
-                    if (resource == null) {
-                        // This should not happen because we rather should get back an empty list of resources; we keep the code nevertheless just in case
-                        logger.warn("Ignoring fragment {} because it cannot be resolved", importedFragmentReference);
-                        continue;
-                    }
                     try (InputStream fragmentYamlStream = resource.openStream()) {
                         fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getAutomationPackageName());
                         fragmentYamlMap.put(resource.toString(), fragment);
@@ -232,7 +226,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         for (Map.Entry<String, PatchableYamlList<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
             boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage);
             if (!hooked) {
-                log.warn("Hook not found for additional field " + additionalField.getKey() + ". The additional field has been skipped");
+                logger.warn("Hook not found for additional field " + additionalField.getKey() + ". The additional field has been skipped");
             }
         }
     }
@@ -301,7 +295,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     }
 
     public synchronized void updateJsonSchema(String jsonSchemaPath) {
-        log.info("Change json schema for automation package to {}", jsonSchemaPath);
+        logger.info("Change json schema for automation package to {}", jsonSchemaPath);
         this.jsonSchemaPath = jsonSchemaPath;
         this.descriptorReader = null;
     }
