@@ -21,8 +21,9 @@ package step.automation.packages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.*;
-import java.util.*;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class ResourcePathMatchingResolver {
@@ -37,17 +38,28 @@ public class ResourcePathMatchingResolver {
     public List<URL> getResourcesByPattern(String resourcePathPattern) {
         List<URL> res = new ArrayList<>();
         if (!containsWildcard(resourcePathPattern)) {
-            res.add(classLoader.getResource(resourcePathPattern));
+            addIfNotNull(res, classLoader.getResource(resourcePathPattern), resourcePathPattern);
         } else {
             for (URL resource : findPathMatchingResources(resourcePathPattern)) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Obtain resource from automation package: {}", resource);
+                if (addIfNotNull(res, resource, resourcePathPattern)) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("Obtained resource from automation package: {}", resource);
+                    }
                 }
-                res.add(resource);
             }
         }
 
         return res;
+    }
+
+    private boolean addIfNotNull(List<URL> res, URL url, String resourcePathPattern) {
+        if (url != null) {
+            res.add(url);
+            return true;
+        } else {
+            logger.warn("Ignoring resource because it cannot be resolved: {}", resourcePathPattern);
+            return false;
+        }
     }
 
     public static boolean containsWildcard(String resourcePathPattern) {
@@ -62,7 +74,11 @@ public class ResourcePathMatchingResolver {
             throw new RuntimeException("Wildcards are currently not supported for the root element of the path: " + rootPath + ". You should put all the fragments into a folder and reference them as follow: myFolder/*");
         } else {
             URL resource = classLoader.getResource(rootPath);
-            findPathMatchingResourcesRecursive(pathArray, 0, resource, result);
+            if (resource != null) {
+                findPathMatchingResourcesRecursive(pathArray, 0, resource, result);
+            } else {
+                logger.warn("Ignoring resource because it cannot be resolved: {}", locationPattern);
+            }
         }
         return result;
     }

@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
  * these resources are not stored yet).
  */
 public abstract class AutomationPackageReader<T extends AutomationPackageArchive> {
-
+    protected static final Logger logger = LoggerFactory.getLogger(AutomationPackageReader.class);
     public static final String AP_VERSION_SEPARATOR = ".";
     protected static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
     private final PlanParser planTextPlanParser;
@@ -185,7 +185,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
         URL descriptorURL = archive.getDescriptorYamlUrl();
-        try (InputStream inputStream = descriptorURL.openStream()){
+        try (InputStream inputStream = descriptorURL.openStream()) {
             AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
             descriptor.setFragmentUrl(descriptorURL);
             AutomationPackageContent content = newContentInstance();
@@ -205,6 +205,11 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
             for (String importedFragmentReference : fragment.getFragments()) {
                 List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
                 for (URL resource : resources) {
+                    if (resource == null) {
+                        // This should not happen because we rather should get back an empty list of resources; we keep the code nevertheless just in case
+                        logger.warn("Ignoring fragment {} because it cannot be resolved", importedFragmentReference);
+                        continue;
+                    }
                     try (InputStream fragmentYamlStream = resource.openStream()) {
                         fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getAutomationPackageName());
                         fragmentYamlMap.put(resource.toString(), fragment);
