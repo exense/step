@@ -24,11 +24,8 @@ import step.artefacts.Echo;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
-import step.core.yaml.deserialization.AutomationPackagePerObjectSaveUnsupportedException;
 import step.functions.Function;
-import step.parameter.Parameter;
 import step.plugins.functions.types.CompositeFunction;
 
 import java.io.IOException;
@@ -38,7 +35,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class AutomationPackageKeywordCollectionTest extends AutomationPackageCollectionTestBase {
 
