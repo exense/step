@@ -8,3 +8,4 @@ fragments:
   - "parameters.yml"
   - "parameters2.yml"
   - "unknown.yml"
+  - "existingbutempty/*.yml"
