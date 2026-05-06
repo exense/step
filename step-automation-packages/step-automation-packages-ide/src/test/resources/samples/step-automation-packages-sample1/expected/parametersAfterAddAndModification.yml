@@ -14,4 +14,4 @@ parameters:
       expression: "mySimpleKey"
   - key: "addedParameter"
     value: "foo"
-    description: "This is an added Parameter after modification"
+    description: "This is an added Parameter with a new description"

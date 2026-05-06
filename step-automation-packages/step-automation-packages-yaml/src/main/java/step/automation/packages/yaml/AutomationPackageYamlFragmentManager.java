@@ -291,6 +291,7 @@ public class AutomationPackageYamlFragmentManager {
 
             YO oldYamlObject = (YO) patchableMap.get(object);
             modifyFragmentEntity(fragment, list, oldYamlObject, newYamlObject);
+            patchableMap.put(object, newYamlObject);
         }
         return object;
     }

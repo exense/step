@@ -75,7 +75,9 @@ public class AutomationPackageParameterCollectionTest extends AutomationPackageC
 
         assertFilesEqual(expectedFilesPath.resolve("parametersAfterAdd.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
 
-        parameter.setDescription("This is an added Parameter after modification");
+        parameter.setDescription("This is an added Parameter with a new description");
+        parameterCollection.save(parameter);
+
         parameter.setValue(new DynamicValue<>("foo"));
         parameterCollection.save(parameter);
 
