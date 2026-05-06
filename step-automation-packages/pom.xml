@@ -42,7 +42,7 @@
     <module>step-automation-packages-manager</module>
     <module>step-automation-packages-client</module>
     <module>step-automation-packages-controller</module>
-    <module>step-automation-packages-ide</module>
+    <module>step-automation-packages-collections</module>
   </modules>
 
   <properties>
