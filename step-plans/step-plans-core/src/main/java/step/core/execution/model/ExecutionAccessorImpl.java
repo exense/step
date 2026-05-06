@@ -48,7 +48,7 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
             new IndexField("endTime", Order.DESC, null))));
         collectionDriver.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(new IndexField("planId", Order.ASC, null),
             new IndexField("endTime", Order.DESC, null))));
-        collectionDriver.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(new IndexField("canonicalPlanName",Order.ASC, null),
+        collectionDriver.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(new IndexField("importResult.canonicalPlanName",Order.ASC, null),
             new IndexField("endTime",Order.DESC, null))));
     }
 
@@ -174,9 +174,9 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
             filters.add(Filters.lte("startTime", to));
         }
         return collectionDriver
-                .find(Filters.and(filters),
-                        order, 0, limit, 0)
-                .collect(Collectors.toList());
+            .find(Filters.and(filters),
+                order, 0, limit, 0)
+            .collect(Collectors.toList());
     }
 
     public List<Execution> getLastEndedExecutionsByPlanId(String planId, int limit, Long from, Long to) {
