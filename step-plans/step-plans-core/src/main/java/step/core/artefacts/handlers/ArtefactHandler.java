@@ -39,10 +39,12 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.execution.ReportNodeCache;
 import step.core.execution.ReportNodeEventListener;
+import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionStatus;
 import step.core.functions.FunctionGroupHandle;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
+import step.core.repositories.ImportResult;
 import step.core.variables.VariablesManager;
 import step.resources.ResourceManager;
 
@@ -269,10 +271,16 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
     private Map<String, Object> getTimeSeriesContextAttributes(ExecutionContext executionContext) {
         Map<String, Object> attributes = new HashMap<>();
-		String canonicalPlanName = executionContext.getExecutionManager().getExecution().getImportResult().getCanonicalPlanName();
-		if (canonicalPlanName != null) {
-			attributes.put("canonicalPlanName", canonicalPlanName);
-		}
+        Execution execution = executionContext.getExecutionManager().getExecution();
+        if (execution != null) {
+            ImportResult importResult = execution.getImportResult();
+            if (importResult != null) {
+                String canonicalPlanName = importResult.getCanonicalPlanName();
+                if (canonicalPlanName != null) {
+                    attributes.put("canonicalPlanName", canonicalPlanName);
+                }
+            }
+        }
 		if (executionContext.getPlan() != null) {
             attributes.put("planId", executionContext.getPlan().getId().toString());
         }
