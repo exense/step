@@ -28,10 +28,9 @@ import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewRequest;
 import step.core.collections.Collection;
-import step.core.collections.Filters;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.table.EnrichedReportNode;
 import step.core.execution.table.ReportNodeTableFilterFactory;
-import step.core.objectenricher.TriFunction;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
@@ -47,6 +46,11 @@ import step.planbuilder.BaseArtefacts;
 import step.planbuilder.FunctionArtefacts;
 import step.plans.assertions.PerformanceAssertPlugin;
 import step.threadpool.ThreadPoolPlugin;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import step.core.accessors.DefaultJacksonMapperProvider;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -218,6 +222,40 @@ public class ReportTableTest {
         assertCallKeywordLeafReportNodes(plan, 1, false);
     }
 
+    @Test
+    public void testEnrichedReportNodeSerialization() throws Exception {
+        ObjectMapper mapper = DefaultJacksonMapperProvider.getObjectMapper();
+
+        CallFunctionReportNode delegate = new CallFunctionReportNode();
+        delegate.setStatus(ReportNodeStatus.FAILED);
+
+        AssertReportNode assertionError = new AssertReportNode();
+        assertionError.setStatus(ReportNodeStatus.FAILED);
+
+        EnrichedReportNode<CallFunctionReportNode> enriched =
+                new EnrichedReportNode<>(delegate, List.of(assertionError));
+
+        // direct serialization — exercises Serializer.serialize()
+        JsonNode directJson = mapper.valueToTree(enriched);
+        Assert.assertEquals(CallFunctionReportNode.class.getName(), directJson.get("_class").asText());
+        Assert.assertEquals(ReportNodeStatus.FAILED.toString(), directJson.get("status").asText());
+        JsonNode assertionNodes = directJson.get("assertionReportNodesOnError");
+        Assert.assertNotNull(assertionNodes);
+        Assert.assertEquals(1, assertionNodes.size());
+        Assert.assertEquals(AssertReportNode.class.getName(), assertionNodes.get(0).get("_class").asText());
+
+        // typed-container serialization — exercises Serializer.serializeWithType()
+        String json = mapper.writerFor(new TypeReference<List<ReportNode>>() {}).writeValueAsString(List.of(enriched));
+        JsonNode containerJson = mapper.readTree(json);
+        JsonNode firstElement = containerJson.get(0);
+        Assert.assertEquals(CallFunctionReportNode.class.getName(), firstElement.get("_class").asText());
+        Assert.assertEquals(ReportNodeStatus.FAILED.toString(), firstElement.get("status").asText());
+        JsonNode assertionNodesInContainer = firstElement.get("assertionReportNodesOnError");
+        Assert.assertNotNull(assertionNodesInContainer);
+        Assert.assertEquals(1, assertionNodesInContainer.size());
+        Assert.assertEquals(AssertReportNode.class.getName(), assertionNodesInContainer.get(0).get("_class").asText());
+    }
+
     private void assertCallKeywordLeafReportNodes(Plan plan, int expectedAssertionErrors, boolean isPerfAssert) throws TableServiceException, ClassNotFoundException, PluginManager.Builder.CircularDependencyException, InstantiationException, IllegalAccessException {
         PlanRunnerResult result = engine.execute(plan);
         ReportNodeStatus planResult = result.getResult();
@@ -243,24 +281,28 @@ public class ReportTableTest {
 
         TableResponse<Object> response = tableService.request("leafReports", tableRequest, new Session<>());
 
-        List<CallFunctionReportNode> callKeywordReports = response.getData().stream()
-            .filter(n -> n instanceof CallFunctionReportNode)
-            .map(n -> (CallFunctionReportNode) n)
-            .toList();
-        Assert.assertEquals(1, callKeywordReports.size());
+        // Failed CallFunctionReportNodes are returned as EnrichedReportNode; passed ones are returned as-is
+        ReportNode rawNode = response.getData().stream()
+            .filter(n -> n instanceof CallFunctionReportNode || n instanceof EnrichedReportNode)
+            .map(n -> (ReportNode) n)
+            .findFirst()
+            .orElseThrow();
 
-        CallFunctionReportNode callFunctionReport = callKeywordReports.getFirst();
-        if (expectedAssertionErrors == 0) {
-            Assert.assertEquals(ReportNodeStatus.PASSED, callFunctionReport.getStatus());
+        CallFunctionReportNode callFunctionReport;
+        List<ReportNode> assertionErrors;
+        if (rawNode instanceof EnrichedReportNode<?> enriched) {
+            callFunctionReport = (CallFunctionReportNode) enriched.getDelegate();
+            assertionErrors = enriched.getAssertionReportNodesOnError();
         } else {
-            Assert.assertEquals(ReportNodeStatus.FAILED, callFunctionReport.getStatus());
+            callFunctionReport = (CallFunctionReportNode) rawNode;
+            assertionErrors = null;
         }
 
-        @SuppressWarnings("unchecked")
-        List<ReportNode> assertionErrors = (List<ReportNode>) callFunctionReport.getCustomField("assertionReportNodesOnError");
         if (expectedAssertionErrors == 0) {
+            Assert.assertEquals(ReportNodeStatus.PASSED, callFunctionReport.getStatus());
             Assert.assertNull(assertionErrors);
         } else {
+            Assert.assertEquals(ReportNodeStatus.FAILED, callFunctionReport.getStatus());
             Assert.assertNotNull(assertionErrors);
             Assert.assertEquals(expectedAssertionErrors, assertionErrors.size());
             if (isPerfAssert) {
