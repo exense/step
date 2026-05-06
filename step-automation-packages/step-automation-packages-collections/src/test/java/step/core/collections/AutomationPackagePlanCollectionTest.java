@@ -31,10 +31,17 @@ import step.plans.parser.yaml.YamlPlan;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class AutomationPackagePlanCollectionTest extends AutomationPackageCollectionTestBase {
 
@@ -52,7 +59,7 @@ public class AutomationPackagePlanCollectionTest extends AutomationPackageCollec
     }
 
     @Test
-    public void testReadAllPlans()  {
+    public void testReadAllPlans() {
         long count = planCollection.count(Filters.empty(), 100);
         List<Plan> plans = planCollection.find(Filters.empty(), null, null, null, 100).collect(Collectors.toList());
 

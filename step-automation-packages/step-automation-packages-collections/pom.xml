@@ -9,14 +9,7 @@
         <version>0.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>step-automation-packages-ide</artifactId>
-
-    <properties>
-        <groupId>ch.exense.step</groupId>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
+    <artifactId>step-automation-packages-collections</artifactId>
 
     <dependencies>
         <dependency>
