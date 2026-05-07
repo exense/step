@@ -21,7 +21,7 @@ plans:
           text: "Hello World"
 parameters:
   - key: "paramInMainAP"
-  - value: "once"
+    value: "once"
 fragments:
   - "keywords.yml"
   - "plans/*.yml"
