@@ -19,6 +19,9 @@ plans:
       children:
       - echo:
           text: "Hello World"
+parameters:
+  - key: "paramInMainAP"
+  - value: "once"
 fragments:
   - "keywords.yml"
   - "plans/*.yml"
