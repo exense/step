@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.reports.AssertReportNode;
 import step.artefacts.reports.CallFunctionReportNode;
+import step.artefacts.reports.CheckReportNode;
 import step.artefacts.reports.PerformanceAssertReportNode;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -67,7 +68,7 @@ public class ReportNodeTableEnricher implements TriFunction<ReportNode, Session<
             reportNodeStream
                 .filter(r -> recordCounter.getAndIncrement() < MAX_CALL_FUNCTION_REPORT_CHILDREN)
                 .forEach(child -> {
-                    if (child instanceof PerformanceAssertReportNode || child instanceof AssertReportNode) {
+                    if (child instanceof PerformanceAssertReportNode || child instanceof AssertReportNode || child instanceof CheckReportNode) {
                         collected.add(child);
                     } else {
                         collectAssertionErrors(root, child, depth + 1, collected);

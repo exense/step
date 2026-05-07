@@ -68,7 +68,7 @@ public class EnrichedReportNode<T extends ReportNode> extends ReportNode {
 
         @Override
         public void serialize(EnrichedReportNode<?> value, JsonGenerator gen, SerializerProvider serializers)
-                throws IOException {
+            throws IOException {
             ObjectMapper mapper = (ObjectMapper) gen.getCodec();
             // valueToTree honours @JsonTypeInfo — the delegate's _class is included
             ObjectNode node = mapper.valueToTree(value.delegate);
@@ -90,7 +90,7 @@ public class EnrichedReportNode<T extends ReportNode> extends ReportNode {
          */
         @Override
         public void serializeWithType(EnrichedReportNode<?> value, JsonGenerator gen,
-                SerializerProvider serializers, TypeSerializer typeSer) throws IOException {
+                                      SerializerProvider serializers, TypeSerializer typeSer) throws IOException {
             serialize(value, gen, serializers);
         }
     }

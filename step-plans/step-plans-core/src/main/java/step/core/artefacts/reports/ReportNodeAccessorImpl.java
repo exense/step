@@ -225,7 +225,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
     @Override
     public Stream<ReportNode> getReportNodesWithContributingErrors(String executionId, Integer skip, Integer limit) {
         Objects.requireNonNull(executionId);
-        return collectionDriver.find(
+        return collectionDriver.findLazy(
             Filters.and(List.of(Filters.equals("executionID", executionId), Filters.equals("contributingError", true))),
             null, skip, limit, 0);
     }
