@@ -12,7 +12,10 @@ alertingRules:
           predicate:
             BindingValueEqualsPredicate:
               value: "myValue"
-plans: []
+plans: [ ]
+parameters:
+  - key: "paramInMainAP"
+  - value: "once"
 fragments:
   - "keywords.yml"
   - "plans/*.yml"

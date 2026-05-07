@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import step.automation.packages.AutomationPackageOperationMode;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
@@ -36,8 +35,6 @@ import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.automation.AutomationPackageParameter;
 import step.plans.parser.yaml.YamlPlan;
-import step.resources.LocalResourceManagerImpl;
-import step.resources.ResourceManager;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -46,7 +43,6 @@ import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -92,7 +88,9 @@ public class AutomationPackageYamlFragmentManager {
         this.stagingContext = stagingContext;
         initializeMaps(descriptorYaml);
 
-        pathToYamlFragment.values().forEach(this::initializeMaps);
+        pathToYamlFragment.values().stream()
+            .filter(f -> f != descriptorYaml)
+            .forEach(this::initializeMaps);
     }
 
     public void setProperties(Properties properties) {
@@ -101,7 +99,7 @@ public class AutomationPackageYamlFragmentManager {
 
     public void initializeMaps(AutomationPackageFragmentYaml fragment) {
         pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
-        for (YamlPlan yamlPlan: fragment.getPlans()) {
+        for (YamlPlan yamlPlan : fragment.getPlans()) {
             Plan plan = descriptorReader.getPlanReader().yamlPlanToPlan(yamlPlan);
             patchableMap.put(plan, yamlPlan);
             fragmentMap.put(plan, fragment);
@@ -157,7 +155,6 @@ public class AutomationPackageYamlFragmentManager {
     }
 
 
-
     public synchronized step.functions.Function saveFunction(step.functions.Function function) {
         AutomationPackageFragmentYaml fragment = fragmentMap.get(function);
         if (fragment == null) {
@@ -175,7 +172,7 @@ public class AutomationPackageYamlFragmentManager {
         return function;
     }
 
-    private <T extends PatchableYamlModel>  void addFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T newEntity) {
+    private <T extends PatchableYamlModel> void addFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T newEntity) {
         entityList.add(newEntity);
         fragment.writeToDisk();
     }
@@ -194,7 +191,7 @@ public class AutomationPackageYamlFragmentManager {
         }
 
 
-        if (mode== NewObjectFragmentMode.PER_OBJECT && !p.hasAttribute(AbstractOrganizableObject.NAME)) {
+        if (mode == NewObjectFragmentMode.PER_OBJECT && !p.hasAttribute(AbstractOrganizableObject.NAME)) {
             throw new AutomationPackagePerObjectSaveUnsupportedException(String.format("""
                 Saving by object name is unsupported for %1$s, please configure the entity to be stored in a specified single fragment, i.e.
 
@@ -221,7 +218,7 @@ public class AutomationPackageYamlFragmentManager {
                 return pathToYamlFragment.get(url.toString());
             }
             PatchingContext context = new PatchingContext("---", descriptorYaml.getPatchingContext().getMapper());
-            AutomationPackageFragmentYaml fragment =  new AutomationPackageFragmentYamlImpl(context);
+            AutomationPackageFragmentYaml fragment = new AutomationPackageFragmentYamlImpl(context);
             fragment.setFragmentUrl(url);
             return fragment;
         } catch (MalformedURLException e) {
