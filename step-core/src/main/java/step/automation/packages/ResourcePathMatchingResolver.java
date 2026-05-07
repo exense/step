@@ -42,7 +42,7 @@ public class ResourcePathMatchingResolver {
             if (url != null) {
                 res.add(url);
             } else {
-                logger.warn("Ignoring resource because it cannot be resolved: {}", resourcePathPattern);
+                throw new IllegalArgumentException("Illegal resource definition, resource cannot be found: " + resourcePathPattern);
             }
         } else {
             for (URL resource : findPathMatchingResources(resourcePathPattern)) {
@@ -71,7 +71,7 @@ public class ResourcePathMatchingResolver {
             if (resource != null) {
                 findPathMatchingResourcesRecursive(pathArray, 0, resource, result);
             } else {
-                logger.warn("Ignoring resource because it cannot be resolved: {}", locationPattern);
+                throw new IllegalArgumentException("Illegal resource definition, resource cannot be found: " + locationPattern);
             }
         }
         return result;
