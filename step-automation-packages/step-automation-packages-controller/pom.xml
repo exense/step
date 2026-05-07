@@ -28,7 +28,18 @@
       <version>${project.version}</version>
     </dependency>
 
-
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>4.3.0</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>ch.exense.step</groupId>
       <artifactId>step-functions-plugins-defs-all-os</artifactId>
@@ -43,16 +54,51 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-automation-packages-sample1</artifactId>
+      <version>${project.version}</version>
+      <classifier>jar-with-dependencies</classifier>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.awaitility</groupId>
-      <artifactId>awaitility</artifactId>
-      <version>4.3.0</version>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-automation-packages-sample1-extended</artifactId>
+      <version>${project.version}</version>
+      <classifier>jar-with-dependencies</classifier>
       <scope>test</scope>
-      <type>jar</type>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-automation-packages-sample2</artifactId>
+      <version>${project.version}</version>
+      <classifier>jar-with-dependencies</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-automation-packages-malformed</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-automation-packages-kw-lib</artifactId>
+      <version>${project.version}</version>
+      <classifier>jar-with-dependencies</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-automation-packages-sample-echo</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-automation-packages-kw-lib-call</artifactId>
+      <version>${project.version}</version>
+      <classifier>jar-with-dependencies</classifier>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -75,7 +121,7 @@
         <executions>
           <execution>
             <id>copy-test</id>
-            <phase>validate</phase>
+            <phase>process-test-resources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
@@ -98,7 +144,7 @@
           </execution>
           <execution>
             <id>copy-test-2</id>
-            <phase>validate</phase>
+            <phase>process-test-resources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
@@ -121,7 +167,7 @@
           </execution>
           <execution>
             <id>copy-test-3</id>
-            <phase>validate</phase>
+            <phase>process-test-resources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
@@ -144,7 +190,7 @@
           </execution>
           <execution>
             <id>copy-test-4</id>
-            <phase>validate</phase>
+            <phase>process-test-resources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
@@ -154,7 +200,6 @@
                   <groupId>ch.exense.step</groupId>
                   <artifactId>step-automation-packages-malformed</artifactId>
                   <version>${project.version}</version>
-                  <classifier></classifier>
                   <type>jar</type>
                   <overWrite>false</overWrite>
                   <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
@@ -167,7 +212,7 @@
           </execution>
           <execution>
             <id>copy-test-5</id>
-            <phase>validate</phase>
+            <phase>process-test-resources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
@@ -190,7 +235,7 @@
           </execution>
           <execution>
             <id>copy-test-6</id>
-            <phase>validate</phase>
+            <phase>process-test-resources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
@@ -213,7 +258,7 @@
           </execution>
           <execution>
             <id>copy-test-7</id>
-            <phase>validate</phase>
+            <phase>process-test-resources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
@@ -236,7 +281,7 @@
           </execution>
           <execution>
             <id>copy-test-8</id>
-            <phase>validate</phase>
+            <phase>process-test-resources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
@@ -246,7 +291,6 @@
                   <groupId>ch.exense.step</groupId>
                   <artifactId>step-automation-packages-sample-echo</artifactId>
                   <version>${project.version}</version>
-                  <classifier></classifier>
                   <type>jar</type>
                   <overWrite>false</overWrite>
                   <outputDirectory>${project.basedir}/src/test/resources/samples</outputDirectory>
@@ -259,7 +303,7 @@
           </execution>
           <execution>
             <id>copy-test-9</id>
-            <phase>validate</phase>
+            <phase>process-test-resources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
