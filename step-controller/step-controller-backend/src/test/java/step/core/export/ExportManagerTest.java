@@ -246,16 +246,7 @@ public class ExportManagerTest {
     }
 
     public static ObjectEnricher dummyObjectEnricher() {
-        return new ObjectEnricher() {
-
-            @Override
-            public void accept(EnricheableObject t) {
-            }
-
-            @Override
-            public TreeMap<String, String> getAdditionalAttributes() {
-                return null;
-            }
+        return t -> {
         };
     }
 

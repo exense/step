@@ -184,7 +184,7 @@ public class GridServices extends AbstractStepServices {
     @GET
     @Path("/token/usage")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<TokenGroupCapacity> getUsageByIdentity(@QueryParam("groupby") List<String> groupbys) {
+    public List<TokenGroupCapacity> getUsageByIdentity(@QueryParam("groupby") Set<String> groupbys) {
         return getReportBuilder().getUsageByIdentity(groupbys);
     }
 
