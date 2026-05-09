@@ -22,42 +22,32 @@ import ch.exense.commons.app.Configuration;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.mockito.Mockito;
-import step.artefacts.Echo;
-import step.artefacts.Sequence;
 import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
-import step.core.dynamicbeans.DynamicValue;
-import step.core.plans.Plan;
-import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
-import step.core.yaml.deserialization.AutomationPackagePerObjectSaveUnsupportedException;
-import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.automation.AutomationPackageParametersRegistration;
-import step.plans.parser.yaml.YamlPlan;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Properties;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class AutomationPackageCollectionTestBase {
 
     private final JavaAutomationPackageReader reader;
 
-    protected final File sourceDirectory = new File("src/test/resources/samples/step-automation-packages-sample1");
+    // To use a different source directory, override in subclass constructor
+    protected File sourceDirectory = new File("src/test/resources/testdata/ap1");
     protected File destinationDirectory;
-    protected final Path expectedFilesPath = sourceDirectory.toPath().resolve("expected");
+    protected Path expectedFilesPath = new File("src/test/resources/expected").toPath();
     protected AutomationPackageYamlFragmentManager fragmentManager;
 
     public AutomationPackageCollectionTestBase() {
