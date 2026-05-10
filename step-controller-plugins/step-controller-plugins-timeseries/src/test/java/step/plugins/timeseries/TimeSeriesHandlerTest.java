@@ -16,10 +16,10 @@ import step.core.execution.model.InMemoryExecutionAccessor;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.TimeSeriesBuilder;
 import step.core.timeseries.TimeSeriesCollection;
-import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
-import step.plugins.measurements.Measurement;
+import step.core.metrics.ExecutionMetricSample;
+import step.core.metrics.Measurement;
 import step.plugins.timeseries.api.BucketResponse;
 import step.plugins.timeseries.api.FetchBucketsRequest;
 import step.plugins.timeseries.api.OQLVerifyResponse;
@@ -34,16 +34,18 @@ public class TimeSeriesHandlerTest {
     private static final int BUCKET_RESOLUTION = 200;
     private static final long BUCKET_DURATION = 500;
     private static final int SAMPLING_LIMIT = 1000;
-    private static final List<String> TS_ATTRIBUTES = Arrays.asList("key", "field1", "field2", "field3");
+    private static final Set<String> TS_ATTRIBUTES = Set.of("key", "field1", "field2", "field3");
     private static TimeSeriesHandler handler;
 
     private static InMemoryExecutionAccessor executionAccessor;
     private static Collection<Bucket> bucketsCollection;
     private static Collection<Measurement> measurementsCollection;
+    private static Collection<ExecutionMetricSample> metricSamplesCollection;
 
     @BeforeClass
     public static void init() {
         measurementsCollection = new InMemoryCollection<>();
+        metricSamplesCollection = new InMemoryCollection<>();
         executionAccessor = new InMemoryExecutionAccessor();
         bucketsCollection = new InMemoryCollection<>();
         TimeSeriesCollection tsCollection = new TimeSeriesCollection(bucketsCollection, BUCKET_RESOLUTION);
@@ -52,7 +54,7 @@ public class TimeSeriesHandlerTest {
             .build();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
         ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(new InMemoryCollectionFactory(null), new Configuration());
-        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, measurementsCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT);
+        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, Set.of(), measurementsCollection, metricSamplesCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT);
     }
 
     @Test
@@ -115,7 +117,7 @@ public class TimeSeriesHandlerTest {
         request.setOqlFilter("");
         request.setParams(Map.of("eId", "abc"));
         request.setMaxNumberOfSeries(100);
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(BUCKET_RESOLUTION, response.getEnd());
         Assert.assertTrue(response.getMatrix().isEmpty());
@@ -138,7 +140,7 @@ public class TimeSeriesHandlerTest {
         request.setParams(Map.of("key", key));
         request.setMaxNumberOfSeries(100);
 
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(bucketsCount * 1000, response.getEnd());
         Assert.assertEquals(1, response.getMatrix().size());
@@ -174,7 +176,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.key = " + key);
 
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(bucketsCount * 1000, response.getEnd());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
@@ -216,7 +218,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.key = " + key + " or attributes.key = " + key2);
 
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(bucketsCount * 1000, response.getEnd());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
@@ -232,7 +234,7 @@ public class TimeSeriesHandlerTest {
         request.setPercentiles(Arrays.asList(10D, 20D, 50D));
         request.setOqlFilter("attributes.key = " + key);
 
-        response = handler.getOrBuildTimeSeries(request);
+        response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getStart());
         Assert.assertEquals(bucketsCount * 1000, response.getEnd());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
@@ -256,13 +258,13 @@ public class TimeSeriesHandlerTest {
         request.setOqlFilter("attributes.unknownKey = " + key); // this is not a known field, so it will fall over on RAW data.
         request.setMaxNumberOfSeries(100);
 
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(0, response.getMatrix().size()); // we don't have measurements with unknown key
         Assert.assertEquals(0, response.getMatrixKeys().size());
 
         List<Measurement> measurements = generateMeasurements(100, "unknownKey", key);
         measurementsCollection.save(measurements);
-        response = handler.getOrBuildTimeSeries(request);
+        response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(1, response.getMatrix().size()); // w have measurements with unknown key
         Assert.assertEquals(1, response.getMatrixKeys().size());
 
@@ -287,7 +289,7 @@ public class TimeSeriesHandlerTest {
         request.setOqlFilter("attributes.key = " + key);
         request.setMaxNumberOfSeries(100);
 
-        TimeSeriesAPIResponse response = handler.getOrBuildTimeSeries(request);
+        TimeSeriesAPIResponse response = handler.fetchBucketsWithFallback(request);
         Assert.assertEquals(1, response.getMatrix().size());
         Assert.assertEquals(responseBucketsCount, response.getMatrix().get(0).size());
         Assert.assertEquals(1, response.getMatrixKeys().size());

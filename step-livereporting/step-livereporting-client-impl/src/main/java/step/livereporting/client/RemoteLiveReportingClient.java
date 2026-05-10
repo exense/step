@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.constants.LiveReportingConstants;
 import step.reporting.impl.LiveMeasureDestination;
+import step.reporting.impl.LiveMetricDestination;
 import step.streaming.client.upload.StreamingUploadProvider;
 import step.streaming.common.StreamingResourceUploadContext;
 import step.streaming.websocket.client.upload.WebsocketUploadProvider;
@@ -39,6 +40,7 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
     private static final Logger logger = LoggerFactory.getLogger(RemoteLiveReportingClient.class);
 
     private final RestUploadingLiveMeasureDestination liveMeasureDestination;
+    private final RestUploadingLiveMetricDestination liveMetricDestination;
     private final StreamingUploadProvider streamingUploadProvider;
 
     public RemoteLiveReportingClient(Map<String, String> contextProperties, Map<String, String> agentProperties, ExecutorService executorService, AtomicReference<Object> websocketContainer) {
@@ -65,20 +67,29 @@ public class RemoteLiveReportingClient implements LiveReportingClient {
         if (liveReportingContextId != null) {
             String baseUrl = getReportingUrl(contextProperties, agentProperties);
             if (baseUrl != null) {
-                String url = String.format("%s/rest/live-reporting/%s/measures", baseUrl, liveReportingContextId);
-                liveMeasureDestination = new RestUploadingLiveMeasureDestination(url);
+                String measuresUrl = String.format("%s/rest/live-reporting/%s/measures", baseUrl, liveReportingContextId);
+                liveMeasureDestination = new RestUploadingLiveMeasureDestination(measuresUrl);
+                String metricsUrl = String.format("%s/rest/live-reporting/%s/metrics", baseUrl, liveReportingContextId);
+                liveMetricDestination = new RestUploadingLiveMetricDestination(metricsUrl);
             } else {
                 liveMeasureDestination = null;
+                liveMetricDestination = null;
             }
         } else {
             // API liveReporting knows how to handle null values
             liveMeasureDestination = null;
+            liveMetricDestination = null;
         }
     }
 
     @Override
     public LiveMeasureDestination getLiveMeasureDestination() {
         return liveMeasureDestination;
+    }
+
+    @Override
+    public LiveMetricDestination getLiveMetricDestination() {
+        return liveMetricDestination;
     }
 
     @Override

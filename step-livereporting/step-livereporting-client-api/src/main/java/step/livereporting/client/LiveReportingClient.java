@@ -20,11 +20,14 @@
 package step.livereporting.client;
 
 import step.reporting.impl.LiveMeasureDestination;
+import step.reporting.impl.LiveMetricDestination;
 import step.streaming.client.upload.StreamingUploadProvider;
 
 public interface LiveReportingClient {
 
     LiveMeasureDestination getLiveMeasureDestination();
+
+    LiveMetricDestination getLiveMetricDestination();
 
     StreamingUploadProvider getStreamingUploadProvider();
 }

@@ -13,6 +13,7 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.DataSetArtefact;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
+import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
@@ -1594,7 +1595,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             new FunctionPlugin(),
             new GeneralScriptFunctionPlugin(),
             new ThreadPoolPlugin(),
-            new AutomationPackageExecutionPlugin(automationPackageLocks)));
+            new AutomationPackageExecutionPlugin(automationPackageLocks, new InMemoryAutomationPackageAccessorImpl())));
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.put(FunctionAccessor.class, functionAccessor);
         parentContext.setPlanAccessor(planAccessor);

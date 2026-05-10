@@ -90,6 +90,10 @@
       <artifactId>step-framework-server-plugins</artifactId>
     </dependency>
     <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-api-reporting</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.json</groupId>
       <artifactId>json</artifactId>
     </dependency>

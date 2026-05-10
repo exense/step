@@ -20,7 +20,6 @@ package step.functions.handler;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.fasterxml.jackson.datatype.jsr353.JSR353Module;
 import step.functions.io.Input;
 import step.functions.io.Output;
