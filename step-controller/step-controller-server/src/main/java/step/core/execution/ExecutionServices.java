@@ -237,7 +237,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
         return result;
     }
 
-    @Operation(description = "Returns the last executions by planId/canonicalPlanName")
+    @Operation(description = "Returns the last executions by planId")
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -248,7 +248,21 @@ public class ExecutionServices extends AbstractStepAsyncServices {
             @QueryParam("limit") int limit,
             @QueryParam("from") Long from,
             @QueryParam("to") Long to) {
-        return ((ExecutionAccessorImpl) getContext().getExecutionAccessor()).getLastEndedExecutionsByPlanId(planId, limit, from, to);
+        return executionAccessor.getLastEndedExecutionsByPlanId(planId, limit, from, to);
+    }
+
+    @Operation(description = "Returns the last executions by canonical plan name")
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/search/last/by/canonical-plan/{name}")
+    @Secured(right = "execution-read")
+    public List<Execution> getLastExecutionsByCanonicalPlanName(
+            @PathParam("name") String canonicalPlanName,
+            @QueryParam("limit") int limit,
+            @QueryParam("from") Long from,
+            @QueryParam("to") Long to) {
+        return executionAccessor.getLastEndedExecutionsByCanonicalPlanName(canonicalPlanName, limit, from, to);
     }
 
     @Operation(description = "Returns the list of report nodes with contributing errors for the given execution")

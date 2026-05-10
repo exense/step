@@ -179,22 +179,14 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
             .collect(Collectors.toList());
     }
 
+    @Override
     public List<Execution> getLastEndedExecutionsByPlanId(String planId, int limit, Long from, Long to) {
-        SearchOrder order = new SearchOrder("endTime", -1);
-        List<Filter> allFilters = new ArrayList<>();
-        Filter planFilter = Filters.or(
-            List.of(
-                Filters.equals("planId", planId),
-                Filters.equals("importResult.canonicalPlanName", planId))
-        );
-        allFilters.add(planFilter);
-        if (from != null) {
-            allFilters.add(Filters.gte("startTime", from));
-        }
-        if (to != null) {
-            allFilters.add(Filters.lte("startTime", to));
-        }
-        return collectionDriver.find(Filters.and(allFilters), order, 0, limit, 0).collect(Collectors.toList());
+        return getLastEndedExecutionsByAttribute("planId", planId, limit, from, to);
+    }
+
+    @Override
+    public List<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long from, Long to) {
+        return getLastEndedExecutionsByAttribute("importResult.canonicalPlanName", canonicalPlanName, limit, from, to);
     }
 
 	@Override
@@ -217,4 +209,16 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
 		return collectionDriver
 				.find(Filters.and(filters), order, 0, limit, 0);
 	}
+
+    private List<Execution> getLastEndedExecutionsByAttribute(String attribute, String value, int limit, Long from, Long to) {
+        SearchOrder order = new SearchOrder("endTime", -1);
+        List<Filter> filters = new ArrayList<>(List.of(Filters.equals(attribute, value)));
+        if (from != null) {
+            filters.add(Filters.gte("startTime", from));
+        }
+        if (to != null) {
+            filters.add(Filters.lte("startTime", to));
+        }
+        return collectionDriver.find(Filters.and(filters), order, 0, limit, 0).collect(Collectors.toList());
+    }
 }

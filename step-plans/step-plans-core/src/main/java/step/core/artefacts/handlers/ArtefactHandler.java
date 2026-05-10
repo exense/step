@@ -281,7 +281,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
                 }
             }
         }
-		if (executionContext.getPlan() != null) {
+        if (executionContext.getPlan() != null) {
             attributes.put("planId", executionContext.getPlan().getId().toString());
         }
         attributes.put("taskId", Objects.requireNonNullElse(executionContext.get("$schedulerTaskId"), ""));
