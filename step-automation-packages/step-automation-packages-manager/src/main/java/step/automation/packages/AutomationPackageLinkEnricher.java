@@ -33,11 +33,6 @@ public class AutomationPackageLinkEnricher implements ObjectEnricher {
     }
 
     @Override
-    public TreeMap<String, String> getAdditionalAttributes() {
-        return new TreeMap<>();
-    }
-
-    @Override
     public void accept(EnricheableObject enricheableObject) {
         if (enricheableObject instanceof AbstractIdentifiableObject) {
             ((AbstractIdentifiableObject) enricheableObject).addCustomField(AutomationPackageEntity.AUTOMATION_PACKAGE_ID, automationPackageId);
