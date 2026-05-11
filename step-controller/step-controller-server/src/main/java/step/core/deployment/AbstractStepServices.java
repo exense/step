@@ -90,6 +90,11 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
         return objectHookRegistry.getObjectFilter(session);
     }
 
+    protected ObjectFilter getUnscopedObjectFilter() {
+        Session<User> session = new UnscopedSession(getSession());
+        return objectHookRegistry.getObjectFilter(session);
+    }
+
     protected ObjectPredicate getObjectPredicate() {
         return objectHookRegistry.getObjectPredicate(getSession());
     }
