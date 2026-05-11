@@ -35,13 +35,14 @@ public class ReportNodeTimeSeries implements AutoCloseable {
     private final boolean ingestionEnabled;
 
     public ReportNodeTimeSeries(CollectionFactory collectionFactory, Configuration configuration) {
-        this(collectionFactory, TimeSeriesCollectionsSettings.readSettings(configuration, TIME_SERIES_MAIN_COLLECTION),
+        this(collectionFactory, TimeSeriesConfig.fromConfiguration(configuration, TIME_SERIES_MAIN_COLLECTION),
             configuration.getPropertyAsBoolean(CONF_KEY_REPORT_NODE_TIME_SERIES_ENABLED, true));
     }
 
-    public ReportNodeTimeSeries(CollectionFactory collectionFactory, TimeSeriesCollectionsSettings timeSeriesCollectionsSettings, boolean ingestionEnabled) {
-        List<TimeSeriesCollection> timeSeriesCollections = getTimeSeriesCollections(timeSeriesCollectionsSettings, collectionFactory);
-        timeSeries = new TimeSeriesBuilder().registerCollections(timeSeriesCollections).build();
+    public ReportNodeTimeSeries(CollectionFactory collectionFactory, TimeSeriesConfig timeSeriesConfig, boolean ingestionEnabled) {
+        timeSeries = new TimeSeriesBuilder()
+            .withConfig(timeSeriesConfig, collectionFactory, TIME_SERIES_MAIN_COLLECTION, Set.of(EXECUTION_ID))
+            .build();
         ingestionPipeline = timeSeries.getIngestionPipeline();
         timeSeries.createIndexes(Set.of(new IndexField(EXECUTION_ID, Order.ASC, String.class)));
         IndexField beginIndexField = new IndexField(TIMESTAMP_ATTRIBUTE, Order.ASC, Long.class);
@@ -54,11 +55,6 @@ public class ReportNodeTimeSeries implements AutoCloseable {
             beginIndexField
         )));
         this.ingestionEnabled = ingestionEnabled;
-    }
-
-    private List<TimeSeriesCollection> getTimeSeriesCollections(TimeSeriesCollectionsSettings collectionsSettings, CollectionFactory collectionFactory) {
-        TimeSeriesCollectionsBuilder timeSeriesCollectionsBuilder = new TimeSeriesCollectionsBuilder(collectionFactory);
-        return timeSeriesCollectionsBuilder.getTimeSeriesCollections(TIME_SERIES_MAIN_COLLECTION, collectionsSettings, Set.of(EXECUTION_ID));
     }
 
     public TimeSeries getTimeSeries() {

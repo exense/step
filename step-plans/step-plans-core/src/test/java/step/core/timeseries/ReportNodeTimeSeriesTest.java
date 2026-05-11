@@ -85,7 +85,7 @@ public class ReportNodeTimeSeriesTest {
         configuration.putProperty("reportNodeTimeSeries.collections.day.flush.period", "13");
         configuration.putProperty("reportNodeTimeSeries.collections.week.flush.period", "14");
 
-        TimeSeriesCollectionsSettings settings = TimeSeriesCollectionsSettings.readSettings(configuration, "reportNodeTimeSeries");
+        TimeSeriesConfig settings = TimeSeriesConfig.fromConfiguration(configuration, "reportNodeTimeSeries");
         assertEquals(11, settings.getPerMinuteFlushInterval());
         assertEquals(12, settings.getHourlyFlushInterval());
         assertEquals(13, settings.getDailyFlushInterval());

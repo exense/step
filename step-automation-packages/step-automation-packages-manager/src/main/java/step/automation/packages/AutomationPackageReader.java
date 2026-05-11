@@ -59,9 +59,8 @@ import java.util.stream.Collectors;
  * these resources are not stored yet).
  */
 public abstract class AutomationPackageReader<T extends AutomationPackageArchive> {
-
+    private static final Logger logger = LoggerFactory.getLogger(AutomationPackageReader.class);
     public static final String AP_VERSION_SEPARATOR = ".";
-    protected static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
     private final PlanParser planTextPlanParser;
     protected String jsonSchemaPath;
     protected final AutomationPackageHookRegistry hookRegistry;
@@ -185,7 +184,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
         URL descriptorURL = archive.getDescriptorYamlUrl();
-        try (InputStream inputStream = descriptorURL.openStream()){
+        try (InputStream inputStream = descriptorURL.openStream()) {
             AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
             descriptor.setFragmentUrl(descriptorURL);
             AutomationPackageContent content = newContentInstance();
@@ -227,7 +226,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         for (Map.Entry<String, PatchableYamlList<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
             boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage);
             if (!hooked) {
-                log.warn("Hook not found for additional field " + additionalField.getKey() + ". The additional field has been skipped");
+                logger.warn("Hook not found for additional field " + additionalField.getKey() + ". The additional field has been skipped");
             }
         }
     }
@@ -296,7 +295,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     }
 
     public synchronized void updateJsonSchema(String jsonSchemaPath) {
-        log.info("Change json schema for automation package to {}", jsonSchemaPath);
+        logger.info("Change json schema for automation package to {}", jsonSchemaPath);
         this.jsonSchemaPath = jsonSchemaPath;
         this.descriptorReader = null;
     }

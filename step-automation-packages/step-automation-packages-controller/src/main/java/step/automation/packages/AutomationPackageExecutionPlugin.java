@@ -2,6 +2,7 @@ package step.automation.packages;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
@@ -31,15 +32,18 @@ public class AutomationPackageExecutionPlugin extends AbstractExecutionEnginePlu
 
     private static final Logger logger = LoggerFactory.getLogger(AutomationPackageExecutionPlugin.class);
     private final AutomationPackageLocks automationPackageLocks;
+    private final AutomationPackageAccessor automationPackageAccessor;
     private static final String EXECUTION_CONTEXT_LOCK_ID = "EXECUTION_CONTEXT_LOCK_ID";
 
-    public AutomationPackageExecutionPlugin(AutomationPackageLocks automationPackageLocks) {
+    public AutomationPackageExecutionPlugin(AutomationPackageLocks automationPackageLocks, AutomationPackageAccessor automationPackageAccessor) {
         this.automationPackageLocks = automationPackageLocks;
+        this.automationPackageAccessor = automationPackageAccessor;
     }
 
     @Override
     public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
         super.initializeExecutionContext(executionEngineContext, executionContext);
+        executionContext.computeIfAbsent(AutomationPackageAccessor.class, k -> automationPackageAccessor);
         AutomationPackageExecutionContext automationPackageExecutionContext = new AutomationPackageExecutionContext(executionContext);
         if (shouldLock(automationPackageExecutionContext)) {
             try {

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -82,6 +83,12 @@ public class AutomationPackageParameterCollectionTest extends AutomationPackageC
         parameterCollection.save(parameter);
 
         assertFilesEqual(expectedFilesPath.resolve("parametersAfterAddAndModification.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
+    }
+
+    @Test
+    public void testParametersInRootApAreAddedOnlyOnce() throws Exception {
+        // SED-4681
+        assertEquals(1, parameterCollection.find(Filters.equals("key", "paramInMainAP"), null, null, null, 0).count());
     }
 
 }

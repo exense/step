@@ -15,6 +15,7 @@ public class FetchBucketsRequest {
     private int collectAttributesValuesLimit;
     private int maxNumberOfSeries;
     private boolean includeGlobalEntities; //If not set default is false
+    private String metricType; //request limited to a given metric type
 
     public Long getStart() {
         return start;
@@ -112,5 +113,13 @@ public class FetchBucketsRequest {
 
     public void setIncludeGlobalEntities(boolean includeGlobalEntities) {
         this.includeGlobalEntities = includeGlobalEntities;
+    }
+
+    public String getMetricType() {
+        return metricType;
+    }
+
+    public void setMetricType(String metricType) {
+        this.metricType = metricType;
     }
 }
