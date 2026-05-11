@@ -32,6 +32,14 @@ public class CurrentlyOpenedAutomationPackageCollectionFactory implements Collec
     }
 
     public void setCurrentFactory(AutomationPackageCollectionFactory currentAPFactory) {
+        if (this.currentAPFactory != null) {
+            try {
+                this.currentAPFactory.close();
+            } catch (IOException e) {
+                // TODO better logging
+                e.printStackTrace();
+            }
+        }
         this.currentAPFactory = currentAPFactory;
         collectionsByName.values().forEach(collection -> collection.setFromCurrentFactory(currentAPFactory));
     }

@@ -12,48 +12,56 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.nio.file.Files;
 
 public class App extends Application {
 
-    @Override
-    public void start(Stage primaryStage) {
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
 
-        WebView webView = new WebView();
+    private final WebView webView = new WebView();
+    private final MenuBar menuBar = new MenuBar();
+    private final ToolBar toolBar = new ToolBar();
 
-        // 1. Route JS alerts to Java standard error
-        webView.getEngine().setOnAlert(event -> System.err.println("JS ALERT/ERR: " + event.getData()));
+    private void initWebView() {
+        // Route JS alerts and errors to log
+        webView.getEngine().setOnAlert(event -> logger.warn("JS Alert: {}", event.getData()));
+        webView.getEngine().setOnError(event -> logger.error("JS Error: {}", event.getMessage()));
 
-        // Catch standard JavaFX JS errors
-        webView.getEngine().setOnError(event -> System.err.println("JS Error: " + event.getMessage()));
-
-        // 2. Track load states safely
         webView.getEngine().getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
-            System.out.println("Load state: " + newState);
+            logger.debug("Webview load state: " + newState);
             if (newState == Worker.State.FAILED) {
-                System.err.println("Network Error: " + webView.getEngine().getLoadWorker().getException());
+                logger.error("Webview Network Error: " + webView.getEngine().getLoadWorker().getException());
             }
         });
 
-        // 3. Inject JS error handler exactly when the Document object is created
-        webView.getEngine().documentProperty().addListener((obs, oldDoc, newDoc) -> {
-            if (newDoc != null) {
-                try {
-                    webView.getEngine().executeScript("window.onerror = function(msg, url, line) { alert(msg + ' at line ' + line); };");
-                } catch (Exception e) {
-                    System.err.println("Could not inject error handler: " + e.getMessage());
+        if (false) {
+            // Not sure what this was good for, but keeping it for now.
+            // 3. Inject JS error handler exactly when the Document object is created
+            webView.getEngine().documentProperty().addListener((obs, oldDoc, newDoc) -> {
+                if (newDoc != null) {
+                    try {
+                        webView.getEngine().executeScript("window.onerror = function(msg, url, line) { alert(msg + ' at line ' + line); };");
+                    } catch (Exception e) {
+                        logger.error("Could not inject error handler: " + e.getMessage());
+                    }
                 }
-            }
-        });
+            });
+        }
+    }
 
-        // 4. Setup trivial MenuBar & ToolBar
-        MenuBar menuBar = new MenuBar();
+    private void initMenuBar() {
         Menu fileMenu = new Menu("File");
         MenuItem exitItem = new MenuItem("Exit");
         exitItem.setOnAction(e -> System.exit(0));
         fileMenu.getItems().add(exitItem);
         menuBar.getMenus().add(fileMenu);
+    }
 
-        ToolBar toolBar = new ToolBar();
+    private void initToolBar() {
         Button reloadButton = new Button("Reload");
         reloadButton.setOnAction(e -> webView.getEngine().reload());
 
@@ -70,22 +78,43 @@ public class App extends Application {
             }
         });
 
-        toolBar.getItems().addAll(reloadButton, dumpHtmlButton);
+        Button newEmptyApButton = new Button("New Empty AP");
+        newEmptyApButton.setOnAction(e -> {
+            try {
+                File workDir = Files.createTempDirectory("automationPackageCollectionTest").toFile();
+                webView.getEngine().reload();
+            } catch (Exception ex) {
+                logger.error("error", ex);
+            }
+        });
 
+        toolBar.getItems().addAll(reloadButton, dumpHtmlButton, newEmptyApButton);
+    }
+
+    private Scene initScene() {
         VBox topContainer = new VBox(menuBar, toolBar);
         BorderPane root = new BorderPane();
         root.setTop(topContainer);
         root.setCenter(webView);
 
-        Scene scene = new Scene(root, 1024, 768);
-        primaryStage.setTitle("StepUp");
-        // Force the JVM to terminate when the window is closed
-        primaryStage.setOnCloseRequest(event -> {
-            System.out.println("Window closed, terminating JVM...");
+        return new Scene(root, 1600, 1000);
+    }
+
+    @Override
+    public void start(Stage stage) {
+        stage.setTitle("StepUp");
+        stage.setOnCloseRequest(event -> {
+            logger.info("Window closed, terminating JVM...");
             System.exit(0);
         });
-        primaryStage.setScene(scene);
-        primaryStage.show();
+
+        initWebView();
+        initMenuBar();
+        initToolBar();
+
+        stage.setScene(initScene());
+        stage.show();
+
         webView.getEngine().load("http://127.0.0.1:4201");
     }
 
