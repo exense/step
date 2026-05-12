@@ -271,7 +271,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
     private Map<String, Object> getTimeSeriesContextAttributes(ExecutionContext executionContext) {
         Map<String, Object> attributes = new HashMap<>();
-        Execution execution = executionContext.getExecutionManager().getExecution();
+        Execution execution = executionContext.getExecutionManager().getExecution(); // or object enricher?
         if (execution != null) {
             ImportResult importResult = execution.getImportResult();
             if (importResult != null) {

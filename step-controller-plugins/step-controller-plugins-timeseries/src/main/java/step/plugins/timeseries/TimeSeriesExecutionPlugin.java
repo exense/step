@@ -24,11 +24,6 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
     public static String TIMESERIES_FLAG = "hasTimeSeries";
 
-    public static final String EXECUTION_ID = "eId";
-    public static final String TASK_ID = "taskId";
-    public static final String PLAN_ID = "planId";
-    public static final String CANONICAL_PLAN_NAME = "canonicalPlanName";
-
     private final TimeSeries timeSeries;
 
     public TimeSeriesExecutionPlugin(TimeSeries timeSeries) {
@@ -92,15 +87,4 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
         super.afterExecutionEnd(context);
     }
 
-    private BucketAttributes withExecutionAttributes(Execution execution, Map<String, Object> attributes) {
-        HashMap<String, Object> result = new HashMap<>(attributes);
-        result.put(EXECUTION_ID, execution.getId().toString());
-        String executionTaskID = execution.getExecutionTaskID();
-        if (executionTaskID != null) {
-            result.put(TASK_ID, executionTaskID);
-        }
-        result.put(PLAN_ID, execution.getPlanId());
-        result.put(CANONICAL_PLAN_NAME, execution.getImportResult().getCanonicalPlanName());
-        return new BucketAttributes(result);
-    }
 }

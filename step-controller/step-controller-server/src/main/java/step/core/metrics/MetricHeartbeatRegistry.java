@@ -149,7 +149,7 @@ public class MetricHeartbeatRegistry {
                 1, last, last, last, last, null);
         }
         return new ExecutionMetricSample(heartbeatSample, original.eId, original.rnId, original.planId,
-            original.plan, original.taskId, original.schedule, original.execution,
+            original.plan, original.canonicalPlanName, original.taskId, original.schedule, original.execution,
             original.agentUrl, original.origin, original.getAttributes(), original.metricType);
     }
 }

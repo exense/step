@@ -21,6 +21,7 @@ public class ExecutionMetricSample extends StepMetricSample {
     public final String rnId;
     public final String planId;
     public final String plan;
+    public final String canonicalPlanName;
     public final String taskId;
     public final String schedule;
     public final String execution;
@@ -33,6 +34,7 @@ public class ExecutionMetricSample extends StepMetricSample {
                                  @JsonProperty("rnId") String rnId,
                                  @JsonProperty("planId") String planId,
                                  @JsonProperty("plan") String plan,
+                                 @JsonProperty("canonicalPlanName") String canonicalPlanName,
                                  @JsonProperty("taskId") String taskId,
                                  @JsonProperty("schedule") String schedule,
                                  @JsonProperty("execution") String execution,
@@ -45,6 +47,7 @@ public class ExecutionMetricSample extends StepMetricSample {
         this.rnId = rnId;
         this.planId = planId;
         this.plan = plan;
+        this.canonicalPlanName = canonicalPlanName;
         this.taskId = taskId;
         this.schedule = schedule;
         this.execution = execution;
@@ -75,6 +78,7 @@ public class ExecutionMetricSample extends StepMetricSample {
         putIfNotEmpty(labels, MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID, eId);
         putIfNotEmpty(labels, MetricsExecutionPlugin.PLAN_ID, planId);
         putIfNotEmpty(labels, MetricsExecutionPlugin.PLAN, plan);
+        putIfNotEmpty(labels, MetricsExecutionPlugin.CANONICAL_PLAN_NAME, canonicalPlanName);
         putIfNotEmpty(labels, MetricsExecutionPlugin.AGENT_URL, agentUrl);
         putIfNotEmpty(labels, MetricsExecutionPlugin.TASK_ID, taskId);
         putIfNotEmpty(labels, MetricsExecutionPlugin.SCHEDULE, schedule);
