@@ -188,7 +188,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
             String schedule = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULE_NAME), "");
             String planId = context.getPlan().getId().toString();
             String plan = Objects.requireNonNullElse(context.getPlan().getAttribute(AbstractOrganizableObject.NAME), "");
-            String canonicalPlanName = Objects.requireNonNullElse((String) context.get(CTX_CANONICAL_PLAN_NAME), null);
+            String canonicalPlanName = Objects.requireNonNullElse((String) context.get(CTX_CANONICAL_PLAN_NAME), "");
             String execution = Objects.requireNonNullElse((String) context.get(CTX_EXECUTION_DESCRIPTION), "");
             @SuppressWarnings("unchecked")
             Map<String, String> additionalAttributes = (Map<String, String>) context.get(CTX_ADDITIONAL_ATTRIBUTES);

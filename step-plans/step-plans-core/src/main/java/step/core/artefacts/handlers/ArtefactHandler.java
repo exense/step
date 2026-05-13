@@ -272,7 +272,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
     private Map<String, Object> getTimeSeriesContextAttributes(ExecutionContext executionContext) {
         Map<String, Object> attributes = new HashMap<>();
-        String canonicalPlanName = Objects.requireNonNullElse((String) executionContext.get(CTX_CANONICAL_PLAN_NAME), null);
+        String canonicalPlanName = Objects.requireNonNullElse((String) executionContext.get(CTX_CANONICAL_PLAN_NAME), "");
         attributes.put("canonicalPlanName", canonicalPlanName);
 
         if (executionContext.getPlan() != null) {
