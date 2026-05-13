@@ -310,10 +310,10 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         measurement.setValue(measure.getDuration());
         measurement.setBegin(measure.getBegin());
         measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
+        measurement.setCanonicalPlanName(canonicalPlanName);
         enrichWithNodeAttributes(measurement, functionReport);
         enrichWithCustomData(measurement, measure.getData());
         enrichWithAdditionalAttributes(measurement, executionContext);
-        measurement.setCanonicalPlanName(canonicalPlanName);
         return measurement;
     }
 

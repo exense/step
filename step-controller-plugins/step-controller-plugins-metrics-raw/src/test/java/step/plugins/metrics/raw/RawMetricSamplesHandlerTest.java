@@ -40,7 +40,6 @@ public class RawMetricSamplesHandlerTest {
     public void testRawMeasurementsHandler() {
         InMemoryPlanAccessor planAccessor = new InMemoryPlanAccessor();
         InMemoryExecutionAccessor executionAccessor = new InMemoryExecutionAccessor();
-        InMemoryExecutionTaskAccessor scheduleAccessor = new InMemoryExecutionTaskAccessor();
         Sleep sleep = sleep(100);
         sleep.setInstrumentNode(new DynamicValue<>(true));
         Plan plan = PlanBuilder.create().startBlock(sequence()).add(sleep).endBlock().build();
@@ -63,7 +62,7 @@ public class RawMetricSamplesHandlerTest {
 
             Document document = measurementAccessor.find(Filters.empty()).findFirst().orElseThrow();
             assertNotNull(document);
-            assertEquals(13, document.size());
+            assertEquals(14, document.size());
             assertEquals("val1", document.get("attr1"));
             assertEquals("val2", document.get("attr2"));
             assertFalse(document.containsKey("plan"));
@@ -74,6 +73,7 @@ public class RawMetricSamplesHandlerTest {
             assertEquals(MetricsExecutionPlugin.TYPE_CUSTOM, document.get("type"));
             assertEquals("PASSED", document.get("rnStatus"));
             assertEquals(plan.getId().toHexString(), document.get("planId"));
+            assertEquals("", document.get("canonicalPlanName")); // there is no importResult on the execution
             assertEquals("", document.get("taskId"));
         }
 
@@ -113,7 +113,7 @@ public class RawMetricSamplesHandlerTest {
 
             Document document = measurementAccessor.find(Filters.empty()).findFirst().orElseThrow();
             assertNotNull(document);
-            assertEquals(13, document.size());
+            assertEquals(14, document.size());
             assertEquals("val1", document.get("attr1"));
             assertEquals("val2", document.get("attr2"));
             assertFalse(document.containsKey("plan"));
@@ -124,6 +124,7 @@ public class RawMetricSamplesHandlerTest {
             assertEquals(MetricsExecutionPlugin.TYPE_CUSTOM, document.get("type"));
             assertEquals("PASSED", document.get("rnStatus"));
             assertEquals(plan.getId().toHexString(), document.get("planId"));
+            assertEquals("", document.get("canonicalPlanName")); // there is no importResult on the execution
             assertEquals(taskParameters.getId().toHexString(), document.get("taskId"));
 
 
