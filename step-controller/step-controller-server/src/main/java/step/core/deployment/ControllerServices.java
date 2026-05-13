@@ -174,7 +174,7 @@ public class ControllerServices extends AbstractStepServices {
     @Secured(right = "execution-read")
     public List<ReportNode> getReportNodesWithContributingErrors(@PathParam("id") String reportNodeId, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
         skip = skip != null ? skip : 0;
-        limit = limit != null ? limit : 1000;
+        limit = limit != null ? limit : 10;
         try (Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrorsByAncestor(reportNodeId, skip, limit)) {
             return stream.collect(Collectors.toList());
         }
