@@ -72,8 +72,10 @@ public class ReportNodeTimeSeries implements AutoCloseable {
         nodeBucket.put(ARTEFACT_HASH, reportNode.getArtefactHash());
         nodeBucket.put(STATUS, status.toString());
         if (reportNode.getError() != null) {
-            nodeBucket.put(ERROR_CODE, reportNode.getError().getCode());
-            nodeBucket.put(ERROR_MESSAGE, reportNode.getError().getMsg());
+            nodeBucket.put(ERROR_CODE, reportNode.getError().getCode() != null ? reportNode.getError().getCode() : 0);
+            if (reportNode.getError().getMsg() != null) {
+                nodeBucket.put(ERROR_MESSAGE, reportNode.getError().getMsg());
+            }
         }
         if (customAttributes != null) {
             nodeBucket.putAll(customAttributes);

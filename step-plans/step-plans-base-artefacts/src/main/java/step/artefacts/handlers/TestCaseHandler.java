@@ -37,7 +37,6 @@ public class TestCaseHandler extends AbstractSessionArtefactHandler<TestCase, Re
 
     @Override
     public void execute_(ReportNode node, TestCase testArtefact) {
-        addTestCaseNameToCustomAttributes(testArtefact);
         ReportNode resultNode = executeInSession(testArtefact, node, (sessionArtefact, sessionReportNode) -> {
             SequentialArtefactScheduler scheduler = new SequentialArtefactScheduler(context);
             scheduler.execute_(sessionReportNode, sessionArtefact);
@@ -45,14 +44,8 @@ public class TestCaseHandler extends AbstractSessionArtefactHandler<TestCase, Re
         new AtomicReportNodeStatusComposer(resultNode).applyComposedStatusToParentNode(node);
     }
 
-    private void addTestCaseNameToCustomAttributes(TestCase testArtefact) {
-        ReportNodeAttributesManager reportNodeAttributesManager = new ReportNodeAttributesManager(context);
-        reportNodeAttributesManager.addCustomAttribute("TestCase", testArtefact.getId().toString());
-    }
-
     @Override
     public ReportNode createReportNode_(ReportNode parentNode, TestCase testArtefact) {
-        addTestCaseNameToCustomAttributes(testArtefact);
         return new TestCaseReportNode();
     }
 

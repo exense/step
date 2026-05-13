@@ -224,7 +224,9 @@ public class AssertHandler extends ArtefactHandler<Assert, AssertReportNode> {
 
     @Override
     public AssertReportNode createReportNode_(ReportNode parentNode, Assert artefact) {
-        return new AssertReportNode();
+        AssertReportNode assertReportNode = new AssertReportNode();
+        assertReportNode.setLeafReportNode(true);
+        return assertReportNode;
     }
 
     private AssertOperatorHandler getOperatorHandler(AssertOperator operator) {

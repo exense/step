@@ -31,12 +31,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @JsonTypeInfo(use = Id.CLASS, property = "_class")
 public class ReportNode extends AbstractIdentifiableObject {
 
     protected ObjectId parentID;
-    protected String path;
+    protected Set<String> ancestorIds;
     protected String name;
     protected String executionID;
     protected ObjectId artefactID;
@@ -49,6 +50,7 @@ public class ReportNode extends AbstractIdentifiableObject {
     protected Boolean isContributingError;
     protected Map<String, String> customAttributes;
     protected ParentSource parentSource;
+    protected boolean leafReportNode;
 
     @JsonIgnore
     protected AbstractArtefact artefactInstance;
@@ -70,12 +72,12 @@ public class ReportNode extends AbstractIdentifiableObject {
         this.parentID = parentID;
     }
 
-    public String getPath() {
-        return path;
+    public Set<String> getAncestorIds() {
+        return ancestorIds;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setAncestorIds(Set<String> ancestorIds) {
+        this.ancestorIds = ancestorIds;
     }
 
     public String getName() {
@@ -245,6 +247,14 @@ public class ReportNode extends AbstractIdentifiableObject {
 
     public void setParentSource(ParentSource parentSource) {
         this.parentSource = parentSource;
+    }
+
+    public boolean isLeafReportNode() {
+        return leafReportNode;
+    }
+
+    public void setLeafReportNode(boolean leafReportNode) {
+        this.leafReportNode = leafReportNode;
     }
 
     /**

@@ -74,6 +74,8 @@ public class SetHandler extends ArtefactHandler<Set, SetReportNode> {
 
     @Override
     public SetReportNode createReportNode_(ReportNode parentNode, Set testArtefact) {
-        return new SetReportNode();
+        SetReportNode setReportNode = new SetReportNode();
+        setReportNode.setLeafReportNode(true);
+        return setReportNode;
     }
 }

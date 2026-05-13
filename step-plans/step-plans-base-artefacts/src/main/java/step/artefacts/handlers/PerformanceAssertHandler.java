@@ -84,7 +84,9 @@ public class PerformanceAssertHandler extends ArtefactHandler<PerformanceAssert,
 
     @Override
     protected PerformanceAssertReportNode createReportNode_(ReportNode parentReportNode, PerformanceAssert artefact) {
-        return new PerformanceAssertReportNode();
+        PerformanceAssertReportNode performanceAssertReportNode = new PerformanceAssertReportNode();
+        performanceAssertReportNode.setLeafReportNode(true);
+        return performanceAssertReportNode;
     }
 
 }

@@ -44,6 +44,8 @@ public class ScriptHandler extends ArtefactHandler<Script, ReportNode> {
 
     @Override
     public ReportNode createReportNode_(ReportNode parentNode, Script testArtefact) {
-        return new ReportNode();
+        ReportNode reportNode = new ReportNode();
+        reportNode.setLeafReportNode(true);
+        return reportNode;
     }
 }

@@ -113,5 +113,7 @@ public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAcce
 
     void removeNodesByExecutionID(String executionID);
 
-    Stream<ReportNode> getReportNodesWithContributingErrors(String executionId, Integer skip, Integer limit);
+    Stream<ReportNode> getReportNodesWithContributingErrorsByExecution(String executionId, Integer skip, Integer limit);
+
+    Stream<ReportNode> getReportNodesWithContributingErrorsByAncestor(String ancestorId, Integer skip, Integer limit);
 }

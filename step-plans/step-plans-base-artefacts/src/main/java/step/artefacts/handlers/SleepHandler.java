@@ -92,6 +92,8 @@ public class SleepHandler extends ArtefactHandler<Sleep, ReportNode> {
 
     @Override
     public SleepReportNode createReportNode_(ReportNode parentNode, Sleep testArtefact) {
-        return new SleepReportNode();
+        SleepReportNode sleepReportNode = new SleepReportNode();
+        sleepReportNode.setLeafReportNode(true);
+        return sleepReportNode;
     }
 }

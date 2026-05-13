@@ -38,11 +38,11 @@ public class EnrichedReportNode<T extends ReportNode> extends ReportNode {
     @JsonIgnore
     private final T delegate;
 
-    private final List<ReportNode> assertionReportNodesOnError;
+    private final List<ReportNode> contributingErrors;
 
-    public EnrichedReportNode(T delegate, List<ReportNode> assertionReportNodesOnError) {
+    public EnrichedReportNode(T delegate, List<ReportNode> contributingErrors) {
         this.delegate = delegate;
-        this.assertionReportNodesOnError = assertionReportNodesOnError;
+        this.contributingErrors = contributingErrors;
     }
 
     /**
@@ -56,8 +56,8 @@ public class EnrichedReportNode<T extends ReportNode> extends ReportNode {
      * Returns the assertion report nodes collected from failed children of the delegate,
      * or {@code null} when no enrichment was performed.
      */
-    public List<ReportNode> getAssertionReportNodesOnError() {
-        return assertionReportNodesOnError;
+    public List<ReportNode> getContributingErrors() {
+        return contributingErrors;
     }
 
     /**
@@ -72,12 +72,12 @@ public class EnrichedReportNode<T extends ReportNode> extends ReportNode {
             ObjectMapper mapper = (ObjectMapper) gen.getCodec();
             // valueToTree honours @JsonTypeInfo — the delegate's _class is included
             ObjectNode node = mapper.valueToTree(value.delegate);
-            if (value.assertionReportNodesOnError != null) {
+            if (value.contributingErrors != null) {
                 ArrayNode arrayNode = mapper.createArrayNode();
-                for (ReportNode assertionNode : value.assertionReportNodesOnError) {
+                for (ReportNode assertionNode : value.contributingErrors) {
                     arrayNode.add(mapper.valueToTree(assertionNode));
                 }
-                node.set("assertionReportNodesOnError", arrayNode);
+                node.set("contributingErrors", arrayNode);
             }
             mapper.writeTree(gen, node);
         }

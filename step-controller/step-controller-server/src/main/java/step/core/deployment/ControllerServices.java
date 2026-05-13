@@ -52,6 +52,8 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static step.core.Controller.USER_ACTIVITY_MAP_KEY;
 
@@ -164,6 +166,18 @@ public class ControllerServices extends AbstractStepServices {
             result.add(it.next());
         }
         return result;
+    }
+
+    @GET
+    @Path("/reportnode/{id}/reportnodes-with-errors")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "execution-read")
+    public List<ReportNode> getReportNodesWithContributingErrors(@PathParam("id") String reportNodeId, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+        skip = skip != null ? skip : 0;
+        limit = limit != null ? limit : 1000;
+        try (Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrorsByAncestor(reportNodeId, skip, limit)) {
+            return stream.collect(Collectors.toList());
+        }
     }
 
     @GET

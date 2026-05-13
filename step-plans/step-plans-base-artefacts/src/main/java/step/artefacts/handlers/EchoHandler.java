@@ -42,6 +42,8 @@ public class EchoHandler extends ArtefactHandler<Echo, EchoReportNode> {
 
     @Override
     public EchoReportNode createReportNode_(ReportNode parentNode, Echo testArtefact) {
-        return new EchoReportNode();
+        EchoReportNode reportNode = new EchoReportNode();
+        reportNode.setLeafReportNode(true);
+        return reportNode;
     }
 }

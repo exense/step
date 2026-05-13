@@ -6,8 +6,8 @@ import java.util.List;
 
 public class ReportNodesTableParameters extends TableParameters {
     private String eid;
-    private List<String> testcases;
-    private boolean enrichCallKeywordWithAssertionErrors;
+    private List<String> ancestorIds;
+    private boolean enrichWithContributingErrors;
 
     public String getEid() {
         return eid;
@@ -17,19 +17,19 @@ public class ReportNodesTableParameters extends TableParameters {
         this.eid = eid;
     }
 
-    public List<String> getTestcases() {
-        return testcases;
+    public List<String> getAncestorIds() {
+        return ancestorIds;
     }
 
-    public void setTestcases(List<String> testcases) {
-        this.testcases = testcases;
+    public void setAncestorIds(List<String> ancestorIds) {
+        this.ancestorIds = ancestorIds;
     }
 
-    public boolean isEnrichCallKeywordWithAssertionErrors() {
-        return enrichCallKeywordWithAssertionErrors;
+    public boolean isEnrichWithContributingErrors() {
+        return enrichWithContributingErrors;
     }
 
-    public void setEnrichCallKeywordWithAssertionErrors(boolean enrichCallKeywordWithAssertionErrors) {
-        this.enrichCallKeywordWithAssertionErrors = enrichCallKeywordWithAssertionErrors;
+    public void setEnrichWithContributingErrors(boolean enrichWithContributingErrors) {
+        this.enrichWithContributingErrors = enrichWithContributingErrors;
     }
 }

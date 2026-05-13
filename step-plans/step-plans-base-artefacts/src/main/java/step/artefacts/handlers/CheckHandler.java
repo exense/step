@@ -48,6 +48,8 @@ public class CheckHandler extends ArtefactHandler<Check, CheckReportNode> {
 
     @Override
     public CheckReportNode createReportNode_(ReportNode parentNode, Check testArtefact) {
-        return new CheckReportNode();
+        CheckReportNode checkReportNode = new CheckReportNode();
+        checkReportNode.setLeafReportNode(true);
+        return checkReportNode;
     }
 }

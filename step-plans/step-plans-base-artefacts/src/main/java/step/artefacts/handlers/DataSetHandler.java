@@ -142,6 +142,8 @@ public class DataSetHandler extends ArtefactHandler<DataSetArtefact, ReportNode>
 
     @Override
     public ReportNode createReportNode_(ReportNode parentNode, DataSetArtefact testArtefact) {
-        return new ReportNode();
+        ReportNode reportNode = new ReportNode();
+        reportNode.setLeafReportNode(true);
+        return reportNode;
     }
 }

@@ -206,7 +206,7 @@ public class AggregatedReportViewBuilder {
         Map<String, ReportNode> singleReportNodes = new HashMap<>();
         // select the closest iteration node if any otherwise we fall back to the selected node
         ReportNode partialTreeRoot = path.stream().filter(this::isIterationNodeReport).findFirst().orElse(selectedReportNode);
-        aggregatedReport.resolvedPartialPath = partialTreeRoot.getPath();
+        aggregatedReport.partialTreeRootNodeId = partialTreeRoot.getId().toHexString();
         ingestReportNodeRecursively(partialTreeRoot, reportNodeTimeSeries, singleReportNodes, runningCountByArtefactHash, operationsByArtefactHash, fetchCurrentOperations);
         reportNodeAccessor.save(singleReportNodes.values());
         reportNodeTimeSeries.flush();
@@ -279,7 +279,9 @@ public class AggregatedReportViewBuilder {
         ReportNode singleInstanceReportNode = null;
         //Get the count by error message for this artefact in all cases allow to pull the errors to parent
         Map<String, Bucket> bucketByErrorMessage = countByHashAndErrorMessage.getOrDefault(artefactHash, new HashMap<>());
-        countByErrorMessage = bucketByErrorMessage.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getCount()));
+        countByErrorMessage = bucketByErrorMessage.entrySet().stream()
+            .filter(e -> e.getKey() != null)
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().getCount()));
         //Skip generation of statistics for reports that are not included based on request filter, root node is always IN
         if (resolvedPlanNode.parentId == null || shouldIncludeAggregatedReport(request, resolvedPlanNode.artefact)) {
             bucketsByStatus = bucketByHashAndStatus.getOrDefault(artefactHash, new HashMap<>());

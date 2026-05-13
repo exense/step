@@ -18,7 +18,6 @@ import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.reports.AssertReportNode;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.artefacts.reports.PerformanceAssertReportNode;
-import step.core.GlobalContextBuilder;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.ChildrenBlock;
 import step.core.artefacts.reports.ReportNode;
@@ -27,7 +26,6 @@ import step.core.artefacts.reports.aggregated.AggregatedReport;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewRequest;
-import step.core.collections.Collection;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.table.EnrichedReportNode;
 import step.core.execution.table.ReportNodeTableFilterFactory;
@@ -56,7 +54,6 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static step.planbuilder.BaseArtefacts.assertEqualArtefact;
@@ -150,7 +147,7 @@ public class ReportTableTest {
 
         // Request with filter on the echo artefact Hash (inner loop) + selected aggregatedReport context
         oqlFilter = new OQLFilter();
-        oqlFilter.setOql("artefactHash = " + reportNode.getArtefactHash() + " and path ~ \"^" + aggregatedReport.resolvedPartialPath + "\"");
+        oqlFilter.setOql("artefactHash = " + reportNode.getArtefactHash() + " and ancestorIds includes \"" + aggregatedReport.partialTreeRootNodeId + "\"");
         tableRequest.setFilters(List.of(oqlFilter));
         reports = tableService.request("reports", tableRequest, new Session<>());
         Assert.assertEquals(1, reports.getRecordsFiltered());
@@ -158,7 +155,7 @@ public class ReportTableTest {
         //Test for node in inner loop
         ReportNode setReportNode = engine.getExecutionEngineContext().getReportNodeAccessor().getReportNodesByExecutionIDAndClass(result.getExecutionId(), "step.artefacts.reports.SetReportNode").findFirst().orElseThrow(() -> new RuntimeException("No echo report aggregatedReportView found"));
         oqlFilter = new OQLFilter();
-        oqlFilter.setOql("artefactHash = " + setReportNode.getArtefactHash() + " and path ~ \"^" + aggregatedReport.resolvedPartialPath + "\"");
+        oqlFilter.setOql("artefactHash = " + setReportNode.getArtefactHash() + " and ancestorIds includes \"" + aggregatedReport.partialTreeRootNodeId + "\"");
         tableRequest.setFilters(List.of(oqlFilter));
         reports = tableService.request("reports", tableRequest, new Session<>());
         Assert.assertEquals(5, reports.getRecordsFiltered());
@@ -233,24 +230,25 @@ public class ReportTableTest {
         assertionError.setStatus(ReportNodeStatus.FAILED);
 
         EnrichedReportNode<CallFunctionReportNode> enriched =
-                new EnrichedReportNode<>(delegate, List.of(assertionError));
+            new EnrichedReportNode<>(delegate, List.of(assertionError));
 
         // direct serialization — exercises Serializer.serialize()
         JsonNode directJson = mapper.valueToTree(enriched);
         Assert.assertEquals(CallFunctionReportNode.class.getName(), directJson.get("_class").asText());
         Assert.assertEquals(ReportNodeStatus.FAILED.toString(), directJson.get("status").asText());
-        JsonNode assertionNodes = directJson.get("assertionReportNodesOnError");
+        JsonNode assertionNodes = directJson.get("contributingErrors");
         Assert.assertNotNull(assertionNodes);
         Assert.assertEquals(1, assertionNodes.size());
         Assert.assertEquals(AssertReportNode.class.getName(), assertionNodes.get(0).get("_class").asText());
 
         // typed-container serialization — exercises Serializer.serializeWithType()
-        String json = mapper.writerFor(new TypeReference<List<ReportNode>>() {}).writeValueAsString(List.of(enriched));
+        String json = mapper.writerFor(new TypeReference<List<ReportNode>>() {
+        }).writeValueAsString(List.of(enriched));
         JsonNode containerJson = mapper.readTree(json);
         JsonNode firstElement = containerJson.get(0);
         Assert.assertEquals(CallFunctionReportNode.class.getName(), firstElement.get("_class").asText());
         Assert.assertEquals(ReportNodeStatus.FAILED.toString(), firstElement.get("status").asText());
-        JsonNode assertionNodesInContainer = firstElement.get("assertionReportNodesOnError");
+        JsonNode assertionNodesInContainer = firstElement.get("contributingErrors");
         Assert.assertNotNull(assertionNodesInContainer);
         Assert.assertEquals(1, assertionNodesInContainer.size());
         Assert.assertEquals(AssertReportNode.class.getName(), assertionNodesInContainer.get(0).get("_class").asText());
@@ -266,13 +264,12 @@ public class ReportTableTest {
         }
 
         // Wire up leafReports table the same way ExecutionPlugin does, using the engine's report collection
-        Collection<ReportNode> reportsCollection = engine.getExecutionEngineContext().getReportAccessor().getCollectionDriver();
         TableRegistry tableRegistry = new TableRegistry();
-        tableRegistry.register("leafReports", ExecutionPlugin.getLeafReportTable(GlobalContextBuilder.createGlobalContext(), reportsCollection));
+        tableRegistry.register("leafReports", ExecutionPlugin.getReportTable(engine.getExecutionEngineContext(), true));
 
         ReportNodesTableParameters params = new ReportNodesTableParameters();
         params.setEid(result.getExecutionId());
-        params.setEnrichCallKeywordWithAssertionErrors(true);
+        params.setEnrichWithContributingErrors(true);
         TableRequest tableRequest = new TableRequest();
         tableRequest.setFilters(List.of(new OQLFilter()));
         tableRequest.setTableParameters(params);
@@ -292,7 +289,7 @@ public class ReportTableTest {
         List<ReportNode> assertionErrors;
         if (rawNode instanceof EnrichedReportNode<?> enriched) {
             callFunctionReport = (CallFunctionReportNode) enriched.getDelegate();
-            assertionErrors = enriched.getAssertionReportNodesOnError();
+            assertionErrors = enriched.getContributingErrors();
         } else {
             callFunctionReport = (CallFunctionReportNode) rawNode;
             assertionErrors = null;

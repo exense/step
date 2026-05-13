@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import com.google.common.io.Files;
 
 import step.artefacts.Export;
+import step.artefacts.reports.EchoReportNode;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
@@ -104,6 +105,8 @@ public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
 
     @Override
     public ReportNode createReportNode_(ReportNode parentNode, Export testArtefact) {
-        return new ReportNode();
+        ReportNode reportNode = new ReportNode();
+        reportNode.setLeafReportNode(true);
+        return reportNode;
     }
 }
