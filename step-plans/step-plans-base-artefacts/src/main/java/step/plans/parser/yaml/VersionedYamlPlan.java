@@ -20,7 +20,7 @@ package step.plans.parser.yaml;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import step.core.yaml.deserialization.PatchingContext;
+import step.core.yaml.PatchingContext;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder(VersionedYamlPlan.VERSION_FIELD_NAME)

@@ -27,6 +27,8 @@ public class StepUp {
     private static final String initialDirName = "src/main/resources/work-initial";
 
     public static void main(String[] args) throws Exception {
+        // Use an IntelliJ run configuration that uses '%MODULE_WORKING_DIR%' (verbatim) as the working directory, and use
+        // -config="src/test/resources/step.properties" as program argument
         ControllerServer.main(args);
         initWorkdir();
         App.main(args); // this will never return

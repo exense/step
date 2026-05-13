@@ -19,23 +19,23 @@
 package step.core.yaml;
 
 import com.fasterxml.jackson.core.JsonLocation;
-import step.core.yaml.deserialization.PatchingContext;
 
 public interface PatchableYamlModel {
 
-    void setPatchingBounds(JsonLocation startLocation, JsonLocation endLocation);
+    void setPatchingContext(PatchingContext context);
 
-    int getStartOffset();
+    PatchingContext getPatchingContext();
 
-    int getIndent();
+    String getCurrentYaml(String contextIndent);
 
-    int getEndOffset();
+    void setModified();
 
-    void setStartOffset(int startOffset);
+    enum StartingLineDeterminationStrategy {
+        SAME_LINE,
+        NEXT_CONTENT_LINE
+    }
 
-    void setEndOffset(int endOffset);
+    StartingLineDeterminationStrategy getStartingLineDeterminationStrategy();
 
-    void setIndent(int indent);
-
-    void setContext(PatchingContext context);
+    void onParsed(JsonLocation startLocation, JsonLocation endLocation);
 }

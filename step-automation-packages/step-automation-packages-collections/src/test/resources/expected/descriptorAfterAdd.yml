@@ -13,12 +13,12 @@ alertingRules:
             BindingValueEqualsPredicate:
               value: "myValue"
 plans:
-- name: "New Name"
-  root:
-    sequence:
-      children:
-      - echo:
-          text: "Hello World"
+  - name: "New Name"
+    root:
+      sequence:
+        children:
+          - echo:
+              text: "Hello World"
 parameters:
   - key: "paramInMainAP"
     value: "once"

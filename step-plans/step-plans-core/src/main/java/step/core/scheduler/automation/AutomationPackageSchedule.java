@@ -20,12 +20,13 @@ package step.core.scheduler.automation;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.OptBoolean;
 import step.core.yaml.PatchableYamlModelBase;
-import step.core.yaml.deserialization.PatchingContext;
+import step.core.yaml.PatchingContext;
 
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 public class AutomationPackageSchedule extends PatchableYamlModelBase {
 
@@ -35,8 +36,10 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase {
     private Boolean active = true;
     private String cron;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL) // otherwise fails schema check after re-reading serialized value
     private List<String> cronExclusions;
     private String planName;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String assertionPlanName;
     private Map<String, String> executionParameters;
 

@@ -25,8 +25,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.deser.BeanDeserializer;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
-import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
-import step.core.yaml.deserialization.PatchingContext;
+import step.core.yaml.PatchingContext;
 import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 
 import java.io.IOException;

@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.OptBoolean;
 import step.core.yaml.PatchableYamlModelBase;
-import step.core.yaml.deserialization.PatchingContext;
+import step.core.yaml.PatchingContext;
 import step.plans.nl.RootArtefactType;
 
 import java.util.List;
@@ -38,7 +38,7 @@ public class YamlPlainTextPlan extends PatchableYamlModelBase {
     private String file;
 
     @JsonCreator
-    public YamlPlainTextPlan(@JacksonInject(useInput = OptBoolean.FALSE, optional = OptBoolean.TRUE)  PatchingContext context) {
+    public YamlPlainTextPlan(@JacksonInject(useInput = OptBoolean.FALSE, optional = OptBoolean.TRUE) PatchingContext context) {
         super(context);
     }
 

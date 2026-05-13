@@ -2,27 +2,27 @@
 fragments: []
 keywords: []
 plans:
-- name: "Test Plan"
-  root:
-    testCase:
-      nodeName: "Test Plan"
-      children:
-      - echo:
-          text:
-            expression: "new Date().toString();"
-      - echo:
-          text:
-            expression: "mySimpleKey"
-      - callKeyword:
-          nodeName: "CallMyKeyword2"
-          inputs:
-          - myInput: "myValue"
-          keyword: "MyKeyword2"
-  categories:
-  - "Yaml Plan"
+  - name: "Test Plan"
+    root:
+      testCase:
+        nodeName: "Test Plan"
+        children:
+          - echo:
+              text:
+                expression: "new Date().toString();"
+          - echo:
+              text:
+                expression: "mySimpleKey"
+          - callKeyword:
+              nodeName: "CallMyKeyword2"
+              inputs:
+                - myInput: "myValue"
+              keyword: "MyKeyword2"
+    categories:
+      - "Yaml Plan"
 plansPlainText:
-- name: "Plain text plan"
-  rootType: "Sequence"
-  categories:
-  - "PlainTextPlan"
-  file: "plans/plan2.plan"
+  - name: "Plain text plan"
+    rootType: "Sequence"
+    categories:
+    - "PlainTextPlan"
+    file: "plans/plan2.plan"

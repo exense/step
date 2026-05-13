@@ -27,10 +27,10 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchableYamlModelBase;
+import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.AutomationPackagePerObjectSaveUnsupportedException;
 import step.core.yaml.deserialization.AutomationPackageUpdateException;
 import step.core.yaml.deserialization.PatchableYamlList;
-import step.core.yaml.deserialization.PatchingContext;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.automation.AutomationPackageParameter;
@@ -51,8 +51,8 @@ import java.util.stream.Collectors;
 public class AutomationPackageYamlFragmentManager {
 
 
-    private final Path apRoot;
-    private final StagingAutomationPackageContext stagingContext;
+    protected final Path apRoot;
+    protected final StagingAutomationPackageContext stagingContext;
 
     public enum NewObjectFragmentMode {
         /**
@@ -67,14 +67,14 @@ public class AutomationPackageYamlFragmentManager {
 
     public static final String PROPERTY_NEW_OBJECT_FRAGMENT_MODE = "newFragmentPaths.%s.mode";
     public static final String PROPERTY_NEW_OBJECT_FRAGMENT_PATH = "newFragmentPaths.%s.path";
-    private final AutomationPackageDescriptorReader descriptorReader;
+    protected final AutomationPackageDescriptorReader descriptorReader;
 
-    private final Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap = new ConcurrentHashMap<>();
-    private final Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap = new ConcurrentHashMap<>();
-    private final Map<String, AutomationPackageFragmentYaml> pathToYamlFragment;
+    protected final Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap = new ConcurrentHashMap<>();
+    protected final Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap = new ConcurrentHashMap<>();
+    protected final Map<String, AutomationPackageFragmentYaml> pathToYamlFragment;
 
-    private Properties properties = new Properties();
-    private final AutomationPackageFragmentYaml descriptorYaml;
+    protected Properties properties = new Properties();
+    protected final AutomationPackageFragmentYaml descriptorYaml;
 
     public AutomationPackageYamlFragmentManager(AutomationPackageDescriptorYaml descriptorYaml, Map<String, AutomationPackageFragmentYaml> fragmentMap, AutomationPackageDescriptorReader descriptorReader, StagingAutomationPackageContext stagingContext) {
 
@@ -146,8 +146,8 @@ public class AutomationPackageYamlFragmentManager {
             pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
             addFragmentEntity(fragment, fragment.getPlans(), newYamlPlan);
         } else {
-            YamlPlan yamlPlan = (YamlPlan) patchableMap.get(plan);
-            modifyFragmentEntity(fragment, fragment.getPlans(), yamlPlan, newYamlPlan);
+            YamlPlan oldYamlPlan = (YamlPlan) patchableMap.get(plan);
+            modifyFragmentEntity(fragment, fragment.getPlans(), oldYamlPlan, newYamlPlan);
         }
         patchableMap.put(plan, newYamlPlan);
 
@@ -161,14 +161,11 @@ public class AutomationPackageYamlFragmentManager {
             fragment = fragmentForNewObject(function, YamlPlan.PLANS_ENTITY_NAME);
             fragmentMap.put(function, fragment);
             pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
-            //addFragmentEntity(fragment, fragment.getKeywords(), newYamlKeyword);
         } else {
             YamlAutomationPackageKeyword yamlKeyword = (YamlAutomationPackageKeyword) patchableMap.get(function);
             yamlKeyword.getYamlKeyword().updateFromFunction(function);
             modifyFragmentEntity(fragment, fragment.getKeywords(), yamlKeyword, yamlKeyword);
         }
-        //patchableMap.put(function, y);
-
         return function;
     }
 
@@ -217,7 +214,7 @@ public class AutomationPackageYamlFragmentManager {
             if (pathToYamlFragment.containsKey(url.toString())) {
                 return pathToYamlFragment.get(url.toString());
             }
-            PatchingContext context = new PatchingContext("---", descriptorYaml.getPatchingContext().getMapper());
+            PatchingContext context = new PatchingContext(url.toString(), "---", descriptorYaml.getPatchingContext().getMapper());
             AutomationPackageFragmentYaml fragment = new AutomationPackageFragmentYamlImpl(context);
             fragment.setFragmentUrl(url);
             return fragment;

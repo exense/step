@@ -205,7 +205,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = resource.openStream()) {
-                        fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getAutomationPackageName());
+                        fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName());
                         fragmentYamlMap.put(resource.toString(), fragment);
                         fragment.setFragmentUrl(resource);
                         fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragmentYamlMap);

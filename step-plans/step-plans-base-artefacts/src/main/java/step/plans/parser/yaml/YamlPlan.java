@@ -28,7 +28,7 @@ import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.core.plans.agents.configuration.AgentProvisioningConfigurationDeserializer;
 import step.core.plans.agents.configuration.AgentProvisioningConfigurationSerializer;
 import step.core.yaml.PatchableYamlModelBase;
-import step.core.yaml.deserialization.PatchingContext;
+import step.core.yaml.PatchingContext;
 import step.core.yaml.model.NamedYamlArtefact;
 
 import java.util.List;
@@ -81,7 +81,7 @@ public class YamlPlan extends PatchableYamlModelBase {
         return categories;
     }
 
-	public void setCategories(List<String> categories) {
-		this.categories = categories;
-	}
+    public void setCategories(List<String> categories) {
+        this.categories = categories;
+    }
 }
