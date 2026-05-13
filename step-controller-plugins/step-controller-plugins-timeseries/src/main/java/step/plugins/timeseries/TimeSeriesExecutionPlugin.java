@@ -86,5 +86,4 @@ public class TimeSeriesExecutionPlugin extends AbstractExecutionEnginePlugin {
 
         super.afterExecutionEnd(context);
     }
-
 }
