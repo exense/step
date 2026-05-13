@@ -67,6 +67,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
     public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
     public static final String TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED = "tec.execution.reportnodes.timeseries.enabled";
     public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
+    public static final String CTX_CANONICAL_PLAN_NAME = "$canonicalPlanName";
 
     protected ExecutionContext context;
     private ArtefactHandlerManager artefactHandlerManager;
@@ -271,16 +272,9 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
     private Map<String, Object> getTimeSeriesContextAttributes(ExecutionContext executionContext) {
         Map<String, Object> attributes = new HashMap<>();
-        Execution execution = executionContext.getExecutionManager().getExecution(); // or object enricher?
-        if (execution != null) {
-            ImportResult importResult = execution.getImportResult();
-            if (importResult != null) {
-                String canonicalPlanName = importResult.getCanonicalPlanName();
-                if (canonicalPlanName != null) {
-                    attributes.put("canonicalPlanName", canonicalPlanName);
-                }
-            }
-        }
+        String canonicalPlanName = Objects.requireNonNullElse((String) executionContext.get(CTX_CANONICAL_PLAN_NAME), null);
+        attributes.put("canonicalPlanName", canonicalPlanName);
+
         if (executionContext.getPlan() != null) {
             attributes.put("planId", executionContext.getPlan().getId().toString());
         }
