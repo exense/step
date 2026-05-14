@@ -38,7 +38,7 @@ public class ReportNodesFilter {
         if (parameters != null) {
             String eid = parameters.getEid();
             if (eid != null) {
-                fragments.add(Filters.equals("executionID", eid));
+                fragments.add(Filters.equals(ReportNodeAccessorImpl.EXECUTION_ID_FIELD_NAME, eid));
             }
 
             List<String> ancestorIds = parameters.getAncestorIds();

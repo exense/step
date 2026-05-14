@@ -46,6 +46,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
     public static final String ARTEFACT_HASH_FIELD_NAME = "artefactHash";
     public static final String ANCESTOR_IDS_FIELD_NAME = "ancestorIds";
     public static final String CONTRIBUTING_ERROR_FIELD_NAME = "contributingError";
+    public static final String PARENT_SOURCE_FIELD_NAME = "parentSource";
 
     public ReportNodeAccessorImpl(Collection<ReportNode> collectionDriver) {
         super(collectionDriver);
@@ -63,7 +64,10 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 
         IndexField indexFieldExecutionId = new IndexField(EXECUTION_ID_FIELD_NAME, Order.ASC, String.class);
         IndexField indexFieldAncestorIds = new IndexField(ANCESTOR_IDS_FIELD_NAME, Order.ASC, List.class);
-        createOrUpdateCompoundIndex(new LinkedHashSet<>(Set.of(indexFieldExecutionId, indexFieldAncestorIds)));
+        IndexField indexFieldContributingError = new IndexField(CONTRIBUTING_ERROR_FIELD_NAME, Order.ASC, Boolean.class);
+        IndexField indexFieldExecutionTime = new IndexField(EXECUTION_TIME_FIELD_NAME, Order.ASC, Long.class);
+        createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(indexFieldExecutionId, indexFieldAncestorIds, indexFieldExecutionTime)));
+        createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(indexFieldExecutionId, indexFieldContributingError, indexFieldExecutionTime)));
     }
 
     @Override
@@ -96,12 +100,12 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 
     @Override
     public Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource) {
-        return collectionDriver.find(Filters.and(List.of(Filters.equals(PARENT_ID_FIELD_NAME, parentID), Filters.equals("parentSource", parentSource.name()))), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), null, null, 0).iterator();
+        return collectionDriver.find(Filters.and(List.of(Filters.equals(PARENT_ID_FIELD_NAME, parentID), Filters.equals(PARENT_SOURCE_FIELD_NAME, parentSource.name()))), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), null, null, 0).iterator();
     }
 
     @Override
     public Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource, int skip, int limit) {
-        return collectionDriver.find(Filters.and(List.of(Filters.equals(PARENT_ID_FIELD_NAME, parentID), Filters.equals("parentSource", parentSource.name()))), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), skip, limit, 0).iterator();
+        return collectionDriver.find(Filters.and(List.of(Filters.equals(PARENT_ID_FIELD_NAME, parentID), Filters.equals(PARENT_SOURCE_FIELD_NAME, parentSource.name()))), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), skip, limit, 0).iterator();
     }
 
 
@@ -227,7 +231,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 
     @Override
     public Stream<ReportNode> getReportNodesWithContributingErrors(String executionID) {
-        return getReportNodesWithContributingErrorsByExecution(executionID, null, null);
+        return getReportNodesWithContributingErrors(executionID, null, null, null);
     }
 
     @Override
@@ -237,18 +241,13 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
     }
 
     @Override
-    public Stream<ReportNode> getReportNodesWithContributingErrorsByExecution(String executionId, Integer skip, Integer limit) {
+    public Stream<ReportNode> getReportNodesWithContributingErrors(String executionId, String ancestorId, Integer skip, Integer limit) {
         Objects.requireNonNull(executionId);
         List<Filter> contributingErrorFilters = new ArrayList<>(List.of(Filters.equals(EXECUTION_ID_FIELD_NAME, executionId),
             Filters.equals(CONTRIBUTING_ERROR_FIELD_NAME, true)));
-        return collectionDriver.findLazy(Filters.and(contributingErrorFilters), null, skip, limit, 0);
-    }
-
-    @Override
-    public Stream<ReportNode> getReportNodesWithContributingErrorsByAncestor(String ancestorId, Integer skip, Integer limit) {
-        Objects.requireNonNull(ancestorId);
-        List<Filter> contributingErrorFilters = new ArrayList<>(List.of(Filters.includes(ANCESTOR_IDS_FIELD_NAME, ancestorId),
-            Filters.equals(CONTRIBUTING_ERROR_FIELD_NAME, true)));
-        return collectionDriver.findLazy(Filters.and(contributingErrorFilters), null, skip, limit, 0);
+        if (ancestorId != null) {
+            contributingErrorFilters.add(Filters.includes(ANCESTOR_IDS_FIELD_NAME, ancestorId));
+        }
+        return collectionDriver.findLazy(Filters.and(contributingErrorFilters), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), skip, limit, 0);
     }
 }

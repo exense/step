@@ -245,7 +245,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     public List<ReportNode> getReportNodeWithContributingErrors(@PathParam("id") String executionId, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
         skip = skip != null ? skip : 0;
         limit = limit != null ? limit : 1000;
-        try (Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrorsByExecution(executionId, skip, limit)) {
+        try (Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrors(executionId, null, skip, limit)) {
             return stream.collect(Collectors.toList());
         }
     }

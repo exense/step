@@ -23,22 +23,25 @@ public class ReportNodeTableEnricher implements TriFunction<ReportNode, Session<
 
     @Override
     public ReportNode apply(ReportNode reportNode, Session<?> session, TableParameters tableParameters) {
-        if (shouldEnrich(reportNode, tableParameters)) {
-            List<ReportNode> contributingErrors = collectContributingErrors(reportNode);
-            return new EnrichedReportNode<>(reportNode, contributingErrors);
+        if (tableParameters instanceof ReportNodesTableParameters reportNodesTableParameters) {
+            if (shouldEnrich(reportNode, reportNodesTableParameters)) {
+                List<ReportNode> contributingErrors = collectContributingErrors(reportNode, reportNodesTableParameters);
+                return new EnrichedReportNode<>(reportNode, contributingErrors);
+            }
         }
         return reportNode;
     }
 
-    private static boolean shouldEnrich(ReportNode reportNode, TableParameters tableParameters) {
-        return (tableParameters instanceof ReportNodesTableParameters)
-            && ((ReportNodesTableParameters) tableParameters).isEnrichWithContributingErrors()
+    private static boolean shouldEnrich(ReportNode reportNode, ReportNodesTableParameters tableParameters) {
+        return tableParameters.isEnrichWithContributingErrors()
             && (!reportNode.isLeafReportNode())
             && ((ReportNodeStatus.FAILED.equals(reportNode.getStatus())) || (ReportNodeStatus.TECHNICAL_ERROR.equals(reportNode.getStatus())));
     }
 
-    private List<ReportNode> collectContributingErrors(ReportNode root) {
-        try (Stream<ReportNode> reportNodesWithContributingErrors = reportNodeAccessor.getReportNodesWithContributingErrorsByAncestor(root.getId().toHexString(), 0, 10)) {
+    private List<ReportNode> collectContributingErrors(ReportNode root, ReportNodesTableParameters tableParameters) {
+        try (Stream<ReportNode> reportNodesWithContributingErrors = reportNodeAccessor.getReportNodesWithContributingErrors(
+            root.getExecutionID(), root.getId().toHexString(),
+            0, tableParameters.getEnrichWithContributingErrorsLimit())) {
             return reportNodesWithContributingErrors.collect(Collectors.toList());
         }
     }

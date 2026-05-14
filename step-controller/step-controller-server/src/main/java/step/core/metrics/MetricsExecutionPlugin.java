@@ -172,11 +172,6 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         // heartbeat always reflects the true current count regardless of which thread wins.
         synchronized (counter) {
             long count = inc ? counter.incrementAndGet() : Math.max(0, counter.decrementAndGet());
-            if (inc) {
-                logger.info("Thread group {} starting one new thread, new count is {}", threadGroupName, count);
-            } else {
-                logger.info("Thread group {} stopping one thread, new count is {}", threadGroupName, count);
-            }
             String scheduleId = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULER_TASK_ID), "");
             String schedule = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULE_NAME), "");
             String planId = context.getPlan().getId().toString();

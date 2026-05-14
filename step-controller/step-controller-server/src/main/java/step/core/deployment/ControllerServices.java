@@ -34,6 +34,7 @@ import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.objectenricher.ObjectHookRegistry;
@@ -72,6 +73,7 @@ public class ControllerServices extends AbstractStepServices {
 
     private ObjectPredicateFactory objectPredicateFactory;
     private ExecutionScheduler scheduler;
+    private ReportNodeAccessor reportAccessor;
 
     @PostConstruct
     public void init() throws Exception {
@@ -79,6 +81,7 @@ public class ControllerServices extends AbstractStepServices {
         GlobalContext context = getContext();
         currentVersion = context.getCurrentVersion();
         controller = context.require(Controller.class);
+        reportAccessor = context.getReportAccessor();
 
         DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
         SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
@@ -175,7 +178,11 @@ public class ControllerServices extends AbstractStepServices {
     public List<ReportNode> getReportNodesWithContributingErrors(@PathParam("id") String reportNodeId, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
         skip = skip != null ? skip : 0;
         limit = limit != null ? limit : 10;
-        try (Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrorsByAncestor(reportNodeId, skip, limit)) {
+        ReportNode reportNode = reportAccessor.get(reportNodeId);
+        if (reportNode == null) {
+            throw new ControllerServiceException("Contributing errors for the report with id " + reportNodeId + " cannot be retrieved, the referenced report does not exists.");
+        }
+        try (Stream<ReportNode> stream = reportAccessor.getReportNodesWithContributingErrors(reportNode.getExecutionID(), reportNodeId, skip, limit)) {
             return stream.collect(Collectors.toList());
         }
     }
