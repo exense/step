@@ -19,19 +19,19 @@
 package step.automation.packages.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.deser.BeanDeserializer;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.model.AbstractAutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
+import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.PatchableYamlList;
-import step.core.yaml.deserialization.PatchingContext;
-import step.core.yaml.deserializers.StepYamlDeserializerAddOn;
 
 import java.io.IOException;
-import java.util.List;
 
 public abstract class AbstractYamlAutomationPackageFragmentDeserializer extends BeanDeserializer implements ContextualDeserializer, ResolvableDeserializer {
 

@@ -20,14 +20,12 @@ package step.automation.packages.model;
 
 import step.automation.packages.StagingAutomationPackageContext;
 import step.core.yaml.PatchableYamlModelBase;
-import step.core.yaml.YamlModelUtils;
-import step.core.yaml.deserialization.PatchingContext;
+import step.core.yaml.PatchingContext;
 import step.functions.Function;
 
 public class YamlAutomationPackageKeyword extends PatchableYamlModelBase implements AutomationPackageKeyword {
 
     private AbstractYamlFunction<?> yamlKeyword;
-
 
 
     public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword, PatchingContext context) {

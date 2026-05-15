@@ -18,16 +18,17 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import org.apache.commons.io.FileUtils;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageWriteToDiskException;
+import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.core.yaml.deserialization.PatchableYamlList;
-import step.core.yaml.deserialization.PatchingContext;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
@@ -37,14 +38,17 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractAutomationPackageFragmentYaml implements AutomationPackageFragmentYaml {
     private List<String> fragments = new ArrayList<>();
     private PatchableYamlList<YamlAutomationPackageKeyword> keywords;
     private PatchableYamlList<YamlPlan> plans;
-    private List<YamlPlainTextPlan> plansPlainText = new ArrayList<>();
+    private PatchableYamlList<YamlPlainTextPlan> plansPlainText;
 
     private final Map<String, PatchableYamlList<?>> additionalFields = new HashMap<>();
     private PatchingContext context;
@@ -54,6 +58,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
         context = patchingContext;
         plans = new PatchableYamlList<>(patchingContext, YamlPlan.PLANS_ENTITY_NAME);
         keywords = new PatchableYamlList<>(patchingContext, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
+        plansPlainText = new PatchableYamlList<>(patchingContext, "plansPlainText");
     }
 
     @JsonIgnore
@@ -97,7 +102,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
 
     @Override
     public void setAdditionalFields(String key, PatchableYamlList<?> list) {
-        additionalFields.put(key,  list);
+        additionalFields.put(key, list);
     }
 
     @Override
@@ -106,7 +111,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setPlansPlainText(List<YamlPlainTextPlan> plansPlainText) {
+    public void setPlansPlainText(PatchableYamlList<YamlPlainTextPlan> plansPlainText) {
         this.plansPlainText = plansPlainText;
     }
 
@@ -145,7 +150,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
             if (file.exists() && file.lastModified() > fileLastModified) {
                 throw new AutomationPackageConcurrentEditException(MessageFormat.format("Automation package fragment {0} was edited outside the editor.", url));
             }
-            FileUtils.writeStringToFile(file, context.getYaml(), StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(file, context.getCurrentYaml(), StandardCharsets.UTF_8);
             resetLastModified();
         } catch (IOException | URISyntaxException e) {
             throw new AutomationPackageWriteToDiskException(MessageFormat.format("Error when writing automation package fragment {0} back to disk.", url), e);

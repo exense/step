@@ -18,9 +18,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.nio.file.Files;
 
-public class App extends Application {
+public class FXApp extends Application {
 
-    private static final Logger logger = LoggerFactory.getLogger(App.class);
+    private static final Logger logger = LoggerFactory.getLogger(FXApp.class);
 
     private final WebView webView = new WebView();
     private final MenuBar menuBar = new MenuBar();
@@ -65,7 +65,6 @@ public class App extends Application {
         Button reloadButton = new Button("Reload");
         reloadButton.setOnAction(e -> webView.getEngine().reload());
 
-        // NEW: Button to dump the HTML so we can see what's actually there
         Button dumpHtmlButton = new Button("Dump HTML");
         dumpHtmlButton.setOnAction(e -> {
             try {
@@ -82,6 +81,8 @@ public class App extends Application {
         newEmptyApButton.setOnAction(e -> {
             try {
                 File workDir = Files.createTempDirectory("automationPackageCollectionTest").toFile();
+                System.err.println("CREATED AND NOW USING NEW WORKDIR: " + workDir.getAbsolutePath());
+                StepUp.useAutomationPackageDirectory(workDir);
                 webView.getEngine().reload();
             } catch (Exception ex) {
                 logger.error("error", ex);

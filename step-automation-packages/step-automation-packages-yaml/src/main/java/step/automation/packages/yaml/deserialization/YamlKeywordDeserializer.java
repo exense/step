@@ -18,11 +18,12 @@
  ******************************************************************************/
 package step.automation.packages.yaml.deserialization;
 
-import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.core.yaml.AutomationPackageKeywordsLookuper;
@@ -34,6 +35,7 @@ import java.io.IOException;
 
 @StepYamlDeserializerAddOn(targetClasses = {YamlAutomationPackageKeyword.class})
 public class YamlKeywordDeserializer extends StepYamlDeserializer<YamlAutomationPackageKeyword> {
+    private static final Logger logger = LoggerFactory.getLogger(YamlKeywordDeserializer.class);
 
     private final AutomationPackageKeywordsLookuper keywordsLookuper = new AutomationPackageKeywordsLookuper();
 
@@ -48,15 +50,19 @@ public class YamlKeywordDeserializer extends StepYamlDeserializer<YamlAutomation
         try {
             PatchingParserDelegate patchingParser = (PatchingParserDelegate) jsonParser;
             Class<?> clazz = Class.forName(keywordsLookuper.yamlKeywordClassToJava(yamlName));
-            JsonLocation startItem = patchingParser.currentLocation();
-            jsonParser.nextToken();
+            swallowToken(jsonParser);
+            logger.debug("{} About to deserialize YamlAutomationPackageKeyword (yamlName={} -> class={})", this, yamlName, clazz.getName());
             YamlAutomationPackageKeyword keyword = new YamlAutomationPackageKeyword((AbstractYamlFunction<?>) deserializationContext.readValue(jsonParser, clazz), patchingParser.getPatchingContext());
-            keyword.setPatchingBounds(startItem, patchingParser.getLastDistinctLocation());
-            jsonParser.nextToken();
+            swallowToken(jsonParser);
             return keyword;
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void swallowToken(JsonParser jsonParser) throws IOException {
+        var tk = jsonParser.nextToken();
+        logger.debug("{} Swallowed token: {}", this, tk);
     }
 
 }

@@ -43,12 +43,14 @@ import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfigurat
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.PatchableYamlModel;
+import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlListDeserializer;
 import step.core.yaml.deserialization.PatchableYamlModelDeserializer;
-import step.core.yaml.deserialization.PatchingContext;
 import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
+import step.core.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.NamedYamlArtefact;
 import step.core.yaml.serializers.StepYamlSerializersScanner;
 import step.migration.MigrationManager;
 import step.plans.nl.RootArtefactType;
@@ -56,8 +58,6 @@ import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.deserializers.UpgradableYamlPlanDeserializer;
 import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
-import step.core.yaml.model.AbstractYamlArtefact;
-import step.core.yaml.model.NamedYamlArtefact;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
@@ -67,7 +67,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static step.core.scanner.Classes.newInstanceAs;
@@ -216,6 +220,7 @@ public class YamlPlanReader {
         YAMLFactory yamlFactory = new YAMLFactory();
         // Disable native type id to enable conversion to generic Documents
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
+        yamlFactory.enable(YAMLGenerator.Feature.INDENT_ARRAYS_WITH_INDICATOR);
         return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
     }
 
@@ -330,13 +335,13 @@ public class YamlPlanReader {
     }
 
     public VersionedYamlPlan planToVersionedYamlPlan(Plan plan) {
-        VersionedYamlPlan yamlPlan = new VersionedYamlPlan(new PatchingContext("", yamlMapper), currentVersion.toString());
+        VersionedYamlPlan yamlPlan = new VersionedYamlPlan(new PatchingContext(yamlMapper), currentVersion.toString());
         setYamlPlanFieldsFromPlan(yamlPlan, plan);
         return yamlPlan;
     }
 
     public YamlPlan planToYamlPlan(Plan plan) {
-        YamlPlan yamlPlan = new YamlPlan(new PatchingContext("", yamlMapper));
+        YamlPlan yamlPlan = new YamlPlan(new PatchingContext(yamlMapper));
         setYamlPlanFieldsFromPlan(yamlPlan, plan);
         return yamlPlan;
     }

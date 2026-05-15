@@ -18,10 +18,9 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.PatchableYamlList;
-import step.core.yaml.deserialization.PatchingContext;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 

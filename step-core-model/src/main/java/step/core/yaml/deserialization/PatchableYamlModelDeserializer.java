@@ -20,7 +20,6 @@ package step.core.yaml.deserialization;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.BeanProperty;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
@@ -32,7 +31,6 @@ import step.core.yaml.PatchableYamlModel;
 import java.io.IOException;
 
 public class PatchableYamlModelDeserializer<T extends PatchableYamlModel> extends JsonDeserializer<T> implements ContextualDeserializer {
-
     private final JsonDeserializer<T> delegate;
 
     public PatchableYamlModelDeserializer(JsonDeserializer<?> delegate) {
@@ -41,11 +39,10 @@ public class PatchableYamlModelDeserializer<T extends PatchableYamlModel> extend
 
     @Override
     public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        if (p instanceof PatchingParserDelegate) {
-            PatchingParserDelegate patchingParser = (PatchingParserDelegate) p;
+        if (p instanceof PatchingParserDelegate patchingParser) {
             JsonLocation startItem = patchingParser.currentLocation();
             T entity = delegate.deserialize(p, ctxt);
-            entity.setPatchingBounds(startItem, patchingParser.getLastDistinctLocation());
+            entity.onParsed(startItem, patchingParser.getLastDistinctLocation());
             return entity;
         }
         return delegate.deserialize(p, ctxt);

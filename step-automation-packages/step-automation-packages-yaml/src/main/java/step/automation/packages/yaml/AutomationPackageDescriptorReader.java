@@ -18,11 +18,9 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
-import com.fasterxml.jackson.databind.deser.std.CollectionDeserializer;
+import com.fasterxml.jackson.databind.InjectableValues;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import org.apache.commons.lang3.StringUtils;
@@ -37,11 +35,10 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.DefaultJacksonMapperProvider;
-import step.core.yaml.PatchableYamlModel;
-import step.core.yaml.deserialization.*;
-import step.plans.parser.yaml.YamlPlan;
+import step.core.yaml.PatchingContext;
+import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchingParserDelegate;
 import step.plans.parser.yaml.YamlPlanReader;
-import step.plans.parser.yaml.deserializers.UpgradableYamlPlanDeserializer;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
@@ -49,7 +46,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class AutomationPackageDescriptorReader {
@@ -78,7 +74,7 @@ public class AutomationPackageDescriptorReader {
 
     public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor, String packageName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor...");
-        return readAutomationPackageYamlFile(yamlDescriptor, getDescriptorClass(), packageName);
+        return readAutomationPackageYamlFile("automation-package.yml", yamlDescriptor, getDescriptorClass(), packageName);
     }
 
     protected Class<? extends AutomationPackageDescriptorYaml> getDescriptorClass() {
@@ -87,14 +83,14 @@ public class AutomationPackageDescriptorReader {
 
     public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor fragment ({})...", fragmentName);
-        return readAutomationPackageYamlFile(yamlFragment, getFragmentClass(), packageName);
+        return readAutomationPackageYamlFile(fragmentName, yamlFragment, getFragmentClass(), packageName);
     }
 
     protected Class<? extends AutomationPackageFragmentYaml> getFragmentClass() {
         return AutomationPackageFragmentYamlImpl.class;
     }
 
-    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageName) throws AutomationPackageReadingException {
+    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(String location, InputStream yaml, Class<T> targetClass, String packageName) throws AutomationPackageReadingException {
         try {
             String yamlDescriptorString = new String(yaml.readAllBytes(), StandardCharsets.UTF_8);
             String version = null;
@@ -110,7 +106,7 @@ public class AutomationPackageDescriptorReader {
                     throw new YamlPlanValidationException(message, ex);
                 }
             }
-            PatchingContext context = new PatchingContext(yamlDescriptorString, yamlObjectMapper);
+            PatchingContext context = new PatchingContext(location, yamlDescriptorString, yamlObjectMapper);
             PatchingParserDelegate parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString), context);
 
             Map<Class<?>, Object> injections = new HashMap<>();
@@ -170,6 +166,7 @@ public class AutomationPackageDescriptorReader {
 
         // Disable native type id to enable conversion to generic Documents
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
+        yamlFactory.enable(YAMLGenerator.Feature.INDENT_ARRAYS_WITH_INDICATOR);
         ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
 
 

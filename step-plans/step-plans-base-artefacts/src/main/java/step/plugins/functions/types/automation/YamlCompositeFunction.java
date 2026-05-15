@@ -34,9 +34,6 @@ import step.jsonschema.JsonSchema;
 import step.plans.parser.yaml.YamlPlan;
 import step.plugins.functions.types.CompositeFunction;
 
-import java.util.Map;
-import java.util.Objects;
-
 @YamlModel(name = "Composite")
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunction> {
@@ -75,10 +72,14 @@ public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunctio
         if (function instanceof CompositeFunction) {
             Plan plan = ((CompositeFunction) function).getPlan();
             // plan name is optional, the composite function name is used by default
+            // FIXME: discuss what exactly this is supposed to do and how it relates to the comment above :-)
             if (this.plan.getName() != null && !this.plan.getName().isEmpty()) {
-                this.plan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));;
+                this.plan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
             }
-            ObjectMapper mapper = this.plan.getRoot().getYamlArtefact().getYamlObjectMapper();
+            // I have no idea why that mapper would be null sometimes:
+            // ObjectMapper mapper = this.plan.getRoot().getYamlArtefact().getYamlObjectMapper();
+            // That one should work...
+            ObjectMapper mapper = this.getPlan().getPatchingContext().getMapper();
             this.plan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), mapper)));
         }
     }

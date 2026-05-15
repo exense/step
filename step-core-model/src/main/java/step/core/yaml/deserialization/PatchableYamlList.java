@@ -21,78 +21,74 @@ package step.core.yaml.deserialization;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonLocation;
 import step.core.yaml.PatchableYamlModel;
+import step.core.yaml.PatchingContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.function.UnaryOperator;
 
-public class PatchableYamlList<T> extends ArrayList<T> implements PatchableYamlModel{
+public class PatchableYamlList<T> extends ArrayList<T> implements PatchableYamlModel {
 
 
-    private PatchingContext context;
+    private final PatchingContext patchingContext;
     private final String fieldName;
+    private volatile PatchingContext.ChunkBounds bounds;
 
-    @JsonIgnore
-    private int startOffset = -1;
+    public PatchableYamlList(PatchingContext patchingContext, String fieldName) {
 
-    @JsonIgnore
-    private int indent = -1;
-
-    @JsonIgnore
-    private int endOffset = -1;
-
-    public PatchableYamlList(PatchingContext context, String fieldName) {
-
-        this(new ArrayList<>(), context, fieldName);
+        this(new ArrayList<>(), patchingContext, fieldName);
     }
 
-    protected PatchableYamlList(Collection<T> delegate, PatchingContext context, String fieldName) {
-        super(delegate);
-        this.context = context;
-        this.fieldName = fieldName;
+    protected PatchableYamlList(Collection<T> content, PatchingContext patchingContext, String fieldName) {
+        super(content);
+        this.patchingContext = Objects.requireNonNull(patchingContext);
+        this.fieldName = Objects.requireNonNull(fieldName);
     }
 
     @Override
-    public boolean remove(Object item) {
-        if (super.remove(item)) {
-            PatchableYamlModel patchableItem = (PatchableYamlModel) item;
-            context.removePatchable(patchableItem);
+    @JsonIgnore
+    public PatchingContext getPatchingContext() {
+        return patchingContext;
+    }
 
-            if (super.isEmpty()) {
-                context.removePatchable(this);
-            }
-            return true;
+    @Override
+    @JsonIgnore
+    public String getCurrentYaml(String contextIndent) {
+        if (isEmpty()) {
+            return contextIndent + fieldName + ": []\n";
         }
-        return false;
+        String childIndent = " ".repeat(contextIndent.length()) + "  - ";
+        // Simply return a concatenated list of the current items; they're responsible for their own serialization
+        // Note that in theory we could even try to preserve the original comments between items (if there are any),
+        // but this could become complicated if entries get deleted, so we omit it for now.
+        StringBuilder sb = new StringBuilder();
+        sb.append(contextIndent).append(fieldName).append(":").append("\n");
+        stream().map(item -> (PatchableYamlModel) item).forEach(item -> {
+            sb.append(item.getCurrentYaml(childIndent));
+        });
+        return sb.toString();
+
     }
 
     @Override
     public boolean add(T item) {
-        if (!context.contains(this)) {
-            context.appendEmptyPatchable(this);
+        if (bounds == null) {
+            // This list has not been registered with the context yet, meaning it hasn't been parsed from a file, but manually added.
+            // We'll need to add it to the context as a new object.
+            synchronized (this) {
+                if (bounds == null) {
+                    // FIXME: For now, this assumes all lists are top-level (see the hardcoded indent below)
+                    bounds = patchingContext.appendAndClaim(this, getCurrentYaml(""));
+                }
+            }
         }
-        PatchableYamlModel patchableItem = (PatchableYamlModel)  item;
 
-        if (super.isEmpty()) {
-            patchableItem.setIndent(getListItemMarker().length());
-            context.replaceContainerPatchable(this, patchableItem, fieldName + ":\n" + getListItemMarker());
-        } else {
-            PatchableYamlModel last = (PatchableYamlModel) get(size()-1);
-
-            context.addPatchableAfter(last, patchableItem, getListItemMarker(last));
-        }
+        PatchableYamlModel patchableItem = (PatchableYamlModel) item;
+        patchableItem.setPatchingContext(this.getPatchingContext());
+        patchableItem.setModified();
         super.add(item);
         return true;
-    }
-
-    private String getListItemMarker(PatchableYamlModel last) {
-        String yaml = context.getYaml();
-        int listItemMarkerStartOffset = yaml.lastIndexOf("\n", last.getStartOffset());
-        return yaml.substring( listItemMarkerStartOffset, last.getStartOffset());
-    }
-
-    private String getListItemMarker() {
-        return " ".repeat(indent) + "- ";
     }
 
     @Override
@@ -123,54 +119,29 @@ public class PatchableYamlList<T> extends ArrayList<T> implements PatchableYamlM
         super.forEach(this::remove);
     }
 
-    public void  replaceItem(PatchableYamlModel oldEntity, PatchableYamlModel newEntity) {
+    public void replaceItem(PatchableYamlModel oldEntity, PatchableYamlModel newEntity) {
         replaceAll(item -> item == oldEntity ? (T) newEntity : item);
-        context.replacePatchable(oldEntity, newEntity);
-    }
-
-    @JsonIgnore
-    public void setPatchingBounds(JsonLocation startLocation, JsonLocation endLocation) {
-        startOffset = (int) startLocation.getCharOffset();
-        endOffset = context.ensureNextEndOfLineOffset((int) endLocation.getCharOffset());
-        indent = startLocation.getColumnNr() -1;
-        context.getPatchables().add(this);
-    }
-
-    @Override
-    public int getStartOffset(){
-        return startOffset;
-    }
-
-    @Override
-    public int getIndent() {
-        return indent;
-    }
-
-    @Override
-    public int getEndOffset() {
-        return endOffset;
-    }
-
-
-    @Override
-    public void setStartOffset(int startOffset) {
-        this.startOffset = startOffset;
-    }
-
-    @Override
-    public void setEndOffset(int endOffset) {
-        this.endOffset = endOffset;
-    }
-
-    @JsonIgnore
-    @Override
-    public void setIndent(int indent) {
-        this.indent = indent;
+        patchingContext.replaceEntity(oldEntity, newEntity);
     }
 
     @Override
     @JsonIgnore
-    public void setContext(PatchingContext context) {
-        this.context = context;
+    public void setPatchingContext(PatchingContext context) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public StartingLineDeterminationStrategy getStartingLineDeterminationStrategy() {
+        return StartingLineDeterminationStrategy.NEXT_CONTENT_LINE;
+    }
+
+    @Override
+    public void setModified() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void onParsed(JsonLocation startLocation, JsonLocation endLocation) {
+        bounds = patchingContext.claimChunk(startLocation, endLocation, this);
     }
 }

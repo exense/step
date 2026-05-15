@@ -20,68 +20,62 @@ package step.core.yaml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonLocation;
-import step.core.yaml.deserialization.PatchingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PatchableYamlModelBase extends AbstractYamlModel implements PatchableYamlModel {
+    private static final Logger logger = LoggerFactory.getLogger(PatchableYamlModelBase.class);
 
     @JsonIgnore
     private PatchingContext context;
-
-    @JsonIgnore
-    private int startOffset = -1;
-
-    @JsonIgnore
-    private int indent = -1;
-
-    @JsonIgnore
-    private int endOffset = -1;
 
     public PatchableYamlModelBase(PatchingContext context) {
         this.context = context;
     }
 
+    @Override
     @JsonIgnore
-    public void setPatchingBounds(JsonLocation startLocation, JsonLocation endLocation) {
-        startOffset = (int) startLocation.getCharOffset();
-        endOffset = context.ensureNextEndOfLineOffset((int) endLocation.getCharOffset());
-        indent = startLocation.getColumnNr() -1;
-        context.getPatchables().add(this);
+    public final PatchingContext getPatchingContext() {
+        return context;
     }
 
     @JsonIgnore
-    public int getStartOffset(){
-        return startOffset;
-    }
+    private boolean modified = false;
 
-    @JsonIgnore
-    public int getIndent() {
-        return indent;
-    }
-
-    @JsonIgnore
-    public int getEndOffset() {
-        return endOffset;
+    public void setModified() {
+        this.modified = true;
     }
 
     @Override
-    public void setStartOffset(int startOffset) {
-        this.startOffset = startOffset;
-    }
-
-    @Override
-    public void setEndOffset(int endOffset) {
-        this.endOffset = endOffset;
-    }
-
-
     @JsonIgnore
-    @Override
-    public void setIndent(int indent) {
-        this.indent = indent;
-    }
-
-    @Override
-    public void setContext(PatchingContext context) {
+    public final void setPatchingContext(PatchingContext context) {
         this.context = context;
     }
+
+    @JsonIgnore
+    public String getCurrentYaml(String contextIndent) {
+        if (!modified) {
+            String chunk = context.getChunk(this);
+            if (chunk != null) {
+                // use the original chunk, but still re-indent appropriately if needed
+                return context.reindent(chunk, contextIndent);
+            }
+            // fallthrough in case of any problem?
+            throw new IllegalStateException();
+        }
+        return context.serialize(this, contextIndent);
+    }
+
+    @Override
+    @JsonIgnore
+    public StartingLineDeterminationStrategy getStartingLineDeterminationStrategy() {
+        // Let's hope that this really is true for all subclasses :-)
+        return StartingLineDeterminationStrategy.SAME_LINE;
+    }
+
+    @Override
+    public void onParsed(JsonLocation startLocation, JsonLocation endLocation) {
+        context.claimChunk(startLocation, endLocation, this);
+    }
+
 }

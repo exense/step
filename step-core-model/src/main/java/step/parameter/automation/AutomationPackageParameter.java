@@ -18,13 +18,16 @@
  ******************************************************************************/
 package step.parameter.automation;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.OptBoolean;
 import step.commons.activation.Expression;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.PatchableYamlModelBase;
+import step.core.yaml.PatchingContext;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
-import step.core.yaml.deserialization.PatchingContext;
 import step.parameter.Parameter;
 import step.parameter.ParameterScope;
 

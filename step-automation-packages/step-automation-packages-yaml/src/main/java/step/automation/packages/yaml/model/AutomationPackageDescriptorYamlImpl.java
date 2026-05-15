@@ -19,11 +19,8 @@
 package step.automation.packages.yaml.model;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.OptBoolean;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.core.yaml.deserialization.PatchingContext;
+import step.core.yaml.PatchingContext;
 
 import java.util.HashMap;
 import java.util.Map;
