@@ -39,6 +39,10 @@ import step.plugins.timeseries.migration.MigrateResolutionsWithIgnoredFieldsTask
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static step.core.metrics.MetricsExecutionPlugin.AGENT_URL;
+import static step.core.metrics.MetricsExecutionPlugin.BEGIN;
+import static step.core.metrics.MetricsExecutionPlugin.RN_ID;
+import static step.core.metrics.MetricsExecutionPlugin.VALUE;
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
 import static step.core.metrics.StepMetricSample.METRIC_TYPE;
@@ -54,7 +58,8 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     // The list of excluded attributes can be customized via step.properties
     // If a query filter or groupBy use an excluded attribute we fall back to RAW measurements
     public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY = "timeseries.attributes.excluded";
-    public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT = "agentUrl,rnId";
+    public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT = AGENT_URL + "," + RN_ID;
+    public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_MANDATORY = "";
     // Before Step 30, the list of supported attributed by the time-series were defined with below default values and could be customized via step.properties
     // This was used to determine if we had to fall back to RAW measurement when a filter or group by used unknown fields
     public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
@@ -84,8 +89,11 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         Set<String> excludedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY, TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT).split(","))
             .filter(s -> !s.isEmpty())
             .collect(Collectors.toSet());
-
-        if (!includedAttributes.isEmpty() && !excludedAttributes.isEmpty()) {
+        if (includedAttributes.isEmpty()) {
+            //add mandatory exclude attributes
+            excludedAttributes.add(BEGIN);
+            excludedAttributes.add(VALUE);
+        } else if (!excludedAttributes.isEmpty()) {
             throw new PluginCriticalException("Setting both the properties " + TIME_SERIES_ATTRIBUTES_PROPERTY + " and " + TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY + " is not allowed.");
         }
 
