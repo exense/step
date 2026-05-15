@@ -147,10 +147,10 @@ public class PatchingContext {
         return outerBounds;
     }
 
-    private String serializeUnindented(PatchableYamlModel entity) {
+    private String serializeUnindented(Object entity) {
         try {
             return mapper.writeValueAsString(entity)
-                .replaceAll("---\n", "")
+                .replaceFirst("^---\\s*\\n", "")
                 .trim();
         } catch (JsonProcessingException e) {
             throw new AutomationPackageUpdateException("Error Serializing YAML object", e);
@@ -163,7 +163,7 @@ public class PatchingContext {
     is contained in a list ("   - "). Only the first line needs the list marker, all others
     need to be aligned and consist only of spaces.
      */
-    public String serialize(PatchableYamlModel entity, String contextIndent) {
+    public String serialize(Object entity, String contextIndent) {
         return indent(serializeUnindented(entity), contextIndent);
     }
 

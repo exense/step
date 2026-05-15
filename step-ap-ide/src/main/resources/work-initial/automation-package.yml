@@ -13,6 +13,9 @@ alertingRules:
             BindingValueEqualsPredicate:
               value: "myValue"
 plans: []
+parameters:
+  - key: "parameterInMainDescriptor"
+    value: "value1"
 fragments:
   - "keywords.yml"
   - "plans/*.yml"

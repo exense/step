@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.automation.packages.AutomationPackageHookRegistry;
+import step.automation.packages.JavaAutomationPackageArchive;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
@@ -16,6 +17,11 @@ import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plans.parser.yaml.YamlPlan;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -23,40 +29,43 @@ public class StepUp {
 
     private static final Logger logger = LoggerFactory.getLogger(StepUp.class);
 
+    // These are meant for development to have something to play with without having to recreate everything from scratch
     private static final String workDirName = "work";
     private static final String initialDirName = "src/main/resources/work-initial";
 
     public static void main(String[] args) throws Exception {
-        // Use an IntelliJ run configuration that uses '%MODULE_WORKING_DIR%' (verbatim) as the working directory, and use
-        // -config="src/test/resources/step.properties" as program argument
-        ControllerServer.main(args);
+        Configuration configuration = new Configuration();
+        // this uses the existing methods, we could also refactor the implementation to make it a little easier.
+        InputStream propsStream = StepUp.class.getClassLoader().getResourceAsStream("step.properties");
+        configuration.getUnderlyingPropertyObject().load(propsStream);
+        new ControllerServer(configuration).start();
         initWorkdir();
-        App.main(args); // this will never return
+        FXApp.main(args); // this will never return
     }
 
-    static final JavaAutomationPackageReader READER;
+    private static final JavaAutomationPackageReader READER;
 
     static {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
-
         // required for reading parameters, apparently the manager can be null
         AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, null);
-
         READER = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, new Configuration());
     }
 
     private static void initWorkdir() throws Exception {
         File workDir = new File(workDirName);
+        File initialDir = new File(initialDirName);
         if (!workDir.isDirectory() || (workDir.isDirectory() && Objects.requireNonNull(workDir.listFiles()).length == 0)) {
             logger.info("Work directory is not present or empty, initializing from " + initialDirName);
-            File initialDir = new File(initialDirName);
             if (!initialDir.isDirectory()) {
-                throw new RuntimeException("Not a directory: " + initialDir.getAbsolutePath());
-            }
-            FileUtils.copyDirectory(initialDir, workDir);
-            if (!workDir.isDirectory()) {
-                throw new RuntimeException("Something went wrong while initializing directory: " + workDir.getAbsolutePath());
+                workDir = Files.createTempDirectory("step-ap-ide-").toFile();
+                logger.warn("initialDir is not present, using temporary directory: {}", workDir.getAbsolutePath());
+            } else {
+                FileUtils.copyDirectory(initialDir, workDir);
+                if (!workDir.isDirectory()) {
+                    throw new RuntimeException("Something went wrong while initializing directory: " + workDir.getAbsolutePath());
+                }
             }
         } else {
             logger.info("Using existing work directory at: " + workDir.getAbsolutePath());
@@ -65,21 +74,47 @@ public class StepUp {
         useAutomationPackageDirectory(workDir);
     }
 
-//    private static void setPropertiesWriteToFragment(Properties properties, String entityName, String fragment) {
-//        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), fragment);
-//        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
-//    }
-
     static void useAutomationPackageDirectory(File apDir) throws Exception {
+        verifyOrCreateMainAPFile(apDir);
         var fragmentManager = StepUp.READER.getAutomationPackageYamlFragmentManager(apDir);
         Properties properties = new Properties();
-        // parameters all go into parameters.yml
-        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
-        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), "parameters.yml");
-        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, YamlPlan.PLANS_ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.PER_OBJECT.name());
+
+        // variant 1:
+        // parameters all go into parameters.yml, plans go into separate files in plans/$PLAN_NAME.yml
+        // Only works if the target files/directories already exist, so disabled for now
+        if (1 == 0) {
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), "parameters.yml");
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, YamlPlan.PLANS_ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.PER_OBJECT.name());
+            // keywords seem to use PER_OBJECT by default?
+        }
+        // variant 2: simple, everything goes into main descriptor
+        if (1 == 1) {
+            String mainFile = Paths.get(fragmentManager.descriptorYaml.getFragmentUrl().toURI()).toFile().getName();
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), mainFile);
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, YamlPlan.PLANS_ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, YamlPlan.PLANS_ENTITY_NAME), mainFile);
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, "keywords"), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, "keywords"), mainFile);
+        }
         fragmentManager.setProperties(properties);
         var automationPackageCollectionFactory = new AutomationPackageCollectionFactory(new Properties(), fragmentManager);
 
         CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(automationPackageCollectionFactory);
+    }
+
+    private static void verifyOrCreateMainAPFile(File apDir) throws Exception {
+        for (String fileName : JavaAutomationPackageArchive.METADATA_FILES) {
+            if (new File(apDir, fileName).isFile()) {
+                return;
+            }
+        }
+        File descriptor = new File(apDir, JavaAutomationPackageArchive.METADATA_FILES.getFirst());
+        logger.info("Initializing AP directory with new descriptor: {}", descriptor.getAbsolutePath());
+        PrintWriter pw = new PrintWriter(new FileOutputStream(descriptor));
+        pw.println("schemaVersion: 1.0.0");
+        pw.println("name: \"My package\""); // TODO: make this configurable somehow
+        pw.close();
     }
 }
