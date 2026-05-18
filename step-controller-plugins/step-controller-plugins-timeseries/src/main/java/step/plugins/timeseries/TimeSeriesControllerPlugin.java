@@ -59,7 +59,6 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     // If a query filter or groupBy use an excluded attribute we fall back to RAW measurements
     public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY = "timeseries.attributes.excluded";
     public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT = AGENT_URL + "," + RN_ID;
-    public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_MANDATORY = "";
     // Before Step 30, the list of supported attributed by the time-series were defined with below default values and could be customized via step.properties
     // This was used to determine if we had to fall back to RAW measurement when a filter or group by used unknown fields
     public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
@@ -83,17 +82,22 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     @Override
     public void serverStart(GlobalContext context) {
         Configuration configuration = context.getConfiguration();
+        // Either use the included attributes mode in which case only the configured attributes are ingested (this is not the default mode)
         Set<String> includedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, "").split(","))
             .filter(s -> !s.isEmpty())
-            .collect(Collectors.toSet());
+            .map(String::trim)
+            .collect(Collectors.toCollection(HashSet::new));
+        // Or use the excluded attributes mode in which case all attributes except the ones explicitly excluded are ingested (default mode)
         Set<String> excludedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY, TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT).split(","))
             .filter(s -> !s.isEmpty())
-            .collect(Collectors.toSet());
+            .map(String::trim)
+            .collect(Collectors.toCollection(HashSet::new));
         if (includedAttributes.isEmpty()) {
-            //add mandatory exclude attributes
+            // In the excluded attributes mode, we have a set of fields that are always excluded
             excludedAttributes.add(BEGIN);
             excludedAttributes.add(VALUE);
         } else if (!excludedAttributes.isEmpty()) {
+            //Only one mode can be used
             throw new PluginCriticalException("Setting both the properties " + TIME_SERIES_ATTRIBUTES_PROPERTY + " and " + TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY + " is not allowed.");
         }
 
