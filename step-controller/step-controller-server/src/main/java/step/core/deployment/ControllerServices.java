@@ -172,7 +172,7 @@ public class ControllerServices extends AbstractStepServices {
     }
 
     @GET
-    @Path("/reportnode/{id}/reportnodes-with-errors")
+    @Path("/reportnode/{id}/descendants-with-errors")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "execution-read")
     public List<ReportNode> getReportNodesWithContributingErrors(@PathParam("id") String reportNodeId, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
