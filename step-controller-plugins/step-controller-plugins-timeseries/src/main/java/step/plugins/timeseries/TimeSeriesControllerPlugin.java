@@ -99,11 +99,14 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         }
 
         // Following set of attributes must always be excluded from the ingestion for both modes,
-        // so we add them to the list of attributes to be excluded and remove them from the list of attributes to be included
-        excludedAttributes.add(BEGIN);
-        excludedAttributes.add(VALUE);
-        includedAttributes.remove(VALUE);
-        includedAttributes.remove(BEGIN);
+        // so we add them to the list of attributes to be excluded in exclude modes or remove them in includes mode
+        if (includedAttributes.isEmpty()) {
+            excludedAttributes.add(BEGIN);
+            excludedAttributes.add(VALUE);
+        } else {
+            includedAttributes.remove(VALUE);
+            includedAttributes.remove(BEGIN);
+        }
 
         MigrationManager migrationManager = context.require(MigrationManager.class);
         migrationManager.register(MigrateDashboardsTask.class);
