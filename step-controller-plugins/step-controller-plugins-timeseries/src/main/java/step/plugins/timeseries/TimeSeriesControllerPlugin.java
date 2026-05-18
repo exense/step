@@ -92,14 +92,18 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
             .filter(s -> !s.isEmpty())
             .map(String::trim)
             .collect(Collectors.toCollection(HashSet::new));
-        if (includedAttributes.isEmpty()) {
-            // In the excluded attributes mode, we have a set of fields that are always excluded
-            excludedAttributes.add(BEGIN);
-            excludedAttributes.add(VALUE);
-        } else if (!excludedAttributes.isEmpty()) {
+
+        if (!includedAttributes.isEmpty() && !excludedAttributes.isEmpty()) {
             //Only one mode can be used
             throw new PluginCriticalException("Setting both the properties " + TIME_SERIES_ATTRIBUTES_PROPERTY + " and " + TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY + " is not allowed.");
         }
+
+        // Following set of attributes must always be excluded from the ingestion for both modes,
+        // so we add them to the list of attributes to be excluded and remove them from the list of attributes to be included
+        excludedAttributes.add(BEGIN);
+        excludedAttributes.add(VALUE);
+        includedAttributes.remove(VALUE);
+        includedAttributes.remove(BEGIN);
 
         MigrationManager migrationManager = context.require(MigrationManager.class);
         migrationManager.register(MigrateDashboardsTask.class);
