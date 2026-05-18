@@ -79,8 +79,6 @@ public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
 
     @Override
     public ReportNode createReportNode_(ReportNode parentNode, Return testArtefact) {
-        ReportNode reportNode = new ReportNode();
-        reportNode.setLeafReportNode(true);
-        return reportNode;
+        return new ReportNode();
     }
 }

@@ -50,7 +50,6 @@ public class ReportNode extends AbstractIdentifiableObject {
     protected Boolean isContributingError;
     protected Map<String, String> customAttributes;
     protected ParentSource parentSource;
-    protected boolean leafReportNode;
 
     @JsonIgnore
     protected AbstractArtefact artefactInstance;
@@ -247,14 +246,6 @@ public class ReportNode extends AbstractIdentifiableObject {
 
     public void setParentSource(ParentSource parentSource) {
         this.parentSource = parentSource;
-    }
-
-    public boolean isLeafReportNode() {
-        return leafReportNode;
-    }
-
-    public void setLeafReportNode(boolean leafReportNode) {
-        this.leafReportNode = leafReportNode;
     }
 
     /**

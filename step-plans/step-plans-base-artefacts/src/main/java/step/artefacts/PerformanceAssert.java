@@ -13,7 +13,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlPerformanceAssert.class, name = "performanceAssert")
-@Artefact
+@Artefact(leafArtefact = true)
 public class PerformanceAssert extends AbstractArtefact {
 
     private List<Filter> filters;

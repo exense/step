@@ -105,8 +105,6 @@ public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
 
     @Override
     public ReportNode createReportNode_(ReportNode parentNode, Export testArtefact) {
-        ReportNode reportNode = new ReportNode();
-        reportNode.setLeafReportNode(true);
-        return reportNode;
+        return new ReportNode();
     }
 }

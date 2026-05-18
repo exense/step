@@ -54,4 +54,9 @@ public @interface Artefact {
      */
     boolean test() default false;
 
+    /**
+     * @return true if this artefact is a leaf node, i.e. it never executes children artefacts.
+     */
+    boolean leafArtefact() default false;
+
 }

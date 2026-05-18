@@ -49,6 +49,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static step.core.reports.Error.DEFAULT_ERROR_CODE;
+
 public class ExecutionEngineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(ExecutionEngineRunner.class);
@@ -335,7 +337,7 @@ public class ExecutionEngineRunner {
 
     private void addLifecyleError(String message, Throwable exception) {
         logger.error(messageWithId(message), exception);
-        Error error = new Error(ErrorType.TECHNICAL, EXECUTION_ENGINE_LAYER, message, 0, true);
+        Error error = new Error(ErrorType.TECHNICAL, EXECUTION_ENGINE_LAYER, message, DEFAULT_ERROR_CODE, true);
         updateExecution(e -> {
             e.addLifecyleError(error);
             e.setResult(ReportNodeStatus.TECHNICAL_ERROR);

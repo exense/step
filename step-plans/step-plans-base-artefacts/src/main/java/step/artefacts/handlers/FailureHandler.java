@@ -55,8 +55,6 @@ public class FailureHandler extends ArtefactHandler<Failure, FailureReportNode> 
 
     @Override
     public FailureReportNode createReportNode_(ReportNode parentNode, Failure testArtefact) {
-        FailureReportNode reportNode = new FailureReportNode();
-        reportNode.setLeafReportNode(true);
-        return reportNode;
+        return new FailureReportNode();
     }
 }

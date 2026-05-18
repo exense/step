@@ -25,7 +25,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlCheck.class, name = "check")
-@Artefact(block = false)
+@Artefact(block = false, leafArtefact = true)
 public class Check extends AbstractArtefact {
 
     private DynamicValue<Boolean> expression = new DynamicValue<>("", "");

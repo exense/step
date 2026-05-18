@@ -26,7 +26,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 @YamlModel(name = "failure")
-@Artefact(block = false)
+@Artefact(block = false, leafArtefact = true)
 public class Failure extends AbstractArtefact {
 
 	/* We cannot add the exception as a field here, because serialization/deserialization loses type information,

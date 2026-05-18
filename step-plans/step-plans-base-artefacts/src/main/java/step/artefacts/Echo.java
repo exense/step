@@ -25,7 +25,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
 @YamlModel(name = "echo")
-@Artefact(block = false)
+@Artefact(block = false, leafArtefact = true)
 public class Echo extends AbstractArtefact {
 
     private DynamicValue<Object> text = new DynamicValue<>();

@@ -1,5 +1,7 @@
 package step.core.execution.table;
 
+import step.core.artefacts.AbstractArtefact;
+import step.core.artefacts.Artefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.artefacts.reports.ReportNodeStatus;
@@ -34,8 +36,18 @@ public class ReportNodeTableEnricher implements TriFunction<ReportNode, Session<
 
     private static boolean shouldEnrich(ReportNode reportNode, ReportNodesTableParameters tableParameters) {
         return tableParameters.isEnrichWithContributingErrors()
-            && (!reportNode.isLeafReportNode())
+            && (!isLeafReportNode(reportNode))
             && ((ReportNodeStatus.FAILED.equals(reportNode.getStatus())) || (ReportNodeStatus.TECHNICAL_ERROR.equals(reportNode.getStatus())));
+    }
+
+    private static boolean isLeafReportNode(ReportNode reportNode) {
+        AbstractArtefact resolvedArtefact = reportNode.getResolvedArtefact();
+        if (resolvedArtefact == null) {
+            return false;
+        }
+        Artefact artefactAnnotation = resolvedArtefact.getClass().getAnnotation(Artefact.class);
+        return (artefactAnnotation != null && artefactAnnotation.leafArtefact());
+
     }
 
     private List<ReportNode> collectContributingErrors(ReportNode root, ReportNodesTableParameters tableParameters) {
