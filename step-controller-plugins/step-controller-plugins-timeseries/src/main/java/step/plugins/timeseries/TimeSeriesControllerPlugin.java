@@ -39,6 +39,10 @@ import step.plugins.timeseries.migration.MigrateResolutionsWithIgnoredFieldsTask
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static step.core.metrics.MetricsExecutionPlugin.AGENT_URL;
+import static step.core.metrics.MetricsExecutionPlugin.BEGIN;
+import static step.core.metrics.MetricsExecutionPlugin.RN_ID;
+import static step.core.metrics.MetricsExecutionPlugin.VALUE;
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
 import static step.core.metrics.StepMetricSample.METRIC_TYPE;
@@ -54,7 +58,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     // The list of excluded attributes can be customized via step.properties
     // If a query filter or groupBy use an excluded attribute we fall back to RAW measurements
     public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY = "timeseries.attributes.excluded";
-    public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT = "agentUrl,rnId";
+    public static final String TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT = AGENT_URL + "," + RN_ID;
     // Before Step 30, the list of supported attributed by the time-series were defined with below default values and could be customized via step.properties
     // This was used to determine if we had to fall back to RAW measurement when a filter or group by used unknown fields
     public static final String TIME_SERIES_ATTRIBUTES_PROPERTY = "timeseries.attributes";
@@ -78,15 +82,30 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     @Override
     public void serverStart(GlobalContext context) {
         Configuration configuration = context.getConfiguration();
+        // Either use the included attributes mode in which case only the configured attributes are ingested (this is not the default mode)
         Set<String> includedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_ATTRIBUTES_PROPERTY, "").split(","))
             .filter(s -> !s.isEmpty())
-            .collect(Collectors.toSet());
+            .map(String::trim)
+            .collect(Collectors.toCollection(HashSet::new));
+        // Or use the excluded attributes mode in which case all attributes except the ones explicitly excluded are ingested (default mode)
         Set<String> excludedAttributes = Arrays.stream(configuration.getProperty(TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY, TIME_SERIES_EXCLUDED_ATTRIBUTES_DEFAULT).split(","))
             .filter(s -> !s.isEmpty())
-            .collect(Collectors.toSet());
+            .map(String::trim)
+            .collect(Collectors.toCollection(HashSet::new));
 
         if (!includedAttributes.isEmpty() && !excludedAttributes.isEmpty()) {
+            //Only one mode can be used
             throw new PluginCriticalException("Setting both the properties " + TIME_SERIES_ATTRIBUTES_PROPERTY + " and " + TIME_SERIES_EXCLUDED_ATTRIBUTES_PROPERTY + " is not allowed.");
+        }
+
+        // Following set of attributes must always be excluded from the ingestion for both modes,
+        // so we add them to the list of attributes to be excluded in exclude modes or remove them in includes mode
+        if (includedAttributes.isEmpty()) {
+            excludedAttributes.add(BEGIN);
+            excludedAttributes.add(VALUE);
+        } else {
+            includedAttributes.remove(VALUE);
+            includedAttributes.remove(BEGIN);
         }
 
         MigrationManager migrationManager = context.require(MigrationManager.class);
