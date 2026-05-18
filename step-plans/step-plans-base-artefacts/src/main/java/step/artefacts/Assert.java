@@ -24,7 +24,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
 @YamlModel(name = "assert")
-@Artefact(leafArtefact = true)
+@Artefact(block = false)
 public class Assert extends AbstractArtefact {
 
     private DynamicValue<String> actual = new DynamicValue<>("");

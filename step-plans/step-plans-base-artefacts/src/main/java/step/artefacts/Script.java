@@ -24,7 +24,7 @@ import step.core.artefacts.Artefact;
 import step.core.yaml.YamlModel;
 
 @YamlModel(name = "script")
-@Artefact(block = false, leafArtefact = true)
+@Artefact(block = false)
 public class Script extends AbstractArtefact {
 
     private String script;

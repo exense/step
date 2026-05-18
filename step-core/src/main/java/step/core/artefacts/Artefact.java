@@ -31,6 +31,9 @@ public @interface Artefact {
 
     Class<? extends ReportNode> report() default ReportNode.class;
 
+    /**
+     * @return true (default) for artefacts supporting the execution of children artefacts or false for artefact that ignores children (i.e. leaf plan nodes)
+     */
     boolean block() default true;
 
     /**
@@ -53,10 +56,5 @@ public @interface Artefact {
      * Marks the artefact as test (used in unit tests) to avoid inclusion in json schema for Yaml format
      */
     boolean test() default false;
-
-    /**
-     * @return true if this artefact is a leaf node, i.e. it never executes children artefacts.
-     */
-    boolean leafArtefact() default false;
 
 }

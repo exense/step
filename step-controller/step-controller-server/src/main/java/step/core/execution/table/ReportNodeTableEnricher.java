@@ -36,18 +36,25 @@ public class ReportNodeTableEnricher implements TriFunction<ReportNode, Session<
 
     private static boolean shouldEnrich(ReportNode reportNode, ReportNodesTableParameters tableParameters) {
         return tableParameters.isEnrichWithContributingErrors()
-            && (!isLeafReportNode(reportNode))
+            && (mayHaveChildren(reportNode))
             && ((ReportNodeStatus.FAILED.equals(reportNode.getStatus())) || (ReportNodeStatus.TECHNICAL_ERROR.equals(reportNode.getStatus())));
     }
 
-    private static boolean isLeafReportNode(ReportNode reportNode) {
+    /**
+     * Determine whether this type of nodes can have children based on the underlying resolved artefact.
+     * Returns {@code true} (safe default matching {@link Artefact#block()}'s default) when the resolved
+     * artefact or its annotation cannot be determined at this point.
+     *
+     * @param reportNode the report node to evaluate
+     * @return whether it may have children report nodes
+     */
+    private static boolean mayHaveChildren(ReportNode reportNode) {
         AbstractArtefact resolvedArtefact = reportNode.getResolvedArtefact();
         if (resolvedArtefact == null) {
-            return false;
+            return true;
         }
         Artefact artefactAnnotation = resolvedArtefact.getClass().getAnnotation(Artefact.class);
-        return (artefactAnnotation != null && artefactAnnotation.leafArtefact());
-
+        return (artefactAnnotation == null || artefactAnnotation.block());
     }
 
     private List<ReportNode> collectContributingErrors(ReportNode root, ReportNodesTableParameters tableParameters) {

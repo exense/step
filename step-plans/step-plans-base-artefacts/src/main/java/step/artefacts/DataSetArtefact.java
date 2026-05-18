@@ -24,7 +24,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlDataSet.class, name = "dataSet")
-@Artefact(name = DataSetArtefact.DATA_SET_ARTIFACT_NAME, leafArtefact = true)
+@Artefact(name = DataSetArtefact.DATA_SET_ARTIFACT_NAME, block = false)
 public class DataSetArtefact extends AbstractForBlock {
 
     public static final String DATA_SET_ARTIFACT_NAME = "DataSet";

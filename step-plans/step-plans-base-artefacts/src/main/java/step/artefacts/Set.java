@@ -26,7 +26,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
 @YamlModel(name = "set")
-@Artefact(report = SetReportNode.class, block = false, leafArtefact = true)
+@Artefact(report = SetReportNode.class, block = false)
 public class Set extends AbstractArtefact {
 
     private DynamicValue<String> key = new DynamicValue<>("");

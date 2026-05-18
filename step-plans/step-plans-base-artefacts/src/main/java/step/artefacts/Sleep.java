@@ -25,7 +25,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
 @YamlModel(name = "sleep")
-@Artefact(block = false, leafArtefact = true)
+@Artefact(block = false)
 public class Sleep extends AbstractArtefact {
 
     private DynamicValue<Long> duration = new DynamicValue<>(0L);

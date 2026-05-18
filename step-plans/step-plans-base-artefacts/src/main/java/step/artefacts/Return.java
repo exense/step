@@ -25,7 +25,7 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlReturn.class, name = "return")
-@Artefact(block = false, leafArtefact = true)
+@Artefact(block = false)
 public class Return extends AbstractArtefact {
 
     private DynamicValue<String> output = new DynamicValue<>();
