@@ -48,17 +48,17 @@ public class ImportResult implements Serializable {
         this.planId = planId;
     }
 
-	public String getCanonicalPlanName() {
-		return canonicalPlanName;
-	}
+    public String getCanonicalPlanName() {
+        return canonicalPlanName;
+    }
 
-	public void setCanonicalPlanName(String canonicalPlanName) {
-		this.canonicalPlanName = canonicalPlanName;
-	}
+    public void setCanonicalPlanName(String canonicalPlanName) {
+        this.canonicalPlanName = canonicalPlanName;
+    }
 
-	public List<String> getErrors() {
-		return errors;
-	}
+    public List<String> getErrors() {
+        return errors;
+    }
 
     public void setErrors(List<String> errors) {
         this.errors = errors;
