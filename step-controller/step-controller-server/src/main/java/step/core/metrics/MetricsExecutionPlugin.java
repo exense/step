@@ -119,7 +119,8 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
                 executionContext.put(CTX_EXECUTION_DESCRIPTION, description);
             }
             if (execution.getImportResult() != null) {
-                String canonicalPlanName = execution.getImportResult().getCanonicalPlanName();
+
+                String canonicalPlanName = Objects.requireNonNullElse(execution.getImportResult().getCanonicalPlanName(), "");
                 executionContext.put(CTX_CANONICAL_PLAN_NAME, canonicalPlanName);
             }
 
