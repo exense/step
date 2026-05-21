@@ -118,11 +118,6 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
                 // TODO we should set this after the description is updated in ExecutionEngineRunner
                 executionContext.put(CTX_EXECUTION_DESCRIPTION, description);
             }
-            if (execution.getImportResult() != null) {
-
-                String canonicalPlanName = Objects.requireNonNullElse(execution.getImportResult().getCanonicalPlanName(), "");
-                executionContext.put(CTX_CANONICAL_PLAN_NAME, canonicalPlanName);
-            }
 
             ExecutiontTaskParameters executiontTaskParameters = execution.getExecutiontTaskParameters();
             if (executiontTaskParameters != null) {
@@ -136,6 +131,17 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
             for (MetricSamplesHandler metricSamplesHandler : MetricsExecutionPlugin.SAMPLES_HANDLERS) {
                 metricSamplesHandler.initializeExecutionContext(executionEngineContext, executionContext);
             }
+        }
+    }
+
+    @Override
+    public void executionStart(ExecutionContext context) {
+        super.executionStart(context);
+        Execution execution = context.getExecutionAccessor().get(context.getExecutionId());
+        if (execution.getImportResult() != null) {
+
+            String canonicalPlanName = Objects.requireNonNullElse(execution.getImportResult().getCanonicalPlanName(), "");
+            context.put(CTX_CANONICAL_PLAN_NAME, canonicalPlanName);
         }
     }
 
