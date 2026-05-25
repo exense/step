@@ -19,11 +19,13 @@
 package step.core.execution;
 
 
+import step.core.artefacts.reports.ReportNodeAccessorImpl;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ReportNodesFilter {
 
@@ -36,13 +38,16 @@ public class ReportNodesFilter {
         if (parameters != null) {
             String eid = parameters.getEid();
             if (eid != null) {
-                fragments.add(Filters.equals("executionID", eid));
+                fragments.add(Filters.equals(ReportNodeAccessorImpl.EXECUTION_ID_FIELD_NAME, eid));
             }
 
-            List<String> testcasesParam = parameters.getTestcases();
-            if (testcasesParam != null && !testcasesParam.isEmpty()) {
-                List<Object> testcases = new ArrayList<>(testcasesParam);
-                fragments.add(Filters.in("customAttributes.TestCase", testcases));
+            List<String> ancestorIds = parameters.getAncestorIds();
+            if (ancestorIds != null && !ancestorIds.isEmpty()) {
+                if (ancestorIds.size() == 1) {
+                    fragments.add(Filters.includes(ReportNodeAccessorImpl.ANCESTOR_IDS_FIELD_NAME, ancestorIds.getFirst()));
+                } else {
+                    fragments.add(Filters.or(ancestorIds.stream().map(aId -> Filters.includes(ReportNodeAccessorImpl.ANCESTOR_IDS_FIELD_NAME, aId)).collect(Collectors.toList())));
+                }
             }
         }
 

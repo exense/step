@@ -27,6 +27,8 @@ import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
+import step.core.collections.IndexField;
+import step.core.collections.Order;
 import step.core.collections.SearchOrder;
 import step.core.collections.filters.And;
 import step.core.collections.filters.Equals;
@@ -36,20 +38,36 @@ import static step.core.artefacts.reports.ReportNodeStatus.RUNNING;
 
 public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> implements ReportTreeAccessor, ReportNodeAccessor {
 
+    public static final String EXECUTION_ID_FIELD_NAME = "executionID";
+    public static final String EXECUTION_TIME_FIELD_NAME = "executionTime";
+    public static final String PARENT_ID_FIELD_NAME = "parentID";
+    public static final String STATUS_FIELD_NAME = "status";
+    public static final String CLASS_FIELD_NAME = "_class";
+    public static final String ARTEFACT_HASH_FIELD_NAME = "artefactHash";
+    public static final String ANCESTOR_IDS_FIELD_NAME = "ancestorIds";
+    public static final String CONTRIBUTING_ERROR_FIELD_NAME = "contributingError";
+    public static final String PARENT_SOURCE_FIELD_NAME = "parentSource";
+
     public ReportNodeAccessorImpl(Collection<ReportNode> collectionDriver) {
         super(collectionDriver);
     }
 
     @Override
     public void createIndexesIfNeeded(Long ttl) {
-        createOrUpdateIndex("parentID");
-        createOrUpdateIndex("executionTime");
-        createOrUpdateCompoundIndex("executionID", "status", "executionTime");
-        createOrUpdateCompoundIndex("executionID", "executionTime");
-        createOrUpdateCompoundIndex("executionID", "_class");
-        createOrUpdateCompoundIndex("executionID", "parentID");
-        createOrUpdateCompoundIndex("executionID", "artefactHash");
-        createOrUpdateCompoundIndex("executionID", "path");
+        createOrUpdateIndex(PARENT_ID_FIELD_NAME);
+        createOrUpdateIndex(EXECUTION_TIME_FIELD_NAME);
+        createOrUpdateCompoundIndex(EXECUTION_ID_FIELD_NAME, STATUS_FIELD_NAME, EXECUTION_TIME_FIELD_NAME);
+        createOrUpdateCompoundIndex(EXECUTION_ID_FIELD_NAME, EXECUTION_TIME_FIELD_NAME);
+        createOrUpdateCompoundIndex(EXECUTION_ID_FIELD_NAME, CLASS_FIELD_NAME);
+        createOrUpdateCompoundIndex(EXECUTION_ID_FIELD_NAME, PARENT_ID_FIELD_NAME);
+        createOrUpdateCompoundIndex(EXECUTION_ID_FIELD_NAME, ARTEFACT_HASH_FIELD_NAME);
+
+        IndexField indexFieldExecutionId = new IndexField(EXECUTION_ID_FIELD_NAME, Order.ASC, String.class);
+        IndexField indexFieldAncestorIds = new IndexField(ANCESTOR_IDS_FIELD_NAME, Order.ASC, List.class);
+        IndexField indexFieldContributingError = new IndexField(CONTRIBUTING_ERROR_FIELD_NAME, Order.ASC, Boolean.class);
+        IndexField indexFieldExecutionTime = new IndexField(EXECUTION_TIME_FIELD_NAME, Order.ASC, Long.class);
+        createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(indexFieldExecutionId, indexFieldAncestorIds, indexFieldExecutionTime)));
+        createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(indexFieldExecutionId, indexFieldContributingError, indexFieldExecutionTime)));
     }
 
     @Override
@@ -72,35 +90,35 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 
     @Override
     public Iterator<ReportNode> getChildren(ObjectId parentID) {
-        return collectionDriver.find(Filters.equals("parentID", parentID), new SearchOrder("executionTime", 1), null, null, 0).iterator();
+        return collectionDriver.find(Filters.equals(PARENT_ID_FIELD_NAME, parentID), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), null, null, 0).iterator();
     }
 
     @Override
     public Iterator<ReportNode> getChildren(ObjectId parentID, int skip, int limit) {
-        return collectionDriver.find(Filters.equals("parentID", parentID), new SearchOrder("executionTime", 1), skip, limit, 0).iterator();
+        return collectionDriver.find(Filters.equals(PARENT_ID_FIELD_NAME, parentID), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), skip, limit, 0).iterator();
     }
 
     @Override
     public Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource) {
-        return collectionDriver.find(Filters.and(List.of(Filters.equals("parentID", parentID), Filters.equals("parentSource", parentSource.name()))), new SearchOrder("executionTime", 1), null, null, 0).iterator();
+        return collectionDriver.find(Filters.and(List.of(Filters.equals(PARENT_ID_FIELD_NAME, parentID), Filters.equals(PARENT_SOURCE_FIELD_NAME, parentSource.name()))), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), null, null, 0).iterator();
     }
 
     @Override
     public Iterator<ReportNode> getChildrenByParentSource(ObjectId parentID, ParentSource parentSource, int skip, int limit) {
-        return collectionDriver.find(Filters.and(List.of(Filters.equals("parentID", parentID), Filters.equals("parentSource", parentSource.name()))), new SearchOrder("executionTime", 1), skip, limit, 0).iterator();
+        return collectionDriver.find(Filters.and(List.of(Filters.equals(PARENT_ID_FIELD_NAME, parentID), Filters.equals(PARENT_SOURCE_FIELD_NAME, parentSource.name()))), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), skip, limit, 0).iterator();
     }
 
 
     @Override
     public Stream<ReportNode> getReportNodesByExecutionID(String executionID) {
         Objects.requireNonNull(executionID);
-        return collectionDriver.findLazy(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, null, 0);
+        return collectionDriver.findLazy(Filters.equals(EXECUTION_ID_FIELD_NAME, executionID), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), null, null, 0);
     }
 
     @Override
     public Stream<ReportNode> getReportNodesByExecutionID(String executionID, Integer limit) {
         Objects.requireNonNull(executionID);
-        return collectionDriver.findLazy(Filters.equals("executionID", executionID), new SearchOrder("executionTime", 1), null, limit, 0);
+        return collectionDriver.findLazy(Filters.equals(EXECUTION_ID_FIELD_NAME, executionID), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), null, limit, 0);
     }
 
     @Override
@@ -119,11 +137,11 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
     private Filter filerByExecutionTime(Long from, Long to) {
         ArrayList<Filter> filters = new ArrayList<>();
         if (from != null) {
-            filters.add(Filters.gte("executionTime", from));
+            filters.add(Filters.gte(EXECUTION_TIME_FIELD_NAME, from));
         }
 
         if (to != null) {
-            filters.add(Filters.lt("executionTime", to));
+            filters.add(Filters.lt(EXECUTION_TIME_FIELD_NAME, to));
         }
 
         return (filters.isEmpty() ? Filters.empty() : Filters.and(filters));
@@ -131,11 +149,11 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 
 
     private static And filterByExecutionIdAndArtefactHash(String executionId, String artefactPathHash) {
-        return Filters.and(List.of(Filters.equals("executionID", executionId), artefactPathHashFilter(artefactPathHash)));
+        return Filters.and(List.of(Filters.equals(EXECUTION_ID_FIELD_NAME, executionId), artefactPathHashFilter(artefactPathHash)));
     }
 
     private static Equals artefactPathHashFilter(String artefactPathHash) {
-        return Filters.equals("artefactHash", artefactPathHash);
+        return Filters.equals(ARTEFACT_HASH_FIELD_NAME, artefactPathHash);
     }
 
     @Override
@@ -148,18 +166,18 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
     public Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_) {
         Objects.requireNonNull(executionID);
         return collectionDriver.findLazy(
-            Filters.and(List.of(Filters.equals("executionID", executionID),
-                Filters.equals("_class", class_))),
-            new SearchOrder("executionTime", 1), null, null, 0);
+            Filters.and(List.of(Filters.equals(EXECUTION_ID_FIELD_NAME, executionID),
+                Filters.equals(CLASS_FIELD_NAME, class_))),
+            new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), null, null, 0);
     }
 
     @Override
     public Stream<ReportNode> getReportNodesByExecutionIDAndClass(String executionID, String class_, Integer limit) {
         Objects.requireNonNull(executionID);
         return collectionDriver.findLazy(
-            Filters.and(List.of(Filters.equals("executionID", executionID),
-                Filters.equals("_class", class_))),
-            new SearchOrder("executionTime", 1), null, limit, 0);
+            Filters.and(List.of(Filters.equals(EXECUTION_ID_FIELD_NAME, executionID),
+                Filters.equals(CLASS_FIELD_NAME, class_))),
+            new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), null, limit, 0);
     }
 
     @Override
@@ -167,12 +185,12 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
         Objects.requireNonNull(executionID);
 
         List<Filter> filters = new ArrayList<>();
-        filters.add(Filters.equals("executionID", executionID));
+        filters.add(Filters.equals(EXECUTION_ID_FIELD_NAME, executionID));
 
         if (customAttributes != null) {
             customAttributes.forEach((k, v) -> filters.add(Filters.equals("customAttributes." + k, v)));
         }
-        return collectionDriver.findLazy(Filters.and(filters), new SearchOrder("executionTime", 1), null, null, 0);
+        return collectionDriver.findLazy(Filters.and(filters), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), null, null, 0);
     }
 
     @Override
@@ -180,7 +198,7 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
         Objects.requireNonNull(parentID);
         Objects.requireNonNull(artefactID);
         return collectionDriver.find(
-            Filters.and(List.of(Filters.equals("parentID", parentID), Filters.equals("artefactID", artefactID))),
+            Filters.and(List.of(Filters.equals(PARENT_ID_FIELD_NAME, parentID), Filters.equals("artefactID", artefactID))),
             null, null, null, 0).findFirst().orElse(null);
     }
 
@@ -189,15 +207,15 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
         Objects.requireNonNull(executionID);
         Filter timeFilter = filerByExecutionTime(from, to);
         return collectionDriver.findLazy(
-            Filters.and(List.of(Filters.equals("executionID", executionID), Filters.equals("status", RUNNING.name()), timeFilter)),
-            new SearchOrder("executionTime", 1), null, null, 0);
+            Filters.and(List.of(Filters.equals(EXECUTION_ID_FIELD_NAME, executionID), Filters.equals(STATUS_FIELD_NAME, RUNNING.name()), timeFilter)),
+            new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), null, null, 0);
     }
 
     @Override
     public ReportNode getRootReportNode(String executionID) {
         Objects.requireNonNull(executionID);
         return collectionDriver.find(
-            Filters.and(List.of(Filters.equals("executionID", executionID), Filters.equals("parentID", (String) null))),
+            Filters.and(List.of(Filters.equals(EXECUTION_ID_FIELD_NAME, executionID), Filters.equals(PARENT_ID_FIELD_NAME, (String) null))),
             null, null, null, 0).findFirst().orElse(null);
     }
 
@@ -213,21 +231,23 @@ public class ReportNodeAccessorImpl extends AbstractAccessor<ReportNode> impleme
 
     @Override
     public Stream<ReportNode> getReportNodesWithContributingErrors(String executionID) {
-        return getReportNodesWithContributingErrors(executionID, null, null);
+        return getReportNodesWithContributingErrors(executionID, null, null, null);
     }
 
     @Override
     public void removeNodesByExecutionID(String executionID) {
         Objects.requireNonNull(executionID);
-        collectionDriver.remove(Filters.equals("executionID", executionID));
+        collectionDriver.remove(Filters.equals(EXECUTION_ID_FIELD_NAME, executionID));
     }
 
     @Override
-    public Stream<ReportNode> getReportNodesWithContributingErrors(String executionId, Integer skip, Integer limit) {
+    public Stream<ReportNode> getReportNodesWithContributingErrors(String executionId, String ancestorId, Integer skip, Integer limit) {
         Objects.requireNonNull(executionId);
-        return collectionDriver.find(
-            Filters.and(List.of(Filters.equals("executionID", executionId), Filters.equals("contributingError", true))),
-            null, skip, limit, 0);
+        List<Filter> contributingErrorFilters = new ArrayList<>(List.of(Filters.equals(EXECUTION_ID_FIELD_NAME, executionId),
+            Filters.equals(CONTRIBUTING_ERROR_FIELD_NAME, true)));
+        if (ancestorId != null) {
+            contributingErrorFilters.add(Filters.includes(ANCESTOR_IDS_FIELD_NAME, ancestorId));
+        }
+        return collectionDriver.findLazy(Filters.and(contributingErrorFilters), new SearchOrder(EXECUTION_TIME_FIELD_NAME, 1), skip, limit, 0);
     }
-
 }

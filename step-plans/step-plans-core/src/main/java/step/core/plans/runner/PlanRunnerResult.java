@@ -114,7 +114,9 @@ public class PlanRunnerResult {
      * This considers only the so-called contributing errors according to following definition {@link ReportNode#getContributingError()}
      */
     public String getErrorSummary() {
-        return getErrors().map(Error::getMsg).limit(10).collect(Collectors.joining(";"));
+        try (Stream<Error> errors = getErrors()) {
+            return errors.map(Error::getMsg).limit(10).collect(Collectors.joining(";"));
+        }
     }
 
     /**
@@ -122,7 +124,9 @@ public class PlanRunnerResult {
      * @return a {@link Set} containing the error codes of the first n errors where n is set by the limit parameter.
      */
     public Set<Integer> getErrorCodes(int limit) {
-        return getErrors().map(Error::getCode).limit(limit).collect(Collectors.toSet());
+        try (Stream<Error> errors = getErrors()) {
+            return errors.map(Error::getCode).limit(limit).collect(Collectors.toSet());
+        }
     }
 
     public String getExecutionId() {

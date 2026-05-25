@@ -551,9 +551,11 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
         REPORT_NODE node = createReportNode_(parentReportNode, artefact);
         node.setId(new ObjectId());
         node.setName(getReportNodeName(artefact));
-        node.setParentID(parentReportNode.getId());
-        String parentPath = parentReportNode.getPath();
-        node.setPath(((parentPath != null) ? parentPath : "") + node.getId());
+        ObjectId parentNodeId = parentReportNode.getId();
+        node.setParentID(parentNodeId);
+        LinkedHashSet<String> ancestorIds = Optional.ofNullable(parentReportNode.getAncestorIds()).map(LinkedHashSet::new).orElse(new LinkedHashSet<>());
+        ancestorIds.add(parentNodeId.toHexString());
+        node.setAncestorIds(ancestorIds);
         node.setArtefactID(artefact.getId());
         node.setExecutionID(context.getExecutionId().toString());
         node.setStatus(ReportNodeStatus.NORUN);

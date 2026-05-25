@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import com.google.common.io.Files;
 
 import step.artefacts.Export;
+import step.artefacts.reports.EchoReportNode;
 import step.attachments.AttachmentMeta;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
