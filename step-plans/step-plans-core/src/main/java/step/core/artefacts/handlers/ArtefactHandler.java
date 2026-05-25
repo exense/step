@@ -39,10 +39,12 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.execution.ReportNodeCache;
 import step.core.execution.ReportNodeEventListener;
+import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionStatus;
 import step.core.functions.FunctionGroupHandle;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.miscellaneous.ValidationException;
+import step.core.repositories.ImportResult;
 import step.core.variables.VariablesManager;
 import step.resources.ResourceManager;
 
@@ -65,6 +67,7 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
     public static final String TEC_EXECUTION_REPORTNODES_PERSISTONLYNONPASSED = "tec.execution.reportnodes.persistonlynonpassed";
     public static final String TEC_EXECUTION_REPORTNODES_TIMESERIES_ENABLED = "tec.execution.reportnodes.timeseries.enabled";
     public static final String CTX_ADDITIONAL_ATTRIBUTES = "$additionalAttributes";
+    public static final String CTX_CANONICAL_PLAN_NAME = "$canonicalPlanName";
 
     protected ExecutionContext context;
     private ArtefactHandlerManager artefactHandlerManager;
@@ -269,10 +272,13 @@ public abstract class ArtefactHandler<ARTEFACT extends AbstractArtefact, REPORT_
 
     private Map<String, Object> getTimeSeriesContextAttributes(ExecutionContext executionContext) {
         Map<String, Object> attributes = new HashMap<>();
-        if (context.getPlan() != null) {
-            attributes.put("planId", context.getPlan().getId().toString());
+        String canonicalPlanName = Objects.requireNonNullElse((String) executionContext.get(CTX_CANONICAL_PLAN_NAME), "");
+        attributes.put("canonicalPlanName", canonicalPlanName);
+
+        if (executionContext.getPlan() != null) {
+            attributes.put("planId", executionContext.getPlan().getId().toString());
         }
-        attributes.put("taskId", Objects.requireNonNullElse(context.get("$schedulerTaskId"), ""));
+        attributes.put("taskId", Objects.requireNonNullElse(executionContext.get("$schedulerTaskId"), ""));
 
         TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
         if (additionalAttributes != null) {

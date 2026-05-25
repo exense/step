@@ -62,6 +62,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
     public static final String SCHEDULE_ID = "scheduleId"; //only use by prometheus handler for now
     public static final String PLAN_ID = "planId";
     public static final String PLAN = "plan";
+    public static final String CANONICAL_PLAN_NAME = "canonicalPlanName";
     public static final String SCHEDULE = "schedule";
     public static final String TEST_CASE = "testcase";
     public static final String EXECUTION_DESCRIPTION = "execution";
@@ -69,6 +70,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
     public static final String CTX_SCHEDULER_TASK_ID = "$schedulerTaskId";
     public static final String CTX_SCHEDULE_NAME = "$scheduleName";
     public static final String CTX_EXECUTION_DESCRIPTION = "$executionDescription";
+    public static final String CTX_CANONICAL_PLAN_NAME = "$canonicalPlanName";
     private static final Logger logger = LoggerFactory.getLogger(MetricsExecutionPlugin.class);
     private static final List<MetricSamplesHandler> SAMPLES_HANDLERS = new ArrayList<>();
     public static final String CTX_GENERATE_EXECUTION_METRICS = "$generateExecutionMetrics";
@@ -116,6 +118,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
                 // TODO we should set this after the description is updated in ExecutionEngineRunner
                 executionContext.put(CTX_EXECUTION_DESCRIPTION, description);
             }
+
             ExecutiontTaskParameters executiontTaskParameters = execution.getExecutiontTaskParameters();
             if (executiontTaskParameters != null) {
                 executionContext.put(CTX_SCHEDULER_TASK_ID, executiontTaskParameters.getId().toHexString());
@@ -128,6 +131,17 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
             for (MetricSamplesHandler metricSamplesHandler : MetricsExecutionPlugin.SAMPLES_HANDLERS) {
                 metricSamplesHandler.initializeExecutionContext(executionEngineContext, executionContext);
             }
+        }
+    }
+
+    @Override
+    public void executionStart(ExecutionContext context) {
+        super.executionStart(context);
+        Execution execution = context.getExecutionAccessor().get(context.getExecutionId());
+        if (execution.getImportResult() != null) {
+
+            String canonicalPlanName = Objects.requireNonNullElse(execution.getImportResult().getCanonicalPlanName(), "");
+            context.put(CTX_CANONICAL_PLAN_NAME, canonicalPlanName);
         }
     }
 
@@ -181,6 +195,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
             String schedule = Objects.requireNonNullElse((String) context.get(CTX_SCHEDULE_NAME), "");
             String planId = context.getPlan().getId().toString();
             String plan = Objects.requireNonNullElse(context.getPlan().getAttribute(AbstractOrganizableObject.NAME), "");
+            String canonicalPlanName = Objects.requireNonNullElse((String) context.get(CTX_CANONICAL_PLAN_NAME), "");
             String execution = Objects.requireNonNullElse((String) context.get(CTX_EXECUTION_DESCRIPTION), "");
             @SuppressWarnings("unchecked")
             Map<String, String> additionalAttributes = (Map<String, String>) context.get(CTX_ADDITIONAL_ATTRIBUTES);
@@ -193,7 +208,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
 
             ExecutionMetricSample stepSample = new ExecutionMetricSample(
                 sample, execId, node.getId().toString(),
-                planId, plan, scheduleId, schedule, execution,
+                planId, plan, canonicalPlanName, scheduleId, schedule, execution,
                 null, null, additionalAttributes, THREAD_GROUP);
 
             processMetrics(List.of(stepSample));
@@ -206,7 +221,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
                 1, currentCount, currentCount, currentCount, currentCount, null);
             ExecutionMetricSample heartbeatStepSample = new ExecutionMetricSample(
                 heartbeatSample, execId, node.getId().toString(),
-                planId, plan, scheduleId, schedule, execution,
+                planId, plan, canonicalPlanName, scheduleId, schedule, execution,
                 null, null, additionalAttributes, THREAD_GROUP);
             MetricHeartbeatRegistry.getInstance().update(heartbeatStepSample);
         }
@@ -287,6 +302,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
     private Measurement createMeasurement(ExecutionContext executionContext, Measure measure, CallFunctionReportNode functionReport) {
         Map<String, String> functionAttributes = functionReport.getFunctionAttributes();
         Measurement measurement = initMeasurement(executionContext);
+        String canonicalPlanName = Objects.requireNonNullElse((String) executionContext.get(CTX_CANONICAL_PLAN_NAME), "");
         if (functionAttributes != null) {
             measurement.addCustomFields(functionAttributes);
             measurement.addCustomField(ORIGIN, functionAttributes.get(AbstractOrganizableObject.NAME));
@@ -301,6 +317,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         measurement.setValue(measure.getDuration());
         measurement.setBegin(measure.getBegin());
         measurement.addCustomField(AGENT_URL, functionReport.getAgentUrl());
+        measurement.setCanonicalPlanName(canonicalPlanName);
         enrichWithNodeAttributes(measurement, functionReport);
         enrichWithCustomData(measurement, measure.getData());
         enrichWithAdditionalAttributes(measurement, executionContext);
@@ -320,6 +337,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         Plan plan = executionContext.getPlan();
         String planId = plan.getId().toString();
         String planName = Objects.requireNonNullElse(plan.getAttribute(AbstractOrganizableObject.NAME), "");
+        String canonicalPlanName = Objects.requireNonNullElse((String) executionContext.get(CTX_CANONICAL_PLAN_NAME), "");
         String taskId = Objects.requireNonNullElse((String) executionContext.get(CTX_SCHEDULER_TASK_ID), "");
         String schedule = Objects.requireNonNullElse((String) executionContext.get(CTX_SCHEDULE_NAME), "");
         String execution = Objects.requireNonNullElse((String) executionContext.get(CTX_EXECUTION_DESCRIPTION), "");
@@ -329,7 +347,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         Map<String, String> functionAttributes = (functionReport != null) ? functionReport.getFunctionAttributes() : null;
         String origin = (functionAttributes != null) ? functionAttributes.get(AbstractOrganizableObject.NAME) : null;
         TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
-        return new ExecutionMetricSample(metricSample, execId, rnId, planId, planName, taskId, schedule, execution,
+        return new ExecutionMetricSample(metricSample, execId, rnId, planId, planName, canonicalPlanName, taskId, schedule, execution,
             agentUrl, origin, additionalAttributes, metricType);
     }
 
@@ -364,6 +382,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         Plan plan = executionContext.getPlan();
         measurement.setPlanId(plan.getId().toString());
         measurement.setPlan(Objects.requireNonNullElse(plan.getAttribute(AbstractOrganizableObject.NAME), ""));
+        measurement.setCanonicalPlanName(Objects.requireNonNullElse((String) executionContext.get(CTX_CANONICAL_PLAN_NAME), ""));
         measurement.setExecution(Objects.requireNonNullElse((String) executionContext.get(CTX_EXECUTION_DESCRIPTION), ""));
         measurement.setTaskId(Objects.requireNonNullElse((String) executionContext.get(CTX_SCHEDULER_TASK_ID), ""));
         measurement.setSchedule(Objects.requireNonNullElse((String) executionContext.get(CTX_SCHEDULE_NAME), ""));

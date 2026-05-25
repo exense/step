@@ -124,7 +124,7 @@ public class MetricHeartbeatRegistryTest {
         step.core.metrics.ExecutionMetricSample original = new step.core.metrics.ExecutionMetricSample(
             gauge("cpu", 1, 70, 70, 70, 70),
             "exec-42", "rn-99", "plan-7",
-            "MyPlan", "task-1", "sched-1", "exec desc",
+            "MyPlan", "canonical-plan-7", "task-1", "sched-1", "exec desc",
             "http://agent", "MyKeyword", null, null);
         registry.update(original);
         registry.intervalMs = 0;
@@ -270,13 +270,13 @@ public class MetricHeartbeatRegistryTest {
 
     private step.core.metrics.ExecutionMetricSample stepSample(String execId, MetricSample sample) {
         return new step.core.metrics.ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
-            "MyPlan", "", "", "my execution", null, null, null, null);
+            "MyPlan", "canonical-plan-1", "", "", "my execution", null, null, null, null);
     }
 
     private step.core.metrics.ExecutionMetricSample stepSampleFull(String execId, MetricSample sample,
                                                                    String agentUrl, String origin) {
         return new step.core.metrics.ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
-            "MyPlan", "", "", "my execution", agentUrl, origin, null, null);
+            "MyPlan", "canonical-plan-1", "", "", "my execution", agentUrl, origin, null, null);
     }
 
     private static MetricSample counter(String name, long count, long runningTotal) {

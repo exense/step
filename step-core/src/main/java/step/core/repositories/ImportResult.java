@@ -26,10 +26,9 @@ public class ImportResult implements Serializable {
     private static final long serialVersionUID = 3711110316457339962L;
 
     protected boolean successful = false;
-    ;
 
     protected String planId;
-	protected String canonicalPlanName;
+    protected String canonicalPlanName;
 
     List<String> errors;
 
@@ -49,13 +48,13 @@ public class ImportResult implements Serializable {
         this.planId = planId;
     }
 
-	public String getCanonicalPlanName() {
-		return canonicalPlanName;
-	}
+    public String getCanonicalPlanName() {
+        return canonicalPlanName;
+    }
 
-	public void setCanonicalPlanName(String canonicalPlanName) {
-		this.canonicalPlanName = canonicalPlanName;
-	}
+    public void setCanonicalPlanName(String canonicalPlanName) {
+        this.canonicalPlanName = canonicalPlanName;
+    }
 
     public List<String> getErrors() {
         return errors;
