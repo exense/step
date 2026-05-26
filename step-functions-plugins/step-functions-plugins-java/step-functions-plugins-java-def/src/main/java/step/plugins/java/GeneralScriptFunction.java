@@ -33,6 +33,8 @@ import step.functions.Function;
  */
 public class GeneralScriptFunction extends Function implements AutomationPackageContextual<GeneralScriptFunction> {
 
+    public static final String $_MARK_AS_KEYWORD_FROM_AUTOMATION_PACKAGE_LIBRARY = "$markAsKeywordFromAutomationPackageLibrary";
+
     DynamicValue<String> scriptFile = new DynamicValue<>("");
 
     DynamicValue<String> scriptLanguage = new DynamicValue<>("");
@@ -91,15 +93,33 @@ public class GeneralScriptFunction extends Function implements AutomationPackage
 
     @Override
     public GeneralScriptFunction applyAutomationPackageContext(StagingAutomationPackageContext context) {
+        //Only process function without script file set (i.e. Keywords from scanned annotations)
         if (getScriptFile().get() == null || getScriptFile().get().isEmpty()) {
             AutomationPackage ap = context.getAutomationPackage();
-            if (ap != null && ap.getAutomationPackageResourceRevision() != null && !ap.getAutomationPackageResourceRevision().isEmpty()) {
-                setScriptFile(new DynamicValue<>(ap.getAutomationPackageResourceRevision()));
-            } else {
-                throw new RuntimeException("General script functions can only be used within automation package archive");
+            if (ap == null) {
+                throw new RuntimeException("General script functions defined in Automation Packages must either be declared in the descriptor providing an explicit script file or with Keyword annotation.");
             }
-            if (ap != null && ap.getAutomationPackageLibraryResourceRevision() != null && !ap.getAutomationPackageLibraryResourceRevision().isEmpty()) {
-                setLibrariesFile(new DynamicValue<>(ap.getAutomationPackageLibraryResourceRevision()));
+            String automationPackageLibraryResourceRevision = ap.getAutomationPackageLibraryResourceRevision();
+            boolean hasLibrary = automationPackageLibraryResourceRevision != null && !automationPackageLibraryResourceRevision.isEmpty();
+            //Handle Keywords declared in AP library, the library is used as script file for them
+            if (getCustomField($_MARK_AS_KEYWORD_FROM_AUTOMATION_PACKAGE_LIBRARY) != null) {
+                getCustomFields().remove($_MARK_AS_KEYWORD_FROM_AUTOMATION_PACKAGE_LIBRARY);
+                if (hasLibrary) {
+                    setScriptFile(new DynamicValue<>(automationPackageLibraryResourceRevision));
+                } else {
+                    throw new RuntimeException("Inconsistent state: the annotated Keyword '" + this.getAttribute(NAME) + "' was detected in an Automation Package Library, but the library resource does not exist.");
+                }
+            } else {
+                //Keyword annotated in main AP file
+                String automationPackageResourceRevision = ap.getAutomationPackageResourceRevision();
+                if (automationPackageResourceRevision != null && !automationPackageResourceRevision.isEmpty()) {
+                    setScriptFile(new DynamicValue<>(automationPackageResourceRevision));
+                } else {
+                    throw new RuntimeException("Inconsistent state: the annotated Keyword '" + this.getAttribute(NAME) + "' was detected in an Automation Package, but the package resource does not exist.");
+                }
+                if (hasLibrary) {
+                    setLibrariesFile(new DynamicValue<>(automationPackageLibraryResourceRevision));
+                }
             }
         }
         return this;
