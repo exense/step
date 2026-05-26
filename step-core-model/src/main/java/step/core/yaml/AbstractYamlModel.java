@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class AbstractYamlModel {
     private static final Logger log = LoggerFactory.getLogger(AbstractYamlModel.class);
-
+    
     protected void copyFieldsToObject(Object to, boolean ignoreNulls) {
         List<Field> allFieldsYaml = getAutoCopyFields();
         List<Field> allFieldsTo = ReflectionUtils.getAllFieldsInHierarchy(to.getClass(), null);

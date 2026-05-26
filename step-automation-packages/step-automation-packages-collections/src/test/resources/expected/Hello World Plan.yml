@@ -1,0 +1,8 @@
+---
+plans:
+- name: "Hello World Plan"
+  root:
+    sequence:
+      children:
+      - echo:
+          text: "Hello World"

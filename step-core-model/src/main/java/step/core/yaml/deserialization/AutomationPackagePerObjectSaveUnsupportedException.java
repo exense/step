@@ -1,5 +1,7 @@
+package step.core.yaml.deserialization;
+
 /*******************************************************************************
- * Copyright (C) 2020, exense GmbH
+ * Copyright (C) 2026, exense GmbH
  *
  * This file is part of STEP
  *
@@ -16,9 +18,9 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.deserialization;
+public class AutomationPackagePerObjectSaveUnsupportedException extends AutomationPackageUpdateException {
 
-public interface AutomationPackageSerializationRegistryAware {
-
-    void setSerializationRegistry(AutomationPackageSerializationRegistry registry);
+    public AutomationPackagePerObjectSaveUnsupportedException(String message) {
+        super(message);
+    }
 }

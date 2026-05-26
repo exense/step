@@ -18,11 +18,16 @@
  ******************************************************************************/
 package step.plans.automation;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.OptBoolean;
+import step.core.yaml.PatchableYamlModelBase;
+import step.core.yaml.deserialization.PatchingContext;
 import step.plans.nl.RootArtefactType;
 
 import java.util.List;
 
-public class YamlPlainTextPlan {
+public class YamlPlainTextPlan extends PatchableYamlModelBase {
 
     private String name;
 
@@ -31,6 +36,11 @@ public class YamlPlainTextPlan {
     private List<String> categories;
 
     private String file;
+
+    @JsonCreator
+    public YamlPlainTextPlan(@JacksonInject(useInput = OptBoolean.FALSE, optional = OptBoolean.TRUE)  PatchingContext context) {
+        super(context);
+    }
 
     public String getName() {
         return name;

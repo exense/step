@@ -18,6 +18,9 @@
  ******************************************************************************/
 package step.core.yaml.deserializers;
 
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
@@ -35,4 +38,5 @@ public @interface StepYamlDeserializerAddOn {
     String LOCATION = "step";
 
     Class<?>[] targetClasses();
+
 }

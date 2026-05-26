@@ -21,25 +21,34 @@ package step.automation.packages;
 import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.ScriptAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.plans.Plan;
+import step.core.yaml.deserialization.PatchableYamlList;
 import step.functions.Function;
+import step.plans.automation.YamlPlainTextPlan;
 import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
-import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlanReader;
-import step.plugins.java.GeneralScriptFunction;
 import step.repositories.parser.StepsParser;
+import step.resources.LocalResourceManagerImpl;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.*;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -50,9 +59,8 @@ import java.util.stream.Collectors;
  * these resources are not stored yet).
  */
 public abstract class AutomationPackageReader<T extends AutomationPackageArchive> {
-
+    private static final Logger logger = LoggerFactory.getLogger(AutomationPackageReader.class);
     public static final String AP_VERSION_SEPARATOR = ".";
-    protected static final Logger log = LoggerFactory.getLogger(AutomationPackageReader.class);
     private final PlanParser planTextPlanParser;
     protected String jsonSchemaPath;
     protected final AutomationPackageHookRegistry hookRegistry;
@@ -122,7 +130,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
         // apply imported fragments recursively
         if (descriptor != null) {
-            fillAutomationPackageWithImportedFragments(res, descriptor, archive);
+            fillAutomationPackageWithImportedFragments(res, descriptor, archive, new HashMap<>());
         }
         return res;
     }
@@ -173,7 +181,23 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
     abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, AutomationPackageContent res) throws AutomationPackageReadingException;
 
-    public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
+    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
+        AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
+        URL descriptorURL = archive.getDescriptorYamlUrl();
+        try (InputStream inputStream = descriptorURL.openStream()) {
+            AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
+            descriptor.setFragmentUrl(descriptorURL);
+            AutomationPackageContent content = newContentInstance();
+            Map<String, AutomationPackageFragmentYaml> fragmentMap = new ConcurrentHashMap<>();
+            fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragmentMap);
+            StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(null, AutomationPackageOperationMode.LOCAL, new LocalResourceManagerImpl(Path.of(descriptorURL.getPath()).getParent().toFile()), archive, content, null, null, new HashMap<>());
+            return new AutomationPackageYamlFragmentManager(descriptor, fragmentMap, getOrCreateDescriptorReader(), stagingContext);
+        } catch (IOException e) {
+            throw new AutomationPackageReadingException("Failed to read automation package for editing", e);
+        }
+    }
+
+    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Map<String, AutomationPackageFragmentYaml> fragmentYamlMap) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
         if (!fragment.getFragments().isEmpty()) {
@@ -182,7 +206,9 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = resource.openStream()) {
                         fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getAutomationPackageName());
-                        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive);
+                        fragmentYamlMap.put(resource.toString(), fragment);
+                        fragment.setFragmentUrl(resource);
+                        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragmentYamlMap);
                     } catch (IOException e) {
                         throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
                     }
@@ -197,10 +223,10 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
         readPlainTextPlans(targetPackage, fragment, archive);
 
-        for (Map.Entry<String, List<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
+        for (Map.Entry<String, PatchableYamlList<?>> additionalField : fragment.getAdditionalFields().entrySet()) {
             boolean hooked = hookRegistry.onAdditionalDataRead(additionalField.getKey(), additionalField.getValue(), targetPackage);
             if (!hooked) {
-                log.warn("Hook not found for additional field " + additionalField.getKey() + ". The additional field has been skipped");
+                logger.warn("Hook not found for additional field " + additionalField.getKey() + ". The additional field has been skipped");
             }
         }
     }
@@ -269,7 +295,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     }
 
     public synchronized void updateJsonSchema(String jsonSchemaPath) {
-        log.info("Change json schema for automation package to {}", jsonSchemaPath);
+        logger.info("Change json schema for automation package to {}", jsonSchemaPath);
         this.jsonSchemaPath = jsonSchemaPath;
         this.descriptorReader = null;
     }

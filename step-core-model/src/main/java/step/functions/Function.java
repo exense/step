@@ -43,10 +43,13 @@ import static step.functions.Function.JSON_CLASS_FIELD;
 @JsonTypeInfo(use = Id.CLASS, property = JSON_CLASS_FIELD)
 public class Function extends AbstractOrganizableObject implements EnricheableObject, EvaluationExpression {
 
+
     public final static String JSON_CLASS_FIELD = "type";
 
-    protected DynamicValue<Integer> callTimeout = new DynamicValue<>(180000);
-    protected JsonObject schema = JsonProviderCache.createObjectBuilder().build();
+    public final static DynamicValue<Integer> DEFAULT_CALL_TIMEOUT = new DynamicValue<>(180000);
+    protected DynamicValue<Integer> callTimeout = DEFAULT_CALL_TIMEOUT;
+    public final static JsonObject DEFAULT_SCHEMA = JsonProviderCache.createObjectBuilder().build();
+    protected JsonObject schema = DEFAULT_SCHEMA;
 
     protected boolean executeLocally;
     protected Map<String, String> tokenSelectionCriteria;
