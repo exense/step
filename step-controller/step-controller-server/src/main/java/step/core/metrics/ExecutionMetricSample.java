@@ -17,6 +17,8 @@ import java.util.TreeMap;
  */
 public class ExecutionMetricSample extends StepMetricSample {
 
+    public static final String SAMPLE_SAMPLE_TIME = "sample.sampleTime";
+
     public final String eId;
     public final String rnId;
     public final String planId;
