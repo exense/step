@@ -113,6 +113,25 @@
       <artifactId>mockito-core</artifactId>
     </dependency>
 
+    <!--
+    The following dependencies are not directly required in THIS project, but are transitive.
+    For some reason, maven loses the versions that we explicitly define for them (using Step's
+    dependencyManagement section) in cases where this artifact is directly referenced from an OUTSIDE project.
+    This means they resolve to old, vulnerable versions (which are flagged by security scanners), even though
+    Step actually already includes unaffected updated versions.
+    The easiest workaround to fix this is to simply redeclare the dependencies here again;
+    for some reason, they're then resolved with the correct versions that Step actually ships with.
+    (Note: the scope is kept the same as it is when transitively resolving).
+     -->
+    <dependency>
+      <groupId>net.minidev</groupId>
+      <artifactId>json-smart</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
