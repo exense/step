@@ -15,6 +15,7 @@ import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
+import step.core.execution.model.CommonExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.type.ExecutionTypeManager;
@@ -490,8 +491,8 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
             optionalLabelsMap.put("startTime", String.valueOf(startTime));
             optionalLabelsMap.put("endtime", String.valueOf(endTime));
             ExecutiontTaskParameters executiontTaskParameters = execution.getExecutiontTaskParameters();
-            optionalLabelsMap.put("cronExpression", (executiontTaskParameters != null) ? executiontTaskParameters.getCronExpression() : "");
-            optionalLabelsMap.put("user", execution.getExecutionParameters().getUserID());
+            optionalLabelsMap.put("cronExpression", Optional.ofNullable(executiontTaskParameters).map(ExecutiontTaskParameters::getCronExpression).orElse(""));
+            optionalLabelsMap.put("user", Optional.ofNullable(execution.getExecutionParameters()).map(CommonExecutionParameters::getUserID).orElse(""));
             Object automationPackageId = context.getPlan().getCustomField(AUTOMATION_PACKAGE_ID);
             optionalLabelsMap.put("apId", (automationPackageId != null) ? automationPackageId.toString() : "");
             AutomationPackageAccessor automationPackageAccessor = context.get(AutomationPackageAccessor.class);
