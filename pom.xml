@@ -45,9 +45,9 @@
 		<maven.compiler.target>11</maven.compiler.target>
 		<maven.compiler.release>11</maven.compiler.release>
 		<!-- internal dependencies -->
-		<dependencies.version>2025.6.25</dependencies.version>
+		<dependencies.version>2026.5.29</dependencies.version>
 		<step-grid.version>2.5.1</step-grid.version>
-		<step-framework.version>2.5.3</step-framework.version>
+		<step-framework.version>0.0.0-25-SNAPSHOT</step-framework.version> <!-- snapshot of 2.5 branch -->
 
 		<!-- external, non-transitive, dependencies -->
 		<dep.groovy.version>3.0.23</dep.groovy.version>
@@ -201,7 +201,7 @@
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-handler</artifactId>
-				<version>4.1.118.Final</version>
+				<version>4.1.133.Final</version>
 			</dependency>
 
 			<dependency>
@@ -319,7 +319,7 @@
 			<dependency>
 				<groupId>org.codehaus.plexus</groupId>
 				<artifactId>plexus-utils</artifactId>
-				<version>3.5.1</version>
+				<version>3.6.1</version>
 			</dependency>
 			<dependency>
 				<groupId>org.codehaus.plexus</groupId>
