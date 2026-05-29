@@ -150,7 +150,7 @@ public class PatchingContext {
     private String serializeUnindented(Object entity) {
         try {
             return mapper.writeValueAsString(entity)
-                .replaceFirst("^---\\s*\\n", "")
+                .replaceFirst("^---\\s*\\n*", "")
                 .trim();
         } catch (JsonProcessingException e) {
             throw new AutomationPackageUpdateException("Error Serializing YAML object", e);

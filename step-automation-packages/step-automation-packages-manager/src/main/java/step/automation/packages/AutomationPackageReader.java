@@ -29,6 +29,7 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.plans.Plan;
 import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchableYamlPrimitive;
 import step.functions.Function;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.nl.RootArtefactType;
@@ -42,13 +43,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -130,7 +128,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
         // apply imported fragments recursively
         if (descriptor != null) {
-            fillAutomationPackageWithImportedFragments(res, descriptor, archive, new HashMap<>());
+            fillAutomationPackageWithImportedFragments(res, descriptor, archive, new HashSet<>());
         }
         return res;
     }
@@ -183,32 +181,32 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
     public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
-        URL descriptorURL = archive.getDescriptorYamlUrl();
-        try (InputStream inputStream = descriptorURL.openStream()) {
+        URL descriptorUrl = archive.getDescriptorYamlUrl();
+        try (InputStream inputStream = descriptorUrl.openStream()) {
             AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
-            descriptor.setFragmentUrl(descriptorURL);
+            descriptor.setFragmentPath(Path.of(descriptorUrl.getPath()));
             AutomationPackageContent content = newContentInstance();
-            Map<String, AutomationPackageFragmentYaml> fragmentMap = new ConcurrentHashMap<>();
-            fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragmentMap);
-            StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(null, AutomationPackageOperationMode.LOCAL, new LocalResourceManagerImpl(Path.of(descriptorURL.getPath()).getParent().toFile()), archive, content, null, null, new HashMap<>());
-            return new AutomationPackageYamlFragmentManager(descriptor, fragmentMap, getOrCreateDescriptorReader(), stagingContext);
+            Set<AutomationPackageFragmentYaml> fragments = new HashSet<>();
+            fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments);
+            StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(null, AutomationPackageOperationMode.LOCAL, new LocalResourceManagerImpl(Path.of(descriptorUrl.getPath()).getParent().toFile()), archive, content, null, null, new HashMap<>());
+            return new AutomationPackageYamlFragmentManager(descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("Failed to read automation package for editing", e);
         }
     }
 
-    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Map<String, AutomationPackageFragmentYaml> fragmentYamlMap) throws AutomationPackageReadingException {
+    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
         if (!fragment.getFragments().isEmpty()) {
-            for (String importedFragmentReference : fragment.getFragments()) {
-                List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
+            for (PatchableYamlPrimitive<String> importedFragmentReference : fragment.getFragments()) {
+                List<URL> resources = archive.getResourcesByPattern(importedFragmentReference.toString());
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = resource.openStream()) {
-                        fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName());
-                        fragmentYamlMap.put(resource.toString(), fragment);
-                        fragment.setFragmentUrl(resource);
-                        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragmentYamlMap);
+                        AutomationPackageFragmentYaml referencedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName());
+                        fragments.add(referencedFragment);
+                        referencedFragment.setFragmentPath(Path.of(resource.getPath()));
+                        fillAutomationPackageWithImportedFragments(targetPackage, referencedFragment, archive, fragments);
                     } catch (IOException e) {
                         throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
                     }

@@ -41,7 +41,7 @@ public class AutomationPackageParameterCollection extends InMemoryCollection<Par
 
     @Override
     public Parameter save(Parameter parameter){
-        return super.save(fragmentManager.saveAdditionalFieldObject(parameter, context -> AutomationPackageParameter.forContext(context, parameter), Parameter.ENTITY_NAME));
+        return super.save(fragmentManager.saveAdditionalFieldObject(parameter, AutomationPackageParameter.fromParameter(parameter), Parameter.ENTITY_NAME));
     }
 
     @Override
