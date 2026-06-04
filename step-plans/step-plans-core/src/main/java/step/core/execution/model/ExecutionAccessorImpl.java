@@ -48,8 +48,8 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
             new IndexField("endTime", Order.DESC, null))));
         collectionDriver.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(new IndexField("planId", Order.ASC, null),
             new IndexField("endTime", Order.DESC, null))));
-		collectionDriver.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(new IndexField("canonicalPlanName",Order.ASC, null),
-				new IndexField("endTime",Order.DESC, null))));
+        collectionDriver.createOrUpdateCompoundIndex(new LinkedHashSet<>(List.of(new IndexField("importResult.canonicalPlanName", Order.ASC, null),
+            new IndexField("endTime", Order.DESC, null))));
     }
 
     @Override
@@ -179,24 +179,46 @@ public class ExecutionAccessorImpl extends AbstractAccessor<Execution> implement
             .collect(Collectors.toList());
     }
 
-	@Override
-	public Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long searchBeforeTimestamp, Set<String> excludeExecutionsIds) {
-		SearchOrder order = new SearchOrder("endTime", -1);
+    @Override
+    public List<Execution> getLastEndedExecutionsByPlanId(String planId, int limit, Long from, Long to) {
+        return getLastEndedExecutionsByAttribute("planId", planId, limit, from, to);
+    }
 
-		List<Filter> filters = new ArrayList<>(List.of(
-				Filters.equals("importResult.canonicalPlanName", canonicalPlanName),
-				Filters.equals("status", ExecutionStatus.ENDED.name())
-		));
+    @Override
+    public List<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long from, Long to) {
+        return getLastEndedExecutionsByAttribute("importResult.canonicalPlanName", canonicalPlanName, limit, from, to);
+    }
 
-		if (searchBeforeTimestamp != null) {
-			filters.add(Filters.lte("endTime", searchBeforeTimestamp));
-		}
-		if (CollectionUtils.isNotEmpty(excludeExecutionsIds)) {
-			Filter ignoreExecutionsFilter = Filters.in("_id", new ArrayList<>(excludeExecutionsIds));
-			filters.add(Filters.not(ignoreExecutionsFilter));
-		}
+    @Override
+    public Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long searchBeforeTimestamp, Set<String> excludeExecutionsIds) {
+        SearchOrder order = new SearchOrder("endTime", -1);
 
-		return collectionDriver
-				.find(Filters.and(filters), order, 0, limit, 0);
-	}
+        List<Filter> filters = new ArrayList<>(List.of(
+            Filters.equals("importResult.canonicalPlanName", canonicalPlanName),
+            Filters.equals("status", ExecutionStatus.ENDED.name())
+        ));
+
+        if (searchBeforeTimestamp != null) {
+            filters.add(Filters.lte("endTime", searchBeforeTimestamp));
+        }
+        if (CollectionUtils.isNotEmpty(excludeExecutionsIds)) {
+            Filter ignoreExecutionsFilter = Filters.in("_id", new ArrayList<>(excludeExecutionsIds));
+            filters.add(Filters.not(ignoreExecutionsFilter));
+        }
+
+        return collectionDriver
+            .find(Filters.and(filters), order, 0, limit, 0);
+    }
+
+    private List<Execution> getLastEndedExecutionsByAttribute(String attribute, String value, int limit, Long from, Long to) {
+        SearchOrder order = new SearchOrder("endTime", -1);
+        List<Filter> filters = new ArrayList<>(List.of(Filters.equals(attribute, value)));
+        if (from != null) {
+            filters.add(Filters.gte("startTime", from));
+        }
+        if (to != null) {
+            filters.add(Filters.lte("startTime", to));
+        }
+        return collectionDriver.find(Filters.and(filters), order, 0, limit, 0).collect(Collectors.toList());
+    }
 }

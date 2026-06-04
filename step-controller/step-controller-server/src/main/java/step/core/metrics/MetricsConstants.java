@@ -70,7 +70,6 @@ public class MetricsConstants {
         .setDisplayName("Agent type");
 
 
-
     public static String getAllAttributeNames() {
         return Stream.of(
                 STATUS_ATTRIBUTE,

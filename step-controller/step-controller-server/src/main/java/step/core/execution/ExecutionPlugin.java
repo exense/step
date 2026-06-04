@@ -21,6 +21,7 @@ package step.core.execution;
 import step.core.GlobalContext;
 import step.core.agents.provisioning.driver.AgentProvisioningStatus;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.collections.Collection;
 import step.core.execution.table.*;
 import step.core.execution.type.ExecutionTypeControllerPlugin;
@@ -42,8 +43,6 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
 
         Collection<ExecutionWrapper> collection = context.getCollectionFactory().getCollection("executions",
             ExecutionWrapper.class);
-        Collection<ReportNode> reportsCollection = context.getCollectionFactory().getCollection("reports",
-            ReportNode.class);
 
         RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
         ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
@@ -64,13 +63,24 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
             return execution;
         }));
 
-
-        tableRegistry.register("leafReports", new Table<>(reportsCollection, "execution-read", false)
-            .withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context)).withResultListFactory(() -> new ArrayList<>() {
-            }));
-        tableRegistry.register("reports", new Table<>(reportsCollection, "execution-read", false)
-            .withTableFiltersFactory(new ReportNodeTableFilterFactory()).withResultListFactory(() -> new ArrayList<>() {
-            }));
+        ReportNodeAccessor reportNodeAccessor = context.getReportNodeAccessor();
+        tableRegistry.register("leafReports", getReportTable(context, true));
+        tableRegistry.register("reports", getReportTable(context, false));
         context.getServiceRegistrationCallback().registerService(ExecutionServices.class);
+    }
+
+    // also used by junit tests
+    protected static Table<ReportNode> getReportTable(AbstractExecutionEngineContext context, boolean filterLeafReport) {
+        ReportNodeAccessor reportNodeAccessor = context.getReportNodeAccessor();
+        Table<ReportNode> reportNodeTable = new Table<>(reportNodeAccessor.getCollectionDriver(), "execution-read", false)
+            .withResultListFactory(() -> new ArrayList<>() {
+            })
+            .withResultItemEnricher(new ReportNodeTableEnricher(reportNodeAccessor));
+        if (filterLeafReport) {
+            reportNodeTable.withTableFiltersFactory(new LeafReportNodeTableFilterFactory(context));
+        } else {
+            reportNodeTable.withTableFiltersFactory(new ReportNodeTableFilterFactory());
+        }
+        return reportNodeTable;
     }
 }

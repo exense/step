@@ -32,7 +32,7 @@ public class StepYamlDeserializersScanner {
      * Scans and returns all {@link StepYamlDeserializer} classes annotated with {@link StepYamlDeserializerAddOn}
      */
     public static Map<Class<?>, Class<?>> scanDeserializerAddons() {
-        Map<Class<?>, Class<?>>  result = new HashMap<>();
+        Map<Class<?>, Class<?>> result = new HashMap<>();
         List<Class<?>> annotatedClasses = new ArrayList<>(CachedAnnotationScanner.getClassesWithAnnotation(StepYamlDeserializerAddOn.LOCATION, StepYamlDeserializerAddOn.class, Thread.currentThread().getContextClassLoader()));
         for (Class<?> annotatedClass : annotatedClasses) {
             StepYamlDeserializerAddOn annotation = annotatedClass.getAnnotation(StepYamlDeserializerAddOn.class);

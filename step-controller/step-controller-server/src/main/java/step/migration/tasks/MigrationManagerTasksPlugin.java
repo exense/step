@@ -55,6 +55,7 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
         migrationManager.register(V28_0_FixEmptyDefaultMavenSettingsMigrationTask.class);
         migrationManager.register(V29_0_UpdateAutomationPackageModel.class);
         migrationManager.register(V29_2_TimeSeriesNewIndexes.class);
+        migrationManager.register(V30_0_ReportNodeAncestorIdsMigrationTask.class);
     }
 
     @Override

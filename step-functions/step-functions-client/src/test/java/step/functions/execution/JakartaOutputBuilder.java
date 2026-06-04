@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static step.core.reports.Error.DEFAULT_ERROR_CODE;
+
 public class JakartaOutputBuilder {
     private JsonObjectBuilder payloadBuilder;
 
@@ -124,7 +126,7 @@ public class JakartaOutputBuilder {
      * @return this instance
      */
     public JakartaOutputBuilder setError(String technicalError) {
-        error = new Error(ErrorType.TECHNICAL, "keyword", technicalError, 0, true);
+        error = new Error(ErrorType.TECHNICAL, "keyword", technicalError, DEFAULT_ERROR_CODE, true);
         return this;
     }
 
@@ -165,7 +167,7 @@ public class JakartaOutputBuilder {
      * @return this instance
      */
     public JakartaOutputBuilder setBusinessError(String businessError) {
-        error = new Error(ErrorType.BUSINESS, "keyword", businessError, 0, true);
+        error = new Error(ErrorType.BUSINESS, "keyword", businessError, DEFAULT_ERROR_CODE, true);
         return this;
     }
 

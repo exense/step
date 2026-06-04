@@ -36,6 +36,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static step.core.metrics.ExecutionMetricSample.SAMPLE_SAMPLE_TIME;
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
 import static step.core.metrics.StepMetricSample.METRIC_TYPE;
@@ -71,7 +72,7 @@ public class TimeSeriesHandler {
             return attribute;
         }
     };
-    public static final String SAMPLE_SAMPLE_TIME = "sample.sampleTime";
+
     private final Set<String> includedAttributesWithPrefix;
     private final Set<String> excludedAttributesWithPrefix;
 

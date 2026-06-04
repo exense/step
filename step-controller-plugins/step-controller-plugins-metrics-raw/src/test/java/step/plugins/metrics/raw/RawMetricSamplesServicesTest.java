@@ -260,7 +260,7 @@ public class RawMetricSamplesServicesTest {
 
     private void save(String rnId, MetricSample sample) {
         ExecutionMetricSample sms = new ExecutionMetricSample(sample, EXEC_ID, rnId, PLAN_ID,
-            "myPlan", "", "", "my test", null, null, null, null);
+            "myPlan", "canonical", "", "", "my test", null, null, null, null);
         accessor.save(Collections.singletonList(sms));
     }
 

@@ -113,5 +113,15 @@ public interface ReportNodeAccessor extends Accessor<ReportNode>, ReportTreeAcce
 
     void removeNodesByExecutionID(String executionID);
 
-    Stream<ReportNode> getReportNodesWithContributingErrors(String executionId, Integer skip, Integer limit);
+    /**
+     * Search contributing error by execution ID (mandatory) and optional ancestor ID
+     * While a search by ancestor ID would be technically possible, it wouldn't be performance in terms of index usage (due to array specific index type)
+     *
+     * @param executionId the execution ID to filter by
+     * @param ancestorId  the optional ancestor ID to filter by
+     * @param skip        the skip to be applied to the query (i.e. Offset)
+     * @param limit       the limit to be applied to the query
+     * @return the query results as a stream of ReportNode
+     */
+    Stream<ReportNode> getReportNodesWithContributingErrors(String executionId, String ancestorId, Integer skip, Integer limit);
 }

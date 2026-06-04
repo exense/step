@@ -144,6 +144,7 @@ public class TimeSeriesBucketingHandlerTest {
             "rn-1",          // rnId
             "plan-1",        // planId
             "MyPlan",        // plan name
+            "canonical",     // canonicalPlanName
             "",              // taskId
             "",              // schedule
             "",              // execution description

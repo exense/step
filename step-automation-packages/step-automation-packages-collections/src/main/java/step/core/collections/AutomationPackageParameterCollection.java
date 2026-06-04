@@ -23,7 +23,7 @@ import step.core.collections.inmemory.InMemoryCollection;
 import step.parameter.Parameter;
 import step.parameter.automation.AutomationPackageParameter;
 
-public class AutomationPackageParameterCollection extends InMemoryCollection<Parameter> implements Collection<Parameter>  {
+public class AutomationPackageParameterCollection extends InMemoryCollection<Parameter> implements Collection<Parameter> {
 
 
     private final AutomationPackageYamlFragmentManager fragmentManager;
@@ -40,7 +40,7 @@ public class AutomationPackageParameterCollection extends InMemoryCollection<Par
     }
 
     @Override
-    public Parameter save(Parameter parameter){
+    public Parameter save(Parameter parameter) {
         return super.save(fragmentManager.saveAdditionalFieldObject(parameter, context -> AutomationPackageParameter.forContext(context, parameter), Parameter.ENTITY_NAME));
     }
 

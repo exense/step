@@ -23,7 +23,7 @@ import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.collections.inmemory.InMemoryCollection;
 import step.functions.Function;
 
-public class AutomationPackageFunctionCollection extends InMemoryCollection<Function> implements Collection<Function>  {
+public class AutomationPackageFunctionCollection extends InMemoryCollection<Function> implements Collection<Function> {
 
 
     private final AutomationPackageYamlFragmentManager fragmentManager;
@@ -40,7 +40,7 @@ public class AutomationPackageFunctionCollection extends InMemoryCollection<Func
     }
 
     @Override
-    public Function save(Function p){
+    public Function save(Function p) {
         return super.save(fragmentManager.saveFunction(p));
     }
 

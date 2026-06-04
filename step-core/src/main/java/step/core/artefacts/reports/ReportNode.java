@@ -31,12 +31,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @JsonTypeInfo(use = Id.CLASS, property = "_class")
 public class ReportNode extends AbstractIdentifiableObject {
 
     protected ObjectId parentID;
-    protected String path;
+    protected Set<String> ancestorIds;
     protected String name;
     protected String executionID;
     protected ObjectId artefactID;
@@ -70,12 +71,12 @@ public class ReportNode extends AbstractIdentifiableObject {
         this.parentID = parentID;
     }
 
-    public String getPath() {
-        return path;
+    public Set<String> getAncestorIds() {
+        return ancestorIds;
     }
 
-    public void setPath(String path) {
-        this.path = path;
+    public void setAncestorIds(Set<String> ancestorIds) {
+        this.ancestorIds = ancestorIds;
     }
 
     public String getName() {

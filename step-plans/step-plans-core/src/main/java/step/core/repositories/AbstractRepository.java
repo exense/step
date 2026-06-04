@@ -46,10 +46,10 @@ public abstract class AbstractRepository implements Repository {
         }
 
         return repositoryParameters.entrySet().stream()
-                .filter(entry -> this.canonicalRepositoryParameters.contains(entry.getKey()))
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> e.getKey() + "=" + e.getValue())
-                .collect(Collectors.joining("&"));
+            .filter(entry -> this.canonicalRepositoryParameters.contains(entry.getKey()))
+            .sorted(Map.Entry.comparingByKey())
+            .map(e -> e.getKey() + "=" + e.getValue())
+            .collect(Collectors.joining("&"));
     }
 
 

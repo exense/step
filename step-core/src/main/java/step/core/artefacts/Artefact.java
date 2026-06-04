@@ -31,6 +31,9 @@ public @interface Artefact {
 
     Class<? extends ReportNode> report() default ReportNode.class;
 
+    /**
+     * @return true (default) for artefacts supporting the execution of children artefacts or false for artefact that ignores children (i.e. leaf plan nodes)
+     */
     boolean block() default true;
 
     /**

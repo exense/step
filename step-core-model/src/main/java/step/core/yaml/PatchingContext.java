@@ -66,19 +66,21 @@ public class PatchingContext {
         return initialLines.subList(bounds.startLineNumber - 1, bounds.endLineNumber);
     }
 
-    public record ChunkBounds(int startLineNumber, int endLineNumber) implements Comparable<ChunkBounds> {
+    public record ChunkBounds(int startLineNumber, int endLineNumber) implements Comparable<ChunkBounds>
+
+    {
         private static final Comparator<ChunkBounds> COMPARATOR = Comparator
             .comparingInt(ChunkBounds::startLineNumber) // lower startLine first
             .thenComparing(Comparator.comparingInt(ChunkBounds::endLineNumber).reversed()); // larger endLine (i.e. larger chunk) first
 
         @Override
-        public int compareTo(ChunkBounds that) {
-            return COMPARATOR.compare(this, that);
-        }
+        public int compareTo (ChunkBounds that){
+        return COMPARATOR.compare(this, that);
+    }
 
-        public boolean encompasses(ChunkBounds inner) {
-            return inner.startLineNumber >= this.startLineNumber && inner.endLineNumber <= this.endLineNumber;
-        }
+        public boolean encompasses (ChunkBounds inner){
+        return inner.startLineNumber >= this.startLineNumber && inner.endLineNumber <= this.endLineNumber;
+    }
     }
 
     public String getCurrentYaml() {
