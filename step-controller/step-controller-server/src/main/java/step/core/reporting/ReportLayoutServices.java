@@ -76,7 +76,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     @Override
     public Map<String, String> findNamesByIds(List<String> ids) {
         return reportLayoutAccessor.findByIds(ids).peek(l -> checkLayoutRight(l, READ_RIGHT)).collect(Collectors.toMap(a -> a.getId().toHexString(), a ->
-                a.getAttribute(AbstractOrganizableObject.NAME)
+            a.getAttribute(AbstractOrganizableObject.NAME)
         ));
     }
 
@@ -98,7 +98,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     @GET
     @Path("/list")
     @Produces(MediaType.APPLICATION_JSON)
-    @Secured(right="{entity}-read")
+    @Secured(right = "{entity}-read")
     public List<ReportLayout> getAllReportLayouts() {
         return reportLayoutAccessor.getAccessibleReportLayoutsDefinitions(getSession().getUser().getUsername());
     }

@@ -60,7 +60,7 @@ public class ExcelFunctions {
      *                     als Attachment zugefuegten Exceldatei.
      * @param sheetName    Name des zu lesenden Blattes
      * @param cellIndex    Zellenadressierung in der Form 'A::1' (Spalte, Zeile)
-     * @return                Zelleninhalt als String
+     * @return Zelleninhalt als String
      */
     public static String getCell(String workbookPath, String sheetName, String cellIndex) {
         ExcelFileLookup excelFileLookup = new ExcelFileLookup(null);

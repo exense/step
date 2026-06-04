@@ -23,7 +23,7 @@ import step.core.collections.inmemory.InMemoryCollection;
 import step.core.plans.Plan;
 import step.plans.parser.yaml.YamlPlan;
 
-public class AutomationPackagePlanCollection extends InMemoryCollection<Plan> implements Collection<Plan>  {
+public class AutomationPackagePlanCollection extends InMemoryCollection<Plan> implements Collection<Plan> {
 
 
     private final AutomationPackageYamlFragmentManager fragmentManager;
@@ -40,7 +40,7 @@ public class AutomationPackagePlanCollection extends InMemoryCollection<Plan> im
     }
 
     @Override
-    public Plan save(Plan p){
+    public Plan save(Plan p) {
         return super.save(fragmentManager.savePlan(p));
     }
 

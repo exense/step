@@ -240,7 +240,8 @@ public class AutomationPackageYamlFragmentManager {
                     if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(oldRelativePath.toString()))) {
                         referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), referencePath.toString()));
                         referencingFragment.writeToDisk();
-                    };
+                    }
+                    ;
                 } catch (IOException ignored) {
                 }
             }

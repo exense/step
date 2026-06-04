@@ -237,6 +237,34 @@ public class ExecutionServices extends AbstractStepAsyncServices {
         return result;
     }
 
+    @Operation(description = "Returns the last executions by planId")
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/search/last/by/plan/{id}")
+    @Secured(right = "execution-read")
+    public List<Execution> getLastExecutionsByPlan(
+        @PathParam("id") String planId,
+        @QueryParam("limit") int limit,
+        @QueryParam("from") Long from,
+        @QueryParam("to") Long to) {
+        return executionAccessor.getLastEndedExecutionsByPlanId(planId, limit, from, to);
+    }
+
+    @Operation(description = "Returns the last executions by canonical plan name")
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/search/last/by/canonical-plan/{name}")
+    @Secured(right = "execution-read")
+    public List<Execution> getLastExecutionsByCanonicalPlanName(
+        @PathParam("name") String canonicalPlanName,
+        @QueryParam("limit") int limit,
+        @QueryParam("from") Long from,
+        @QueryParam("to") Long to) {
+        return executionAccessor.getLastEndedExecutionsByCanonicalPlanName(canonicalPlanName, limit, from, to);
+    }
+
     @Operation(description = "Returns the list of report nodes with contributing errors for the given execution")
     @GET
     @Path("/{id}/reportnodes-with-errors")
@@ -245,8 +273,9 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     public List<ReportNode> getReportNodeWithContributingErrors(@PathParam("id") String executionId, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
         skip = skip != null ? skip : 0;
         limit = limit != null ? limit : 1000;
-        Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrors(executionId, skip, limit);
-        return stream.collect(Collectors.toList());
+        try (Stream<ReportNode> stream = getContext().getReportAccessor().getReportNodesWithContributingErrors(executionId, null, skip, limit)) {
+            return stream.collect(Collectors.toList());
+        }
     }
 
     @Operation(description = "Returns the list of report nodes by execution id and artefact hash")
@@ -405,7 +434,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     @Secured(right = "execution-delete")
     public void deleteExecution(@PathParam("id") String id) {
         Execution execution = executionAccessor.get(id);
-        if (execution.getStatus().equals(ExecutionStatus.ENDED)) {
+        if (!execution.getStatus().equals(ExecutionStatus.ENDED)) {
             throw new ControllerServiceException("Only ended executions can be deleted.");
         }
         executionAccessor.remove(new ObjectId(id));

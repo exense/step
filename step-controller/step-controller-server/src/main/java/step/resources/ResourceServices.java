@@ -83,7 +83,7 @@ public class ResourceServices extends AbstractStepAsyncServices {
         if (resourceType == null || resourceType.isEmpty()) {
             throw new ControllerServiceException(INVALID_RESOURCE_THE_RESOURCE_HAS_NO_RESOURCE_TYPE_SET);
         }
-        checkRightIfDefined(RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + resourceType +  RIGHT_SEPARATOR + right);
+        checkRightIfDefined(RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + resourceType + RIGHT_SEPARATOR + right);
     }
 
     private void checkResourceTypeRight(Resource resource, String right) {

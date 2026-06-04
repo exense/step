@@ -81,6 +81,7 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
+import static step.core.reports.Error.DEFAULT_ERROR_CODE;
 import static step.planbuilder.BaseArtefacts.*;
 import static step.plugins.parametermanager.ParameterManagerPlugin.CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS;
 
@@ -528,7 +529,7 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
     private static MyFunction newFailingFunction() {
         MyFunction function = new MyFunction(input -> {
             Output<JsonObject> output = new Output<>();
-            output.setError(new Error(ErrorType.TECHNICAL, "keyword", "My Error", 0, true));
+            output.setError(new Error(ErrorType.TECHNICAL, "keyword", "My Error", DEFAULT_ERROR_CODE, true));
             return output;
         });
         function.addAttribute(AbstractOrganizableObject.NAME, "MyFunction");

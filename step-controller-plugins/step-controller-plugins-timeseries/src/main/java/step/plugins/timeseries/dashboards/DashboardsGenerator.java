@@ -181,6 +181,7 @@ public class DashboardsGenerator {
             .setDashlets(Arrays.asList(
                 new DashboardItem()
                     .setName("Execution duration")
+                    .setId(UUID.randomUUID().toString())
                     .setType(DashletType.CHART)
                     .setGrouping(Arrays.asList(EXECUTION_ATTRIBUTE.getName(), EXECUTION_BOOLEAN_RESULT.getName()))
                     .setAttributes(durationMetric.getAttributes())
@@ -199,6 +200,7 @@ public class DashboardsGenerator {
                             .setColorizationType(AxesColorizationType.STROKE))),
                 new DashboardItem()
                     .setName("Execution throughput")
+                    .setId(UUID.randomUUID().toString())
                     .setType(DashletType.CHART)
                     .setGrouping(Collections.emptyList())
                     .setAttributes(durationMetric.getAttributes())
@@ -221,6 +223,7 @@ public class DashboardsGenerator {
                     ),
                 new DashboardItem()
                     .setName("Execution count")
+                    .setId(UUID.randomUUID().toString())
                     .setType(DashletType.CHART)
                     .setGrouping(List.of(EXECUTION_ATTRIBUTE.getName()))
                     .setAttributes(countMetric.getAttributes())
@@ -239,6 +242,7 @@ public class DashboardsGenerator {
                             .setColorizationType(AxesColorizationType.FILL))),
                 new DashboardItem()
                     .setName("Execution failure count")
+                    .setId(UUID.randomUUID().toString())
                     .setType(DashletType.CHART)
                     .setGrouping(List.of(EXECUTION_ATTRIBUTE.getName()))
                     .setAttributes(failureCountMetric.getAttributes())
@@ -257,6 +261,7 @@ public class DashboardsGenerator {
                             .setColorizationType(AxesColorizationType.FILL))),
                 new DashboardItem()
                     .setName("Execution failure percentage")
+                    .setId(UUID.randomUUID().toString())
                     .setType(DashletType.CHART)
                     .setGrouping(Collections.emptyList())
                     .setAttributes(failurePercentageMetric.getAttributes())
@@ -275,6 +280,7 @@ public class DashboardsGenerator {
                             .setColorizationType(AxesColorizationType.FILL))),
                 new DashboardItem()
                     .setName("Execution failure count by error code")
+                    .setId(UUID.randomUUID().toString())
                     .setType(DashletType.CHART)
                     .setGrouping(List.of(ERROR_CODE_ATTRIBUTE.getName()))
                     .setAttributes(failureCountByErrorCodeMetric.getAttributes())
@@ -357,6 +363,7 @@ public class DashboardsGenerator {
     private static DashboardItem createGridMetricChartDashlet(MetricType metric, String name) {
         return new DashboardItem()
             .setName(name)
+            .setId(UUID.randomUUID().toString())
             .setType(DashletType.CHART)
             .setGrouping(metric.getDefaultGroupingAttributes())
             .setAttributes(metric.getAttributes())
@@ -429,6 +436,7 @@ public class DashboardsGenerator {
     private static DashboardItem createSummaryDashlet(MetricType metric) {
         return new DashboardItem()
             .setName("Performance Overview")
+            .setId(UUID.randomUUID().toString())
             .setType(DashletType.CHART)
             .setGrouping(Collections.emptyList())
             .setAttributes(metric.getAttributes())
@@ -454,6 +462,7 @@ public class DashboardsGenerator {
     private static DashboardItem createStatusDashlet(MetricType metric) {
         return new DashboardItem()
             .setName("Statuses")
+            .setId(UUID.randomUUID().toString())
             .setType(DashletType.CHART)
             .setGrouping(Arrays.asList("rnStatus"))
             .setAttributes(metric.getAttributes())
@@ -475,6 +484,7 @@ public class DashboardsGenerator {
     private static DashboardItem createResponseTimeDashlet(MetricType metric) {
         return new DashboardItem()
             .setName("Response Times")
+            .setId(UUID.randomUUID().toString())
             .setType(DashletType.CHART)
             .setGrouping(Collections.emptyList())
             .setAttributes(metric.getAttributes())
@@ -496,6 +506,7 @@ public class DashboardsGenerator {
     private static DashboardItem createThroughputDashlet(MetricType metric) {
         return new DashboardItem()
             .setName("Throughput")
+            .setId(UUID.randomUUID().toString())
             .setType(DashletType.CHART)
             .setGrouping(Collections.emptyList())
             .setAttributes(metric.getAttributes())
@@ -544,14 +555,16 @@ public class DashboardsGenerator {
 
     private static DashboardItem createCustomMetricTableDashlet(MetricType metric, List<TableDashletSettings.ColumnSelection> columns) {
         return new DashboardItem()
-            .setId(UUID.randomUUID().toString())
             .setName(metric.getDisplayName())
+            .setId(UUID.randomUUID().toString())
             .setType(DashletType.TABLE)
             .setGrouping(metric.getDefaultGroupingAttributes())
             .setAttributes(metric.getAttributes())
             .setFilters(Collections.emptyList())
             .setMetricKey(metric.getName())
             .setInheritGlobalFilters(true)
+            .setInheritSpecificFiltersOnly(true)
+            .setSpecificFiltersToInherit(Arrays.asList(NAME_ATTRIBUTE.getName(), PLAN_ATTRIBUTE.getName(), EXECUTION_ATTRIBUTE.getName(), TASK_ATTRIBUTE.getName()))
             .setInheritGlobalGrouping(true)
             .setReadonlyAggregate(true)
             .setReadonlyGrouping(true)
@@ -563,6 +576,7 @@ public class DashboardsGenerator {
     private static DashboardItem createCustomMetricChartDashlet(MetricType metric, String masterChartId, MetricAggregation aggregation, String unit) {
         return new DashboardItem()
             .setName(metric.getDisplayName())
+            .setId(UUID.randomUUID().toString())
             .setType(DashletType.CHART)
             .setMasterChartId(masterChartId)
             .setGrouping(metric.getDefaultGroupingAttributes())
@@ -570,6 +584,8 @@ public class DashboardsGenerator {
             .setFilters(Collections.emptyList())
             .setMetricKey(metric.getName())
             .setInheritGlobalFilters(true)
+            .setInheritSpecificFiltersOnly(true)
+            .setSpecificFiltersToInherit(Arrays.asList(NAME_ATTRIBUTE.getName(), PLAN_ATTRIBUTE.getName(), EXECUTION_ATTRIBUTE.getName(), TASK_ATTRIBUTE.getName()))
             .setInheritGlobalGrouping(true)
             .setReadonlyAggregate(false)
             .setReadonlyGrouping(false)
