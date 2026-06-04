@@ -244,10 +244,10 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     @Path("/search/last/by/plan/{id}")
     @Secured(right = "execution-read")
     public List<Execution> getLastExecutionsByPlan(
-            @PathParam("id") String planId,
-            @QueryParam("limit") int limit,
-            @QueryParam("from") Long from,
-            @QueryParam("to") Long to) {
+        @PathParam("id") String planId,
+        @QueryParam("limit") int limit,
+        @QueryParam("from") Long from,
+        @QueryParam("to") Long to) {
         return executionAccessor.getLastEndedExecutionsByPlanId(planId, limit, from, to);
     }
 
@@ -258,10 +258,10 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     @Path("/search/last/by/canonical-plan/{name}")
     @Secured(right = "execution-read")
     public List<Execution> getLastExecutionsByCanonicalPlanName(
-            @PathParam("name") String canonicalPlanName,
-            @QueryParam("limit") int limit,
-            @QueryParam("from") Long from,
-            @QueryParam("to") Long to) {
+        @PathParam("name") String canonicalPlanName,
+        @QueryParam("limit") int limit,
+        @QueryParam("from") Long from,
+        @QueryParam("to") Long to) {
         return executionAccessor.getLastEndedExecutionsByCanonicalPlanName(canonicalPlanName, limit, from, to);
     }
 

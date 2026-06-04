@@ -58,5 +58,5 @@ public interface ExecutionAccessor extends Accessor<Execution>, ExecutionProvide
 
     List<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long from, Long to);
 
-	Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long searchBeforeTimestamp, Set<String> excludeExecutionsIds);
+    Stream<Execution> getLastEndedExecutionsByCanonicalPlanName(String canonicalPlanName, int limit, Long searchBeforeTimestamp, Set<String> excludeExecutionsIds);
 }

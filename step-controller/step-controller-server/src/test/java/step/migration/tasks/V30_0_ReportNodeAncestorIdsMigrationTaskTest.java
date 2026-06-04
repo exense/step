@@ -114,7 +114,7 @@ public class V30_0_ReportNodeAncestorIdsMigrationTaskTest {
         assertEquals(2, results.size());
 
         Document migrated = results.stream().filter(d -> d.get("ancestorIds") != null).findFirst()
-                .orElseThrow(() -> new AssertionError("No migrated document found"));
+            .orElseThrow(() -> new AssertionError("No migrated document found"));
         assertNull(migrated.getString("path"));
         List<?> ancestorIds = (List<?>) migrated.get("ancestorIds");
         assertEquals(2, ancestorIds.size());
@@ -122,7 +122,7 @@ public class V30_0_ReportNodeAncestorIdsMigrationTaskTest {
         assertEquals(ID_2, ancestorIds.get(1));
 
         Document untouched = results.stream().filter(d -> "no-path".equals(d.getString("name"))).findFirst()
-                .orElseThrow(() -> new AssertionError("Untouched document not found"));
+            .orElseThrow(() -> new AssertionError("Untouched document not found"));
         assertNull(untouched.get("ancestorIds"));
     }
 
@@ -132,6 +132,6 @@ public class V30_0_ReportNodeAncestorIdsMigrationTaskTest {
 
     private static Document findFirst(Collection<Document> reports) {
         return reports.find(Filters.empty(), null, null, null, 0).findFirst()
-                .orElseThrow(() -> new AssertionError("No document found"));
+            .orElseThrow(() -> new AssertionError("No document found"));
     }
 }

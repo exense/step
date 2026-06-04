@@ -56,7 +56,7 @@ public class V30_0_ReportNodeAncestorIdsMigrationTask extends AsyncMigrationTask
     public static void convertPathToAncestorIds(Collection<Document> reports) {
         AtomicLong counter = new AtomicLong(0);
         try (ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1,
-                BasicThreadFactory.builder().namingPattern("ancestor-ids-migration-progress-%d").daemon(true).build())) {
+            BasicThreadFactory.builder().namingPattern("ancestor-ids-migration-progress-%d").daemon(true).build())) {
             scheduler.scheduleAtFixedRate(
                 () -> logger.info("[{}] {} nodes migrated so far...", TASK_NAME, counter.get()),
                 1, 1, TimeUnit.MINUTES);
