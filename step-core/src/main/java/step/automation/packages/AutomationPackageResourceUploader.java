@@ -40,10 +40,12 @@ public class AutomationPackageResourceUploader {
     private final Map<String, String> uniqueResourceReferences = new ConcurrentHashMap<>();
 
     public String applyUniqueResourceReference(String resourceReference,
-                                         String resourceType,
-                                         StagingAutomationPackageContext context) {
+                                               String resourceType,
+                                               StagingAutomationPackageContext context) {
         return uniqueResourceReferences.computeIfAbsent(resourceReference, key -> applyResourceReference(resourceReference, resourceType, context));
-    };
+    }
+
+    ;
 
     public String applyResourceReference(String resourceReference,
                                          String resourceType,

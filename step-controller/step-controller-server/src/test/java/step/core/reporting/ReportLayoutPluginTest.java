@@ -51,10 +51,12 @@ public class ReportLayoutPluginTest {
 
     private void setPresetsFolder(File folder) {
         context.getConfiguration().putProperty(
-                ReportLayoutPlugin.PRESET_FOLDER_PATH_CONFIG_KEY, folder.getAbsolutePath());
+            ReportLayoutPlugin.PRESET_FOLDER_PATH_CONFIG_KEY, folder.getAbsolutePath());
     }
 
-    /** Writes a preset JSON file with a fresh ObjectId. Returns the generated id. */
+    /**
+     * Writes a preset JSON file with a fresh ObjectId. Returns the generated id.
+     */
     private String writePresetFile(File folder, String fileName, String name) throws IOException {
         String id = new ObjectId().toHexString();
         writePresetFileWithId(folder, fileName, name, id, "{\"type\":\"test\"}");
@@ -70,11 +72,11 @@ public class ReportLayoutPluginTest {
 
     private List<ReportLayout> getAllPresets() {
         return accessor.getCollectionDriver()
-                .find(step.core.collections.Filters.equals(
-                        ReportLayout.FIELD_VISIBILITY,
-                        ReportLayout.ReportLayoutVisibility.Preset.name()),
-                        null, null, null, 0)
-                .collect(Collectors.toList());
+            .find(step.core.collections.Filters.equals(
+                    ReportLayout.FIELD_VISIBILITY,
+                    ReportLayout.ReportLayoutVisibility.Preset.name()),
+                null, null, null, 0)
+            .collect(Collectors.toList());
     }
 
     // --- initializeData with valid folder ---
@@ -106,8 +108,8 @@ public class ReportLayoutPluginTest {
         List<ReportLayout> presets = getAllPresets();
         assertEquals(3, presets.size());
         List<String> names = presets.stream()
-                .map(p -> p.getAttribute(AbstractOrganizableObject.NAME))
-                .collect(Collectors.toList());
+            .map(p -> p.getAttribute(AbstractOrganizableObject.NAME))
+            .collect(Collectors.toList());
         assertTrue(names.contains("Alpha"));
         assertTrue(names.contains("Beta"));
         assertTrue(names.contains("Gamma"));
@@ -221,8 +223,8 @@ public class ReportLayoutPluginTest {
     @Test
     public void initializeData_missingFolder_createsNoPresets() throws Exception {
         context.getConfiguration().putProperty(
-                ReportLayoutPlugin.PRESET_FOLDER_PATH_CONFIG_KEY,
-                "/nonexistent/path/to/presets");
+            ReportLayoutPlugin.PRESET_FOLDER_PATH_CONFIG_KEY,
+            "/nonexistent/path/to/presets");
 
         plugin.initializeData(context);
 
@@ -236,8 +238,8 @@ public class ReportLayoutPluginTest {
         accessor.save(existing);
 
         context.getConfiguration().putProperty(
-                ReportLayoutPlugin.PRESET_FOLDER_PATH_CONFIG_KEY,
-                "/nonexistent/path/to/presets");
+            ReportLayoutPlugin.PRESET_FOLDER_PATH_CONFIG_KEY,
+            "/nonexistent/path/to/presets");
 
         plugin.initializeData(context);
 

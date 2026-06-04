@@ -68,7 +68,7 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
         super.initializeData(context);
         // Drop all existing presets - the folder is the source of truth at startup
         reportLayoutAccessor.getCollectionDriver().remove(
-                Filters.equals(ReportLayout.FIELD_VISIBILITY, ReportLayout.ReportLayoutVisibility.Preset.name()));
+            Filters.equals(ReportLayout.FIELD_VISIBILITY, ReportLayout.ReportLayoutVisibility.Preset.name()));
 
         // Load presets from the configured folder
         File presetsFolder = new File(context.getConfiguration().getProperty(PRESET_FOLDER_PATH_CONFIG_KEY, PRESET_FOLDER_PATH_DEFAULT));
@@ -85,7 +85,7 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
                             reportLayout.setId(new ObjectId(layoutJson.id));
                             reportLayoutAccessor.save(reportLayout);
                         } else {
-                            logger.error("Invalid json file: {}, the id {} has been tempered with and is not a valid ObjectId", jsonFile.getAbsolutePath(),  layoutJson.id);
+                            logger.error("Invalid json file: {}, the id {} has been tempered with and is not a valid ObjectId", jsonFile.getAbsolutePath(), layoutJson.id);
                         }
                     } catch (Exception e) {
                         logger.error("Failed to load preset layout from file '{}'", jsonFile.getAbsolutePath(), e);

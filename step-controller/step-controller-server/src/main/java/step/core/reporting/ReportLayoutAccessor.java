@@ -25,9 +25,9 @@ public class ReportLayoutAccessor extends AbstractAccessor<ReportLayout> {
     public List<ReportLayout> getAccessibleReportLayoutsDefinitions(String userName) {
         Or ownerOrShared = Filters.or(List.of(Filters.equals(FIELD_VISIBILITY, Preset.name()), Filters.equals(FIELD_VISIBILITY, Shared.name()), Filters.equals("creationUser", userName)));
         return this.getCollectionDriver()
-                .find(ownerOrShared, new SearchOrder(ATTRIBUTES_FIELD_NAME + "." + AbstractOrganizableObject.NAME, ASC.numeric), null, null, 0)
-                .peek(reportLayout -> reportLayout.layout = null)
-                .collect(Collectors.toList());
+            .find(ownerOrShared, new SearchOrder(ATTRIBUTES_FIELD_NAME + "." + AbstractOrganizableObject.NAME, ASC.numeric), null, null, 0)
+            .peek(reportLayout -> reportLayout.layout = null)
+            .collect(Collectors.toList());
     }
 
 }
