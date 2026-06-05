@@ -54,6 +54,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class AutomationPackageYamlFragmentManager {
 
@@ -314,7 +315,8 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     private Optional<AutomationPackageFragmentYaml> determineReferencingFragment(Path path) {
-        for (AutomationPackageFragmentYaml fragment : fragments) {
+
+        for (AutomationPackageFragmentYaml fragment : Stream.concat(Stream.of(descriptorYaml), fragments.stream()).toList()) {
             for (PatchableYamlPrimitive<String> fragmentPathPattern : fragment.getFragments()) {
                 if (resourcePatchMatchingResolver.isMatchingPath(fragmentPathPattern.getValue(), path)) {
                     return Optional.of(fragment);

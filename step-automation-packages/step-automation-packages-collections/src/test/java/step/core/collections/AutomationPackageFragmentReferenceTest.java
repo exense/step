@@ -117,4 +117,71 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
             destinationDirectory.toPath()
                 .resolve("automation-package.yml"));
     }
+
+    @Test
+    public void testAddTwoPlansToNewFragmentAndRemoveOne() throws IOException {
+
+        Sequence sequence = new Sequence();
+        Echo echo = new Echo();
+        echo.setText(new DynamicValue<>("Hello World"));
+        sequence.addChild(echo);
+
+        Plan plan = new Plan(sequence);
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put(AbstractArtefact.NAME, "Hello World Plan");
+        plan.setAttributes(attributes);
+
+        setPropertiesWriteMode(YamlPlan.PLANS_ENTITY_NAME, "newPlansPath", AutomationPackageYamlFragmentManager.NewObjectFragmentMode.PER_OBJECT);
+
+        planCollection.save(plan);
+
+        assertFilesEqual(
+            expectedFilesPath
+                .resolve("Hello World Plan.yml"),
+            destinationDirectory.toPath()
+                .resolve("newPlansPath")
+                .resolve("Hello World Plan.yml")
+        );
+        assertFilesEqual(
+            expectedFilesPath
+                .resolve("descriptorAfterNewFragmentReference.yml"),
+            destinationDirectory.toPath()
+                .resolve("automation-package.yml")
+        );
+
+        Plan plan2 = new Plan(sequence);
+        Map<String, String> attributes2 = new HashMap<>();
+        attributes2.put(AbstractArtefact.NAME, "This Plan was renamed");
+        plan2.setAttributes(attributes2);
+
+        planCollection.save(plan2);
+
+        assertFilesEqual(
+            expectedFilesPath
+                .resolve("This Plan was renamed.yml"),
+            destinationDirectory.toPath()
+                .resolve("newPlansPath")
+                .resolve("This Plan was renamed.yml")
+        );
+
+        assertFilesEqual(
+            expectedFilesPath
+                .resolve("descriptorAfterNewFragmentReference.yml"),
+            destinationDirectory.toPath()
+                .resolve("automation-package.yml"));
+
+        planCollection.remove(Filters.equals("attributes.name", "Hello World Plan"));
+
+        assertFalse(Files.exists(
+            destinationDirectory.toPath()
+                .resolve("newPlansPath")
+                .resolve("Hello World Plan.yml")
+        ));
+
+        assertFilesEqual(
+            expectedFilesPath
+                .resolve("descriptorAfterNewFragmentReference.yml"),
+            destinationDirectory.toPath()
+                .resolve("automation-package.yml"));
+    }
 }
