@@ -57,4 +57,6 @@ public interface AutomationPackageFragmentYaml {
     void setPatchingContext(PatchingContext context);
 
     void writeToDisk();
+
+    boolean isEmpty();
 }

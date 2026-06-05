@@ -244,15 +244,47 @@ public class AutomationPackageYamlFragmentManager {
                 AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
                     .orElse(descriptorYaml);
 
+                String newReference = resourcePatchMatchingResolver.getFragmentReferenceString(determineObjectRelativePath(newEntity, fieldName, true));
+                String oldReference = resourcePatchMatchingResolver.getFragmentReferenceString(oldRelativePath);
 
-                Path referencePath = determineObjectRelativePath(newEntity, fieldName, true);
-                if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(resourcePatchMatchingResolver.getFragmentReferenceString(oldRelativePath)))) {
-                    referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), resourcePatchMatchingResolver.getFragmentReferenceString(referencePath)));
+                if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(oldReference))) {
+                    referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), newReference));
                     referencingFragment.writeToDisk();
                 };
             }
         }
         fragment.writeToDisk();
+    }
+
+    private <BO extends AbstractOrganizableObject, T extends PatchableYamlModel> void removeFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, BO object) {
+
+        PatchableYamlModel yamlObject = patchableMap.get(object);
+        entityList.remove(yamlObject);
+
+        patchableMap.remove(object);
+        fragmentMap.remove(object);
+
+        if (fragment.isEmpty()) {
+            try {
+                FileUtils.delete(fragment.getFragmentPath().toFile());
+
+                Optional<AutomationPackageFragmentYaml> optionalReferencingFragment = determineReferencingFragment(fragment.getFragmentPath());
+
+                if (optionalReferencingFragment.isPresent()) {
+                    AutomationPackageFragmentYaml referencingFragment = optionalReferencingFragment.get();
+                    String relativeFragmentReference = resourcePatchMatchingResolver.getFragmentReferenceString(apRoot.relativize(fragment.getFragmentPath()));
+                    if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(relativeFragmentReference))) {
+                        referencingFragment.writeToDisk();
+                    };
+
+                    fragments.remove(fragment);
+                }
+            } catch (IOException e) {
+                throw new AutomationPackageConcurrentEditException(String.format("%s was removed outside the editor", fragment.getFragmentPath()));
+            }
+        } else {
+            fragment.writeToDisk();
+        }
     }
 
     private AutomationPackageFragmentYaml fragmentForNewObject(PatchableYamlModel p, String fieldName) {
@@ -327,41 +359,18 @@ public class AutomationPackageYamlFragmentManager {
 
     public void removePlan(Plan plan) {
         AutomationPackageFragmentYaml fragment = fragmentMap.get(plan);
-        YamlPlan yamlPlan = (YamlPlan) patchableMap.get(plan);
-
-        fragment.getPlans().remove(yamlPlan);
-
-        patchableMap.remove(plan);
-        fragmentMap.remove(plan);
-
-        fragment.writeToDisk();
+        removeFragmentEntity(fragment, fragment.getPlans(), plan);
     }
 
     public void removeFunction(step.functions.Function function) {
         AutomationPackageFragmentYaml fragment = fragmentMap.get(function);
-        YamlAutomationPackageKeyword yamlKeyword = (YamlAutomationPackageKeyword) patchableMap.get(function);
-
-        fragment.getKeywords().remove(yamlKeyword);
-
-        patchableMap.remove(function);
-        fragmentMap.remove(function);
-
-        fragment.writeToDisk();
+        removeFragmentEntity(fragment, fragment.getKeywords(), function);
     }
 
 
     public <BO extends AbstractOrganizableObject> void removeAdditionalFieldObject(BO object, String fieldName) {
-
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
-        PatchableYamlModel yamlObject = patchableMap.get(object);
-
-        fragment.getAdditionalField(fieldName)
-            .remove(yamlObject);
-
-        patchableMap.remove(object);
-        fragmentMap.remove(object);
-
-        fragment.writeToDisk();
+        removeFragmentEntity(fragment, fragment.getAdditionalField(fieldName), object);
     }
 
     public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModelBase> BO saveAdditionalFieldObject(BO object, YO yamlObject, String fieldName) {

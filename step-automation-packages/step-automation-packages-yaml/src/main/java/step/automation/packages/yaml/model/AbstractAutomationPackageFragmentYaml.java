@@ -152,4 +152,13 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
             throw new AutomationPackageWriteToDiskException(MessageFormat.format("Error when writing automation package fragment {0} back to disk.", path), e);
         }
     }
+
+    @Override
+    public boolean isEmpty() {
+        return getFragments().isEmpty() &&
+            getPlans().isEmpty() &&
+            getPlansPlainText().isEmpty() &&
+            getKeywords().isEmpty() &&
+            getAdditionalFields().isEmpty();
+    }
 }
