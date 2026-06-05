@@ -29,7 +29,7 @@ public class AutomationPackageFunctionCollection extends InMemoryCollection<Func
     private final AutomationPackageYamlFragmentManager fragmentManager;
 
     public AutomationPackageFunctionCollection(AutomationPackageYamlFragmentManager fragmentManager) {
-        super(true, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
+        super(false, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
         this.fragmentManager = fragmentManager;
         initialzeRecordsFromFragments(fragmentManager);
     }
@@ -41,7 +41,7 @@ public class AutomationPackageFunctionCollection extends InMemoryCollection<Func
 
     @Override
     public Function save(Function p) {
-        return super.save(fragmentManager.saveFunction(p));
+        return fragmentManager.saveFunction(super.save(p));
     }
 
     @Override

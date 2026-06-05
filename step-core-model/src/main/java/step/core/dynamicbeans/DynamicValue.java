@@ -141,4 +141,15 @@ public class DynamicValue<T> {
     protected boolean hasProtectedAccess() {
         return false;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (obj instanceof DynamicValue<?> other) {
+            if (dynamic != other.dynamic) return false;
+            if (dynamic) return expression.equals(other.expression);
+            return value.equals(other.value);
+        }
+        return false;
+    }
 }

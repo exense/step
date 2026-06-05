@@ -29,7 +29,7 @@ public class AutomationPackageParameterCollection extends InMemoryCollection<Par
     private final AutomationPackageYamlFragmentManager fragmentManager;
 
     public AutomationPackageParameterCollection(AutomationPackageYamlFragmentManager fragmentManager) {
-        super(true, Parameter.ENTITY_NAME);
+        super(false, Parameter.ENTITY_NAME);
         this.fragmentManager = fragmentManager;
         initialzeRecordsFromFragments(fragmentManager);
     }
@@ -41,7 +41,7 @@ public class AutomationPackageParameterCollection extends InMemoryCollection<Par
 
     @Override
     public Parameter save(Parameter parameter) {
-        return super.save(fragmentManager.saveAdditionalFieldObject(parameter, AutomationPackageParameter.fromParameter(parameter), Parameter.ENTITY_NAME));
+        return fragmentManager.saveAdditionalFieldObject(super.save(parameter), AutomationPackageParameter.fromParameter(parameter), Parameter.ENTITY_NAME);
     }
 
     @Override
