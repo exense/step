@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.JsonLocation;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
 
+import java.util.Objects;
+
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -31,6 +33,7 @@ public class PatchableYamlPrimitive<T> extends PatchableYamlModelBase {
     public PatchableYamlPrimitive(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext context, T value) {
         super(context);
         this.value = value;
+        Objects.requireNonNull(value);
     }
 
     @Override

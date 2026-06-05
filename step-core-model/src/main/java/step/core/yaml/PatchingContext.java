@@ -7,11 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.yaml.deserialization.AutomationPackageUpdateException;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -32,13 +29,16 @@ public class PatchingContext {
     }
 
     public PatchingContext(ObjectMapper mapper) {
-        this(null, "", mapper);
+        this("", "", mapper);
     }
 
     public PatchingContext(String sourceLocation, String yaml, ObjectMapper mapper) {
         this.sourceLocation = sourceLocation;
         this.initialLines = new CopyOnWriteArrayList<>(yaml.lines().toList());
         this.mapper = mapper;
+        Objects.requireNonNull(sourceLocation);
+        Objects.requireNonNull(mapper);
+        Objects.requireNonNull(initialLines);
     }
 
     public ObjectMapper getMapper() {

@@ -45,6 +45,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -184,12 +185,19 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         URL descriptorUrl = archive.getDescriptorYamlUrl();
         try (InputStream inputStream = descriptorUrl.openStream()) {
             AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
-            descriptor.setFragmentPath(Path.of(descriptorUrl.getPath()));
-            AutomationPackageContent content = newContentInstance();
-            Set<AutomationPackageFragmentYaml> fragments = new HashSet<>();
-            fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments);
-            StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(null, AutomationPackageOperationMode.LOCAL, new LocalResourceManagerImpl(Path.of(descriptorUrl.getPath()).getParent().toFile()), archive, content, null, null, new HashMap<>());
-            return new AutomationPackageYamlFragmentManager(descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
+
+            try {
+                Path descriptorPath = Path.of(descriptorUrl.toURI());
+                descriptor.setFragmentPath(descriptorPath);
+                AutomationPackageContent content = newContentInstance();
+                Set<AutomationPackageFragmentYaml> fragments = new HashSet<>();
+                fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments);
+                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(null, AutomationPackageOperationMode.LOCAL, new LocalResourceManagerImpl(descriptorPath.getParent().toFile()), archive, content, null, null, new HashMap<>());
+                return new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
+            } catch (FileSystemNotFoundException | URISyntaxException e) {
+                throw new AutomationPackageReadingException("Failed to read automation package for editing. The most likely cause is that you were trying to load " +
+                    "an automation package as a packaged jar. This is not supported and expected behaviour", e);
+            }
         } catch (IOException e) {
             throw new AutomationPackageReadingException("Failed to read automation package for editing", e);
         }
@@ -205,9 +213,15 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                     try (InputStream fragmentYamlStream = resource.openStream()) {
                         AutomationPackageFragmentYaml referencedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName());
                         fragments.add(referencedFragment);
-                        referencedFragment.setFragmentPath(Path.of(resource.getPath()));
+                        try {
+                            referencedFragment.setFragmentPath(Path.of(resource.toURI()));
+                        } catch (FileSystemNotFoundException e) {
+                            logger.warn("Could not set Fragment path for fragment editing while loading fragment. " +
+                                "This is likely due to loading the automation package as a jar and not as a file system folder. This is expected behaviour");
+                        }
+
                         fillAutomationPackageWithImportedFragments(targetPackage, referencedFragment, archive, fragments);
-                    } catch (IOException e) {
+                    } catch (IOException | URISyntaxException e) {
                         throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
                     }
                 }

@@ -19,6 +19,7 @@
 package step.automation.packages.yaml;
 
 import org.apache.commons.io.FileUtils;
+import step.automation.packages.ResourcePathMatchingResolver;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
@@ -30,6 +31,7 @@ import step.core.yaml.NamedObjectPatchableYamlModel;
 import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
+import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.core.yaml.deserialization.AutomationPackagePerObjectSaveUnsupportedException;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlPrimitive;
@@ -45,10 +47,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.util.*;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -57,6 +60,7 @@ public class AutomationPackageYamlFragmentManager {
 
     protected final Path apRoot;
     protected final StagingAutomationPackageContext stagingContext;
+    private final ResourcePathMatchingResolver resourcePatchMatchingResolver;
 
     public enum NewObjectFragmentMode {
         /**
@@ -80,8 +84,8 @@ public class AutomationPackageYamlFragmentManager {
     protected Properties properties = new Properties();
     public final AutomationPackageFragmentYaml descriptorYaml;
 
-    public AutomationPackageYamlFragmentManager(AutomationPackageDescriptorYaml descriptorYaml, Set<AutomationPackageFragmentYaml> fragments, AutomationPackageDescriptorReader descriptorReader, StagingAutomationPackageContext stagingContext) {
-
+    public AutomationPackageYamlFragmentManager(ResourcePathMatchingResolver resourcePathMatchingResolver, AutomationPackageDescriptorYaml descriptorYaml, Set<AutomationPackageFragmentYaml> fragments, AutomationPackageDescriptorReader descriptorReader, StagingAutomationPackageContext stagingContext) {
+        this.resourcePatchMatchingResolver = resourcePathMatchingResolver;
         this.descriptorReader = descriptorReader;
         this.descriptorYaml = descriptorYaml;
 
@@ -228,21 +232,24 @@ public class AutomationPackageYamlFragmentManager {
 
             if (absoluteOldPath.equals(fragment.getFragmentPath())) {
                 Path absoluteNewPath = apRoot.resolve(newRelativePath);
+
                 try {
                     FileUtils.moveFile(absoluteOldPath.toFile(), absoluteNewPath.toFile());
                     fragment.setFragmentPath(absoluteNewPath);
-
-                    AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
-                        .orElse(descriptorYaml);
-
-
-                    Path referencePath = determineObjectRelativePath(newEntity, fieldName, true);
-                    if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(oldRelativePath.toString()))) {
-                        referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), referencePath.toString()));
-                        referencingFragment.writeToDisk();
-                    };
-                } catch (IOException ignored) {
+                } catch (IOException e) {
+                    throw new AutomationPackageConcurrentEditException(
+                        String.format("Unable to rename file %s to file %s. Was the file renamed or deleted outside the editor?", absoluteOldPath, absoluteNewPath));
                 }
+
+                AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
+                    .orElse(descriptorYaml);
+
+
+                Path referencePath = determineObjectRelativePath(newEntity, fieldName, true);
+                if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(resourcePatchMatchingResolver.getFragmentReferenceString(oldRelativePath)))) {
+                    referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), resourcePatchMatchingResolver.getFragmentReferenceString(referencePath)));
+                    referencingFragment.writeToDisk();
+                };
             }
         }
         fragment.writeToDisk();
@@ -267,8 +274,8 @@ public class AutomationPackageYamlFragmentManager {
 
         Optional<AutomationPackageFragmentYaml> optionalReferencingFragment = determineReferencingFragment(path);
         if (optionalReferencingFragment.isEmpty()) {
-            Path referencePath = determineObjectRelativePath(p, fieldName, true);
-            descriptorYaml.getFragments().add(new PatchableYamlPrimitive<>(descriptorYaml.getPatchingContext(), referencePath.toString()));
+            String referencingPath = resourcePatchMatchingResolver.getFragmentReferenceString(determineObjectRelativePath(p, fieldName, true));
+            descriptorYaml.getFragments().add(new PatchableYamlPrimitive<>(descriptorYaml.getPatchingContext(), referencingPath));
             descriptorYaml.writeToDisk();
         }
         return fragment;
@@ -277,8 +284,7 @@ public class AutomationPackageYamlFragmentManager {
     private Optional<AutomationPackageFragmentYaml> determineReferencingFragment(Path path) {
         for (AutomationPackageFragmentYaml fragment : fragments) {
             for (PatchableYamlPrimitive<String> fragmentPathPattern : fragment.getFragments()) {
-                PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + fragmentPathPattern.getValue());
-                if (matcher.matches(path)) {
+                if (resourcePatchMatchingResolver.isMatchingPath(fragmentPathPattern.getValue(), path)) {
                     return Optional.of(fragment);
                 }
             }

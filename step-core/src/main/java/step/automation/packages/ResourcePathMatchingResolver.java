@@ -18,10 +18,15 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -88,7 +93,7 @@ public class ResourcePathMatchingResolver {
                 if (nextLevel < pathArray.length) {
                     String nextPath = pathArray[nextLevel];
                     List<URL> urls = ClassLoaderResourceFilesystem.listDirectory(currentPath);
-                    Pattern pattern = Pattern.compile(nextPath.replaceAll("\\*", ".*"));
+                    Pattern pattern = prepareMatchPattern(nextPath);
                     for (URL url : urls) {
                         String file = url.getFile();
                         if (file.endsWith(getPathSeparator())) {
@@ -109,4 +114,15 @@ public class ResourcePathMatchingResolver {
         }
     }
 
+    private Pattern prepareMatchPattern(String referencingString) {
+        return Pattern.compile(referencingString.replace("*", ".*"));
+    }
+
+    public boolean isMatchingPath(String referenceString, Path path) {
+        return prepareMatchPattern(referenceString).matcher(getFragmentReferenceString(path)).matches();
+    }
+
+    public String getFragmentReferenceString(Path path) {
+        return path.toString().replace(File.pathSeparator, getPathSeparator());
+    }
 }
