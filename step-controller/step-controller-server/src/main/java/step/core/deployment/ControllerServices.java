@@ -34,6 +34,7 @@ import step.core.Version;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.objectenricher.ObjectHookRegistry;
@@ -52,6 +53,8 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static step.core.Controller.USER_ACTIVITY_MAP_KEY;
 
@@ -70,6 +73,7 @@ public class ControllerServices extends AbstractStepServices {
 
     private ObjectPredicateFactory objectPredicateFactory;
     private ExecutionScheduler scheduler;
+    private ReportNodeAccessor reportAccessor;
 
     @PostConstruct
     public void init() throws Exception {
@@ -77,6 +81,7 @@ public class ControllerServices extends AbstractStepServices {
         GlobalContext context = getContext();
         currentVersion = context.getCurrentVersion();
         controller = context.require(Controller.class);
+        reportAccessor = context.getReportAccessor();
 
         DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
         SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
@@ -164,6 +169,22 @@ public class ControllerServices extends AbstractStepServices {
             result.add(it.next());
         }
         return result;
+    }
+
+    @GET
+    @Path("/reportnode/{id}/descendants-with-errors")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "execution-read")
+    public List<ReportNode> getReportNodesWithContributingErrors(@PathParam("id") String reportNodeId, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+        skip = skip != null ? skip : 0;
+        limit = limit != null ? limit : 10;
+        ReportNode reportNode = reportAccessor.get(reportNodeId);
+        if (reportNode == null) {
+            throw new ControllerServiceException("Contributing errors for the report with id " + reportNodeId + " cannot be retrieved, the referenced report does not exists.");
+        }
+        try (Stream<ReportNode> stream = reportAccessor.getReportNodesWithContributingErrors(reportNode.getExecutionID(), reportNodeId, skip, limit)) {
+            return stream.collect(Collectors.toList());
+        }
     }
 
     @GET

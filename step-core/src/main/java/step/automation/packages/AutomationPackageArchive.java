@@ -74,7 +74,7 @@ public abstract class AutomationPackageArchive implements Closeable {
             return null;
         }
     }
-    
+
     abstract public InputStream getResourceAsStream(String resourcePath) throws IOException;
 
     abstract public URL getResource(String resourcePath);

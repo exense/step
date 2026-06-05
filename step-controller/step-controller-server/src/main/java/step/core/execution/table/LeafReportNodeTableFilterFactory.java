@@ -23,9 +23,9 @@ import step.artefacts.reports.CheckReportNode;
 import step.artefacts.reports.EchoReportNode;
 import step.artefacts.reports.RetryIfFailsReportNode;
 import step.artefacts.reports.SleepReportNode;
-import step.core.GlobalContext;
 import step.core.collections.Filter;
 import step.core.collections.Filters;
+import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.LeafReportNodesFilter;
 import step.core.execution.ReportNodesTableParameters;
 import step.framework.server.tables.service.TableParameters;
@@ -38,7 +38,7 @@ public class LeafReportNodeTableFilterFactory implements Function<TableParameter
 
     private final List<String[]> optionalReportNodesFilter;
 
-    public LeafReportNodeTableFilterFactory(GlobalContext context) {
+    public LeafReportNodeTableFilterFactory(AbstractExecutionEngineContext context) {
         Configuration configuration = context.getConfiguration();
         String optionalReportNodesFilterStr = configuration.getProperty("execution.reports.nodes.include",
             "_class:" + EchoReportNode.class.getName() + "," +

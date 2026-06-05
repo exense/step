@@ -102,7 +102,6 @@ public class StepControllerPlugin extends AbstractControllerPlugin {
     @Override
     public void recover(GlobalContext context) throws Exception {
         VersionManager<?> versionManager = context.require(VersionManager.class);
-        versionManager.readLatestControllerLog();
         ControllerLog latestControllerLog = versionManager.getLatestControllerLog();
         ExecutionAccessor accessor = context.getExecutionAccessor();
         List<Execution> executions = accessor.getActiveTests((latestControllerLog == null) ? 0 : latestControllerLog.getStart().getTime());

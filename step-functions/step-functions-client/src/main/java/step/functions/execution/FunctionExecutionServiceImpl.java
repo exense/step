@@ -57,6 +57,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static step.core.reports.Error.DEFAULT_ERROR_CODE;
 import static step.functions.handler.FunctionMessageHandler.FUNCTION_HANDLER_PACKAGE_CLEANABLE_KEY;
 
 public class FunctionExecutionServiceImpl implements FunctionExecutionService {
@@ -319,7 +320,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
     }
 
     private Error newAgentError(String message) {
-        return new Error(ErrorType.TECHNICAL, "agent", message, 0, true);
+        return new Error(ErrorType.TECHNICAL, "agent", message, DEFAULT_ERROR_CODE, true);
     }
 
     /**
@@ -348,7 +349,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
     }
 
     private void attachUnexpectedExceptionToOutput(Output<?> output, String message, Exception e) {
-        output.setError(new Error(ErrorType.TECHNICAL, "functionClient", message, 0, true));
+        output.setError(new Error(ErrorType.TECHNICAL, "functionClient", message, DEFAULT_ERROR_CODE, true));
         attachExceptionToOutput(output, e);
     }
 

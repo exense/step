@@ -98,6 +98,14 @@ public class Measurement extends HashMap<String, Object> {
         this.put(MetricsExecutionPlugin.PLAN, plan);
     }
 
+    public String getCanonicalPlanName() {
+        return (String) this.get(MetricsExecutionPlugin.CANONICAL_PLAN_NAME);
+    }
+
+    public void setCanonicalPlanName(String canonicalPlanName) {
+        this.put(MetricsExecutionPlugin.CANONICAL_PLAN_NAME, canonicalPlanName);
+    }
+
     public Map<String, Object> getCustomFields() {
         return Collections.unmodifiableMap(customFields);
     }

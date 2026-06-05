@@ -60,6 +60,6 @@ public interface Repository {
         return new ArtefactLinks(List.of());
     }
 
-	String getCanonicalPlanName(Map<String, String> repositoryParameters);
+    String getCanonicalPlanName(Map<String, String> repositoryParameters);
 
 }

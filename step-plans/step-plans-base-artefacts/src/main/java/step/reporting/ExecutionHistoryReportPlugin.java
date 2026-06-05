@@ -32,15 +32,15 @@ public class ExecutionHistoryReportPlugin extends AbstractExecutionEnginePlugin 
         }
         long searchBeforeTimestamp = execution.getEndTime() != null ? execution.getEndTime() : System.currentTimeMillis();
         List<ExecutionResultSnapshot> pastExecutionsSnapshots = executionAccessor.getLastEndedExecutionsByCanonicalPlanName(execution.getImportResult().getCanonicalPlanName(), countItems, searchBeforeTimestamp, Set.of(execution.getId().toString()))
-                .map(e -> {
-                    ExecutionResultSnapshot snapshot = new ExecutionResultSnapshot();
-                    snapshot.setId(e.getId().toString());
-                    snapshot.setResult(e.getResult());
-                    snapshot.setStatus(e.getStatus());
-                    snapshot.setStartTime(e.getStartTime());
-                    return snapshot;
-                })
-                .collect(Collectors.toList());
+            .map(e -> {
+                ExecutionResultSnapshot snapshot = new ExecutionResultSnapshot();
+                snapshot.setId(e.getId().toString());
+                snapshot.setResult(e.getResult());
+                snapshot.setStatus(e.getStatus());
+                snapshot.setStartTime(e.getStartTime());
+                return snapshot;
+            })
+            .collect(Collectors.toList());
         execution.setHistoryResults(pastExecutionsSnapshots);
         executionAccessor.save(execution);
     }
