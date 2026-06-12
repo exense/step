@@ -23,23 +23,26 @@ import org.junit.Test;
 import step.artefacts.Echo;
 import step.artefacts.Sequence;
 import step.automation.packages.AutomationPackageReadingException;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
-import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
+import step.functions.Function;
 import step.plans.parser.yaml.YamlPlan;
+import step.plugins.functions.types.CompositeFunction;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
 
 public class AutomationPackageFragmentReferenceTest extends AutomationPackageCollectionTestBase {
 
+    private Collection<Function> functionCollection;
     private Collection<Plan> planCollection;
 
     public AutomationPackageFragmentReferenceTest() {
@@ -51,8 +54,77 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
         super.setUp();
         AutomationPackageCollectionFactory collectionFactory = new AutomationPackageCollectionFactory(new Properties(), fragmentManager);
         planCollection = collectionFactory.getCollection(YamlPlan.PLANS_ENTITY_NAME, Plan.class);
+        functionCollection = collectionFactory.getCollection(YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME, Function.class);
     }
 
+
+    @Test
+    public void testAddCompositeKeywordToNewFragmentAndRenameAndRemove() throws IOException {
+
+        Sequence sequence = new Sequence();
+        Echo echo = new Echo();
+        echo.setText(new DynamicValue<>("Hello World"));
+        sequence.addChild(echo);
+
+        Plan plan = new Plan(sequence);
+
+        CompositeFunction function = new CompositeFunction();
+        function.setPlan(plan);
+
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put(AbstractArtefact.NAME, "Hello World Composite Function");
+        function.setAttributes(attributes);
+
+        setPropertiesWriteMode(YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME, "newKeywordsPath", AutomationPackageYamlFragmentManager.NewObjectFragmentMode.PER_OBJECT);
+
+        functionCollection.save(function);
+
+        assertFilesEqual(
+            expectedFilesPath
+                .resolve("Hello World Composite Function.yml"),
+            destinationDirectory.toPath()
+                .resolve("newKeywordsPath")
+                .resolve("Hello World Composite Function.yml")
+        );
+        assertFilesEqual(
+            expectedFilesPath
+                .resolve("descriptorAfterNewKeywordsFragmentReference.yml"),
+            destinationDirectory.toPath()
+                .resolve("automation-package.yml")
+        );
+
+        attributes.put(AbstractArtefact.NAME, "This Keyword was renamed");
+
+        functionCollection.save(function);
+
+        assertFilesEqual(
+            expectedFilesPath
+                .resolve("This Keyword was renamed.yml"),
+            destinationDirectory.toPath()
+                .resolve("newKeywordsPath")
+                .resolve("This Keyword was renamed.yml")
+        );
+
+        assertFilesEqual(
+            expectedFilesPath
+                .resolve("descriptorAfterNewKeywordsFragmentReference.yml"),
+            destinationDirectory.toPath()
+                .resolve("automation-package.yml"));
+
+        functionCollection.remove(Filters.equals("attributes.name", "This Keyword was renamed"));
+
+        assertFalse(Files.exists(
+            destinationDirectory.toPath()
+                .resolve("newKeywordsPath")
+                .resolve("This Keyword was renamed.yml")
+        ));
+
+        assertFilesEqual(
+            expectedFilesPath
+                .resolve("descriptorAfterNewKeywordsFragmentReference.yml"),
+            destinationDirectory.toPath()
+                .resolve("automation-package.yml"));
+    }
 
     @Test
     public void testAddPlanToNewFragmentAndRenameAndRemove() throws IOException {
@@ -80,7 +152,7 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
         );
         assertFilesEqual(
             expectedFilesPath
-                .resolve("descriptorAfterNewFragmentReference.yml"),
+                .resolve("descriptorAfterNewPlansFragmentReference.yml"),
             destinationDirectory.toPath()
                 .resolve("automation-package.yml")
         );
@@ -99,7 +171,7 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
         assertFilesEqual(
             expectedFilesPath
-                .resolve("descriptorAfterNewFragmentReference.yml"),
+                .resolve("descriptorAfterNewPlansFragmentReference.yml"),
             destinationDirectory.toPath()
                 .resolve("automation-package.yml"));
 
@@ -113,7 +185,7 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
         assertFilesEqual(
             expectedFilesPath
-                .resolve("descriptorAfterNewFragmentReference.yml"),
+                .resolve("descriptorAfterNewPlansFragmentReference.yml"),
             destinationDirectory.toPath()
                 .resolve("automation-package.yml"));
     }
@@ -144,7 +216,7 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
         );
         assertFilesEqual(
             expectedFilesPath
-                .resolve("descriptorAfterNewFragmentReference.yml"),
+                .resolve("descriptorAfterNewPlansFragmentReference.yml"),
             destinationDirectory.toPath()
                 .resolve("automation-package.yml")
         );
@@ -166,7 +238,7 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
         assertFilesEqual(
             expectedFilesPath
-                .resolve("descriptorAfterNewFragmentReference.yml"),
+                .resolve("descriptorAfterNewPlansFragmentReference.yml"),
             destinationDirectory.toPath()
                 .resolve("automation-package.yml"));
 
@@ -180,7 +252,7 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
         assertFilesEqual(
             expectedFilesPath
-                .resolve("descriptorAfterNewFragmentReference.yml"),
+                .resolve("descriptorAfterNewPlansFragmentReference.yml"),
             destinationDirectory.toPath()
                 .resolve("automation-package.yml"));
     }

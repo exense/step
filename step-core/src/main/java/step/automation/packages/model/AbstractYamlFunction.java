@@ -120,11 +120,6 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
         return res;
     }
 
-    public void updateFromFunction(Function function) {
-        copyFieldsFromObject(function, false);
-    }
-
-
     public static class DefaultYamlFunctionNameProvider implements JsonSchemaDefaultValueProvider {
 
         public DefaultYamlFunctionNameProvider() {

@@ -164,8 +164,8 @@ public class AutomationPackageYamlFragmentManager {
 
     public synchronized step.functions.Function saveFunction(step.functions.Function function) {
         AutomationPackageFragmentYaml fragment = fragmentMap.get(function);
+        YamlAutomationPackageKeyword newKeyword = createNewYamlKeyword(function);
         if (fragment == null) {
-            YamlAutomationPackageKeyword newKeyword = createNewYamlKeyword(function);
             fragment = fragmentForNewObject(newKeyword, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
             fragmentMap.put(function, fragment);
             if (newKeyword != null) {
@@ -175,9 +175,9 @@ public class AutomationPackageYamlFragmentManager {
                 System.err.println("SAVING OF FUNCTION OF TYPE " + function.getClass().getName() + " IS NOT CURRENTLY SUPPORTED");
             }
         } else {
-            YamlAutomationPackageKeyword yamlKeyword = (YamlAutomationPackageKeyword) patchableMap.get(function);
-            yamlKeyword.getYamlKeyword().updateFromFunction(function);
-            modifyFragmentEntity(fragment, fragment.getKeywords(), yamlKeyword, yamlKeyword, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
+            YamlAutomationPackageKeyword oldKeyword = (YamlAutomationPackageKeyword) patchableMap.get(function);
+            modifyFragmentEntity(fragment, fragment.getKeywords(), oldKeyword, newKeyword, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
+            patchableMap.put(function, newKeyword);
         }
         return function;
     }
