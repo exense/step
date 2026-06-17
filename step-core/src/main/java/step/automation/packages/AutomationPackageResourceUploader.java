@@ -110,7 +110,7 @@ public class AutomationPackageResourceUploader {
                     context.getActorUser()
                 );
             } catch (Exception e) {
-                throw new RuntimeException("Unable to upload automation package resource " + resourcePath, e);
+                throw new RuntimeException("Unable to upload automation package resource " + resourcePath + ":" + e.getMessage(), e);
             } finally {
                 if (resourceStream != null) {
                     try {

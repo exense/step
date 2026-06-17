@@ -32,17 +32,27 @@
   <dependencies>
     <dependency>
       <groupId>ch.exense.step</groupId>
+      <artifactId>step-ide-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-framework-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
       <artifactId>step-controller-backend</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>ch.exense.step</groupId>
-      <artifactId>step-agent</artifactId>
+      <artifactId>step-automation-packages-collections</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>ch.exense.step</groupId>
-      <artifactId>step-grid-agent</artifactId>
     </dependency>
   </dependencies>
 

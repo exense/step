@@ -29,7 +29,8 @@ import step.core.Constants;
 import step.core.Version;
 import step.core.maven.MavenArtifactIdentifier;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 
@@ -52,8 +53,12 @@ public class StepConsole implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         // call help by default
-        return addStepSubcommands(new CommandLine(new StepConsole()), ApCommand.ApDeployCommand::new, ApCommand.ApExecuteCommand::new,
-            LibraryCommand.DeployLibraryCommand::new)
+        return addStepSubcommands(
+            new CommandLine(new StepConsole()),
+            ApCommand.ApDeployCommand::new,
+            ApCommand.ApExecuteCommand::new,
+            LibraryCommand.DeployLibraryCommand::new,
+            IdeCommand.LaunchIdeCommand::new)
             .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
             .execute("help");
     }
@@ -205,18 +210,24 @@ public class StepConsole implements Callable<Integer> {
     }
 
     static int executeMain(String... args) {
-        return executeMain(ApCommand.ApDeployCommand::new, ApCommand.ApExecuteCommand::new, LibraryCommand.DeployLibraryCommand::new, true, args);
+        return executeMain(
+            ApCommand.ApDeployCommand::new,
+            ApCommand.ApExecuteCommand::new,
+            LibraryCommand.DeployLibraryCommand::new,
+            IdeCommand.LaunchIdeCommand::new,
+            true, args);
     }
 
     static int executeMain(Supplier<ApCommand.ApDeployCommand> deployCommandSupplier,
                            Supplier<ApCommand.ApExecuteCommand> executeCommandSupplier,
                            Supplier<LibraryCommand.DeployLibraryCommand> deployLibraryCommandSupplier,
+                           Supplier<IdeCommand.LaunchIdeCommand> launchIdeCommandSupplier,
                            boolean lookupDefaultConfigFile,
                            String... args) {
         StepConsole configFinder = new StepConsole();
 
         // parse arguments just to resolve configuration files and setup default values provider programmatically
-        CommandLine clForFinder = addStepSubcommands(new CommandLine(configFinder), deployCommandSupplier, executeCommandSupplier, deployLibraryCommandSupplier);
+        CommandLine clForFinder = addStepSubcommands(new CommandLine(configFinder), deployCommandSupplier, executeCommandSupplier, deployLibraryCommandSupplier, launchIdeCommandSupplier);
         CommandLine.ParseResult parseResult = null;
         try {
             parseResult = clForFinder.parseArgs(args);
@@ -245,7 +256,7 @@ public class StepConsole implements Callable<Integer> {
             }
         }
 
-        return addStepSubcommands(new CommandLine(new StepConsole()), deployCommandSupplier, executeCommandSupplier, deployLibraryCommandSupplier)
+        return addStepSubcommands(new CommandLine(new StepConsole()), deployCommandSupplier, executeCommandSupplier, deployLibraryCommandSupplier, launchIdeCommandSupplier)
             .setCaseInsensitiveEnumValuesAllowed(true)
             .setDefaultValueProvider(new StepDefaultValuesProvider(customConfigFiles, lookupDefaultConfigFile))
             .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
@@ -255,11 +266,14 @@ public class StepConsole implements Callable<Integer> {
     private static CommandLine addStepSubcommands(CommandLine cl,
                                                   Supplier<ApCommand.ApDeployCommand> deployCommandSupplier,
                                                   Supplier<ApCommand.ApExecuteCommand> executeCommandSupplier,
-                                                  Supplier<LibraryCommand.DeployLibraryCommand> deployLibraryCommandSupplier) {
+                                                  Supplier<LibraryCommand.DeployLibraryCommand> deployLibraryCommandSupplier,
+                                                  Supplier<IdeCommand.LaunchIdeCommand> launchIdeCommandSupplier) {
         return cl.addSubcommand("help", new CommandLine.HelpCommand())
             .addSubcommand(ApCommand.AP_COMMAND,
                 addApSubcommands(new CommandLine(new ApCommand()), deployCommandSupplier, executeCommandSupplier))
-            .addSubcommand(LibraryCommand.LIBRARY_COMMAND, addLibrarySubcommands(new CommandLine(new LibraryCommand()), deployLibraryCommandSupplier));
+            .addSubcommand(LibraryCommand.LIBRARY_COMMAND, addLibrarySubcommands(new CommandLine(new LibraryCommand()), deployLibraryCommandSupplier))
+            .addSubcommand(IdeCommand.NAME, addIdeSubcommands(new CommandLine(new IdeCommand()), launchIdeCommandSupplier))
+            ;
     }
 
     public static CommandLine addApSubcommands(CommandLine cl,
@@ -274,6 +288,12 @@ public class StepConsole implements Callable<Integer> {
                                                     Supplier<LibraryCommand.DeployLibraryCommand> deployCommandSupplier) {
         return cl.addSubcommand("help", new CommandLine.HelpCommand())
             .addSubcommand("deploy", deployCommandSupplier.get());
+    }
+
+    public static CommandLine addIdeSubcommands(CommandLine cl,
+                                                Supplier<IdeCommand.LaunchIdeCommand> launchIdeCommandSupplier) {
+        return cl.addSubcommand("help", new CommandLine.HelpCommand())
+            .addSubcommand("launch", launchIdeCommandSupplier.get());
     }
 
 }
