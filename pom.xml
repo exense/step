@@ -43,7 +43,7 @@
     <!-- compiler settings -->
     <maven.compiler.release>21</maven.compiler.release>
     <!-- internal dependencies -->
-    <step-grid.version>3.0.0</step-grid.version>
+    <step-grid.version>0.0.0-SED-4757-SNAPSHOT</step-grid.version>
     <step-framework.version>3.0.0</step-framework.version>
 
     <!-- external, non-transitive, dependencies -->
