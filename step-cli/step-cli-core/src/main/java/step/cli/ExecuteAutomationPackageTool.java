@@ -115,7 +115,7 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
             }
             if (executionIds != null) {
                 if (executionIds.isEmpty()) {
-                    logInfo("No executions started (unexpected empty response from server).", null);
+                    throw logAndThrow("No executions started (unexpected empty response from server).", null);
                 } else {
                     Map<String, Execution> executionInfos = new HashMap<>();
                     logInfo("Execution(s) started in Step:", null);

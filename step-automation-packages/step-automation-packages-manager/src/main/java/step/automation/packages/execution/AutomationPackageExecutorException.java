@@ -30,7 +30,7 @@ public class AutomationPackageExecutorException extends RuntimeException {
 
     public AutomationPackageExecutorException(String message, Throwable cause, boolean addCauseToMessage) {
         // the cause is added to the message to be displayed on UI (propagated to step.core.deployment.ControllerServiceException)
-        super(message + (addCauseToMessage ? " Caused by: " + cause.getMessage() : ""), cause);
+        super(message + (addCauseToMessage && cause != null && cause.getMessage() != null ? " Caused by: " + cause.getMessage() : ""), cause);
     }
 
 }
