@@ -191,15 +191,24 @@ public class AutomationPackageExecutor {
         PlanFilter planFilter = parameters.getPlanFilter();
         boolean somePlansFiltered = false;
         String apID = automationPackage.getId().toHexString();
-        for (Plan plan : apManager.getPackagePlans(automationPackage.getId())) {
+        String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
+        List<Plan> packagePlans = apManager.getPackagePlans(automationPackage.getId());
+        if (packagePlans.isEmpty()) {
+            throw new AutomationPackageExecutorException(
+                "No plans found in automation package '" + apName + "'; no executions started");
+        }
+        for (Plan plan : packagePlans) {
             if ((planFilter == null || planFilter.isSelected(plan)) && plan.getRoot().getClass().getAnnotation(Artefact.class).validForStandaloneExecution()) {
                 applicablePlans.add(plan);
             } else {
                 somePlansFiltered = true;
             }
         }
+        if (applicablePlans.isEmpty()) {
+            throw new AutomationPackageExecutorException(
+                "No executable plans matching the filter were found in automation package '" + apName + "'; no executions started");
+        }
 
-        String apName = automationPackage.getAttribute(AbstractOrganizableObject.NAME);
         if (parameters.getWrapIntoTestSet() == null || !parameters.getWrapIntoTestSet()) {
             // run each plans in separate execution (apply the plan name filter to use the single file in execution)
             for (Plan plan : applicablePlans) {
