@@ -41,6 +41,12 @@ import static step.automation.packages.AutomationPackagePlugin.*;
 public class MavenArtifactRepository extends AbstractArtifactRepository {
 
     public static final String MAVEN_SETTINGS_PREFIX = ArtifactRepositoryConstants.MAVEN_SETTINGS_PREFIX;
+    public static final Set<String> CANONICAL_REPOSITORY_PARAMETER_KEYS = Set.of(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID,
+        ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION,
+        ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS,
+        ArtifactRepositoryConstants.PARAM_EXCLUDE_PLANS,
+        ArtifactRepositoryConstants.PARAM_INCLUDE_CATEGORIES,
+        ArtifactRepositoryConstants.PARAM_EXCLUDE_CATEGORIES);
 
     private final ControllerSettingAccessor controllerSettingAccessor;
     private final File localRepository;
@@ -49,7 +55,7 @@ public class MavenArtifactRepository extends AbstractArtifactRepository {
 
     public MavenArtifactRepository(AutomationPackageManager manager, FunctionTypeRegistry functionTypeRegistry, FunctionAccessor functionAccessor, Configuration configuration,
                                    ControllerSettingAccessor controllerSettingAccessor, ResourceManager resourceManager) {
-        super(Set.of(ArtifactRepositoryConstants.ARTIFACT_PARAM_GROUP_ID, ArtifactRepositoryConstants.ARTIFACT_PARAM_ARTIFACT_ID, ArtifactRepositoryConstants.ARTIFACT_PARAM_VERSION), manager, functionTypeRegistry, functionAccessor, resourceManager);
+        super(CANONICAL_REPOSITORY_PARAMETER_KEYS, manager, functionTypeRegistry, functionAccessor, resourceManager);
         localRepository = configuration.getPropertyAsFile(CONFIGURATION_MAVEN_FOLDER, new File(DEFAULT_MAVEN_FOLDER));
         this.controllerSettingAccessor = controllerSettingAccessor;
         maxAge = Duration.ofMinutes(configuration.getPropertyAsLong(CONFIGURATION_MAVEN_MAX_AGE, DEFAULT_MAVEN_MAX_AGE));
