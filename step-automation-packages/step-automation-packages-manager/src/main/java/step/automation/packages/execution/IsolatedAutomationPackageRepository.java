@@ -60,7 +60,9 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
         ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS,
         ArtifactRepositoryConstants.PARAM_EXCLUDE_PLANS,
         ArtifactRepositoryConstants.PARAM_INCLUDE_CATEGORIES,
-        ArtifactRepositoryConstants.PARAM_EXCLUDE_CATEGORIES);
+        ArtifactRepositoryConstants.PARAM_EXCLUDE_CATEGORIES,
+        ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET,
+        ArtifactRepositoryConstants.PARAM_ROOT_TYPE);
 
     private final Supplier<String> ttlValueSupplier;
     private final Path mavenCachePath;
