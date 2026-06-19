@@ -114,54 +114,58 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
                 throw new StepCliExecutionException("Error while executing automation package: " + e.getMessage());
             }
             if (executionIds != null) {
-                Map<String, Execution> executionInfos = new HashMap<>();
-                logInfo("Execution(s) started in Step:", null);
-                for (String executionId : executionIds) {
-                    Execution executionInfo = remoteExecutionManager.get(executionId);
-                    executionInfos.put(executionId, executionInfo);
-                    logInfo("- " + executionToString(executionId, executionInfo), null);
-                }
-
-                if (parameters.getWaitForExecution()) {
-                    logInfo("Waiting for execution(s) to complete...", null);
-
-                    Exception executionError = null;
-                    try {
-                        waitForExecutionFinish(remoteExecutionManager, executionIds);
-                    } catch (Exception ex) {
-                        // if some execution fails, we will get exception here, but we want to save the execution report anyway
-                        executionError = ex;
-                    }
-
-                    if (parameters.getReports() != null && !executionIds.isEmpty()) {
-                        try {
-                            for (Report report : parameters.getReports()) {
-                                ReportCreator reportCreator;
-                                ReportType reportType = report.getReportType();
-                                switch (reportType) {
-                                    case junit:
-                                        reportCreator = new JUnitReportCreator(remoteExecutionManager, outputFolder);
-                                        break;
-                                    case aggregated:
-                                        reportCreator = new AggregatedReportCreator(remoteExecutionManager, outputFolder);
-                                        break;
-                                    default:
-                                        throw new UnsupportedOperationException("Unsupported report type: " + reportType);
-                                }
-                                reportCreator.createReport(executionInfos, report.getOutputModes(), this);
-                            }
-
-                        } catch (Exception ex) {
-                            logError("The execution report cannot be saved", ex);
-                        }
-                    }
-
-                    // throw the original exception if exists
-                    if (executionError != null) {
-                        throw executionError;
-                    }
+                if (executionIds.isEmpty()) {
+                    throw logAndThrow("No executions started (unexpected empty response from server).", null);
                 } else {
-                    logInfo("waitForExecution set to 'false'. Not waiting for executions to complete.", null);
+                    Map<String, Execution> executionInfos = new HashMap<>();
+                    logInfo("Execution(s) started in Step:", null);
+                    for (String executionId : executionIds) {
+                        Execution executionInfo = remoteExecutionManager.get(executionId);
+                        executionInfos.put(executionId, executionInfo);
+                        logInfo("- " + executionToString(executionId, executionInfo), null);
+                    }
+
+                    if (parameters.getWaitForExecution()) {
+                        logInfo("Waiting for execution(s) to complete...", null);
+
+                        Exception executionError = null;
+                        try {
+                            waitForExecutionFinish(remoteExecutionManager, executionIds);
+                        } catch (Exception ex) {
+                            // if some execution fails, we will get exception here, but we want to save the execution report anyway
+                            executionError = ex;
+                        }
+
+                        if (parameters.getReports() != null && !executionIds.isEmpty()) {
+                            try {
+                                for (Report report : parameters.getReports()) {
+                                    ReportCreator reportCreator;
+                                    ReportType reportType = report.getReportType();
+                                    switch (reportType) {
+                                        case junit:
+                                            reportCreator = new JUnitReportCreator(remoteExecutionManager, outputFolder);
+                                            break;
+                                        case aggregated:
+                                            reportCreator = new AggregatedReportCreator(remoteExecutionManager, outputFolder);
+                                            break;
+                                        default:
+                                            throw new UnsupportedOperationException("Unsupported report type: " + reportType);
+                                    }
+                                    reportCreator.createReport(executionInfos, report.getOutputModes(), this);
+                                }
+
+                            } catch (Exception ex) {
+                                logError("The execution report cannot be saved", ex);
+                            }
+                        }
+
+                        // throw the original exception if exists
+                        if (executionError != null) {
+                            throw executionError;
+                        }
+                    } else {
+                        logInfo("waitForExecution set to 'false'. Not waiting for executions to complete.", null);
+                    }
                 }
             } else {
                 throw logAndThrow("Unexpected response from Step. No execution Id returned. Please check the controller logs.");
