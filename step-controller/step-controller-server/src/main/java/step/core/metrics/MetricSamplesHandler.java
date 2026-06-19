@@ -12,7 +12,15 @@ public interface MetricSamplesHandler {
 
     }
 
-    void processMeasurements(List<Measurement> measurements);
+    /**
+     * Processes a batch of measurements.
+     *
+     * @param executionContext the execution context the measurements were produced in, or {@code null}
+     *                         when they are not bound to a running execution (e.g. periodic re-ingestion).
+     *                         Handlers may use it to surface execution-level feedback (warnings, status).
+     * @param measurements     the measurements to process, never {@code null}
+     */
+    void processMeasurements(ExecutionContext executionContext, List<Measurement> measurements);
 
     /**
      * Processes a batch of enriched metric snapshots (counter, gauge, histogram).
@@ -24,9 +32,11 @@ public interface MetricSamplesHandler {
      * The default no-op implementation allows existing handlers to remain unchanged
      * until they opt-in to metric processing.
      *
-     * @param metrics enriched metric snapshots, never {@code null}
+     * @param executionContext the execution context the metrics were produced in, or {@code null}
+     *                         when they are not bound to a running execution (e.g. metric heartbeats).
+     * @param metrics          enriched metric snapshots, never {@code null}
      */
-    default void processMetrics(List<ExecutionMetricSample> metrics) {
+    default void processMetrics(ExecutionContext executionContext, List<ExecutionMetricSample> metrics) {
 
     }
 
@@ -38,13 +48,14 @@ public interface MetricSamplesHandler {
      * {@link step.functions.io.OutputBuilder#addMetric}) and for live metric snapshots
      * dispatched periodically during keyword execution.
      * <p>
-     * The default implementation invoke {@link #processMetrics(List)} discarding the optionalLabels
+     * The default implementation invoke {@link #processMetrics(ExecutionContext, List)} discarding the optionalLabels
      *
-     * @param metrics        enriched metric snapshots, never {@code null}
-     * @param optionalLabels Map of optional labels that be used to further enrich the metric snapshots, can be {@code null}
+     * @param executionContext the execution context the metrics were produced in, or {@code null}
+     * @param metrics          enriched metric snapshots, never {@code null}
+     * @param optionalLabels   Map of optional labels that be used to further enrich the metric snapshots, can be {@code null}
      */
-    default void processMetrics(List<ExecutionMetricSample> metrics, Map<String, String> optionalLabels) {
-        processMetrics(metrics);
+    default void processMetrics(ExecutionContext executionContext, List<ExecutionMetricSample> metrics, Map<String, String> optionalLabels) {
+        processMetrics(executionContext, metrics);
     }
 
     /**

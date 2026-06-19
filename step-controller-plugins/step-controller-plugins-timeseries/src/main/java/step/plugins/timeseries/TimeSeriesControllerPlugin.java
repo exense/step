@@ -126,7 +126,9 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getIngestionPipeline();
 
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
-        TimeSeriesMetricSamplesHandler handler = new TimeSeriesMetricSamplesHandler(timeSeries, includedAttributes, excludedAttributes);
+        // Safeguard against high cardinality on user-defined metric/measurement labels during executions.
+        int maxUniqueLabelValues = configuration.getPropertyAsInteger("timeseries.attributes.max-unique-label-values", 20);
+        TimeSeriesMetricSamplesHandler handler = new TimeSeriesMetricSamplesHandler(timeSeries, includedAttributes, excludedAttributes, maxUniqueLabelValues);
 
         context.put(TimeSeries.class, timeSeries);
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);
