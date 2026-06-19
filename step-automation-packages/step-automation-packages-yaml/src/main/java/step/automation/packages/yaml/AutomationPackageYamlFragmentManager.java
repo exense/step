@@ -146,7 +146,9 @@ public class AutomationPackageYamlFragmentManager {
     public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO save(BO object) {
 
         BusinessObjectToYamlMapper<BO, YO> mapper = (BusinessObjectToYamlMapper<BO, YO>) mappers.get(object.getClass());
-
+        if (mapper == null) {
+            throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());
+        }
         YO newYamlObject = mapper.getNewYamlObject(object);
 
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
@@ -167,6 +169,9 @@ public class AutomationPackageYamlFragmentManager {
 
     public synchronized <BO extends AbstractOrganizableObject> void remove(BO object) {
         BusinessObjectToYamlMapper<BO, ?> mapper = (BusinessObjectToYamlMapper<BO, ?>) mappers.get(object.getClass());
+        if (mapper == null) {
+            throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());
+        }
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
         removeFragmentEntity(fragment, fragment.getListForYamlObject(mapper), object);
     }
