@@ -27,6 +27,7 @@ import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
+import step.commons.activation.Expression;
 import step.core.plans.Plan;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlPrimitive;
@@ -192,7 +193,9 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 AutomationPackageContent content = newContentInstance();
                 Set<AutomationPackageFragmentYaml> fragments = new HashSet<>();
                 fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments);
-                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(null, AutomationPackageOperationMode.LOCAL, new LocalResourceManagerImpl(descriptorPath.getParent().toFile()), archive, content, null, null, new HashMap<>());
+                AutomationPackage automationPackage = new AutomationPackage();
+                automationPackage.setStatus(AutomationPackageStatus.EDIT);
+                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(automationPackage, AutomationPackageOperationMode.LOCAL, new LocalResourceManagerImpl(descriptorPath.getParent().toFile()), archive, content, null, null, new HashMap<>());
                 return new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
             } catch (FileSystemNotFoundException | URISyntaxException e) {
                 throw new AutomationPackageReadingException("Failed to read automation package for editing. The most likely cause is that you were trying to load " +

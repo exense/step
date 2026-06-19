@@ -19,41 +19,41 @@
 package step.core.collections;
 
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.inmemory.InMemoryCollection;
-import step.core.plans.Plan;
-import step.plans.parser.yaml.YamlPlan;
+import step.core.yaml.PatchableYamlModel;
 
-public class AutomationPackagePlanCollection extends InMemoryCollection<Plan> implements Collection<Plan> {
+public class AutomationPackageCollection<BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> extends InMemoryCollection<BO> implements Collection<BO> {
 
 
     private final AutomationPackageYamlFragmentManager fragmentManager;
 
-    public AutomationPackagePlanCollection(AutomationPackageYamlFragmentManager fragmentManager) {
-        super(false, YamlPlan.PLANS_ENTITY_NAME);
+    public AutomationPackageCollection(AutomationPackageYamlFragmentManager fragmentManager, Class<BO> boClass) {
+        super(false);
         this.fragmentManager = fragmentManager;
-        initialzeRecordsFromFragments(fragmentManager);
+        initialzeRecordsFromFragments(boClass, fragmentManager);
     }
 
-    private void initialzeRecordsFromFragments(AutomationPackageYamlFragmentManager fragmentManager) {
+    private void initialzeRecordsFromFragments(Class<BO> boClass, AutomationPackageYamlFragmentManager fragmentManager) {
         // initialization into the collection memory. Calls super save to avoid calling fragmentManager.savePlan
-        fragmentManager.getBusinessObjects(Plan.class).forEach(super::save);
+        fragmentManager.getBusinessObjects(boClass).forEach(super::save);
     }
 
     @Override
-    public Plan save(Plan p) {
-        return fragmentManager.savePlan(super.save(p));
+    public BO save(BO p) {
+        return fragmentManager.save(super.save(p));
     }
 
     @Override
-    public void save(Iterable<Plan> iterable) {
-        for (Plan p : iterable) {
-            save(p);
+    public void save(Iterable<BO> iterable) {
+        for (BO object : iterable) {
+            save(object);
         }
     }
 
     @Override
     public void remove(Filter filter) {
-        find(filter, null, null, null, 0).forEach(fragmentManager::removePlan);
+        find(filter, null, null, null, 0).forEach(fragmentManager::remove);
         super.remove(filter);
     }
 }

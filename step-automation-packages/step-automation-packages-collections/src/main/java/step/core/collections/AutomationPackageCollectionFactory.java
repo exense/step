@@ -18,11 +18,14 @@
  ******************************************************************************/
 package step.core.collections;
 
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.plans.Plan;
 import step.functions.Function;
 import step.parameter.Parameter;
+import step.parameter.automation.AutomationPackageParameter;
+import step.plans.parser.yaml.YamlPlan;
 
 import java.io.IOException;
 import java.util.Map;
@@ -45,11 +48,11 @@ public class AutomationPackageCollectionFactory implements CollectionFactory {
     public <T> Collection<T> getCollection(String name, Class<T> entityClass) {
         return (Collection<T>) collectionsByName.computeIfAbsent(name, (_name) -> {
             if (Plan.class.isAssignableFrom(entityClass)) {
-                return new AutomationPackagePlanCollection(fragmentManager);
+                return new AutomationPackageCollection<Plan, YamlPlan>(fragmentManager, Plan.class);
             } else if (Parameter.class.isAssignableFrom(entityClass)) {
-                return new AutomationPackageParameterCollection(fragmentManager);
+                return new AutomationPackageCollection<Parameter, AutomationPackageParameter>(fragmentManager, Parameter.class);
             } else if (Function.class.isAssignableFrom(entityClass)) {
-                return new AutomationPackageFunctionCollection(fragmentManager);
+                return new AutomationPackageCollection<Function, YamlAutomationPackageKeyword>(fragmentManager, Function.class);
             }
             return baseFactory.getCollection(name, entityClass);
         });
