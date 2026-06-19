@@ -1,11 +1,11 @@
 package step.automation.packages.yaml.mappers;
 
-import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
-import step.core.yaml.deserialization.PatchableYamlList;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
 import step.parameter.Parameter;
 import step.parameter.automation.AutomationPackageParameter;
-
-import java.util.Optional;
 
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
@@ -26,8 +26,11 @@ import java.util.Optional;
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-@ObjectToYamlMapping(organizableObject = Parameter.class)
-public class ParameterToYamlParameterObjectMapper extends ObjectToYamlObjectMapper<Parameter, AutomationPackageParameter> {
+@BusinessObjectToYamlMapping(sourceClass = Parameter.class)
+@YamlToBusinessObjectMapping(sourceClass = AutomationPackageParameter.class)
+public class ParameterMapper implements
+    BusinessObjectToYamlMapper<Parameter, AutomationPackageParameter>,
+    YamlToBusinessObjectMapper<Parameter, AutomationPackageParameter> {
 
     @Override
     public AutomationPackageParameter getNewYamlObject(Parameter parameter) {
@@ -35,14 +38,8 @@ public class ParameterToYamlParameterObjectMapper extends ObjectToYamlObjectMapp
     }
 
     @Override
-    public Optional<Parameter> getBusinessObject(AutomationPackageParameter yamlParameter) {
-        return Optional.ofNullable(yamlParameter.toParameter());
-    }
-
-    @Override
-    public PatchableYamlList<AutomationPackageParameter> getListInFragment(AutomationPackageFragmentYaml fragment) {
-        return (PatchableYamlList<AutomationPackageParameter>) fragment.getAdditionalFields()
-            .computeIfAbsent(Parameter.ENTITY_NAME, f -> new PatchableYamlList<AutomationPackageParameter>(fragment.getPatchingContext(), f));
+    public Parameter getBusinessObject(AutomationPackageParameter yamlParameter) {
+        return yamlParameter.toParameter();
     }
 
     @Override

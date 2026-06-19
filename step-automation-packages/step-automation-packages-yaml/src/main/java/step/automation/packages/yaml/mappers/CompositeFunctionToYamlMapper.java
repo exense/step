@@ -1,12 +1,12 @@
 package step.automation.packages.yaml.mappers;
 
-import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
-import step.core.plans.Plan;
-import step.core.yaml.deserialization.PatchableYamlList;
+import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
 import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.YamlPlanReader;
-
-import java.util.Optional;
+import step.plugins.functions.types.CompositeFunction;
+import step.plugins.functions.types.automation.YamlCompositeFunction;
 
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
@@ -26,34 +26,25 @@ import java.util.Optional;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-
-@ObjectToYamlMapping(organizableObject = Plan.class)
-public class PlanToYamlPlanObjectMapper extends ObjectToYamlObjectMapper<Plan, YamlPlan> {
+@BusinessObjectToYamlMapping(sourceClass = CompositeFunction.class)
+public class CompositeFunctionToYamlMapper extends AbstractFunctionToYamlMapper<CompositeFunction> {
 
     private final YamlPlanReader planReader;
 
-    public PlanToYamlPlanObjectMapper(YamlPlanReader planReader) {
+    public CompositeFunctionToYamlMapper(YamlPlanReader planReader) {
         this.planReader = planReader;
     }
 
     @Override
-    public YamlPlan getNewYamlObject(Plan plan) {
-        return planReader.planToYamlPlan(plan);
-    }
+    public YamlAutomationPackageKeyword getNewYamlObject(CompositeFunction compositeFunction) {
 
-    @Override
-    public Optional<Plan> getBusinessObject(YamlPlan yamlPlan) {
-        return Optional.ofNullable(planReader.yamlPlanToPlan(yamlPlan));
-    }
+        YamlCompositeFunction yamlComposite = new YamlCompositeFunction();
+        setCommonAtributes(compositeFunction, yamlComposite);
 
-    @Override
-    public PatchableYamlList<YamlPlan> getListInFragment(AutomationPackageFragmentYaml fragment) {
-        return fragment.getPlans();
-    }
+        YamlPlan plan = planReader.planToYamlPlan(compositeFunction.getPlan());
+        plan.setName(null);
+        yamlComposite.setPlan(plan);
 
-    @Override
-    public String getCollectionName() {
-        return YamlPlan.PLANS_ENTITY_NAME;
+        return new YamlAutomationPackageKeyword(yamlComposite, null);
     }
-
 }

@@ -1,5 +1,12 @@
+package step.plugins.node.automation;
+
+import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.plugins.node.NodeFunction;
+
 /*******************************************************************************
- * Copyright (C) 2020, exense GmbH
+ * Copyright (C) 2026, exense GmbH
  *
  * This file is part of STEP
  *
@@ -16,16 +23,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.yaml.model;
+@BusinessObjectToYamlMapping(sourceClass = NodeFunction.class)
+public class NodeFunctionToYamlMapper extends AbstractFunctionToYamlMapper<NodeFunction> {
 
-import com.fasterxml.jackson.annotation.JacksonInject;
-import com.fasterxml.jackson.annotation.OptBoolean;
-import step.core.yaml.PatchingContext;
+    @Override
+    public YamlAutomationPackageKeyword getNewYamlObject(NodeFunction nodeFunction) {
 
-public class AutomationPackageFragmentYamlImpl extends AbstractAutomationPackageFragmentYaml {
+        YamlNodeFunction yamlFunction = new YamlNodeFunction();
+        setCommonAtributes(nodeFunction, yamlFunction);
+        yamlFunction.setJsfile(nodeFunction.getJsFile());
 
-    public AutomationPackageFragmentYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
-        super(patchingContext);
+        return new YamlAutomationPackageKeyword(yamlFunction, null);
     }
 
 }

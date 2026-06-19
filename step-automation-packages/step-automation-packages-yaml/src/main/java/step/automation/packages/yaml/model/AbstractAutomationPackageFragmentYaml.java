@@ -22,6 +22,10 @@ import com.fasterxml.jackson.annotation.*;
 import org.apache.commons.io.FileUtils;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageWriteToDiskException;
+import step.automation.packages.mappers.interfaces.HasCollectionName;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.core.yaml.deserialization.PatchableYamlList;
@@ -160,5 +164,26 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
             getPlansPlainText().isEmpty() &&
             getKeywords().isEmpty() &&
             getAdditionalFields().isEmpty();
+    }
+
+    @Override
+    public <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<BO, YO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap) {
+        for (YO yamlObject : getListForYamlObject(mapper)) {
+            BO businessObject = mapper.getBusinessObject(yamlObject);
+            patchableMap.put(businessObject, yamlObject);
+            fragmentMap.put(businessObject, this);
+        }
+    }
+
+    @Override
+    public <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> PatchableYamlList<YO> getListForYamlObject(HasCollectionName<BO, YO> mapper) {
+        String collectionName = mapper.getCollectionName();
+        return (PatchableYamlList<YO>) switch (collectionName) {
+            case YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME -> getKeywords();
+            case YamlPlan.PLANS_ENTITY_NAME -> getPlans();
+            case "plansPlainText" -> getPlansPlainText();
+            default -> getAdditionalFields()
+                .computeIfAbsent(collectionName, n -> new PatchableYamlList<YO>(getPatchingContext(), n));
+        };
     }
 }

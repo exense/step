@@ -1,13 +1,12 @@
 package step.automation.packages.yaml.mappers;
 
 import step.automation.packages.StagingAutomationPackageContext;
+import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.functions.Function;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
 import step.plugins.java.GeneralFunctionScriptLanguage;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.java.automation.YamlGeneralScriptFunction;
-
-import java.util.Optional;
 
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
@@ -27,14 +26,8 @@ import java.util.Optional;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-@ObjectToYamlMapping(organizableObject = GeneralScriptFunction.class)
-public class GeneralScriptFunctionToYamlAutomationKeywordObjectMapper extends FunctionToYamlAutomationKeywordObjectMapper<GeneralScriptFunction> {
-
-    private final StagingAutomationPackageContext stagingContext;
-
-    public GeneralScriptFunctionToYamlAutomationKeywordObjectMapper(StagingAutomationPackageContext stagingContext) {
-        this.stagingContext = stagingContext;
-    }
+@BusinessObjectToYamlMapping(sourceClass = GeneralScriptFunction.class)
+public class GeneralScriptFunctionToYamlMapper extends AbstractFunctionToYamlMapper<GeneralScriptFunction> {
 
     @Override
     public YamlAutomationPackageKeyword getNewYamlObject(GeneralScriptFunction generalScriptFunction) {
@@ -49,12 +42,4 @@ public class GeneralScriptFunctionToYamlAutomationKeywordObjectMapper extends Fu
         return new YamlAutomationPackageKeyword(yamlFunction, null);
     }
 
-    @Override
-    public Optional<GeneralScriptFunction> getBusinessObject(YamlAutomationPackageKeyword yamlKeyword) {
-        Function function = yamlKeyword.prepareKeyword(stagingContext);
-        if (function instanceof GeneralScriptFunction generalScriptFunction) {
-            return Optional.of(generalScriptFunction);
-        }
-        return Optional.empty();
-    }
 }

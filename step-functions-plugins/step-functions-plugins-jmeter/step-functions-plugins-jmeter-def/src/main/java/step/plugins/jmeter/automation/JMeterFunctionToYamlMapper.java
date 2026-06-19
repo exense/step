@@ -1,9 +1,9 @@
-package step.automation.packages.yaml.mappers;
+package step.plugins.jmeter.automation;
 
-import step.core.accessors.AbstractOrganizableObject;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.plugins.jmeter.JMeterFunction;
 
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
@@ -23,11 +23,16 @@ import java.lang.annotation.RetentionPolicy;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ObjectToYamlMapping {
+@BusinessObjectToYamlMapping(sourceClass = JMeterFunction.class)
+public class JMeterFunctionToYamlMapper extends AbstractFunctionToYamlMapper<JMeterFunction> {
 
-    /**
-     * @return the list of injections to inject into the constructor
-     */
-    Class<? extends AbstractOrganizableObject> organizableObject();
+    @Override
+    public YamlAutomationPackageKeyword getNewYamlObject(JMeterFunction jmeterFunction) {
+
+        YamlJMeterFunction yamlFunction = new YamlJMeterFunction();
+        setCommonAtributes(jmeterFunction, yamlFunction);
+        yamlFunction.setJmeterTestplan(jmeterFunction.getJmeterTestplan());
+
+        return new YamlAutomationPackageKeyword(yamlFunction, null);
+    }
 }

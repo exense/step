@@ -52,6 +52,6 @@ public class PatchableYamlPrimitive<T> extends PatchableYamlModelBase {
 
     @Override
     public void onParsed(JsonLocation startLocation, JsonLocation endLocation) {
-        context.claimChunk(startLocation, startLocation, this);
+        getPatchingContext().claimChunk(startLocation, startLocation, this);
     }
 }
