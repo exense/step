@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.controller.services.async.AsyncTaskManager;
 import step.controller.services.async.AsyncTaskManagerPlugin;
+import step.core.Constants;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
@@ -13,6 +14,9 @@ import step.core.collections.Order;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.Entity;
 import step.core.entities.EntityConstants;
+import step.core.execution.model.ExecutionNoticeSeverity;
+import step.core.execution.notices.ExecutionNoticeManager;
+import step.core.execution.notices.ExecutionNoticeType;
 import step.core.metrics.MetricsConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
@@ -128,7 +132,19 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
         TimeSeriesAggregationPipeline aggregationPipeline = timeSeries.getAggregationPipeline();
         // Safeguard against high cardinality on user-defined metric/measurement labels during executions.
         int maxUniqueLabelValues = configuration.getPropertyAsInteger("timeseries.attributes.max-unique-label-values", 20);
-        TimeSeriesMetricSamplesHandler handler = new TimeSeriesMetricSamplesHandler(timeSeries, includedAttributes, excludedAttributes, maxUniqueLabelValues);
+        ExecutionNoticeManager executionNoticeManager = context.require(ExecutionNoticeManager.class);
+        // The documentation URL is keyed on the Step "doc" version (the minor component, e.g. "30" for 3.30.0),
+        // derived from the version constant so it tracks version upgrades automatically.
+        String docUrl = "https://step.dev/knowledgebase/" + Constants.STEP_VERSION.getMinor()
+            + "/userdocs/analytics/measurements-and-metrics/#label-cardinality-safeguard";
+        executionNoticeManager.register(new ExecutionNoticeType(
+            TimeSeriesMetricSamplesHandler.CARDINALITY_NOTICE_TYPE_ID,
+            "Time-series",
+            ExecutionNoticeSeverity.WARNING,
+            "High cardinality detected on the custom metric label <b>{labelName}</b> of metric <b>{metricName}</b>. " +
+                "Unique values exceeding the quota of {quota} were dismissed and are reported under a single placeholder value. " +
+                "<a href=\"" + docUrl + "\" target=\"_blank\">Learn more</a>"));
+        TimeSeriesMetricSamplesHandler handler = new TimeSeriesMetricSamplesHandler(timeSeries, includedAttributes, excludedAttributes, maxUniqueLabelValues, executionNoticeManager);
 
         context.put(TimeSeries.class, timeSeries);
         context.put(TimeSeriesIngestionPipeline.class, mainIngestionPipeline);

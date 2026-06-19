@@ -3,10 +3,10 @@ package step.plugins.timeseries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
+import step.core.execution.model.ExecutionNotice;
+import step.core.execution.notices.ExecutionNoticeManager;
 import step.core.metrics.InstrumentType;
 import step.core.metrics.MetricSample;
-import step.core.reports.Error;
-import step.core.reports.ErrorType;
 import step.core.timeseries.TimeSeries;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
@@ -36,6 +36,9 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
     /** Static value substituted for label values dropped once a label exceeds its unique-value quota. */
     public static final String QUOTA_EXCEEDED_VALUE = "values dismissed due to quota exceeded";
 
+    /** Id of the execution notice type raised when a label's unique-value quota is exceeded. */
+    public static final String CARDINALITY_NOTICE_TYPE_ID = "timeseries.label-cardinality-quota-exceeded";
+
     private final TimeSeries timeSeries;
 
     private final Set<String> handledAttributes;
@@ -61,6 +64,12 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
     private final ConcurrentHashMap<String, Set<String>> warnedLabels = new ConcurrentHashMap<>();
 
     /**
+     * Used to raise an execution notice the first time a label exceeds its quota. May be {@code null}
+     * for re-ingestion/rebuild and test paths, in which case the quota breach is only logged.
+     */
+    private final ExecutionNoticeManager executionNoticeManager;
+
+    /**
      * @param timeSeries         the time series to ingest metric samples into
      * @param handledAttributes  allowlist of attribute keys to retain when building bucket
      *                           attributes from a measurement or metric sample label set.
@@ -79,7 +88,7 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
     public TimeSeriesMetricSamplesHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes) {
         // Cardinality safeguard disabled by default: used by re-ingestion/rebuild paths (raw data was
         // already filtered at first ingestion) and by tests that don't exercise the quota.
-        this(timeSeries, handledAttributes, excludedAttributes, 0);
+        this(timeSeries, handledAttributes, excludedAttributes, 0, null);
     }
 
     /**
@@ -87,10 +96,21 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
      *                             before new user-defined label values are masked. {@code <= 0} disables the safeguard.
      */
     public TimeSeriesMetricSamplesHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes, int maxUniqueLabelValues) {
+        this(timeSeries, handledAttributes, excludedAttributes, maxUniqueLabelValues, null);
+    }
+
+    /**
+     * @param maxUniqueLabelValues   maximum number of unique values per (execution, metric name, label name)
+     *                               before new user-defined label values are masked. {@code <= 0} disables the safeguard.
+     * @param executionNoticeManager manager used to raise an execution notice the first time a label exceeds
+     *                               its quota; may be {@code null} (the breach is then only logged).
+     */
+    public TimeSeriesMetricSamplesHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes, int maxUniqueLabelValues, ExecutionNoticeManager executionNoticeManager) {
         this.timeSeries = timeSeries;
         this.handledAttributes = Objects.requireNonNull(handledAttributes);
         this.excludedAttributes = Objects.requireNonNull(excludedAttributes);
         this.maxUniqueLabelValues = maxUniqueLabelValues;
+        this.executionNoticeManager = executionNoticeManager;
         if (!handledAttributes.isEmpty() && !excludedAttributes.isEmpty()) {
             throw new IllegalArgumentException("Either a set of handled attributes or a set of excluded attributes is required, setting both is not supported.");
         }
@@ -270,16 +290,15 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
         if (!warned.add(metricName + '\0' + labelName)) {
             return;
         }
-        String message = String.format(
-            "High cardinality detected on custom metric label [%s] for metric [%s]. Unique values exceeding the quota of %d have been dismissed (replaced with \"%s\").",
-            labelName, metricName, maxUniqueLabelValues, QUOTA_EXCEEDED_VALUE);
-        logger.warn("Execution {}: {}", execId, message);
-        if (executionContext != null) {
-            try {
-                executionContext.getExecutionManager().updateExecution(e -> e.addLifecyleError(new Error(ErrorType.TECHNICAL, message)));
-            } catch (Exception e) {
-                logger.error("Failed to append high-cardinality warning to execution {}", execId, e);
-            }
+        logger.warn("Execution {}: high cardinality detected on custom metric label [{}] for metric [{}]. " +
+                "Unique values exceeding the quota of {} have been dismissed (replaced with \"{}\").",
+            execId, labelName, metricName, maxUniqueLabelValues, QUOTA_EXCEEDED_VALUE);
+        if (executionNoticeManager != null) {
+            ExecutionNotice notice = new ExecutionNotice(CARDINALITY_NOTICE_TYPE_ID, Map.of(
+                "labelName", labelName,
+                "metricName", metricName,
+                "quota", String.valueOf(maxUniqueLabelValues)));
+            executionNoticeManager.raiseNotice(executionContext, notice);
         }
     }
 

@@ -4,6 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollection;
+import step.core.execution.ExecutionContext;
+import step.core.execution.model.ExecutionNotice;
+import step.core.execution.notices.ExecutionNoticeManager;
 import step.core.metrics.ExecutionMetricSample;
 import step.core.metrics.InstrumentType;
 import step.core.metrics.Measurement;
@@ -19,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static step.plugins.timeseries.TimeSeriesMetricSamplesHandler.CARDINALITY_NOTICE_TYPE_ID;
 import static step.plugins.timeseries.TimeSeriesMetricSamplesHandler.QUOTA_EXCEEDED_VALUE;
 
 /**
@@ -34,10 +38,31 @@ public class TimeSeriesLabelCardinalityTest {
     private InMemoryCollection<Bucket> bucketsCollection;
 
     private TimeSeriesMetricSamplesHandler newHandler(int maxUniqueLabelValues) {
+        return newHandler(maxUniqueLabelValues, null);
+    }
+
+    private TimeSeriesMetricSamplesHandler newHandler(int maxUniqueLabelValues, ExecutionNoticeManager noticeManager) {
         bucketsCollection = new InMemoryCollection<>();
         TimeSeriesCollection tsCollection = new TimeSeriesCollection(bucketsCollection, BUCKET_RESOLUTION);
         TimeSeries timeSeries = new TimeSeriesBuilder().registerCollection(tsCollection).build();
-        return new TimeSeriesMetricSamplesHandler(timeSeries, HANDLED_ATTRIBUTES, Set.of(), maxUniqueLabelValues);
+        return new TimeSeriesMetricSamplesHandler(timeSeries, HANDLED_ATTRIBUTES, Set.of(), maxUniqueLabelValues, noticeManager);
+    }
+
+    /**
+     * Captures the notices the handler would raise, without needing a live execution context: the
+     * handler passes its (possibly null) context straight through to {@link #raiseNotice}.
+     */
+    private static class CapturingNoticeManager extends ExecutionNoticeManager {
+        final List<ExecutionNotice> captured = new ArrayList<>();
+
+        CapturingNoticeManager() {
+            super(100);
+        }
+
+        @Override
+        public void raiseNotice(ExecutionContext executionContext, ExecutionNotice notice) {
+            captured.add(notice);
+        }
     }
 
     // ── Normal behavior: all unique values below the quota are ingested unchanged ───────────────
@@ -121,6 +146,34 @@ public class TimeSeriesLabelCardinalityTest {
         Assert.assertTrue(values.contains("user_id-0"));
         Assert.assertTrue(values.contains("user_id-1"));
         Assert.assertFalse(values.contains("user_id-2"));
+    }
+
+    // ── A single notice is raised, once per (metric, label), when the quota is exceeded ─────────
+
+    @Test
+    public void raisesNoticeOncePerLabelWhenQuotaExceeded() {
+        CapturingNoticeManager noticeManager = new CapturingNoticeManager();
+        TimeSeriesMetricSamplesHandler handler = newHandler(2, noticeManager);
+
+        // 5 distinct values on (m1, user_id) with quota 2 → quota exceeded, but the notice must be raised once.
+        handler.processMetrics(null, metricsWithDistinctLabel("user_id", 5, "m1", "e1"));
+        handler.flush();
+
+        Assert.assertEquals(1, noticeManager.captured.size());
+        ExecutionNotice notice = noticeManager.captured.get(0);
+        Assert.assertEquals(CARDINALITY_NOTICE_TYPE_ID, notice.getTypeId());
+        Assert.assertEquals("user_id", notice.getParameters().get("labelName"));
+        Assert.assertEquals("m1", notice.getParameters().get("metricName"));
+        Assert.assertEquals("2", notice.getParameters().get("quota"));
+    }
+
+    @Test
+    public void noNoticeRaisedWhenWithinQuota() {
+        CapturingNoticeManager noticeManager = new CapturingNoticeManager();
+        TimeSeriesMetricSamplesHandler handler = newHandler(20, noticeManager);
+        handler.processMetrics(null, metricsWithDistinctLabel("status", 15, "m1", "e1"));
+        handler.flush();
+        Assert.assertTrue(noticeManager.captured.isEmpty());
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────────────────────
