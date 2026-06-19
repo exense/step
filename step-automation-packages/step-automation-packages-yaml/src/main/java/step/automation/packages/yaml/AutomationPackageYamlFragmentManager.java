@@ -137,7 +137,7 @@ public class AutomationPackageYamlFragmentManager {
         this.properties = properties;
     }
 
-    public <BO extends AbstractOrganizableObject> Iterable<BO> getBusinessObjects(Class<BO> boClass) {
+    public <BO extends AbstractOrganizableObject, T> Iterable<BO> getBusinessObjects(Class<T> boClass) {
         return patchableMap.keySet().stream()
             .filter(businessObject -> boClass.isAssignableFrom(businessObject.getClass()))
             .map(businessObject -> (BO) businessObject).collect(Collectors.toList());

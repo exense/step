@@ -29,7 +29,7 @@ import java.util.Optional;
 public abstract class AbstractFunctionToYamlMapper<F extends Function> implements BusinessObjectToYamlMapper<F, YamlAutomationPackageKeyword> {
 
 
-    protected void setCommonAtributes(F function, AbstractYamlFunction<F> yamlFunction) {
+    protected void setCommonAttributes(F function, AbstractYamlFunction<F> yamlFunction) {
         Optional.ofNullable(function.getAttribute(AbstractOrganizableObject.NAME)).ifPresent(yamlFunction::setName);
         Optional.ofNullable(function.getAttribute("description")).ifPresent(yamlFunction::setDescription);
     }

@@ -39,7 +39,7 @@ public class CompositeFunctionToYamlMapper extends AbstractFunctionToYamlMapper<
     public YamlAutomationPackageKeyword getNewYamlObject(CompositeFunction compositeFunction) {
 
         YamlCompositeFunction yamlComposite = new YamlCompositeFunction();
-        setCommonAtributes(compositeFunction, yamlComposite);
+        setCommonAttributes(compositeFunction, yamlComposite);
 
         YamlPlan plan = planReader.planToYamlPlan(compositeFunction.getPlan());
         plan.setName(null);

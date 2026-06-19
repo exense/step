@@ -21,22 +21,22 @@ package step.core.collections;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.inmemory.InMemoryCollection;
-import step.core.yaml.PatchableYamlModel;
 
-public class AutomationPackageCollection<BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> extends InMemoryCollection<BO> implements Collection<BO> {
+public class AutomationPackageCollection<BO extends AbstractOrganizableObject, T> extends InMemoryCollection<BO> implements Collection<BO> {
 
 
     private final AutomationPackageYamlFragmentManager fragmentManager;
 
-    public AutomationPackageCollection(AutomationPackageYamlFragmentManager fragmentManager, Class<BO> boClass) {
+    public AutomationPackageCollection(AutomationPackageYamlFragmentManager fragmentManager, Class<T> boClass) {
         super(false);
         this.fragmentManager = fragmentManager;
-        initialzeRecordsFromFragments(boClass, fragmentManager);
+        initializeRecordsFromFragments(boClass, fragmentManager);
     }
 
-    private void initialzeRecordsFromFragments(Class<BO> boClass, AutomationPackageYamlFragmentManager fragmentManager) {
+    private void initializeRecordsFromFragments(Class<T> boClass, AutomationPackageYamlFragmentManager fragmentManager) {
         // initialization into the collection memory. Calls super save to avoid calling fragmentManager.savePlan
-        fragmentManager.getBusinessObjects(boClass).forEach(super::save);
+        Iterable<BO> list = fragmentManager.getBusinessObjects(boClass);
+        list.forEach(super::save);
     }
 
     @Override

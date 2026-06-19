@@ -1,6 +1,5 @@
 package step.automation.packages.yaml.mappers;
 
-import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
@@ -33,7 +32,7 @@ public class GeneralScriptFunctionToYamlMapper extends AbstractFunctionToYamlMap
     public YamlAutomationPackageKeyword getNewYamlObject(GeneralScriptFunction generalScriptFunction) {
 
         YamlGeneralScriptFunction yamlFunction = new YamlGeneralScriptFunction();
-        setCommonAtributes(generalScriptFunction, yamlFunction);
+        setCommonAttributes(generalScriptFunction, yamlFunction);
 
         yamlFunction.setScriptFile(generalScriptFunction.getScriptFile());
         yamlFunction.setLibrariesFile(generalScriptFunction.getLibrariesFile());

@@ -30,7 +30,7 @@ public class JMeterFunctionToYamlMapper extends AbstractFunctionToYamlMapper<JMe
     public YamlAutomationPackageKeyword getNewYamlObject(JMeterFunction jmeterFunction) {
 
         YamlJMeterFunction yamlFunction = new YamlJMeterFunction();
-        setCommonAtributes(jmeterFunction, yamlFunction);
+        setCommonAttributes(jmeterFunction, yamlFunction);
         yamlFunction.setJmeterTestplan(jmeterFunction.getJmeterTestplan());
 
         return new YamlAutomationPackageKeyword(yamlFunction, null);
