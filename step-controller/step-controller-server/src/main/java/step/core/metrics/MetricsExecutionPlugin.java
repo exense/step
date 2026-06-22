@@ -80,7 +80,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
     // These are used by the MeasurementControllerPlugin to "reconstruct" measures from measurements, and indicate the
     // "internal" fields which should NOT be added to the measure data field. Keep this in sync with the fields defined above.
     static final Set<String> MEASURE_NOT_DATA_KEYS = java.util.Set.of("_id", PROJECT, "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
-        ORIGIN, RN_STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION);
+        ORIGIN, RN_STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION, CANONICAL_PLAN_NAME);
     // Same use, but for defining which fields SHOULD be directly copied to the top-level fields of a measure.
     static final Set<String> MEASURE_FIELDS = java.util.Set.of(NAME, BEGIN, VALUE, STATUS);
 
@@ -163,13 +163,13 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         if (liveReportingContext != null) {
             liveReportingContext.registerMeasureListener(measures -> {
                 List<Measurement> measurements = measures.stream().map(m -> createMeasurement(context, m, (CallFunctionReportNode) node)).collect(Collectors.toList());
-                processMeasurements(measurements);
+                processMeasurements(context, measurements);
             });
             liveReportingContext.registerMetricListener(metricSamples -> {
                 List<ExecutionMetricSample> executionMetricSamples = metricSamples.stream()
                     .map(s -> createExecutionMetricSample(context, s, (CallFunctionReportNode) node, null))
                     .collect(Collectors.toList());
-                processMetrics(executionMetricSamples);
+                processMetrics(context, executionMetricSamples);
             });
         }
     }
@@ -207,7 +207,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
                 planId, plan, canonicalPlanName, scheduleId, schedule, execution,
                 null, null, additionalAttributes, THREAD_GROUP);
 
-            processMetrics(List.of(stepSample));
+            processMetrics(context, List.of(stepSample));
 
             long currentCount = Math.max(0, counter.get());
             MetricSample heartbeatSample = new MetricSample(
@@ -268,7 +268,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
             }
             //Delegate to plugins implementation
             if (!measurements.isEmpty()) {
-                processMeasurements(measurements);
+                processMeasurements(executionContext, measurements);
             }
             //For keyword call, process output metrics
             if (node instanceof CallFunctionReportNode) {
@@ -278,7 +278,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
                     List<ExecutionMetricSample> executionMetricSamples = outputMetrics.stream()
                         .map(m -> createExecutionMetricSample(executionContext, m, functionReport, null))
                         .collect(Collectors.toList());
-                    processMetrics(executionMetricSamples);
+                    processMetrics(executionContext, executionMetricSamples);
                 }
             }
         }
@@ -317,6 +317,11 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         enrichWithNodeAttributes(measurement, functionReport);
         enrichWithCustomData(measurement, measure.getData());
         enrichWithAdditionalAttributes(measurement, executionContext);
+        // Record the keyword-author-defined custom data keys so downstream handlers (i.e. the time-series
+        // handler) can identify which labels are user-defined and therefore subject to cardinality control.
+        if (measure.getData() != null && !measure.getData().isEmpty()) {
+            measurement.setCustomMetricLabelKeys(new HashSet<>(measure.getData().keySet()));
+        }
         return measurement;
     }
 
@@ -347,14 +352,14 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
             agentUrl, origin, additionalAttributes, metricType);
     }
 
-    public void processMetrics(List<ExecutionMetricSample> metrics) {
-        processMetrics(metrics, null);
+    public void processMetrics(ExecutionContext executionContext, List<ExecutionMetricSample> metrics) {
+        processMetrics(executionContext, metrics, null);
     }
 
-    public void processMetrics(List<ExecutionMetricSample> metrics, Map<String, String> optionalLabels) {
+    public void processMetrics(ExecutionContext executionContext, List<ExecutionMetricSample> metrics, Map<String, String> optionalLabels) {
         for (MetricSamplesHandler metricSamplesHandler : MetricsExecutionPlugin.SAMPLES_HANDLERS) {
             try {
-                metricSamplesHandler.processMetrics(metrics, optionalLabels);
+                metricSamplesHandler.processMetrics(executionContext, metrics, optionalLabels);
             } catch (Exception e) {
                 logger.error("Metrics could not be processed by " + metricSamplesHandler.getClass().getSimpleName(), e);
             }
@@ -385,10 +390,10 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         return measurement;
     }
 
-    public void processMeasurements(List<Measurement> measurements) {
+    public void processMeasurements(ExecutionContext executionContext, List<Measurement> measurements) {
         for (MetricSamplesHandler metricSamplesHandler : MetricsExecutionPlugin.SAMPLES_HANDLERS) {
             try {
-                metricSamplesHandler.processMeasurements(measurements);
+                metricSamplesHandler.processMeasurements(executionContext, measurements);
             } catch (Exception e) {
                 logger.error("Measurement count not be processed by " + metricSamplesHandler.getClass().getSimpleName(), e);
             }
@@ -500,7 +505,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
             optionalLabelsMap.put("apName", Optional.ofNullable(automationPackage).map(ap -> ap.getAttribute(AbstractOrganizableObject.NAME)).orElse(""));
             optionalLabelsMap.put("apVersionName", Optional.ofNullable(automationPackage).map(AutomationPackage::getVersionName).orElse(""));
             optionalLabelsMap.put("apLastModified", Optional.ofNullable(automationPackage).map(AbstractTrackedObject::getLastModificationDate).map(d -> String.valueOf(d.toInstant().toEpochMilli())).orElse(""));
-            processMetrics(samples, optionalLabelsMap);
+            processMetrics(context, samples, optionalLabelsMap);
         }
     }
 }
