@@ -50,7 +50,7 @@ public class YamlGeneralScriptFunction extends AbstractYamlFunction<GeneralScrip
             res.setScriptLanguage(new DynamicValue<>(GeneralFunctionScriptLanguage.groovy.name()));
         }
 
-        AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
+        AutomationPackageResourceUploader resourceUploader = context.getResourceUploader();
         String scriptFilePath = scriptFile.get();
         String uploaded = resourceUploader.applyResourceReference(scriptFilePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
         if (uploaded != null) {

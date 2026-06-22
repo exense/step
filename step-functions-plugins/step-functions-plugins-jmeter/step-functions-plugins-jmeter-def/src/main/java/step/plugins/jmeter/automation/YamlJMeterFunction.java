@@ -44,7 +44,7 @@ public class YamlJMeterFunction extends AbstractYamlFunction<JMeterFunction> {
     @Override
     protected void fillDeclaredFields(JMeterFunction function, StagingAutomationPackageContext context) {
         super.fillDeclaredFields(function, context);
-        AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
+        AutomationPackageResourceUploader resourceUploader = context.getResourceUploader();
 
         String testplanPath = jmeterTestplan.get();
         String testPlanRef = resourceUploader.applyResourceReference(testplanPath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
