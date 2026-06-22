@@ -71,6 +71,6 @@ public class ExecutionNoticeManagerTest {
         // first notice resolves via unknown fallback (type "t" not registered here), sentinel resolves via built-in type
         ResolvedExecutionNotice sentinel = resolved.get(resolved.size() - 1);
         Assert.assertEquals(ExecutionNoticeManager.NOTICES_SUPPRESSED_TYPE_ID, sentinel.getTypeId());
-        Assert.assertTrue(sentinel.getMessage().contains("limit of 1"));
+        Assert.assertEquals("Additional execution notices were suppressed because the per-execution limit of 1 was reached.", sentinel.getMessage());
     }
 }

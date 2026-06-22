@@ -75,6 +75,6 @@ public class ExecutionNoticeResolverTest {
         ResolvedExecutionNotice resolved = resolver.resolve(new ExecutionNotice("does.not.exist", Map.of("k", "v")));
         Assert.assertEquals(ExecutionNoticeResolver.UNKNOWN_TYPE_CATEGORY, resolved.getCategory());
         Assert.assertEquals(ExecutionNoticeSeverity.INFO, resolved.getSeverity());
-        Assert.assertTrue(resolved.getMessage().contains("does.not.exist"));
+        Assert.assertEquals("Unknown execution notice type 'does.not.exist' (parameters: {k=v})", resolved.getMessage());
     }
 }
