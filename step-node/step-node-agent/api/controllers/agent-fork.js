@@ -18,6 +18,7 @@
  */
 
 const { OutputBuilder } = require("./output");
+const { createLiveReporting } = require("./live-reporting");
 const Session = require("./session");
 const fs = require("fs");
 const path = require('path')
@@ -34,6 +35,7 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
     pendingUncaughtException = null;
     console.log("[Agent fork] Calling keyword " + functionName)
     const outputBuilder = new OutputBuilder();
+    const liveReporting = createLiveReporting(properties);
     try {
       if (!keywordDirectoryExists(projectPath, keywordDirectory)) {
         outputBuilder.fail("The keyword directory '" + keywordDirectory + "' doesn't exist in " + path.basename(projectPath) + ". Possible cause: If using TypeScript, the keywords may not have been compiled. Fix: Ensure your project is built before deploying to Step or during 'npm install'.")
@@ -52,7 +54,7 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
             if(beforeKeyword) {
               await beforeKeyword(functionName);
             }
-            await keyword(input, outputBuilder, session, properties);
+            await keyword(input, outputBuilder, session, properties, liveReporting);
           } catch (e) {
             console.log("[Agent fork] Keyword execution failed with following error", e)
             const onError = module['onError'];
@@ -82,6 +84,12 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
       // Flush the event loop so unhandledRejection / uncaughtException from the keyword
       // (e.g. fire-and-forget promises, nextTick throws) land before we send the result.
       await new Promise(resolve => setImmediate(resolve));
+      // Close live reporting: flushes any buffered measures and waits for in-flight uploads.
+      try {
+        await liveReporting.close();
+      } catch (e) {
+        console.log("[Agent fork] Error while closing live reporting", e);
+      }
       // Surface inter-keyword errors first, labelled clearly as coming from a previous keyword.
       if (prevUnhandledRejection) {
         const sep = outputBuilder.hasError() ? '\n' : '';

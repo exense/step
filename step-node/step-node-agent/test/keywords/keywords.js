@@ -100,6 +100,48 @@ exports.MultipleMeasuresKW = async (input, output, session, properties) => {
   output.addMeasure('third', 50)
 }
 
+// --- live reporting (measures) ---
+
+exports.LiveMeasureKW = async (input, output, session, properties, liveReporting) => {
+  output.add('hasLiveReporting', !!(liveReporting && liveReporting.measures))
+  liveReporting.measures.startMeasure('live-step')
+  liveReporting.measures.stopMeasure({ status: 'PASSED', data: { k: 'v' } })
+  liveReporting.measures.addMeasure('live-pre-timed', 42, { status: 'FAILED' })
+}
+
+exports.UploadFileKW = async (input, output, session, properties, liveReporting) => {
+  const status = await liveReporting.fileUploads.uploadBinaryFile(input.filePath, { mimeType: 'text/plain' })
+  output.add('transferStatus', status.transferStatus)
+  output.add('size', status.size)
+  output.add('reference', status.reference)
+}
+
+// Streams a file while it is still being written: start the upload, append chunks over time, then complete.
+exports.StreamGrowingFileKW = async (input, output, session, properties, liveReporting) => {
+  const fs = require('fs')
+  fs.writeFileSync(input.filePath, '')
+  const upload = liveReporting.fileUploads.startTextFileUpload(input.filePath)
+  for (const chunk of input.chunks) {
+    fs.appendFileSync(input.filePath, chunk)
+    await new Promise(r => setTimeout(r, 30))
+  }
+  const status = await upload.complete()
+  output.add('transferStatus', status.transferStatus)
+  output.add('size', status.size)
+}
+
+exports.LiveMetricKW = async (input, output, session, properties, liveReporting) => {
+  const counter = liveReporting.metrics.registerCounter('requests', { endpoint: '/login' })
+  counter.increment()
+  counter.increment(3)
+  const gauge = liveReporting.metrics.registerGauge('queueDepth')
+  gauge.observe(7)
+  const histogram = liveReporting.metrics.registerHistogram('respTimeMs')
+  histogram.observe(12)
+  histogram.observe(25)
+  output.add('ok', true)
+}
+
 // --- session ---
 
 exports.SessionSetKW = async (input, output, session) => {

@@ -7,6 +7,16 @@ const logger = require('../logger').child({ component: 'Agent' });
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
+// Resolve the bundled `ws` module path once, so it can be injected into forked keyword processes
+// (whose own require() resolves against the keyword project, not the agent). Used by live reporting
+// for streaming file uploads. If ws is missing, file uploads degrade to discarding.
+let wsModulePath = null;
+try {
+  wsModulePath = require.resolve('ws');
+} catch {
+  logger.warn('The ws module could not be resolved; live reporting file uploads will be disabled');
+}
+
 process.on('unhandledRejection', error => {
   logger.error('Critical: an unhandled error (unhandled promise rejection) occurred and might not have been reported:', error)
 })
@@ -348,10 +358,15 @@ class ForkedAgent {
     fs.mkdirSync(agentForkerLibPath, { recursive: true });
     fs.copyFileSync(path.resolve(__dirname, 'agent-fork.js'), path.join(agentForkerLibPath, 'agent-fork.js'));
     fs.copyFileSync(path.join(__dirname, 'output.js'), path.join(agentForkerLibPath, 'output.js'));
+    fs.copyFileSync(path.join(__dirname, 'live-reporting.js'), path.join(agentForkerLibPath, 'live-reporting.js'));
     fs.copyFileSync(path.join(__dirname, 'session.js'), path.join(agentForkerLibPath, 'session.js'));
     this.agentForkerLibPath = agentForkerLibPath;
     this.startupChunks = [];
-    this.forkProcess = fork(path.join(agentForkerLibPath, 'agent-fork.js'), [], {cwd: keywordProjectPath, silent: true});
+    const forkEnv = { ...process.env };
+    if (wsModulePath) {
+      forkEnv.STEP_AGENT_WS_MODULE = wsModulePath;
+    }
+    this.forkProcess = fork(path.join(agentForkerLibPath, 'agent-fork.js'), [], {cwd: keywordProjectPath, silent: true, env: forkEnv});
     // Capture stdout/stderr immediately so startup crashes are not silently lost
     if (this.forkProcess.stdout) {
       this.forkProcess.stdout.on('data', (data) => this.startupChunks.push(data));
