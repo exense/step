@@ -37,11 +37,11 @@ public class ExecutionNoticeRegistryTest {
         registry.register(type("b"));
 
         Assert.assertNotNull(registry.get("a"));
-        Assert.assertEquals("b", registry.get("b").getId());
+        Assert.assertEquals("b", registry.get("b").id());
         Assert.assertNull(registry.get("missing"));
 
         List<ExecutionNoticeType> all = registry.getAll();
-        Assert.assertEquals(List.of("a", "b"), all.stream().map(ExecutionNoticeType::getId).collect(java.util.stream.Collectors.toList()));
+        Assert.assertEquals(List.of("a", "b"), all.stream().map(ExecutionNoticeType::id).collect(java.util.stream.Collectors.toList()));
     }
 
     @Test(expected = IllegalArgumentException.class)

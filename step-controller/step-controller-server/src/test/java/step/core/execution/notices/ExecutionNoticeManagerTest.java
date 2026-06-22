@@ -44,10 +44,10 @@ public class ExecutionNoticeManagerTest {
         List<ExecutionNotice> notices = execution.getNotices();
         // 3 real notices + exactly 1 sentinel
         Assert.assertEquals(4, notices.size());
-        Assert.assertEquals("t", notices.get(0).getTypeId());
-        Assert.assertEquals("t", notices.get(2).getTypeId());
-        Assert.assertEquals(ExecutionNoticeManager.NOTICES_SUPPRESSED_TYPE_ID, notices.get(3).getTypeId());
-        Assert.assertEquals("3", notices.get(3).getParameters().get("limit"));
+        Assert.assertEquals("t", notices.get(0).typeId());
+        Assert.assertEquals("t", notices.get(2).typeId());
+        Assert.assertEquals(ExecutionNoticeManager.NOTICES_SUPPRESSED_TYPE_ID, notices.get(3).typeId());
+        Assert.assertEquals("3", notices.get(3).parameters().get("limit"));
     }
 
     @Test
@@ -70,7 +70,7 @@ public class ExecutionNoticeManagerTest {
         List<ResolvedExecutionNotice> resolved = manager.resolve(execution);
         // first notice resolves via unknown fallback (type "t" not registered here), sentinel resolves via built-in type
         ResolvedExecutionNotice sentinel = resolved.get(resolved.size() - 1);
-        Assert.assertEquals(ExecutionNoticeManager.NOTICES_SUPPRESSED_TYPE_ID, sentinel.getTypeId());
-        Assert.assertEquals("Additional execution notices were suppressed because the per-execution limit of 1 was reached.", sentinel.getMessage());
+        Assert.assertEquals(ExecutionNoticeManager.NOTICES_SUPPRESSED_TYPE_ID, sentinel.typeId());
+        Assert.assertEquals("Additional execution notices were suppressed because the per-execution limit of 1 was reached.", sentinel.message());
     }
 }

@@ -23,68 +23,15 @@ import step.core.execution.model.ExecutionNoticeSeverity;
 /**
  * Read-time, fully resolved view of an execution notice: the message has been rendered from the
  * notice type's template and the instance parameters (with parameter values HTML-escaped). This is
- * the shape returned by the REST endpoints; it is never persisted.
+ * the shape returned by the REST endpoints; it is immutable and never persisted.
+ *
+ * @param message the resolved, sanitized HTML message
  */
-public class ResolvedExecutionNotice {
-
-    private String typeId;
-    private String category;
-    private ExecutionNoticeSeverity severity;
-    private String message;
-    private long timestamp;
-
-    public ResolvedExecutionNotice() {
-        super();
-    }
-
-    public ResolvedExecutionNotice(String typeId, String category, ExecutionNoticeSeverity severity, String message, long timestamp) {
-        this.typeId = typeId;
-        this.category = category;
-        this.severity = severity;
-        this.message = message;
-        this.timestamp = timestamp;
-    }
-
-    public String getTypeId() {
-        return typeId;
-    }
-
-    public void setTypeId(String typeId) {
-        this.typeId = typeId;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public ExecutionNoticeSeverity getSeverity() {
-        return severity;
-    }
-
-    public void setSeverity(ExecutionNoticeSeverity severity) {
-        this.severity = severity;
-    }
-
-    /**
-     * @return the resolved, sanitized HTML message
-     */
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
+public record ResolvedExecutionNotice(
+    String typeId,
+    String category,
+    ExecutionNoticeSeverity severity,
+    String message,
+    long timestamp
+) {
 }

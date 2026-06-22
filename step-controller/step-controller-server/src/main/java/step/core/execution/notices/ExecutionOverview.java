@@ -28,33 +28,5 @@ import java.util.List;
  * In a future major version this object is expected to become a curated model exposing only the
  * data required by the overview page, rather than embedding the full {@link Execution}.
  */
-public class ExecutionOverview {
-
-    private Execution execution;
-    private List<ResolvedExecutionNotice> resolvedNotices;
-
-    public ExecutionOverview() {
-        super();
-    }
-
-    public ExecutionOverview(Execution execution, List<ResolvedExecutionNotice> resolvedNotices) {
-        this.execution = execution;
-        this.resolvedNotices = resolvedNotices;
-    }
-
-    public Execution getExecution() {
-        return execution;
-    }
-
-    public void setExecution(Execution execution) {
-        this.execution = execution;
-    }
-
-    public List<ResolvedExecutionNotice> getResolvedNotices() {
-        return resolvedNotices;
-    }
-
-    public void setResolvedNotices(List<ResolvedExecutionNotice> resolvedNotices) {
-        this.resolvedNotices = resolvedNotices;
-    }
+public record ExecutionOverview(Execution execution, List<ResolvedExecutionNotice> resolvedNotices) {
 }

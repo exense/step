@@ -22,47 +22,18 @@ import step.core.execution.model.ExecutionNoticeSeverity;
 
 /**
  * Definition of an execution notice. Notice types are registered by plugins at startup in the
- * {@link ExecutionNoticeRegistry} and are referenced by their {@link #id} from the lightweight
+ * {@link ExecutionNoticeRegistry} and are referenced by their {@code id} from the lightweight
  * {@code ExecutionNotice} instances persisted on executions.
  * <p>
- * The {@link #messageTemplate} is <b>trusted HTML</b> authored by the plugin developer. It may
+ * The {@code messageTemplate} is <b>trusted HTML</b> authored by the plugin developer. It may
  * contain {@code {placeholder}} tokens (resolved at read time from the notice instance parameters)
  * and static HTML such as {@code <a href="...">} links. Parameter values substituted into the
  * template are HTML-escaped at resolution time; the template itself is not.
+ *
+ * @param id              the unique, namespaced id of this notice type (e.g. {@code "timeseries.label-cardinality-quota-exceeded"})
+ * @param category        a free-form grouping key (e.g. {@code "cardinality"}), used to group/filter notices in the UI
+ * @param severity        the presentation severity; never affects the execution result or status
+ * @param messageTemplate trusted HTML message template with optional {@code {placeholder}} tokens
  */
-public class ExecutionNoticeType {
-
-    private final String id;
-    private final String category;
-    private final ExecutionNoticeSeverity severity;
-    private final String messageTemplate;
-
-    /**
-     * @param id              the unique, namespaced id of this notice type (e.g. {@code "timeseries.label-cardinality-quota-exceeded"})
-     * @param category        a free-form grouping key (e.g. {@code "cardinality"}), used to group/filter notices in the UI
-     * @param severity        the presentation severity; never affects the execution result or status
-     * @param messageTemplate trusted HTML message template with optional {@code {placeholder}} tokens
-     */
-    public ExecutionNoticeType(String id, String category, ExecutionNoticeSeverity severity, String messageTemplate) {
-        this.id = id;
-        this.category = category;
-        this.severity = severity;
-        this.messageTemplate = messageTemplate;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public ExecutionNoticeSeverity getSeverity() {
-        return severity;
-    }
-
-    public String getMessageTemplate() {
-        return messageTemplate;
-    }
+public record ExecutionNoticeType(String id, String category, ExecutionNoticeSeverity severity, String messageTemplate) {
 }

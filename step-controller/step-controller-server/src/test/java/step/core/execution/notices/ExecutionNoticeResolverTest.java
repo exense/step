@@ -42,9 +42,9 @@ public class ExecutionNoticeResolverTest {
         ResolvedExecutionNotice resolved = resolver.resolve(new ExecutionNotice("t",
             Map.of("labelName", "user_id", "metricName", "m1", "quota", "20")));
 
-        Assert.assertEquals("cardinality", resolved.getCategory());
-        Assert.assertEquals(ExecutionNoticeSeverity.WARNING, resolved.getSeverity());
-        Assert.assertEquals("High cardinality on <b>user_id</b> of metric <b>m1</b> (quota 20).", resolved.getMessage());
+        Assert.assertEquals("cardinality", resolved.category());
+        Assert.assertEquals(ExecutionNoticeSeverity.WARNING, resolved.severity());
+        Assert.assertEquals("High cardinality on <b>user_id</b> of metric <b>m1</b> (quota 20).", resolved.message());
     }
 
     @Test
@@ -56,7 +56,7 @@ public class ExecutionNoticeResolverTest {
             Map.of("labelName", "<script>alert('x')</script>")));
 
         // The trusted <b> markup survives; the user-controlled value is escaped.
-        Assert.assertEquals("label <b>&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;</b>", resolved.getMessage());
+        Assert.assertEquals("label <b>&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;</b>", resolved.message());
     }
 
     @Test
@@ -65,7 +65,7 @@ public class ExecutionNoticeResolverTest {
             "t", "cat", ExecutionNoticeSeverity.INFO, "a {present} b {absent}"));
 
         ResolvedExecutionNotice resolved = resolver.resolve(new ExecutionNotice("t", Map.of("present", "X")));
-        Assert.assertEquals("a X b {absent}", resolved.getMessage());
+        Assert.assertEquals("a X b {absent}", resolved.message());
     }
 
     @Test
@@ -73,8 +73,8 @@ public class ExecutionNoticeResolverTest {
         ExecutionNoticeResolver resolver = new ExecutionNoticeResolver(new ExecutionNoticeRegistry());
 
         ResolvedExecutionNotice resolved = resolver.resolve(new ExecutionNotice("does.not.exist", Map.of("k", "v")));
-        Assert.assertEquals(ExecutionNoticeResolver.UNKNOWN_TYPE_CATEGORY, resolved.getCategory());
-        Assert.assertEquals(ExecutionNoticeSeverity.INFO, resolved.getSeverity());
-        Assert.assertEquals("Unknown execution notice type 'does.not.exist' (parameters: {k=v})", resolved.getMessage());
+        Assert.assertEquals(ExecutionNoticeResolver.UNKNOWN_TYPE_CATEGORY, resolved.category());
+        Assert.assertEquals(ExecutionNoticeSeverity.INFO, resolved.severity());
+        Assert.assertEquals("Unknown execution notice type 'does.not.exist' (parameters: {k=v})", resolved.message());
     }
 }

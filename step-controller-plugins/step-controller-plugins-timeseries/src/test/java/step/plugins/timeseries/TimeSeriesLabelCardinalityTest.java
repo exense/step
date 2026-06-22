@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static step.plugins.timeseries.TimeSeriesMetricSamplesHandler.CARDINALITY_LABEL_COUNT_NOTICE_TYPE_ID;
 import static step.plugins.timeseries.TimeSeriesMetricSamplesHandler.CARDINALITY_NOTICE_TYPE_ID;
 import static step.plugins.timeseries.TimeSeriesMetricSamplesHandler.QUOTA_EXCEEDED_VALUE;
 
@@ -46,6 +47,19 @@ public class TimeSeriesLabelCardinalityTest {
         TimeSeriesCollection tsCollection = new TimeSeriesCollection(bucketsCollection, BUCKET_RESOLUTION);
         TimeSeries timeSeries = new TimeSeriesBuilder().registerCollection(tsCollection).build();
         return new TimeSeriesMetricSamplesHandler(timeSeries, HANDLED_ATTRIBUTES, Set.of(), maxUniqueLabelValues, noticeManager);
+    }
+
+    /**
+     * Builds a handler in exclude mode (empty allowlist) so that arbitrary custom label <em>names</em> flow
+     * through to the safeguard. In allowlist (include) mode the set of label names is already bounded by the
+     * allowlist, so the label-count safeguard only matters in exclude mode (the default production mode).
+     */
+    private TimeSeriesMetricSamplesHandler newLabelCountHandler(int maxLabelsPerMetric, ExecutionNoticeManager noticeManager) {
+        bucketsCollection = new InMemoryCollection<>();
+        TimeSeriesCollection tsCollection = new TimeSeriesCollection(bucketsCollection, BUCKET_RESOLUTION);
+        TimeSeries timeSeries = new TimeSeriesBuilder().registerCollection(tsCollection).build();
+        // Value axis disabled (-1) to isolate the label-count safeguard.
+        return new TimeSeriesMetricSamplesHandler(timeSeries, Set.of(), Set.of(), -1, maxLabelsPerMetric, noticeManager);
     }
 
     /**
@@ -115,17 +129,30 @@ public class TimeSeriesLabelCardinalityTest {
         Assert.assertEquals(Set.of("user_id-0", "user_id-1"), m2Values);
     }
 
-    // ── Disabled safeguard (default 3-arg constructor / value <= 0) ────────────────────────────
+    // ── Disabled safeguard (default 3-arg constructor / value < 0) ─────────────────────────────
 
     @Test
     public void quotaDisabledIngestsEverything() {
-        TimeSeriesMetricSamplesHandler handler = newHandler(0);
+        TimeSeriesMetricSamplesHandler handler = newHandler(-1);
         handler.processMetrics(null, metricsWithDistinctLabel("user_id", 25, "m1", "e1"));
         handler.flush();
 
         Set<String> values = bucketAttributeValues("user_id");
         Assert.assertEquals(25, values.size());
         Assert.assertFalse(values.contains(QUOTA_EXCEEDED_VALUE));
+    }
+
+    // ── Strictest value quota (0): every custom value is masked, but the label key is kept ──────
+
+    @Test
+    public void valueQuotaZeroMasksEveryValue() {
+        TimeSeriesMetricSamplesHandler handler = newHandler(0);
+        handler.processMetrics(null, metricsWithDistinctLabel("user_id", 5, "m1", "e1"));
+        handler.flush();
+
+        Set<String> values = bucketAttributeValues("user_id");
+        // The label dimension is retained but collapses to the single placeholder.
+        Assert.assertEquals(Set.of(QUOTA_EXCEEDED_VALUE), values);
     }
 
     // ── Measurement path is guarded as well ────────────────────────────────────────────────────
@@ -161,10 +188,10 @@ public class TimeSeriesLabelCardinalityTest {
 
         Assert.assertEquals(1, noticeManager.captured.size());
         ExecutionNotice notice = noticeManager.captured.get(0);
-        Assert.assertEquals(CARDINALITY_NOTICE_TYPE_ID, notice.getTypeId());
-        Assert.assertEquals("user_id", notice.getParameters().get("labelName"));
-        Assert.assertEquals("m1", notice.getParameters().get("metricName"));
-        Assert.assertEquals("2", notice.getParameters().get("quota"));
+        Assert.assertEquals(CARDINALITY_NOTICE_TYPE_ID, notice.typeId());
+        Assert.assertEquals("user_id", notice.parameters().get("labelName"));
+        Assert.assertEquals("m1", notice.parameters().get("metricName"));
+        Assert.assertEquals("2", notice.parameters().get("quota"));
     }
 
     @Test
@@ -174,6 +201,111 @@ public class TimeSeriesLabelCardinalityTest {
         handler.processMetrics(null, metricsWithDistinctLabel("status", 15, "m1", "e1"));
         handler.flush();
         Assert.assertTrue(noticeManager.captured.isEmpty());
+    }
+
+    // ── Label-count safeguard: distinct label names per metric are bounded ──────────────────────
+
+    @Test
+    public void excessLabelNamesAreDropped() {
+        TimeSeriesMetricSamplesHandler handler = newLabelCountHandler(2, null);
+        // 4 distinct label names on m1 with a label-count quota of 2 → only the first 2 names survive.
+        handler.processMetrics(null, List.of(
+            metricWithLabel("m1", "e1", "lbl-0", "v"),
+            metricWithLabel("m1", "e1", "lbl-1", "v"),
+            metricWithLabel("m1", "e1", "lbl-2", "v"),
+            metricWithLabel("m1", "e1", "lbl-3", "v")));
+        handler.flush();
+
+        Set<String> keys = allBucketAttributeKeys();
+        Assert.assertTrue(keys.contains("lbl-0"));
+        Assert.assertTrue(keys.contains("lbl-1"));
+        Assert.assertFalse("over-quota label name must be dropped", keys.contains("lbl-2"));
+        Assert.assertFalse("over-quota label name must be dropped", keys.contains("lbl-3"));
+    }
+
+    @Test
+    public void admittedLabelNamesKeepPassingAcrossBatches() {
+        TimeSeriesMetricSamplesHandler handler = newLabelCountHandler(1, null);
+        handler.processMetrics(null, List.of(metricWithLabel("m1", "e1", "lbl-0", "v")));
+        // Second batch: lbl-0 is already admitted and must still pass; lbl-1 is new and over quota → dropped.
+        handler.processMetrics(null, List.of(
+            metricWithLabel("m1", "e1", "lbl-0", "v"),
+            metricWithLabel("m1", "e1", "lbl-1", "v")));
+        handler.flush();
+
+        Set<String> keys = allBucketAttributeKeys();
+        Assert.assertTrue(keys.contains("lbl-0"));
+        Assert.assertFalse(keys.contains("lbl-1"));
+    }
+
+    @Test
+    public void labelCountQuotaIsIsolatedPerMetricName() {
+        TimeSeriesMetricSamplesHandler handler = newLabelCountHandler(1, null);
+        handler.processMetrics(null, List.of(
+            metricWithLabel("m1", "e1", "a", "v"),
+            metricWithLabel("m1", "e1", "b", "v"), // dropped on m1
+            metricWithLabel("m2", "e1", "c", "v"))); // first on m2, kept
+        handler.flush();
+
+        Set<String> keys = allBucketAttributeKeys();
+        Assert.assertTrue(keys.contains("a"));
+        Assert.assertFalse(keys.contains("b"));
+        Assert.assertTrue(keys.contains("c"));
+    }
+
+    @Test
+    public void labelCountQuotaDisabledKeepsAllLabelNames() {
+        TimeSeriesMetricSamplesHandler handler = newLabelCountHandler(-1, null);
+        handler.processMetrics(null, List.of(
+            metricWithLabel("m1", "e1", "lbl-0", "v"),
+            metricWithLabel("m1", "e1", "lbl-1", "v"),
+            metricWithLabel("m1", "e1", "lbl-2", "v")));
+        handler.flush();
+
+        Set<String> keys = allBucketAttributeKeys();
+        Assert.assertTrue(keys.contains("lbl-0"));
+        Assert.assertTrue(keys.contains("lbl-1"));
+        Assert.assertTrue(keys.contains("lbl-2"));
+    }
+
+    // ── Strictest label-count quota (0): all custom labels are dropped ──────────────────────────
+
+    @Test
+    public void labelCountZeroDropsAllCustomLabels() {
+        TimeSeriesMetricSamplesHandler handler = newLabelCountHandler(0, null);
+        handler.processMetrics(null, List.of(
+            metricWithLabel("m1", "e1", "lbl-0", "v"),
+            metricWithLabel("m1", "e1", "lbl-1", "v")));
+        handler.flush();
+
+        Set<String> keys = allBucketAttributeKeys();
+        Assert.assertFalse(keys.contains("lbl-0"));
+        Assert.assertFalse(keys.contains("lbl-1"));
+        // The metric itself is still ingested, just without its custom labels.
+        Assert.assertTrue(keys.contains("name"));
+    }
+
+    @Test
+    public void raisesLabelCountNoticeOncePerMetric() {
+        CapturingNoticeManager noticeManager = new CapturingNoticeManager();
+        TimeSeriesMetricSamplesHandler handler = newLabelCountHandler(1, noticeManager);
+        handler.processMetrics(null, List.of(
+            metricWithLabel("m1", "e1", "a", "v"),
+            metricWithLabel("m1", "e1", "b", "v"), // over quota on m1
+            metricWithLabel("m1", "e1", "c", "v"), // over quota on m1 again → no second notice
+            metricWithLabel("m2", "e1", "d", "v"),
+            metricWithLabel("m2", "e1", "e", "v"))); // over quota on m2
+        handler.flush();
+
+        List<ExecutionNotice> labelCountNotices = noticeManager.captured.stream()
+            .filter(n -> CARDINALITY_LABEL_COUNT_NOTICE_TYPE_ID.equals(n.typeId()))
+            .collect(Collectors.toList());
+        Assert.assertEquals("one notice per offending metric", 2, labelCountNotices.size());
+        Set<String> noticedMetrics = labelCountNotices.stream()
+            .map(n -> n.parameters().get("metricName"))
+            .collect(Collectors.toSet());
+        Assert.assertEquals(Set.of("m1", "m2"), noticedMetrics);
+        labelCountNotices.forEach(n -> Assert.assertEquals("1", n.parameters().get("quota")));
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────────────────────
@@ -187,6 +319,13 @@ public class TimeSeriesLabelCardinalityTest {
                 "canonical", "", "", "", null, null, null, null));
         }
         return samples;
+    }
+
+    private ExecutionMetricSample metricWithLabel(String metricName, String execId, String labelName, String labelValue) {
+        MetricSample snapshot = new MetricSample(0L, metricName,
+            Map.of(labelName, labelValue), InstrumentType.GAUGE, 1, 1, 1, 1, 1, null);
+        return new ExecutionMetricSample(snapshot, execId, "rn", "plan-1", "MyPlan",
+            "canonical", "", "", "", null, null, null, null);
     }
 
     private Measurement measurementWithLabel(String metricName, String execId, String labelName, String labelValue) {
@@ -208,6 +347,12 @@ public class TimeSeriesLabelCardinalityTest {
         return allBuckets().stream()
             .map(b -> (String) b.getAttributes().get(attribute))
             .filter(java.util.Objects::nonNull)
+            .collect(Collectors.toSet());
+    }
+
+    private Set<String> allBucketAttributeKeys() {
+        return allBuckets().stream()
+            .flatMap(b -> b.getAttributes().keySet().stream())
             .collect(Collectors.toSet());
     }
 

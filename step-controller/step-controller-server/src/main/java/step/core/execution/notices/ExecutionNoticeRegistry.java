@@ -41,7 +41,7 @@ public class ExecutionNoticeRegistry {
      */
     public void register(ExecutionNoticeType type) {
         Objects.requireNonNull(type, "The execution notice type must not be null");
-        String id = Objects.requireNonNull(type.getId(), "The execution notice type id must not be null");
+        String id = Objects.requireNonNull(type.id(), "The execution notice type id must not be null");
         synchronized (types) {
             if (types.containsKey(id)) {
                 throw new IllegalArgumentException("An execution notice type with id '" + id + "' is already registered");

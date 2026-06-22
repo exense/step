@@ -46,7 +46,9 @@ import java.util.stream.Collectors;
  */
 public class ExecutionNoticeResolver {
 
-    /** Matches {@code {placeholderName}} tokens, where the name is a Java-style identifier. */
+    /**
+     * Matches {@code {placeholderName}} tokens, where the name is a Java-style identifier.
+     */
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{([a-zA-Z0-9_.-]+)}");
 
     static final String UNKNOWN_TYPE_CATEGORY = "unknown";
@@ -72,20 +74,20 @@ public class ExecutionNoticeResolver {
      * Resolves a single notice instance.
      */
     public ResolvedExecutionNotice resolve(ExecutionNotice notice) {
-        ExecutionNoticeType type = (notice.getTypeId() != null) ? registry.get(notice.getTypeId()) : null;
+        ExecutionNoticeType type = (notice.typeId() != null) ? registry.get(notice.typeId()) : null;
         if (type == null) {
             return resolveUnknown(notice);
         }
-        String message = renderMessage(type.getMessageTemplate(), notice.getParameters());
-        return new ResolvedExecutionNotice(notice.getTypeId(), type.getCategory(), type.getSeverity(), message, notice.getTimestamp());
+        String message = renderMessage(type.messageTemplate(), notice.parameters());
+        return new ResolvedExecutionNotice(notice.typeId(), type.category(), type.severity(), message, notice.timestamp());
     }
 
     private ResolvedExecutionNotice resolveUnknown(ExecutionNotice notice) {
-        Map<String, String> parameters = notice.getParameters();
+        Map<String, String> parameters = notice.parameters();
         String params = (parameters != null) ? parameters.toString() : "";
-        String message = "Unknown execution notice type '" + escapeHtml(notice.getTypeId()) + "'"
+        String message = "Unknown execution notice type '" + escapeHtml(notice.typeId()) + "'"
             + (params.isEmpty() ? "" : " (parameters: " + escapeHtml(params) + ")");
-        return new ResolvedExecutionNotice(notice.getTypeId(), UNKNOWN_TYPE_CATEGORY, ExecutionNoticeSeverity.INFO, message, notice.getTimestamp());
+        return new ResolvedExecutionNotice(notice.typeId(), UNKNOWN_TYPE_CATEGORY, ExecutionNoticeSeverity.INFO, message, notice.timestamp());
     }
 
     private String renderMessage(String template, Map<String, String> parameters) {
@@ -94,7 +96,7 @@ public class ExecutionNoticeResolver {
         }
         Map<String, String> params = (parameters != null) ? parameters : Collections.emptyMap();
         Matcher matcher = PLACEHOLDER.matcher(template);
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         while (matcher.find()) {
             String key = matcher.group(1);
             String replacement;
@@ -119,12 +121,23 @@ public class ExecutionNoticeResolver {
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
             switch (c) {
-                case '&': sb.append("&amp;"); break;
-                case '<': sb.append("&lt;"); break;
-                case '>': sb.append("&gt;"); break;
-                case '"': sb.append("&quot;"); break;
-                case '\'': sb.append("&#39;"); break;
-                default: sb.append(c);
+                case '&':
+                    sb.append("&amp;");
+                    break;
+                case '<':
+                    sb.append("&lt;");
+                    break;
+                case '>':
+                    sb.append("&gt;");
+                    break;
+                case '"':
+                    sb.append("&quot;");
+                    break;
+                case '\'':
+                    sb.append("&#39;");
+                    break;
+                default:
+                    sb.append(c);
             }
         }
         return sb.toString();

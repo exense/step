@@ -91,7 +91,7 @@ public class ExecutionNoticeManager {
         try {
             executionContext.getExecutionManager().updateExecution(execution -> appendWithCap(execution, notice));
         } catch (Exception e) {
-            logger.error("Failed to append notice [{}] to execution {}", notice.getTypeId(), executionContext.getExecutionId(), e);
+            logger.error("Failed to append notice [{}] to execution {}", notice.typeId(), executionContext.getExecutionId(), e);
         }
     }
 
