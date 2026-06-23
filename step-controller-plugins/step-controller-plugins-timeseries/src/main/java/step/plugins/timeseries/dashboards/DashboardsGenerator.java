@@ -21,26 +21,26 @@ public class DashboardsGenerator {
     private final static String RATE_UNIT_KEY = "rateUnit";
 
     private final static Map<String, String> gridTokensColors = Map.of(
-        "java", "#007396",
-        "node", "#6cc24a",
-        "dotnet", "#ffbb00"
+        "Java", "#007396",
+        "Node.js", "#6cc24a",
+        ".NET", "#ffbb00"
     );
     private final static Map<String, String> gridTokensByStatusColors = Map.ofEntries(
-        Map.entry("java|free", "#00aa90"),
-        Map.entry("java|in_use", "#0082cd"),
-        Map.entry("java|maintenance_requested", "#7ab2d0"),
-        Map.entry("java|maintenance", "#e1cc01"),
-        Map.entry("java|error", "#d00000"),
-        Map.entry("node|free", "#00aa68"),
-        Map.entry("node|in_use", "#00c4cd"),
-        Map.entry("node|maintenance_requested", "#b28ed8"),
-        Map.entry("node|maintenance", "#feb62d"),
-        Map.entry("node|error", "#ff4232"),
-        Map.entry("dotnet|free", "#22d85f"),
-        Map.entry("dotnet|in_use", "#343cdc"),
-        Map.entry("dotnet|maintenance_requested", "#afafec"),
-        Map.entry("dotnet|maintenance", "#fea97a"),
-        Map.entry("dotnet|error", "#ce4f19")
+        Map.entry("Java|FREE", "#00aa90"),
+        Map.entry("Java|IN_USE", "#0082cd"),
+        Map.entry("Java|MAINTENANCE_REQUESTED", "#7ab2d0"),
+        Map.entry("Java|MAINTENANCE", "#e1cc01"),
+        Map.entry("Java|ERROR", "#d00000"),
+        Map.entry("Node.js|FREE", "#00aa68"),
+        Map.entry("Node.js|IN_USE", "#00c4cd"),
+        Map.entry("Node.js|MAINTENANCE_REQUESTED", "#b28ed8"),
+        Map.entry("Node.js|MAINTENANCE", "#feb62d"),
+        Map.entry("Node.js|ERROR", "#ff4232"),
+        Map.entry(".NET|FREE", "#22d85f"),
+        Map.entry(".NET|IN_USE", "#343cdc"),
+        Map.entry(".NET|MAINTENANCE_REQUESTED", "#afafec"),
+        Map.entry(".NET|MAINTENANCE", "#fea97a"),
+        Map.entry(".NET|ERROR", "#ce4f19")
     );
 
     private final Map<String, MetricType> metricsByNames = new HashMap<>();
