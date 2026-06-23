@@ -3,10 +3,7 @@ package step.plugins.timeseries.dashboards;
 import step.controller.grid.GridPlugin;
 import step.core.deployment.ControllerServiceException;
 import step.core.metrics.InstrumentType;
-import step.core.timeseries.metric.MetricAggregation;
-import step.core.timeseries.metric.MetricAggregationType;
-import step.core.timeseries.metric.MetricAttribute;
-import step.core.timeseries.metric.MetricType;
+import step.core.timeseries.metric.*;
 import step.plugins.timeseries.TimeSeriesControllerPlugin;
 import step.plugins.timeseries.dashboards.model.*;
 
@@ -22,6 +19,29 @@ public class DashboardsGenerator {
 
     private final static String PCL_VALUE_KEY = "pclValue";
     private final static String RATE_UNIT_KEY = "rateUnit";
+
+    private final static Map<String, String> gridTokensColors = Map.of(
+        "Java", "#007396",
+        "Node.js", "#6cc24a",
+        ".NET", "#ffbb00"
+    );
+    private final static Map<String, String> gridTokensByStatusColors = Map.ofEntries(
+        Map.entry("Java|FREE", "#00aa90"),
+        Map.entry("Java|IN_USE", "#0082cd"),
+        Map.entry("Java|MAINTENANCE_REQUESTED", "#7ab2d0"),
+        Map.entry("Java|MAINTENANCE", "#e1cc01"),
+        Map.entry("Java|ERROR", "#d00000"),
+        Map.entry("Node.js|FREE", "#00aa68"),
+        Map.entry("Node.js|IN_USE", "#00c4cd"),
+        Map.entry("Node.js|MAINTENANCE_REQUESTED", "#b28ed8"),
+        Map.entry("Node.js|MAINTENANCE", "#feb62d"),
+        Map.entry("Node.js|ERROR", "#ff4232"),
+        Map.entry(".NET|FREE", "#22d85f"),
+        Map.entry(".NET|IN_USE", "#343cdc"),
+        Map.entry(".NET|MAINTENANCE_REQUESTED", "#afafec"),
+        Map.entry(".NET|MAINTENANCE", "#fea97a"),
+        Map.entry(".NET|ERROR", "#ce4f19")
+    );
 
     private final Map<String, MetricType> metricsByNames = new HashMap<>();
 
@@ -341,7 +361,7 @@ public class DashboardsGenerator {
         dashboard.addCustomField(CUSTOM_FIELD_LOCKED, true);
         dashboard.addCustomField(GENERATION_NAME, TimeSeriesControllerPlugin.GRID_MONITORING_DASHBOARD_PREPOPULATED_NAME);
         dashboard
-            .setGrouping(List.of(GRID_TOKEN_AGENT_TYPE.getName(), GRID_TOKEN_STATE.getName()))
+            .setGrouping(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
             .setDescription("Preconfigured dashboard for grid monitoring")
             .setTimeRange(new TimeRangeSelection().setType(TimeRangeSelectionType.RELATIVE).setRelativeSelection(new TimeRangeRelativeSelection().setTimeInMs(60000L * 60)))
             .setFilters(Arrays.asList(
@@ -349,8 +369,8 @@ public class DashboardsGenerator {
                 emptyFilterFromAttribute(GRID_TOKEN_STATE, TimeSeriesFilterItemType.FREE_TEXT, false)
             ))
             .setDashlets(Arrays.asList(
-                createGridMetricChartDashlet(capacityMetric, "Grid tokens capacity"),
-                createGridMetricChartDashlet(byStateMetric, "Grid tokens by state")//,
+                createGridMetricChartDashlet(capacityMetric, "Grid tokens capacity", true, gridTokensColors),
+                createGridMetricChartDashlet(byStateMetric, "Grid tokens by state", false, gridTokensByStatusColors)//,
                 //Tables not added for now, since we do not create samples when the agents are down, the stats can be confusing
                 //createGridMetricTableDashlet(capacityMetric, "Grid tokens capacity"),
                 //createGridMetricTableDashlet(byStateMetric, "Grid tokens by state")
@@ -360,7 +380,7 @@ public class DashboardsGenerator {
         return dashboard;
     }
 
-    private static DashboardItem createGridMetricChartDashlet(MetricType metric, String name) {
+    private static DashboardItem createGridMetricChartDashlet(MetricType metric, String name, boolean inheritDashboardGrouping, Map<String, String> seriesColors) {
         return new DashboardItem()
             .setName(name)
             .setId(UUID.randomUUID().toString())
@@ -370,7 +390,7 @@ public class DashboardsGenerator {
             .setFilters(Collections.emptyList())
             .setMetricKey(metric.getName())
             .setInheritGlobalFilters(true)
-            .setInheritGlobalGrouping(true)
+            .setInheritGlobalGrouping(inheritDashboardGrouping)
             .setReadonlyAggregate(false)
             .setReadonlyGrouping(false)
             .setSize(2)
@@ -379,7 +399,10 @@ public class DashboardsGenerator {
                     .setAggregation(new MetricAggregation(MetricAggregationType.AVG))
                     .setUnit("1")
                     .setDisplayType(AxesDisplayType.STACKED_BAR)
-                    .setColorizationType(AxesColorizationType.FILL)));
+                    .setColorizationType(AxesColorizationType.FILL)
+                    .setRenderingSettings(new MetricRenderingSettings()
+                        .setSeriesColors(seriesColors)))
+            );
     }
 
     private static DashboardItem createGridMetricTableDashlet(MetricType metric, String name) {
