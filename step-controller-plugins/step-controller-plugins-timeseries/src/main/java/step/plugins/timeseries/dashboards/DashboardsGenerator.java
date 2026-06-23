@@ -380,7 +380,7 @@ public class DashboardsGenerator {
         return dashboard;
     }
 
-    private static DashboardItem createGridMetricChartDashlet(MetricType metric, String name, boolean inheritDashboardGrouping, Map<java.lang.String,java.lang.String> seriesColors) {
+    private static DashboardItem createGridMetricChartDashlet(MetricType metric, String name, boolean inheritDashboardGrouping, Map<String, String> seriesColors) {
         return new DashboardItem()
             .setName(name)
             .setId(UUID.randomUUID().toString())
