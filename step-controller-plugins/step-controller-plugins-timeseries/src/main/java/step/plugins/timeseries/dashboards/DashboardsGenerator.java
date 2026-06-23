@@ -25,12 +25,22 @@ public class DashboardsGenerator {
         "node", "#6cc24a",
         "dotnet", "#ffbb00"
     );
-    private final static Map<String, String> gridTokensByStatusColors = Map.of(
-        "java|in_use", "#0082cd",
-        "java|error", "#000000",
-        "java|free", "#01a990",
-        "java|maintenance_requested", "#66b5e0",
-        "java|maintenance", "#e1cc01"
+    private final static Map<String, String> gridTokensByStatusColors = Map.ofEntries(
+        Map.entry("java|free", "#00aa90"),
+        Map.entry("java|in_use", "#0082cd"),
+        Map.entry("java|maintenance_requested", "#7ab2d0"),
+        Map.entry("java|maintenance", "#e1cc01"),
+        Map.entry("java|error", "#d00000"),
+        Map.entry("node|free", "#00aa68"),
+        Map.entry("node|in_use", "#00c4cd"),
+        Map.entry("node|maintenance_requested", "#b28ed8"),
+        Map.entry("node|maintenance", "#feb62d"),
+        Map.entry("node|error", "#ff4232"),
+        Map.entry("dotnet|free", "#22d85f"),
+        Map.entry("dotnet|in_use", "#343cdc"),
+        Map.entry("dotnet|maintenance_requested", "#afafec"),
+        Map.entry("dotnet|maintenance", "#fea97a"),
+        Map.entry("dotnet|error", "#ce4f19")
     );
 
     private final Map<String, MetricType> metricsByNames = new HashMap<>();
