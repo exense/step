@@ -186,6 +186,12 @@ class BatchingRestPoster {
         },
         (resp) => {
           const status = resp.statusCode;
+          // The response stream can emit 'error' (e.g. connection severed mid-response); handle it so
+          // it doesn't become an unhandled exception, and settle the flush promise either way.
+          resp.on('error', (err) => {
+            logger.error(`Response error while reporting ${items.length} ${this.label}(s):`, err);
+            resolve();
+          });
           // Always drain the response so the socket can be reused/released.
           resp.on('data', () => {});
           resp.on('end', () => {
@@ -238,6 +244,12 @@ class RestUploadingLiveMeasureDestination {
  * Records and streams live performance (response-time) measures.
  * Supports a stack of nested measures via startMeasure()/stopMeasure(), plus direct addMeasure().
  * The API matches the (final) OutputBuilder measure API for consistency.
+ *
+ * Concurrency: startMeasure()/stopMeasure() share a single stack and are meant for sequential or
+ * properly nested measurements within one logical flow. Overlapping measures started from concurrent
+ * asynchronous operations (e.g. several branches of a Promise.all) would interleave their push/pop and
+ * corrupt the stack — for those cases use addMeasure(), which records a fully-formed measure atomically.
+ * (This mirrors the Java LiveMeasures stack semantics.)
  */
 class LiveMeasures {
   constructor(destination) {
@@ -409,7 +421,9 @@ class SampledMetric extends Metric {
     this._sum += value;
     if (value < this._min) this._min = value;
     if (value > this._max) this._max = value;
-    const bucket = value - (value % this._percentilePrecision);
+    // Floor to the bucket boundary via division rather than modulo, which avoids floating-point
+    // artifacts (e.g. 0.3 % 0.1) if a non-integer value is ever observed.
+    const bucket = Math.floor(value / this._percentilePrecision) * this._percentilePrecision;
     this._distribution.set(bucket, (this._distribution.get(bucket) || 0) + 1);
     this._last = value;
     this._notifyObserved(observationTimestampMs);

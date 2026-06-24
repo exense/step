@@ -35,8 +35,11 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
     pendingUncaughtException = null;
     console.log("[Agent fork] Calling keyword " + functionName)
     const outputBuilder = new OutputBuilder();
-    const liveReporting = createLiveReporting(properties);
+    let liveReporting;
     try {
+      // Initialize inside the try so any initialization error is reported via outputBuilder.fail
+      // (in the catch below) rather than escaping the message handler.
+      liveReporting = createLiveReporting(properties);
       if (!keywordDirectoryExists(projectPath, keywordDirectory)) {
         outputBuilder.fail("The keyword directory '" + keywordDirectory + "' doesn't exist in " + path.basename(projectPath) + ". Possible cause: If using TypeScript, the keywords may not have been compiled. Fix: Ensure your project is built before deploying to Step or during 'npm install'.")
       } else {
@@ -85,8 +88,11 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
       // (e.g. fire-and-forget promises, nextTick throws) land before we send the result.
       await new Promise(resolve => setImmediate(resolve));
       // Close live reporting: flushes any buffered measures and waits for in-flight uploads.
+      // Guarded because initialization above may have failed before liveReporting was assigned.
       try {
-        await liveReporting.close();
+        if (liveReporting) {
+          await liveReporting.close();
+        }
       } catch (e) {
         console.log("[Agent fork] Error while closing live reporting", e);
       }
