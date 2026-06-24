@@ -358,8 +358,10 @@ class ForkedAgent {
     fs.mkdirSync(agentForkerLibPath, { recursive: true });
     fs.copyFileSync(path.resolve(__dirname, 'agent-fork.js'), path.join(agentForkerLibPath, 'agent-fork.js'));
     fs.copyFileSync(path.join(__dirname, 'output.js'), path.join(agentForkerLibPath, 'output.js'));
-    fs.copyFileSync(path.join(__dirname, 'live-reporting.js'), path.join(agentForkerLibPath, 'live-reporting.js'));
     fs.copyFileSync(path.join(__dirname, 'session.js'), path.join(agentForkerLibPath, 'session.js'));
+    // The live-reporting code is split across a folder of modules; copy the whole directory so adding
+    // new modules never requires updating this list.
+    fs.cpSync(path.join(__dirname, 'live-reporting'), path.join(agentForkerLibPath, 'live-reporting'), { recursive: true });
     this.agentForkerLibPath = agentForkerLibPath;
     this.startupChunks = [];
     const forkEnv = { ...process.env };
