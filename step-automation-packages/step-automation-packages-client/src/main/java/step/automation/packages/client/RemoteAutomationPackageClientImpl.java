@@ -85,10 +85,12 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
             throw new AutomationPackageClientException("Unexpected response from Step. The deployment task id is null. Please check the controller logs.");
         }
 
-        long deadline = deploymentTimeoutMs > 0 ? System.currentTimeMillis() + deploymentTimeoutMs : Long.MAX_VALUE;
+        // A non-positive timeout means "wait indefinitely". We compare elapsed time against the timeout rather than
+        // computing an absolute deadline, which avoids any overflow when very large timeout values are passed.
+        long startTime = System.currentTimeMillis();
         AsyncTaskStatus<AutomationPackageUpdateResult> status = initialStatus;
         while (!status.isReady()) {
-            if (System.currentTimeMillis() > deadline) {
+            if (deploymentTimeoutMs > 0 && System.currentTimeMillis() - startTime > deploymentTimeoutMs) {
                 throw new AutomationPackageClientException("Timeout while waiting for the automation package deployment to complete after "
                     + (deploymentTimeoutMs / 1000) + "s. The deployment may still be running on the server (task id: " + initialStatus.getId() + ").");
             }

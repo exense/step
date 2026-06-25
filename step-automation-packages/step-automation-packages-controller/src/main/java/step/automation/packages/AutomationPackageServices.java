@@ -452,40 +452,48 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         // Parse the request and buffer any uploaded stream into a temp file *on the request thread*. This is required
         // because the multipart input streams are bound to the HTTP request and would be closed by the time the
         // background task reads them.
-        final ParsedRequestParameters parsedRequestParameters;
+        // The buffered temp files are owned by the scheduled task (which cleans them up in its own finally block);
+        // until the task has been successfully scheduled we are responsible for cleaning them up ourselves. The
+        // 'taskScheduled' flag together with the finally block guarantees this happens for any failure on the request
+        // thread - including unexpected runtime exceptions and a failure while scheduling the task itself.
         final List<InputStreamToTempFileDownloader.TempFile> tempFiles = new ArrayList<>();
+        boolean taskScheduled = false;
         try {
-            parsedRequestParameters = getParsedRequestParameters(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
+            final ParsedRequestParameters parsedRequestParameters = getParsedRequestParameters(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
                 apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, managedLibraryName,
                 plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
             addIfNotNull(tempFiles, bufferUploadedStream(parsedRequestParameters.apFileSource));
             addIfNotNull(tempFiles, bufferUploadedStream(parsedRequestParameters.apLibrarySource));
+
+            AsyncTaskStatus<AutomationPackageUpdateResult> taskStatus = scheduleAsyncTaskWithinSessionContext(h -> {
+                try {
+                    AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
+                        .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
+                        .withVersionName(apVersion).withActivationExpression(activationExpression)
+                        .withAsync(async).withForceRefreshOfSnapshots(forceRefreshOfSnapshots)
+                        .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
+                        .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
+                        .build();
+                    AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
+                    auditLog("create-or-update", result.getId());
+                    return result;
+                } finally {
+                    closeSourceQuietly(parsedRequestParameters.apFileSource);
+                    closeSourceQuietly(parsedRequestParameters.apLibrarySource);
+                    cleanupBufferedUploads(tempFiles);
+                }
+            });
+            taskScheduled = true;
+            return taskStatus;
         } catch (AutomationPackageManagerException e) {
-            cleanupBufferedUploads(tempFiles);
             throw new ControllerServiceException(e.getMessage(), e);
         } catch (IOException e) {
-            cleanupBufferedUploads(tempFiles);
             throw new ControllerServiceException("Unable to buffer the uploaded automation package content: " + e.getMessage());
-        }
-
-        return scheduleAsyncTaskWithinSessionContext(h -> {
-            try {
-                AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
-                    .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
-                    .withVersionName(apVersion).withActivationExpression(activationExpression)
-                    .withAsync(async).withForceRefreshOfSnapshots(forceRefreshOfSnapshots)
-                    .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
-                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
-                    .build();
-                AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
-                auditLog("create-or-update", result.getId());
-                return result;
-            } finally {
-                closeSourceQuietly(parsedRequestParameters.apFileSource);
-                closeSourceQuietly(parsedRequestParameters.apLibrarySource);
+        } finally {
+            if (!taskScheduled) {
                 cleanupBufferedUploads(tempFiles);
             }
-        });
+        }
     }
 
     /**
