@@ -11,6 +11,12 @@ class FileManager {
     this.agentContext = agentContext;
     const filemanagerPath = agentContext.filemanagerPath || 'filemanager'
     this.workingDir = filemanagerPath + '/work/'
+    // Download retry/timeout settings, aligned with the Java agent config
+    // (gridMaxRetries / gridRetryDelayMs / gridConnectTimeout / gridReadTimeout)
+    this.gridMaxRetries = agentContext.gridMaxRetries ?? 3
+    this.gridRetryDelayMs = agentContext.gridRetryDelayMs ?? 1000
+    this.gridConnectTimeout = agentContext.gridConnectTimeout ?? 3000
+    this.gridReadTimeout = agentContext.gridReadTimeout ?? 3000
     logger.info('Starting file manager using working directory: ' + this.workingDir)
 
     logger.info('Clearing working dir: ' + this.workingDir)
@@ -87,7 +93,42 @@ class FileManager {
     this.filemanagerMap[fileId + fileVersion] = entry
   }
 
-  #getKeywordFile(controllerFileUrl, targetDir) {
+  // Downloads the keyword file, retrying transient network failures (e.g. the
+  // grid temporarily being unreachable, or a connect/read timeout) with a delay
+  // between attempts. This mirrors the Java agent (RegistrationClient), which
+  // retries downloads on network/timeout errors but not on server-side errors
+  // such as a non-200 response or a malformed response.
+  async #getKeywordFile(controllerFileUrl, targetDir) {
+    let attempt = 0
+    while (true) {
+      try {
+        return await this.#downloadKeywordFile(controllerFileUrl, targetDir)
+      } catch (err) {
+        if (!err.nonRetryable && attempt < this.gridMaxRetries) {
+          attempt++
+          logger.warn('Retrying download from ' + controllerFileUrl + ' after a network error (' +
+            (err.code || err.message) + '). Attempt ' + attempt + '/' + this.gridMaxRetries)
+          await this.#sleep(this.gridRetryDelayMs)
+        } else {
+          throw err
+        }
+      }
+    }
+  }
+
+  #sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+  }
+
+  // Builds an error that the retry loop must not retry, used for server-side
+  // failures (non-200 responses, malformed responses) where retrying is pointless.
+  #nonRetryableError(message) {
+    const err = new Error(message)
+    err.nonRetryable = true
+    return err
+  }
+
+  #downloadKeywordFile(controllerFileUrl, targetDir) {
     return new Promise((resolve, reject) => {
       const parsedUrl = url.parse(controllerFileUrl)
       const httpModule = parsedUrl.protocol === 'https:' ? https : http
@@ -106,17 +147,48 @@ class FileManager {
       }
 
       const req = httpModule.request(requestOptions, (resp) => {
+        // Non-200 responses are server-side errors and are not retried (matching the Java agent)
+        if (resp.statusCode !== 200) {
+          resp.resume() // drain the response so the socket can be freed
+          reject(this.#nonRetryableError('Unexpected server error while downloading ' + controllerFileUrl + ': HTTP status ' + resp.statusCode))
+          return
+        }
+
         const filename = this.#parseName(resp.headers)
+        if (!filename) {
+          resp.resume()
+          reject(this.#nonRetryableError('No filename found in content-disposition header of the response from ' + controllerFileUrl))
+          return
+        }
+
+        // Errors occurring while streaming the body (e.g. a connection reset
+        // mid-download) are network errors and are therefore retryable.
+        resp.on('error', reject)
         const filepath = targetDir + '/' + filename
         if (this.#isDir(resp.headers) || filename.toUpperCase().endsWith('ZIP')) {
-          resp.pipe(unzip.Extract({path: filepath})).on('close', () => resolve(filename))
+          const extract = unzip.Extract({path: filepath})
+          extract.on('error', reject)
+          resp.pipe(extract).on('close', () => resolve(filename))
         } else {
           const myFile = fs.createWriteStream(filepath)
+          myFile.on('error', reject)
           resp.pipe(myFile).on('finish', () => resolve(filename))
         }
       }).on('error', (err) => {
-        logger.error('HTTP request error:', err)
+        // Logged at debug level only: network errors may be retried by the
+        // caller, and the final failure is logged by loadOrGetKeywordFile.
+        logger.debug('HTTP request error:', err)
         reject(err)
+      })
+
+      // Apply the connect/read timeouts. Node uses a single socket inactivity
+      // timeout, so we use the larger of the two; a timeout is surfaced as a
+      // retryable ETIMEDOUT, matching the Java agent which retries on timeouts.
+      const socketTimeout = Math.max(this.gridConnectTimeout, this.gridReadTimeout)
+      req.setTimeout(socketTimeout, () => {
+        const err = new Error('Request to ' + controllerFileUrl + ' timed out after ' + socketTimeout + 'ms')
+        err.code = 'ETIMEDOUT'
+        req.destroy(err)
       })
 
       req.end()
