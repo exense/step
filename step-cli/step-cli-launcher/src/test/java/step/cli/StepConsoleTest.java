@@ -92,6 +92,8 @@ public class StepConsoleTest {
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
         Assert.assertEquals(usedParams.params.getVersionName(), "ver1");
         Assert.assertEquals(usedParams.params.getActivationExpression(), "true==true");
+        // deployment timeout defaults to 300 seconds
+        Assert.assertEquals(Integer.valueOf(300), usedParams.params.getDeploymentTimeout());
 
         // for OS (required params only)
         deployExecHistory.clear();
@@ -102,6 +104,13 @@ public class StepConsoleTest {
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertFalse(usedParams.params.getAsync());
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.params.getAutomationPackageFile().getName());
+
+        // explicit deployment timeout
+        deployExecHistory.clear();
+        res = runMain(histories, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080", "--deployment-timeout=60");
+        Assert.assertEquals(0, res);
+        Assert.assertEquals(1, deployExecHistory.size());
+        Assert.assertEquals(Integer.valueOf(60), deployExecHistory.get(0).params.getDeploymentTimeout());
 
         // incorrect parameters (project name / token)
         deployExecHistory.clear();

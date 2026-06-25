@@ -27,7 +27,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.bson.types.ObjectId;
@@ -55,7 +54,10 @@ import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -416,11 +418,21 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
+    /**
+     * Creates or updates an automation package asynchronously.
+     * <p>
+     * The uploaded content is buffered on the request thread and the actual deployment is then scheduled on the
+     * {@link step.controller.services.async.AsyncTaskManager}. This prevents the synchronous REST call from timing out
+     * while the deployment waits for running executions to release the package (the locking mechanism still applies,
+     * it just runs inside the background task now). The returned {@link AsyncTaskStatus} is meant to be polled by the
+     * client until it becomes ready, at which point it carries either the {@link AutomationPackageUpdateResult} or the
+     * server-side error message.
+     */
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
-    public Response createOrUpdateAutomationPackage(@FormDataParam("async") boolean async,
+    public AsyncTaskStatus<AutomationPackageUpdateResult> createOrUpdateAutomationPackage(@FormDataParam("async") boolean async,
                                                     @FormDataParam("versionName") String apVersion,
                                                     @FormDataParam("forceRefreshOfSnapshots") boolean forceRefreshOfSnapshots,
                                                     @FormDataParam("activationExpr") String activationExpression,
@@ -437,31 +449,81 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam(FUNCTIONS_ATTRIBUTES) String functionsAttributesAsString,
                                                     @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
                                                     @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
+        // Parse the request and buffer any uploaded stream into a temp file *on the request thread*. This is required
+        // because the multipart input streams are bound to the HTTP request and would be closed by the time the
+        // background task reads them.
+        final ParsedRequestParameters parsedRequestParameters;
+        final List<InputStreamToTempFileDownloader.TempFile> tempFiles = new ArrayList<>();
         try {
-            ParsedRequestParameters parsedRequestParameters = getParsedRequestParameters(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
+            parsedRequestParameters = getParsedRequestParameters(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
                 apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, managedLibraryName,
                 plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
-
-            AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
-                .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
-                .withVersionName(apVersion).withActivationExpression(activationExpression)
-                .withAsync(async).withForceRefreshOfSnapshots(forceRefreshOfSnapshots)
-                .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
-                .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
-                .build();
-            AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
-            auditLog("create-or-update", result.getId());
-            Response.ResponseBuilder responseBuilder;
-            if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
-                responseBuilder = Response.status(Response.Status.CREATED);
-            } else {
-                responseBuilder = Response.status(Response.Status.OK);
-            }
-            return responseBuilder.entity(result).build();
-        } catch (AutomationPackageAccessException ex) {
-            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+            addIfNotNull(tempFiles, bufferUploadedStream(parsedRequestParameters.apFileSource));
+            addIfNotNull(tempFiles, bufferUploadedStream(parsedRequestParameters.apLibrarySource));
         } catch (AutomationPackageManagerException e) {
+            cleanupBufferedUploads(tempFiles);
             throw new ControllerServiceException(e.getMessage(), e);
+        } catch (IOException e) {
+            cleanupBufferedUploads(tempFiles);
+            throw new ControllerServiceException("Unable to buffer the uploaded automation package content: " + e.getMessage());
+        }
+
+        return scheduleAsyncTaskWithinSessionContext(h -> {
+            try {
+                AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
+                    .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
+                    .withVersionName(apVersion).withActivationExpression(activationExpression)
+                    .withAsync(async).withForceRefreshOfSnapshots(forceRefreshOfSnapshots)
+                    .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
+                    .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
+                    .build();
+                AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
+                auditLog("create-or-update", result.getId());
+                return result;
+            } finally {
+                closeSourceQuietly(parsedRequestParameters.apFileSource);
+                closeSourceQuietly(parsedRequestParameters.apLibrarySource);
+                cleanupBufferedUploads(tempFiles);
+            }
+        });
+    }
+
+    /**
+     * Buffers the uploaded stream of the given source (if any) into a temp file and replaces the source's stream with
+     * a fresh stream over that temp file, so that it can safely be consumed after the request thread has returned.
+     *
+     * @return the created temp file to be cleaned up once the deployment completed, or {@code null} if the source has no uploaded stream
+     */
+    private InputStreamToTempFileDownloader.TempFile bufferUploadedStream(AutomationPackageFileSource source) throws IOException {
+        if (source == null || source.getMode() != AutomationPackageFileSource.Mode.INPUT_STREAM) {
+            return null;
+        }
+        String fileName = source.getFileName() != null ? source.getFileName() : "automation-package";
+        InputStreamToTempFileDownloader.TempFile tempFile;
+        try (InputStream in = source.getInputStream()) {
+            tempFile = InputStreamToTempFileDownloader.copyStreamToTempFile(in, fileName);
+        }
+        source.setInputStream(new FileInputStream(tempFile.getTempFile()), source.getFileName());
+        return tempFile;
+    }
+
+    private static void addIfNotNull(List<InputStreamToTempFileDownloader.TempFile> tempFiles, InputStreamToTempFileDownloader.TempFile tempFile) {
+        if (tempFile != null) {
+            tempFiles.add(tempFile);
+        }
+    }
+
+    private static void cleanupBufferedUploads(List<InputStreamToTempFileDownloader.TempFile> tempFiles) {
+        tempFiles.forEach(InputStreamToTempFileDownloader::cleanupTempFiles);
+    }
+
+    private static void closeSourceQuietly(AutomationPackageFileSource source) {
+        if (source != null && source.getInputStream() != null) {
+            try {
+                source.getInputStream().close();
+            } catch (IOException ignored) {
+                // best effort: the temp file cleanup will report any leftover
+            }
         }
     }
 

@@ -34,7 +34,8 @@ public interface AutomationPackageClient extends Closeable {
                                                                   Map<String, String> plansAttributes, Map<String, String> functionsAttributes,
                                                                   Map<String, String> tokenSelectionCriteria,
                                                                   Boolean executeFunctionsLocally,
-                                                                  Boolean async, Boolean forceRefreshOfSnapshots) throws AutomationPackageClientException;
+                                                                  Boolean async, Boolean forceRefreshOfSnapshots,
+                                                                  long deploymentTimeoutMs) throws AutomationPackageClientException;
 
     List<String> executeAutomationPackage(AutomationPackageSource automationPackageSource,
                                           IsolatedAutomationPackageExecutionParameters params,

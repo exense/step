@@ -116,7 +116,7 @@ public class ApCommand implements Callable<Integer> {
         public static final String FORCE_REFRESH_OF_SNAPSHOTS = "--forceRefreshOfSnapshots";
 
         @CommandLine.Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
-            description = "Whether to waits for the deployment to complete")
+            description = "Updating an existing package while executions based on it are running will be delayed until these executions end. With this property set to true, the deployment will not wait in case of such delayed updates and will return as soon as the update has been scheduled.")
         protected boolean async;
 
         @CommandLine.Option(names = {VERSION_NAME}, description = "Optionally set the version of this automation package. This allows to deploy and use multiple versions of the same package on Step. If a version is set, them the activation expression is required too.")
@@ -128,6 +128,10 @@ public class ApCommand implements Callable<Integer> {
         @CommandLine.Option(names = {FORCE_REFRESH_OF_SNAPSHOTS}, defaultValue = "false",
             description = "To force the refresh of snapshot content when available in the remote repository, this will trigger reloading all automation packages using the same snapshot artefact in case of update.")
         protected boolean forceRefreshOfSnapshots;
+
+        @CommandLine.Option(names = {"--deployment-timeout"}, defaultValue = "300", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+            description = "Max time in seconds to wait for the deployment to complete on the server. The deployment runs asynchronously and is polled until completion; if it does not complete within this timeout the command fails (the deployment may still be running on the server).")
+        protected int deploymentTimeout;
 
         @Override
         public Integer call() throws Exception {
@@ -144,6 +148,7 @@ public class ApCommand implements Callable<Integer> {
 
             ApDeployParameters params = new ApDeployParameters()
                 .setAsync(async)
+                .setDeploymentTimeout(deploymentTimeout)
                 .setForceRefreshOfSnapshots(forceRefreshOfSnapshots)
                 .setAutomationPackageMavenArtifact(apMavenArtifact)
                 .setAutomationPackageFile(apMavenArtifact != null ? null : prepareApFile(apFile))

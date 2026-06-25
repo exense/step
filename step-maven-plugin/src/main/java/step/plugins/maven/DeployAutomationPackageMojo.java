@@ -72,6 +72,9 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
     @Parameter(property = "step-deploy-auto-packages.force-refresh-snapshots", required = false)
     private Boolean forceRefreshOfSnapshots;
 
+    @Parameter(property = "step-deploy-automation-package.deployment-timeout", required = false)
+    private Integer deploymentTimeout;
+
     @Override
     protected ControllerCredentials getControllerCredentials() {
         String authToken = getAuthToken();
@@ -113,6 +116,7 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
             .setAuthToken(authToken)
             .setAsync(async)
             .setForceRefreshOfSnapshots(forceRefreshOfSnapshots)
+            .setDeploymentTimeout(getDeploymentTimeout())
             .setVersionName(apVersion)
             .setActivationExpression(activationExpr)
         );
@@ -238,6 +242,14 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
 
     public void setForceRefreshOfSnapshots(Boolean forceRefreshOfSnapshots) {
         this.forceRefreshOfSnapshots = forceRefreshOfSnapshots;
+    }
+
+    public Integer getDeploymentTimeout() {
+        return deploymentTimeout;
+    }
+
+    public void setDeploymentTimeout(Integer deploymentTimeout) {
+        this.deploymentTimeout = deploymentTimeout;
     }
 
     protected boolean isLocalMavenArtifact() {
