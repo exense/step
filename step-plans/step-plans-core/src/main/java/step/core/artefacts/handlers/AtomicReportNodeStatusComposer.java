@@ -37,9 +37,7 @@ public class AtomicReportNodeStatusComposer {
 
     public synchronized void addStatusAndRecompose(ReportNode reportNode) {
         ReportNodeStatus reportNodeStatus = reportNode.getStatus();
-        if (parentStatus == null || reportNodeStatus.ordinal() < parentStatus.ordinal()) {
-            parentStatus = reportNodeStatus;
-        }
+        addStatusAndRecompose(reportNodeStatus);
     }
 
     public synchronized void addStatusAndRecompose(ReportNodeStatus reportNodeStatus) {
