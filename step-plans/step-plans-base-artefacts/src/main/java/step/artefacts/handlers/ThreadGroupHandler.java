@@ -116,8 +116,7 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
 
                         CancellableSleep.sleep(localStartOffset, context::isInterrupted, ThreadGroupHandler.class);
                         if (context.isInterrupted()) {
-                            node.setStatus(ReportNodeStatus.INTERRUPTED);
-                            reportNodeStatusComposer.addStatusAndRecompose(node);
+                            reportNodeStatusComposer.addStatusAndRecompose(ReportNodeStatus.INTERRUPTED);
                             return;
                         }
 
