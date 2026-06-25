@@ -104,10 +104,10 @@ class FileManager {
       try {
         return await this.#downloadKeywordFile(controllerFileUrl, targetDir)
       } catch (err) {
-        if (!err.nonRetryable && attempt < this.gridMaxRetries) {
+        if (!err?.nonRetryable && attempt < this.gridMaxRetries) {
           attempt++
           logger.warn('Retrying download from ' + controllerFileUrl + ' after a network error (' +
-            (err.code || err.message) + '). Attempt ' + attempt + '/' + this.gridMaxRetries)
+            (err?.code || err?.message) + '). Attempt ' + attempt + '/' + this.gridMaxRetries)
           await this.#sleep(this.gridRetryDelayMs)
         } else {
           throw err
@@ -162,16 +162,26 @@ class FileManager {
         }
 
         // Errors occurring while streaming the body (e.g. a connection reset
-        // mid-download) are network errors and are therefore retryable.
-        resp.on('error', reject)
+        // mid-download) are network errors and are therefore retryable. On such
+        // errors we tear down the request and the destination stream to avoid
+        // leaking sockets and file descriptors, especially across retries.
         const filepath = targetDir + '/' + filename
+        const cleanupOnError = (destination) => (err) => {
+          req.destroy()
+          if (destination && typeof destination.destroy === 'function') {
+            destination.destroy()
+          }
+          reject(err)
+        }
         if (this.#isDir(resp.headers) || filename.toUpperCase().endsWith('ZIP')) {
           const extract = unzip.Extract({path: filepath})
-          extract.on('error', reject)
+          resp.on('error', cleanupOnError(extract))
+          extract.on('error', cleanupOnError(extract))
           resp.pipe(extract).on('close', () => resolve(filename))
         } else {
           const myFile = fs.createWriteStream(filepath)
-          myFile.on('error', reject)
+          resp.on('error', cleanupOnError(myFile))
+          myFile.on('error', cleanupOnError(myFile))
           resp.pipe(myFile).on('finish', () => resolve(filename))
         }
       }).on('error', (err) => {
