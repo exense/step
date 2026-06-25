@@ -18,21 +18,24 @@
  ******************************************************************************/
 package step.plugins.functions.types.automation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
+import step.core.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.NamedYamlArtefact;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
+import step.functions.Function;
 import step.jsonschema.JsonSchema;
 import step.plans.parser.yaml.YamlPlan;
 import step.plugins.functions.types.CompositeFunction;
 
-import java.util.Map;
-import java.util.Objects;
-
 @YamlModel(name = "Composite")
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunction> {
 
     @YamlFieldCustomCopy
@@ -62,7 +65,27 @@ public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunctio
         }
     }
 
-    public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
+    @Override
+    public void updateFromFunction(Function function) {
+        copyFieldsFromObject(function, false);
+
+        if (function instanceof CompositeFunction) {
+            Plan plan = ((CompositeFunction) function).getPlan();
+            // plan name is optional, the composite function name is used by default
+            // FIXME: discuss what exactly this is supposed to do and how it relates to the comment above :-)
+            if (this.plan.getName() != null && !this.plan.getName().isEmpty()) {
+                this.plan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
+            }
+            // I have no idea why that mapper would be null sometimes:
+            // ObjectMapper mapper = this.plan.getRoot().getYamlArtefact().getYamlObjectMapper();
+            // That one should work...
+            ObjectMapper mapper = this.getPlan().getPatchingContext().getMapper();
+            this.plan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), mapper)));
+        }
+    }
+
+
+    private Plan yamlPlanToPlan(YamlPlan yamlPlan) {
         Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
 
         // plan name is optional, the composite function name is used by default

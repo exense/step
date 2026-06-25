@@ -19,25 +19,41 @@
 package step.automation.packages.yaml.model;
 
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.core.yaml.PatchingContext;
+import step.core.yaml.deserialization.PatchableYamlList;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
 public interface AutomationPackageFragmentYaml {
 
-    List<YamlAutomationPackageKeyword> getKeywords();
+    PatchableYamlList<YamlAutomationPackageKeyword> getKeywords();
 
-    List<YamlPlan> getPlans();
+    PatchableYamlList<YamlPlan> getPlans();
 
     List<YamlPlainTextPlan> getPlansPlainText();
 
     List<String> getFragments();
 
-    Map<String, List<?>> getAdditionalFields();
+    Map<String, PatchableYamlList<?>> getAdditionalFields();
 
-    default <T> List<T> getAdditionalField(String k) {
-        return (List<T>) getAdditionalFields().get(k);
+    default <T> PatchableYamlList<T> getAdditionalField(String k) {
+        return (PatchableYamlList<T>) getAdditionalFields().get(k);
     }
+
+    void setAdditionalFields(String key, PatchableYamlList<?> value) throws IOException;
+
+    URL getFragmentUrl();
+
+    void setFragmentUrl(URL url);
+
+    PatchingContext getPatchingContext();
+
+    void setPatchingContext(PatchingContext context);
+
+    void writeToDisk();
 }

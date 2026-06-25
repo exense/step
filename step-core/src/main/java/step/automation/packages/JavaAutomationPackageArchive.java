@@ -123,9 +123,9 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     }
 
     @Override
-    public InputStream getDescriptorYaml() {
+    public URL getDescriptorYamlUrl() {
         for (String metadataFile : METADATA_FILES) {
-            InputStream yamlDescriptor = classLoaderForMainApFile.getResourceAsStream(metadataFile);
+            URL yamlDescriptor = classLoaderForMainApFile.getResource(metadataFile);
             if (yamlDescriptor != null) {
                 return yamlDescriptor;
             }

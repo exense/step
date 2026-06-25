@@ -18,35 +18,26 @@
  ******************************************************************************/
 package step.core.yaml.deserializers;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.deser.BeanDeserializerFactory;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
-import com.fasterxml.jackson.databind.type.TypeFactory;
 
-import java.io.IOException;
+public abstract class StepYamlDeserializer<T> extends JsonDeserializer<T> implements ResolvableDeserializer {
 
-public abstract class StepYamlDeserializer<T> extends JsonDeserializer<T> {
+    protected final ObjectMapper yamlObjectMapper;
+    protected final JsonDeserializer<?> baseDeserializer;
 
-    protected ObjectMapper yamlObjectMapper;
-
-    public StepYamlDeserializer() {
-    }
-
-    public StepYamlDeserializer(ObjectMapper yamlObjectMapper) {
+    public StepYamlDeserializer(JsonDeserializer<?> deserializer, ObjectMapper yamlObjectMapper) {
+        this.baseDeserializer = deserializer;
         this.yamlObjectMapper = yamlObjectMapper;
     }
 
-    protected JsonDeserializer<Object> getDefaultDeserializerForClass(JsonParser p, DeserializationContext ctxt, Class<?> clazz) throws IOException {
-
-        DeserializationConfig config = ctxt.getConfig();
-        JavaType type = TypeFactory.defaultInstance().constructType(clazz);
-        JsonDeserializer<Object> defaultDeserializer = BeanDeserializerFactory.instance.buildBeanDeserializer(ctxt, type, config.introspect(type));
-
-        if (defaultDeserializer instanceof ResolvableDeserializer) {
-            ((ResolvableDeserializer) defaultDeserializer).resolve(ctxt);
+    @Override
+    public void resolve(DeserializationContext ctxt) throws JsonMappingException {
+        if (baseDeserializer instanceof ResolvableDeserializer) {
+            ((ResolvableDeserializer) baseDeserializer).resolve(ctxt);
         }
-
-        return defaultDeserializer;
     }
 }
