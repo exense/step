@@ -110,6 +110,7 @@ public class ExecutionEngineRunner {
 
                     if (planReportNode != null && planReportNode.getStatus() != null) {
                         ReportNodeStatus resultStatus = planReportNode.getStatus();
+                        //Should add a check here as RUNNING status would be incorrect, but in that case we should probably introduce an UNKNOWN status
                         rootReportNode.setStatus(resultStatus);
                         persistReportNode(rootReportNode);
                         updateExecutionResult(resultStatus);
