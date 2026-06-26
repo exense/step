@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static step.cli.DeployAutomationPackageTool.DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS;
 import static step.cli.StepConsole.executeMain;
 
 public class StepConsoleTest {
@@ -93,7 +94,7 @@ public class StepConsoleTest {
         Assert.assertEquals(usedParams.params.getVersionName(), "ver1");
         Assert.assertEquals(usedParams.params.getActivationExpression(), "true==true");
         // deployment timeout defaults to 300 seconds
-        Assert.assertEquals(Integer.valueOf(300), usedParams.params.getDeploymentTimeout());
+        Assert.assertEquals(Integer.valueOf(DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS), usedParams.params.getDeploymentTimeout());
 
         // for OS (required params only)
         deployExecHistory.clear();

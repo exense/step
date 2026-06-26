@@ -130,7 +130,7 @@ public class ApCommand implements Callable<Integer> {
         protected boolean forceRefreshOfSnapshots;
 
         @CommandLine.Option(names = {"--deployment-timeout"}, defaultValue = "300", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
-            description = "Max time in seconds to wait for the deployment to complete on the server. The deployment runs asynchronously and is polled until completion; if it does not complete within this timeout the command fails (the deployment may still be running on the server).")
+            description = "Maximum duration in seconds to wait for the deployment to complete on the server. The deployment runs asynchronously and is polled until completion; if it does not complete within this timeout the command fails (note that on the server, the deployment will still continue to run until deployment succeeds or fails).")
         protected int deploymentTimeout;
 
         @Override

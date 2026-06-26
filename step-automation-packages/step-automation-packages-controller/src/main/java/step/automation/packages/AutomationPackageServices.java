@@ -457,11 +457,14 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         // 'taskScheduled' flag together with the finally block guarantees this happens for any failure on the request
         // thread - including unexpected runtime exceptions and a failure while scheduling the task itself.
         final List<InputStreamToTempFileDownloader.TempFile> tempFiles = new ArrayList<>();
+        final List<AutomationPackageFileSource> sources = new ArrayList<>();
         boolean taskScheduled = false;
         try {
             final ParsedRequestParameters parsedRequestParameters = getParsedRequestParameters(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
                 apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, managedLibraryName,
                 plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
+            addIfNotNull(sources, parsedRequestParameters.apFileSource);
+            addIfNotNull(sources, parsedRequestParameters.apLibrarySource);
             addIfNotNull(tempFiles, bufferUploadedStream(parsedRequestParameters.apFileSource));
             addIfNotNull(tempFiles, bufferUploadedStream(parsedRequestParameters.apLibrarySource));
 
@@ -478,8 +481,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                     auditLog("create-or-update", result.getId());
                     return result;
                 } finally {
-                    closeSourceQuietly(parsedRequestParameters.apFileSource);
-                    closeSourceQuietly(parsedRequestParameters.apLibrarySource);
+                    closeSourcesQuietly(sources);
                     cleanupBufferedUploads(tempFiles);
                 }
             });
@@ -491,6 +493,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             throw new ControllerServiceException("Unable to buffer the uploaded automation package content: " + e.getMessage());
         } finally {
             if (!taskScheduled) {
+                closeSourcesQuietly(sources);
                 cleanupBufferedUploads(tempFiles);
             }
         }
@@ -515,14 +518,18 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         return tempFile;
     }
 
-    private static void addIfNotNull(List<InputStreamToTempFileDownloader.TempFile> tempFiles, InputStreamToTempFileDownloader.TempFile tempFile) {
-        if (tempFile != null) {
-            tempFiles.add(tempFile);
+    private static <T> void addIfNotNull(List<T> list, T element) {
+        if (element != null) {
+            list.add(element);
         }
     }
 
     private static void cleanupBufferedUploads(List<InputStreamToTempFileDownloader.TempFile> tempFiles) {
         tempFiles.forEach(InputStreamToTempFileDownloader::cleanupTempFiles);
+    }
+
+    private static void closeSourcesQuietly(List<AutomationPackageFileSource> sources) {
+        sources.forEach(AutomationPackageServices::closeSourceQuietly);
     }
 
     private static void closeSourceQuietly(AutomationPackageFileSource source) {
