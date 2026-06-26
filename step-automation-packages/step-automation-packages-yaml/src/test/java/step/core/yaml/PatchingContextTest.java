@@ -103,7 +103,6 @@ public class PatchingContextTest {
         schemaVersion: 1.0.0
         name: "complete-package"
         fragments:
-          - "importPlans.yml"
           - "importKeywords.yml"
         keywords:
           - Composite:
@@ -151,7 +150,6 @@ public class PatchingContextTest {
         schemaVersion: 1.0.0
         name: "complete-package"
         fragments:
-          - "importPlans.yml"
           - "importKeywords.yml"
         keywords: []
         plans: []
@@ -186,35 +184,35 @@ public class PatchingContextTest {
                 .filter(m -> m instanceof PatchableYamlList<?>)
                 .map(x -> (PatchableYamlList) x)
                 .toList();
-            assertEquals(3, lists.size());
+            assertEquals(4, lists.size());
             // remove first keyword, second plan, second schedule
             lists.get(0).remove(0);
-            lists.get(1).remove(1);
+            lists.get(1).remove(0);
             lists.get(2).remove(1);
+            lists.get(3).remove(1);
 
             current = ensureValid(patchingContext.getCurrentYaml());
             Assert.assertEquals(EXPECTED_REMOVED_1, current);
 
             // empty first two lists, modify schedule a little
-            AutomationPackageSchedule schedule1 = (AutomationPackageSchedule) lists.get(2).getFirst();
+            AutomationPackageSchedule schedule1 = (AutomationPackageSchedule) lists.get(3).getFirst();
             schedule1.setName("This is now the new schedule name which is rather long, really long in fact");
             schedule1.setActive(false);
             schedule1.getExecutionParameters().clear();
             // we have to tell the entity explicitly that it was modified
             schedule1.setModified();
-            lists.subList(0, 2).forEach(ArrayList::removeFirst);
+            lists.subList(1, 3).forEach(ArrayList::removeFirst);
 
             current = ensureValid(patchingContext.getCurrentYaml());
             Assert.assertEquals(EXPECTED_REMOVED_2_MODIFIED, current);
 
-            lists.get(2).removeFirst();
+            lists.get(3).removeFirst();
             current = ensureValid(patchingContext.getCurrentYaml());
 
             Assert.assertEquals("""
                 schemaVersion: 1.0.0
                 name: "complete-package"
                 fragments:
-                  - "importPlans.yml"
                   - "importKeywords.yml"
                 keywords: []
                 plans: []

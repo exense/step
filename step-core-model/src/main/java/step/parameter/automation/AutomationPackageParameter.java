@@ -103,8 +103,8 @@ public class AutomationPackageParameter extends PatchableYamlModelBase {
         return scopeEntity;
     }
 
-    public static AutomationPackageParameter forContext(PatchingContext context, Parameter parameter) {
-        AutomationPackageParameter yamlParameter = new AutomationPackageParameter(context);
+    public static AutomationPackageParameter fromParameter(Parameter parameter) {
+        AutomationPackageParameter yamlParameter = new AutomationPackageParameter(null);
         yamlParameter.copyFieldsFromObject(parameter, true);
         Expression expression = parameter.getActivationExpression();
         if (expression == null) {

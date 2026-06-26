@@ -7,11 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.yaml.deserialization.AutomationPackageUpdateException;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -32,13 +29,13 @@ public class PatchingContext {
     }
 
     public PatchingContext(ObjectMapper mapper) {
-        this(null, "", mapper);
+        this("", "", mapper);
     }
 
     public PatchingContext(String sourceLocation, String yaml, ObjectMapper mapper) {
-        this.sourceLocation = sourceLocation;
-        this.initialLines = new CopyOnWriteArrayList<>(yaml.lines().toList());
-        this.mapper = mapper;
+        this.sourceLocation = Objects.requireNonNull(sourceLocation);
+        this.initialLines = new CopyOnWriteArrayList<>(Objects.requireNonNull(yaml).lines().toList());
+        this.mapper = Objects.requireNonNull(mapper);
     }
 
     public ObjectMapper getMapper() {
@@ -66,21 +63,19 @@ public class PatchingContext {
         return initialLines.subList(bounds.startLineNumber - 1, bounds.endLineNumber);
     }
 
-    public record ChunkBounds(int startLineNumber, int endLineNumber) implements Comparable<ChunkBounds>
-
-    {
+    public record ChunkBounds(int startLineNumber, int endLineNumber) implements Comparable<ChunkBounds> {
         private static final Comparator<ChunkBounds> COMPARATOR = Comparator
             .comparingInt(ChunkBounds::startLineNumber) // lower startLine first
             .thenComparing(Comparator.comparingInt(ChunkBounds::endLineNumber).reversed()); // larger endLine (i.e. larger chunk) first
 
         @Override
-        public int compareTo (ChunkBounds that){
-        return COMPARATOR.compare(this, that);
-    }
+        public int compareTo(ChunkBounds that) {
+            return COMPARATOR.compare(this, that);
+        }
 
-        public boolean encompasses (ChunkBounds inner){
-        return inner.startLineNumber >= this.startLineNumber && inner.endLineNumber <= this.endLineNumber;
-    }
+        public boolean encompasses(ChunkBounds inner) {
+            return inner.startLineNumber >= this.startLineNumber && inner.endLineNumber <= this.endLineNumber;
+        }
     }
 
     public String getCurrentYaml() {
@@ -151,9 +146,7 @@ public class PatchingContext {
 
     private String serializeUnindented(Object entity) {
         try {
-            return mapper.writeValueAsString(entity)
-                .replaceFirst("^---\\s*\\n", "")
-                .trim();
+            return mapper.writeValueAsString(entity);
         } catch (JsonProcessingException e) {
             throw new AutomationPackageUpdateException("Error Serializing YAML object", e);
         }

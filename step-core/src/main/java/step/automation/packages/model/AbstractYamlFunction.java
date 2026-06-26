@@ -20,11 +20,11 @@ package step.automation.packages.model;
 
 import jakarta.json.JsonObject;
 import step.automation.packages.StagingAutomationPackageContext;
-import step.core.yaml.YamlModelUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlModelUtils;
 import step.functions.Function;
 import step.jsonschema.JsonSchema;
 import step.jsonschema.JsonSchemaDefaultValueProvider;
@@ -119,11 +119,6 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
         fillDeclaredFields(res, context);
         return res;
     }
-
-    public void updateFromFunction(Function function) {
-        copyFieldsFromObject(function, false);
-    }
-
 
     public static class DefaultYamlFunctionNameProvider implements JsonSchemaDefaultValueProvider {
 
