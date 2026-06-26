@@ -30,8 +30,7 @@ public abstract class AbstractFunctionToYamlMapper<F extends Function> implement
 
 
     protected void setCommonAttributes(F function, AbstractYamlFunction<F> yamlFunction) {
-        Optional.ofNullable(function.getAttribute(AbstractOrganizableObject.NAME)).ifPresent(yamlFunction::setName);
-        Optional.ofNullable(function.getAttribute("description")).ifPresent(yamlFunction::setDescription);
+        yamlFunction.setDeclaredFieldsFromObject(function);
     }
 
     @Override

@@ -27,7 +27,7 @@ import step.functions.Function;
 public class YamlAutomationPackageKeyword extends PatchableYamlModelBase
     implements AutomationPackageKeyword, NamedObjectPatchableYamlModel {
 
-    private AbstractYamlFunction<?> yamlKeyword;
+    private final AbstractYamlFunction<?> yamlKeyword;
 
     public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword) {
         this(yamlKeyword, null);
@@ -41,10 +41,6 @@ public class YamlAutomationPackageKeyword extends PatchableYamlModelBase
 
     public AbstractYamlFunction<?> getYamlKeyword() {
         return yamlKeyword;
-    }
-
-    public void setYamlKeyword(AbstractYamlFunction<?> yamlKeyword) {
-        this.yamlKeyword = yamlKeyword;
     }
 
     @Override
