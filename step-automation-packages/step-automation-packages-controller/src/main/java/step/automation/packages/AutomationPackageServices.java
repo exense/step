@@ -30,6 +30,8 @@ import jakarta.ws.rs.core.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -66,6 +68,8 @@ import java.util.Map;
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
 public class AutomationPackageServices extends AbstractStepAsyncServices {
+
+    private static final Logger logger = LoggerFactory.getLogger(AutomationPackageServices.class);
 
     public static final String PLANS_ATTRIBUTES = "plansAttributes";
     public static final String FUNCTIONS_ATTRIBUTES = "functionsAttributes";
@@ -470,6 +474,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
 
             AsyncTaskStatus<AutomationPackageUpdateResult> taskStatus = scheduleAsyncTaskWithinSessionContext(h -> {
                 try {
+                    logger.info("Starting the automation package deployment (task id: {})", h.getId());
                     AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
                         .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
                         .withVersionName(apVersion).withActivationExpression(activationExpression)
@@ -479,6 +484,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                         .build();
                     AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
                     auditLog("create-or-update", result.getId());
+                    logger.info("Completed the automation package deployment (task id: {})", h.getId());
                     return result;
                 } finally {
                     closeSourcesQuietly(sources);
@@ -486,6 +492,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 }
             });
             taskScheduled = true;
+            logger.info("Automation package deployment scheduled (task id: {})", taskStatus.getId());
             return taskStatus;
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);
