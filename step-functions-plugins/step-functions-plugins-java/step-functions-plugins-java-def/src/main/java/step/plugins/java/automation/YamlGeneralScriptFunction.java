@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.java.automation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import step.automation.packages.AutomationPackageResourceUploader;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
@@ -29,6 +30,7 @@ import step.plugins.java.GeneralScriptFunction;
 import step.resources.ResourceManager;
 
 @YamlModel(name = "GeneralScript")
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlGeneralScriptFunction extends AbstractYamlFunction<GeneralScriptFunction> {
 
     @YamlFieldCustomCopy
