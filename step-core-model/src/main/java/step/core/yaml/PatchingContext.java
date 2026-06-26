@@ -33,12 +33,9 @@ public class PatchingContext {
     }
 
     public PatchingContext(String sourceLocation, String yaml, ObjectMapper mapper) {
-        this.sourceLocation = sourceLocation;
-        this.initialLines = new CopyOnWriteArrayList<>(yaml.lines().toList());
-        this.mapper = mapper;
-        Objects.requireNonNull(sourceLocation);
-        Objects.requireNonNull(mapper);
-        Objects.requireNonNull(initialLines);
+        this.sourceLocation = Objects.requireNonNull(sourceLocation);
+        this.initialLines = new CopyOnWriteArrayList<>(Objects.requireNonNull(yaml).lines().toList());
+        this.mapper = Objects.requireNonNull(mapper);
     }
 
     public ObjectMapper getMapper() {
@@ -149,9 +146,7 @@ public class PatchingContext {
 
     private String serializeUnindented(Object entity) {
         try {
-            return mapper.writeValueAsString(entity)
-                .replaceFirst("^---\\s*\\n*", "")
-                .trim();
+            return mapper.writeValueAsString(entity);
         } catch (JsonProcessingException e) {
             throw new AutomationPackageUpdateException("Error Serializing YAML object", e);
         }

@@ -185,18 +185,29 @@ public class AutomationPackageYamlFragmentManager {
         entityList.replaceItem(oldEntity, newEntity);
         Path oldRelativePath = determineObjectRelativePath(oldEntity, fieldName, false);
         Path newRelativePath = determineObjectRelativePath(newEntity, fieldName, false);
-        if (!oldRelativePath.equals(newRelativePath)) {
-            Path absoluteOldPath = apRoot.resolve(oldRelativePath);
 
-            if (absoluteOldPath.equals(fragment.getFragmentPath())) {
-                Path absoluteNewPath = apRoot.resolve(newRelativePath);
+        // Path did not change - skip entire move logic
+        if (!oldRelativePath.equals(newRelativePath)) {
+            Path oldAbsolutePath = apRoot.resolve(oldRelativePath);
+
+             /*  oldRelativePath is the path which would have been given to old version of the entity
+                 by the fragment manager. If it matches the fragment path, this means that
+                 the fragment path was intended to follow the naming convention based on the configuration
+                 (i.e. PER_OBJECT naming)
+
+                 if the paths don't match, then simply skip the renaming. This silently allows for:
+                  - legacy fragments which don't follow the naming convention
+                  - FRAGMENT type naming (fixed fragment for object types such as Parameters)
+              */
+            if (oldAbsolutePath.equals(fragment.getFragmentPath())) {
+                Path newAbsolutePath = apRoot.resolve(newRelativePath);
 
                 try {
-                    FileUtils.moveFile(absoluteOldPath.toFile(), absoluteNewPath.toFile());
-                    fragment.setFragmentPath(absoluteNewPath);
+                    FileUtils.moveFile(oldAbsolutePath.toFile(), newAbsolutePath.toFile());
+                    fragment.setFragmentPath(newAbsolutePath);
                 } catch (IOException e) {
                     throw new AutomationPackageConcurrentEditException(
-                        String.format("Unable to rename file %s to file %s. Was the file renamed or deleted outside the editor?", absoluteOldPath, absoluteNewPath));
+                        String.format("Unable to rename file %s to file %s. Was the file renamed or deleted outside the editor?", oldAbsolutePath, newAbsolutePath));
                 }
 
                 AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
@@ -226,17 +237,14 @@ public class AutomationPackageYamlFragmentManager {
             try {
                 FileUtils.delete(fragment.getFragmentPath().toFile());
 
-                Optional<AutomationPackageFragmentYaml> optionalReferencingFragment = determineReferencingFragment(fragment.getFragmentPath());
-
-                if (optionalReferencingFragment.isPresent()) {
-                    AutomationPackageFragmentYaml referencingFragment = optionalReferencingFragment.get();
-                    String relativeFragmentReference = resourcePatchMatchingResolver.getFragmentReferenceString(apRoot.relativize(fragment.getFragmentPath()));
+                determineReferencingFragment(fragment.getFragmentPath()).ifPresent(referencingFragment -> {
+                    String relativeFragmentReference = resourcePatchMatchingResolver
+                        .getFragmentReferenceString(apRoot.relativize(fragment.getFragmentPath()));
                     if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(relativeFragmentReference))) {
                         referencingFragment.writeToDisk();
                     };
-
                     fragments.remove(fragment);
-                }
+                });
             } catch (IOException e) {
                 throw new AutomationPackageConcurrentEditException(String.format("%s was removed outside the editor", fragment.getFragmentPath()));
             }
@@ -261,9 +269,7 @@ public class AutomationPackageYamlFragmentManager {
         fragments.add(fragment);
         fragment.setFragmentPath(absolutePath);
 
-
-        Optional<AutomationPackageFragmentYaml> optionalReferencingFragment = determineReferencingFragment(path);
-        if (optionalReferencingFragment.isEmpty()) {
+        if (determineReferencingFragment(path).isEmpty()) {
             String referencingPath = resourcePatchMatchingResolver.getFragmentReferenceString(determineObjectRelativePath(p, fieldName, true));
             descriptorYaml.getFragments().add(new PatchableYamlPrimitive<>(descriptorYaml.getPatchingContext(), referencingPath));
             descriptorYaml.writeToDisk();
@@ -272,15 +278,10 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     private Optional<AutomationPackageFragmentYaml> determineReferencingFragment(Path path) {
-
-        for (AutomationPackageFragmentYaml fragment : Stream.concat(Stream.of(descriptorYaml), fragments.stream()).toList()) {
-            for (PatchableYamlPrimitive<String> fragmentPathPattern : fragment.getFragments()) {
-                if (resourcePatchMatchingResolver.isMatchingPath(fragmentPathPattern.getValue(), path)) {
-                    return Optional.of(fragment);
-                }
-            }
-        }
-        return Optional.empty();
+        return Stream.concat(Stream.of(descriptorYaml), fragments.stream())
+            .filter(fragment -> fragment.getFragments().stream()
+                .anyMatch(pattern -> resourcePatchMatchingResolver.isMatchingPath(pattern.getValue(), path)))
+            .findFirst();
     }
 
     private Path determineObjectRelativePath(PatchableYamlModel p, String fieldName, boolean globPattern) {
