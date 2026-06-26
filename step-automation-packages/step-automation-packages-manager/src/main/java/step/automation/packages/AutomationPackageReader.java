@@ -203,6 +203,14 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         }
     }
 
+    /**
+     *
+     * @param targetPackage Target Automation package content to be filled by fragment read entities
+     * @param fragment Fragment to read
+     * @param archive Automation package archive
+     * @param fragments Set of all automation package fragments collected during  recursive reading of fragments.
+     * @throws AutomationPackageReadingException Thrown upon errors when reading the fragment
+     */
     private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
