@@ -19,6 +19,10 @@
 package step.automation.packages.yaml.model;
 
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.automation.packages.mappers.interfaces.HasCollectionName;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlPrimitive;
@@ -59,4 +63,8 @@ public interface AutomationPackageFragmentYaml {
     void writeToDisk();
 
     boolean isEmpty();
+
+    <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<BO, YO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap);
+
+    <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> PatchableYamlList<YO> getListForYamlObject(HasCollectionName<BO,YO> mapper);
 }

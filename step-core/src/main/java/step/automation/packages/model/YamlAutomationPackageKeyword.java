@@ -29,12 +29,14 @@ public class YamlAutomationPackageKeyword extends PatchableYamlModelBase
 
     private AbstractYamlFunction<?> yamlKeyword;
 
+    public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword) {
+        this(yamlKeyword, null);
+    }
 
     public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword, PatchingContext context) {
         super(context);
         this.yamlKeyword = yamlKeyword;
     }
-
 
 
     public AbstractYamlFunction<?> getYamlKeyword() {

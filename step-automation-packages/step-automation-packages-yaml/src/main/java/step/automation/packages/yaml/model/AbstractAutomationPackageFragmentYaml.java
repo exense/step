@@ -22,10 +22,15 @@ import com.fasterxml.jackson.annotation.*;
 import org.apache.commons.io.FileUtils;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageWriteToDiskException;
+import step.automation.packages.mappers.interfaces.HasCollectionName;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlPrimitive;
+import step.plans.automation.AutomationPackagePlainTextPlanJsonSchema;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
@@ -35,7 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -53,7 +57,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
         context = patchingContext;
         plans = new PatchableYamlList<>(patchingContext, YamlPlan.PLANS_ENTITY_NAME);
         keywords = new PatchableYamlList<>(patchingContext, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
-        plansPlainText = new PatchableYamlList<>(patchingContext, "plansPlainText");
+        plansPlainText = new PatchableYamlList<>(patchingContext, AutomationPackagePlainTextPlanJsonSchema.FIELD_NAME_IN_AP);
         fragments = new PatchableYamlList<>(patchingContext, "fragments");
     }
 
@@ -102,7 +106,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @Override
-    public List<YamlPlainTextPlan> getPlansPlainText() {
+    public PatchableYamlList<YamlPlainTextPlan> getPlansPlainText() {
         return plansPlainText;
     }
 
@@ -160,5 +164,26 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
             getPlansPlainText().isEmpty() &&
             getKeywords().isEmpty() &&
             getAdditionalFields().isEmpty();
+    }
+
+    @Override
+    public <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<BO, YO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap) {
+        for (YO yamlObject : getListForYamlObject(mapper)) {
+            BO businessObject = mapper.getBusinessObject(yamlObject);
+            patchableMap.put(businessObject, yamlObject);
+            fragmentMap.put(businessObject, this);
+        }
+    }
+
+    @Override
+    public <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> PatchableYamlList<YO> getListForYamlObject(HasCollectionName<BO, YO> mapper) {
+        String collectionName = mapper.getCollectionName();
+        return (PatchableYamlList<YO>) switch (collectionName) {
+            case YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME -> keywords;
+            case YamlPlan.PLANS_ENTITY_NAME -> plans;
+            case AutomationPackagePlainTextPlanJsonSchema.FIELD_NAME_IN_AP -> plansPlainText;
+            default -> additionalFields
+                .computeIfAbsent(collectionName, n -> new PatchableYamlList<YO>(getPatchingContext(), n));
+        };
     }
 }

@@ -63,5 +63,4 @@ public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPacka
     public void setAttributes(Map<String, String> attributes) {
         this.attributes = attributes;
     }
-
 }

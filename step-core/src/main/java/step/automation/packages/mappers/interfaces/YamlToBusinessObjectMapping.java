@@ -1,5 +1,12 @@
+package step.automation.packages.mappers.interfaces;
+
+import step.core.yaml.PatchableYamlModel;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /*******************************************************************************
- * Copyright (C) 2020, exense GmbH
+ * Copyright (C) 2026, exense GmbH
  *
  * This file is part of STEP
  *
@@ -16,10 +23,11 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+@Retention(RetentionPolicy.RUNTIME)
+public @interface YamlToBusinessObjectMapping {
 
-public enum AutomationPackageStatus {
-    DELAYED_UPDATE,
-    SCHEDULED_RELOAD,
-    EDIT, RELOAD_FAILED
+    /**
+     * @return source class of the mapping
+     */
+    Class<? extends PatchableYamlModel> sourceClass();
 }

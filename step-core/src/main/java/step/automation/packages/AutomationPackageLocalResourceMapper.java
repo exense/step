@@ -18,8 +18,28 @@
  ******************************************************************************/
 package step.automation.packages;
 
-public enum AutomationPackageStatus {
-    DELAYED_UPDATE,
-    SCHEDULED_RELOAD,
-    EDIT, RELOAD_FAILED
+import java.nio.file.Path;
+
+public class AutomationPackageLocalResourceMapper extends AutomationPackageResourceUploader {
+
+    private final Path workPath;
+
+    public AutomationPackageLocalResourceMapper(Path workPath) {
+        this.workPath = workPath;
+    }
+
+    @Override
+    public String applyUniqueResourceReference(String resourceReference,
+                                               String resourceType,
+                                               StagingAutomationPackageContext context) {
+        return workPath.resolve(resourceReference).toString();
+    }
+
+    @Override
+    public String applyResourceReference(String resourceReference,
+                                         String resourceType,
+                                         StagingAutomationPackageContext context) {
+        return workPath.resolve(resourceReference).toString();
+    }
+
 }

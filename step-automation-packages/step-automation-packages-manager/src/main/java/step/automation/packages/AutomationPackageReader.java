@@ -192,7 +192,9 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 AutomationPackageContent content = newContentInstance();
                 Set<AutomationPackageFragmentYaml> fragments = new HashSet<>();
                 fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments);
-                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(null, AutomationPackageOperationMode.LOCAL, new LocalResourceManagerImpl(descriptorPath.getParent().toFile()), archive, content, null, null, new HashMap<>());
+                AutomationPackage automationPackage = new AutomationPackage();
+                automationPackage.setStatus(AutomationPackageStatus.EDIT);
+                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(descriptorPath.getParent()), automationPackage, AutomationPackageOperationMode.LOCAL, null, archive, content, null, null, new HashMap<>());
                 return new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
             } catch (FileSystemNotFoundException | URISyntaxException e) {
                 throw new AutomationPackageReadingException("Failed to read automation package for editing. The most likely cause is that you were trying to load " +

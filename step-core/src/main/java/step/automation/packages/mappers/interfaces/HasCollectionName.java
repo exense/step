@@ -1,5 +1,10 @@
+package step.automation.packages.mappers.interfaces;
+
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.yaml.PatchableYamlModel;
+
 /*******************************************************************************
- * Copyright (C) 2020, exense GmbH
+ * Copyright (C) 2026, exense GmbH
  *
  * This file is part of STEP
  *
@@ -16,10 +21,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+public interface HasCollectionName<BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> {
 
-public enum AutomationPackageStatus {
-    DELAYED_UPDATE,
-    SCHEDULED_RELOAD,
-    EDIT, RELOAD_FAILED
+    String getCollectionName();
 }

@@ -192,7 +192,6 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
     @Test
     public void testAddTwoPlansToNewFragmentAndRemoveOne() throws IOException {
-
         Sequence sequence = new Sequence();
         Echo echo = new Echo();
         echo.setText(new DynamicValue<>("Hello World"));
