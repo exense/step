@@ -22,27 +22,37 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.artefacts.reports.aggregated.AggregatedReport;
-import step.core.artefacts.reports.aggregated.AggregatedReportViewRequest;
-import step.core.artefacts.reports.aggregated.FlatAggregatedReport;
-import step.core.entities.EntityConstants;
-import step.reports.CustomReportType;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.access.User;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.aggregated.AggregatedReport;
 import step.core.artefacts.reports.aggregated.AggregatedReportViewBuilder;
+import step.core.artefacts.reports.aggregated.AggregatedReportViewRequest;
+import step.core.artefacts.reports.aggregated.FlatAggregatedReport;
 import step.core.artefacts.reports.junitxml.JUnitXmlReportBuilder;
 import step.core.collections.SearchOrder;
 import step.core.deployment.AbstractStepAsyncServices;
 import step.core.deployment.ControllerServiceException;
 import step.core.deployment.FindByCriteraParam;
-import step.core.execution.model.*;
+import step.core.entities.EntityConstants;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionAccessor;
+import step.core.execution.model.ExecutionAccessorImpl;
+import step.core.execution.model.ExecutionParameters;
+import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.RepositoryObjectReference;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
@@ -50,10 +60,15 @@ import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 import step.reporting.JUnitReport;
+import step.reports.CustomReportType;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,12 +82,15 @@ public class ExecutionServices extends AbstractStepAsyncServices {
 
     protected ExecutionAccessor executionAccessor;
     private TableService tableService;
+    private ExecutionDiversion executionDiversion;
 
     @PostConstruct
     public void init() throws Exception {
         super.init();
         executionAccessor = getContext().getExecutionAccessor();
         tableService = getContext().require(TableService.class);
+        // usually null, but IDE diverts executions
+        executionDiversion = getContext().get(ExecutionDiversion.class);
     }
 
     @Operation(description = "Starts an execution with the given parameters.")
@@ -84,6 +102,9 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     public String execute(ExecutionParameters executionParams) {
         checkRightsOnBehalfOf("plan-execute", executionParams.getUserID());
         applyUserIdFromSessionIfNotSpecified(executionParams);
+        if (executionDiversion != null) {
+            return executionDiversion.divertExecution(executionParams);
+        }
         return getScheduler().execute(executionParams);
     }
 

@@ -23,6 +23,7 @@ import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -248,9 +249,9 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
      * @return the automation package fragment manager read from the provided files for editing
      * @throws AutomationPackageReadingException in case of error
      */
-    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(File automationPackage) throws AutomationPackageReadingException {
+    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(File automationPackage, ResourceManager resourceManager) throws AutomationPackageReadingException {
         try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, null, null)) {
-            return getAutomationPackageYamlFragmentManager(automationPackageArchive);
+            return getAutomationPackageYamlFragmentManager(automationPackageArchive, resourceManager);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
         }

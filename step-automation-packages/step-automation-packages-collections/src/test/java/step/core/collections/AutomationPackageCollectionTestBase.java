@@ -31,6 +31,8 @@ import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.parameter.ParameterManager;
 import step.parameter.automation.AutomationPackageParametersRegistration;
+import step.resources.LocalResourceManagerImpl;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +51,8 @@ public class AutomationPackageCollectionTestBase {
     protected File destinationDirectory;
     protected Path expectedFilesPath = new File("src/test/resources/expected").toPath();
     protected AutomationPackageYamlFragmentManager fragmentManager;
+    protected File resourcesDirectory;
+    protected ResourceManager resourceManager;
 
     public AutomationPackageCollectionTestBase() {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
@@ -63,16 +67,18 @@ public class AutomationPackageCollectionTestBase {
     @Before
     public void setUp() throws IOException, AutomationPackageReadingException {
         destinationDirectory = Files.createTempDirectory("automationPackageCollectionTest").toFile();
+        resourcesDirectory = Files.createTempDirectory("automationPackageCollectionTestResources").toFile();
         FileUtils.copyDirectory(sourceDirectory, destinationDirectory);
-
-        fragmentManager = reader.getAutomationPackageYamlFragmentManager(destinationDirectory);
+        resourceManager = new LocalResourceManagerImpl(resourcesDirectory);
+        fragmentManager = reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager);
     }
 
     @After
     public void tearDown() throws IOException, AutomationPackageReadingException {
         // Attempt to re-read the just written Automation package from scratch
-        reader.getAutomationPackageYamlFragmentManager(destinationDirectory);
+        reader.getAutomationPackageYamlFragmentManager(destinationDirectory, resourceManager);
         FileUtils.deleteDirectory(destinationDirectory);
+        FileUtils.deleteDirectory(resourcesDirectory);
     }
 
 

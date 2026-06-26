@@ -1,4 +1,4 @@
-package step.ap_ide;
+package step.ide.collections;
 
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;

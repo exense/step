@@ -36,7 +36,7 @@ import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.repositories.parser.StepsParser;
-import step.resources.LocalResourceManagerImpl;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -180,7 +180,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
     abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, AutomationPackageContent res) throws AutomationPackageReadingException;
 
-    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
+    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive, ResourceManager resourceManager) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
         URL descriptorUrl = archive.getDescriptorYamlUrl();
         try (InputStream inputStream = descriptorUrl.openStream()) {
@@ -194,7 +194,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments);
                 AutomationPackage automationPackage = new AutomationPackage();
                 automationPackage.setStatus(AutomationPackageStatus.EDIT);
-                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(descriptorPath.getParent()), automationPackage, AutomationPackageOperationMode.LOCAL, null, archive, content, null, null, new HashMap<>());
+                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(descriptorPath.getParent()), automationPackage, AutomationPackageOperationMode.LOCAL, resourceManager, archive, content, null, null, new HashMap<>());
                 return new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
             } catch (FileSystemNotFoundException | URISyntaxException e) {
                 throw new AutomationPackageReadingException("Failed to read automation package for editing. The most likely cause is that you were trying to load " +
