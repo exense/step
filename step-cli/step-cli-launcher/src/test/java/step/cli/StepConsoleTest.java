@@ -410,6 +410,7 @@ public class StepConsoleTest {
             () -> new TestApDeployCommand(histories.deployHistory),
             () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory),
             () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
+            IdeCommand.LaunchIdeCommand::new,
             false,
             args
         );
@@ -423,6 +424,7 @@ public class StepConsoleTest {
             () -> new TestApDeployCommand(histories.deployHistory, version),
             () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version),
             () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
+            IdeCommand.LaunchIdeCommand::new,
             false,
             args
         );
