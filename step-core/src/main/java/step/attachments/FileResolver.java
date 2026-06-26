@@ -21,6 +21,7 @@ package step.attachments;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import org.bson.types.ObjectId;
 import step.resources.Resource;
@@ -33,6 +34,8 @@ public class FileResolver {
     public static final String RESOURCE_PREFIX = "resource:";
     public static final String RESOURCE_PATH_SEPARATOR = ":";
 
+    private Path plainPathRoot = Path.of("");
+
     private final ResourceManager resourceManager;
 
     public FileResolver(ResourceManager resourceManager) {
@@ -44,6 +47,10 @@ public class FileResolver {
         return resourceManager;
     }
 
+    public void setPlainPathRoot(File pathRoot) {
+        plainPathRoot = pathRoot.toPath();
+    }
+
     public File resolve(String path) {
         File file;
         if (path.startsWith(ATTACHMENT_PREFIX)) {
@@ -52,7 +59,7 @@ public class FileResolver {
         } else if (path.startsWith(RESOURCE_PREFIX)) {
             file = getResourceRevisionFileHandleForPath(path).getResourceFile();
         } else {
-            file = new File(path);
+            file = plainPathRoot.resolve(Path.of(path)).toFile();
         }
         return file;
     }

@@ -22,24 +22,18 @@ import java.nio.file.Path;
 
 public class AutomationPackageLocalResourceMapper extends AutomationPackageResourceUploader {
 
-    private final Path workPath;
-
-    public AutomationPackageLocalResourceMapper(Path workPath) {
-        this.workPath = workPath;
-    }
-
     @Override
     public String applyUniqueResourceReference(String resourceReference,
                                                String resourceType,
                                                StagingAutomationPackageContext context) {
-        return workPath.resolve(resourceReference).toString();
+        return resourceReference;
     }
 
     @Override
     public String applyResourceReference(String resourceReference,
                                          String resourceType,
                                          StagingAutomationPackageContext context) {
-        return workPath.resolve(resourceReference).toString();
+        return resourceReference;
     }
 
 }

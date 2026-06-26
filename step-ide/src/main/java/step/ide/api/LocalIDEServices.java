@@ -2,16 +2,11 @@ package step.ide.api;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
 import step.ide.LocalIDEState;
 
@@ -27,7 +22,6 @@ public class LocalIDEServices extends AbstractStepServices {
     @PostConstruct
     public void init() throws Exception {
         super.init();
-        GlobalContext globalContext = getContext();
     }
 
     @POST
@@ -40,6 +34,7 @@ public class LocalIDEServices extends AbstractStepServices {
         }
         try {
             LocalIDEState.get().useExistingAutomationPackageDirectory(file);
+
         } catch (Exception e) {
             logger.error("Unable to use existing AP directory: {}", directory, e);
             throw new WebApplicationException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);

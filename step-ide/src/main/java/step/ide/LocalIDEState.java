@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.JavaAutomationPackageArchive;
 import step.automation.packages.JavaAutomationPackageReader;
@@ -25,6 +26,7 @@ import step.resources.ResourceManagerImpl;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.nio.file.FileSystem;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Properties;
@@ -39,6 +41,7 @@ public class LocalIDEState implements ExecutionDiversion {
     private ResourceManagerImpl resourceManager;
     private IDEExecutorDelegateFactory executorDelegateFactory;
     private File currentAutomationPackageDirectory;
+    private FileResolver fileResolver;
 
     public static LocalIDEState get() {
         return instance;
@@ -104,6 +107,7 @@ public class LocalIDEState implements ExecutionDiversion {
         var automationPackageCollectionFactory = new AutomationPackageCollectionFactory(new Properties(), fragmentManager);
         CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(automationPackageCollectionFactory);
         this.currentAutomationPackageDirectory = apDir;
+        this.fileResolver.setPlainPathRoot(apDir);
     }
 
     private void verifyAPDirectory(File apDir) throws Exception {
@@ -159,5 +163,9 @@ public class LocalIDEState implements ExecutionDiversion {
         String executionId = executionIdFuture.join();
         logger.info("Diverted executionId: {}", executionId);
         return executionId;
+    }
+
+    public void setFileResolver(FileResolver fileResolver) {
+        this.fileResolver = fileResolver;
     }
 }
