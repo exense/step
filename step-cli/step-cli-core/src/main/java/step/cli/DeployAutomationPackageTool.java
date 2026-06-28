@@ -25,6 +25,11 @@ import step.cli.parameters.ApDeployParameters;
 
 public class DeployAutomationPackageTool extends AbstractCliTool<ApDeployParameters> {
 
+    /**
+     * Default max time (in seconds) to wait for the deployment to complete when no explicit timeout is configured.
+     */
+    public static final int DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS = 300;
+
     public DeployAutomationPackageTool(String url, ApDeployParameters params) {
         super(url, params);
     }
@@ -32,6 +37,8 @@ public class DeployAutomationPackageTool extends AbstractCliTool<ApDeployParamet
     public void execute() throws StepCliExecutionException {
         parameters.validate();
         try (RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClient()) {
+            int deploymentTimeoutSeconds = parameters.getDeploymentTimeout() != null
+                ? parameters.getDeploymentTimeout() : DEFAULT_DEPLOYMENT_TIMEOUT_SECONDS;
 
             AutomationPackageUpdateResult updateResult;
             String mavenAutomationPackageXml = null;
@@ -48,8 +55,8 @@ public class DeployAutomationPackageTool extends AbstractCliTool<ApDeployParamet
                     createPackageSource(parameters.getAutomationPackageFile(), mavenAutomationPackageXml),
                     createLibrarySource(parameters.getLibraryFile(), mavenPackageLibraryXml, parameters.getManagedLibraryName()),
                     parameters.getVersionName(), parameters.getActivationExpression(), null, null, null, null,
-                    parameters.getAsync(), parameters.getForceRefreshOfSnapshots()
-
+                    parameters.getAsync(), parameters.getForceRefreshOfSnapshots(),
+                    deploymentTimeoutSeconds * 1000L
                 );
 
                 if (updateResult != null && updateResult.getId() != null) {

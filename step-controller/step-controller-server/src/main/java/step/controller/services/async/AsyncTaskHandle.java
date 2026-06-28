@@ -10,6 +10,10 @@ public class AsyncTaskHandle {
         this.asyncTaskStatus = asyncTaskStatus;
     }
 
+    public String getId() {
+        return asyncTaskStatus.getId();
+    }
+
     public void setWarnings(Set<String> warnings) {
         asyncTaskStatus.setWarnings(warnings);
     }
