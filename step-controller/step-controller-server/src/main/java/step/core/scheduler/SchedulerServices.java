@@ -139,6 +139,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Path("/{id}")
     @Secured(right = "{entity}-toggle")
     public void enableExecutionTask(@PathParam("id") String executionTaskID, @QueryParam("enabled") Boolean enabled) {
+        assertEntityIsEditableInContext(getEntity(executionTaskID));
         try {
             String auditOperation;
             if (enabled != null && enabled) {
