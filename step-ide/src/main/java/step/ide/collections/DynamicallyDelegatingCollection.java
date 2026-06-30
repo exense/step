@@ -6,7 +6,6 @@ import step.core.collections.Filter;
 import step.core.collections.IndexField;
 import step.core.collections.Order;
 import step.core.collections.SearchOrder;
-import step.core.collections.inmemory.InMemoryCollection;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,12 +16,13 @@ import java.util.stream.Stream;
 public class DynamicallyDelegatingCollection<T> implements Collection<T> {
     private final String name;
     private final Class<T> type;
-    private final Collection<T> fallback = new InMemoryCollection<>();
+    private final Collection<T> fallback;
     private final AtomicReference<Collection<T>> currentCollection = new AtomicReference<>(null);
 
     public DynamicallyDelegatingCollection(String name, Class<T> type, CollectionFactory currentFactory) {
         this.name = name;
         this.type = type;
+        fallback = new NoOpCollection<>(name, type);
         setFromCurrentFactory(currentFactory);
     }
 

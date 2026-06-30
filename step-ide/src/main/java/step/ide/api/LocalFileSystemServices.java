@@ -17,6 +17,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -83,7 +84,12 @@ public class LocalFileSystemServices extends AbstractStepServices {
             throw new WebApplicationException("Cannot specify both filesOnly and dirsOnly", Response.Status.BAD_REQUEST);
         }
 
-        Path targetDir = ((pathString != null && !pathString.isBlank()) ? Paths.get(pathString) : home).normalize().toAbsolutePath();
+        Path targetDir;
+        try {
+            targetDir = ((pathString != null && !pathString.isBlank()) ? Paths.get(pathString) : home).normalize().toAbsolutePath();
+        } catch (InvalidPathException e) {
+            throw new WebApplicationException("Invalid path: " + pathString, Response.Status.BAD_REQUEST);
+        }
 
         if (!Files.exists(targetDir) || !Files.isDirectory(targetDir)) {
             throw new WebApplicationException("Path is not a valid directory: " + targetDir, Response.Status.BAD_REQUEST);
