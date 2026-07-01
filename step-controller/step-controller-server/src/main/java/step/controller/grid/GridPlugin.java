@@ -239,8 +239,8 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setDisplayName("Grid tokens by state")
             .setDescription("Number of grid tokens currently in each lifecycle state, broken down by state and agent type.")
             .setInstrumentType(GAUGE.toLowerCase())
-            .setAttributes(Arrays.asList(GRID_TOKEN_STATE, GRID_TOKEN_AGENT_TYPE))
-            .setDefaultGroupingAttributes(List.of(GRID_TOKEN_STATE.getName(), GRID_TOKEN_AGENT_TYPE.getName()))
+            .setAttributes(Arrays.asList(GRID_TOKEN_AGENT_TYPE, GRID_TOKEN_STATE))
+            .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName(), GRID_TOKEN_STATE.getName()))
             .setUnit("1")
             .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
             .setRenderingSettings(new MetricRenderingSettings());
