@@ -48,7 +48,7 @@ public class TimeSeriesBucketingHandlerTest {
 
         ExecutionMetricSample mm = buildMetricMeasurement(snapshot);
 
-        handler.processMetrics(List.of(mm));
+        handler.processMetrics(null, List.of(mm));
         handler.flush();
 
         List<Bucket> buckets = allBuckets();
@@ -75,7 +75,7 @@ public class TimeSeriesBucketingHandlerTest {
             3, 57, 15, 42, 42, null);
         ExecutionMetricSample mm = buildMetricMeasurement(snapshot);
 
-        handler.processMetrics(List.of(mm));
+        handler.processMetrics(null, List.of(mm));
         handler.flush();
 
         List<Bucket> buckets = allBuckets();
@@ -100,7 +100,7 @@ public class TimeSeriesBucketingHandlerTest {
             2, 300, 100, 200, 200, dist);
         ExecutionMetricSample mm = buildMetricMeasurement(snapshot);
 
-        handler.processMetrics(List.of(mm));
+        handler.processMetrics(null, List.of(mm));
         handler.flush();
 
         List<Bucket> buckets = allBuckets();
@@ -126,7 +126,7 @@ public class TimeSeriesBucketingHandlerTest {
             1, 80, 80, 80, 80, null);
         ExecutionMetricSample mm = buildMetricMeasurement(snapshot);
 
-        handler.processMetrics(List.of(mm));
+        handler.processMetrics(null, List.of(mm));
         handler.flush();
 
         List<Bucket> buckets = allBuckets();

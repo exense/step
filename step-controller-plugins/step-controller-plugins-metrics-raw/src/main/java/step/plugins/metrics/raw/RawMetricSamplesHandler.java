@@ -47,7 +47,7 @@ public class RawMetricSamplesHandler implements MetricSamplesHandler {
     }
 
     @Override
-    public void processMeasurements(List<Measurement> measurements) {
+    public void processMeasurements(ExecutionContext executionContext, List<Measurement> measurements) {
         List<?> castedMeasurements = measurements;
         if (measurements.size() > 0) {
             accessor.saveManyMeasurements((List<Object>) castedMeasurements);
@@ -55,7 +55,7 @@ public class RawMetricSamplesHandler implements MetricSamplesHandler {
     }
 
     @Override
-    public void processMetrics(List<ExecutionMetricSample> metrics) {
+    public void processMetrics(ExecutionContext executionContext, List<ExecutionMetricSample> metrics) {
         if (metrics != null && !metrics.isEmpty()) {
             executionMetricSampleAccessor.save(metrics);
         }
