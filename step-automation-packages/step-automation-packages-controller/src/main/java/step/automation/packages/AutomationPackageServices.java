@@ -449,7 +449,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     @Operation(description = "Creates or updates an automation package. Current clients set 'asyncDeployment' to true and receive an AsyncTaskStatus to poll; clients from a previous minor version omit it and receive the AutomationPackageUpdateResult synchronously.",
-        responses = {@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = AsyncTaskStatus.class)))})
+        responses = {@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(anyOf = {AsyncTaskStatus.class, AutomationPackageUpdateResult.class})))})
     public Response createOrUpdateAutomationPackage(@FormDataParam("async") boolean async,
                                                     @FormDataParam("versionName") String apVersion,
                                                     @FormDataParam("forceRefreshOfSnapshots") boolean forceRefreshOfSnapshots,
@@ -467,7 +467,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam(FUNCTIONS_ATTRIBUTES) String functionsAttributesAsString,
                                                     @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
                                                     @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally,
-                                                    @FormDataParam("asyncDeployment") boolean asyncDeployment) {
+                                                    @DefaultValue("false") @FormDataParam("asyncDeployment") boolean asyncDeployment) {
         // In the asynchronous case, the uploaded streams have to be buffered into temp files *on the request thread*.
         // This is required because the multipart input streams are bound to the HTTP request and would be closed by the
         // time the background task reads them.
