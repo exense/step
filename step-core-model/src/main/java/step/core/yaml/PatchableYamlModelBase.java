@@ -27,7 +27,7 @@ public class PatchableYamlModelBase extends AbstractYamlModel implements Patchab
     private static final Logger logger = LoggerFactory.getLogger(PatchableYamlModelBase.class);
 
     @JsonIgnore
-    private PatchingContext context;
+    protected PatchingContext context;
 
     public PatchableYamlModelBase(PatchingContext context) {
         this.context = context;

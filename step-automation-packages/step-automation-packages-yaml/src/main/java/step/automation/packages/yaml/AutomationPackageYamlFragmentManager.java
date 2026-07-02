@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
+import org.apache.commons.io.FileUtils;
+import step.automation.packages.ResourcePathMatchingResolver;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
@@ -25,12 +27,14 @@ import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.plans.Plan;
+import step.core.yaml.NamedObjectPatchableYamlModel;
 import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
+import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.core.yaml.deserialization.AutomationPackagePerObjectSaveUnsupportedException;
-import step.core.yaml.deserialization.AutomationPackageUpdateException;
 import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchableYamlPrimitive;
 import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.automation.AutomationPackageParameter;
@@ -39,24 +43,25 @@ import step.plugins.functions.types.CompositeFunction;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.text.MessageFormat;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class AutomationPackageYamlFragmentManager {
 
 
     protected final Path apRoot;
     protected final StagingAutomationPackageContext stagingContext;
+    private final ResourcePathMatchingResolver resourcePatchMatchingResolver;
 
     public enum NewObjectFragmentMode {
         /**
@@ -75,24 +80,24 @@ public class AutomationPackageYamlFragmentManager {
 
     protected final Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap = new ConcurrentHashMap<>();
     protected final Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap = new ConcurrentHashMap<>();
-    protected final Map<String, AutomationPackageFragmentYaml> pathToYamlFragment;
+    protected final Set<AutomationPackageFragmentYaml> fragments;
 
     protected Properties properties = new Properties();
     public final AutomationPackageFragmentYaml descriptorYaml;
 
-    public AutomationPackageYamlFragmentManager(AutomationPackageDescriptorYaml descriptorYaml, Map<String, AutomationPackageFragmentYaml> fragmentMap, AutomationPackageDescriptorReader descriptorReader, StagingAutomationPackageContext stagingContext) {
-
+    public AutomationPackageYamlFragmentManager(ResourcePathMatchingResolver resourcePathMatchingResolver, AutomationPackageDescriptorYaml descriptorYaml, Set<AutomationPackageFragmentYaml> fragments, AutomationPackageDescriptorReader descriptorReader, StagingAutomationPackageContext stagingContext) {
+        this.resourcePatchMatchingResolver = resourcePathMatchingResolver;
         this.descriptorReader = descriptorReader;
         this.descriptorYaml = descriptorYaml;
 
-        pathToYamlFragment = fragmentMap;
-        apRoot = Path.of(descriptorYaml.getFragmentUrl().getPath())
-            .getParent();
+        apRoot = descriptorYaml.getFragmentPath().getParent();
 
         this.stagingContext = stagingContext;
         initializeMaps(descriptorYaml);
 
-        pathToYamlFragment.values().stream()
+        this.fragments = fragments;
+
+        fragments.stream()
             .filter(f -> f != descriptorYaml)
             .forEach(this::initializeMaps);
     }
@@ -102,7 +107,6 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     public void initializeMaps(AutomationPackageFragmentYaml fragment) {
-        pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
         for (YamlPlan yamlPlan : fragment.getPlans()) {
             Plan plan = descriptorReader.getPlanReader().yamlPlanToPlan(yamlPlan);
             patchableMap.put(plan, yamlPlan);
@@ -145,13 +149,12 @@ public class AutomationPackageYamlFragmentManager {
 
         AutomationPackageFragmentYaml fragment = fragmentMap.get(plan);
         if (fragment == null) {
-            fragment = fragmentForNewObject(plan, YamlPlan.PLANS_ENTITY_NAME);
+            fragment = fragmentForNewObject(newYamlPlan, YamlPlan.PLANS_ENTITY_NAME);
             fragmentMap.put(plan, fragment);
-            pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
             addFragmentEntity(fragment, fragment.getPlans(), newYamlPlan);
         } else {
             YamlPlan oldYamlPlan = (YamlPlan) patchableMap.get(plan);
-            modifyFragmentEntity(fragment, fragment.getPlans(), oldYamlPlan, newYamlPlan);
+            modifyFragmentEntity(fragment, fragment.getPlans(), oldYamlPlan, newYamlPlan, YamlPlan.PLANS_ENTITY_NAME);
         }
         patchableMap.put(plan, newYamlPlan);
 
@@ -161,11 +164,10 @@ public class AutomationPackageYamlFragmentManager {
 
     public synchronized step.functions.Function saveFunction(step.functions.Function function) {
         AutomationPackageFragmentYaml fragment = fragmentMap.get(function);
+        YamlAutomationPackageKeyword newKeyword = createNewYamlKeyword(function);
         if (fragment == null) {
-            fragment = fragmentForNewObject(function, "keywords");
+            fragment = fragmentForNewObject(newKeyword, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
             fragmentMap.put(function, fragment);
-            pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
-            YamlAutomationPackageKeyword newKeyword = createNewYamlKeyword(function);
             if (newKeyword != null) {
                 patchableMap.put(function, newKeyword);
                 addFragmentEntity(fragment, fragment.getKeywords(), newKeyword);
@@ -173,9 +175,9 @@ public class AutomationPackageYamlFragmentManager {
                 System.err.println("SAVING OF FUNCTION OF TYPE " + function.getClass().getName() + " IS NOT CURRENTLY SUPPORTED");
             }
         } else {
-            YamlAutomationPackageKeyword yamlKeyword = (YamlAutomationPackageKeyword) patchableMap.get(function);
-            yamlKeyword.getYamlKeyword().updateFromFunction(function);
-            modifyFragmentEntity(fragment, fragment.getKeywords(), yamlKeyword, yamlKeyword);
+            YamlAutomationPackageKeyword oldKeyword = (YamlAutomationPackageKeyword) patchableMap.get(function);
+            modifyFragmentEntity(fragment, fragment.getKeywords(), oldKeyword, newKeyword, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
+            patchableMap.put(function, newKeyword);
         }
         return function;
     }
@@ -222,54 +224,136 @@ public class AutomationPackageYamlFragmentManager {
         fragment.writeToDisk();
     }
 
-    private <T extends PatchableYamlModel> void modifyFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T oldEntity, T newEntity) {
+    private <T extends PatchableYamlModel> void modifyFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T oldEntity, T newEntity, String fieldName) {
         entityList.replaceItem(oldEntity, newEntity);
+        Path oldRelativePath = determineObjectRelativePath(oldEntity, fieldName, false);
+        Path newRelativePath = determineObjectRelativePath(newEntity, fieldName, false);
+
+        // Path did not change - skip entire move logic
+        if (!oldRelativePath.equals(newRelativePath)) {
+            Path oldAbsolutePath = apRoot.resolve(oldRelativePath);
+
+             /*  oldRelativePath is the path which would have been given to old version of the entity
+                 by the fragment manager. If it matches the fragment path, this means that
+                 the fragment path was intended to follow the naming convention based on the configuration
+                 (i.e. PER_OBJECT naming)
+
+                 if the paths don't match, then simply skip the renaming. This silently allows for:
+                  - legacy fragments which don't follow the naming convention
+                  - FRAGMENT type naming (fixed fragment for object types such as Parameters)
+              */
+            if (oldAbsolutePath.equals(fragment.getFragmentPath())) {
+                Path newAbsolutePath = apRoot.resolve(newRelativePath);
+
+                try {
+                    FileUtils.moveFile(oldAbsolutePath.toFile(), newAbsolutePath.toFile());
+                    fragment.setFragmentPath(newAbsolutePath);
+                } catch (IOException e) {
+                    throw new AutomationPackageConcurrentEditException(
+                        String.format("Unable to rename file %s to file %s. Was the file renamed or deleted outside the editor?", oldAbsolutePath, newAbsolutePath));
+                }
+
+                AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
+                    .orElse(descriptorYaml);
+
+                String newReference = resourcePatchMatchingResolver.getFragmentReferenceString(determineObjectRelativePath(newEntity, fieldName, true));
+                String oldReference = resourcePatchMatchingResolver.getFragmentReferenceString(oldRelativePath);
+
+                if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(oldReference))) {
+                    referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), newReference));
+                    referencingFragment.writeToDisk();
+                };
+            }
+        }
         fragment.writeToDisk();
     }
 
-    private AutomationPackageFragmentYaml fragmentForNewObject(AbstractOrganizableObject p, String fieldName) {
+    private <BO extends AbstractOrganizableObject, T extends PatchableYamlModel> void removeFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, BO object) {
+
+        PatchableYamlModel yamlObject = patchableMap.get(object);
+        entityList.remove(yamlObject);
+
+        patchableMap.remove(object);
+        fragmentMap.remove(object);
+
+        if (fragment.isEmpty()) {
+            try {
+                FileUtils.delete(fragment.getFragmentPath().toFile());
+
+                determineReferencingFragment(fragment.getFragmentPath()).ifPresent(referencingFragment -> {
+                    String relativeFragmentReference = resourcePatchMatchingResolver
+                        .getFragmentReferenceString(apRoot.relativize(fragment.getFragmentPath()));
+                    if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(relativeFragmentReference))) {
+                        referencingFragment.writeToDisk();
+                    };
+                    fragments.remove(fragment);
+                });
+            } catch (IOException e) {
+                throw new AutomationPackageConcurrentEditException(String.format("%s was removed outside the editor", fragment.getFragmentPath()));
+            }
+        } else {
+            fragment.writeToDisk();
+        }
+    }
+
+    private AutomationPackageFragmentYaml fragmentForNewObject(PatchableYamlModel p, String fieldName) {
+
+        Path path = determineObjectRelativePath(p, fieldName, false);
+        Path absolutePath = apRoot.resolve(path);
+
+        Optional<AutomationPackageFragmentYaml> optionalExistingFragment = fragmentMap
+            .values().stream().filter(f -> f.getFragmentPath().equals(absolutePath)).findAny();
+        if (optionalExistingFragment.isPresent()) {
+            return optionalExistingFragment.get();
+        }
+
+        PatchingContext context = new PatchingContext(absolutePath.toString(), "---", descriptorYaml.getPatchingContext().getMapper());
+        AutomationPackageFragmentYaml fragment = new AutomationPackageFragmentYamlImpl(context);
+        fragments.add(fragment);
+        fragment.setFragmentPath(absolutePath);
+
+        if (determineReferencingFragment(path).isEmpty()) {
+            String referencingPath = resourcePatchMatchingResolver.getFragmentReferenceString(determineObjectRelativePath(p, fieldName, true));
+            descriptorYaml.getFragments().add(new PatchableYamlPrimitive<>(descriptorYaml.getPatchingContext(), referencingPath));
+            descriptorYaml.writeToDisk();
+        }
+        return fragment;
+    }
+
+    private Optional<AutomationPackageFragmentYaml> determineReferencingFragment(Path path) {
+        return Stream.concat(Stream.of(descriptorYaml), fragments.stream())
+            .filter(fragment -> fragment.getFragments().stream()
+                .anyMatch(pattern -> resourcePatchMatchingResolver.isMatchingPath(pattern.getValue(), path)))
+            .findFirst();
+    }
+
+    public Path determineObjectRelativePath(PatchableYamlModel p, String fieldName, boolean globPattern) {
 
         NewObjectFragmentMode mode = NewObjectFragmentMode.valueOf(properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, fieldName), NewObjectFragmentMode.PER_OBJECT.name()));
         String defaultRelativeFragmentPath = fieldName;
+
         if (mode == NewObjectFragmentMode.FRAGMENT) {
             defaultRelativeFragmentPath = defaultRelativeFragmentPath + ".yml";
         }
 
-
-        if (mode == NewObjectFragmentMode.PER_OBJECT && !p.hasAttribute(AbstractOrganizableObject.NAME)) {
-            throw new AutomationPackagePerObjectSaveUnsupportedException(String.format("""
-                Saving by object name is unsupported for %1$s, please configure the entity to be stored in a specified single fragment, i.e.
-
-                %2$s = %1$s.yml
-                %3$s = %4$s
-                """, fieldName, String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, fieldName), String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, fieldName), NewObjectFragmentMode.FRAGMENT.name()));
-        }
-
         String relativeFragmentPath = properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, fieldName), defaultRelativeFragmentPath);
-        Path path = new File(relativeFragmentPath).toPath();
-        if (!path.isAbsolute()) {
-            path = apRoot.resolve(path);
-        }
 
-        if (mode == NewObjectFragmentMode.PER_OBJECT) {
-            path = path.resolve(sanitizeFilename(p.getAttribute(AbstractOrganizableObject.NAME)) + ".yml");
-        }
+        return switch (mode) {
+            case NewObjectFragmentMode.FRAGMENT -> new File(relativeFragmentPath).toPath();
+            case NewObjectFragmentMode.PER_OBJECT -> {
+                if (p instanceof NamedObjectPatchableYamlModel namedObjectPatchableYamlModel) {
+                    String name = globPattern ? "*" : namedObjectPatchableYamlModel.getName();
+                    yield new File(relativeFragmentPath).toPath().resolve(sanitizeFilename(name + ".yml"));
+                }
 
-        try {
-            URL url = path.toUri().toURL();
+                throw new AutomationPackagePerObjectSaveUnsupportedException(String.format("""
+                    Saving by object name is unsupported for %1$s, please configure the entity to be stored in a specified single fragment, i.e.
 
-
-            if (pathToYamlFragment.containsKey(url.toString())) {
-                return pathToYamlFragment.get(url.toString());
+                    %2$s = %1$s.yml
+                    %3$s = %4$s
+                    """, fieldName, String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, fieldName), String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, fieldName), NewObjectFragmentMode.FRAGMENT.name()));
             }
-            PatchingContext context = new PatchingContext(url.toString(), "---", descriptorYaml.getPatchingContext().getMapper());
-            AutomationPackageFragmentYaml fragment = new AutomationPackageFragmentYamlImpl(context);
-            fragment.setFragmentUrl(url);
-            return fragment;
-        } catch (MalformedURLException e) {
-            throw new AutomationPackageUpdateException(MessageFormat.format("Error creating path for new fragment: {0}", path), e);
-        }
-
+        };
     }
 
     public String sanitizeFilename(String inputName) {
@@ -278,64 +362,35 @@ public class AutomationPackageYamlFragmentManager {
 
     public void removePlan(Plan plan) {
         AutomationPackageFragmentYaml fragment = fragmentMap.get(plan);
-        YamlPlan yamlPlan = (YamlPlan) patchableMap.get(plan);
-
-        fragment.getPlans().remove(yamlPlan);
-
-        patchableMap.remove(plan);
-        fragmentMap.remove(plan);
-
-        fragment.writeToDisk();
+        removeFragmentEntity(fragment, fragment.getPlans(), plan);
     }
 
     public void removeFunction(step.functions.Function function) {
         AutomationPackageFragmentYaml fragment = fragmentMap.get(function);
-        YamlAutomationPackageKeyword yamlKeyword = (YamlAutomationPackageKeyword) patchableMap.get(function);
-
-        fragment.getKeywords().remove(yamlKeyword);
-
-        patchableMap.remove(function);
-        fragmentMap.remove(function);
-
-        fragment.writeToDisk();
+        removeFragmentEntity(fragment, fragment.getKeywords(), function);
     }
 
 
     public <BO extends AbstractOrganizableObject> void removeAdditionalFieldObject(BO object, String fieldName) {
-
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
-        PatchableYamlModel yamlObject = patchableMap.get(object);
-
-        fragment.getAdditionalField(fieldName)
-            .remove(yamlObject);
-
-        patchableMap.remove(object);
-        fragmentMap.remove(object);
-
-        fragment.writeToDisk();
+        removeFragmentEntity(fragment, fragment.getAdditionalField(fieldName), object);
     }
 
-    public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModelBase> BO saveAdditionalFieldObject(BO object, java.util.function.Function<PatchingContext, YO> newYamlObjectCreator, String fieldName) {
-        AutomationPackageFragmentYaml fragment;
-        if (fragmentMap.get(object) == null) {
-            fragment = fragmentForNewObject(object, fieldName);
+    public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModelBase> BO saveAdditionalFieldObject(BO object, YO yamlObject, String fieldName) {
+        final AutomationPackageFragmentYaml fragment = fragmentMap.computeIfAbsent(object, o -> fragmentForNewObject(yamlObject, fieldName));
 
-            YO newYamlObject = newYamlObjectCreator.apply(fragment.getPatchingContext());
-            PatchableYamlList<YO> list = (PatchableYamlList<YO>) fragment.getAdditionalFields()
-                .computeIfAbsent(fieldName, k -> new PatchableYamlList<YO>(fragment.getPatchingContext(), fieldName));
-            fragmentMap.put(object, fragment);
-            pathToYamlFragment.put(fragment.getFragmentUrl().toString(), fragment);
-            addFragmentEntity(fragment, list, newYamlObject);
-            patchableMap.put(object, newYamlObject);
+        yamlObject.setPatchingContext(fragment.getPatchingContext());
+        PatchableYamlList<YO> list = (PatchableYamlList<YO>) fragment.getAdditionalFields()
+            .computeIfAbsent(fieldName, f -> new PatchableYamlList<YO>(fragment.getPatchingContext(), fieldName));
+
+
+        if (patchableMap.get(object) == null) {
+            addFragmentEntity(fragment, list, yamlObject);
+            patchableMap.put(object, yamlObject);
         } else {
-            fragment = fragmentMap.get(object);
-            YO newYamlObject = newYamlObjectCreator.apply(fragment.getPatchingContext());
-            PatchableYamlList<YO> list = (PatchableYamlList<YO>) fragment.getAdditionalFields()
-                .computeIfAbsent(fieldName, k -> new PatchableYamlList<YO>(fragment.getPatchingContext(), fieldName));
-
             YO oldYamlObject = (YO) patchableMap.get(object);
-            modifyFragmentEntity(fragment, list, oldYamlObject, newYamlObject);
-            patchableMap.put(object, newYamlObject);
+            modifyFragmentEntity(fragment, list, oldYamlObject, yamlObject, fieldName);
+            patchableMap.put(object, yamlObject);
         }
         return object;
     }

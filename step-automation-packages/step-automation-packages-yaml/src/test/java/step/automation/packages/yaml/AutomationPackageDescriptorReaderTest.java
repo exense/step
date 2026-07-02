@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -100,7 +101,7 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("*/5 * * * *", firstTask.getCron());
             assertEquals("TEST", firstTask.getExecutionParameters().get("environment"));
 
-            assertEquals(Arrays.asList("importPlans.yml", "importKeywords.yml"), descriptor.getFragments());
+            assertEquals(Arrays.asList("importPlans.yml", "importKeywords.yml"), descriptor.getFragments().stream().map(f -> f.getValue()).collect(Collectors.toUnmodifiableList()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

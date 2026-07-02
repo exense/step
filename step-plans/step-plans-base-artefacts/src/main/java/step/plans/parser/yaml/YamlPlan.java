@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.core.plans.agents.configuration.AgentProvisioningConfigurationDeserializer;
 import step.core.plans.agents.configuration.AgentProvisioningConfigurationSerializer;
+import step.core.yaml.NamedObjectPatchableYamlModel;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
 import step.core.yaml.model.NamedYamlArtefact;
@@ -34,7 +35,7 @@ import step.core.yaml.model.NamedYamlArtefact;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class YamlPlan extends PatchableYamlModelBase {
+public class YamlPlan extends PatchableYamlModelBase implements NamedObjectPatchableYamlModel {
 
     public static final String PLANS_ENTITY_NAME = "plans";
 
@@ -53,6 +54,7 @@ public class YamlPlan extends PatchableYamlModelBase {
         super(context);
     }
 
+    @Override
     public String getName() {
         return name;
     }

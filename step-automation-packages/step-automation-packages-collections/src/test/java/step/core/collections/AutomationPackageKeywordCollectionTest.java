@@ -82,4 +82,18 @@ public class AutomationPackageKeywordCollectionTest extends AutomationPackageCol
         assertFilesEqual(expectedFilesPath.resolve("keywordsAfterCompositeModification.yml"), destinationDirectory.toPath().resolve("keywords.yml"));
     }
 
+    @Test
+    public void testRenameCompositeKeyword() throws IOException {
+        Optional<Function> optionalFunction = functionCollection.find(Filters.equals("attributes.name", "Composite keyword from AP"), null, null, null, 100).findFirst();
+        assertTrue(optionalFunction.isPresent());
+
+        CompositeFunction compositeFunction = (CompositeFunction) optionalFunction.get();
+
+        compositeFunction.getAttributes().put(AbstractOrganizableObject.NAME, "Renamed Composite Keyword");
+
+        functionCollection.save(compositeFunction);
+
+        assertFilesEqual(expectedFilesPath.resolve("keywordsAfterCompositeRenamed.yml"), destinationDirectory.toPath().resolve("keywords.yml"));
+    }
+
 }

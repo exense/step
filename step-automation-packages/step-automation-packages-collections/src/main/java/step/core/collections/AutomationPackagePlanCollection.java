@@ -29,7 +29,7 @@ public class AutomationPackagePlanCollection extends InMemoryCollection<Plan> im
     private final AutomationPackageYamlFragmentManager fragmentManager;
 
     public AutomationPackagePlanCollection(AutomationPackageYamlFragmentManager fragmentManager) {
-        super(true, YamlPlan.PLANS_ENTITY_NAME);
+        super(false, YamlPlan.PLANS_ENTITY_NAME);
         this.fragmentManager = fragmentManager;
         initialzeRecordsFromFragments(fragmentManager);
     }
@@ -41,7 +41,7 @@ public class AutomationPackagePlanCollection extends InMemoryCollection<Plan> im
 
     @Override
     public Plan save(Plan p) {
-        return super.save(fragmentManager.savePlan(p));
+        return fragmentManager.savePlan(super.save(p));
     }
 
     @Override

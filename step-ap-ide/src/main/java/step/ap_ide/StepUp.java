@@ -21,7 +21,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -40,7 +39,7 @@ public class StepUp {
         configuration.getUnderlyingPropertyObject().load(propsStream);
         new ControllerServer(configuration).start();
         initWorkdir();
-        FXApp.main(args); // this will never return
+        //FXApp.main(args); // this will never return*/
     }
 
     private static final JavaAutomationPackageReader READER;
@@ -79,18 +78,18 @@ public class StepUp {
         var fragmentManager = StepUp.READER.getAutomationPackageYamlFragmentManager(apDir);
         Properties properties = new Properties();
 
+        int variant = 1;
         // variant 1:
         // parameters all go into parameters.yml, plans go into separate files in plans/$PLAN_NAME.yml
-        // Only works if the target files/directories already exist, so disabled for now
-        if (1 == 0) {
+        // this is because parameters do not have unique names by design.
+        if (variant == 1) {
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), "parameters.yml");
-            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, YamlPlan.PLANS_ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.PER_OBJECT.name());
-            // keywords seem to use PER_OBJECT by default?
+            // per default, PER_OBJECT is used on all objects?
         }
         // variant 2: simple, everything goes into main descriptor
-        if (1 == 1) {
-            String mainFile = Paths.get(fragmentManager.descriptorYaml.getFragmentUrl().toURI()).toFile().getName();
+        if (variant == 2) {
+            String mainFile = fragmentManager.descriptorYaml.getFragmentPath().toFile().getName();
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), mainFile);
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, YamlPlan.PLANS_ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
