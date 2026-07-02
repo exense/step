@@ -143,6 +143,15 @@ public class LocalIDEState implements ExecutionDiversion {
         return currentAutomationPackageDirectory;
     }
 
+
+    public String getCurrentAutomationPackageName() {
+        if (currentAutomationPackageDirectory == null) {
+            return null;
+        }
+        // FIXME: determine name
+        return "FIXME";
+    }
+
     public void closeCurrentAutomationPackage() {
         CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(null);
         this.currentAutomationPackageDirectory = null;
