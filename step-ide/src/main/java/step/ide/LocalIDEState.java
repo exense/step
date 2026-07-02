@@ -134,12 +134,22 @@ public class LocalIDEState implements ExecutionDiversion {
         }
         File descriptor = new File(apDir, JavaAutomationPackageArchive.METADATA_FILES.getFirst());
         logger.info("Initializing AP directory with new descriptor: {}", descriptor.getAbsolutePath());
-        PrintWriter pw = new PrintWriter(new FileOutputStream(descriptor));
-        // escape backslashes and quotes
-        String yamlName = apName.replace("\\", "\\\\").replace("\"", "\\\"");
-        pw.println("schemaVersion: 1.0.0");
-        pw.println("name: \"" + yamlName + "\"");
-        pw.close();
+        try (PrintWriter pw = new PrintWriter(new FileOutputStream(descriptor))) {
+            // escape backslashes and quotes
+            String yamlName = apName.replace("\\", "\\\\").replace("\"", "\\\"");
+            pw.println("schemaVersion: 1.0.0");
+            pw.println("name: \"" + yamlName + "\"");
+        }
+    }
+
+
+    public File getCurrentAutomationPackageDirectory() {
+        return currentAutomationPackageDirectory;
+    }
+
+    public void closeCurrentAutomationPackage() {
+        CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(null);
+        this.currentAutomationPackageDirectory = null;
     }
 
     public void setExecutorDelegateFactory(IDEExecutorDelegateFactory executorDelegateFactory) {
