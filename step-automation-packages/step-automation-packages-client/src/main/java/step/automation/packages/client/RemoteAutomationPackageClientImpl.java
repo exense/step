@@ -172,6 +172,10 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
 
         addStringBodyPart("versionName", versionName, multiPart);
         addStringBodyPart("activationExpr", activationExpr, multiPart);
+        // Signal to the server that this client supports the asynchronous deployment protocol (i.e. it will poll the
+        // returned async task). Servers from a previous minor version simply ignore this unknown form part. Omitting
+        // it (as previous-minor clients do) makes the server fall back to the legacy synchronous response.
+        addBooleanBodyPart("asyncDeployment", true, multiPart);
         addBooleanBodyPart("async", async, multiPart);
         addBooleanBodyPart("forceRefreshOfSnapshots", forceRefreshOfSnapshots, multiPart);
         addMapBodyPart("plansAttributes", plansAttributes, multiPart);

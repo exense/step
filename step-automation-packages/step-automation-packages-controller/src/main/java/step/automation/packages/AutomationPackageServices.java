@@ -23,10 +23,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.bson.types.ObjectId;
@@ -423,20 +428,29 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     /**
-     * Creates or updates an automation package asynchronously.
+     * Creates or updates an automation package.
      * <p>
-     * The uploaded content is buffered on the request thread and the actual deployment is then scheduled on the
-     * {@link step.controller.services.async.AsyncTaskManager}. This prevents the synchronous REST call from timing out
-     * while the deployment waits for running executions to release the package (the locking mechanism still applies,
-     * it just runs inside the background task now). The returned {@link AsyncTaskStatus} is meant to be polled by the
-     * client until it becomes ready, at which point it carries either the {@link AutomationPackageUpdateResult} or the
-     * server-side error message.
+     * By default (when {@code asyncDeployment} is {@code true}, as sent by current clients) the deployment is
+     * processed asynchronously: the uploaded content is buffered on the request thread and the actual deployment is
+     * then scheduled on the {@link step.controller.services.async.AsyncTaskManager}. This prevents the REST call from
+     * timing out while the deployment waits for running executions to release the package (the locking mechanism still
+     * applies, it just runs inside the background task now). The returned {@link AsyncTaskStatus} is meant to be polled
+     * by the client until it becomes ready, at which point it carries either the {@link AutomationPackageUpdateResult}
+     * or the server-side error message.
+     * <p>
+     * When {@code asyncDeployment} is {@code false} - which is the case for CLIs and Maven plugins from a previous minor
+     * version that do not know how to poll the async task - the deployment is processed synchronously on the request
+     * thread and the {@link AutomationPackageUpdateResult} is returned directly. This preserves the pre-async wire
+     * contract so that those older clients keep working against this server (they retain the original read-timeout
+     * limitation, which is the behavior they had against a previous-minor server).
      */
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
-    public AsyncTaskStatus<AutomationPackageUpdateResult> createOrUpdateAutomationPackage(@FormDataParam("async") boolean async,
+    @Operation(description = "Creates or updates an automation package. Current clients set 'asyncDeployment' to true and receive an AsyncTaskStatus to poll; clients from a previous minor version omit it and receive the AutomationPackageUpdateResult synchronously.",
+        responses = {@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(implementation = AsyncTaskStatus.class)))})
+    public Response createOrUpdateAutomationPackage(@FormDataParam("async") boolean async,
                                                     @FormDataParam("versionName") String apVersion,
                                                     @FormDataParam("forceRefreshOfSnapshots") boolean forceRefreshOfSnapshots,
                                                     @FormDataParam("activationExpr") String activationExpression,
@@ -452,10 +466,11 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam(PLANS_ATTRIBUTES) String plansAttributesAsString,
                                                     @FormDataParam(FUNCTIONS_ATTRIBUTES) String functionsAttributesAsString,
                                                     @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
-                                                    @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
-        // Parse the request and buffer any uploaded stream into a temp file *on the request thread*. This is required
-        // because the multipart input streams are bound to the HTTP request and would be closed by the time the
-        // background task reads them.
+                                                    @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally,
+                                                    @FormDataParam("asyncDeployment") boolean asyncDeployment) {
+        // In the asynchronous case, the uploaded streams have to be buffered into temp files *on the request thread*.
+        // This is required because the multipart input streams are bound to the HTTP request and would be closed by the
+        // time the background task reads them.
         // The buffered temp files are owned by the scheduled task (which cleans them up in its own finally block);
         // until the task has been successfully scheduled we are responsible for cleaning them up ourselves. The
         // 'taskScheduled' flag together with the finally block guarantees this happens for any failure on the request
@@ -469,21 +484,24 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
             addIfNotNull(sources, parsedRequestParameters.apFileSource);
             addIfNotNull(sources, parsedRequestParameters.apLibrarySource);
+
+            if (!asyncDeployment) {
+                // Legacy synchronous path for clients that cannot poll the async task: run the deployment inline (the
+                // multipart streams are still open on the request thread, so no buffering is needed) and return the
+                // result directly. The 'finally' below cleans up since taskScheduled stays false.
+                AutomationPackageUpdateResult result = deployAutomationPackage(parsedRequestParameters, async, apVersion,
+                    activationExpression, forceRefreshOfSnapshots, executeFunctionsLocally);
+                return Response.ok(result).build();
+            }
+
             addIfNotNull(tempFiles, bufferUploadedStream(parsedRequestParameters.apFileSource));
             addIfNotNull(tempFiles, bufferUploadedStream(parsedRequestParameters.apLibrarySource));
 
             AsyncTaskStatus<AutomationPackageUpdateResult> taskStatus = scheduleAsyncTaskWithinSessionContext(h -> {
                 try {
                     logger.info("Starting the automation package deployment (task id: {})", h.getId());
-                    AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
-                        .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
-                        .withVersionName(apVersion).withActivationExpression(activationExpression)
-                        .withAsync(async).withForceRefreshOfSnapshots(forceRefreshOfSnapshots)
-                        .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
-                        .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
-                        .build();
-                    AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
-                    auditLog("create-or-update", result.getId());
+                    AutomationPackageUpdateResult result = deployAutomationPackage(parsedRequestParameters, async, apVersion,
+                        activationExpression, forceRefreshOfSnapshots, executeFunctionsLocally);
                     logger.info("Completed the automation package deployment (task id: {})", h.getId());
                     return result;
                 } finally {
@@ -493,7 +511,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             });
             taskScheduled = true;
             logger.info("Automation package deployment scheduled (task id: {})", taskStatus.getId());
-            return taskStatus;
+            return Response.ok(taskStatus).build();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);
         } catch (IOException e) {
@@ -504,6 +522,21 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 cleanupBufferedUploads(tempFiles);
             }
         }
+    }
+
+    private AutomationPackageUpdateResult deployAutomationPackage(ParsedRequestParameters parsedRequestParameters, boolean async,
+                                                                 String apVersion, String activationExpression,
+                                                                 boolean forceRefreshOfSnapshots, boolean executeFunctionsLocally) {
+        AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
+            .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
+            .withVersionName(apVersion).withActivationExpression(activationExpression)
+            .withAsync(async).withForceRefreshOfSnapshots(forceRefreshOfSnapshots)
+            .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
+            .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
+            .build();
+        AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
+        auditLog("create-or-update", result.getId());
+        return result;
     }
 
     /**
