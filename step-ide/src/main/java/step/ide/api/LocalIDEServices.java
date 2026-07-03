@@ -1,6 +1,5 @@
 package step.ide.api;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.Consumes;
@@ -12,7 +11,6 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.deployment.AbstractStepServices;
@@ -73,12 +71,18 @@ public class LocalIDEServices extends AbstractStepServices {
         }
     }
 
+    public record AutomationPackageDescriptor(String directory, String name) {
+    }
+
     @GET
     @Path("ap/current")
     @Produces(MediaType.APPLICATION_JSON)
-    public String getCurrentAP() {
+    public AutomationPackageDescriptor getCurrentAP() {
         File dir = LocalIDEState.get().getCurrentAutomationPackageDirectory();
-        return Failable.get(() -> new ObjectMapper().writeValueAsString(dir));
+        if (dir == null) {
+            return new AutomationPackageDescriptor(null, null);
+        }
+        return new AutomationPackageDescriptor(dir.getAbsolutePath(), LocalIDEState.get().getCurrentAutomationPackageName());
     }
 
     @POST
