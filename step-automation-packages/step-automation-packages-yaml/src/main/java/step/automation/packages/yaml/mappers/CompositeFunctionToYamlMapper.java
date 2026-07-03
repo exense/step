@@ -1,8 +1,9 @@
 package step.automation.packages.yaml.mappers;
 
 import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.core.plans.Plan;
 import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plugins.functions.types.CompositeFunction;
@@ -41,10 +42,13 @@ public class CompositeFunctionToYamlMapper extends AbstractFunctionToYamlMapper<
         YamlCompositeFunction yamlComposite = new YamlCompositeFunction();
         setCommonAttributes(compositeFunction, yamlComposite);
 
-        YamlPlan plan = planReader.planToYamlPlan(compositeFunction.getPlan());
-        plan.setName(null);
-        yamlComposite.setPlan(plan);
+        Plan plan = compositeFunction.getPlan();
+        if (plan != null) {
+            YamlPlan yamlPlan = planReader.planToYamlPlan(compositeFunction.getPlan());
+            yamlPlan.setName(null);
+            yamlComposite.setPlan(yamlPlan);
+        }
 
-        return new YamlAutomationPackageKeyword(yamlComposite, null);
+        return new YamlAutomationPackageKeyword(yamlComposite);
     }
 }
