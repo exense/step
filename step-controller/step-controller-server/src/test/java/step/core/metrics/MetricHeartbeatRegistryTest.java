@@ -3,9 +3,6 @@ package step.core.metrics;
 import org.junit.Before;
 import org.junit.Test;
 import step.core.execution.ExecutionContext;
-import step.core.execution.ExecutionEngineContext;
-import step.core.metrics.MetricSample;
-import step.core.metrics.InstrumentType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -297,11 +294,11 @@ public class MetricHeartbeatRegistryTest {
     private static step.core.metrics.MetricSamplesHandler capturingHandler(List<step.core.metrics.ExecutionMetricSample> sink) {
         return new step.core.metrics.MetricSamplesHandler() {
             @Override
-            public void processMeasurements(List<step.core.metrics.Measurement> measurements) {
+            public void processMeasurements(ExecutionContext executionContext, List<step.core.metrics.Measurement> measurements) {
             }
 
             @Override
-            public void processMetrics(List<step.core.metrics.ExecutionMetricSample> metrics) {
+            public void processMetrics(ExecutionContext executionContext, List<step.core.metrics.ExecutionMetricSample> metrics) {
                 sink.addAll(metrics);
             }
         };

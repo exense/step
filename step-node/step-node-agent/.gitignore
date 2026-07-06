@@ -4,3 +4,4 @@ node_modules/
 filemanager/work/
 /coverage/
 /npm-project-workspaces/
+/agent-fork-libs/

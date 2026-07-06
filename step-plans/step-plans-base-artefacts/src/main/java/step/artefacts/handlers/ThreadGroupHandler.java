@@ -31,6 +31,7 @@ import step.core.artefacts.ChildrenBlock;
 import step.core.artefacts.handlers.*;
 import step.core.artefacts.reports.ParentSource;
 import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.resolvedplan.ResolvedChildren;
 import step.threadpool.IntegerSequenceIterator;
 import step.threadpool.ThreadPool;
@@ -114,6 +115,10 @@ public class ThreadGroupHandler extends ArtefactHandler<ThreadGroup, ReportNode>
                         final long localStartOffset = startOffset + (long) (1.0 * pack * Math.floor((groupID - 1) / pack) / effectiveNumberOfThreads * rampup);
 
                         CancellableSleep.sleep(localStartOffset, context::isInterrupted, ThreadGroupHandler.class);
+                        if (context.isInterrupted()) {
+                            reportNodeStatusComposer.addStatusAndRecompose(ReportNodeStatus.INTERRUPTED);
+                            return;
+                        }
 
                         Thread thread = createWorkArtefact(Thread.class, testArtefact, "Thread " + groupID, true);
                         thread.setGcounter(gcounter);

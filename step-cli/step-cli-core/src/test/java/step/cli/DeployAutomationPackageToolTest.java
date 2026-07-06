@@ -48,8 +48,7 @@ public class DeployAutomationPackageToolTest {
                 packageFileCaptor.capture(), Mockito.isNull(),
                 Mockito.eq("ver1"), Mockito.eq("true==true"),
                 Mockito.isNull(), Mockito.isNull(), Mockito.isNull(), Mockito.isNull(),
-                Mockito.anyBoolean(), Mockito.isNull()
-
+                Mockito.anyBoolean(), Mockito.isNull(), Mockito.anyLong()
             );
         Mockito.verify(automationPackageClient, Mockito.times(1)).close();
         Mockito.verifyNoMoreInteractions(automationPackageClient);
@@ -62,7 +61,7 @@ public class DeployAutomationPackageToolTest {
             Mockito.any(), Mockito.isNull(),
             Mockito.any(), Mockito.any(), Mockito.isNull(),
             Mockito.isNull(), Mockito.isNull(), Mockito.isNull(),
-            Mockito.anyBoolean(), Mockito.isNull())
+            Mockito.anyBoolean(), Mockito.isNull(), Mockito.anyLong())
         ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID, null, Set.of()));
         return remoteClient;
     }
