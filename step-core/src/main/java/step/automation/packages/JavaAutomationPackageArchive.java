@@ -40,7 +40,7 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
 
     private final ClassLoader classLoaderForMainApFile;
-    private final ClassLoader classLoaderForApAndLibraries;
+    private final URLClassLoader classLoaderForApAndLibraries;
     private boolean internalClassLoader = false;
     private final ResourcePathMatchingResolver pathMatchingResourceResolver;
 
@@ -81,7 +81,9 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
             this.pathMatchingResourceResolver = new ResourcePathMatchingResolver(classLoaderForMainApFile);
 
             // IMPORTANT!!! The class loader used to scan plans and keywords by annotations should contain all the classes from AP file and keyword lib
-            // (inclusive the parent classloader)
+            // 1. because Keywords declared in the AP file but using classes from the library will throw java.lang.NoClassDefFoundError otherwise
+            // 2. because we also want to include Keywords and Plans declared as code in the library.
+            // However, Keyword from the library will be created using the library as main Jar file
             this.classLoaderForApAndLibraries = createClassloaderForApWithKeywordLib(automationPackageFile, keywordLibFile);
         } catch (MalformedURLException ex) {
             throw new AutomationPackageReadingException("Unable to read automation package", ex);
@@ -162,7 +164,7 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     }
 
     public AnnotationScanner createAnnotationScanner() {
-        return AnnotationScanner.forSpecificJarFromURLClassLoader((URLClassLoader) getClassLoaderForApAndLibraries());
+        return AnnotationScanner.forSpecificJarFromURLClassLoader(classLoaderForApAndLibraries);
     }
 
     @Override

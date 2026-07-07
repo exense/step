@@ -18,9 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.*;
 import java.net.URL;
 import java.util.List;
@@ -29,16 +26,15 @@ import java.util.Objects;
 
 public abstract class AutomationPackageArchive implements Closeable {
 
-    private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchive.class);
     public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
     public static final String NULL_TYPE_ERROR_MSG = "The type of the AutomationPackageArchive must not be null";
 
     private final File originalFile;
-    private final File keywordLibFile;
+    private final File libraryFile;
     private final String type;
     private final String archiveName;
 
-    public AutomationPackageArchive(File automationPackageFile, File keywordLibFile, String type, String archiveName) throws AutomationPackageReadingException {
+    public AutomationPackageArchive(File automationPackageFile, File libraryFile, String type, String archiveName) throws AutomationPackageReadingException {
         Objects.requireNonNull(automationPackageFile, "The automationPackageFile must not be null");
         Objects.requireNonNull(automationPackageFile, NULL_TYPE_ERROR_MSG);
         this.archiveName = archiveName;
@@ -46,7 +42,7 @@ public abstract class AutomationPackageArchive implements Closeable {
             throw new AutomationPackageReadingException("Automation package " + automationPackageFile.getName() + " doesn't exist");
         }
         this.originalFile = automationPackageFile;
-        this.keywordLibFile = keywordLibFile;
+        this.libraryFile = libraryFile;
         this.type = type;
     }
 
@@ -69,8 +65,8 @@ public abstract class AutomationPackageArchive implements Closeable {
 
     abstract public List<URL> getResourcesByPattern(String resourcePathPattern);
 
-    public File getKeywordLibFile() {
-        return keywordLibFile;
+    public File getLibraryFile() {
+        return libraryFile;
     }
 
     public File getOriginalFile() {
