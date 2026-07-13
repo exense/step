@@ -120,6 +120,15 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
         return scheduler.executeExecutionTask(executionTaskID, session.getUser().getUsername());
     }
 
+    @Operation(description = "Returns the next execution date of the given scheduler task as a timestamp.")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/next-execution-date")
+    @Secured(right = "{entity}-read")
+    public Long getNextExecutionDate(@PathParam("id") String executionTaskID) {
+        return scheduler.getNextExecutionDate(executionTaskID);
+    }
+
     @Operation(description = "Enable/disable all the scheduler tasks.")
     @PUT
     @Path("/schedule")

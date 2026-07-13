@@ -156,6 +156,18 @@ public class Executor {
         }
     }
 
+    public Long getNextExecutionDate(ExecutiontTaskParameters task) {
+        try {
+            List<CronExclusion> cronExclusions = task.getCronExclusions();
+            return CronUtils.getNextExecutionDate(
+                task.getCronExpression(),
+                cronExclusions == null ? null : cronExclusions.stream().map(CronExclusion::getCronExpression).collect(Collectors.toList()));
+        } catch (ParseException e) {
+            logAndThrow("Cron expression '" + task.getCronExpression() + "' is invalid.", e);
+            return null;
+        }
+    }
+
     public boolean schedule(ExecutiontTaskParameters task) {
         JobKey key = new JobKey(task.getId().toString());
         String taskName = task.getAttribute(NAME);
