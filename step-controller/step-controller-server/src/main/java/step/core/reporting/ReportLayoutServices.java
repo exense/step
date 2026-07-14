@@ -94,13 +94,14 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
         }
     }
 
-    @Operation(description = "Returns all accessible report layouts.")
+    @Operation(description = "Returns all accessible report layouts for the given report type.")
     @GET
     @Path("/list")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-read")
-    public List<ReportLayout> getAllReportLayouts() {
-        return reportLayoutAccessor.getAccessibleReportLayoutsDefinitions(getSession().getUser().getUsername());
+    public List<ReportLayout> getAllReportLayouts(@QueryParam("reportType") ReportLayout.ReportLayoutType reportType) {
+        ReportLayout.ReportLayoutType effectiveReportType = reportType != null ? reportType : ReportLayout.ReportLayoutType.SingleExecution;
+        return reportLayoutAccessor.getAccessibleReportLayoutsDefinitions(getSession().getUser().getUsername(), effectiveReportType);
     }
 
     @Override
