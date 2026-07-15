@@ -6,9 +6,7 @@ import step.core.objectenricher.TriFunction;
 import step.framework.server.Session;
 import step.framework.server.tables.service.TableParameters;
 
-import java.text.ParseException;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
 public class SchedulerTaskTableEnricher implements TriFunction<ExecutiontTaskParameters, Session<?>, TableParameters, ExecutiontTaskParameters> {
 
@@ -16,16 +14,20 @@ public class SchedulerTaskTableEnricher implements TriFunction<ExecutiontTaskPar
 
     private static final Logger logger = LoggerFactory.getLogger(SchedulerTaskTableEnricher.class);
 
+    private final Supplier<ExecutionScheduler> executionSchedulerSupplier;
+
+    public SchedulerTaskTableEnricher(Supplier<ExecutionScheduler> executionSchedulerSupplier) {
+        this.executionSchedulerSupplier = executionSchedulerSupplier;
+    }
+
     @Override
     public ExecutiontTaskParameters apply(ExecutiontTaskParameters task, Session<?> session, TableParameters tableParameters) {
         if (task != null) {
             try {
-                List<CronExclusion> cronExclusions = task.getCronExclusions();
-                Long nextExecutionDate = CronUtils.getNextExecutionDate(
-                    task.getCronExpression(),
-                    cronExclusions == null ? null : cronExclusions.stream().map(CronExclusion::getCronExpression).collect(Collectors.toList()));
+                ExecutionScheduler scheduler = executionSchedulerSupplier.get();
+                Long nextExecutionDate = scheduler == null ? null : scheduler.getNextExecutionDate(task.getId().toString());
                 task.addAttribute(NEXT_EXECUTION_TIMESTAMP, nextExecutionDate == null ? null : nextExecutionDate.toString());
-            } catch (ParseException | RuntimeException e) {
+            } catch (RuntimeException e) {
                 logger.warn("Unable to compute next execution date for scheduler task {}", task.getId(), e);
                 task.addAttribute(NEXT_EXECUTION_TIMESTAMP, null);
             }

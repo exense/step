@@ -160,7 +160,11 @@ public class ExecutionScheduler implements ExecutionLauncher {
     }
 
     public Long getNextExecutionDate(String executionTaskID) {
-        return executor.getNextExecutionDate(get(executionTaskID));
+        ExecutiontTaskParameters task = get(executionTaskID);
+        if (!isSchedulerEnabled() || !task.isActive()) {
+            return null;
+        }
+        return executor.getNextExecutionDate(task);
     }
 
     public ExecutiontTaskParameters get(String id) {

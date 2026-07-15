@@ -39,6 +39,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -157,14 +158,17 @@ public class Executor {
     }
 
     public Long getNextExecutionDate(ExecutiontTaskParameters task) {
+        JobKey jobKey = new JobKey(task.getId().toString());
         try {
-            List<CronExclusion> cronExclusions = task.getCronExclusions();
-            return CronUtils.getNextExecutionDate(
-                task.getCronExpression(),
-                cronExclusions == null ? null : cronExclusions.stream().map(CronExclusion::getCronExpression).collect(Collectors.toList()));
-        } catch (ParseException e) {
-            logAndThrow("Cron expression '" + task.getCronExpression() + "' is invalid.", e);
-            return null;
+            return scheduler.getTriggersOfJob(jobKey).stream()
+                .map(Trigger::getNextFireTime)
+                .filter(Objects::nonNull)
+                .min(Date::compareTo)
+                .map(Date::getTime)
+                .orElse(null);
+        } catch (SchedulerException e) {
+            logger.error("An error occurred while getting next execution date for task: " + task);
+            throw new RuntimeException(e);
         }
     }
 
