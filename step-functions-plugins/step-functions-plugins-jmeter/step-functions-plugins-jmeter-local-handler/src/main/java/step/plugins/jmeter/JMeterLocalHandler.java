@@ -39,10 +39,14 @@ import javax.json.JsonObject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 
@@ -197,7 +201,7 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
         return arguments;
     }
 
-    private void updateClasspathSystemProperty(String jmeterHome) {
+    protected static synchronized void updateClasspathSystemProperty(String jmeterHome) {
         // this ugly manipulation of the system property "java.class.path" is a workaround to
         // the way how the plugins are discovered in jmeter:
         // the method org.apache.jorphan.reflect.ClassFinder.getClasspathMatches
@@ -205,16 +209,26 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
         // to filter out jar files of the jmeter/lib/ext folder. As this handler
         // relies on URLClassLoader, the extension jars of jmeter
         // are not in the property "java.class.path"
-        StringBuilder cp = new StringBuilder(System.getProperty("java.class.path"));
-
+        //
+        // The handler may be initialized multiple times during the lifetime of the agent
+        // (once per application context), while "java.class.path" is a single JVM-wide
+        // property. We therefore append each ext jar only once, otherwise the property
+        // would grow unbounded with duplicate entries on every initialization.
         File extFolder = new File(jmeterHome + "/lib/ext");
         if (extFolder.exists() && extFolder.isDirectory()) {
-            for (File jar : Objects.requireNonNull(extFolder.listFiles())) {
-                cp.append(File.pathSeparator).append(jar.getAbsolutePath());
-            }
-        }
+            String currentClasspath = System.getProperty("java.class.path");
+            Set<String> existingEntries = new HashSet<>(Arrays.asList(currentClasspath.split(Pattern.quote(File.pathSeparator))));
 
-        System.setProperty("java.class.path", cp.toString());
+            StringBuilder cp = new StringBuilder(currentClasspath);
+            for (File jar : Objects.requireNonNull(extFolder.listFiles())) {
+                String jarPath = jar.getAbsolutePath();
+                if (existingEntries.add(jarPath)) {
+                    cp.append(File.pathSeparator).append(jarPath);
+                }
+            }
+
+            System.setProperty("java.class.path", cp.toString());
+        }
     }
 
 }
