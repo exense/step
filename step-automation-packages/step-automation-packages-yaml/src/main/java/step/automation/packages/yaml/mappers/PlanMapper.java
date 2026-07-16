@@ -28,9 +28,9 @@ import step.plans.parser.yaml.YamlPlanReader;
 
 
 @BusinessObjectToYamlMapping(sourceClass = Plan.class)
-@YamlToBusinessObjectMapping(sourceClass = YamlPlan.class)
+@YamlToBusinessObjectMapping
 public class PlanMapper implements BusinessObjectToYamlMapper<Plan, YamlPlan>,
-    YamlToBusinessObjectMapper<Plan, YamlPlan> {
+    YamlToBusinessObjectMapper<YamlPlan, Plan> {
 
     private final YamlPlanReader planReader;
 

@@ -18,16 +18,9 @@
  ******************************************************************************/
 package step.automation.packages.mappers.interfaces;
 
-import step.core.yaml.PatchableYamlModel;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
 public @interface YamlToBusinessObjectMapping {
-
-    /**
-     * @return source class of the mapping
-     */
-    Class<? extends PatchableYamlModel> sourceClass();
 }

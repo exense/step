@@ -26,10 +26,10 @@ import step.parameter.Parameter;
 import step.parameter.automation.AutomationPackageParameter;
 
 @BusinessObjectToYamlMapping(sourceClass = Parameter.class)
-@YamlToBusinessObjectMapping(sourceClass = AutomationPackageParameter.class)
+@YamlToBusinessObjectMapping
 public class ParameterMapper implements
     BusinessObjectToYamlMapper<Parameter, AutomationPackageParameter>,
-    YamlToBusinessObjectMapper<Parameter, AutomationPackageParameter> {
+    YamlToBusinessObjectMapper<AutomationPackageParameter, Parameter> {
 
     @Override
     public AutomationPackageParameter toYamlObject(Parameter parameter) {

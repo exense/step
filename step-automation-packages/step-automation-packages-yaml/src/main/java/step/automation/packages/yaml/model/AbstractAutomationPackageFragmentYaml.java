@@ -171,7 +171,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @Override
-    public <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<BO, YO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap) {
+    public <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<YO, BO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap) {
         for (YO yamlObject : getListForYamlObject(mapper)) {
             BO businessObject = mapper.toBusinessObject(yamlObject);
             patchableMap.put(businessObject, yamlObject);

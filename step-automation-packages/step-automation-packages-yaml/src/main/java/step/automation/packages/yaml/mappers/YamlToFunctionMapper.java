@@ -24,8 +24,8 @@ import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.functions.Function;
 
-@YamlToBusinessObjectMapping(sourceClass = YamlAutomationPackageKeyword.class)
-public class YamlToFunctionMapper implements YamlToBusinessObjectMapper<Function, YamlAutomationPackageKeyword> {
+@YamlToBusinessObjectMapping
+public class YamlToFunctionMapper implements YamlToBusinessObjectMapper<YamlAutomationPackageKeyword, Function> {
 
     private final StagingAutomationPackageContext stagingContext;
 
