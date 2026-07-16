@@ -23,6 +23,7 @@ import step.core.agents.provisioning.driver.AgentProvisioningStatus;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.collections.Collection;
+import step.core.execution.model.Execution;
 import step.core.execution.table.*;
 import step.core.execution.type.ExecutionTypeControllerPlugin;
 import step.core.plugins.AbstractControllerPlugin;
@@ -41,8 +42,7 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
     public void serverStart(GlobalContext context) throws Exception {
         TableRegistry tableRegistry = context.get(TableRegistry.class);
 
-        Collection<ExecutionWrapper> collection = context.getCollectionFactory().getCollection("executions",
-            ExecutionWrapper.class);
+        Collection<Execution> collection = context.getCollectionFactory().getCollection("executions", Execution.class);
 
         RootReportNodeProvider rootReportNodeFormatter = new RootReportNodeProvider(context);
         ExecutionSummaryProvider executionSummaryFormatter = new ExecutionSummaryProvider(context);
@@ -57,10 +57,11 @@ public class ExecutionPlugin extends AbstractControllerPlugin {
             }
             return execution;
         }).withResultItemEnricher(execution -> {
-            execution.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
+            ExecutionWrapper executionWrapper = new ExecutionWrapper(execution);
+            executionWrapper.setRootReportNode(rootReportNodeFormatter.getRootReportNode(execution));
             Object executionSummary = executionSummaryFormatter.format(execution);
-            execution.setExecutionSummary(executionSummary);
-            return execution;
+            executionWrapper.setExecutionSummary(executionSummary);
+            return executionWrapper;
         }));
 
         ReportNodeAccessor reportNodeAccessor = context.getReportNodeAccessor();
