@@ -8,9 +8,7 @@ import step.framework.server.tables.service.TableParameters;
 
 import java.util.function.Supplier;
 
-public class SchedulerTaskTableEnricher implements TriFunction<ExecutiontTaskParameters, Session<?>, TableParameters, ExecutiontTaskParameters> {
-
-    public static final String NEXT_EXECUTION_TIMESTAMP = "nextExecutionTimestamp";
+public class SchedulerTaskTableEnricher implements TriFunction<SchedulerTaskWrapper, Session<?>, TableParameters, SchedulerTaskWrapper> {
 
     private static final Logger logger = LoggerFactory.getLogger(SchedulerTaskTableEnricher.class);
 
@@ -21,15 +19,20 @@ public class SchedulerTaskTableEnricher implements TriFunction<ExecutiontTaskPar
     }
 
     @Override
-    public ExecutiontTaskParameters apply(ExecutiontTaskParameters task, Session<?> session, TableParameters tableParameters) {
+    public SchedulerTaskWrapper apply(SchedulerTaskWrapper task, Session<?> session, TableParameters tableParameters) {
         if (task != null) {
-            try {
-                ExecutionScheduler scheduler = executionSchedulerSupplier.get();
-                Long nextExecutionDate = scheduler == null ? null : scheduler.getNextExecutionDate(task.getId().toString());
-                task.addAttribute(NEXT_EXECUTION_TIMESTAMP, nextExecutionDate == null ? null : nextExecutionDate.toString());
-            } catch (RuntimeException e) {
-                logger.warn("Unable to compute next execution date for scheduler task {}", task.getId(), e);
-                task.addAttribute(NEXT_EXECUTION_TIMESTAMP, null);
+            String cronExpression = task.getCronExpression();
+            if (!task.isActive() || cronExpression == null || cronExpression.isEmpty()) {
+                task.setNextExecutionTimestamp(null);
+            } else {
+                try {
+                    ExecutionScheduler scheduler = executionSchedulerSupplier.get();
+                    Long nextExecutionDate = scheduler == null ? null : scheduler.getNextExecutionDate(task.getId().toString());
+                    task.setNextExecutionTimestamp(nextExecutionDate);
+                } catch (RuntimeException e) {
+                    logger.error("Unable to compute next execution date for scheduler task {}", task.getId(), e);
+                    task.setNextExecutionTimestamp(null);
+                }
             }
         }
         return task;
