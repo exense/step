@@ -26,8 +26,10 @@ import step.plans.parser.yaml.YamlPlan;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public interface AutomationPackageFragmentYaml {
 
@@ -48,6 +50,16 @@ public interface AutomationPackageFragmentYaml {
     void setAdditionalFields(String key, PatchableYamlList<?> value) throws IOException;
 
     URL getFragmentUrl();
+
+    default Path getFragmentPath() {
+        URL fragmentUrl = getFragmentUrl();
+        Objects.requireNonNull(fragmentUrl, "fragmentUrl is null");
+        try {
+            return Path.of(fragmentUrl.toURI());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid URL for Path conversion: " + fragmentUrl, e);
+        }
+    }
 
     void setFragmentUrl(URL url);
 

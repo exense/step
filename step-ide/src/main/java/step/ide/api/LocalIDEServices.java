@@ -35,6 +35,11 @@ public class LocalIDEServices extends AbstractStepServices {
     @Path("ap/useExisting")
     @Consumes(MediaType.APPLICATION_JSON)
     public void useExistingAP(@QueryParam("directory") String directory) {
+        // Temporary workaround for windows: Strip the leading slash if it looks like /C:
+        if (directory.startsWith("/") && directory.length() > 2 && directory.charAt(2) == ':') {
+            directory = directory.substring(1);
+        }
+
         if (directory == null || directory.isBlank()) {
             throw new WebApplicationException("directory must not be empty", Response.Status.BAD_REQUEST);
         }

@@ -86,8 +86,7 @@ public class AutomationPackageYamlFragmentManager {
         this.descriptorYaml = descriptorYaml;
 
         pathToYamlFragment = fragmentMap;
-        apRoot = Path.of(descriptorYaml.getFragmentUrl().getPath())
-            .getParent();
+        apRoot = descriptorYaml.getFragmentPath().getParent();
 
         this.stagingContext = stagingContext;
         initializeMaps(descriptorYaml);

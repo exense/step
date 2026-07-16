@@ -92,7 +92,7 @@ public class LocalIDEState implements ExecutionDiversion {
         }
         // variant 2: simple, everything goes into main descriptor
         if (1 == 1) {
-            String mainFile = Paths.get(fragmentManager.descriptorYaml.getFragmentUrl().toURI()).toFile().getName();
+            String mainFile = fragmentManager.descriptorYaml.getFragmentPath().toFile().getName();
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), mainFile);
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, YamlPlan.PLANS_ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
