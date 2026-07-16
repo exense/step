@@ -126,7 +126,8 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Path("/{id}/next-execution-date")
     @Secured(right = "{entity}-read")
     public Long getNextExecutionDate(@PathParam("id") String executionTaskID) {
-        return scheduler.getNextExecutionDate(executionTaskID);
+        ExecutiontTaskParameters task = getEntity(executionTaskID);
+        return scheduler.getNextExecutionDate(task);
     }
 
     @Operation(description = "Enable/disable all the scheduler tasks.")

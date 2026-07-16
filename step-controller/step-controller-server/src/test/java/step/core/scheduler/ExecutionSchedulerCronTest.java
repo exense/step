@@ -114,14 +114,14 @@ public class ExecutionSchedulerCronTest {
         executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters);
 
         long now = System.currentTimeMillis();
-        Long nextExecutionDate = executionScheduler.getNextExecutionDate(executiontTaskParameters.getId().toHexString());
+        Long nextExecutionDate = executionScheduler.getNextExecutionDate(executiontTaskParameters);
 
         assertNotNull(nextExecutionDate);
         assertTrue(nextExecutionDate > now);
         assertTrue(nextExecutionDate <= now + 60_000);
 
         executionScheduler.disableExecutionTask(executiontTaskParameters.getId().toHexString());
-        assertNull(executionScheduler.getNextExecutionDate(executiontTaskParameters.getId().toHexString()));
+        assertNull(executionScheduler.getNextExecutionDate(executiontTaskParameters));
     }
 
     @Test
@@ -139,7 +139,7 @@ public class ExecutionSchedulerCronTest {
         executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters);
 
         long now = System.currentTimeMillis();
-        Long nextExecutionDate = executionScheduler.getNextExecutionDate(executiontTaskParameters.getId().toHexString());
+        Long nextExecutionDate = executionScheduler.getNextExecutionDate(executiontTaskParameters);
 
         assertNotNull(nextExecutionDate);
         assertTrue(nextExecutionDate > now);

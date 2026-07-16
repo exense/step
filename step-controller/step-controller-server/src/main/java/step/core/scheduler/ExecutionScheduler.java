@@ -159,9 +159,14 @@ public class ExecutionScheduler implements ExecutionLauncher {
         return executor.execute(task);
     }
 
-    public Long getNextExecutionDate(String executionTaskID) {
-        ExecutiontTaskParameters task = get(executionTaskID);
-        if (!isSchedulerEnabled() || !task.isActive()) {
+    public Long getNextExecutionDate(ExecutiontTaskParameters task) {
+        if (!isSchedulerEnabled()) {
+            return null;
+        }
+        if (task == null) {
+            throw new IllegalArgumentException("The execution task must not be null.");
+        }
+        if (!task.isActive()) {
             return null;
         }
         return executor.getNextExecutionDate(task);

@@ -21,18 +21,16 @@ public class SchedulerTaskTableEnricher implements TriFunction<SchedulerTaskWrap
     @Override
     public SchedulerTaskWrapper apply(SchedulerTaskWrapper task, Session<?> session, TableParameters tableParameters) {
         if (task != null) {
-            String cronExpression = task.getCronExpression();
-            if (!task.isActive() || cronExpression == null || cronExpression.isEmpty()) {
-                task.setNextExecutionTimestamp(null);
-            } else {
-                try {
-                    ExecutionScheduler scheduler = executionSchedulerSupplier.get();
-                    Long nextExecutionDate = scheduler == null ? null : scheduler.getNextExecutionDate(task.getId().toString());
-                    task.setNextExecutionTimestamp(nextExecutionDate);
-                } catch (RuntimeException e) {
-                    logger.error("Unable to compute next execution date for scheduler task {}", task.getId(), e);
+            try {
+                ExecutionScheduler scheduler = executionSchedulerSupplier.get();
+                if (scheduler == null) {
                     task.setNextExecutionTimestamp(null);
+                } else {
+                    task.setNextExecutionTimestamp(scheduler.getNextExecutionDate(task));
                 }
+            } catch (RuntimeException e) {
+                logger.error("Unable to compute next execution date for scheduler task {}", task.getId(), e);
+                task.setNextExecutionTimestamp(null);
             }
         }
         return task;
