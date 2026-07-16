@@ -92,6 +92,35 @@ public class JMeterLocalHandlerClasspathTest {
         }
     }
 
+    @Test
+    public void updateClasspathSystemPropertyDoesNotAddLeadingSeparatorOnEmptyClasspath() {
+        // An empty starting classpath must not gain a leading separator, which Java would
+        // interpret as adding the current working directory (".") to the classpath.
+        System.setProperty("java.class.path", "");
+
+        JMeterLocalHandler.updateClasspathSystemProperty(jmeterHome.toFile().getAbsolutePath());
+
+        String classpath = System.getProperty("java.class.path");
+        Assert.assertFalse("Classpath must not start with a separator: " + classpath,
+            classpath.startsWith(File.pathSeparator));
+        List<String> entries = Arrays.asList(classpath.split(java.util.regex.Pattern.quote(File.pathSeparator)));
+        Assert.assertEquals("Only the ext jars should be present", jarAbsolutePaths.size(), entries.size());
+    }
+
+    @Test
+    public void updateClasspathSystemPropertyDoesNotRewritePropertyWhenNothingIsAdded() {
+        // First call adds the jars.
+        JMeterLocalHandler.updateClasspathSystemProperty(jmeterHome.toFile().getAbsolutePath());
+        String afterFirstCall = System.getProperty("java.class.path");
+
+        // A second call has nothing new to add and must leave the property instance untouched.
+        JMeterLocalHandler.updateClasspathSystemProperty(jmeterHome.toFile().getAbsolutePath());
+        String afterSecondCall = System.getProperty("java.class.path");
+
+        Assert.assertSame("Property should not be rewritten when no new entry is added",
+            afterFirstCall, afterSecondCall);
+    }
+
     private static void deleteRecursively(File file) {
         if (file == null || !file.exists()) {
             return;
