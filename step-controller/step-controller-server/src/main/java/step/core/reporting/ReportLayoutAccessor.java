@@ -9,6 +9,7 @@ import step.core.collections.SearchOrder;
 import step.core.reporting.model.ReportLayout;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static step.core.collections.Order.ASC;
@@ -25,6 +26,7 @@ public class ReportLayoutAccessor extends AbstractAccessor<ReportLayout> {
     }
 
     public List<ReportLayout> getAccessibleReportLayoutsDefinitions(String userName, ReportLayoutType reportType) {
+        Objects.requireNonNull(reportType, "ReportLayout type cannot be null");
         Filter ownerOrShared = Filters.or(List.of(Filters.equals(FIELD_VISIBILITY, Preset.name()), Filters.equals(FIELD_VISIBILITY, Shared.name()), Filters.equals("creationUser", userName)));
         Filter filter = Filters.and(List.of(Filters.equals(FIELD_REPORT_TYPE, reportType.name()), ownerOrShared));
         return this.getCollectionDriver()

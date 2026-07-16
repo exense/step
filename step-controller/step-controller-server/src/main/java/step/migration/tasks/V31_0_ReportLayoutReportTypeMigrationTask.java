@@ -30,7 +30,7 @@ public class V31_0_ReportLayoutReportTypeMigrationTask extends MigrationTask {
         Collection<Document> reportLayouts = collectionFactory.getCollection(EntityConstants.reportLayouts, Document.class);
         AtomicLong counter = new AtomicLong(0);
         logger.info("Backfilling '{}' on report layouts missing it...", ReportLayout.FIELD_REPORT_TYPE);
-        try (Stream<Document> documents = reportLayouts.find(Filters.not(Filters.exists(ReportLayout.FIELD_REPORT_TYPE)), null, null, null, 0)) {
+        try (Stream<Document> documents = reportLayouts.findLazy(Filters.not(Filters.exists(ReportLayout.FIELD_REPORT_TYPE)), null, null, null, 0)) {
             documents.forEach(document -> {
                 document.put(ReportLayout.FIELD_REPORT_TYPE, ReportLayout.ReportLayoutType.SingleExecution.name());
                 reportLayouts.save(document);
