@@ -184,10 +184,10 @@ public class AutomationPackageYamlFragmentManager {
             fragment = fragmentForNewObject(newYamlObject, mapper.getCollectionName());
             fragmentMap.put(object, fragment);
             newYamlObject.setPatchingContext(fragment.getPatchingContext());
-            addFragmentEntity(fragment, fragment.getListForYamlObject(mapper), newYamlObject);
+            addFragmentEntity(fragment, fragment.getListForYamlObject(mapper.getCollectionName()), newYamlObject);
         } else {
             YO oldYamlObject = (YO) patchableMap.get(object);
-            modifyFragmentEntity(fragment, fragment.getListForYamlObject(mapper), oldYamlObject, newYamlObject, mapper.getCollectionName());
+            modifyFragmentEntity(fragment, fragment.getListForYamlObject(mapper.getCollectionName()), oldYamlObject, newYamlObject, mapper.getCollectionName());
         }
         patchableMap.put(object, newYamlObject);
 
@@ -201,7 +201,7 @@ public class AutomationPackageYamlFragmentManager {
             throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());
         }
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
-        removeFragmentEntity(fragment, fragment.getListForYamlObject(mapper), object);
+        removeFragmentEntity(fragment, fragment.getListForYamlObject(mapper.getCollectionName()), object);
     }
 
     private <T extends PatchableYamlModel> void addFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T newEntity) {

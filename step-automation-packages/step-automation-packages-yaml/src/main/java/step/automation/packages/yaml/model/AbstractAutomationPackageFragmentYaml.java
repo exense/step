@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import org.apache.commons.io.FileUtils;
-import step.automation.packages.mappers.interfaces.HasCollectionName;
 import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageWriteToDiskException;
@@ -172,7 +171,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
 
     @Override
     public <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<YO, BO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap) {
-        for (YO yamlObject : getListForYamlObject(mapper)) {
+        for (YO yamlObject : (PatchableYamlList<YO>) getListForYamlObject(mapper.getCollectionName())) {
             BO businessObject = mapper.toBusinessObject(yamlObject);
             patchableMap.put(businessObject, yamlObject);
             fragmentMap.put(businessObject, this);
@@ -180,8 +179,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @Override
-    public <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> PatchableYamlList<YO> getListForYamlObject(HasCollectionName<BO, YO> mapper) {
-        String collectionName = mapper.getCollectionName();
+    public <YO extends PatchableYamlModel> PatchableYamlList<YO> getListForYamlObject(String collectionName) {
         return (PatchableYamlList<YO>) switch (collectionName) {
             case YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME -> keywords;
             case YamlPlan.PLANS_ENTITY_NAME -> plans;

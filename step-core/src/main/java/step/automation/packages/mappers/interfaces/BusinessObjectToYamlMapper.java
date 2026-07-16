@@ -21,7 +21,9 @@ package step.automation.packages.mappers.interfaces;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.yaml.PatchableYamlModel;
 
-public interface BusinessObjectToYamlMapper<BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> extends HasCollectionName<BO, YO> {
+public interface BusinessObjectToYamlMapper<BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> {
 
     YO toYamlObject(BO object);
+
+    String getCollectionName();
 }

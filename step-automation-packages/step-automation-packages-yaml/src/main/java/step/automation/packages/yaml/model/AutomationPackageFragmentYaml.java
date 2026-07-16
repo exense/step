@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import step.automation.packages.mappers.interfaces.HasCollectionName;
 import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
@@ -66,5 +65,5 @@ public interface AutomationPackageFragmentYaml {
 
     <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<YO, BO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap);
 
-    <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> PatchableYamlList<YO> getListForYamlObject(HasCollectionName<BO, YO> mapper);
+    <YO extends PatchableYamlModel> PatchableYamlList<YO> getListForYamlObject(String collectionName);
 }
