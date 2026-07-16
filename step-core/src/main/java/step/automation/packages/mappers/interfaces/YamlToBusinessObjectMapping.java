@@ -1,10 +1,3 @@
-package step.automation.packages.mappers.interfaces;
-
-import step.core.yaml.PatchableYamlModel;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -23,6 +16,13 @@ import java.lang.annotation.RetentionPolicy;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+package step.automation.packages.mappers.interfaces;
+
+import step.core.yaml.PatchableYamlModel;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 @Retention(RetentionPolicy.RUNTIME)
 public @interface YamlToBusinessObjectMapping {
 

@@ -18,12 +18,16 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import org.apache.commons.io.FileUtils;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.automation.packages.yaml.AutomationPackageWriteToDiskException;
 import step.automation.packages.mappers.interfaces.HasCollectionName;
 import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.automation.packages.yaml.AutomationPackageWriteToDiskException;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
@@ -169,7 +173,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     @Override
     public <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<BO, YO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap) {
         for (YO yamlObject : getListForYamlObject(mapper)) {
-            BO businessObject = mapper.getBusinessObject(yamlObject);
+            BO businessObject = mapper.toBusinessObject(yamlObject);
             patchableMap.put(businessObject, yamlObject);
             fragmentMap.put(businessObject, this);
         }

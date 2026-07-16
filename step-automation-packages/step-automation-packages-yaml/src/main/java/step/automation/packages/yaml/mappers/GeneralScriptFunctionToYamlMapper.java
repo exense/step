@@ -1,12 +1,3 @@
-package step.automation.packages.yaml.mappers;
-
-import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
-import step.plugins.java.GeneralFunctionScriptLanguage;
-import step.plugins.java.GeneralScriptFunction;
-import step.plugins.java.automation.YamlGeneralScriptFunction;
-
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -25,11 +16,20 @@ import step.plugins.java.automation.YamlGeneralScriptFunction;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+package step.automation.packages.yaml.mappers;
+
+import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.plugins.java.GeneralFunctionScriptLanguage;
+import step.plugins.java.GeneralScriptFunction;
+import step.plugins.java.automation.YamlGeneralScriptFunction;
+
 @BusinessObjectToYamlMapping(sourceClass = GeneralScriptFunction.class)
 public class GeneralScriptFunctionToYamlMapper extends AbstractFunctionToYamlMapper<GeneralScriptFunction> {
 
     @Override
-    public YamlAutomationPackageKeyword getNewYamlObject(GeneralScriptFunction generalScriptFunction) {
+    public YamlAutomationPackageKeyword toYamlObject(GeneralScriptFunction generalScriptFunction) {
 
         YamlGeneralScriptFunction yamlFunction = new YamlGeneralScriptFunction();
         setCommonAttributes(generalScriptFunction, yamlFunction);

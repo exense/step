@@ -30,19 +30,30 @@ import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.scanner.CachedAnnotationScanner;
-import step.core.yaml.NamedObjectPatchableYamlModel;
+import step.core.yaml.NamedPatchableYamlModel;
 import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
-import step.core.yaml.deserialization.*;
+import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
+import step.core.yaml.deserialization.AutomationPackagePerObjectSaveUnsupportedException;
+import step.core.yaml.deserialization.AutomationPackageUpdateException;
+import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchableYamlPrimitive;
 import step.plans.parser.yaml.YamlPlanReader;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,7 +61,7 @@ import java.util.stream.Stream;
 public class AutomationPackageYamlFragmentManager {
 
     protected final Path apRoot;
-    private final ResourcePathMatchingResolver resourcePatchMatchingResolver;
+    private final ResourcePathMatchingResolver resourcePathMatchingResolver;
 
     public enum NewObjectFragmentMode {
         /**
@@ -73,10 +84,10 @@ public class AutomationPackageYamlFragmentManager {
     protected Properties properties = new Properties();
     public final AutomationPackageFragmentYaml descriptorYaml;
 
-    private final Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> mappers = new HashMap<>();
+    private final Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> businessObjectToYamlMappers;
 
     public AutomationPackageYamlFragmentManager(ResourcePathMatchingResolver resourcePathMatchingResolver, AutomationPackageDescriptorYaml descriptorYaml, Set<AutomationPackageFragmentYaml> fragments, AutomationPackageDescriptorReader descriptorReader, StagingAutomationPackageContext stagingContext) {
-        this.resourcePatchMatchingResolver = resourcePathMatchingResolver;
+        this.resourcePathMatchingResolver = resourcePathMatchingResolver;
         this.descriptorYaml = descriptorYaml;
 
         apRoot = descriptorYaml.getFragmentPath().getParent();
@@ -86,45 +97,59 @@ public class AutomationPackageYamlFragmentManager {
         injectables.put(YamlPlanReader.class, descriptorReader.getPlanReader());
         injectables.put(StagingAutomationPackageContext.class, stagingContext);
 
-        scanBusinessObjectMappers(injectables);
-        Collection<YamlToBusinessObjectMapper<?, ?>> yamlObjectMappers = scanYamlObjectMappers(injectables);
+        businessObjectToYamlMappers = createBusinessObjectToYamlMappers(injectables);
+        Collection<YamlToBusinessObjectMapper<?, ?>> yamlToBusinessObjectMappers = createYamlToBusinessObjectMappers(injectables);
 
-        initializeMaps(descriptorYaml, yamlObjectMappers);
+        initializeMaps(descriptorYaml, yamlToBusinessObjectMappers);
 
         this.fragments = fragments;
 
         fragments.stream()
             .filter(f -> f != descriptorYaml)
-            .forEach(f -> initializeMaps(f, yamlObjectMappers));
+            .forEach(f -> initializeMaps(f, yamlToBusinessObjectMappers));
     }
 
-    private void scanBusinessObjectMappers(Map<Class<?>, Object> injectables) {
+    private Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> createBusinessObjectToYamlMappers(Map<Class<?>, Object> injectables) {
+        var mappers = new HashMap<Class<?>, BusinessObjectToYamlMapper<?, ?>>();
 
         for (Class<?> annotatedClass : CachedAnnotationScanner.getClassesWithAnnotation(BusinessObjectToYamlMapping.class)) {
-            Arrays.stream(annotatedClass.getConstructors()).findFirst().ifPresent(c -> {
-                try {
-                    BusinessObjectToYamlMapping annotation = annotatedClass.getAnnotation(BusinessObjectToYamlMapping.class);
-                    mappers.put(annotation.sourceClass(), (BusinessObjectToYamlMapper<?, ?>) c.newInstance(Arrays.stream(c.getParameterTypes()).map(injectables::get).toArray()));
-                } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            BusinessObjectToYamlMapping annotation = annotatedClass.getAnnotation(BusinessObjectToYamlMapping.class);
+            mappers.put(annotation.sourceClass(), instantiateWithInjectables(BusinessObjectToYamlMapping.class, annotatedClass, injectables));
         }
+
+        return mappers;
     }
 
-    private Collection<YamlToBusinessObjectMapper<?, ?>> scanYamlObjectMappers(Map<Class<?>, Object> injectables) {
-        List<YamlToBusinessObjectMapper<?, ?>> list = new LinkedList<>();
+    private Collection<YamlToBusinessObjectMapper<?, ?>> createYamlToBusinessObjectMappers(Map<Class<?>, Object> injectables) {
+        List<YamlToBusinessObjectMapper<?, ?>> list = new ArrayList<>();
+
         for (Class<?> annotatedClass : CachedAnnotationScanner.getClassesWithAnnotation(YamlToBusinessObjectMapping.class)) {
-            Arrays.stream(annotatedClass.getConstructors()).findFirst().ifPresent(c -> {
-                try {
-                    list.add((YamlToBusinessObjectMapper<?, ?>) c.newInstance(Arrays.stream(c.getParameterTypes()).map(injectables::get).toArray()));
-                } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            list.add(instantiateWithInjectables(YamlToBusinessObjectMapping.class, annotatedClass, injectables));
         }
 
         return list;
+    }
+
+    // Instantiates a class found by scanning annotations; The class must have exactly one constructor
+    // whose arguments can be found in the injectables map.
+    @SuppressWarnings("unchecked")
+    private <T> T instantiateWithInjectables(Class<?> annotationType, Class<?> annotatedClass, Map<Class<?>, Object> injectables) {
+        var constructors = annotatedClass.getConstructors();
+        if (constructors.length != 1) {
+            throw new IllegalStateException("Expected exactly one constructor for @" + annotationType.getSimpleName() + "-annotated class "
+                + annotatedClass.getName() + ", but found " + constructors.length);
+        }
+
+        var constructor = constructors[0];
+        try {
+            var parameters = Arrays.stream(constructor.getParameterTypes())
+                .map(injectables::get)
+                .toArray();
+
+            return (T) constructor.newInstance(parameters);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void initializeMaps(AutomationPackageFragmentYaml fragment, Collection<YamlToBusinessObjectMapper<?, ?>> yamlObjectMappers) {
@@ -137,19 +162,21 @@ public class AutomationPackageYamlFragmentManager {
         this.properties = properties;
     }
 
+    @SuppressWarnings("unchecked")
     public <BO extends AbstractOrganizableObject, T> Iterable<BO> getBusinessObjects(Class<T> boClass) {
         return patchableMap.keySet().stream()
             .filter(businessObject -> boClass.isAssignableFrom(businessObject.getClass()))
             .map(businessObject -> (BO) businessObject).collect(Collectors.toList());
     }
 
+    @SuppressWarnings("unchecked")
     public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO save(BO object) {
 
-        BusinessObjectToYamlMapper<BO, YO> mapper = (BusinessObjectToYamlMapper<BO, YO>) mappers.get(object.getClass());
+        BusinessObjectToYamlMapper<BO, YO> mapper = (BusinessObjectToYamlMapper<BO, YO>) businessObjectToYamlMappers.get(object.getClass());
         if (mapper == null) {
             throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());
         }
-        YO newYamlObject = mapper.getNewYamlObject(object);
+        YO newYamlObject = mapper.toYamlObject(object);
 
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
 
@@ -167,8 +194,9 @@ public class AutomationPackageYamlFragmentManager {
         return object;
     }
 
+    @SuppressWarnings("unchecked")
     public synchronized <BO extends AbstractOrganizableObject> void remove(BO object) {
-        BusinessObjectToYamlMapper<BO, ?> mapper = (BusinessObjectToYamlMapper<BO, ?>) mappers.get(object.getClass());
+        BusinessObjectToYamlMapper<BO, ?> mapper = (BusinessObjectToYamlMapper<BO, ?>) businessObjectToYamlMappers.get(object.getClass());
         if (mapper == null) {
             throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());
         }
@@ -183,8 +211,8 @@ public class AutomationPackageYamlFragmentManager {
 
     private <T extends PatchableYamlModel> void modifyFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T oldEntity, T newEntity, String fieldName) {
         entityList.replaceItem(oldEntity, newEntity);
-        Path oldRelativePath = determineObjectRelativePath(oldEntity, fieldName, false);
-        Path newRelativePath = determineObjectRelativePath(newEntity, fieldName, false);
+        Path oldRelativePath = determineRelativePathFor(oldEntity, fieldName, false);
+        Path newRelativePath = determineRelativePathFor(newEntity, fieldName, false);
 
         // Path did not change - skip entire move logic
         if (!oldRelativePath.equals(newRelativePath)) {
@@ -213,13 +241,13 @@ public class AutomationPackageYamlFragmentManager {
                 AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
                     .orElse(descriptorYaml);
 
-                String newReference = resourcePatchMatchingResolver.getFragmentReferenceString(determineObjectRelativePath(newEntity, fieldName, true));
-                String oldReference = resourcePatchMatchingResolver.getFragmentReferenceString(oldRelativePath);
+                String newReference = resourcePathMatchingResolver.getFragmentReferenceString(determineRelativePathFor(newEntity, fieldName, true));
+                String oldReference = resourcePathMatchingResolver.getFragmentReferenceString(oldRelativePath);
 
                 if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(oldReference))) {
                     referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), newReference));
                     referencingFragment.writeToDisk();
-                };
+                }
             }
         }
         fragment.writeToDisk();
@@ -238,11 +266,11 @@ public class AutomationPackageYamlFragmentManager {
                 FileUtils.delete(fragment.getFragmentPath().toFile());
 
                 determineReferencingFragment(fragment.getFragmentPath()).ifPresent(referencingFragment -> {
-                    String relativeFragmentReference = resourcePatchMatchingResolver
+                    String relativeFragmentReference = resourcePathMatchingResolver
                         .getFragmentReferenceString(apRoot.relativize(fragment.getFragmentPath()));
                     if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(relativeFragmentReference))) {
                         referencingFragment.writeToDisk();
-                    };
+                    }
                     fragments.remove(fragment);
                 });
             } catch (IOException e) {
@@ -253,9 +281,9 @@ public class AutomationPackageYamlFragmentManager {
         }
     }
 
-    private AutomationPackageFragmentYaml fragmentForNewObject(PatchableYamlModel p, String fieldName) {
+    private AutomationPackageFragmentYaml fragmentForNewObject(PatchableYamlModel patchable, String fieldName) {
 
-        Path path = determineObjectRelativePath(p, fieldName, false);
+        Path path = determineRelativePathFor(patchable, fieldName, false);
         Path absolutePath = apRoot.resolve(path);
 
         Optional<AutomationPackageFragmentYaml> optionalExistingFragment = fragmentMap
@@ -270,7 +298,7 @@ public class AutomationPackageYamlFragmentManager {
         fragment.setFragmentPath(absolutePath);
 
         if (determineReferencingFragment(path).isEmpty()) {
-            String referencingPath = resourcePatchMatchingResolver.getFragmentReferenceString(determineObjectRelativePath(p, fieldName, true));
+            String referencingPath = resourcePathMatchingResolver.getFragmentReferenceString(determineRelativePathFor(patchable, fieldName, true));
             descriptorYaml.getFragments().add(new PatchableYamlPrimitive<>(descriptorYaml.getPatchingContext(), referencingPath));
             descriptorYaml.writeToDisk();
         }
@@ -280,26 +308,35 @@ public class AutomationPackageYamlFragmentManager {
     private Optional<AutomationPackageFragmentYaml> determineReferencingFragment(Path path) {
         return Stream.concat(Stream.of(descriptorYaml), fragments.stream())
             .filter(fragment -> fragment.getFragments().stream()
-                .anyMatch(pattern -> resourcePatchMatchingResolver.isMatchingPath(pattern.getValue(), path)))
+                .anyMatch(pattern -> resourcePathMatchingResolver.isMatchingPath(pattern.getValue(), path)))
             .findFirst();
     }
 
-    private Path determineObjectRelativePath(PatchableYamlModel p, String fieldName, boolean globPattern) {
+    /**
+     * Determines the filesystem path (i.e. filename), relative to the AP root, where a given PatchableYamlModel is/should be located.
+     * The result may vary on the {@link NewObjectFragmentMode} setting (e.g. data could go into a single aggregated YAML file, or a file per entity).
+     *
+     * @param patchable   existing model instance
+     * @param entityName  YAML entity name containing this model's instances (e.g. "plans", "keywords")
+     * @param useWildcard if `true` and the mode is per-object, return a wildcard filename (.../*.yml) instead of a concrete filename.
+     * @return path to the file location for the given patchable.
+     */
+    private Path determineRelativePathFor(PatchableYamlModel patchable, String entityName, boolean useWildcard) {
 
-        NewObjectFragmentMode mode = NewObjectFragmentMode.valueOf(properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, fieldName), NewObjectFragmentMode.PER_OBJECT.name()));
-        String defaultRelativeFragmentPath = fieldName;
+        NewObjectFragmentMode mode = NewObjectFragmentMode.valueOf(properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), NewObjectFragmentMode.PER_OBJECT.name()));
+        String defaultRelativeFragmentPath = entityName;
 
         if (mode == NewObjectFragmentMode.FRAGMENT) {
             defaultRelativeFragmentPath = defaultRelativeFragmentPath + ".yml";
         }
 
-        String relativeFragmentPath = properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, fieldName), defaultRelativeFragmentPath);
+        String relativeFragmentPath = properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), defaultRelativeFragmentPath);
 
         return switch (mode) {
             case NewObjectFragmentMode.FRAGMENT -> new File(relativeFragmentPath).toPath();
             case NewObjectFragmentMode.PER_OBJECT -> {
-                if (p instanceof NamedObjectPatchableYamlModel namedObjectPatchableYamlModel) {
-                    String name = globPattern ? "*" : namedObjectPatchableYamlModel.getName();
+                if (patchable instanceof NamedPatchableYamlModel namedPatchableYamlModel) {
+                    String name = useWildcard ? "*" : namedPatchableYamlModel.getName();
                     yield new File(relativeFragmentPath).toPath().resolve(sanitizeFilename(name + ".yml"));
                 }
 
@@ -308,12 +345,12 @@ public class AutomationPackageYamlFragmentManager {
 
                     %2$s = %1$s.yml
                     %3$s = %4$s
-                    """, fieldName, String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, fieldName), String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, fieldName), NewObjectFragmentMode.FRAGMENT.name()));
+                    """, entityName, String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), NewObjectFragmentMode.FRAGMENT.name()));
             }
         };
     }
 
     private String sanitizeFilename(String inputName) {
-        return URLEncoder.encode(inputName, Charset.defaultCharset()).replace("+", " ");
+        return URLEncoder.encode(inputName, StandardCharsets.UTF_8).replace("+", " ");
     }
 }

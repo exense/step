@@ -1,11 +1,3 @@
-package step.automation.packages.yaml.mappers;
-
-import step.automation.packages.StagingAutomationPackageContext;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
-import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
-import step.functions.Function;
-
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -24,6 +16,14 @@ import step.functions.Function;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+package step.automation.packages.yaml.mappers;
+
+import step.automation.packages.StagingAutomationPackageContext;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.functions.Function;
+
 @YamlToBusinessObjectMapping(sourceClass = YamlAutomationPackageKeyword.class)
 public class YamlToFunctionMapper implements YamlToBusinessObjectMapper<Function, YamlAutomationPackageKeyword> {
 
@@ -34,7 +34,7 @@ public class YamlToFunctionMapper implements YamlToBusinessObjectMapper<Function
     }
 
     @Override
-    public Function getBusinessObject(YamlAutomationPackageKeyword yamlKeyword) {
+    public Function toBusinessObject(YamlAutomationPackageKeyword yamlKeyword) {
         return yamlKeyword.prepareKeyword(stagingContext);
     }
 

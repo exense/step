@@ -1,13 +1,3 @@
-package step.automation.packages.yaml.mappers;
-
-import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
-import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
-import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
-import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
-import step.core.plans.Plan;
-import step.plans.parser.yaml.YamlPlan;
-import step.plans.parser.yaml.YamlPlanReader;
-
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -26,6 +16,16 @@ import step.plans.parser.yaml.YamlPlanReader;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+package step.automation.packages.yaml.mappers;
+
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
+import step.core.plans.Plan;
+import step.plans.parser.yaml.YamlPlan;
+import step.plans.parser.yaml.YamlPlanReader;
+
 
 @BusinessObjectToYamlMapping(sourceClass = Plan.class)
 @YamlToBusinessObjectMapping(sourceClass = YamlPlan.class)
@@ -39,12 +39,12 @@ public class PlanMapper implements BusinessObjectToYamlMapper<Plan, YamlPlan>,
     }
 
     @Override
-    public YamlPlan getNewYamlObject(Plan plan) {
+    public YamlPlan toYamlObject(Plan plan) {
         return planReader.planToYamlPlan(plan);
     }
 
     @Override
-    public Plan getBusinessObject(YamlPlan yamlPlan) {
+    public Plan toBusinessObject(YamlPlan yamlPlan) {
         return planReader.yamlPlanToPlan(yamlPlan);
     }
 

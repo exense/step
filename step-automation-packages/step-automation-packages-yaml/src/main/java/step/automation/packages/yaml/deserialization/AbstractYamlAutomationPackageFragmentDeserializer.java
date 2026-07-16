@@ -39,7 +39,7 @@ public abstract class AbstractYamlAutomationPackageFragmentDeserializer extends 
     }
 
     @Override
-    abstract public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException;
+    public abstract Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException;
 
     @Override
     protected void handleUnknownVanilla(JsonParser p, DeserializationContext ctxt, Object intoValue, String propName) throws IOException {

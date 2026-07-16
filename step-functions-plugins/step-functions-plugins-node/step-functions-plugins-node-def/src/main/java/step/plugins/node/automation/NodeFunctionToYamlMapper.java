@@ -1,10 +1,3 @@
-package step.plugins.node.automation;
-
-import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
-import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plugins.node.NodeFunction;
-
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -23,11 +16,18 @@ import step.plugins.node.NodeFunction;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+package step.plugins.node.automation;
+
+import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.plugins.node.NodeFunction;
+
 @BusinessObjectToYamlMapping(sourceClass = NodeFunction.class)
 public class NodeFunctionToYamlMapper extends AbstractFunctionToYamlMapper<NodeFunction> {
 
     @Override
-    public YamlAutomationPackageKeyword getNewYamlObject(NodeFunction nodeFunction) {
+    public YamlAutomationPackageKeyword toYamlObject(NodeFunction nodeFunction) {
 
         YamlNodeFunction yamlFunction = new YamlNodeFunction();
         setCommonAttributes(nodeFunction, yamlFunction);

@@ -1,13 +1,3 @@
-package step.automation.packages.mappers;
-
-import step.automation.packages.model.AbstractYamlFunction;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
-import step.core.accessors.AbstractOrganizableObject;
-import step.functions.Function;
-
-import java.util.Optional;
-
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -26,6 +16,13 @@ import java.util.Optional;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+package step.automation.packages.mappers;
+
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
+import step.automation.packages.model.AbstractYamlFunction;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.functions.Function;
+
 public abstract class AbstractFunctionToYamlMapper<F extends Function> implements BusinessObjectToYamlMapper<F, YamlAutomationPackageKeyword> {
 
 

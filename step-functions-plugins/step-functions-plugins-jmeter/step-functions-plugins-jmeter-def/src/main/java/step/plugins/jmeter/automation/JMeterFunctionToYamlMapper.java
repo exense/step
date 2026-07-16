@@ -1,10 +1,3 @@
-package step.plugins.jmeter.automation;
-
-import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
-import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plugins.jmeter.JMeterFunction;
-
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -23,11 +16,18 @@ import step.plugins.jmeter.JMeterFunction;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+package step.plugins.jmeter.automation;
+
+import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.plugins.jmeter.JMeterFunction;
+
 @BusinessObjectToYamlMapping(sourceClass = JMeterFunction.class)
 public class JMeterFunctionToYamlMapper extends AbstractFunctionToYamlMapper<JMeterFunction> {
 
     @Override
-    public YamlAutomationPackageKeyword getNewYamlObject(JMeterFunction jmeterFunction) {
+    public YamlAutomationPackageKeyword toYamlObject(JMeterFunction jmeterFunction) {
 
         YamlJMeterFunction yamlFunction = new YamlJMeterFunction();
         setCommonAttributes(jmeterFunction, yamlFunction);

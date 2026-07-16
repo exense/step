@@ -26,8 +26,6 @@ import step.resources.ResourceManagerImpl;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
-import java.nio.file.FileSystem;
-import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -107,7 +105,7 @@ public class LocalIDEState implements ExecutionDiversion {
         var automationPackageCollectionFactory = new AutomationPackageCollectionFactory(new Properties(), fragmentManager);
         CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(automationPackageCollectionFactory);
         this.currentAutomationPackageDirectory = apDir;
-        this.fileResolver.setPlainPathRoot(apDir);
+        this.fileResolver.setUnprefixedRoot(apDir.toPath());
     }
 
     private void verifyAPDirectory(File apDir) throws Exception {

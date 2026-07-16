@@ -1,6 +1,5 @@
 package step.ide;
 
-import step.attachments.FileResolver;
 import step.core.GlobalContext;
 import step.core.execution.ExecutionDiversion;
 import step.core.plugins.AbstractControllerPlugin;
@@ -8,8 +7,6 @@ import step.core.plugins.Plugin;
 import step.ide.api.LocalFileSystemServices;
 import step.ide.api.LocalIDEServices;
 import step.resources.ResourceManagerImpl;
-
-import java.io.File;
 
 @Plugin
 public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
@@ -23,9 +20,4 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
         services.registerService(LocalFileSystemServices.class);
         context.put(ExecutionDiversion.class, LocalIDEState.get());
     }
-    /*
-    @Override
-    public void initializeData(GlobalContext context) throws Exception {
-        LocalIDEState.get().useExistingAutomationPackageDirectory(new File("/Users/cyril/exense/step-backend/step/step-ap-ide/work"));
-    }*/
 }

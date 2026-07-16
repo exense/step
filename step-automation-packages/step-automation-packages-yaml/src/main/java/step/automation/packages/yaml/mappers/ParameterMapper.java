@@ -1,12 +1,3 @@
-package step.automation.packages.yaml.mappers;
-
-import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
-import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
-import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
-import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
-import step.parameter.Parameter;
-import step.parameter.automation.AutomationPackageParameter;
-
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -25,6 +16,14 @@ import step.parameter.automation.AutomationPackageParameter;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+package step.automation.packages.yaml.mappers;
+
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
+import step.parameter.Parameter;
+import step.parameter.automation.AutomationPackageParameter;
 
 @BusinessObjectToYamlMapping(sourceClass = Parameter.class)
 @YamlToBusinessObjectMapping(sourceClass = AutomationPackageParameter.class)
@@ -33,12 +32,12 @@ public class ParameterMapper implements
     YamlToBusinessObjectMapper<Parameter, AutomationPackageParameter> {
 
     @Override
-    public AutomationPackageParameter getNewYamlObject(Parameter parameter) {
+    public AutomationPackageParameter toYamlObject(Parameter parameter) {
         return AutomationPackageParameter.fromParameter(parameter);
     }
 
     @Override
-    public Parameter getBusinessObject(AutomationPackageParameter yamlParameter) {
+    public Parameter toBusinessObject(AutomationPackageParameter yamlParameter) {
         return yamlParameter.toParameter();
     }
 

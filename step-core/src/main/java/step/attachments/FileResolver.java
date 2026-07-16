@@ -18,15 +18,15 @@
  ******************************************************************************/
 package step.attachments;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Path;
-
 import org.bson.types.ObjectId;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionFileHandle;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 
 public class FileResolver {
 
@@ -34,7 +34,11 @@ public class FileResolver {
     public static final String RESOURCE_PREFIX = "resource:";
     public static final String RESOURCE_PATH_SEPARATOR = ":";
 
-    private Path plainPathRoot = Path.of("");
+    /**
+     * used for direct access to files relative to the given filesystem path
+     * when @{{@link FileResolver#resolve(String)} is called without any prefix
+     */
+    private Path unprefixedRoot = Path.of("");
 
     private final ResourceManager resourceManager;
 
@@ -47,8 +51,8 @@ public class FileResolver {
         return resourceManager;
     }
 
-    public void setPlainPathRoot(File pathRoot) {
-        plainPathRoot = pathRoot.toPath();
+    public void setUnprefixedRoot(Path pathRoot) {
+        unprefixedRoot = pathRoot;
     }
 
     public File resolve(String path) {
@@ -59,7 +63,7 @@ public class FileResolver {
         } else if (path.startsWith(RESOURCE_PREFIX)) {
             file = getResourceRevisionFileHandleForPath(path).getResourceFile();
         } else {
-            file = plainPathRoot.resolve(Path.of(path)).toFile();
+            file = unprefixedRoot.resolve(Path.of(path)).toFile();
         }
         return file;
     }
@@ -148,7 +152,7 @@ public class FileResolver {
         return resourceRevisionFileHandle;
     }
 
-    public class FileHandle implements Closeable {
+    public static class FileHandle implements Closeable {
 
         protected final File file;
         protected final ResourceRevisionFileHandle resourceRevisionFileHandle;

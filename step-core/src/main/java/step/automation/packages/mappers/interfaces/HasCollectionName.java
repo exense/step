@@ -1,8 +1,3 @@
-package step.automation.packages.mappers.interfaces;
-
-import step.core.accessors.AbstractOrganizableObject;
-import step.core.yaml.PatchableYamlModel;
-
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -21,6 +16,11 @@ import step.core.yaml.PatchableYamlModel;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+package step.automation.packages.mappers.interfaces;
+
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.yaml.PatchableYamlModel;
+
 public interface HasCollectionName<BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> {
 
     String getCollectionName();

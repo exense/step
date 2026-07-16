@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.core.yaml;
 
-public interface NamedObjectPatchableYamlModel {
+public interface NamedPatchableYamlModel extends PatchableYamlModel {
 
     String getName();
 }
