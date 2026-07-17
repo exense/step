@@ -20,8 +20,8 @@ package step.automation.packages.yaml;
 
 import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
@@ -36,7 +36,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class AutomationPackageDescriptorReaderTest {
 

@@ -243,6 +243,7 @@ public class AutomationPackageYamlFragmentManager {
                 String newReference = resourcePathMatchingResolver.getFragmentReferenceString(determineRelativePathFor(newEntity, fieldName, true));
                 String oldReference = resourcePathMatchingResolver.getFragmentReferenceString(oldRelativePath);
 
+                // If the old reference is explicitly present in the YAML list, replace it with the new one.
                 if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(oldReference))) {
                     referencingFragment.getFragments().add(new PatchableYamlPrimitive<>(referencingFragment.getPatchingContext(), newReference));
                     referencingFragment.writeToDisk();
@@ -294,6 +295,7 @@ public class AutomationPackageYamlFragmentManager {
         AutomationPackageFragmentYaml fragment = new AutomationPackageFragmentYamlImpl(context);
         fragment.setFragmentPath(absolutePath);
 
+        // if the fragment isn't referenced yet in the YAML list, add it
         if (determineReferencingFragment(path).isEmpty()) {
             String referencingPath = resourcePathMatchingResolver.getFragmentReferenceString(determineRelativePathFor(patchable, fieldName, true));
             descriptorYaml.getFragments().add(new PatchableYamlPrimitive<>(descriptorYaml.getPatchingContext(), referencingPath));

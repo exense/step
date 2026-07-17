@@ -18,8 +18,11 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import java.nio.file.Path;
-
+/* Note: This class is used to provide a (required) AutomationPackageResourceUploader object for the
+(required) StagingContext when creating an AutomationPackageYamlFragmentManager for the IDE (which
+allows to edit Automation packages in place).
+If you find a better name for this class, or a way to not require it, feel free to refactor.
+ */
 public class AutomationPackageLocalResourceMapper extends AutomationPackageResourceUploader {
 
     @Override

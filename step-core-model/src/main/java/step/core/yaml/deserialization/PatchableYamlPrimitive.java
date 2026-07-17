@@ -56,6 +56,7 @@ public class PatchableYamlPrimitive<T> extends PatchableYamlModelBase {
 
     @Override
     public void onParsed(JsonLocation startLocation, JsonLocation endLocation) {
+        // FIXME: Yes, we use startLocation twice here. This is a workaround for a known bug, see SED-4847
         getPatchingContext().claimChunk(startLocation, startLocation, this);
     }
 }
