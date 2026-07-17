@@ -1,6 +1,5 @@
 package step.plugins.streaming;
 
-import ch.exense.commons.app.Configuration;
 import jakarta.servlet.http.HttpSession;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.HandshakeResponse;
@@ -10,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;
-import step.core.controller.StepControllerPlugin;
 import step.core.deployment.ObjectHookControllerPlugin;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
@@ -20,7 +18,6 @@ import step.core.plugins.Plugin;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.resources.ResourceManagerControllerPlugin;
-import step.resources.StreamingResourceContentProvider;
 import step.streaming.common.StreamingResourceUploadContexts;
 import step.streaming.server.FilesystemStreamingResourcesStorageBackend;
 import step.streaming.server.StreamingResourceManager;
@@ -66,6 +63,7 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         manager = new StepStreamingResourceManager(context, catalog, storage, referenceProducer, uploadContexts);
 
         context.put(StepStreamingResourceManager.class, manager);
+        context.setAttachmentStorage(manager);
         context.getServiceRegistrationCallback().registerService(StreamingResourceServices.class);
 
         context.getServiceRegistrationCallback().registerWebsocketEndpoint(makeUploadConfig(manager));
@@ -115,8 +113,8 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
         return new AbstractExecutionEnginePlugin() {
             @Override
             public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
-                // required by AP reporting for fetching attachments
-                executionEngineContext.put(StreamingResourceContentProvider.class, manager);
+                // required by AP reporting for fetching attachments; FIXME -- this is now redundant
+                executionEngineContext.setAttachmentStorage(manager);
             }
 
             @Override
@@ -126,6 +124,8 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
                 executionContext.put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, UPLOAD_PATH);
                 // Note: this URL is also used by the measures streaming to determine the hostname.
                 executionContext.put(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL, controllerUrl);
+                // FIXME: This is now also redundant...
+                executionContext.setAttachmentStorage(manager);
             }
 
 

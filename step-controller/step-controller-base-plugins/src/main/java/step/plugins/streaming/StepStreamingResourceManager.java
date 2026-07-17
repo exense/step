@@ -1,24 +1,36 @@
 package step.plugins.streaming;
 
+import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.attachments.AttachmentMeta;
+import step.attachments.SkippedAttachmentMeta;
+import step.attachments.StreamingAttachmentMeta;
 import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;
 import step.core.access.User;
 import step.core.deployment.AuthorizationException;
+import step.core.execution.ExecutionContext;
+import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.framework.server.Session;
 import step.framework.server.access.AuthorizationManager;
-import step.resources.StreamingResourceContentProvider;
-import step.streaming.common.*;
+import step.resources.AttachmentStorage;
+import step.streaming.common.QuotaExceededException;
+import step.streaming.common.StreamingResourceMetadata;
+import step.streaming.common.StreamingResourceReference;
+import step.streaming.common.StreamingResourceUploadContext;
+import step.streaming.common.StreamingResourceUploadContexts;
 import step.streaming.server.DefaultStreamingResourceManager;
 import step.streaming.server.StreamingResourcesStorageBackend;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import java.util.function.Function;
 
-public class StepStreamingResourceManager extends DefaultStreamingResourceManager implements StreamingResourceContentProvider {
+public class StepStreamingResourceManager extends DefaultStreamingResourceManager implements AttachmentStorage {
     private static final Logger logger = LoggerFactory.getLogger(StepStreamingResourceManager.class);
     static final String ATTRIBUTE_STEP_SESSION = "stepSession";
 
@@ -139,8 +151,73 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
         }
     }
 
+    /* The following methods implement the AttachmentStorage interface */
+
     @Override
-    public InputStream getResourceContentStream(String resourceId) throws Exception {
+    public InputStream getAttachmentStream(String resourceId) throws Exception {
         return openStream(resourceId, 0, getStatus(resourceId).getCurrentSize());
+    }
+
+    @Override
+    public AttachmentMeta saveAttachment(Object executionContext, byte[] content, String filename, String mimeType) {
+        ExecutionContext context = (ExecutionContext) Objects.requireNonNull(executionContext);
+        StreamingResourceUploadContexts uploadContexts = context.get(StreamingResourceUploadContexts.class);
+
+        if (uploadContexts == null) {
+            return new SkippedAttachmentMeta(filename, mimeType, "UNEXPECTED: no StreamingResourceUploadContexts found in execution context");
+        }
+
+        // We don't need to react to any events, but we need an UploadContext to convey relevant contextual information about the attachment.
+        StreamingResourceUploadContext uploadContext = new StreamingResourceUploadContext();
+        ObjectEnricher enricher = context.getObjectEnricher();
+        if (enricher != null) {
+            uploadContext.getAttributes().put(LiveReportingConstants.ACCESSCONTROL_ENRICHER, enricher);
+        }
+        uploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_EXECUTION_ID, context.getExecutionId());
+        uploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_VARIABLES_MANAGER, context.getVariablesManager());
+        uploadContext.getAttributes().put(LiveReportingConstants.CONTEXT_REPORT_NODE, context.getCurrentReportNode());
+        uploadContexts.registerContext(uploadContext);
+
+        try {
+            return createAttachmentFromContent(content, filename, mimeType, uploadContext.contextId);
+        } catch (Exception e) {
+            return new SkippedAttachmentMeta(filename, mimeType, e.getMessage());
+        } finally {
+            uploadContexts.unregisterContext(uploadContext);
+        }
+    }
+
+    public AttachmentMeta createAttachmentFromContent(byte[] content, String filename, String mimeType, String uploadContextId) throws QuotaExceededException, IOException {
+        mimeType = sanitizeMimeType(mimeType);
+        boolean supportsLineAccess = isLineAccessSupported(mimeType);
+        StreamingResourceMetadata metadata = new StreamingResourceMetadata(filename, mimeType, supportsLineAccess);
+        String resourceId = registerNewResource(metadata, uploadContextId);
+        StreamingAttachmentMeta meta = new StreamingAttachmentMeta(new ObjectId(resourceId), filename, mimeType);
+        // Saving will be completely finished, in a single call, because all data is already present from the beginning.
+        writeChunk(resourceId, new ByteArrayInputStream(content), true);
+        var status = markCompleted(resourceId);
+        meta.setCurrentNumberOfLines(status.getNumberOfLines());
+        meta.setCurrentSize(status.getCurrentSize());
+        meta.setStatus(StreamingAttachmentMeta.Status.COMPLETED);
+        return meta;
+    }
+
+    private static String sanitizeMimeType(String mimeType) {
+        if (mimeType == null) {
+            // fallback if no mimeType was given
+            return "application/octet-stream";
+        }
+        mimeType = mimeType.trim(); // just in case
+        if (!mimeType.matches("^[a-zA-Z0-9!#$&^_.+-]+/[a-zA-Z0-9!#$&^_.+-]+$")) {
+            logger.warn("Invalid mime type \"{}\", replacing with generic application/octet-stream", mimeType);
+            return "application/octet-stream";
+        }
+        return mimeType;
+    }
+
+    private static boolean isLineAccessSupported(String mimeType) {
+        // Very simple heuristic for now, should catch > 90% of the useful cases
+        // TODO: we can add a few other well-known textual formats if needed
+        return mimeType.startsWith("text/");
     }
 }

@@ -18,9 +18,27 @@
  ******************************************************************************/
 package step.core.plans.runner;
 
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.attachments.AttachmentMeta;
+import step.attachments.SkippedAttachmentMeta;
+import step.core.artefacts.reports.ParentSource;
+import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.ReportTreeAccessor;
+import step.core.artefacts.reports.ReportTreeVisitor;
+import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionProvider;
+import step.core.reports.Error;
+import step.reporting.ReportWriter;
+import step.resources.AttachmentStorage;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -36,21 +54,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import step.attachments.AttachmentMeta;
-import step.core.artefacts.reports.*;
-import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionProvider;
-import step.core.reports.Error;
-import step.reporting.ReportWriter;
-import step.resources.Resource;
-import step.resources.ResourceManager;
-import step.resources.ResourceRevisionContent;
-
 /**
  * This class provides an API for the manipulation of plan executions
  *
@@ -63,18 +66,18 @@ public class PlanRunnerResult {
 
     protected final ExecutionProvider executionProvider;
     protected final ReportTreeAccessor reportTreeAccessor;
-    protected final ResourceManager resourceManager;
+    protected final AttachmentStorage attachmentStorage;
 
     public PlanRunnerResult(String executionId, ExecutionProvider executionProvider, ReportTreeAccessor reportTreeAccessor) {
         this(executionId, executionProvider, reportTreeAccessor, null);
     }
 
-    public PlanRunnerResult(String executionId, ExecutionProvider executionProvider, ReportTreeAccessor reportTreeAccessor, ResourceManager resourceManager) {
+    public PlanRunnerResult(String executionId, ExecutionProvider executionProvider, ReportTreeAccessor reportTreeAccessor, AttachmentStorage attachmentStorage) {
         super();
         this.executionId = executionId;
         this.executionProvider = executionProvider;
         this.reportTreeAccessor = reportTreeAccessor;
-        this.resourceManager = resourceManager;
+        this.attachmentStorage = attachmentStorage;
     }
 
     public ReportNodeStatus getResult() {
@@ -274,20 +277,17 @@ public class PlanRunnerResult {
                 if (printAttachments) {
                     List<AttachmentMeta> attachments = node.getAttachments();
                     if (attachments != null) {
-                        attachments.forEach(a -> {
-                            Resource resource = resourceManager.getResource(a.getId().toString());
-                            // TODO create constant for value "exception.log"
-                            if (resource.getResourceName().equals("exception.log")) {
-                                try {
-                                    bWriter.write("Stacktrace: \n");
-                                    ResourceRevisionContent resourceContent = resourceManager.getResourceContent(a.getId().toString());
+                        attachments.forEach(att -> {
+                            if (!(att instanceof SkippedAttachmentMeta)) {
+                                if (att.getName().equals("exception.log")) {
                                     try {
-                                        IOUtils.copy(resourceContent.getResourceStream(), bWriter, StandardCharsets.UTF_8);
-                                    } finally {
-                                        resourceContent.close();
+                                        bWriter.write("Stacktrace: \n");
+                                        try (InputStream data = attachmentStorage.getAttachmentStream(att.getId().toString())) {
+                                            IOUtils.copy(data, bWriter, StandardCharsets.UTF_8);
+                                        }
+                                    } catch (Exception e) {
+                                        logger.error("Error while writing attachment {}", att.getName(), e);
                                     }
-                                } catch (IOException e) {
-                                    logger.error("Error while writing attachment", e);
                                 }
                             }
                         });
