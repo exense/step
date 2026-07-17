@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,9 +78,9 @@ public class AutomationPackageYamlFragmentManager {
     public static final String PROPERTY_NEW_OBJECT_FRAGMENT_MODE = "newFragmentPaths.%s.mode";
     public static final String PROPERTY_NEW_OBJECT_FRAGMENT_PATH = "newFragmentPaths.%s.path";
 
+    // TODO: These maps could potentially be combined, but this is a non-trivial task.
     protected final Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap = new ConcurrentHashMap<>();
     protected final Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap = new ConcurrentHashMap<>();
-    protected final Set<AutomationPackageFragmentYaml> fragments;
 
     protected Properties properties = new Properties();
     public final AutomationPackageFragmentYaml descriptorYaml;
@@ -101,8 +102,6 @@ public class AutomationPackageYamlFragmentManager {
         Collection<YamlToBusinessObjectMapper<?, ?>> yamlToBusinessObjectMappers = createYamlToBusinessObjectMappers(injectables);
 
         initializeMaps(descriptorYaml, yamlToBusinessObjectMappers);
-
-        this.fragments = fragments;
 
         fragments.stream()
             .filter(f -> f != descriptorYaml)
@@ -271,7 +270,6 @@ public class AutomationPackageYamlFragmentManager {
                     if (referencingFragment.getFragments().removeIf(f -> f.getValue().equals(relativeFragmentReference))) {
                         referencingFragment.writeToDisk();
                     }
-                    fragments.remove(fragment);
                 });
             } catch (IOException e) {
                 throw new AutomationPackageConcurrentEditException(String.format("%s was removed outside the editor", fragment.getFragmentPath()));
@@ -294,7 +292,6 @@ public class AutomationPackageYamlFragmentManager {
 
         PatchingContext context = new PatchingContext(absolutePath.toString(), "---", descriptorYaml.getPatchingContext().getMapper());
         AutomationPackageFragmentYaml fragment = new AutomationPackageFragmentYamlImpl(context);
-        fragments.add(fragment);
         fragment.setFragmentPath(absolutePath);
 
         if (determineReferencingFragment(path).isEmpty()) {
@@ -306,7 +303,7 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     private Optional<AutomationPackageFragmentYaml> determineReferencingFragment(Path path) {
-        return Stream.concat(Stream.of(descriptorYaml), fragments.stream())
+        return Stream.concat(Stream.of(descriptorYaml), new LinkedHashSet<>(fragmentMap.values()).stream())
             .filter(fragment -> fragment.getFragments().stream()
                 .anyMatch(pattern -> resourcePathMatchingResolver.isMatchingPath(pattern.getValue(), path)))
             .findFirst();
