@@ -55,8 +55,7 @@ public class RemoteExecutionManager extends AbstractRemoteClient implements Exec
 
     /**
      * Lazily created report tree accessor scoped to this manager's configuration (including tenant).
-     * It shares this manager's lifecycle and is closed together with it, so {@link #getFuture(String)}
-     * can reuse it instead of leaking a new client on each call.
+     * It shares this manager's lifecycle and is closed together with it.
      */
     private RemoteReportTreeAccessor reportTreeAccessor;
 

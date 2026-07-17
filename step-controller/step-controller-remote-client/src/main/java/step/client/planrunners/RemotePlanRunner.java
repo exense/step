@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.client.planrunners;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
@@ -33,7 +34,6 @@ import step.client.accessors.RemotePlanAccessor;
 import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
 import step.client.executions.RemoteExecutionManager;
-import step.client.reports.RemoteExecutionProvider;
 import step.client.reports.RemoteReportTreeAccessor;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportTreeAccessor;
@@ -53,10 +53,16 @@ import step.core.repositories.RepositoryObjectReference;
  * instead.
  *
  */
-public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner {
+public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner, ExecutionProvider {
 
     private PlanAccessor planAccessor;
     private RemoteCollectionFactory remoteCollectionFactory;
+
+    /**
+     * Lazily created report tree accessor scoped to this runner's configuration (including tenant).
+     * It shares this runner's lifecycle and is closed together with it.
+     */
+    private RemoteReportTreeAccessor reportTreeAccessor;
 
     public RemotePlanRunner() {
         super();
@@ -107,11 +113,7 @@ public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner
 
         String executionId = executeRequest(() -> b.post(entity, String.class));
 
-        // Build the nested clients from this runner's configuration so they inherit the tenant.
-        RemoteReportTreeAccessor reportTreeAccessor = new RemoteReportTreeAccessor(getConfiguration());
-        RemoteExecutionProvider executionProvider = new RemoteExecutionProvider(getConfiguration());
-
-        return new RemotePlanRunnerResult(executionId, reportTreeAccessor, executionProvider);
+        return new RemotePlanRunnerResult(executionId, getReportTreeAccessor(), this);
     }
 
     public class RemotePlanRunnerResult extends PlanRunnerResult {
@@ -132,6 +134,33 @@ public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner
     public Execution getExecution(String executionID) {
         Builder b = requestBuilder("/rest/executions/" + executionID);
         return executeRequest(() -> b.get(Execution.class));
+    }
+
+    @Override
+    public Execution get(String executionId) {
+        return getExecution(executionId);
+    }
+
+    /**
+     * @return a {@link RemoteReportTreeAccessor} scoped to the same configuration (including tenant) as
+     * this runner. The instance is cached and shares this runner's lifecycle (see {@link #close()}).
+     */
+    public synchronized RemoteReportTreeAccessor getReportTreeAccessor() {
+        if (reportTreeAccessor == null) {
+            reportTreeAccessor = new RemoteReportTreeAccessor(getConfiguration());
+        }
+        return reportTreeAccessor;
+    }
+
+    @Override
+    public synchronized void close() throws IOException {
+        try {
+            if (reportTreeAccessor != null) {
+                reportTreeAccessor.close();
+            }
+        } finally {
+            super.close();
+        }
     }
 
     public Execution waitForExecutionToTerminate(String executionID, long timeout) throws TimeoutException, InterruptedException {
