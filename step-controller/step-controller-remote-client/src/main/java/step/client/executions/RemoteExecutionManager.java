@@ -27,13 +27,16 @@ import jakarta.ws.rs.core.Response;
 import step.core.artefacts.reports.aggregated.AggregatedReport;
 import step.reports.CustomReportType;
 import step.client.AbstractRemoteClient;
+import step.client.RemoteClientConfiguration;
 import step.client.credentials.ControllerCredentials;
+import step.client.reports.RemoteReportTreeAccessor;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.AggregatedReportView;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
+import step.core.execution.model.ExecutionProvider;
 import step.core.execution.model.ExecutionStatus;
 import step.core.repositories.RepositoryObjectReference;
 
@@ -48,7 +51,14 @@ import java.util.concurrent.TimeoutException;
  * This class provides an API for the execution of plans existing on a remote controller
  *
  */
-public class RemoteExecutionManager extends AbstractRemoteClient {
+public class RemoteExecutionManager extends AbstractRemoteClient implements ExecutionProvider {
+
+    /**
+     * Lazily created report tree accessor scoped to this manager's configuration (including tenant).
+     * It shares this manager's lifecycle and is closed together with it, so {@link #getFuture(String)}
+     * can reuse it instead of leaking a new client on each call.
+     */
+    private RemoteReportTreeAccessor reportTreeAccessor;
 
     public RemoteExecutionManager() {
         super();
@@ -56,6 +66,10 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
 
     public RemoteExecutionManager(ControllerCredentials credentials) {
         super(credentials);
+    }
+
+    public RemoteExecutionManager(RemoteClientConfiguration configuration) {
+        super(configuration);
     }
 
     /**
@@ -298,8 +312,30 @@ public class RemoteExecutionManager extends AbstractRemoteClient {
         return new RemoteExecutionFuture(this, executionId);
     }
 
+    /**
+     * @return a {@link RemoteReportTreeAccessor} scoped to the same configuration (including tenant) as
+     * this manager. The instance is cached and shares this manager's lifecycle (see {@link #close()}).
+     */
+    public synchronized RemoteReportTreeAccessor getReportTreeAccessor() {
+        if (reportTreeAccessor == null) {
+            reportTreeAccessor = new RemoteReportTreeAccessor(getConfiguration());
+        }
+        return reportTreeAccessor;
+    }
+
     protected ControllerCredentials getControllerCredentials() {
         return credentials;
+    }
+
+    @Override
+    public synchronized void close() throws IOException {
+        try {
+            if (reportTreeAccessor != null) {
+                reportTreeAccessor.close();
+            }
+        } finally {
+            super.close();
+        }
     }
 
 }

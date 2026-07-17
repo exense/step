@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Function;
 
 import step.client.AbstractRemoteClient;
+import step.client.RemoteClientConfiguration;
 import step.client.credentials.ControllerCredentials;
 import step.client.planrunners.RemotePlanRunner;
 import step.client.reports.RemoteExecutionProvider;
@@ -69,6 +70,10 @@ public class StagingRepositoryClient extends AbstractRemoteClient {
         super(credentials);
     }
 
+    public StagingRepositoryClient(RemoteClientConfiguration configuration) {
+        super(configuration);
+    }
+
     /**
      * Creates a new isolated context for execution
      *
@@ -77,7 +82,8 @@ public class StagingRepositoryClient extends AbstractRemoteClient {
     public StagingContext createContext() {
         Builder b = requestBuilder("/rest/staging/context");
         String contextId = executeRequest(() -> b.get(String.class));
-        StagingContext context = new StagingContext(credentials, contextId);
+        // Propagate the configuration (including tenant) to the context and its nested clients.
+        StagingContext context = new StagingContext(getConfiguration(), contextId);
         return context;
     }
 
@@ -87,6 +93,11 @@ public class StagingRepositoryClient extends AbstractRemoteClient {
 
         public StagingContext(ControllerCredentials credentials, String contextId) {
             super(credentials);
+            this.contextId = contextId;
+        }
+
+        public StagingContext(RemoteClientConfiguration configuration, String contextId) {
+            super(configuration);
             this.contextId = contextId;
         }
 
@@ -154,9 +165,9 @@ public class StagingRepositoryClient extends AbstractRemoteClient {
 
             Entity<Map<String, String>> entity = Entity.entity(executionParameters, MediaType.APPLICATION_JSON);
             String executionId = executeRequest(() -> b.post(entity, String.class));
-            RemotePlanRunner remotePlanRunner = new RemotePlanRunner(credentials);
+            RemotePlanRunner remotePlanRunner = new RemotePlanRunner(getConfiguration());
             closables.add(remotePlanRunner);
-            return remotePlanRunner.new RemotePlanRunnerResult(executionId, new RemoteReportTreeAccessor(credentials), new RemoteExecutionProvider(credentials));
+            return remotePlanRunner.new RemotePlanRunnerResult(executionId, new RemoteReportTreeAccessor(getConfiguration()), new RemoteExecutionProvider(getConfiguration()));
         }
 
         List<Closeable> closables = new ArrayList<>();

@@ -28,6 +28,7 @@ import jakarta.ws.rs.core.MediaType;
 
 import ch.exense.commons.io.Poller;
 import step.client.AbstractRemoteClient;
+import step.client.RemoteClientConfiguration;
 import step.client.accessors.RemotePlanAccessor;
 import step.client.collections.remote.RemoteCollectionFactory;
 import step.client.credentials.ControllerCredentials;
@@ -69,6 +70,12 @@ public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner
         planAccessor = new RemotePlanAccessor(remoteCollectionFactory);
     }
 
+    public RemotePlanRunner(RemoteClientConfiguration configuration) {
+        super(configuration);
+        remoteCollectionFactory = new RemoteCollectionFactory(this);
+        planAccessor = new RemotePlanAccessor(remoteCollectionFactory);
+    }
+
     @Override
     public PlanRunnerResult run(Plan plan) {
         return run(plan, new HashMap<>());
@@ -100,8 +107,9 @@ public class RemotePlanRunner extends AbstractRemoteClient implements PlanRunner
 
         String executionId = executeRequest(() -> b.post(entity, String.class));
 
-        RemoteReportTreeAccessor reportTreeAccessor = new RemoteReportTreeAccessor(credentials);
-        RemoteExecutionProvider executionProvider = new RemoteExecutionProvider(credentials);
+        // Build the nested clients from this runner's configuration so they inherit the tenant.
+        RemoteReportTreeAccessor reportTreeAccessor = new RemoteReportTreeAccessor(getConfiguration());
+        RemoteExecutionProvider executionProvider = new RemoteExecutionProvider(getConfiguration());
 
         return new RemotePlanRunnerResult(executionId, reportTreeAccessor, executionProvider);
     }

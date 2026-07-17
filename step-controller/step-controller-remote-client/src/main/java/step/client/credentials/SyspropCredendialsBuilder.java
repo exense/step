@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.client.credentials;
 
+import step.client.RemoteClientConfiguration;
+
 /**
  * This class is a factory for controller credentials
  * It reads the controller host and credentials from the following system properties:
@@ -26,10 +28,14 @@ package step.client.credentials;
  * 	<li>rcPort: the port of the controller</li>
  * 	<li>rcUsername: the username to be used for login</li>
  * 	<li>rcPassword: the password to be used for login</li>
+ * 	<li>rcTenant: (EE only) the tenant / project name to scope the requests to</li>
  * </ul>
  *
  */
 public class SyspropCredendialsBuilder {
+
+    /** System property carrying the tenant (EE project name) to scope requests to. */
+    public static final String TENANT_PROPERTY = "rcTenant";
 
     public static ControllerCredentials build() {
         if (System.getProperty("rcHostname") != null) {
@@ -63,6 +69,16 @@ public class SyspropCredendialsBuilder {
         } else {
             return new DefaultLocalCredentials();
         }
+    }
+
+    /**
+     * Same as {@link #build()} but also reads the optional {@value #TENANT_PROPERTY} system property so
+     * that clients created from system properties (e.g. via the no-arg constructor) are scoped to a tenant
+     * in EE context. When the property is absent or empty, the resulting configuration is tenant-less (OS).
+     */
+    public static RemoteClientConfiguration buildConfiguration() {
+        String tenant = System.getProperty(TENANT_PROPERTY);
+        return new RemoteClientConfiguration(build(), (tenant == null || tenant.isEmpty()) ? null : tenant);
     }
 
     public static void setDefaultLocalProperties() {
