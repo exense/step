@@ -107,13 +107,6 @@ public abstract class AbstractStepContext extends AbstractContext {
     }
 
     public void setAttachmentStorage(AttachmentStorage attachmentStorage) {
-        if (attachmentStorage == this.attachmentStorage) {
-            System.err.println("FIXME: redundant setting of attachment storage in " + this.getClass().getSimpleName());
-            return;
-        }
-        if (this.attachmentStorage != null) {
-            throw new IllegalStateException("BUG: attachmentStorage must not be set more than once");
-        }
         this.attachmentStorage = attachmentStorage;
     }
 

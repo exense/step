@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import step.constants.LiveReportingConstants;
 import step.core.GlobalContext;
 import step.core.deployment.ObjectHookControllerPlugin;
-import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngineContext;
 import step.core.plugins.AbstractControllerPlugin;
@@ -112,20 +111,12 @@ public class StreamingResourcesControllerPlugin extends AbstractControllerPlugin
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
         return new AbstractExecutionEnginePlugin() {
             @Override
-            public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
-                // required by AP reporting for fetching attachments; FIXME -- this is now redundant
-                executionEngineContext.setAttachmentStorage(manager);
-            }
-
-            @Override
             public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext executionContext) {
                 // Makes streaming available to the execution
                 executionContext.put(StreamingResourceUploadContexts.class, uploadContexts);
                 executionContext.put(LiveReportingConstants.STREAMING_WEBSOCKET_UPLOAD_PATH, UPLOAD_PATH);
                 // Note: this URL is also used by the measures streaming to determine the hostname.
                 executionContext.put(LiveReportingConstants.LIVEREPORTING_CONTROLLER_URL, controllerUrl);
-                // FIXME: This is now also redundant...
-                executionContext.setAttachmentStorage(manager);
             }
 
 
