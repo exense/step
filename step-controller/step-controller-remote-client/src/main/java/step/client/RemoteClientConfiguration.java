@@ -20,6 +20,8 @@ package step.client;
 
 import step.client.credentials.ControllerCredentials;
 
+import java.util.Objects;
+
 /**
  * Bundles everything required to establish a remote connection to a Step controller:
  * the {@link ControllerCredentials} and, in EE context, the tenant (project name) the
@@ -36,7 +38,9 @@ public class RemoteClientConfiguration {
 
     private final ControllerCredentials credentials;
 
-    /** EE project name to scope requests to; {@code null} in OS context. */
+    /**
+     * EE project name to scope requests to; {@code null} in OS context.
+     */
     private final String tenant;
 
     public RemoteClientConfiguration(ControllerCredentials credentials) {
@@ -44,7 +48,7 @@ public class RemoteClientConfiguration {
     }
 
     public RemoteClientConfiguration(ControllerCredentials credentials, String tenant) {
-        this.credentials = credentials;
+        this.credentials = Objects.requireNonNull(credentials, "credentials must not be null");
         this.tenant = tenant;
     }
 

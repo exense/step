@@ -46,6 +46,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -77,8 +78,8 @@ public class AbstractRemoteClient implements Closeable {
     }
 
     public AbstractRemoteClient(RemoteClientConfiguration configuration) {
-        this.configuration = configuration;
-        this.credentials = configuration.getCredentials();
+        this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
+        this.credentials = Objects.requireNonNull(configuration.getCredentials(), "credentials must not be null");
         createClient();
         if (credentials.getToken() != null) {
             Feature feature = OAuth2ClientSupport.feature(credentials.getToken());
