@@ -32,7 +32,7 @@ public class LocalIDE implements Closeable {
         Configuration configuration = loadConfiguration();
         resourcesDirectory = Files.createTempDirectory("step-ide-resources-").toFile();
         fileManagerDirectory = Files.createTempDirectory("step-ide-filemanager-").toFile();
-        // TODO: delete on exit
+        // TODO SED-4429 delete these one exit (will require better support for shutdown handling in step-framework)
         logger.info("Using temporary resources directory: {}", resourcesDirectory.getAbsolutePath());
         configuration.putProperty("resources.dir", resourcesDirectory.getAbsolutePath());
         logger.info("Using temporary filemanager directory: {}", fileManagerDirectory.getAbsolutePath());
@@ -57,6 +57,6 @@ public class LocalIDE implements Closeable {
 
     @Override
     public void close() throws IOException {
-        System.err.println("TODO: shutdown server");
+        System.err.println("TODO SED-4429: shutdown server");
     }
 }

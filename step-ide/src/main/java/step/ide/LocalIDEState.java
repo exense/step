@@ -161,7 +161,7 @@ public class LocalIDEState implements ExecutionDiversion {
         CompletableFuture<String> executionIdFuture = new CompletableFuture<>();
         CompletableFuture.runAsync((() -> {
             try {
-                executorDelegate.executeStuffForIDE(executionIdFuture);
+                executorDelegate.executePackageAndFillExecutionId(executionIdFuture);
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
                 executionIdFuture.completeExceptionally(e);

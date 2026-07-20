@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+// TODO SED-4429 Remove this service (probably)
 @jakarta.ws.rs.Path("/local/fs")
 @Tag(name = "Filesystem")
 public class LocalFileSystemServices extends AbstractStepServices {

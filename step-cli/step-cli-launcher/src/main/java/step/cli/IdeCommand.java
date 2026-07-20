@@ -17,7 +17,7 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(name = IdeCommand.NAME,
     mixinStandardHelpOptions = true,
     version = Constants.STEP_VERSION_STRING,
-    description = "FIXME -- something with IDE",
+    description = "CLI interface to launch the local Step IDE",
     usageHelpAutoWidth = true
 )
 public class IdeCommand implements Callable<Integer> {
@@ -42,7 +42,8 @@ public class IdeCommand implements Callable<Integer> {
         public Integer call() throws Exception {
             LocalIDEState.get().setExecutorDelegateFactory(this);
             step.ide.LocalIDE.main(new String[]{});
-            System.err.println("TODO: PROPER TERMINATION HANDLING; FOR NOW, JUST STOP THE PROCESS");
+            // TODO SED-4429 (will require better support for shutdown handling in step-framework)
+            System.err.println("TODO SED-4429: PROPER TERMINATION HANDLING; FOR NOW, JUST STOP THE PROCESS");
             Thread.sleep(Long.MAX_VALUE);
             return 0;
         }

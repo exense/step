@@ -82,10 +82,24 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
 
 
     @Override
-    public void executeStuffForIDE(CompletableFuture<String> singleExecutionIdFuture) throws Exception {
+    public void executePackageAndFillExecutionId(CompletableFuture<String> singleExecutionIdFuture) throws Exception {
         executePackageOnStep(singleExecutionIdFuture);
     }
 
+    /**
+     * Executes the AP on Step, according to its parameterization.
+     * Depending on the configuration (parameters.getWaitForExecution),
+     * this can result in a blocking or non-blocking operation.
+     * <p>
+     * Regardless of the mode, if the parameter firstExecutionIdFuture is present,
+     * the given future will be completed immediately once the execution ID is known.
+     * This is used by the IDE execution diversion mechanism (which starts the execution
+     * in an asynchronous fashion, and uses the ID retrieved here).
+     *
+     * @param firstExecutionIdFuture execution ID future to complete once it's known.
+     * @throws StepCliExecutionException on error
+     */
+    // TODO SED-4429 extract and refactor this logic
     protected void executePackageOnStep(CompletableFuture<String> firstExecutionIdFuture) throws StepCliExecutionException {
         parameters.validate();
 

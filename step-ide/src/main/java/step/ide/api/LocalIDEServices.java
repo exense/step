@@ -30,7 +30,7 @@ public class LocalIDEServices extends AbstractStepServices {
     }
 
     @POST
-    @Path("ap/useExisting")
+    @Path("ap/use-existing")
     @Consumes(MediaType.APPLICATION_JSON)
     public void useExistingAP(@QueryParam("directory") String directory) {
         // Temporary workaround for windows: Strip the leading slash if it looks like /C:
@@ -55,7 +55,7 @@ public class LocalIDEServices extends AbstractStepServices {
     }
 
     @POST
-    @Path("ap/initializeNew")
+    @Path("ap/initialize-new")
     @Consumes(MediaType.APPLICATION_JSON)
     public void initializeNewAP(@QueryParam("existingEmptyDirectory") String existingEmptyDirectory, @QueryParam("apName") String apName) {
         if (existingEmptyDirectory == null || existingEmptyDirectory.isBlank()) {
@@ -85,7 +85,7 @@ public class LocalIDEServices extends AbstractStepServices {
     public AutomationPackageDescriptor getCurrentAP() {
         File dir = LocalIDEState.get().getCurrentAutomationPackageDirectory();
         if (dir == null) {
-            return new AutomationPackageDescriptor(null, null);
+            return null;
         }
         return new AutomationPackageDescriptor(dir.getAbsolutePath(), LocalIDEState.get().getCurrentAutomationPackageName());
     }
