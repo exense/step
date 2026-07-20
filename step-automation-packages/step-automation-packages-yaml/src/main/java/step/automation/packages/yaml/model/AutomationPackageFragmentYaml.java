@@ -18,18 +18,20 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchableYamlPrimitive;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public interface AutomationPackageFragmentYaml {
 
@@ -39,7 +41,7 @@ public interface AutomationPackageFragmentYaml {
 
     List<YamlPlainTextPlan> getPlansPlainText();
 
-    List<String> getFragments();
+    PatchableYamlList<PatchableYamlPrimitive<String>> getFragments();
 
     Map<String, PatchableYamlList<?>> getAdditionalFields();
 
@@ -49,23 +51,19 @@ public interface AutomationPackageFragmentYaml {
 
     void setAdditionalFields(String key, PatchableYamlList<?> value) throws IOException;
 
-    URL getFragmentUrl();
+    Path getFragmentPath();
 
-    default Path getFragmentPath() {
-        URL fragmentUrl = getFragmentUrl();
-        Objects.requireNonNull(fragmentUrl, "fragmentUrl is null");
-        try {
-            return Path.of(fragmentUrl.toURI());
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid URL for Path conversion: " + fragmentUrl, e);
-        }
-    }
-
-    void setFragmentUrl(URL url);
+    void setFragmentPath(Path url);
 
     PatchingContext getPatchingContext();
 
     void setPatchingContext(PatchingContext context);
 
     void writeToDisk();
+
+    boolean isEmpty();
+
+    <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<YO, BO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap);
+
+    <YO extends PatchableYamlModel> PatchableYamlList<YO> getListForYamlObject(String collectionName);
 }

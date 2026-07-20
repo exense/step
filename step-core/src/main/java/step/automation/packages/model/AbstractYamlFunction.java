@@ -20,17 +20,18 @@ package step.automation.packages.model;
 
 import jakarta.json.JsonObject;
 import step.automation.packages.StagingAutomationPackageContext;
-import step.core.yaml.YamlModelUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlModelUtils;
 import step.functions.Function;
 import step.jsonschema.JsonSchema;
 import step.jsonschema.JsonSchemaDefaultValueProvider;
 
 import java.lang.reflect.Field;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class AbstractYamlFunction<T extends Function> extends AbstractYamlModel implements AutomationPackageContextual<T> {
 
@@ -108,7 +109,14 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
 
     protected void fillDeclaredFields(T res, StagingAutomationPackageContext context) {
         res.addAttribute(AbstractOrganizableObject.NAME, this.getName());
+        res.setTokenSelectionCriteria(routing);
         copyFieldsToObject(res, true);
+    }
+
+    public void setDeclaredFieldsFromObject(T res) {
+        Optional.ofNullable(res.getAttribute(AbstractOrganizableObject.NAME)).ifPresent(this::setName);
+        routing = res.getTokenSelectionCriteria();
+        copyFieldsFromObject(res, true);
     }
 
     protected abstract T createFunctionInstance();
@@ -119,11 +127,6 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
         fillDeclaredFields(res, context);
         return res;
     }
-
-    public void updateFromFunction(Function function) {
-        copyFieldsFromObject(function, false);
-    }
-
 
     public static class DefaultYamlFunctionNameProvider implements JsonSchemaDefaultValueProvider {
 

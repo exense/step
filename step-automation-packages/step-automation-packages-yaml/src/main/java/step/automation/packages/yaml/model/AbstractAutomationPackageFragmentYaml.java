@@ -24,28 +24,30 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import org.apache.commons.io.FileUtils;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageWriteToDiskException;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchableYamlPrimitive;
+import step.plans.automation.AutomationPackagePlainTextPlanJsonSchema;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractAutomationPackageFragmentYaml implements AutomationPackageFragmentYaml {
-    private List<String> fragments = new ArrayList<>();
+    private PatchableYamlList<PatchableYamlPrimitive<String>> fragments;
     private PatchableYamlList<YamlAutomationPackageKeyword> keywords;
     private PatchableYamlList<YamlPlan> plans;
     private PatchableYamlList<YamlPlainTextPlan> plansPlainText;
@@ -58,11 +60,12 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
         context = patchingContext;
         plans = new PatchableYamlList<>(patchingContext, YamlPlan.PLANS_ENTITY_NAME);
         keywords = new PatchableYamlList<>(patchingContext, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
-        plansPlainText = new PatchableYamlList<>(patchingContext, "plansPlainText");
+        plansPlainText = new PatchableYamlList<>(patchingContext, AutomationPackagePlainTextPlanJsonSchema.FIELD_NAME_IN_AP);
+        fragments = new PatchableYamlList<>(patchingContext, "fragments");
     }
 
     @JsonIgnore
-    private URL url;
+    private Path path;
 
     @Override
     public PatchableYamlList<YamlAutomationPackageKeyword> getKeywords() {
@@ -85,12 +88,12 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @Override
-    public List<String> getFragments() {
+    public PatchableYamlList<PatchableYamlPrimitive<String>> getFragments() {
         return fragments;
     }
 
     @JsonSetter(nulls = Nulls.AS_EMPTY)
-    public void setFragments(List<String> fragments) {
+    public void setFragments(PatchableYamlList<PatchableYamlPrimitive<String>> fragments) {
         this.fragments = fragments;
     }
 
@@ -106,7 +109,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @Override
-    public List<YamlPlainTextPlan> getPlansPlainText() {
+    public PatchableYamlList<YamlPlainTextPlan> getPlansPlainText() {
         return plansPlainText;
     }
 
@@ -116,9 +119,9 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @JsonIgnore
-    public void setFragmentUrl(URL url) {
+    public void setFragmentPath(Path path) {
         resetLastModified();
-        this.url = url;
+        this.path = path;
     }
 
     private void resetLastModified() {
@@ -126,8 +129,8 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     }
 
     @JsonIgnore
-    public URL getFragmentUrl() {
-        return url;
+    public Path getFragmentPath() {
+        return path;
     }
 
     @JsonIgnore
@@ -146,14 +149,43 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     @Override
     public void writeToDisk() {
         try {
-            File file = new File(url.toURI());
+            File file = path.toFile();
             if (file.exists() && file.lastModified() > fileLastModified) {
-                throw new AutomationPackageConcurrentEditException(MessageFormat.format("Automation package fragment {0} was edited outside the editor.", url));
+                throw new AutomationPackageConcurrentEditException(MessageFormat.format("Automation package fragment {0} was edited outside the editor.", path));
             }
             FileUtils.writeStringToFile(file, context.getCurrentYaml(), StandardCharsets.UTF_8);
             resetLastModified();
-        } catch (IOException | URISyntaxException e) {
-            throw new AutomationPackageWriteToDiskException(MessageFormat.format("Error when writing automation package fragment {0} back to disk.", url), e);
+        } catch (IOException e) {
+            throw new AutomationPackageWriteToDiskException(MessageFormat.format("Error when writing automation package fragment {0} back to disk.", path), e);
         }
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return getFragments().isEmpty() &&
+            getPlans().isEmpty() &&
+            getPlansPlainText().isEmpty() &&
+            getKeywords().isEmpty() &&
+            getAdditionalFields().isEmpty();
+    }
+
+    @Override
+    public <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<YO, BO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap) {
+        for (YO yamlObject : (PatchableYamlList<YO>) getListForYamlObject(mapper.getCollectionName())) {
+            BO businessObject = mapper.toBusinessObject(yamlObject);
+            patchableMap.put(businessObject, yamlObject);
+            fragmentMap.put(businessObject, this);
+        }
+    }
+
+    @Override
+    public <YO extends PatchableYamlModel> PatchableYamlList<YO> getListForYamlObject(String collectionName) {
+        return (PatchableYamlList<YO>) switch (collectionName) {
+            case YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME -> keywords;
+            case YamlPlan.PLANS_ENTITY_NAME -> plans;
+            case AutomationPackagePlainTextPlanJsonSchema.FIELD_NAME_IN_AP -> plansPlainText;
+            default -> additionalFields
+                .computeIfAbsent(collectionName, n -> new PatchableYamlList<YO>(getPatchingContext(), n));
+        };
     }
 }

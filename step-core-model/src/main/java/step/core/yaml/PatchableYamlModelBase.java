@@ -20,17 +20,13 @@ package step.core.yaml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonLocation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PatchableYamlModelBase extends AbstractYamlModel implements PatchableYamlModel {
-    private static final Logger logger = LoggerFactory.getLogger(PatchableYamlModelBase.class);
-
     @JsonIgnore
     private PatchingContext context;
 
-    public PatchableYamlModelBase(PatchingContext context) {
-        this.context = context;
+    public PatchableYamlModelBase(PatchingContext patchingContext) {
+        this.context = patchingContext;
     }
 
     @Override

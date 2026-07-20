@@ -14,6 +14,7 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
     public void serverStart(GlobalContext context) throws Exception {
         System.out.println(this + " serverStart");
         LocalIDEState.get().setResourceManager((ResourceManagerImpl) context.getResourceManager());
+        LocalIDEState.get().setFileResolver(context.getFileResolver());
         var services = context.getServiceRegistrationCallback();
         services.registerService(LocalIDEServices.class);
         services.registerService(LocalFileSystemServices.class);

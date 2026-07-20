@@ -50,15 +50,15 @@ import java.util.Map;
 
 public class AutomationPackageDescriptorReader {
 
-    protected static final Logger log = LoggerFactory.getLogger(AutomationPackageDescriptorReader.class);
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageDescriptorReader.class);
 
-    protected final ObjectMapper yamlObjectMapper;
+    private final ObjectMapper yamlObjectMapper;
 
-    protected final YamlPlanReader planReader;
+    private final YamlPlanReader planReader;
 
     private final AutomationPackageSerializationRegistry serializationRegistry;
 
-    protected String jsonSchema;
+    private String jsonSchema;
 
     public AutomationPackageDescriptorReader(String jsonSchemaPath, AutomationPackageSerializationRegistry serializationRegistry) {
         this.serializationRegistry = serializationRegistry;
@@ -167,6 +167,7 @@ public class AutomationPackageDescriptorReader {
         // Disable native type id to enable conversion to generic Documents
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
         yamlFactory.enable(YAMLGenerator.Feature.INDENT_ARRAYS_WITH_INDICATOR);
+        yamlFactory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
         ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
 
 

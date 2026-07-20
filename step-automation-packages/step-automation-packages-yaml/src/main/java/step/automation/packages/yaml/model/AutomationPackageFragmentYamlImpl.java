@@ -27,4 +27,5 @@ public class AutomationPackageFragmentYamlImpl extends AbstractAutomationPackage
     public AutomationPackageFragmentYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
         super(patchingContext);
     }
+
 }

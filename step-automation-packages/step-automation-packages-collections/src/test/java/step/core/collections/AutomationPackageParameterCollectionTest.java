@@ -57,6 +57,9 @@ public class AutomationPackageParameterCollectionTest extends AutomationPackageC
         Parameter parameter = optionalParameter.get();
 
         parameter.getValue().setValue("myModifiedValue");
+
+        setPropertiesWriteToFragment(Parameter.ENTITY_NAME, "parameters.yml");
+
         parameterCollection.save(parameter);
 
         assertFilesEqual(expectedFilesPath.resolve("parametersAfterModification.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
@@ -72,6 +75,7 @@ public class AutomationPackageParameterCollectionTest extends AutomationPackageC
 
 
         setPropertiesWriteToFragment(Parameter.ENTITY_NAME, "parameters.yml");
+        parameter.setPriority(1);
         parameterCollection.save(parameter);
 
         assertFilesEqual(expectedFilesPath.resolve("parametersAfterAdd.yml"), destinationDirectory.toPath().resolve("parameters.yml"));
@@ -80,6 +84,7 @@ public class AutomationPackageParameterCollectionTest extends AutomationPackageC
         parameterCollection.save(parameter);
 
         parameter.setValue(new DynamicValue<>("foo"));
+        parameter.setPriority(null);
         parameterCollection.save(parameter);
 
         assertFilesEqual(expectedFilesPath.resolve("parametersAfterAddAndModification.yml"), destinationDirectory.toPath().resolve("parameters.yml"));

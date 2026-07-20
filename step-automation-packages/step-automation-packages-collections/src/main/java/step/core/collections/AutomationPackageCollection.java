@@ -18,42 +18,42 @@
  ******************************************************************************/
 package step.core.collections;
 
-import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.inmemory.InMemoryCollection;
-import step.functions.Function;
 
-public class AutomationPackageFunctionCollection extends InMemoryCollection<Function> implements Collection<Function> {
+public class AutomationPackageCollection<BO extends AbstractOrganizableObject, T> extends InMemoryCollection<BO> implements Collection<BO> {
 
 
     private final AutomationPackageYamlFragmentManager fragmentManager;
 
-    public AutomationPackageFunctionCollection(AutomationPackageYamlFragmentManager fragmentManager) {
-        super(true, YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME);
+    public AutomationPackageCollection(AutomationPackageYamlFragmentManager fragmentManager, Class<T> boClass) {
+        super(false);
         this.fragmentManager = fragmentManager;
-        initialzeRecordsFromFragments(fragmentManager);
+        initializeRecordsFromFragments(boClass, fragmentManager);
     }
 
-    private void initialzeRecordsFromFragments(AutomationPackageYamlFragmentManager fragmentManager) {
+    private void initializeRecordsFromFragments(Class<T> boClass, AutomationPackageYamlFragmentManager fragmentManager) {
         // initialization into the collection memory. Calls super save to avoid calling fragmentManager.savePlan
-        fragmentManager.getBusinessObjects(Function.class).forEach(super::save);
+        Iterable<BO> list = fragmentManager.getBusinessObjects(boClass);
+        list.forEach(super::save);
     }
 
     @Override
-    public Function save(Function p) {
-        return super.save(fragmentManager.saveFunction(p));
+    public BO save(BO p) {
+        return fragmentManager.save(super.save(p));
     }
 
     @Override
-    public void save(Iterable<Function> iterable) {
-        for (Function p : iterable) {
-            save(p);
+    public void save(Iterable<BO> iterable) {
+        for (BO object : iterable) {
+            save(object);
         }
     }
 
     @Override
     public void remove(Filter filter) {
-        find(filter, null, null, null, 0).forEach(fragmentManager::removeFunction);
+        find(filter, null, null, null, 0).forEach(fragmentManager::remove);
         super.remove(filter);
     }
 }

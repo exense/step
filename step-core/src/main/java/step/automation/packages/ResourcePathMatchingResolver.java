@@ -21,10 +21,14 @@ package step.automation.packages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class ResourcePathMatchingResolver {
 
@@ -61,7 +65,7 @@ public class ResourcePathMatchingResolver {
     }
 
     protected List<URL> findPathMatchingResources(String locationPattern) {
-        String[] pathArray = locationPattern.split(getPathSeparator());
+        String[] pathArray = locationPattern.split(Pattern.quote(getCanonicalPathSeparator()));
         List<URL> result = new ArrayList<>();
         String rootPath = pathArray[0];
         if (containsWildcard(rootPath)) {
@@ -77,7 +81,7 @@ public class ResourcePathMatchingResolver {
         return result;
     }
 
-    public static String getPathSeparator() {
+    public static String getCanonicalPathSeparator() {
         return "/";
     }
 
@@ -88,13 +92,13 @@ public class ResourcePathMatchingResolver {
                 if (nextLevel < pathArray.length) {
                     String nextPath = pathArray[nextLevel];
                     List<URL> urls = ClassLoaderResourceFilesystem.listDirectory(currentPath);
-                    Pattern pattern = Pattern.compile(nextPath.replaceAll("\\*", ".*"));
+                    Pattern pattern = prepareMatchPattern(nextPath);
                     for (URL url : urls) {
                         String file = url.getFile();
-                        if (file.endsWith(getPathSeparator())) {
+                        if (file.endsWith(getCanonicalPathSeparator())) {
                             file = file.substring(0, file.length() - 1);
                         }
-                        int lastIndexOf = file.lastIndexOf(getPathSeparator());
+                        int lastIndexOf = file.lastIndexOf(getCanonicalPathSeparator());
                         String lastPath = file.substring(lastIndexOf + 1);
                         if (pattern.matcher(lastPath).matches()) {
                             findPathMatchingResourcesRecursive(pathArray, nextLevel, url, result);
@@ -109,4 +113,31 @@ public class ResourcePathMatchingResolver {
         }
     }
 
+    /**
+     * Turns a glob-style path specification (e.g. "*.txt") into a regular expression Pattern.
+     * The only currently recognized wildcard is "*", "?" is not supported.
+     *
+     * @param globStyleString original String, potentially containing glob wildcards
+     * @return corresponding regex Pattern
+     */
+    private Pattern prepareMatchPattern(String globStyleString) {
+        // We need to replace all glob-style "*" by regex-style ".*". However, we also want to make sure
+        // non-glob characters are properly escaped/quoted, but without quoting the wildcards themselves. So:
+
+        // Split the string by "*", using -1 to preserve trailing empty strings (e.g., in case the pattern would end with a "*")
+        String[] parts = globStyleString.split("\\*", -1);
+
+        // Quote each individual part, then join them with the regex wildcard ".*"
+        String regex = Arrays.stream(parts).map(Pattern::quote).collect(Collectors.joining(".*"));
+        return Pattern.compile(regex);
+    }
+
+    public boolean isMatchingPath(String referenceString, Path path) {
+        return prepareMatchPattern(referenceString).matcher(getFragmentReferenceString(path)).matches();
+    }
+
+    public String getFragmentReferenceString(Path path) {
+        // Attention: File.separator is correct; File.pathSeparator is for separating "$PATH" entries (: or ;), not directories...
+        return path.toString().replace(File.separator, getCanonicalPathSeparator());
+    }
 }

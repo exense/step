@@ -13,7 +13,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.GlobalContext;
 import step.core.deployment.AbstractStepServices;
 import step.ide.LocalIDEState;
 
@@ -28,7 +27,6 @@ public class LocalIDEServices extends AbstractStepServices {
     @PostConstruct
     public void init() throws Exception {
         super.init();
-        GlobalContext globalContext = getContext();
     }
 
     @POST
@@ -49,6 +47,7 @@ public class LocalIDEServices extends AbstractStepServices {
         }
         try {
             LocalIDEState.get().useExistingAutomationPackageDirectory(file);
+
         } catch (Exception e) {
             logger.error("Unable to use existing AP directory: {}", directory, e);
             throw new WebApplicationException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);

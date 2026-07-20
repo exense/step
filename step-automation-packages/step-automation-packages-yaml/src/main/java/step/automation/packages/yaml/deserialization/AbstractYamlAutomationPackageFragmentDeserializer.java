@@ -27,25 +27,19 @@ import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.model.AbstractAutomationPackageFragmentYaml;
-import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
-import step.core.yaml.PatchingContext;
 import step.core.yaml.deserialization.PatchableYamlList;
 
 import java.io.IOException;
 
 public abstract class AbstractYamlAutomationPackageFragmentDeserializer extends BeanDeserializer implements ContextualDeserializer, ResolvableDeserializer {
 
-    private final BeanDeserializer delegate;
 
     public AbstractYamlAutomationPackageFragmentDeserializer(BeanDeserializer deserializer) {
         super(deserializer);
-        delegate = deserializer;
     }
 
     @Override
-    public Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-        return deserialize(p, ctxt, new AutomationPackageFragmentYamlImpl((PatchingContext) ctxt.getAttribute(PatchingContext.class)));
-    }
+    public abstract Object deserialize(JsonParser p, DeserializationContext ctxt) throws IOException;
 
     @Override
     protected void handleUnknownVanilla(JsonParser p, DeserializationContext ctxt, Object intoValue, String propName) throws IOException {

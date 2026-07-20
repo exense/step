@@ -29,6 +29,7 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.plans.Plan;
 import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchableYamlPrimitive;
 import step.functions.Function;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.nl.RootArtefactType;
@@ -42,12 +43,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -129,7 +134,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
         // apply imported fragments recursively
         if (descriptor != null) {
-            fillAutomationPackageWithImportedFragments(res, descriptor, archive, new HashMap<>());
+            fillAutomationPackageWithImportedFragments(res, descriptor, archive, new HashSet<>());
         }
         return res;
     }
@@ -182,33 +187,56 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
     public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive, ResourceManager resourceManager) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
-        URL descriptorURL = archive.getDescriptorYamlUrl();
-        try (InputStream inputStream = descriptorURL.openStream()) {
+        URL descriptorUrl = archive.getDescriptorYamlUrl();
+        try (InputStream inputStream = descriptorUrl.openStream()) {
             AutomationPackageDescriptorYaml descriptor = reader.readAutomationPackageDescriptor(inputStream, archive.getOriginalFileName());
-            descriptor.setFragmentUrl(descriptorURL);
-            AutomationPackageContent content = newContentInstance();
-            Map<String, AutomationPackageFragmentYaml> fragmentMap = new ConcurrentHashMap<>();
-            fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragmentMap);
-            StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(null, AutomationPackageOperationMode.LOCAL, resourceManager, archive, content, null, null, new HashMap<>());
-            return new AutomationPackageYamlFragmentManager(descriptor, fragmentMap, getOrCreateDescriptorReader(), stagingContext);
+
+            try {
+                Path descriptorPath = Path.of(descriptorUrl.toURI());
+                descriptor.setFragmentPath(descriptorPath);
+                AutomationPackageContent content = newContentInstance();
+                Set<AutomationPackageFragmentYaml> fragments = new HashSet<>();
+                fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments);
+                AutomationPackage automationPackage = new AutomationPackage();
+                automationPackage.setStatus(AutomationPackageStatus.EDITING);
+                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(), automationPackage, AutomationPackageOperationMode.LOCAL, resourceManager, archive, content, null, null, new HashMap<>());
+                return new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
+            } catch (FileSystemNotFoundException | URISyntaxException e) {
+                throw new AutomationPackageReadingException("Failed to read automation package for editing. The most likely cause is that you were trying to load " +
+                    "an automation package as a packaged jar. This is not supported and expected behaviour", e);
+            }
         } catch (IOException e) {
             throw new AutomationPackageReadingException("Failed to read automation package for editing", e);
         }
     }
 
-    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Map<String, AutomationPackageFragmentYaml> fragmentYamlMap) throws AutomationPackageReadingException {
+    /**
+     *
+     * @param targetPackage Target Automation package content to be filled by fragment read entities
+     * @param fragment      Fragment to read
+     * @param archive       Automation package archive
+     * @param fragments     Set of all automation package fragments collected during  recursive reading of fragments.
+     * @throws AutomationPackageReadingException Thrown upon errors when reading the fragment
+     */
+    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
         if (!fragment.getFragments().isEmpty()) {
-            for (String importedFragmentReference : fragment.getFragments()) {
-                List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
+            for (PatchableYamlPrimitive<String> importedFragmentReference : fragment.getFragments()) {
+                List<URL> resources = archive.getResourcesByPattern(importedFragmentReference.toString());
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = resource.openStream()) {
-                        fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName());
-                        fragmentYamlMap.put(resource.toString(), fragment);
-                        fragment.setFragmentUrl(resource);
-                        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragmentYamlMap);
-                    } catch (IOException e) {
+                        AutomationPackageFragmentYaml referencedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName());
+                        fragments.add(referencedFragment);
+                        try {
+                            referencedFragment.setFragmentPath(Path.of(resource.toURI()));
+                        } catch (FileSystemNotFoundException e) {
+                            logger.warn("Could not set Fragment path for fragment editing while loading fragment. " +
+                                "This is likely due to loading the automation package as a jar and not as a file system folder. This is expected behaviour");
+                        }
+
+                        fillAutomationPackageWithImportedFragments(targetPackage, referencedFragment, archive, fragments);
+                    } catch (IOException | URISyntaxException e) {
                         throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
                     }
                 }
@@ -261,7 +289,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                             }
                             String urlFile = url.getFile();
                             if (urlFile != null && !urlFile.isEmpty()) {
-                                int fileNameBeginIndex = urlFile.lastIndexOf(ResourcePathMatchingResolver.getPathSeparator());
+                                int fileNameBeginIndex = urlFile.lastIndexOf(ResourcePathMatchingResolver.getCanonicalPathSeparator());
                                 if (fileNameBeginIndex > 0) {
                                     finalPlanName = urlFile.substring(fileNameBeginIndex + 1);
                                 } else {

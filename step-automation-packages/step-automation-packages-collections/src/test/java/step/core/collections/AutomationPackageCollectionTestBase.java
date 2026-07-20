@@ -90,9 +90,13 @@ public class AutomationPackageCollectionTestBase {
     }
 
     protected void setPropertiesWriteToFragment(String entityName, String fragment) {
+        setPropertiesWriteMode(entityName, fragment, AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT);
+    }
+
+    protected void setPropertiesWriteMode(String entityName, String path, AutomationPackageYamlFragmentManager.NewObjectFragmentMode mode) {
         Properties properties = new Properties();
-        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), fragment);
-        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), path);
+        properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), mode.name());
 
         fragmentManager.setProperties(properties);
     }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2020, exense GmbH
+ * Copyright (C) 2026, exense GmbH
  *
  * This file is part of STEP
  *
@@ -16,11 +16,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages;
+package step.automation.packages.mappers;
 
-public enum AutomationPackageStatus {
-    DELAYED_UPDATE,
-    SCHEDULED_RELOAD,
-    RELOAD_FAILED,
-    EDITING
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
+import step.automation.packages.model.AbstractYamlFunction;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.functions.Function;
+
+public abstract class AbstractFunctionToYamlMapper<F extends Function> implements BusinessObjectToYamlMapper<F, YamlAutomationPackageKeyword> {
+
+
+    protected void setCommonAttributes(F function, AbstractYamlFunction<F> yamlFunction) {
+        yamlFunction.setDeclaredFieldsFromObject(function);
+    }
+
+    @Override
+    public String getCollectionName() {
+        return YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME;
+    }
 }

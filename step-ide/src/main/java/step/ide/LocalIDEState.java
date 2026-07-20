@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.JavaAutomationPackageArchive;
 import step.automation.packages.JavaAutomationPackageReader;
@@ -25,7 +26,6 @@ import step.resources.ResourceManagerImpl;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
-import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -39,6 +39,7 @@ public class LocalIDEState implements ExecutionDiversion {
     private ResourceManagerImpl resourceManager;
     private IDEExecutorDelegateFactory executorDelegateFactory;
     private File currentAutomationPackageDirectory;
+    private FileResolver fileResolver;
 
     public static LocalIDEState get() {
         return instance;
@@ -57,16 +58,6 @@ public class LocalIDEState implements ExecutionDiversion {
         logger.info("Setting resource manager to {}", resourceManager);
     }
 
-//    private ResourceManager switchResourceManager() throws Exception {
-//        if (resourceManager != null) {
-//            resourceManager.cleanup();
-//        }
-//        File newRoot = Files.createTempDirectory("step-ide-resourcemanager-").toFile();
-//        logger.info("Creating new local resource manager, root={}", newRoot.getAbsolutePath());
-//        resourceManager = new LocalResourceManagerImpl(newRoot);
-//        return resourceManager;
-//    }
-
     public void useExistingAutomationPackageDirectory(File apDir) throws Exception {
         verifyAPDirectory(apDir);
         useAutomationPackageDirectory(apDir);
@@ -81,17 +72,17 @@ public class LocalIDEState implements ExecutionDiversion {
         var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir, this.resourceManager);
         Properties properties = new Properties();
 
+        int variant = 1;
         // variant 1:
         // parameters all go into parameters.yml, plans go into separate files in plans/$PLAN_NAME.yml
-        // Only works if the target files/directories already exist, so disabled for now
-        if (1 == 0) {
+        // this is because parameters do not have unique names by design.
+        if (variant == 1) {
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), "parameters.yml");
-            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, YamlPlan.PLANS_ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.PER_OBJECT.name());
-            // keywords seem to use PER_OBJECT by default?
+            // per default, PER_OBJECT is used on all objects?
         }
         // variant 2: simple, everything goes into main descriptor
-        if (1 == 1) {
+        if (variant == 2) {
             String mainFile = fragmentManager.descriptorYaml.getFragmentPath().toFile().getName();
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), mainFile);
@@ -104,6 +95,7 @@ public class LocalIDEState implements ExecutionDiversion {
         var automationPackageCollectionFactory = new AutomationPackageCollectionFactory(new Properties(), fragmentManager);
         CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(automationPackageCollectionFactory);
         this.currentAutomationPackageDirectory = apDir;
+        this.fileResolver.setUnprefixedRoot(apDir.toPath());
     }
 
     private void verifyAPDirectory(File apDir) throws Exception {
@@ -178,5 +170,9 @@ public class LocalIDEState implements ExecutionDiversion {
         String executionId = executionIdFuture.join();
         logger.info("Diverted executionId: {}", executionId);
         return executionId;
+    }
+
+    public void setFileResolver(FileResolver fileResolver) {
+        this.fileResolver = fileResolver;
     }
 }

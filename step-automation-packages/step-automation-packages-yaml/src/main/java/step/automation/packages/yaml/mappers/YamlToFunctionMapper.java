@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2020, exense GmbH
+ * Copyright (C) 2026, exense GmbH
  *
  * This file is part of STEP
  *
@@ -16,35 +16,30 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.automation.packages.model;
+package step.automation.packages.yaml.mappers;
 
 import step.automation.packages.StagingAutomationPackageContext;
-import step.core.yaml.NamedPatchableYamlModel;
-import step.core.yaml.PatchableYamlModelBase;
-import step.core.yaml.PatchingContext;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.functions.Function;
 
-public class YamlAutomationPackageKeyword extends PatchableYamlModelBase implements AutomationPackageKeyword, NamedPatchableYamlModel {
+@YamlToBusinessObjectMapping
+public class YamlToFunctionMapper implements YamlToBusinessObjectMapper<YamlAutomationPackageKeyword, Function> {
 
-    private final AbstractYamlFunction<?> yamlKeyword;
+    private final StagingAutomationPackageContext stagingContext;
 
-    public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword, PatchingContext patchingContext) {
-        super(patchingContext);
-        this.yamlKeyword = yamlKeyword;
-    }
-
-
-    public AbstractYamlFunction<?> getYamlKeyword() {
-        return yamlKeyword;
+    public YamlToFunctionMapper(StagingAutomationPackageContext stagingContext) {
+        this.stagingContext = stagingContext;
     }
 
     @Override
-    public Function prepareKeyword(StagingAutomationPackageContext context) {
-        return yamlKeyword.applyAutomationPackageContext(context);
+    public Function toBusinessObject(YamlAutomationPackageKeyword yamlKeyword) {
+        return yamlKeyword.prepareKeyword(stagingContext);
     }
 
     @Override
-    public String getName() {
-        return yamlKeyword.getName();
+    public String getCollectionName() {
+        return YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME;
     }
 }
