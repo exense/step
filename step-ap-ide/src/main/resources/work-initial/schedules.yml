@@ -1,7 +1,0 @@
-schedules:
-  - name: "firstSchedule"
-    cron: "0 15 10 ? * *"
-    cronExclusions:
-      - "0 0 9 25 * ?"
-      - "0 0 9 20 * ?"
-    planName: "Test Plan"

@@ -36,7 +36,7 @@ import step.plans.nl.RootArtefactType;
 import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.repositories.parser.StepsParser;
-import step.resources.LocalResourceManagerImpl;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +47,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -180,7 +185,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
     abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, AutomationPackageContent res) throws AutomationPackageReadingException;
 
-    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive) throws AutomationPackageReadingException {
+    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(T archive, ResourceManager resourceManager) throws AutomationPackageReadingException {
         AutomationPackageDescriptorReader reader = getOrCreateDescriptorReader();
         URL descriptorUrl = archive.getDescriptorYamlUrl();
         try (InputStream inputStream = descriptorUrl.openStream()) {
@@ -192,7 +197,9 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 AutomationPackageContent content = newContentInstance();
                 Set<AutomationPackageFragmentYaml> fragments = new HashSet<>();
                 fillAutomationPackageWithImportedFragments(content, descriptor, archive, fragments);
-                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(null, AutomationPackageOperationMode.LOCAL, new LocalResourceManagerImpl(descriptorPath.getParent().toFile()), archive, content, null, null, new HashMap<>());
+                AutomationPackage automationPackage = new AutomationPackage();
+                automationPackage.setStatus(AutomationPackageStatus.EDITING);
+                StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(), automationPackage, AutomationPackageOperationMode.LOCAL, resourceManager, archive, content, null, null, new HashMap<>());
                 return new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
             } catch (FileSystemNotFoundException | URISyntaxException e) {
                 throw new AutomationPackageReadingException("Failed to read automation package for editing. The most likely cause is that you were trying to load " +
@@ -206,9 +213,9 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     /**
      *
      * @param targetPackage Target Automation package content to be filled by fragment read entities
-     * @param fragment Fragment to read
-     * @param archive Automation package archive
-     * @param fragments Set of all automation package fragments collected during  recursive reading of fragments.
+     * @param fragment      Fragment to read
+     * @param archive       Automation package archive
+     * @param fragments     Set of all automation package fragments collected during  recursive reading of fragments.
      * @throws AutomationPackageReadingException Thrown upon errors when reading the fragment
      */
     private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments) throws AutomationPackageReadingException {
@@ -282,7 +289,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                             }
                             String urlFile = url.getFile();
                             if (urlFile != null && !urlFile.isEmpty()) {
-                                int fileNameBeginIndex = urlFile.lastIndexOf(ResourcePathMatchingResolver.getPathSeparator());
+                                int fileNameBeginIndex = urlFile.lastIndexOf(ResourcePathMatchingResolver.getCanonicalPathSeparator());
                                 if (fileNameBeginIndex > 0) {
                                     finalPlanName = urlFile.substring(fileNameBeginIndex + 1);
                                 } else {

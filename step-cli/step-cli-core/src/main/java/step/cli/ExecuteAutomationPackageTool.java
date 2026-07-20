@@ -28,22 +28,34 @@ import step.cli.reports.JUnitReportCreator;
 import step.cli.reports.ReportCreator;
 import step.client.executions.RemoteExecutionManager;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
+import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.core.plans.PlanFilter;
-import step.core.plans.filters.*;
+import step.core.plans.filters.PlanByExcludedCategoriesFilter;
+import step.core.plans.filters.PlanByExcludedNamesFilter;
+import step.core.plans.filters.PlanByIncludedCategoriesFilter;
+import step.core.plans.filters.PlanByIncludedNamesFilter;
+import step.core.plans.filters.PlanMultiFilter;
 import step.core.plans.runner.PlanRunnerResult;
+import step.ide.api.IDEExecutorDelegate;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParameters> {
+public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParameters> implements IDEExecutorDelegate {
 
     private static final Logger logger = LoggerFactory.getLogger(ExecuteAutomationPackageTool.class);
 
@@ -65,10 +77,30 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
     }
 
     public void execute() throws StepCliExecutionException {
-        executePackageOnStep();
+        executePackageOnStep(null);
     }
 
-    protected void executePackageOnStep() throws StepCliExecutionException {
+
+    @Override
+    public void executePackageAndFillExecutionId(CompletableFuture<String> singleExecutionIdFuture) throws Exception {
+        executePackageOnStep(singleExecutionIdFuture);
+    }
+
+    /**
+     * Executes the AP on Step, according to its parameterization.
+     * Depending on the configuration (parameters.getWaitForExecution),
+     * this can result in a blocking or non-blocking operation.
+     * <p>
+     * Regardless of the mode, if the parameter firstExecutionIdFuture is present,
+     * the given future will be completed immediately once the execution ID is known.
+     * This is used by the IDE execution diversion mechanism (which starts the execution
+     * in an asynchronous fashion, and uses the ID retrieved here).
+     *
+     * @param firstExecutionIdFuture execution ID future to complete once it's known.
+     * @throws StepCliExecutionException on error
+     */
+    // TODO SED-4429 extract and refactor this logic
+    protected void executePackageOnStep(CompletableFuture<String> firstExecutionIdFuture) throws StepCliExecutionException {
         parameters.validate();
 
         File outputFolder = null;
@@ -117,6 +149,10 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
                 Map<String, Execution> executionInfos = new HashMap<>();
                 logInfo("Execution(s) started in Step:", null);
                 for (String executionId : executionIds) {
+                    // This is ok, if present the future will be completed exactly once, with the first id.
+                    Optional.ofNullable(firstExecutionIdFuture).ifPresent(f -> {
+                        f.complete(executionId);
+                    });
                     Execution executionInfo = remoteExecutionManager.get(executionId);
                     executionInfos.put(executionId, executionInfo);
                     logInfo("- " + executionToString(executionId, executionInfo), null);

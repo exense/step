@@ -18,14 +18,20 @@
  ******************************************************************************/
 package step.core.collections;
 
+import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.plans.Plan;
 import step.functions.Function;
 import step.parameter.Parameter;
+import step.parameter.automation.AutomationPackageParameter;
+import step.plans.parser.yaml.YamlPlan;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,14 +50,12 @@ public class AutomationPackageCollectionFactory implements CollectionFactory {
     @SuppressWarnings("unchecked")
     public <T> Collection<T> getCollection(String name, Class<T> entityClass) {
         return (Collection<T>) collectionsByName.computeIfAbsent(name, (_name) -> {
-            if (Plan.class.isAssignableFrom(entityClass)) {
-                return new AutomationPackagePlanCollection(fragmentManager);
-            } else if (Parameter.class.isAssignableFrom(entityClass)) {
-                return new AutomationPackageParameterCollection(fragmentManager);
-            } else if (Function.class.isAssignableFrom(entityClass)) {
-                return new AutomationPackageFunctionCollection(fragmentManager);
+
+            if (!AbstractOrganizableObject.class.isAssignableFrom(entityClass)) {
+                return baseFactory.getCollection(name, entityClass);
             }
-            return baseFactory.getCollection(name, entityClass);
+
+            return new AutomationPackageCollection<>(fragmentManager, entityClass);
         });
     }
 

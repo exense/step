@@ -19,30 +19,23 @@
 package step.automation.packages.model;
 
 import step.automation.packages.StagingAutomationPackageContext;
-import step.core.yaml.NamedObjectPatchableYamlModel;
+import step.core.yaml.NamedPatchableYamlModel;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
 import step.functions.Function;
 
-public class YamlAutomationPackageKeyword extends PatchableYamlModelBase
-    implements AutomationPackageKeyword, NamedObjectPatchableYamlModel {
+public class YamlAutomationPackageKeyword extends PatchableYamlModelBase implements AutomationPackageKeyword, NamedPatchableYamlModel {
 
-    private AbstractYamlFunction<?> yamlKeyword;
+    private final AbstractYamlFunction<?> yamlKeyword;
 
-
-    public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword, PatchingContext context) {
-        super(context);
+    public YamlAutomationPackageKeyword(AbstractYamlFunction<?> yamlKeyword, PatchingContext patchingContext) {
+        super(patchingContext);
         this.yamlKeyword = yamlKeyword;
     }
-
 
 
     public AbstractYamlFunction<?> getYamlKeyword() {
         return yamlKeyword;
-    }
-
-    public void setYamlKeyword(AbstractYamlFunction<?> yamlKeyword) {
-        this.yamlKeyword = yamlKeyword;
     }
 
     @Override

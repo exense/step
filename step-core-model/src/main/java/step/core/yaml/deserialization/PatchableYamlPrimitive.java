@@ -1,12 +1,3 @@
-package step.core.yaml.deserialization;
-
-import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.core.JsonLocation;
-import step.core.yaml.PatchableYamlModelBase;
-import step.core.yaml.PatchingContext;
-
-import java.util.Objects;
-
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
  *
@@ -25,6 +16,19 @@ import java.util.Objects;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+package step.core.yaml.deserialization;
+
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.OptBoolean;
+import com.fasterxml.jackson.core.JsonLocation;
+import step.core.yaml.PatchableYamlModelBase;
+import step.core.yaml.PatchingContext;
+
+import java.util.Objects;
+
 public class PatchableYamlPrimitive<T> extends PatchableYamlModelBase {
     @JsonIgnore
     private T value;
@@ -52,6 +56,7 @@ public class PatchableYamlPrimitive<T> extends PatchableYamlModelBase {
 
     @Override
     public void onParsed(JsonLocation startLocation, JsonLocation endLocation) {
-        context.claimChunk(startLocation, startLocation, this);
+        // FIXME: Yes, we use startLocation twice here. This is a workaround for a known bug, see SED-4847
+        getPatchingContext().claimChunk(startLocation, startLocation, this);
     }
 }

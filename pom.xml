@@ -73,7 +73,6 @@
 
   <modules>
     <module>step-agent</module>
-    <module>step-ap-ide</module>
     <module>step-automation-packages</module>
     <module>step-cli</module>
     <module>step-commons</module>
@@ -84,6 +83,7 @@
     <module>step-core-model</module>
     <module>step-functions</module>
     <module>step-functions-plugins</module>
+    <module>step-ide-api</module>
     <module>step-ide</module>
     <module>step-json-schema</module>
     <module>step-libs-maven-client</module>

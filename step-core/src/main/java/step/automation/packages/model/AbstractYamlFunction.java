@@ -31,6 +31,7 @@ import step.jsonschema.JsonSchemaDefaultValueProvider;
 
 import java.lang.reflect.Field;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class AbstractYamlFunction<T extends Function> extends AbstractYamlModel implements AutomationPackageContextual<T> {
 
@@ -108,7 +109,14 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
 
     protected void fillDeclaredFields(T res, StagingAutomationPackageContext context) {
         res.addAttribute(AbstractOrganizableObject.NAME, this.getName());
+        res.setTokenSelectionCriteria(routing);
         copyFieldsToObject(res, true);
+    }
+
+    public void setDeclaredFieldsFromObject(T res) {
+        Optional.ofNullable(res.getAttribute(AbstractOrganizableObject.NAME)).ifPresent(this::setName);
+        routing = res.getTokenSelectionCriteria();
+        copyFieldsFromObject(res, true);
     }
 
     protected abstract T createFunctionInstance();

@@ -18,20 +18,27 @@
  ******************************************************************************/
 package step.attachments;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-
 import org.bson.types.ObjectId;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionFileHandle;
+
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 
 public class FileResolver {
 
     public static final String ATTACHMENT_PREFIX = "attachment:";
     public static final String RESOURCE_PREFIX = "resource:";
     public static final String RESOURCE_PATH_SEPARATOR = ":";
+
+    /**
+     * used for direct access to files relative to the given filesystem path
+     * when @{{@link FileResolver#resolve(String)} is called without any prefix
+     */
+    private Path unprefixedRoot = Path.of("");
 
     private final ResourceManager resourceManager;
 
@@ -44,6 +51,10 @@ public class FileResolver {
         return resourceManager;
     }
 
+    public void setUnprefixedRoot(Path pathRoot) {
+        unprefixedRoot = pathRoot;
+    }
+
     public File resolve(String path) {
         File file;
         if (path.startsWith(ATTACHMENT_PREFIX)) {
@@ -52,7 +63,7 @@ public class FileResolver {
         } else if (path.startsWith(RESOURCE_PREFIX)) {
             file = getResourceRevisionFileHandleForPath(path).getResourceFile();
         } else {
-            file = new File(path);
+            file = unprefixedRoot.resolve(Path.of(path)).toFile();
         }
         return file;
     }
@@ -141,7 +152,7 @@ public class FileResolver {
         return resourceRevisionFileHandle;
     }
 
-    public class FileHandle implements Closeable {
+    public static class FileHandle implements Closeable {
 
         protected final File file;
         protected final ResourceRevisionFileHandle resourceRevisionFileHandle;
