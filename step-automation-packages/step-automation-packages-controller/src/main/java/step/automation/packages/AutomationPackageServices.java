@@ -449,7 +449,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
     @Operation(description = "Creates or updates an automation package. Current clients set 'asyncDeployment' to true and receive an AsyncTaskStatus to poll; clients from a previous minor version omit it and receive the AutomationPackageUpdateResult synchronously.",
-        responses = {@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(anyOf = {AsyncTaskStatus.class, AutomationPackageUpdateResult.class})))})
+        responses = {@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(anyOf = {AsyncTaskStatusAutomationPackageUpdateResult.class, AutomationPackageUpdateResult.class})))})
     public Response createOrUpdateAutomationPackage(@FormDataParam("async") boolean async,
                                                     @FormDataParam("versionName") String apVersion,
                                                     @FormDataParam("forceRefreshOfSnapshots") boolean forceRefreshOfSnapshots,
@@ -525,8 +525,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     private AutomationPackageUpdateResult deployAutomationPackage(ParsedRequestParameters parsedRequestParameters, boolean async,
-                                                                 String apVersion, String activationExpression,
-                                                                 boolean forceRefreshOfSnapshots, boolean executeFunctionsLocally) {
+                                                                  String apVersion, String activationExpression,
+                                                                  boolean forceRefreshOfSnapshots, boolean executeFunctionsLocally) {
         AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
             .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
             .withVersionName(apVersion).withActivationExpression(activationExpression)
