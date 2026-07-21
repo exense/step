@@ -237,9 +237,9 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
     }
 
     protected RemoteExecutionManager createRemoteExecutionManager() {
-        RemoteExecutionManager remoteExecutionManager = new RemoteExecutionManager(getControllerCredentials());
-        addProjectHeaderToRemoteClient(remoteExecutionManager);
-        return remoteExecutionManager;
+        // Build from a tenant-aware configuration so the manager and every client it derives
+        // are scoped to the same tenant.
+        return new RemoteExecutionManager(getRemoteClientConfiguration());
     }
 
     protected IsolatedAutomationPackageExecutionParameters prepareExecutionParameters() throws StepCliExecutionException {
