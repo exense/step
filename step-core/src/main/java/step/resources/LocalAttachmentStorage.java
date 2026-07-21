@@ -104,4 +104,9 @@ public class LocalAttachmentStorage implements AttachmentStorage {
             logger.error("Error while cleaning up directory {}", rootDirectory.getAbsolutePath(), e);
         }
     }
+
+    @Override
+    public String toString() {
+        return "LocalAttachmentStorage [rootDirectory=" + rootDirectory + "]";
+    }
 }
