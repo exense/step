@@ -30,8 +30,10 @@ import org.glassfish.jersey.media.multipart.file.FileDataBodyPart;
 import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.client.model.AutomationPackageSource;
 import step.client.ControllerClientException;
+import step.controller.services.async.AsyncTaskStatus;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.client.AbstractRemoteClient;
+import step.client.RemoteClientConfiguration;
 import step.client.credentials.ControllerCredentials;
 
 import java.util.List;
@@ -41,6 +43,11 @@ import java.util.function.Supplier;
 
 public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient implements AutomationPackageClient {
 
+    /**
+     * Interval between two polls of the deployment task status.
+     */
+    private static final long DEPLOYMENT_POLL_INTERVAL_MS = 2000L;
+
     public RemoteAutomationPackageClientImpl() {
         super();
     }
@@ -49,19 +56,71 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
         super(credentials);
     }
 
+    public RemoteAutomationPackageClientImpl(RemoteClientConfiguration configuration) {
+        super(configuration);
+    }
+
     @Override
     public AutomationPackageUpdateResult createOrUpdateAutomationPackage(AutomationPackageSource automationPackageSource,
                                                                          AutomationPackageSource apLibrarySource,
                                                                          String versionName, String activationExpr,
                                                                          Map<String, String> plansAttributes, Map<String, String> functionsAttributes,
                                                                          Map<String, String> tokenSelectionCriteria, Boolean executeFunctionsLocally,
-                                                                         Boolean async, Boolean forceRefreshOfSnapshots) throws AutomationPackageClientException {
-        return uploadPackage(automationPackageSource, apLibrarySource, versionName, activationExpr,
+                                                                         Boolean async, Boolean forceRefreshOfSnapshots,
+                                                                         long deploymentTimeoutMs) throws AutomationPackageClientException {
+        // The deployment endpoint is asynchronous: it immediately returns an AsyncTaskStatus that we poll until the
+        // deployment (which may wait for running executions to release the package) reaches a final state.
+        AsyncTaskStatus<AutomationPackageUpdateResult> initialStatus = uploadPackage(automationPackageSource, apLibrarySource, versionName, activationExpr,
             plansAttributes, functionsAttributes, tokenSelectionCriteria, executeFunctionsLocally, async, forceRefreshOfSnapshots,
             multiPartEntity -> {
                 Invocation.Builder builder = requestBuilder("/rest/automation-packages");
-                return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, AutomationPackageUpdateResult.class));
+                return RemoteAutomationPackageClientImpl.this.executeRequest(() -> builder.put(multiPartEntity, new GenericType<AsyncTaskStatus<AutomationPackageUpdateResult>>() {
+                }));
             });
+        return waitForDeploymentTask(initialStatus, deploymentTimeoutMs);
+    }
+
+    /**
+     * Polls the deployment task status until it becomes ready, then returns its result or throws the server-side error.
+     *
+     * @param deploymentTimeoutMs max time to wait for completion; a value &lt;= 0 means waiting indefinitely
+     */
+    private AutomationPackageUpdateResult waitForDeploymentTask(AsyncTaskStatus<AutomationPackageUpdateResult> initialStatus, long deploymentTimeoutMs) throws AutomationPackageClientException {
+        if (initialStatus == null || initialStatus.getId() == null) {
+            throw new AutomationPackageClientException("Unexpected response from Step. The deployment task id is null. Please check the controller logs.");
+        }
+
+        // A non-positive timeout means "wait indefinitely". We compare elapsed time against the timeout rather than
+        // computing an absolute deadline, which avoids any overflow when very large timeout values are passed.
+        long startTime = System.currentTimeMillis();
+        AsyncTaskStatus<AutomationPackageUpdateResult> status = initialStatus;
+        while (!status.isReady()) {
+            if (deploymentTimeoutMs > 0 && System.currentTimeMillis() - startTime > deploymentTimeoutMs) {
+                throw new AutomationPackageClientException("Timeout while waiting for the automation package deployment to complete after "
+                    + (deploymentTimeoutMs / 1000) + "s. The deployment may still be running on the server (task id: " + initialStatus.getId() + ").");
+            }
+            try {
+                Thread.sleep(DEPLOYMENT_POLL_INTERVAL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new AutomationPackageClientException("Interrupted while waiting for the automation package deployment to complete.");
+            }
+            status = getAsyncTaskStatus(initialStatus.getId());
+            if (status == null) {
+                throw new AutomationPackageClientException("The deployment task (" + initialStatus.getId() + ") could not be found on the server anymore. Please check the controller logs.");
+            }
+        }
+
+        if (status.getError() != null) {
+            throw new AutomationPackageClientException(status.getError());
+        }
+        return status.getResult();
+    }
+
+    private AsyncTaskStatus<AutomationPackageUpdateResult> getAsyncTaskStatus(String taskId) throws AutomationPackageClientException {
+        Invocation.Builder builder = requestBuilder("/rest/async/" + taskId);
+        return executeAutomationPackageClientRequest(() -> builder.get(new GenericType<AsyncTaskStatus<AutomationPackageUpdateResult>>() {
+        }));
     }
 
     @Override
@@ -118,6 +177,10 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
 
         addStringBodyPart("versionName", versionName, multiPart);
         addStringBodyPart("activationExpr", activationExpr, multiPart);
+        // Signal to the server that this client supports the asynchronous deployment protocol (i.e. it will poll the
+        // returned async task). Servers from a previous minor version simply ignore this unknown form part. Omitting
+        // it (as previous-minor clients do) makes the server fall back to the legacy synchronous response.
+        addBooleanBodyPart("asyncDeployment", true, multiPart);
         addBooleanBodyPart("async", async, multiPart);
         addBooleanBodyPart("forceRefreshOfSnapshots", forceRefreshOfSnapshots, multiPart);
         addMapBodyPart("plansAttributes", plansAttributes, multiPart);

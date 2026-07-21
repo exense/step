@@ -1,6 +1,10 @@
 package step.plugins.timeseries;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.core.execution.ExecutionContext;
+import step.core.execution.model.ExecutionNotice;
+import step.core.execution.notices.ExecutionNoticeManager;
 import step.core.metrics.InstrumentType;
 import step.core.metrics.MetricSample;
 import step.core.timeseries.TimeSeries;
@@ -15,6 +19,7 @@ import step.core.metrics.MetricSamplesHandler;
 import step.core.metrics.ExecutionMetricSample;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static step.core.metrics.StepMetricSample.METRIC_TYPE;
 import static step.core.metrics.MetricsConstants.INSTRUMENT_TYPE_ATTRIBUTE;
@@ -26,10 +31,75 @@ import static step.core.metrics.MetricsControllerPlugin.THREAD_GROUP;
  */
 public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(TimeSeriesMetricSamplesHandler.class);
+
+    /**
+     * Static value substituted for label values dropped once a label exceeds its unique-value quota.
+     */
+    public static final String QUOTA_EXCEEDED_VALUE = "values dismissed due to quota exceeded";
+
+    /**
+     * Id of the execution notice type raised when a label's unique-value quota is exceeded.
+     */
+    public static final String CARDINALITY_NOTICE_TYPE_ID = "timeseries.label-cardinality-quota-exceeded";
+
+    /**
+     * Id of the execution notice type raised when a metric exceeds its quota of distinct custom label names.
+     */
+    public static final String CARDINALITY_LABEL_COUNT_NOTICE_TYPE_ID = "timeseries.label-count-quota-exceeded";
+
     private final TimeSeries timeSeries;
 
     private final Set<String> handledAttributes;
     private final Set<String> excludedAttributes;
+
+    /**
+     * Maximum number of unique values tolerated per (execution, metric name, label name) before new
+     * values are masked with {@link #QUOTA_EXCEEDED_VALUE}. {@code < 0} disables the safeguard; {@code 0}
+     * is the strictest setting (every custom value is masked to the single placeholder).
+     */
+    private final int maxUniqueLabelValues;
+
+    /**
+     * Maximum number of distinct custom label names (keys) tolerated per (execution, metric name) before
+     * further new label names are dropped from the ingested bucket. This bounds the second cardinality
+     * axis: a developer using a unique id as the label <em>name</em> (rather than value) would otherwise
+     * create an unbounded number of time-series dimensions. {@code < 0} disables the safeguard; {@code 0}
+     * is the strictest setting (all custom labels are dropped).
+     */
+    private final int maxLabelsPerMetric;
+
+    /**
+     * In-memory cardinality tracking, bounded to the lifecycle of an execution and cleaned up in
+     * {@link #afterExecutionEnd(ExecutionContext)}:
+     * {@code executionId -> metricName -> labelName -> set of observed values}.
+     */
+    private final ConcurrentHashMap<String, ConcurrentHashMap<String, ConcurrentHashMap<String, Set<String>>>> labelValueTracking = new ConcurrentHashMap<>();
+
+    /**
+     * In-memory tracking of the distinct custom label names admitted per (execution, metric name), used to
+     * enforce {@link #maxLabelsPerMetric}. Bounded to the lifecycle of an execution and cleaned up in
+     * {@link #afterExecutionEnd(ExecutionContext)}: {@code executionId -> metricName -> set of admitted label names}.
+     */
+    private final ConcurrentHashMap<String, ConcurrentHashMap<String, Set<String>>> labelNameTracking = new ConcurrentHashMap<>();
+
+    /**
+     * Tracks the {@code metricName + '\0' + labelName} keys for which a value-quota warning has already been
+     * raised, per execution, so the user is notified only once per label.
+     */
+    private final ConcurrentHashMap<String, Set<String>> warnedLabels = new ConcurrentHashMap<>();
+
+    /**
+     * Tracks the metric names for which a label-count-quota warning has already been raised, per execution,
+     * so the user is notified only once per metric.
+     */
+    private final ConcurrentHashMap<String, Set<String>> warnedMetricLabelCount = new ConcurrentHashMap<>();
+
+    /**
+     * Used to raise an execution notice the first time a label exceeds its quota. May be {@code null}
+     * for re-ingestion/rebuild and test paths, in which case the quota breach is only logged.
+     */
+    private final ExecutionNoticeManager executionNoticeManager;
 
     /**
      * @param timeSeries         the time series to ingest metric samples into
@@ -48,9 +118,48 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
      *                           supported and throws {@link IllegalArgumentException}.
      */
     public TimeSeriesMetricSamplesHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes) {
+        // Cardinality safeguards disabled by default: used by re-ingestion/rebuild paths (raw data was
+        // already filtered at first ingestion) and by tests that don't exercise the quota.
+        this(timeSeries, handledAttributes, excludedAttributes, -1, -1, null);
+    }
+
+    /**
+     * @param maxUniqueLabelValues maximum number of unique values per (execution, metric name, label name)
+     *                             before new user-defined label values are masked. {@code < 0} disables the
+     *                             safeguard; {@code 0} masks every custom value.
+     */
+    public TimeSeriesMetricSamplesHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes, int maxUniqueLabelValues) {
+        this(timeSeries, handledAttributes, excludedAttributes, maxUniqueLabelValues, -1, null);
+    }
+
+    /**
+     * @param maxUniqueLabelValues   maximum number of unique values per (execution, metric name, label name)
+     *                               before new user-defined label values are masked. {@code < 0} disables the
+     *                               safeguard; {@code 0} masks every custom value.
+     * @param executionNoticeManager manager used to raise an execution notice the first time a label exceeds
+     *                               its quota; may be {@code null} (the breach is then only logged).
+     */
+    public TimeSeriesMetricSamplesHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes, int maxUniqueLabelValues, ExecutionNoticeManager executionNoticeManager) {
+        this(timeSeries, handledAttributes, excludedAttributes, maxUniqueLabelValues, -1, executionNoticeManager);
+    }
+
+    /**
+     * @param maxUniqueLabelValues   maximum number of unique values per (execution, metric name, label name)
+     *                               before new user-defined label values are masked. {@code < 0} disables the
+     *                               safeguard; {@code 0} masks every custom value.
+     * @param maxLabelsPerMetric     maximum number of distinct custom label names (keys) per (execution, metric name)
+     *                               before further new label names are dropped from the ingested bucket.
+     *                               {@code < 0} disables the safeguard; {@code 0} drops all custom labels.
+     * @param executionNoticeManager manager used to raise an execution notice the first time a quota is exceeded;
+     *                               may be {@code null} (the breach is then only logged).
+     */
+    public TimeSeriesMetricSamplesHandler(TimeSeries timeSeries, Set<String> handledAttributes, Set<String> excludedAttributes, int maxUniqueLabelValues, int maxLabelsPerMetric, ExecutionNoticeManager executionNoticeManager) {
         this.timeSeries = timeSeries;
         this.handledAttributes = Objects.requireNonNull(handledAttributes);
         this.excludedAttributes = Objects.requireNonNull(excludedAttributes);
+        this.maxUniqueLabelValues = maxUniqueLabelValues;
+        this.maxLabelsPerMetric = maxLabelsPerMetric;
+        this.executionNoticeManager = executionNoticeManager;
         if (!handledAttributes.isEmpty() && !excludedAttributes.isEmpty()) {
             throw new IllegalArgumentException("Either a set of handled attributes or a set of excluded attributes is required, setting both is not supported.");
         }
@@ -58,21 +167,28 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
     }
 
     @Override
-    public void processMeasurements(List<Measurement> measurements) {
-        measurements.forEach(this::processMeasurement);
+    public void processMeasurements(ExecutionContext executionContext, List<Measurement> measurements) {
+        measurements.forEach(m -> processMeasurement(executionContext, m));
     }
 
+    /**
+     * Re-ingestion entry point (no execution context, no cardinality safeguard).
+     */
     public void processMeasurement(Measurement measurement) {
+        processMeasurement(null, measurement);
+    }
+
+    public void processMeasurement(ExecutionContext executionContext, Measurement measurement) {
         long begin = measurement.getBegin();
         long value = measurement.getValue();
 
-        BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
+        BucketAttributes bucketAttributes = measurementToBucketAttributes(executionContext, measurement);
         bucketAttributes.put(METRIC_TYPE, RESPONSE_TIME);
         TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
         ingestionPipeline.ingestPoint(bucketAttributes, begin, value);
     }
 
-    private BucketAttributes measurementToBucketAttributes(Measurement measurement) {
+    private BucketAttributes measurementToBucketAttributes(ExecutionContext executionContext, Measurement measurement) {
         Map<String, Object> bucketAttributesMap = new HashMap<>();
         if (handledAttributes.isEmpty()) {
             bucketAttributesMap.putAll(measurement);
@@ -84,12 +200,15 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
                 }
             });
         }
+        // Apply the cardinality safeguard to the keyword-author-defined custom data labels only.
+        applyLabelQuota(executionContext, measurement.getExecId(), measurement.getName(),
+            measurement.getCustomMetricLabelKeys(), bucketAttributesMap);
         return new BucketAttributes(bucketAttributesMap);
     }
 
     private void processThreadGroupAsMeasurement(Measurement measurement) {
         if (measurement != null) {
-            BucketAttributes bucketAttributes = measurementToBucketAttributes(measurement);
+            BucketAttributes bucketAttributes = measurementToBucketAttributes(null, measurement);
             bucketAttributes.put(METRIC_TYPE, measurement.getType());
             bucketAttributes.put(INSTRUMENT_TYPE_ATTRIBUTE.getName(), InstrumentType.GAUGE.toLowerCase());
             TimeSeriesIngestionPipeline ingestionPipeline = this.timeSeries.getIngestionPipeline();
@@ -111,19 +230,27 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
      * full distribution for percentile queries. Empty intervals (count == 0) are skipped.
      */
     @Override
-    public void processMetrics(List<ExecutionMetricSample> metrics) {
-        metrics.forEach(this::processMetric);
+    public void processMetrics(ExecutionContext executionContext, List<ExecutionMetricSample> metrics) {
+        metrics.forEach(mm -> processMetric(executionContext, mm));
     }
 
     @Override
     public void processControllerMetrics(List<ControllerMetricSample> metrics) {
-        metrics.forEach(this::processMetric);
+        // Controller metrics are not bound to an execution and carry no user-defined labels.
+        metrics.forEach(mm -> processMetric(null, mm));
     }
 
+    /**
+     * Re-ingestion entry point (no execution context, no cardinality safeguard).
+     */
     public void processMetric(StepMetricSample mm) {
+        processMetric(null, mm);
+    }
+
+    public void processMetric(ExecutionContext executionContext, StepMetricSample mm) {
         MetricSample sample = mm.sample;
         long begin = sample.getSampleTime();
-        BucketAttributes attributes = metricSampleToBucketAttributes(mm);
+        BucketAttributes attributes = metricSampleToBucketAttributes(executionContext, mm);
         String instrumentType = sample.getType().toLowerCase();
         attributes.put(METRIC_TYPE, mm.metricType != null ? mm.metricType : instrumentType);
         attributes.put(INSTRUMENT_TYPE_ATTRIBUTE.getName(), instrumentType);
@@ -131,7 +258,7 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
         ingestionPipeline.ingestBucket(buildMetricBucket(attributes, begin, sample));
     }
 
-    private BucketAttributes metricSampleToBucketAttributes(StepMetricSample mm) {
+    private BucketAttributes metricSampleToBucketAttributes(ExecutionContext executionContext, StepMetricSample mm) {
         Map<String, Object> attributesMap = new HashMap<>();
         Map<String, String> effectiveLabels = mm.getEffectiveLabels();
         if (handledAttributes.isEmpty()) {
@@ -146,7 +273,146 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
         }
         // Metric name always present under "name" for consistent time-series grouping
         attributesMap.put("name", mm.sample.getName());
+        // Apply the cardinality safeguard to the keyword-developer-defined labels only (sample.getLabels()),
+        // not to the context labels merged in by getEffectiveLabels(). Only execution metrics are tracked.
+        if (mm instanceof ExecutionMetricSample) {
+            ExecutionMetricSample ems = (ExecutionMetricSample) mm;
+            Set<String> userLabelKeys = (mm.sample.getLabels() != null) ? mm.sample.getLabels().keySet() : null;
+            applyLabelQuota(executionContext, ems.eId, mm.sample.getName(), userLabelKeys, attributesMap);
+        }
         return new BucketAttributes(attributesMap);
+    }
+
+    /**
+     * Enforces the per-execution cardinality safeguards on the given user-defined label keys, mutating
+     * {@code attributes} in place along two axes:
+     * <ul>
+     *   <li>label name count: over-quota distinct label names per metric are dropped entirely;</li>
+     *   <li>label value count: values beyond the quota are replaced with {@link #QUOTA_EXCEEDED_VALUE}.</li>
+     * </ul>
+     * No-op when both safeguards are disabled, when there is no execution scope, or when there are no
+     * user-defined labels to police.
+     */
+    private void applyLabelQuota(ExecutionContext executionContext, String execId, String metricName,
+                                 Set<String> userLabelKeys, Map<String, Object> attributes) {
+        if ((maxUniqueLabelValues < 0 && maxLabelsPerMetric < 0) || execId == null || execId.isEmpty()
+            || userLabelKeys == null || userLabelKeys.isEmpty()) {
+            return;
+        }
+        String name = (metricName != null) ? metricName : "";
+        for (String labelName : userLabelKeys) {
+            Object value = attributes.get(labelName);
+            if (value == null) {
+                continue;
+            }
+            // First axis: bound the number of distinct label names per metric. Over-quota names are dropped
+            // entirely (a new name is a new time-series dimension, for which there is no meaningful placeholder).
+            if (!admitLabelName(executionContext, execId, name, labelName)) {
+                attributes.remove(labelName);
+                continue;
+            }
+            // Second axis: bound the number of unique values for an admitted label name.
+            if (maxUniqueLabelValues >= 0) {
+                String masked = maskIfOverQuota(executionContext, execId, name, labelName, String.valueOf(value));
+                attributes.put(labelName, masked);
+            }
+        }
+    }
+
+    /**
+     * Atomically records the labelName for the given (execution, metric) and decides whether it is admitted:
+     * <ul>
+     *   <li>safeguard disabled, or already-admitted name, or new name while under quota → admitted (and recorded);</li>
+     *   <li>new name once the quota is reached → rejected, and a warning is raised once per metric.</li>
+     * </ul>
+     */
+    private boolean admitLabelName(ExecutionContext executionContext, String execId, String metricName, String labelName) {
+        if (maxLabelsPerMetric < 0) {
+            return true;
+        }
+        Set<String> admitted = labelNameTracking
+            .computeIfAbsent(execId, k -> new ConcurrentHashMap<>())
+            .computeIfAbsent(metricName, k -> ConcurrentHashMap.newKeySet());
+        if (admitted.contains(labelName)) {
+            return true;
+        }
+        // Serialize the size-check-and-add so concurrent live ingestion can't overshoot the quota.
+        synchronized (admitted) {
+            if (admitted.contains(labelName)) {
+                return true;
+            }
+            if (admitted.size() < maxLabelsPerMetric) {
+                admitted.add(labelName);
+                return true;
+            }
+        }
+        raiseLabelCountWarningOnce(executionContext, execId, metricName);
+        return false;
+    }
+
+    /**
+     * Atomically records the labelValue for the given (execution, metric, label) tuple and decides whether it
+     * passes through or must be masked:
+     * <ul>
+     *   <li>known labelValue, or new labelValue while under quota → returned unchanged (and recorded);</li>
+     *   <li>new labelValue once the quota is reached → returned as {@link #QUOTA_EXCEEDED_VALUE}, and a warning
+     *       is raised once per label.</li>
+     * </ul>
+     */
+    private String maskIfOverQuota(ExecutionContext executionContext, String execId, String metricName,
+                                   String labelName, String labelValue) {
+        Set<String> labelValues = labelValueTracking
+            .computeIfAbsent(execId, k -> new ConcurrentHashMap<>())
+            .computeIfAbsent(metricName, k -> new ConcurrentHashMap<>())
+            .computeIfAbsent(labelName, k -> ConcurrentHashMap.newKeySet());
+        if (labelValues.contains(labelValue)) {
+            return labelValue;
+        }
+        // Serialize the size-check-and-add so concurrent live ingestion can't overshoot the quota.
+        synchronized (labelValues) {
+            if (labelValues.contains(labelValue)) {
+                return labelValue;
+            }
+            if (labelValues.size() < maxUniqueLabelValues) {
+                labelValues.add(labelValue);
+                return labelValue;
+            }
+        }
+        raiseQuotaWarningOnce(executionContext, execId, metricName, labelName);
+        return QUOTA_EXCEEDED_VALUE;
+    }
+
+    private void raiseQuotaWarningOnce(ExecutionContext executionContext, String execId, String metricName, String labelName) {
+        Set<String> warned = warnedLabels.computeIfAbsent(execId, k -> ConcurrentHashMap.newKeySet());
+        if (!warned.add(metricName + '\0' + labelName)) {
+            return;
+        }
+        logger.warn("Execution {}: high cardinality detected on custom metric label [{}] for metric [{}]. " +
+                "Unique values exceeding the quota of {} have been dismissed (replaced with \"{}\").",
+            execId, labelName, metricName, maxUniqueLabelValues, QUOTA_EXCEEDED_VALUE);
+        if (executionNoticeManager != null) {
+            ExecutionNotice notice = new ExecutionNotice(CARDINALITY_NOTICE_TYPE_ID, Map.of(
+                "labelName", labelName,
+                "metricName", metricName,
+                "quota", String.valueOf(maxUniqueLabelValues)));
+            executionNoticeManager.raiseNotice(executionContext, notice);
+        }
+    }
+
+    private void raiseLabelCountWarningOnce(ExecutionContext executionContext, String execId, String metricName) {
+        Set<String> warned = warnedMetricLabelCount.computeIfAbsent(execId, k -> ConcurrentHashMap.newKeySet());
+        if (!warned.add(metricName)) {
+            return;
+        }
+        logger.warn("Execution {}: high cardinality detected on metric [{}]. The number of distinct custom labels " +
+                "exceeded the quota of {}; additional labels have been dropped.",
+            execId, metricName, maxLabelsPerMetric);
+        if (executionNoticeManager != null) {
+            ExecutionNotice notice = new ExecutionNotice(CARDINALITY_LABEL_COUNT_NOTICE_TYPE_ID, Map.of(
+                "metricName", metricName,
+                "quota", String.valueOf(maxLabelsPerMetric)));
+            executionNoticeManager.raiseNotice(executionContext, notice);
+        }
     }
 
     private static Bucket buildMetricBucket(BucketAttributes attributes, long begin, MetricSample sample) {
@@ -191,5 +457,17 @@ public class TimeSeriesMetricSamplesHandler implements MetricSamplesHandler {
 
     public void flush() {
         this.timeSeries.getIngestionPipeline().flush();
+    }
+
+    @Override
+    public void afterExecutionEnd(ExecutionContext context) {
+        // Explicitly release the per-execution cardinality tracking state as soon as the execution ends.
+        if (context != null) {
+            String executionId = context.getExecutionId();
+            labelValueTracking.remove(executionId);
+            labelNameTracking.remove(executionId);
+            warnedLabels.remove(executionId);
+            warnedMetricLabelCount.remove(executionId);
+        }
     }
 }

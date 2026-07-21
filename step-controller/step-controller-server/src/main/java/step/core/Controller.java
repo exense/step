@@ -47,6 +47,7 @@ import step.core.entities.EntityConstants;
 import step.core.entities.EntityManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessorImpl;
+import step.core.execution.notices.ExecutionNoticeManager;
 import step.core.metrics.MetricTypeRegistry;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessorImpl;
@@ -78,6 +79,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class Controller {
 
     public static final Version VERSION = Constants.STEP_VERSION;
+    public static final String EXECUTION_NOTICES_MAX_PER_EXECUTION = "execution.notices.max-per-execution";
 
     public static String USER_ACTIVITY_MAP_KEY = "userActivityMap";
     public static final String USER = "user";
@@ -212,6 +214,9 @@ public class Controller {
 
         MetricTypeAccessor metricTypeAccessor = new MetricTypeAccessor(context.getCollectionFactory().getCollection(EntityConstants.metricTypes, MetricType.class));
         context.put(MetricTypeRegistry.class, new MetricTypeRegistry(metricTypeAccessor));
+
+        int maxNoticesPerExecution = context.getConfiguration().getPropertyAsInteger(EXECUTION_NOTICES_MAX_PER_EXECUTION, 100);
+        context.put(ExecutionNoticeManager.class, new ExecutionNoticeManager(maxNoticesPerExecution));
 
         createOrUpdateIndexes();
 

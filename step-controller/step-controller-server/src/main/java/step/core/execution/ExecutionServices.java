@@ -53,6 +53,9 @@ import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.ExecutionAccessorImpl;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.execution.notices.ExecutionNoticeManager;
+import step.core.execution.notices.ExecutionOverview;
+import step.core.execution.notices.ResolvedExecutionNotice;
 import step.core.repositories.RepositoryObjectReference;
 import step.framework.server.Session;
 import step.framework.server.security.Secured;
@@ -83,6 +86,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     protected ExecutionAccessor executionAccessor;
     private TableService tableService;
     private ExecutionDiversion executionDiversion;
+    private ExecutionNoticeManager executionNoticeManager;
 
     @PostConstruct
     public void init() throws Exception {
@@ -91,6 +95,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
         tableService = getContext().require(TableService.class);
         // usually null, but IDE diverts executions
         executionDiversion = getContext().get(ExecutionDiversion.class);
+        executionNoticeManager = getContext().require(ExecutionNoticeManager.class);
     }
 
     @Operation(description = "Starts an execution with the given parameters.")
@@ -144,6 +149,25 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     @Secured(right = "execution-read")
     public Execution getExecutionById(@PathParam("id") String id) {
         return executionAccessor.get(id);
+    }
+
+    @Operation(description = "Returns the resolved execution notices for the given execution id.")
+    @GET
+    @Path("/{id}/notices")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "execution-read")
+    public List<ResolvedExecutionNotice> getExecutionNotices(@PathParam("id") String id) {
+        return executionNoticeManager.resolve(executionAccessor.get(id));
+    }
+
+    @Operation(description = "Returns the execution overview (the execution enriched with its resolved notices) for the given execution id.")
+    @GET
+    @Path("/{id}/overview")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "execution-read")
+    public ExecutionOverview getExecutionOverview(@PathParam("id") String id) {
+        Execution execution = executionAccessor.get(id);
+        return new ExecutionOverview(execution, executionNoticeManager.resolve(execution));
     }
 
     @Operation(description = "Stops the execution with the given execution id.")

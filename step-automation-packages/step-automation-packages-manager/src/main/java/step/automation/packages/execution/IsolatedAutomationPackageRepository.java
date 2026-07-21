@@ -56,6 +56,13 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
     public static final Logger log = LoggerFactory.getLogger(IsolatedAutomationPackageRepository.class);
     public static final String CONTEXT_ID_CUSTOM_FIELD = "contextId";
     public static final String LAST_EXECUTION_TIME_CUSTOM_FIELD = "lastExecutionTime";
+    public static final Set<String> CANONICAL_REPOSITORY_PARAMETER_KEYS = Set.of(RepositoryWithAutomationPackageSupport.AP_NAME,
+        ArtifactRepositoryConstants.PARAM_INCLUDE_PLANS,
+        ArtifactRepositoryConstants.PARAM_EXCLUDE_PLANS,
+        ArtifactRepositoryConstants.PARAM_INCLUDE_CATEGORIES,
+        ArtifactRepositoryConstants.PARAM_EXCLUDE_CATEGORIES,
+        ArtifactRepositoryConstants.PARAM_WRAP_PLANS_INTO_TEST_SET,
+        ArtifactRepositoryConstants.PARAM_ROOT_TYPE);
 
     private final Supplier<String> ttlValueSupplier;
     private final Path mavenCachePath;
@@ -66,7 +73,7 @@ public class IsolatedAutomationPackageRepository extends RepositoryWithAutomatio
                                                   FunctionAccessor functionAccessor,
                                                   Supplier<String> ttlValueSupplier,
                                                   Path mavenCachePath) {
-        super(Set.of(REPOSITORY_PARAM_CONTEXTID), manager, functionTypeRegistry, functionAccessor, resourceManager);
+        super(CANONICAL_REPOSITORY_PARAMETER_KEYS, manager, functionTypeRegistry, functionAccessor, resourceManager);
         this.ttlValueSupplier = ttlValueSupplier;
         this.mavenCachePath = mavenCachePath;
     }

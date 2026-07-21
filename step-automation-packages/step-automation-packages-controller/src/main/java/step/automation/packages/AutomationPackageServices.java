@@ -23,6 +23,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
@@ -31,6 +35,8 @@ import jakarta.ws.rs.core.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -55,7 +61,10 @@ import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -64,6 +73,8 @@ import java.util.Map;
 @Path("/automation-packages")
 @Tag(name = "Automation packages")
 public class AutomationPackageServices extends AbstractStepAsyncServices {
+
+    private static final Logger logger = LoggerFactory.getLogger(AutomationPackageServices.class);
 
     public static final String PLANS_ATTRIBUTES = "plansAttributes";
     public static final String FUNCTIONS_ATTRIBUTES = "functionsAttributes";
@@ -416,10 +427,29 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
     }
 
+    /**
+     * Creates or updates an automation package.
+     * <p>
+     * By default (when {@code asyncDeployment} is {@code true}, as sent by current clients) the deployment is
+     * processed asynchronously: the uploaded content is buffered on the request thread and the actual deployment is
+     * then scheduled on the {@link step.controller.services.async.AsyncTaskManager}. This prevents the REST call from
+     * timing out while the deployment waits for running executions to release the package (the locking mechanism still
+     * applies, it just runs inside the background task now). The returned {@link AsyncTaskStatus} is meant to be polled
+     * by the client until it becomes ready, at which point it carries either the {@link AutomationPackageUpdateResult}
+     * or the server-side error message.
+     * <p>
+     * When {@code asyncDeployment} is {@code false} - which is the case for CLIs and Maven plugins from a previous minor
+     * version that do not know how to poll the async task - the deployment is processed synchronously on the request
+     * thread and the {@link AutomationPackageUpdateResult} is returned directly. This preserves the pre-async wire
+     * contract so that those older clients keep working against this server (they retain the original read-timeout
+     * limitation, which is the behavior they had against a previous-minor server).
+     */
     @PUT
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-write")
+    @Operation(description = "Creates or updates an automation package. Current clients set 'asyncDeployment' to true and receive an AsyncTaskStatus to poll; clients from a previous minor version omit it and receive the AutomationPackageUpdateResult synchronously.",
+        responses = {@ApiResponse(responseCode = "200", content = @Content(schema = @Schema(anyOf = {AsyncTaskStatusAutomationPackageUpdateResult.class, AutomationPackageUpdateResult.class})))})
     public Response createOrUpdateAutomationPackage(@FormDataParam("async") boolean async,
                                                     @FormDataParam("versionName") String apVersion,
                                                     @FormDataParam("forceRefreshOfSnapshots") boolean forceRefreshOfSnapshots,
@@ -436,32 +466,119 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                                                     @FormDataParam(PLANS_ATTRIBUTES) String plansAttributesAsString,
                                                     @FormDataParam(FUNCTIONS_ATTRIBUTES) String functionsAttributesAsString,
                                                     @FormDataParam(TOKEN_SELECTION_CRITERIA) String tokenSelectionCriteriaAsString,
-                                                    @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally) {
+                                                    @FormDataParam(EXECUTE_FUNCTIONS_LOCALLY) boolean executeFunctionsLocally,
+                                                    @DefaultValue("false") @FormDataParam("asyncDeployment") boolean asyncDeployment) {
+        // In the asynchronous case, the uploaded streams have to be buffered into temp files *on the request thread*.
+        // This is required because the multipart input streams are bound to the HTTP request and would be closed by the
+        // time the background task reads them.
+        // The buffered temp files are owned by the scheduled task (which cleans them up in its own finally block);
+        // until the task has been successfully scheduled we are responsible for cleaning them up ourselves. The
+        // 'taskScheduled' flag together with the finally block guarantees this happens for any failure on the request
+        // thread - including unexpected runtime exceptions and a failure while scheduling the task itself.
+        final List<InputStreamToTempFileDownloader.TempFile> tempFiles = new ArrayList<>();
+        final List<AutomationPackageFileSource> sources = new ArrayList<>();
+        boolean taskScheduled = false;
         try {
-            ParsedRequestParameters parsedRequestParameters = getParsedRequestParameters(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
+            final ParsedRequestParameters parsedRequestParameters = getParsedRequestParameters(uploadedInputStream, fileDetail, apMavenSnippet, apLibraryInputStream,
                 apLibraryFileDetail, apLibraryMavenSnippet, apResourceId, apLibraryResourceId, managedLibraryName,
                 plansAttributesAsString, functionsAttributesAsString, tokenSelectionCriteriaAsString);
+            addIfNotNull(sources, parsedRequestParameters.apFileSource);
+            addIfNotNull(sources, parsedRequestParameters.apLibrarySource);
 
-            AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
-                .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
-                .withVersionName(apVersion).withActivationExpression(activationExpression)
-                .withAsync(async).withForceRefreshOfSnapshots(forceRefreshOfSnapshots)
-                .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
-                .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
-                .build();
-            AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
-            auditLog("create-or-update", result.getId());
-            Response.ResponseBuilder responseBuilder;
-            if (result.getStatus() == AutomationPackageUpdateStatus.CREATED) {
-                responseBuilder = Response.status(Response.Status.CREATED);
-            } else {
-                responseBuilder = Response.status(Response.Status.OK);
+            if (!asyncDeployment) {
+                // Legacy synchronous path for clients that cannot poll the async task: run the deployment inline (the
+                // multipart streams are still open on the request thread, so no buffering is needed) and return the
+                // result directly. The 'finally' below cleans up since taskScheduled stays false.
+                AutomationPackageUpdateResult result = deployAutomationPackage(parsedRequestParameters, async, apVersion,
+                    activationExpression, forceRefreshOfSnapshots, executeFunctionsLocally);
+                return Response.ok(result).build();
             }
-            return responseBuilder.entity(result).build();
-        } catch (AutomationPackageAccessException ex) {
-            throw new ControllerServiceException(HttpStatus.SC_FORBIDDEN, ex.getMessage());
+
+            addIfNotNull(tempFiles, bufferUploadedStream(parsedRequestParameters.apFileSource));
+            addIfNotNull(tempFiles, bufferUploadedStream(parsedRequestParameters.apLibrarySource));
+
+            AsyncTaskStatus<AutomationPackageUpdateResult> taskStatus = scheduleAsyncTaskWithinSessionContext(h -> {
+                try {
+                    logger.info("Starting the automation package deployment (task id: {})", h.getId());
+                    AutomationPackageUpdateResult result = deployAutomationPackage(parsedRequestParameters, async, apVersion,
+                        activationExpression, forceRefreshOfSnapshots, executeFunctionsLocally);
+                    logger.info("Completed the automation package deployment (task id: {})", h.getId());
+                    return result;
+                } finally {
+                    closeSourcesQuietly(sources);
+                    cleanupBufferedUploads(tempFiles);
+                }
+            });
+            taskScheduled = true;
+            logger.info("Automation package deployment scheduled (task id: {})", taskStatus.getId());
+            return Response.ok(taskStatus).build();
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);
+        } catch (IOException e) {
+            throw new ControllerServiceException("Unable to buffer the uploaded automation package content: " + e.getMessage());
+        } finally {
+            if (!taskScheduled) {
+                closeSourcesQuietly(sources);
+                cleanupBufferedUploads(tempFiles);
+            }
+        }
+    }
+
+    private AutomationPackageUpdateResult deployAutomationPackage(ParsedRequestParameters parsedRequestParameters, boolean async,
+                                                                  String apVersion, String activationExpression,
+                                                                  boolean forceRefreshOfSnapshots, boolean executeFunctionsLocally) {
+        AutomationPackageUpdateParameter updateParameters = getAutomationPackageUpdateParameterBuilder()
+            .withApSource(parsedRequestParameters.apFileSource).withApLibrarySource(parsedRequestParameters.apLibrarySource)
+            .withVersionName(apVersion).withActivationExpression(activationExpression)
+            .withAsync(async).withForceRefreshOfSnapshots(forceRefreshOfSnapshots)
+            .withPlansAttributes(parsedRequestParameters.plansAttributes).withFunctionsAttributes(parsedRequestParameters.functionsAttributes)
+            .withTokenSelectionCriteria(parsedRequestParameters.tokenSelectionCriteria).withExecuteFunctionsLocally(executeFunctionsLocally)
+            .build();
+        AutomationPackageUpdateResult result = automationPackageManager.createOrUpdateAutomationPackage(updateParameters);
+        auditLog("create-or-update", result.getId());
+        return result;
+    }
+
+    /**
+     * Buffers the uploaded stream of the given source (if any) into a temp file and replaces the source's stream with
+     * a fresh stream over that temp file, so that it can safely be consumed after the request thread has returned.
+     *
+     * @return the created temp file to be cleaned up once the deployment completed, or {@code null} if the source has no uploaded stream
+     */
+    private InputStreamToTempFileDownloader.TempFile bufferUploadedStream(AutomationPackageFileSource source) throws IOException {
+        if (source == null || source.getMode() != AutomationPackageFileSource.Mode.INPUT_STREAM) {
+            return null;
+        }
+        String fileName = source.getFileName() != null ? source.getFileName() : "automation-package";
+        InputStreamToTempFileDownloader.TempFile tempFile;
+        try (InputStream in = source.getInputStream()) {
+            tempFile = InputStreamToTempFileDownloader.copyStreamToTempFile(in, fileName);
+        }
+        source.setInputStream(new FileInputStream(tempFile.getTempFile()), source.getFileName());
+        return tempFile;
+    }
+
+    private static <T> void addIfNotNull(List<T> list, T element) {
+        if (element != null) {
+            list.add(element);
+        }
+    }
+
+    private static void cleanupBufferedUploads(List<InputStreamToTempFileDownloader.TempFile> tempFiles) {
+        tempFiles.forEach(InputStreamToTempFileDownloader::cleanupTempFiles);
+    }
+
+    private static void closeSourcesQuietly(List<AutomationPackageFileSource> sources) {
+        sources.forEach(AutomationPackageServices::closeSourceQuietly);
+    }
+
+    private static void closeSourceQuietly(AutomationPackageFileSource source) {
+        if (source != null && source.getInputStream() != null) {
+            try {
+                source.getInputStream().close();
+            } catch (IOException ignored) {
+                // best effort: the temp file cleanup will report any leftover
+            }
         }
     }
 

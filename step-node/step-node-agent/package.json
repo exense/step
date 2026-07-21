@@ -46,6 +46,7 @@
     "unzip-stream": "^0.3.1",
     "uuid": "^3.4.0",
     "winston": "^3.19.0",
+    "ws": "^8.21.0",
     "yaml": "^2.4.2"
   },
   "bundledDependencies": [
@@ -56,6 +57,7 @@
     "shelljs",
     "unzip-stream",
     "uuid",
+    "ws",
     "yaml"
   ],
   "bin": {
@@ -69,6 +71,7 @@
     "shelljs",
     "unzip-stream",
     "uuid",
+    "ws",
     "yaml"
   ]
 }

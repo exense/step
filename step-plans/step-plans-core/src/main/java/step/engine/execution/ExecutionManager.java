@@ -42,7 +42,12 @@ public class ExecutionManager {
         });
     }
 
-    public void updateExecution(Consumer<Execution> consumer) {
+    // Synchronized to serialize the read-modify-save cycle for a given execution. This ExecutionManager
+    // is instantiated once per execution (see ExecutionContext), so the lock only serializes concurrent
+    // updates of the same execution. Without it, concurrent updaters (e.g. multiple keyword threads each
+    // appending an execution notice or lifecycle error) load the same snapshot and overwrite each other's
+    // additions, losing all but the last save.
+    public synchronized void updateExecution(Consumer<Execution> consumer) {
         ExecutionAccessor executionAccessor = executionContext.getExecutionAccessor();
         String executionId = executionContext.getExecutionId();
         Execution execution = executionAccessor.get(executionId);
