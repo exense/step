@@ -33,9 +33,13 @@ public class LocalAttachmentStorage implements AttachmentStorage {
     public LocalAttachmentStorage(File rootDirectory) {
         this.rootDirectory = Objects.requireNonNull(rootDirectory);
         if (rootDirectory.exists()) {
-            throw new IllegalArgumentException("Attachments storage root directory already exists: " + rootDirectory.getAbsolutePath());
-        }
-        if (!rootDirectory.mkdirs()) {
+            if (!rootDirectory.isDirectory()) {
+                throw new IllegalArgumentException("Attachments storage root path exists and is not a directory: " + rootDirectory.getAbsolutePath());
+            } else {
+                // We normally expect our own unique (usually temporary) path. Allow instantiation with existing path nevertheless, but complain.
+                logger.warn("Attachments storage root directory already exists, reusing directory:{}", rootDirectory.getAbsolutePath());
+            }
+        } else if (!rootDirectory.mkdirs()) {
             throw new RuntimeException("Cannot create attachments storage directory: " + rootDirectory.getAbsolutePath());
         }
         logger.info("Attachment storage initialized, directory={}", rootDirectory.getAbsolutePath());
@@ -43,6 +47,9 @@ public class LocalAttachmentStorage implements AttachmentStorage {
 
     @Override
     public InputStream getAttachmentStream(String attachmentId) throws Exception {
+        if (attachmentId == null || !attachmentId.matches("^[a-fA-F0-9]+$")) {
+            throw new IllegalArgumentException("Unexpected attachment ID format: " + attachmentId);
+        }
         Path rootPath = rootDirectory.toPath();
         String searchPattern = attachmentId + "_*";
 
@@ -66,7 +73,7 @@ public class LocalAttachmentStorage implements AttachmentStorage {
         // This stores to ${ID}_${FILENAME}.
         // We could also use an intermediate directory, ie. ${ID}/${FILENAME}, which will
         // somewhat facilitate lookup but requires twice the number of inodes.
-        String storedFilename = id.toHexString() + "_" + filename;
+        String storedFilename = id.toHexString() + "_" + escapeFilename(filename);
         Path targetPath = rootDirectory.toPath().resolve(storedFilename);
         try {
             // Resolve the path and write the byte array directly
@@ -80,6 +87,13 @@ public class LocalAttachmentStorage implements AttachmentStorage {
             logger.error("Failed to save attachment {} to {}", targetPath, e);
             return new SkippedAttachmentMeta(filename, mimeType, e.getMessage());
         }
+    }
+
+    private static String escapeFilename(String filename) {
+        if (filename == null || filename.isBlank()) {
+            return filename;
+        }
+        return filename.replaceAll("[^a-zA-Z0-9.-]+", "_");
     }
 
     public void cleanupIfNeeded() {

@@ -82,7 +82,7 @@ public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
                                             throw new RuntimeException("Attachment storage is null");
                                         }
                                         String filenamePrefix = testArtefact.getPrefix() != null ? testArtefact.getPrefix().get() : "";
-                                        File target = new File(file + "/" + filenamePrefix + fileName);
+                                        File target = new File(file, filenamePrefix + fileName);
                                         try (InputStream in = storage.getAttachmentStream(attachmentMeta.getId().toString());
                                              OutputStream out = new FileOutputStream(target)) {
                                             in.transferTo(out);

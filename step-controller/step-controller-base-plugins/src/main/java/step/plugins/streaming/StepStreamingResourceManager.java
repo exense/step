@@ -29,10 +29,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 public class StepStreamingResourceManager extends DefaultStreamingResourceManager implements AttachmentStorage {
     private static final Logger logger = LoggerFactory.getLogger(StepStreamingResourceManager.class);
     static final String ATTRIBUTE_STEP_SESSION = "stepSession";
+    private static final Pattern MIME_TYPE_PATTERN = Pattern.compile("^[a-zA-Z0-9!#$&^_.+-]+/[a-zA-Z0-9!#$&^_.+-]+$");
 
 
     private final AuthorizationManager<User, Session<User>> authorizationManager;
@@ -160,6 +162,10 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
 
     @Override
     public AttachmentMeta saveAttachment(Object executionContext, byte[] content, String filename, String mimeType) {
+        if (!(executionContext instanceof ExecutionContext)) {
+            String className = executionContext == null ? "null" : executionContext.getClass().getName();
+            return new SkippedAttachmentMeta(filename, mimeType, "UNEXPECTED: Invalid execution context type of class " + className);
+        }
         ExecutionContext context = (ExecutionContext) Objects.requireNonNull(executionContext);
         StreamingResourceUploadContexts uploadContexts = context.get(StreamingResourceUploadContexts.class);
 
@@ -208,7 +214,7 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
             return "application/octet-stream";
         }
         mimeType = mimeType.trim(); // just in case
-        if (!mimeType.matches("^[a-zA-Z0-9!#$&^_.+-]+/[a-zA-Z0-9!#$&^_.+-]+$")) {
+        if (!MIME_TYPE_PATTERN.matcher(mimeType).matches()) {
             logger.warn("Invalid mime type \"{}\", replacing with generic application/octet-stream", mimeType);
             return "application/octet-stream";
         }

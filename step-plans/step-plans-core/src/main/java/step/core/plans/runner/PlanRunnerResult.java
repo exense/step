@@ -276,7 +276,10 @@ public class PlanRunnerResult {
 
                 if (printAttachments) {
                     List<AttachmentMeta> attachments = node.getAttachments();
-                    if (attachments != null) {
+                    if (attachmentStorage == null) {
+                        // This should not normally happen, but better safe than sorry
+                        logger.warn("Unable to evaluate exception attachments because attachmentStorage is null");
+                    } else if (attachments != null) {
                         attachments.forEach(att -> {
                             if (!(att instanceof SkippedAttachmentMeta)) {
                                 if (att.getName().equals("exception.log")) {
