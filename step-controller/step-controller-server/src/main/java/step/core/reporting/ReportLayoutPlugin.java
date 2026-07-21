@@ -20,8 +20,7 @@ import step.framework.server.tables.Table;
 import step.framework.server.tables.TableRegistry;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 @Plugin
@@ -34,9 +33,11 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
     public static final String PRESET_FOLDER_PATH_DEFAULT = "../plugins/reporting/layouts";
     public static final String DEFAULT_LAYOUT_ID_CONFIG_KEY = "plugins.reporting.layouts.default.id";
     public static final String DEFAULT_LAYOUT_ID_DEFAULT = "69b010aeec94534eb48176db";
+    public static final String CROSS_EXECUTION_DEFAULT_LAYOUT_ID_CONFIG_KEY = "plugins.reporting.layouts.crossexecution.default.id";
 
     private ReportLayoutAccessor reportLayoutAccessor;
     private String defaultLayoutId;
+    private String crossExecutionDefaultLayoutId;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
@@ -56,10 +57,18 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
         //Register Services
         context.getServiceRegistrationCallback().registerService(ReportLayoutServices.class);
 
-        //Add default layout ID to UI configuration
+        //Add default layout IDs (per report type) to UI configuration
         defaultLayoutId = context.getConfiguration().getProperty(DEFAULT_LAYOUT_ID_CONFIG_KEY, DEFAULT_LAYOUT_ID_DEFAULT);
+        crossExecutionDefaultLayoutId = context.getConfiguration().getProperty(CROSS_EXECUTION_DEFAULT_LAYOUT_ID_CONFIG_KEY);
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
-        configurationManager.registerHook(s -> Map.of(DEFAULT_LAYOUT_ID_CONFIG_KEY, defaultLayoutId));
+        configurationManager.registerHook(s -> {
+            Map<String, String> config = new HashMap<>();
+            config.put(DEFAULT_LAYOUT_ID_CONFIG_KEY, defaultLayoutId);
+            if (crossExecutionDefaultLayoutId != null) {
+                config.put(CROSS_EXECUTION_DEFAULT_LAYOUT_ID_CONFIG_KEY, crossExecutionDefaultLayoutId);
+            }
+            return config;
+        });
 
     }
 
@@ -80,7 +89,7 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
                     try {
                         ReportLayoutJson layoutJson = objectMapper.readValue(jsonFile, ReportLayoutJson.class);
                         if (ObjectId.isValid(layoutJson.id)) {
-                            ReportLayout reportLayout = new ReportLayout(layoutJson.layout, ReportLayout.ReportLayoutVisibility.Preset);
+                            ReportLayout reportLayout = new ReportLayout(layoutJson.layout, ReportLayout.ReportLayoutVisibility.Preset, layoutJson.reportType);
                             reportLayout.addAttribute(AbstractOrganizableObject.NAME, layoutJson.name);
                             reportLayout.setId(new ObjectId(layoutJson.id));
                             reportLayoutAccessor.save(reportLayout);
