@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.node.automation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import step.automation.packages.AutomationPackageResourceUploader;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
@@ -28,6 +29,7 @@ import step.plugins.node.NodeFunction;
 import step.resources.ResourceManager;
 
 @YamlModel(name = "Node")
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlNodeFunction extends AbstractYamlFunction<NodeFunction> {
 
     @YamlFieldCustomCopy

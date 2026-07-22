@@ -893,7 +893,7 @@ public class AutomationPackageManager {
             try {
                 boolean hooked = automationPackageHookRegistry.onPrepareStaging(
                     hookEntry.fieldName,
-                    new StagingAutomationPackageContext(newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, actorUser, enricherForIncludedEntities, extensions),
+                    new StagingAutomationPackageContext(new AutomationPackageResourceUploader(), newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, actorUser, enricherForIncludedEntities, extensions),
                     packageContent,
                     hookEntry.values,
                     oldPackage, staging, objectPredicate);
@@ -993,7 +993,7 @@ public class AutomationPackageManager {
 
     protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
                                                      AutomationPackage oldPackage, ResourceManager stagingResourceManager, String actorUser) {
-        StagingAutomationPackageContext apContext = new StagingAutomationPackageContext(newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
+        StagingAutomationPackageContext apContext = new StagingAutomationPackageContext(new AutomationPackageResourceUploader(), newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids

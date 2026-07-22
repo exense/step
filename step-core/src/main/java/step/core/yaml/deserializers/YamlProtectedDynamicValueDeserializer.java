@@ -25,17 +25,14 @@ import step.core.dynamicbeans.ProtectedDynamicValue;
 @StepYamlDeserializerAddOn(targetClasses = {ProtectedDynamicValue.class})
 public class YamlProtectedDynamicValueDeserializer extends YamlDynamicValueDeserializer {
 
-    public YamlProtectedDynamicValueDeserializer() {
-    }
-
-    public YamlProtectedDynamicValueDeserializer(ObjectMapper yamlObjectMapper) {
-        super(yamlObjectMapper);
+    public YamlProtectedDynamicValueDeserializer(JsonDeserializer<?> deserializer, ObjectMapper yamlObjectMapper) {
+        super(deserializer, yamlObjectMapper);
     }
 
     @Override
     public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {
         this.type = property.getType().containedType(0);
-        YamlProtectedDynamicValueDeserializer deserializer = new YamlProtectedDynamicValueDeserializer();
+        YamlProtectedDynamicValueDeserializer deserializer = new YamlProtectedDynamicValueDeserializer(baseDeserializer, yamlObjectMapper);
         deserializer.type = type;
         return deserializer;
     }

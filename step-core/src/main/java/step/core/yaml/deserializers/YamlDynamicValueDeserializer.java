@@ -33,17 +33,14 @@ public class YamlDynamicValueDeserializer extends StepYamlDeserializer<DynamicVa
 
     protected JavaType type;
 
-    public YamlDynamicValueDeserializer() {
-    }
-
-    public YamlDynamicValueDeserializer(ObjectMapper yamlObjectMapper) {
-        super(yamlObjectMapper);
+    public YamlDynamicValueDeserializer(JsonDeserializer<?> deserializer, ObjectMapper yamlObjectMapper) {
+        super(deserializer, yamlObjectMapper);
     }
 
     @Override
     public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {
         this.type = property.getType().containedType(0);
-        YamlDynamicValueDeserializer deserializer = new YamlDynamicValueDeserializer();
+        YamlDynamicValueDeserializer deserializer = new YamlDynamicValueDeserializer(baseDeserializer, yamlObjectMapper);
         deserializer.type = type;
         return deserializer;
     }

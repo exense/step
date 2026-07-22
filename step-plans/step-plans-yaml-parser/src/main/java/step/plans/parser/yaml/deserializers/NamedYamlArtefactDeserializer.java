@@ -19,9 +19,7 @@
 package step.plans.parser.yaml.deserializers;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.artefacts.AbstractArtefact;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
@@ -39,12 +37,9 @@ import java.util.List;
 @StepYamlDeserializerAddOn(targetClasses = {NamedYamlArtefact.class})
 public class NamedYamlArtefactDeserializer extends StepYamlDeserializer<NamedYamlArtefact> {
 
-    public NamedYamlArtefactDeserializer() {
-        this(null);
-    }
 
-    public NamedYamlArtefactDeserializer(ObjectMapper stepYamlObjectMapper) {
-        super(stepYamlObjectMapper);
+    public NamedYamlArtefactDeserializer(JsonDeserializer<?> deserializer, ObjectMapper yamlObjectMapper) {
+        super(deserializer, yamlObjectMapper);
     }
 
     @Override
