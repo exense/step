@@ -20,6 +20,7 @@ package step.client.reports;
 
 import jakarta.ws.rs.client.Invocation.Builder;
 import step.client.AbstractRemoteClient;
+import step.client.RemoteClientConfiguration;
 import step.client.credentials.ControllerCredentials;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionProvider;
@@ -28,6 +29,10 @@ public class RemoteExecutionProvider extends AbstractRemoteClient implements Exe
 
     public RemoteExecutionProvider(ControllerCredentials credentials) {
         super(credentials);
+    }
+
+    public RemoteExecutionProvider(RemoteClientConfiguration configuration) {
+        super(configuration);
     }
 
     public RemoteExecutionProvider() {

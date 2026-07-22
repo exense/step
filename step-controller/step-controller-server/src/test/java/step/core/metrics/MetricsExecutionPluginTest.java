@@ -115,7 +115,7 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
         }
 
         @Override
-        public void processMeasurements(List<Measurement> measurements) {
+        public void processMeasurements(ExecutionContext executionContext, List<Measurement> measurements) {
             synchronized (assertMeasurementsCount) {
                 for (Measurement measurement : measurements) {
                     incValue(measurement.getExecId(), measurement.getValue());
@@ -138,7 +138,7 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
         }
 
         @Override
-        public void processMetrics(List<ExecutionMetricSample> metrics) {
+        public void processMetrics(ExecutionContext executionContext, List<ExecutionMetricSample> metrics) {
             synchronized (assertMeasurementsCount) {
                 for (ExecutionMetricSample mm : metrics) {
                     if (mm.metricType != null) {

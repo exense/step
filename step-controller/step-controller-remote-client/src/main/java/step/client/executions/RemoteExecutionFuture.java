@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.client.executions;
 
-import step.client.reports.RemoteExecutionProvider;
-import step.client.reports.RemoteReportTreeAccessor;
 import step.core.execution.model.Execution;
 import step.core.plans.runner.PlanRunnerResult;
 
@@ -34,8 +32,7 @@ public class RemoteExecutionFuture extends PlanRunnerResult {
     private RemoteExecutionManager executionManager;
 
     public RemoteExecutionFuture(RemoteExecutionManager executionManager, String executionId) {
-        super(executionId, new RemoteExecutionProvider(executionManager.getControllerCredentials()),
-            new RemoteReportTreeAccessor(executionManager.getControllerCredentials()));
+        super(executionId, executionManager, executionManager.getReportTreeAccessor());
         this.executionManager = executionManager;
     }
 

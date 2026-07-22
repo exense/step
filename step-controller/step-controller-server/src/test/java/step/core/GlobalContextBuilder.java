@@ -43,6 +43,7 @@ import step.core.entities.EntityManager;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.execution.model.InMemoryExecutionAccessor;
+import step.core.execution.notices.ExecutionNoticeManager;
 import step.core.metrics.MetricTypeRegistry;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.PlanEntity;
@@ -132,6 +133,7 @@ public class GlobalContextBuilder {
 
         MetricTypeAccessor accessor = new MetricTypeAccessor(new InMemoryCollection<>());
         context.put(MetricTypeRegistry.class, new MetricTypeRegistry(accessor));
+        context.put(ExecutionNoticeManager.class, new ExecutionNoticeManager(100));
         return context;
     }
 }
