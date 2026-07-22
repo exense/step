@@ -182,6 +182,10 @@ public class ScreenTemplateService extends AbstractStepServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public void saveInput(ScreenInput screenInput) {
+        Input input = screenInput.getInput();
+        if (input == null || input.getId() == null || input.getId().isBlank()) {
+            throw new ControllerServiceException("The input id is required and must not be blank.");
+        }
         ScreenInput screenInputOrig = screenInputAccessor.get(screenInput.getId());
         if (screenInputOrig != null && screenInputOrig.getImmutable()) {
             throw new ControllerServiceException("This screen input is immutable.");

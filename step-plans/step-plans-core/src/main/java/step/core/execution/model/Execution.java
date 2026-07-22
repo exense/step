@@ -43,6 +43,7 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
     private ExecutionStatus status;
     private ReportNodeStatus result;
     private List<Error> lifecycleErrors;
+    private List<ExecutionNotice> notices;
     private String planId;
     private ImportResult importResult;
     private List<ReportExport> reportExports;
@@ -125,6 +126,31 @@ public class Execution extends AbstractOrganizableObject implements EnricheableO
             lifecycleErrors = new ArrayList<>();
         }
         lifecycleErrors.add(error);
+    }
+
+    /**
+     * @return the list of execution notices or null if none was raised. Notices are noteworthy events
+     * that occurred during the execution and which are not lifecycle errors. Unlike lifecycle errors,
+     * notices never affect the execution's result or status. Each notice references a registered notice
+     * type and carries the parameters required to resolve the type's message at read time.
+     */
+    public List<ExecutionNotice> getNotices() {
+        return notices;
+    }
+
+    public synchronized void setNotices(List<ExecutionNotice> notices) {
+        this.notices = notices;
+    }
+
+    /**
+     * Appends a notice to this execution. The list is append-only; deduplication (if any) is the
+     * responsibility of the producer.
+     */
+    public synchronized void addNotice(ExecutionNotice notice) {
+        if (notices == null) {
+            notices = new ArrayList<>();
+        }
+        notices.add(notice);
     }
 
     /**

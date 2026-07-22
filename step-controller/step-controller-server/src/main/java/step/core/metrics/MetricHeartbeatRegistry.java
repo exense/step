@@ -104,7 +104,8 @@ public class MetricHeartbeatRegistry {
             if (!heartbeats.isEmpty()) {
                 for (MetricSamplesHandler handler : handlers) {
                     try {
-                        handler.processMetrics(heartbeats);
+                        // Heartbeats are not bound to a running execution context.
+                        handler.processMetrics(null, heartbeats);
                     } catch (Exception e) {
                         logger.error("Error dispatching metric heartbeats to {}", handler.getClass().getSimpleName(), e);
                     }

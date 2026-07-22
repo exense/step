@@ -45,9 +45,10 @@ public class SchedulerPlugin extends AbstractControllerPlugin {
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         controllerSettingAccessor = context.require(ControllerSettingAccessor.class);
-        Collection<ExecutiontTaskParameters> collectionDriver = context.getCollectionFactory().getCollection(EntityConstants.tasks,
-            ExecutiontTaskParameters.class);
-        context.get(TableRegistry.class).register(EntityConstants.tasks, new Table<>(collectionDriver, "task-read", true));
+        Collection<SchedulerTaskWrapper> collectionDriver = context.getCollectionFactory().getCollection(EntityConstants.tasks,
+            SchedulerTaskWrapper.class);
+        context.get(TableRegistry.class).register(EntityConstants.tasks, new Table<>(collectionDriver, "task-read", true)
+            .withResultItemEnricher(new SchedulerTaskTableEnricher(context::getScheduler)));
 
         this.housekeepingJobsManager = new HousekeepingJobsManager(context.getConfiguration(), controllerSettingAccessor);
         context.put(HousekeepingJobsManager.class, housekeepingJobsManager);

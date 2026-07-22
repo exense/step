@@ -39,6 +39,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -153,6 +154,21 @@ public class Executor {
             }
         } catch (RuntimeException e) {
             logAndThrow(e.getMessage(), e);
+        }
+    }
+
+    public Long getNextExecutionDate(ExecutiontTaskParameters task) {
+        JobKey jobKey = new JobKey(task.getId().toString());
+        try {
+            return scheduler.getTriggersOfJob(jobKey).stream()
+                .map(Trigger::getNextFireTime)
+                .filter(Objects::nonNull)
+                .min(Date::compareTo)
+                .map(Date::getTime)
+                .orElse(null);
+        } catch (SchedulerException e) {
+            logger.error("An error occurred while getting next execution date for task: " + task);
+            throw new RuntimeException(e);
         }
     }
 

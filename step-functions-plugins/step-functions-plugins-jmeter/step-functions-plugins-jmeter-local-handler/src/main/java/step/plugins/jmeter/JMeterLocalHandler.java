@@ -39,10 +39,13 @@ import javax.json.JsonObject;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class JMeterLocalHandler extends JsonBasedFunctionHandler {
 
@@ -197,7 +200,7 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
         return arguments;
     }
 
-    private void updateClasspathSystemProperty(String jmeterHome) {
+    protected static synchronized void updateClasspathSystemProperty(String jmeterHome) {
         // this ugly manipulation of the system property "java.class.path" is a workaround to
         // the way how the plugins are discovered in jmeter:
         // the method org.apache.jorphan.reflect.ClassFinder.getClasspathMatches
@@ -205,16 +208,45 @@ public class JMeterLocalHandler extends JsonBasedFunctionHandler {
         // to filter out jar files of the jmeter/lib/ext folder. As this handler
         // relies on URLClassLoader, the extension jars of jmeter
         // are not in the property "java.class.path"
-        StringBuilder cp = new StringBuilder(System.getProperty("java.class.path"));
-
+        //
+        // The handler may be initialized multiple times during the lifetime of the agent
+        // (once per application context), while "java.class.path" is a single JVM-wide
+        // property. We therefore append each ext jar only once, otherwise the property
+        // would grow unbounded with duplicate entries on every initialization.
         File extFolder = new File(jmeterHome + "/lib/ext");
         if (extFolder.exists() && extFolder.isDirectory()) {
-            for (File jar : Objects.requireNonNull(extFolder.listFiles())) {
-                cp.append(File.pathSeparator).append(jar.getAbsolutePath());
+            File[] jars = extFolder.listFiles();
+            if (jars == null) {
+                // listFiles() can return null even after isDirectory() succeeds (e.g. the folder
+                // became unreadable or was removed in the meantime). Nothing we can add in that case.
+                log.warn("Unable to list files in JMeter ext folder {}. JMeter extensions may not be discovered.", extFolder);
+                return;
+            }
+
+            // "java.class.path" is virtually always set, but guard against null to be safe.
+            String currentClasspath = System.getProperty("java.class.path", "");
+            Set<String> existingEntries = (currentClasspath.isBlank()) ? new HashSet<>() :
+                new HashSet<>(Arrays.asList(currentClasspath.split(Pattern.quote(File.pathSeparator))));
+
+            StringBuilder cp = new StringBuilder(currentClasspath);
+            boolean modified = false;
+            for (File jar : jars) {
+                String jarPath = jar.getAbsolutePath();
+                if (existingEntries.add(jarPath)) {
+                    // Only prepend a separator when the classpath is non-empty,
+                    if (cp.length() > 0) {
+                        cp.append(File.pathSeparator);
+                    }
+                    cp.append(jarPath);
+                    modified = true;
+                }
+            }
+
+            // Avoid rewriting the system property when nothing new was added.
+            if (modified) {
+                System.setProperty("java.class.path", cp.toString());
             }
         }
-
-        System.setProperty("java.class.path", cp.toString());
     }
 
 }

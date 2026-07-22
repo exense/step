@@ -22,7 +22,15 @@ import ch.exense.commons.io.FileHelper;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.ServletContext;
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -41,9 +49,14 @@ import step.framework.server.tables.service.TableService;
 import step.framework.server.tables.service.bulk.TableBulkOperationReport;
 import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -202,6 +215,72 @@ public class ResourceServices extends AbstractStepAsyncServices {
         } catch (ResourceMissingException e) {
             throw new ControllerServiceException(404, e.getMessage());
         }
+    }
+
+    // Note: If success == true, content is the requested preview data; if false, content is an error message.
+    public record ResourcePreview(String resourceId, boolean success, String content) {
+    }
+
+    // Implemented as POST because GET would restrict the number of IDs (because of URL length limitations).
+    @POST
+    @Path("/bulk-preview-content")
+    @Secured(right = RESOURCE_RIGHT_NAME + RIGHT_SEPARATOR + READ_RIGHT)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<ResourcePreview> bulkPreviewContent(List<String> resourceIds, @QueryParam("numberOflines") @DefaultValue("6") int numberOfLines) {
+        if (resourceIds == null) {
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "resourceIds must be provided");
+        }
+        if (numberOfLines < 1) {
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "numberOfLines must be greater than 0");
+        }
+        return resourceIds.stream()
+            .map(id -> getPreview(id, numberOfLines))
+            .collect(Collectors.toList());
+    }
+
+    private ResourcePreview getPreview(String resourceId, int numberOfLines) {
+        if (resourceId == null) {
+            return new ResourcePreview(null, false, "illegal argument: null resourceId");
+        }
+        // heuristic safety limit that potentially kicks in for binary files, or for files with really, really long lines.
+        int maxNumberOfBytes = 256 * numberOfLines;
+        ResourceRevisionContent resourceContent = null;
+        try {
+            resourceContent = resourceManager.getResourceContent(resourceId);
+            checkResourceTypeRight(resourceContent.getResource(), READ_RIGHT);
+            InputStream contentStream = Objects.requireNonNull(resourceContent.getResourceStream(), "resource content stream is null");
+            String previewText = getPreviewText(contentStream, numberOfLines, maxNumberOfBytes);
+            return new ResourcePreview(resourceId, true, previewText);
+        } catch (Exception e) {
+            return new ResourcePreview(resourceId, false, e.getMessage());
+        } finally {
+            if (resourceContent != null) {
+                try {
+                    resourceContent.close();
+                } catch (Exception ignored) {
+                }
+            }
+        }
+    }
+
+    static String getPreviewText(InputStream is, int maxNumberOfLines, int maxNumberOfBytes) throws Exception {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        int bytesRead = 0;
+        int linesRead = 0;
+        int currentByte;
+
+        while (bytesRead < maxNumberOfBytes && linesRead < maxNumberOfLines && (currentByte = is.read()) != -1) {
+            buffer.write(currentByte);
+            bytesRead++;
+
+            if (currentByte == '\n') {
+                linesRead++;
+            }
+        }
+
+        // Convert the accumulated bytes into a String. UTF-8 is the safest fallback when the specific text encoding is unknown.
+        return buffer.toString(StandardCharsets.UTF_8);
     }
 
     @DELETE

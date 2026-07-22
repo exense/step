@@ -1,14 +1,26 @@
 package step.core.metrics;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class Measurement extends HashMap<String, Object> {
     Map<String, Object> customFields = new HashMap<>();
 
     Map<String, String> additionalAttributes = new TreeMap<>();
+
+    /**
+     * Keyword-author-defined custom data keys (from the originating {@code Measure}'s data map).
+     * These are the labels considered "user-defined" and therefore subject to cardinality control
+     * by the time-series handler. Transient and ignored during (de)serialization so it never leaks
+     * into the persisted RAW measurement.
+     */
+    @JsonIgnore
+    private transient Set<String> customMetricLabelKeys;
 
     public long getBegin() {
         return (long) this.get(MetricsExecutionPlugin.BEGIN);
@@ -127,6 +139,16 @@ public class Measurement extends HashMap<String, Object> {
     public void addAdditionalAttributes(TreeMap<String, String> additionalAttributes) {
         this.additionalAttributes.putAll(additionalAttributes);
         this.putAll(additionalAttributes);
+    }
+
+    @JsonIgnore
+    public Set<String> getCustomMetricLabelKeys() {
+        return customMetricLabelKeys;
+    }
+
+    @JsonIgnore
+    public void setCustomMetricLabelKeys(Set<String> customMetricLabelKeys) {
+        this.customMetricLabelKeys = customMetricLabelKeys;
     }
 
 

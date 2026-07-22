@@ -120,6 +120,16 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
         return scheduler.executeExecutionTask(executionTaskID, session.getUser().getUsername());
     }
 
+    @Operation(description = "Returns the next execution date of the given scheduler task as a timestamp.")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}/next-execution-date")
+    @Secured(right = "{entity}-read")
+    public Long getNextExecutionDate(@PathParam("id") String executionTaskID) {
+        ExecutiontTaskParameters task = getEntity(executionTaskID);
+        return scheduler.getNextExecutionDate(task);
+    }
+
     @Operation(description = "Enable/disable all the scheduler tasks.")
     @PUT
     @Path("/schedule")
@@ -139,6 +149,7 @@ public class SchedulerServices extends AbstractEntityServices<ExecutiontTaskPara
     @Path("/{id}")
     @Secured(right = "{entity}-toggle")
     public void enableExecutionTask(@PathParam("id") String executionTaskID, @QueryParam("enabled") Boolean enabled) {
+        assertEntityIsEditableInContext(getEntity(executionTaskID));
         try {
             String auditOperation;
             if (enabled != null && enabled) {
