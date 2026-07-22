@@ -8,7 +8,9 @@
   <!-- loggers with deviating settings for specific packages -->
   <!--	<logger name="step.parameter.ParameterManager" level="debug" />-->
 
+  <!-- TODO SED-4429: revise these error levels before release -->
   <root level="info">
     <appender-ref ref="STDOUT"/>
   </root>
+  <logger name="step.ide" level="debug"/>
 </configuration>

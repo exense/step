@@ -2,6 +2,7 @@ package step.ide;
 
 import ch.exense.commons.app.Configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,9 @@ import step.resources.ResourceManagerImpl;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
@@ -36,6 +40,7 @@ public class LocalIDEState implements ExecutionDiversion {
 
     private final JavaAutomationPackageReader reader;
 
+    private final List<File> directoriesToCleanupOnShutdown = new ArrayList<>();
     private ResourceManagerImpl resourceManager;
     private IDEExecutorDelegateFactory executorDelegateFactory;
     private File currentAutomationPackageDirectory;
@@ -55,7 +60,7 @@ public class LocalIDEState implements ExecutionDiversion {
 
     public void setResourceManager(ResourceManagerImpl resourceManager) {
         this.resourceManager = resourceManager;
-        logger.info("Setting resource manager to {}", resourceManager);
+        logger.debug("Setting resource manager to {}", resourceManager);
     }
 
     public void useExistingAutomationPackageDirectory(File apDir) throws Exception {
@@ -174,5 +179,29 @@ public class LocalIDEState implements ExecutionDiversion {
 
     public void setFileResolver(FileResolver fileResolver) {
         this.fileResolver = fileResolver;
+    }
+
+    public void addDirectoriesToCleanupOnShutdown(Collection<File> directories) {
+        this.directoriesToCleanupOnShutdown.addAll(Objects.requireNonNull(directories));
+        if (logger.isDebugEnabled()) {
+            for (File directory : directoriesToCleanupOnShutdown) {
+                logger.debug("Registering directory for cleanup on shutdown: {}", directory.getAbsolutePath());
+            }
+        }
+    }
+
+    public void onShutdown() {
+        logger.info("Shutting down, performing cleanup tasks");
+        for (File directory : directoriesToCleanupOnShutdown) {
+            if (!directory.isDirectory()) {
+                logger.warn("Directory {} is not a usable directory, unable to cleanup", directory.getAbsolutePath());
+            }
+            try {
+                logger.debug("Cleaning up directory {}", directory.getAbsolutePath());
+                FileUtils.deleteDirectory(directory);
+            } catch (Exception e) {
+                logger.error("Error while deleting directory {}", directory.getAbsolutePath(), e);
+            }
+        }
     }
 }

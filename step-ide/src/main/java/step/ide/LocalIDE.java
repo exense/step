@@ -1,22 +1,17 @@
 package step.ide;
 
 import ch.exense.commons.app.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.framework.server.ControllerServer;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Objects;
 
 public class LocalIDE implements Closeable {
-    private static final Logger logger = LoggerFactory.getLogger(LocalIDE.class);
     private final ControllerServer server;
-    private final File resourcesDirectory;
-    private final File fileManagerDirectory;
 
     public static void main(String[] args) throws Exception {
         try {
@@ -30,12 +25,10 @@ public class LocalIDE implements Closeable {
 
     public LocalIDE() throws Exception {
         Configuration configuration = loadConfiguration();
-        resourcesDirectory = Files.createTempDirectory("step-ide-resources-").toFile();
-        fileManagerDirectory = Files.createTempDirectory("step-ide-filemanager-").toFile();
-        // TODO SED-4429 delete these one exit (will require better support for shutdown handling in step-framework)
-        logger.info("Using temporary resources directory: {}", resourcesDirectory.getAbsolutePath());
+        var resourcesDirectory = Files.createTempDirectory("step-ide-resources-").toFile();
+        var fileManagerDirectory = Files.createTempDirectory("step-ide-filemanager-").toFile();
+        LocalIDEState.get().addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
         configuration.putProperty("resources.dir", resourcesDirectory.getAbsolutePath());
-        logger.info("Using temporary filemanager directory: {}", fileManagerDirectory.getAbsolutePath());
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.getAbsolutePath());
         String jmeterHome = System.getenv("JMETER_HOME");
         if (jmeterHome != null) {
