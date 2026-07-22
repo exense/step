@@ -32,16 +32,15 @@ import step.core.maven.MavenArtifactIdentifier;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 
 
 @Command(name = "step",
-    mixinStandardHelpOptions = true,
-    version = Constants.STEP_VERSION_STRING,
     description = "The command-line interface (CLI) to interact with Step",
-    usageHelpAutoWidth = true
+    version = Constants.STEP_VERSION_STRING,
+    mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
+    subcommands = {ApCommand.class, LibraryCommand.class, IdeCommand.class, CommandLine.HelpCommand.class}
 )
-public class StepConsole implements Callable<Integer> {
+public class StepConsole extends BaseCommand {
 
     public static final String REQUIRED_ERR_MESSAGE = "Illegal parameters. One of the following options is required: '%s'";
 
@@ -49,19 +48,6 @@ public class StepConsole implements Callable<Integer> {
 
     public static final Logger log = LoggerFactory.getLogger(StepConsole.class);
     public static final String MANAGED = "managed:";
-
-    @Override
-    public Integer call() throws Exception {
-        // call help by default
-        return addStepSubcommands(
-            new CommandLine(new StepConsole()),
-            ApCommand.ApDeployCommand::new,
-            ApCommand.ApExecuteCommand::new,
-            LibraryCommand.DeployLibraryCommand::new,
-            IdeCommand.LaunchIdeCommand::new)
-            .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
-            .execute("help");
-    }
 
     public static abstract class AbstractStepCommand implements Callable<Integer> {
 
@@ -211,23 +197,16 @@ public class StepConsole implements Callable<Integer> {
 
     static int executeMain(String... args) {
         return executeMain(
-            ApCommand.ApDeployCommand::new,
-            ApCommand.ApExecuteCommand::new,
-            LibraryCommand.DeployLibraryCommand::new,
-            IdeCommand.LaunchIdeCommand::new,
-            true, args);
+            true,
+            null,
+            args);
     }
 
-    static int executeMain(Supplier<ApCommand.ApDeployCommand> deployCommandSupplier,
-                           Supplier<ApCommand.ApExecuteCommand> executeCommandSupplier,
-                           Supplier<LibraryCommand.DeployLibraryCommand> deployLibraryCommandSupplier,
-                           Supplier<IdeCommand.LaunchIdeCommand> launchIdeCommandSupplier,
-                           boolean lookupDefaultConfigFile,
+    static int executeMain(boolean lookupDefaultConfigFile,
+                           CommandLine.IFactory factory, // used for controlling command instantiation, only set in unit tests
                            String... args) {
-        StepConsole configFinder = new StepConsole();
-
         // parse arguments just to resolve configuration files and setup default values provider programmatically
-        CommandLine clForFinder = addStepSubcommands(new CommandLine(configFinder), deployCommandSupplier, executeCommandSupplier, deployLibraryCommandSupplier, launchIdeCommandSupplier);
+        CommandLine clForFinder = new CommandLine(new StepConsole());
         CommandLine.ParseResult parseResult = null;
         try {
             parseResult = clForFinder.parseArgs(args);
@@ -244,8 +223,8 @@ public class StepConsole implements Callable<Integer> {
 
         // custom configuration files are only applied for "ap" command
         CommandLine.ParseResult subcommand1 = parseResult.subcommand();
-        if (subcommand1 != null && (Objects.equals(subcommand1.commandSpec().name(), ApCommand.AP_COMMAND) ||
-            Objects.equals(subcommand1.commandSpec().name(), LibraryCommand.LIBRARY_COMMAND))) {
+        if (subcommand1 != null && (Objects.equals(subcommand1.commandSpec().name(), ApCommand.COMMAND_NAME) ||
+            Objects.equals(subcommand1.commandSpec().name(), LibraryCommand.COMMAND_NAME))) {
             CommandLine.ParseResult subcommand2 = subcommand1.subcommand();
             if (subcommand2 != null) {
                 CommandLine.Model.OptionSpec configOptionSpec = subcommand2.commandSpec().findOption(AbstractStepCommand.CONFIG);
@@ -255,45 +234,11 @@ public class StepConsole implements Callable<Integer> {
                 }
             }
         }
-
-        return addStepSubcommands(new CommandLine(new StepConsole()), deployCommandSupplier, executeCommandSupplier, deployLibraryCommandSupplier, launchIdeCommandSupplier)
+        CommandLine cmd = factory != null ? new CommandLine(new StepConsole(), factory) : new CommandLine(new StepConsole());
+        return cmd
             .setCaseInsensitiveEnumValuesAllowed(true)
             .setDefaultValueProvider(new StepDefaultValuesProvider(customConfigFiles, lookupDefaultConfigFile))
             .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
             .execute(args);
     }
-
-    private static CommandLine addStepSubcommands(CommandLine cl,
-                                                  Supplier<ApCommand.ApDeployCommand> deployCommandSupplier,
-                                                  Supplier<ApCommand.ApExecuteCommand> executeCommandSupplier,
-                                                  Supplier<LibraryCommand.DeployLibraryCommand> deployLibraryCommandSupplier,
-                                                  Supplier<IdeCommand.LaunchIdeCommand> launchIdeCommandSupplier) {
-        return cl.addSubcommand("help", new CommandLine.HelpCommand())
-            .addSubcommand(ApCommand.AP_COMMAND,
-                addApSubcommands(new CommandLine(new ApCommand()), deployCommandSupplier, executeCommandSupplier))
-            .addSubcommand(LibraryCommand.LIBRARY_COMMAND, addLibrarySubcommands(new CommandLine(new LibraryCommand()), deployLibraryCommandSupplier))
-            .addSubcommand(IdeCommand.NAME, addIdeSubcommands(new CommandLine(new IdeCommand()), launchIdeCommandSupplier))
-            ;
-    }
-
-    public static CommandLine addApSubcommands(CommandLine cl,
-                                               Supplier<ApCommand.ApDeployCommand> deployCommandSupplier,
-                                               Supplier<ApCommand.ApExecuteCommand> executeCommandSupplier) {
-        return cl.addSubcommand("help", new CommandLine.HelpCommand())
-            .addSubcommand("deploy", deployCommandSupplier.get())
-            .addSubcommand("execute", executeCommandSupplier.get());
-    }
-
-    public static CommandLine addLibrarySubcommands(CommandLine cl,
-                                                    Supplier<LibraryCommand.DeployLibraryCommand> deployCommandSupplier) {
-        return cl.addSubcommand("help", new CommandLine.HelpCommand())
-            .addSubcommand("deploy", deployCommandSupplier.get());
-    }
-
-    public static CommandLine addIdeSubcommands(CommandLine cl,
-                                                Supplier<IdeCommand.LaunchIdeCommand> launchIdeCommandSupplier) {
-        return cl.addSubcommand("help", new CommandLine.HelpCommand())
-            .addSubcommand("launch", launchIdeCommandSupplier.get());
-    }
-
 }

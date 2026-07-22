@@ -14,20 +14,24 @@ import step.core.maven.MavenArtifactIdentifier;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-@CommandLine.Command(name = ApCommand.AP_COMMAND,
-    mixinStandardHelpOptions = true,
-    version = Constants.STEP_VERSION_STRING,
+@CommandLine.Command(name = ApCommand.COMMAND_NAME,
     description = "The CLI interface to manage automation packages in Step",
-    usageHelpAutoWidth = true
+    version = Constants.STEP_VERSION_STRING,
+    mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
+    subcommands = {ApCommand.ApDeployCommand.class, ApCommand.ApExecuteCommand.class, CommandLine.HelpCommand.class}
 )
-public class ApCommand implements Callable<Integer> {
+public class ApCommand extends BaseCommand {
+    public static final String COMMAND_NAME = "ap";
 
-    public static final String AP_COMMAND = "ap";
 
     public static abstract class AbstractApCommand extends StepConsole.AbstractStepCommand {
 
@@ -105,11 +109,11 @@ public class ApCommand implements Callable<Integer> {
     }
 
     @CommandLine.Command(name = "deploy",
-        mixinStandardHelpOptions = true,
-        version = Constants.STEP_VERSION_STRING,
         description = "The CLI interface to deploy automation packages in Step",
-        usageHelpAutoWidth = true,
-        subcommands = {CommandLine.HelpCommand.class})
+        version = Constants.STEP_VERSION_STRING,
+        mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
+        subcommands = {CommandLine.HelpCommand.class}
+    )
     public static class ApDeployCommand extends AbstractApCommand {
 
         public static final String VERSION_NAME = "--versionName";
@@ -169,10 +173,9 @@ public class ApCommand implements Callable<Integer> {
     }
 
     @CommandLine.Command(name = "execute",
-        mixinStandardHelpOptions = true,
-        version = "step.ap.execute 1.0",
         description = "The CLI interface to execute automation packages in Step",
-        usageHelpAutoWidth = true,
+        version = "step.ap.execute 1.0",
+        mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
         subcommands = {CommandLine.HelpCommand.class})
     public static class ApExecuteCommand extends AbstractApCommand implements Callable<Integer> {
 
@@ -358,12 +361,4 @@ public class ApCommand implements Callable<Integer> {
         }
 
     }
-
-    @Override
-    public Integer call() throws Exception {
-        // call help by default
-        return StepConsole.addApSubcommands(new CommandLine(new ApCommand()), ApDeployCommand::new, ApExecuteCommand::new)
-            .execute("help");
-    }
-
 }

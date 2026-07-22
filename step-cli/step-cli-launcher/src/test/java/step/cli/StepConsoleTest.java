@@ -416,37 +416,31 @@ public class StepConsoleTest {
 
     private int runMain(Histories histories, String... args) {
         log.info("--- Run CLI - BEGIN ---");
-        int res = executeMain(
-            () -> new TestApDeployCommand(histories.deployHistory),
-            () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory),
-            () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
-            IdeCommand.LaunchIdeCommand::new,
-            false,
-            args
-        );
+        var commandFactory = new TestCommandFactory()
+            .register(ApCommand.ApDeployCommand.class, new TestApDeployCommand(histories.deployHistory))
+            .register(ApCommand.ApExecuteCommand.class, new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory))
+            .register(LibraryCommand.DeployLibraryCommand.class, new TestLibraryDeployCommand(histories.deployLibraryHistory));
+        int res = executeMain(false, commandFactory, args);
         log.info("--- Run CLI - END ---" + "\n");
         return res;
     }
 
     private int runMainWithVersion(Histories histories, Version version, String... args) {
         log.info("--- Run CLI - BEGIN ---");
-        int res = executeMain(
-            () -> new TestApDeployCommand(histories.deployHistory, version),
-            () -> new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version),
-            () -> new TestLibraryDeployCommand(histories.deployLibraryHistory),
-            IdeCommand.LaunchIdeCommand::new,
-            false,
-            args
-        );
+        var commandFactory = new TestCommandFactory()
+            .register(ApCommand.ApDeployCommand.class, new TestApDeployCommand(histories.deployHistory, version))
+            .register(ApCommand.ApExecuteCommand.class, new TestApExecuteCommand(histories.remoteExecuteHistory, histories.localExecuteHistory, version))
+            .register(LibraryCommand.DeployLibraryCommand.class, new TestLibraryDeployCommand(histories.deployLibraryHistory));
+        int res = executeMain(false, commandFactory, args);
         log.info("--- Run CLI - END ---" + "\n");
         return res;
     }
 
     private static class Histories {
-        private List<TestApDeployCommand.ExecutionParams> deployHistory;
-        private List<TestLibraryDeployCommand.ExecutionParams> deployLibraryHistory;
-        private List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory;
-        private List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory;
+        private final List<TestApDeployCommand.ExecutionParams> deployHistory;
+        private final List<TestLibraryDeployCommand.ExecutionParams> deployLibraryHistory;
+        private final List<TestApExecuteCommand.RemoteExecutionParams> remoteExecuteHistory;
+        private final List<TestApExecuteCommand.LocalExecutionParams> localExecuteHistory;
 
         public Histories(List<TestApDeployCommand.ExecutionParams> deployHistory,
                          List<TestLibraryDeployCommand.ExecutionParams> deployLibraryHistory,
