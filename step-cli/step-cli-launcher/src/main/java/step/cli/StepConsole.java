@@ -38,7 +38,7 @@ import java.util.concurrent.Callable;
     description = "The command-line interface (CLI) to interact with Step",
     version = Constants.STEP_VERSION_STRING,
     mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
-    subcommands = {ApCommand.class, LibraryCommand.class, IdeCommand.class, CommandLine.HelpCommand.class}
+    subcommands = {ApCommand.class, LibraryCommand.class, IdeCommands.IdeCommand.class, CommandLine.HelpCommand.class}
 )
 public class StepConsole extends BaseCommand {
 

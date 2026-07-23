@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import step.core.deployment.AbstractStepServices;
 import step.ide.LocalIDEState;
 
-import java.io.File;
+import java.nio.file.Files;
 
 @Path("/local/ide")
 @Tag(name = "IDE")
@@ -33,22 +33,26 @@ public class LocalIDEServices extends AbstractStepServices {
     @Path("ap/use-existing")
     @Consumes(MediaType.APPLICATION_JSON)
     public void useExistingAP(@QueryParam("directory") String directory) {
-        // Temporary workaround for windows: Strip the leading slash if it looks like /C:
+        if (directory == null || directory.isBlank()) {
+            throw new WebApplicationException("directory must not be empty", Response.Status.BAD_REQUEST);
+        }
+        // Workaround for windows: Strip the leading slash if it looks like /C:
         if (directory.startsWith("/") && directory.length() > 2 && directory.charAt(2) == ':') {
             directory = directory.substring(1);
         }
 
-        if (directory == null || directory.isBlank()) {
-            throw new WebApplicationException("directory must not be empty", Response.Status.BAD_REQUEST);
-        }
-        File file = new File(directory);
-        if (!file.isDirectory() || !file.canRead()) {
-            throw new WebApplicationException("Not a readable directory: " + directory, Response.Status.BAD_REQUEST);
+        var apPath = java.nio.file.Path.of(directory);
+        var ideState = LocalIDEState.get();
+
+        try {
+            ideState.validateExistingAutomationPackageDirectory(apPath);
+        } catch (Exception e) {
+            throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
         }
         try {
-            LocalIDEState.get().useExistingAutomationPackageDirectory(file);
-
+            ideState.useExistingAutomationPackageDirectory(apPath);
         } catch (Exception e) {
+            // Catch anything else (e.g., actual IO read errors during setup) as 500 Internal Error
             logger.error("Unable to use existing AP directory: {}", directory, e);
             throw new WebApplicationException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -61,19 +65,34 @@ public class LocalIDEServices extends AbstractStepServices {
         if (existingEmptyDirectory == null || existingEmptyDirectory.isBlank()) {
             throw new WebApplicationException("existingEmptyDirectory is required", Response.Status.BAD_REQUEST);
         }
-        if (apName == null || apName.isBlank()) {
-            throw new WebApplicationException("apName is required", Response.Status.BAD_REQUEST);
-        }
-        File file = new File(existingEmptyDirectory);
-        if (!file.isDirectory() || !file.canWrite()) {
-            throw new WebApplicationException("Not a writable directory: " + existingEmptyDirectory, Response.Status.BAD_REQUEST);
-        }
+
+        var path = java.nio.file.Path.of(existingEmptyDirectory);
         try {
-            LocalIDEState.get().useNewAutomationPackageDirectory(file, apName);
+            // more validation
+            if (LocalIDEState.get().validateInitializableAutomationPackageDirectory(path) != null) {
+                throw new WebApplicationException(
+                    "Directory already contains an automation package descriptor: " + path.toAbsolutePath(),
+                    Response.Status.BAD_REQUEST
+                );
+            }
+
+            if (Files.exists(path) && !Files.isWritable(path)) {
+                throw new WebApplicationException(
+                    "Not a writable directory: " + path.toAbsolutePath(),
+                    Response.Status.BAD_REQUEST
+                );
+            }
+        } catch (IllegalArgumentException e) {
+            throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+
+        try {
+            LocalIDEState.get().useNewAutomationPackageDirectory(path, apName);
         } catch (Exception e) {
-            logger.error("Unable to initialize new AP directory: {}", existingEmptyDirectory, e);
+            logger.error("Unable to initialize new AP directory: {}", path.toAbsolutePath(), e);
             throw new WebApplicationException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+
     }
 
     public record AutomationPackageDescriptor(String directory, String name) {
@@ -83,11 +102,11 @@ public class LocalIDEServices extends AbstractStepServices {
     @Path("ap/current")
     @Produces(MediaType.APPLICATION_JSON)
     public AutomationPackageDescriptor getCurrentAP() {
-        File dir = LocalIDEState.get().getCurrentAutomationPackageDirectory();
+        var dir = LocalIDEState.get().getCurrentAutomationPackageDirectory();
         if (dir == null) {
             return null;
         }
-        return new AutomationPackageDescriptor(dir.getAbsolutePath(), LocalIDEState.get().getCurrentAutomationPackageName());
+        return new AutomationPackageDescriptor(dir.toString(), LocalIDEState.get().getCurrentAutomationPackageName());
     }
 
     @POST

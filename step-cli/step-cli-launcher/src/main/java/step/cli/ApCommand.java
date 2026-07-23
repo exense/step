@@ -35,23 +35,23 @@ public class ApCommand extends BaseCommand {
 
     public static abstract class AbstractApCommand extends StepConsole.AbstractStepCommand {
 
-        @CommandLine.Option(names = {"-p", "--package"}, paramLabel = "<Package>", description = "The path to the automation-package.yaml file, folder or the archive containing it. Also supports maven coordinates (mvn:groupId:artefactId:version[:classifier:type]).")
+        @CommandLine.Option(names = {"-p", "--package"}, paramLabel = "<Package>", description = "The path to the automation-package.yaml file, directory or the archive containing it. Also supports maven coordinates (mvn:groupId:artefactId:version[:classifier:type]).")
         protected String apFile;
 
         @CommandLine.Option(names = {"-l", "--library"}, paramLabel = "<Library>", description = "The file path, maven coordinate (mvn:groupId:artefactId:version[:classifier:type]), or the name of an existing managed library (example managed:MY_COMMON_LIBRARY).")
         protected String library;
 
         /**
-         * If the param points to the folder, prepares the zipped AP file with .stz extension.
+         * If the param points to the directory, prepares the zipped AP file with .stz extension.
          * Otherwise, if the param is a simple file, just returns this file
          *
          * @param param the source of AP
          */
-        protected static File prepareFile(String param, String entityNameForLog, boolean checkApFolder) {
+        protected static File prepareFile(String param, String entityNameForLog, boolean checkApDirectory) {
             try {
                 File file = null;
                 if (param == null) {
-                    // use the current folder by default
+                    // use the current directory by default
                     file = new File(new File("").getAbsolutePath());
                 } else {
                     file = new File(param);
@@ -59,9 +59,9 @@ public class ApCommand extends BaseCommand {
                 StepConsole.log.info("The {} is {}", entityNameForLog, file.getAbsolutePath());
 
                 if (file.isDirectory()) {
-                    // check if the folder is AP (contains the yaml descriptor)
-                    if (checkApFolder) {
-                        checkApFolder(file);
+                    // check if the directory is AP (contains the yaml descriptor)
+                    if (checkApDirectory) {
+                        checkApDirectory(file);
                     }
 
                     Function<File, Boolean> fileFilter = null;
@@ -94,15 +94,15 @@ public class ApCommand extends BaseCommand {
             return prepareFile(param, "package library", false);
         }
 
-        private static void checkApFolder(File param) throws IOException {
+        private static void checkApDirectory(File param) throws IOException {
             // package library is not required here, because we only need to check the automation package descriptor
             try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param, null);
                  AutomationPackageArchive apArchive = apProvider.getAutomationPackageArchive()) {
                 if (!apArchive.hasAutomationPackageDescriptor()) {
-                    throw new StepCliExecutionException("The AP folder " + param.getAbsolutePath() + " doesn't contain the AP descriptor file");
+                    throw new StepCliExecutionException("The AP directory " + param.getAbsolutePath() + " doesn't contain the AP descriptor file");
                 }
             } catch (AutomationPackageReadingException e) {
-                throw new StepCliExecutionException("Unable to read automation package from folder " + param.getAbsolutePath(), e);
+                throw new StepCliExecutionException("Unable to read automation package from directory " + param.getAbsolutePath(), e);
 
             }
         }
@@ -212,7 +212,7 @@ public class ApCommand extends BaseCommand {
         @CommandLine.Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit, aggregated. Also (optional) you can specify the output destination: --reportType=junit;output=file,stdout")
         protected List<String> reportType;
 
-        @CommandLine.Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports", defaultValue = "reports")
+        @CommandLine.Option(names = {"--reportDir"}, description = "The local directory to store generated execution reports", defaultValue = "reports")
         protected File reportDir;
 
         @CommandLine.Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")

@@ -28,12 +28,19 @@ public class StepExecutionExceptionHandler implements CommandLine.IExecutionExce
 
     @Override
     public int handleExecutionException(Exception ex, CommandLine commandLine, CommandLine.ParseResult fullParseResult) throws Exception {
-        boolean verbose = commandLine.getCommandSpec().findOption(StepConsole.AbstractStepCommand.VERBOSE).getValue();
-        if (verbose) {
-            log.error("Execution failed", ex);
+        CommandLine.Model.OptionSpec verboseOption = commandLine.getCommandSpec().findOption(StepConsole.AbstractStepCommand.VERBOSE);
+        if (verboseOption == null) {
+            // commands to launch IDE not related to executions and do not have the verbose flag, so we just perform "generic" error handling
+            StepConsole.log.error("Unhandled exception", ex);
+            return -1;
         } else {
-            log.error("Execution failed. " + ex.getMessage());
+            boolean verbose = verboseOption.getValue();
+            if (verbose) {
+                log.error("Execution failed", ex);
+            } else {
+                log.error("Execution failed. " + ex.getMessage());
+            }
+            return 0;
         }
-        return 0;
     }
 }

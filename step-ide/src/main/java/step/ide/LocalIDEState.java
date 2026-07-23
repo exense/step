@@ -24,9 +24,8 @@ import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plans.parser.yaml.YamlPlan;
 import step.resources.ResourceManagerImpl;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,10 +39,10 @@ public class LocalIDEState implements ExecutionDiversion {
 
     private final JavaAutomationPackageReader reader;
 
-    private final List<File> directoriesToCleanupOnShutdown = new ArrayList<>();
+    private final List<Path> directoriesToCleanupOnShutdown = new ArrayList<>();
     private ResourceManagerImpl resourceManager;
     private IDEExecutorDelegateFactory executorDelegateFactory;
-    private File currentAutomationPackageDirectory;
+    private Path currentAutomationPackageDirectory;
     private FileResolver fileResolver;
 
     public static LocalIDEState get() {
@@ -53,7 +52,6 @@ public class LocalIDEState implements ExecutionDiversion {
     private LocalIDEState() {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
-        // required for reading parameters, apparently the manager can be null
         AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, null);
         reader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, new Configuration());
     }
@@ -63,30 +61,25 @@ public class LocalIDEState implements ExecutionDiversion {
         logger.debug("Setting resource manager to {}", resourceManager);
     }
 
-    public void useExistingAutomationPackageDirectory(File apDir) throws Exception {
-        verifyAPDirectory(apDir);
+    public void useExistingAutomationPackageDirectory(Path apDir) throws Exception {
+        validateExistingAutomationPackageDirectory(apDir);
         useAutomationPackageDirectory(apDir);
     }
 
-    public void useNewAutomationPackageDirectory(File apDir, String apName) throws Exception {
+    public void useNewAutomationPackageDirectory(Path apDir, String apName) throws Exception {
         initializeAPDirectory(apDir, apName);
         useAutomationPackageDirectory(apDir);
     }
 
-    private void useAutomationPackageDirectory(File apDir) throws Exception {
-        var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir, this.resourceManager);
+    private void useAutomationPackageDirectory(Path apDir) throws Exception {
+        var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager);
         Properties properties = new Properties();
 
         int variant = 1;
-        // variant 1:
-        // parameters all go into parameters.yml, plans go into separate files in plans/$PLAN_NAME.yml
-        // this is because parameters do not have unique names by design.
         if (variant == 1) {
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), "parameters.yml");
-            // per default, PER_OBJECT is used on all objects?
         }
-        // variant 2: simple, everything goes into main descriptor
         if (variant == 2) {
             String mainFile = fragmentManager.descriptorYaml.getFragmentPath().toFile().getName();
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
@@ -99,47 +92,94 @@ public class LocalIDEState implements ExecutionDiversion {
         fragmentManager.setProperties(properties);
         var automationPackageCollectionFactory = new AutomationPackageCollectionFactory(new Properties(), fragmentManager);
         CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(automationPackageCollectionFactory);
-        this.currentAutomationPackageDirectory = apDir;
-        this.fileResolver.setUnprefixedRoot(apDir.toPath());
+        this.currentAutomationPackageDirectory = apDir.toAbsolutePath().normalize();
+        this.fileResolver.setUnprefixedRoot(apDir);
     }
 
-    private void verifyAPDirectory(File apDir) throws Exception {
+    private Path findMetadataFile(Path apDirectory) {
         for (String fileName : JavaAutomationPackageArchive.METADATA_FILES) {
-            if (new File(apDir, fileName).isFile()) {
-                return;
+            Path metadataFile = apDirectory.resolve(fileName);
+            if (Files.isRegularFile(metadataFile)) {
+                return metadataFile;
             }
         }
-        throw new IllegalArgumentException("Directory " + apDir + " does not contain an automation package descriptor");
+        return null;
     }
 
-    private void initializeAPDirectory(File apDir, String apName) throws Exception {
+    private Path resolveAndCheckBaseDirectory(Path apDirectory, boolean forInitialization) {
+        if (apDirectory == null) {
+            throw new IllegalArgumentException("Directory path must not be null");
+        }
+        Path resolvedDir = apDirectory.toAbsolutePath().normalize();
+
+        if (!Files.exists(resolvedDir)) {
+            if (forInitialization) {
+                return resolvedDir;
+            }
+            throw new IllegalArgumentException("Path does not exist: " + resolvedDir);
+        }
+
+        if (!Files.isDirectory(resolvedDir)) {
+            throw new IllegalArgumentException("Path exists but is not a directory: " + resolvedDir);
+        }
+
+        if (!Files.isReadable(resolvedDir)) {
+            throw new IllegalArgumentException("Directory is not readable: " + resolvedDir);
+        }
+
+        // This is an absolute edge case, but in theory we could get away with read-only directories in some cases (not very useful for an editor though).
+        if (forInitialization && !Files.isWritable(resolvedDir)) {
+            throw new IllegalArgumentException("Directory is not writable: " + resolvedDir);
+        }
+
+        return resolvedDir;
+    }
+
+    public void validateExistingAutomationPackageDirectory(Path apDirectory) {
+        Path resolvedDir = resolveAndCheckBaseDirectory(apDirectory, false);
+        if (findMetadataFile(resolvedDir) == null) {
+            throw new IllegalArgumentException("Directory " + resolvedDir + " does not contain an automation package descriptor");
+        }
+    }
+
+    public Path validateInitializableAutomationPackageDirectory(Path apDirectory) {
+        Path resolvedDir = resolveAndCheckBaseDirectory(apDirectory, true);
+        return findMetadataFile(resolvedDir);
+    }
+
+    private void initializeAPDirectory(Path apDir, String apName) throws Exception {
         Objects.requireNonNull(apDir, "apDir must not be null");
-        Objects.requireNonNull(apName, "apName must not be null");
-        if (!apDir.isDirectory()) {
-            String error = String.format("Path %s  is not a usable directory, unable to initialize Automation Package", apDir.getAbsolutePath());
+
+        // 1. Create the directory if it doesn't exist (we allow this from the CLI)
+        if (!Files.exists(apDir)) {
+            Files.createDirectories(apDir);
+            logger.info("Created new Automation Package directory: {}", apDir.toAbsolutePath());
+        }
+
+        if (!Files.isDirectory(apDir)) {
+            String error = String.format("Path %s is not a usable directory, unable to initialize Automation Package", apDir.toAbsolutePath());
             logger.error(error);
             throw new IllegalArgumentException(error);
         }
-        if (Objects.requireNonNull(apDir.listFiles()).length != 0) {
-            String error = String.format("Directory %s is not empty, refusing to initialize Automation Package", apDir.getAbsolutePath());
-            logger.error(error);
-            throw new IllegalArgumentException(error);
+
+        Path descriptor = Objects.requireNonNullElseGet(findMetadataFile(apDir),
+            () -> apDir.resolve(JavaAutomationPackageArchive.METADATA_FILES.getFirst())
+        );
+
+        logger.info("Initializing AP descriptor: {}", descriptor.toAbsolutePath());
+
+        if (apName == null) {
+            apName = apDir.getFileName().toString();
         }
-        File descriptor = new File(apDir, JavaAutomationPackageArchive.METADATA_FILES.getFirst());
-        logger.info("Initializing AP directory with new descriptor: {}", descriptor.getAbsolutePath());
-        try (PrintWriter pw = new PrintWriter(new FileOutputStream(descriptor))) {
-            // escape backslashes and quotes
-            String yamlName = apName.replace("\\", "\\\\").replace("\"", "\\\"");
-            pw.println("schemaVersion: 1.0.0");
-            pw.println("name: \"" + yamlName + "\"");
-        }
+
+        String yamlName = apName.replace("\\", "\\\\").replace("\"", "\\\"");
+        String content = "schemaVersion: 1.0.0\nname: \"" + yamlName + "\"\n";
+        Files.writeString(descriptor, content);
     }
 
-
-    public File getCurrentAutomationPackageDirectory() {
+    public Path getCurrentAutomationPackageDirectory() {
         return currentAutomationPackageDirectory;
     }
-
 
     public String getCurrentAutomationPackageName() {
         if (currentAutomationPackageDirectory == null) {
@@ -162,7 +202,7 @@ public class LocalIDEState implements ExecutionDiversion {
     public String divertExecution(ExecutionParameters executionParams) {
         Objects.requireNonNull(currentAutomationPackageDirectory, "currentAutomationPackageDirectory not set; select an AP first");
         logger.info("Launching diverted execution for parameters: {}", Failable.call(() -> new ObjectMapper().writeValueAsString(executionParams)));
-        IDEExecutorDelegate executorDelegate = executorDelegateFactory.createDelegate(currentAutomationPackageDirectory, executionParams);
+        IDEExecutorDelegate executorDelegate = executorDelegateFactory.createDelegate(currentAutomationPackageDirectory.toFile(), executionParams);
         CompletableFuture<String> executionIdFuture = new CompletableFuture<>();
         CompletableFuture.runAsync((() -> {
             try {
@@ -181,27 +221,28 @@ public class LocalIDEState implements ExecutionDiversion {
         this.fileResolver = fileResolver;
     }
 
-    public void addDirectoriesToCleanupOnShutdown(Collection<File> directories) {
+    public void addDirectoriesToCleanupOnShutdown(Collection<Path> directories) {
         this.directoriesToCleanupOnShutdown.addAll(Objects.requireNonNull(directories));
         if (logger.isDebugEnabled()) {
-            for (File directory : directoriesToCleanupOnShutdown) {
-                logger.debug("Registering directory for cleanup on shutdown: {}", directory.getAbsolutePath());
+            for (Path directory : directoriesToCleanupOnShutdown) {
+                logger.debug("Registering directory for cleanup on shutdown: {}", directory.toAbsolutePath());
             }
         }
     }
 
     public void onShutdown() {
         logger.info("Shutting down, performing cleanup tasks");
-        for (File directory : directoriesToCleanupOnShutdown) {
-            if (!directory.isDirectory()) {
-                logger.warn("Directory {} is not a usable directory, unable to cleanup", directory.getAbsolutePath());
+        for (Path directory : directoriesToCleanupOnShutdown) {
+            if (!Files.isDirectory(directory)) {
+                logger.warn("Directory {} is not a usable directory, unable to cleanup", directory.toAbsolutePath());
             }
             try {
-                logger.debug("Cleaning up directory {}", directory.getAbsolutePath());
-                FileUtils.deleteDirectory(directory);
+                logger.debug("Cleaning up directory {}", directory.toAbsolutePath());
+                FileUtils.deleteDirectory(directory.toFile());
             } catch (Exception e) {
-                logger.error("Error while deleting directory {}", directory.getAbsolutePath(), e);
+                logger.error("Error while deleting directory {}", directory.toAbsolutePath(), e);
             }
         }
     }
+
 }
