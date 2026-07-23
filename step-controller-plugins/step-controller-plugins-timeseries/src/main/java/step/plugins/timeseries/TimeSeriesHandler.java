@@ -21,6 +21,7 @@ import step.core.timeseries.aggregation.TimeSeriesAggregationPipeline;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQuery;
 import step.core.timeseries.aggregation.TimeSeriesAggregationQueryBuilder;
 import step.core.timeseries.aggregation.TimeSeriesAggregationResponse;
+import step.core.timeseries.bucket.Aggregation;
 import step.core.timeseries.bucket.Bucket;
 import step.core.timeseries.bucket.BucketAttributes;
 import step.core.timeseries.query.OQLTimeSeriesFilterBuilder;
@@ -359,6 +360,10 @@ public class TimeSeriesHandler {
     }
 
     private TimeSeriesAggregationQuery mapToQuery(FetchBucketsRequest request) {
+        // Both aggregations default to MERGE, matching the historical behavior, so that requests not specifying them
+        // keep aggregating as before
+        Aggregation timeAggregation = Objects.requireNonNullElse(request.getTimeAggregation(), Aggregation.MERGE);
+        Aggregation groupAggregation = Objects.requireNonNullElse(request.getGroupAggregation(), Aggregation.MERGE);
         TimeSeriesAggregationQueryBuilder timeSeriesAggregationQuery = new TimeSeriesAggregationQueryBuilder()
             .range(request.getStart(), request.getEnd())
             .withFilter(Filters.and(
@@ -366,7 +371,8 @@ public class TimeSeriesHandler {
                     TimeSeriesFilterBuilder.buildFilter(request.getOqlFilter()),
                     TimeSeriesFilterBuilder.buildFilter(request.getParams()))
             ))
-            .withGroupDimensions(request.getGroupDimensions());
+            .withTimeAggregation(timeAggregation)
+            .groupBy(request.getGroupDimensions(), groupAggregation);
         if (request.getCollectAttributeKeys() != null && !request.getCollectAttributeKeys().isEmpty()) {
             timeSeriesAggregationQuery.withAttributeCollection(request.getCollectAttributeKeys(),
                 request.getCollectAttributesValuesLimit());

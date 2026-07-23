@@ -295,7 +295,7 @@ public class AggregatedReportViewBuilder {
             if (!bucketsByStatus.isEmpty()) {
                 Bucket bucket = bucketsByStatus.values().stream().findFirst().get();
                 BucketBuilder bucketBuilder = new BucketBuilder(bucket.getBegin(), bucket.getEnd());
-                bucketsByStatus.values().forEach(bucketBuilder::accumulate);
+                bucketsByStatus.values().forEach(bucketBuilder::merge);
                 bucketsByStatus.put(MERGED_GROUPS_LABEL, bucketBuilder.build());
             }
             //if the aggregated report is for a single instance we attach the RAW report if requested
