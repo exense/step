@@ -34,6 +34,7 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
     public static final String DEFAULT_LAYOUT_ID_CONFIG_KEY = "plugins.reporting.layouts.default.id";
     public static final String DEFAULT_LAYOUT_ID_DEFAULT = "69b010aeec94534eb48176db";
     public static final String CROSS_EXECUTION_DEFAULT_LAYOUT_ID_CONFIG_KEY = "plugins.reporting.layouts.crossexecution.default.id";
+    public static final String CROSS_EXECUTION_DEFAULT_LAYOUT_ID_DEFAULT = "6a5a49dfcbff3f2ff375c874";
 
     private ReportLayoutAccessor reportLayoutAccessor;
     private String defaultLayoutId;
@@ -59,14 +60,12 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
 
         //Add default layout IDs (per report type) to UI configuration
         defaultLayoutId = context.getConfiguration().getProperty(DEFAULT_LAYOUT_ID_CONFIG_KEY, DEFAULT_LAYOUT_ID_DEFAULT);
-        crossExecutionDefaultLayoutId = context.getConfiguration().getProperty(CROSS_EXECUTION_DEFAULT_LAYOUT_ID_CONFIG_KEY);
+        crossExecutionDefaultLayoutId = context.getConfiguration().getProperty(CROSS_EXECUTION_DEFAULT_LAYOUT_ID_CONFIG_KEY, CROSS_EXECUTION_DEFAULT_LAYOUT_ID_DEFAULT);
         WebApplicationConfigurationManager configurationManager = context.require(WebApplicationConfigurationManager.class);
         configurationManager.registerHook(s -> {
             Map<String, String> config = new HashMap<>();
             config.put(DEFAULT_LAYOUT_ID_CONFIG_KEY, defaultLayoutId);
-            if (crossExecutionDefaultLayoutId != null) {
-                config.put(CROSS_EXECUTION_DEFAULT_LAYOUT_ID_CONFIG_KEY, crossExecutionDefaultLayoutId);
-            }
+            config.put(CROSS_EXECUTION_DEFAULT_LAYOUT_ID_CONFIG_KEY, crossExecutionDefaultLayoutId);
             return config;
         });
 
