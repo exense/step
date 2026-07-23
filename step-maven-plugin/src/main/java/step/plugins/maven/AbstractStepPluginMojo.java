@@ -32,7 +32,6 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import step.cli.ControllerVersionValidator;
-import step.client.AbstractRemoteClient;
 import step.client.controller.ControllerServicesClient;
 import step.client.credentials.ControllerCredentials;
 import step.client.resources.RemoteResourceManager;
@@ -243,12 +242,6 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
         }
         s = s + ":" + version;
         return s;
-    }
-
-    protected void addProjectHeaderToRemoteClient(String stepProjectName, AbstractRemoteClient remoteClient) {
-        if (stepProjectName != null && !stepProjectName.isEmpty()) {
-            remoteClient.getHeaders().addProjectName(stepProjectName);
-        }
     }
 
     protected static void validateEEConfiguration(String paramProjectName, String paramAuthToken) throws MojoExecutionException {

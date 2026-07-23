@@ -16,33 +16,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.client.reports;
+package step.core.scheduler;
 
-import jakarta.ws.rs.client.Invocation.Builder;
-import step.client.AbstractRemoteClient;
-import step.client.RemoteClientConfiguration;
-import step.client.credentials.ControllerCredentials;
-import step.core.execution.model.Execution;
-import step.core.execution.model.ExecutionProvider;
+public class SchedulerTaskWrapper extends ExecutiontTaskParameters {
 
-public class RemoteExecutionProvider extends AbstractRemoteClient implements ExecutionProvider {
+    private Long nextExecutionTimestamp;
 
-    public RemoteExecutionProvider(ControllerCredentials credentials) {
-        super(credentials);
+    public Long getNextExecutionTimestamp() {
+        return nextExecutionTimestamp;
     }
 
-    public RemoteExecutionProvider(RemoteClientConfiguration configuration) {
-        super(configuration);
+    public void setNextExecutionTimestamp(Long nextExecutionTimestamp) {
+        this.nextExecutionTimestamp = nextExecutionTimestamp;
     }
-
-    public RemoteExecutionProvider() {
-        super();
-    }
-
-    @Override
-    public Execution get(String id) {
-        Builder b = requestBuilder("/rest/executions/" + id);
-        return executeRequest(() -> b.get(Execution.class));
-    }
-
 }

@@ -46,6 +46,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -64,21 +65,40 @@ public class AbstractRemoteClient implements Closeable {
 
     protected ControllerCredentials credentials;
 
+    protected RemoteClientConfiguration configuration;
+
+    /**
+     * @deprecated Prefer {@link #AbstractRemoteClient(RemoteClientConfiguration)}, which also
+     * carries the tenant so it (and any nested client) is scoped to the correct project.
+     * This constructor is kept for backward compatibility and creates a tenant-less configuration.
+     */
+    @Deprecated
     public AbstractRemoteClient(ControllerCredentials credentials) {
-        this.credentials = credentials;
+        this(new RemoteClientConfiguration(credentials));
+    }
+
+    public AbstractRemoteClient(RemoteClientConfiguration configuration) {
+        this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
+        this.credentials = Objects.requireNonNull(configuration.getCredentials(), "credentials must not be null");
         createClient();
         if (credentials.getToken() != null) {
             Feature feature = OAuth2ClientSupport.feature(credentials.getToken());
             client.register(feature);
+        }
+        // EE only: scope all requests to the configured tenant. In OS context the tenant is null
+        // and no header is sent.
+        String tenant = configuration.getTenant();
+        if (tenant != null && !tenant.isEmpty()) {
+            headers.addProjectName(tenant);
         }
         if (credentials.getUsername() != null && !credentials.getUsername().trim().isEmpty()) {
             login();
         }
     }
 
-    // Default = Sysprop for build
+    // Default = Sysprop for build (credentials and, in EE context, the tenant)
     public AbstractRemoteClient() {
-        this(SyspropCredendialsBuilder.build());
+        this(SyspropCredendialsBuilder.buildConfiguration());
     }
 
     private void createClient() {
@@ -179,6 +199,10 @@ public class AbstractRemoteClient implements Closeable {
                     credentials.getServerUrl() + ". The server returned following error: " + errorMessage, e);
             }
         }
+    }
+
+    public RemoteClientConfiguration getConfiguration() {
+        return configuration;
     }
 
     public AdditionalHeaders getHeaders() {
