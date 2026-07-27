@@ -26,7 +26,6 @@ import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.plans.Plan;
-import step.resources.Resource;
 import step.resources.ResourceManager;
 
 import java.beans.IntrospectionException;
@@ -150,13 +149,9 @@ public class AutomationPackagePlansAttributesApplier {
     }
 
     private String uploadAutomationPackageResource(String yamlResourceRef, StagingAutomationPackageContext apContext) {
-        AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
-        Resource resource = resourceUploader.uploadResourceFromAutomationPackage(yamlResourceRef, ResourceManager.RESOURCE_TYPE_DATASOURCE, apContext);
-        String result = null;
-        if (resource != null) {
-            result = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-        }
-        return result;
+        // Use the context's uploader so the rewrite (server) vs pass-through (IDE) behaviour matches
+        // the keyword plugins. It rewrites a plain archive-relative path into an apResource: reference.
+        return apContext.getResourceUploader().applyResourceReference(yamlResourceRef, ResourceManager.RESOURCE_TYPE_DATASOURCE, apContext);
     }
 
     private void applySpecialValuesForChildrenAndBeforeAfterSections(AbstractArtefact parent, StagingAutomationPackageContext apContext) {

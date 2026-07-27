@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -116,7 +117,7 @@ public class ApResourceMaterializer {
         Path parent = target.toPath().getParent();
         Path tmp = Files.createTempFile(parent, TMP_PREFIX, ".tmp");
         try {
-            try (InputStream in = url.openStream()) {
+            try (InputStream in = openStreamWithoutCaching(url)) {
                 Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
             }
             atomicMove(tmp, target.toPath());
@@ -174,6 +175,18 @@ public class ApResourceMaterializer {
      * promoted to {@code ch.exense.commons.io.FileHelper} in exense-commons (which has no atomic move
      * today). Kept local until there is a second consumer.
      */
+    /**
+     * Opens a stream for {@code url} without caching. For a {@code jar:} URL the default
+     * {@link java.net.JarURLConnection} caches the underlying {@code JarFile}, which keeps the archive
+     * file locked (notably on Windows) even after the archive's class loader is closed — blocking a
+     * later delete or redeploy. Disabling caching releases the handle when the stream is closed.
+     */
+    private static InputStream openStreamWithoutCaching(URL url) throws IOException {
+        URLConnection connection = url.openConnection();
+        connection.setUseCaches(false);
+        return connection.getInputStream();
+    }
+
     private static void atomicMove(Path source, Path target) throws IOException {
         try {
             Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);

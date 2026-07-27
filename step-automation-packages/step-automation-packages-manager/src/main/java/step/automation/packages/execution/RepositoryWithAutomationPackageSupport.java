@@ -25,6 +25,7 @@ import step.artefacts.CallPlan;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.automation.packages.*;
+import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
@@ -474,6 +475,11 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         // import all resources from automation package to execution context by adding the layer to contextResourceManager
         // resource manager used in isolated package manager is non-permanent
         ((LayeredResourceManager) contextResourceManager).pushManager(apManager.getResourceManager(), false);
+
+        // Make the apResource: resolver see the isolated automation package: the global accessor
+        // installed at execution init does not contain the in-memory isolated AP, so override it with
+        // the isolated manager's accessor (mirrors the resource-manager layer pushed just above).
+        context.put(AutomationPackageAccessor.class, apManager.getAutomationPackageAccessor());
 
         // call some hooks on import
         apManager.runExtensionsBeforeIsolatedExecution(automationPackage, context, apManager.getExtensions(), result);

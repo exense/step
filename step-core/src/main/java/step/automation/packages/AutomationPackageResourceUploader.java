@@ -18,24 +18,22 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import ch.exense.commons.io.FileHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
-import step.resources.Resource;
-import step.resources.ResourceManager;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Rewrites the resource references of an automation package at deploy time. It rewrites a plain
+ * archive-relative reference into an {@code apResource:<apId>:<relativePath>} reference, which is
+ * resolved on the fly from the automation package archive at execution time (see
+ * {@link ApResourceMaterializer}).
+ * <p>
+ * The IDE / local mode keeps the plain reference untouched via
+ * {@link AutomationPackageLocalResourceMapper}, which overrides both public methods.
+ */
 public class AutomationPackageResourceUploader {
-
-    private static final Logger logger = LoggerFactory.getLogger(AutomationPackageResourceUploader.class);
 
     private final Map<String, String> uniqueResourceReferences = new ConcurrentHashMap<>();
 
@@ -45,87 +43,33 @@ public class AutomationPackageResourceUploader {
         return uniqueResourceReferences.computeIfAbsent(resourceReference, key -> applyResourceReference(resourceReference, resourceType, context));
     }
 
-    ;
-
+    /**
+     * Rewrites {@code resourceReference} into an {@code apResource:} reference.
+     * <ul>
+     *     <li>{@code null} / empty → {@code null} (no reference).</li>
+     *     <li>An already-absolute reference ({@code resource:} from a pre-change package, or an
+     *     {@code apResource:} one) is returned untouched — back-compatibility and idempotency.</li>
+     *     <li>A plain archive-relative path is validated against the archive (a missing entry fails
+     *     now, at deploy time, not mid-execution) and rewritten to
+     *     {@code apResource:<apId>:<normalisedRelativePath>}.</li>
+     * </ul>
+     */
     public String applyResourceReference(String resourceReference,
                                          String resourceType,
                                          StagingAutomationPackageContext context) {
-        String result = null;
-        if (resourceReference != null && !resourceReference.startsWith(FileResolver.RESOURCE_PREFIX)) {
-            Resource resource = uploadResourceFromAutomationPackage(resourceReference, resourceType, context);
-            if (resource != null) {
-                result = FileResolver.RESOURCE_PREFIX + resource.getId().toString();
-            }
-        } else {
-            result = resourceReference;
+        if (resourceReference == null || resourceReference.isEmpty()) {
+            return null;
         }
-        return result;
-    }
-
-    public Resource uploadResourceFromAutomationPackage(String resourcePath,
-                                                        String resourceType,
-                                                        StagingAutomationPackageContext context) {
-        if (resourcePath != null && !resourcePath.isEmpty()) {
-            ResourceManager resourceManager = context.getResourceManager();
-
-            InputStream resourceStream = null;
-            File tempFolder = null;
-            try {
-                URL resourceUrl = context.getAutomationPackageArchive().getResource(resourcePath);
-                if (resourceUrl == null) {
-                    throw new RuntimeException("Resource not found in automation package: " + resourcePath);
-                }
-                File resourceFile = new File(resourceUrl.getFile());
-
-                String fileName;
-                // Check if the resource is a directory
-                boolean isDirectory = ClassLoaderResourceFilesystem.isDirectory(resourceUrl);
-                if (isDirectory) {
-                    logger.debug("The referenced resource {} is a directory. It will be extracted to a temporary directory and zipped...", resourcePath);
-                    // If the resource is a directory, extract it and create a zip out of it
-                    File directoryArchive;
-                    // Extract the resource directory
-                    try (ClassLoaderResourceFilesystem.ExtractedDirectory extractedDirectory = ClassLoaderResourceFilesystem.extractDirectory(resourceUrl)) {
-                        File extractedDirectoryFile = extractedDirectory.directory;
-                        String extractedDirectoryName = extractedDirectoryFile.getName();
-                        // Create a temp folder as container for the archive
-                        tempFolder = FileHelper.createTempFolder();
-                        // Create an archive of the extracted directory
-                        directoryArchive = tempFolder.toPath().resolve(extractedDirectoryName + ".zip").toFile();
-                        FileHelper.zip(extractedDirectoryFile.getParentFile(), directoryArchive);
-                    }
-                    resourceStream = new FileInputStream(directoryArchive);
-                    fileName = directoryArchive.getName();
-                } else {
-                    resourceStream = context.getAutomationPackageArchive().getResourceAsStream(resourcePath);
-                    fileName = resourceFile.getName();
-                }
-
-                return resourceManager.createResource(
-                    resourceType,
-                    isDirectory,
-                    resourceStream,
-                    fileName,
-                    context.getEnricher(),
-                    context.getActorUser()
-                );
-            } catch (Exception e) {
-                throw new RuntimeException("Unable to upload automation package resource " + resourcePath + ":" + e.getMessage(), e);
-            } finally {
-                if (resourceStream != null) {
-                    try {
-                        resourceStream.close();
-                    } catch (IOException e) {
-                        logger.error("Unable to close the automation package input stream.");
-                    }
-                }
-                if (tempFolder != null) {
-                    // Delete the temporary folder
-                    FileHelper.deleteFolder(tempFolder);
-                }
-            }
+        if (FileResolver.isResource(resourceReference) || FileResolver.isApResource(resourceReference)) {
+            return resourceReference;
         }
-
-        return null;
+        // Normalise once so deploy-time validation and runtime materialisation use the exact same path.
+        String relativePath = FileResolver.normalizeApRelativePath(resourceReference);
+        URL resourceUrl = context.getAutomationPackageArchive().getResource(relativePath);
+        if (resourceUrl == null) {
+            throw new RuntimeException("Resource not found in automation package: " + resourceReference);
+        }
+        String apId = context.getAutomationPackage().getId().toHexString();
+        return FileResolver.createPathForApResource(apId, relativePath);
     }
 }
