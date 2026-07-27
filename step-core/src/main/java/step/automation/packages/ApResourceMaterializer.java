@@ -75,7 +75,7 @@ public class ApResourceMaterializer {
         Objects.requireNonNull(relativePath, "relativePath must not be null");
         Objects.requireNonNull(archiveSupplier, "archiveSupplier must not be null");
         String normalized = FileResolver.normalizeApRelativePath(relativePath);
-        File target = new File(new File(cacheRoot, apId), normalized);
+        File target = new File(ApResourceCache.apDirectory(cacheRoot, apId), normalized);
         if (target.exists()) {
             return target;
         }

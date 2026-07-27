@@ -70,6 +70,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     private static final String CONFIGURATION_MAX_VERSIONS_PER_AP = "automation.packages.max.versions.per.package";
     protected AutomationPackageLocks automationPackageLocks;
     private AutomationPackageAccessor packageAccessor;
+    private AutomationPackageReaderRegistry automationPackageReaderRegistry;
+    private File apResourceCacheRoot;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
@@ -102,10 +104,13 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         AutomationPackageSerializationRegistry serRegistry = new AutomationPackageSerializationRegistry();
         context.put(AutomationPackageSerializationRegistry.class, serRegistry);
 
-        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry);
+        automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry);
         JavaAutomationPackageReader javaAutomationPackageReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration());
         automationPackageReaderRegistry.register(javaAutomationPackageReader);
         context.put(AutomationPackageReaderRegistry.class, automationPackageReaderRegistry);
+
+        apResourceCacheRoot = new File(context.getConfiguration().getProperty(
+            ApResourceCache.CACHE_DIR_PROPERTY, ApResourceCache.DEFAULT_CACHE_DIR));
     }
 
     public static class AutomationPackageImportHook implements BiConsumer<Object, ImportContext> {
@@ -153,6 +158,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                 maxVersionPerPackage,
                 context.get(ObjectHookRegistry.class)
             );
+            // Only the MAIN manager owns the apResource cache lifecycle (wipe on redeploy/delete).
+            packageManager.setApResourceCacheRoot(apResourceCacheRoot);
             context.put(AutomationPackageManager.class, packageManager);
         }
     }
@@ -181,7 +188,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return new AutomationPackageExecutionPlugin(automationPackageLocks, packageAccessor);
+        return new AutomationPackageExecutionPlugin(automationPackageLocks, packageAccessor,
+            apResourceCacheRoot, automationPackageReaderRegistry);
     }
 
     private static class MavenConfigProviderImpl implements AutomationPackageMavenConfig.ConfigProvider {

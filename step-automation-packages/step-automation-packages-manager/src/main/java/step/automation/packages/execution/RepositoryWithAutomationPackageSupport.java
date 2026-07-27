@@ -572,6 +572,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         public void close() throws IOException {
             // cleanup the associated automation package manager and remove this context from the shared map in case of shared context
             log.info("Cleanup isolated execution context");
+            // Wipe the materialised apResource cache of the isolated package before disposing the
+            // manager (the AP is still reachable here). The cache root lives on the MAIN manager.
+            wipeApResourceCache();
             //In case the Package execution context is shared (i.e. when triggering isolated executions from CLI), we close the shared context
             //and remove it from the shared map
             if (shared) {
@@ -582,6 +585,19 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 //Otherwise directly clean the automation package stored in this context
             } else {
                 inMemoryManager.cleanup();
+            }
+        }
+
+        private void wipeApResourceCache() {
+            File cacheRoot = manager.getApResourceCacheRoot();
+            AutomationPackage automationPackage = getAutomationPackage();
+            if (cacheRoot == null || automationPackage == null) {
+                return;
+            }
+            String apId = automationPackage.getId().toHexString();
+            if (!ApResourceCache.wipe(cacheRoot, apId)) {
+                log.warn("Unable to fully wipe the apResource cache directory {}",
+                    ApResourceCache.apDirectory(cacheRoot, apId).getAbsolutePath());
             }
         }
     }

@@ -1595,7 +1595,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             new FunctionPlugin(),
             new GeneralScriptFunctionPlugin(),
             new ThreadPoolPlugin(),
-            new AutomationPackageExecutionPlugin(automationPackageLocks, new InMemoryAutomationPackageAccessorImpl())));
+            new AutomationPackageExecutionPlugin(automationPackageLocks, new InMemoryAutomationPackageAccessorImpl(), null, null)));
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.put(FunctionAccessor.class, functionAccessor);
         parentContext.setPlanAccessor(planAccessor);
