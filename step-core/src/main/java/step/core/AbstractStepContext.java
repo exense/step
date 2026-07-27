@@ -65,6 +65,9 @@ public abstract class AbstractStepContext extends AbstractContext {
         setResourceManager(resourceManager);
         expressionHandler = parentContext.getExpressionHandler();
         dynamicBeanResolver = parentContext.getDynamicBeanResolver();
+        // Propagate the apResource: resolver so a provider installed on a parent context (e.g. the
+        // execution engine context in local/JUnit mode) reaches the derived execution contexts.
+        setApResourceProvider(parentContext.getApResourceProvider());
     }
 
     public ExpressionHandler getExpressionHandler() {

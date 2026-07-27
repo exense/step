@@ -31,6 +31,10 @@ import step.parameter.ParameterManager;
 import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.resources.ResourceManager;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
 import static step.core.execution.OperationMode.isLocal;
 
 /**
@@ -56,7 +60,7 @@ public class AutomationPackageLocalOSPlugin extends AbstractExecutionEnginePlugi
                 return automationPackageReaderRegistryInner;
             });
 
-            context.computeIfAbsent(
+            AutomationPackageManager automationPackageManager = context.computeIfAbsent(
                 AutomationPackageManager.class,
                 automationPackageManagerClass -> AutomationPackageManager.createLocalAutomationPackageManager(
                     context.require(FunctionTypeRegistry.class),
@@ -67,6 +71,24 @@ public class AutomationPackageLocalOSPlugin extends AbstractExecutionEnginePlugi
                     hookRegistry
                 )
             );
+
+            // Wire the apResource: resolver for local execution: keyword scripts / datasources embedded
+            // in the automation package are resolved on the fly from its archive (deployed as a
+            // resource by the local manager). Propagated to derived execution contexts via
+            // AbstractStepContext.useAllAttributesFromParentContext.
+            context.setApResourceProvider(new AutomationPackageResourceProvider(
+                createApResourceCacheRoot(),
+                automationPackageManager::getAutomationPackageAccessor,
+                archiveReference -> context.getFileResolver().resolve(archiveReference),
+                file -> automationPackageReaderRegistry.getReaderForFile(file).createAutomationPackageArchive(file, null, null)));
+        }
+    }
+
+    private static File createApResourceCacheRoot() {
+        try {
+            return Files.createTempDirectory("ap-cache-local").toFile();
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create the local apResource cache directory", e);
         }
     }
 
