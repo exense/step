@@ -11,12 +11,28 @@ public class TableDashletSettings {
     @NotNull
     private List<ColumnSelection> columns;
 
+    /**
+     * Custom aggregation pipeline of the table. When null, the table aggregates the historical way: both the time and
+     * the group aggregations merge, and each selected {@link ColumnSelection} extracts one value out of the merged
+     * bucket. When set, both aggregations are scalar and the table displays one single value per row.
+     */
+    private MetricAggregation aggregation;
+
     public List<ColumnSelection> getColumns() {
         return columns;
     }
 
     public TableDashletSettings setColumns(List<ColumnSelection> columns) {
         this.columns = columns;
+        return this;
+    }
+
+    public MetricAggregation getAggregation() {
+        return aggregation;
+    }
+
+    public TableDashletSettings setAggregation(MetricAggregation aggregation) {
+        this.aggregation = aggregation;
         return this;
     }
 
