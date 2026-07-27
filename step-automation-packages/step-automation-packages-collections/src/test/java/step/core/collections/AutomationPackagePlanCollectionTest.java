@@ -28,6 +28,7 @@ import step.core.plans.Plan;
 import step.core.yaml.deserialization.AutomationPackageConcurrentEditException;
 import step.plans.parser.yaml.YamlPlan;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -104,9 +105,14 @@ public class AutomationPackagePlanCollectionTest extends AutomationPackageCollec
         text.setDynamic(true);
         text.setExpression("new Date().toString();");
 
+        File modifiedFile = destinationDirectory.toPath().resolve("plans").resolve("plan1.yml").toFile();
         Files.copy(sourceDirectory.toPath().resolve("plans").resolve("plan1.yml"),
-            destinationDirectory.toPath().resolve("plans").resolve("plan1.yml"),
+            modifiedFile.toPath(),
             StandardCopyOption.REPLACE_EXISTING);
+        // Simulate the effect of an external edit on the file timestamp. Files.copy does not reliably
+        // advance the last-modified time on all platforms (on Windows it may preserve the source's),
+        // whereas a real external editor writing the file would set it to "now".
+        assertTrue(modifiedFile.setLastModified(System.currentTimeMillis() + 2000));
 
         assertThrows(AutomationPackageConcurrentEditException.class, () -> planCollection.save(plan));
 

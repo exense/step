@@ -210,8 +210,8 @@ public class AutomationPackageYamlFragmentManager {
 
     private <T extends PatchableYamlModel> void modifyFragmentEntity(AutomationPackageFragmentYaml fragment, PatchableYamlList<T> entityList, T oldEntity, T newEntity, String fieldName) {
         entityList.replaceItem(oldEntity, newEntity);
-        Path oldRelativePath = determineRelativePathFor(oldEntity, fieldName, false);
-        Path newRelativePath = determineRelativePathFor(newEntity, fieldName, false);
+        Path oldRelativePath = determineRelativePathFor(oldEntity, fieldName);
+        Path newRelativePath = determineRelativePathFor(newEntity, fieldName);
 
         // Path did not change - skip entire move logic
         if (!oldRelativePath.equals(newRelativePath)) {
@@ -240,7 +240,7 @@ public class AutomationPackageYamlFragmentManager {
                 AutomationPackageFragmentYaml referencingFragment = determineReferencingFragment(oldRelativePath)
                     .orElse(descriptorYaml);
 
-                String newReference = resourcePathMatchingResolver.getFragmentReferenceString(determineRelativePathFor(newEntity, fieldName, true));
+                String newReference = determineFragmentReferenceString(newEntity, fieldName, true);
                 String oldReference = resourcePathMatchingResolver.getFragmentReferenceString(oldRelativePath);
 
                 // If the old reference is explicitly present in the YAML list, replace it with the new one.
@@ -282,7 +282,7 @@ public class AutomationPackageYamlFragmentManager {
 
     private AutomationPackageFragmentYaml fragmentForNewObject(PatchableYamlModel patchable, String fieldName) {
 
-        Path path = determineRelativePathFor(patchable, fieldName, false);
+        Path path = determineRelativePathFor(patchable, fieldName);
         Path absolutePath = apRoot.resolve(path);
 
         Optional<AutomationPackageFragmentYaml> optionalExistingFragment = fragmentMap
@@ -297,7 +297,7 @@ public class AutomationPackageYamlFragmentManager {
 
         // if the fragment isn't referenced yet in the YAML list, add it
         if (determineReferencingFragment(path).isEmpty()) {
-            String referencingPath = resourcePathMatchingResolver.getFragmentReferenceString(determineRelativePathFor(patchable, fieldName, true));
+            String referencingPath = determineFragmentReferenceString(patchable, fieldName, true);
             descriptorYaml.getFragments().add(new PatchableYamlPrimitive<>(descriptorYaml.getPatchingContext(), referencingPath));
             descriptorYaml.writeToDisk();
         }
@@ -312,41 +312,76 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     /**
-     * Determines the filesystem path (i.e. filename), relative to the AP root, where a given PatchableYamlModel is/should be located.
-     * The result may vary on the {@link NewObjectFragmentMode} setting (e.g. data could go into a single aggregated YAML file, or a file per entity).
+     * Determines the concrete filesystem path (i.e. filename), relative to the AP root, where a given
+     * PatchableYamlModel is/should be located. The result may vary on the {@link NewObjectFragmentMode}
+     * setting (e.g. data could go into a single aggregated YAML file, or a file per entity).
+     * <p>
+     * For the fragment-list <i>reference</i> string (which may be a per-object wildcard) see
+     * {@link #determineFragmentReferenceString(PatchableYamlModel, String, boolean)}.
      *
-     * @param patchable   existing model instance
-     * @param entityName  YAML entity name containing this model's instances (e.g. "plans", "keywords")
-     * @param useWildcard if `true` and the mode is per-object, return a wildcard filename (.../*.yml) instead of a concrete filename.
+     * @param patchable  existing model instance
+     * @param entityName YAML entity name containing this model's instances (e.g. "plans", "keywords")
      * @return path to the file location for the given patchable.
      */
-    private Path determineRelativePathFor(PatchableYamlModel patchable, String entityName, boolean useWildcard) {
-
-        NewObjectFragmentMode mode = NewObjectFragmentMode.valueOf(properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), NewObjectFragmentMode.PER_OBJECT.name()));
-        String defaultRelativeFragmentPath = entityName;
-
-        if (mode == NewObjectFragmentMode.FRAGMENT) {
-            defaultRelativeFragmentPath = defaultRelativeFragmentPath + ".yml";
-        }
-
-        String relativeFragmentPath = properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), defaultRelativeFragmentPath);
-
-        return switch (mode) {
-            case NewObjectFragmentMode.FRAGMENT -> new File(relativeFragmentPath).toPath();
+    private Path determineRelativePathFor(PatchableYamlModel patchable, String entityName) {
+        FragmentLocation location = resolveFragmentLocation(entityName);
+        return switch (location.mode()) {
+            case NewObjectFragmentMode.FRAGMENT -> new File(location.relativeFragmentPath()).toPath();
             case NewObjectFragmentMode.PER_OBJECT -> {
                 if (patchable instanceof NamedPatchableYamlModel namedPatchableYamlModel) {
-                    String name = useWildcard ? "*" : namedPatchableYamlModel.getName();
-                    yield new File(relativeFragmentPath).toPath().resolve(sanitizeFilename(name + ".yml"));
+                    yield new File(location.relativeFragmentPath()).toPath().resolve(sanitizeFilename(namedPatchableYamlModel.getName() + ".yml"));
                 }
-
-                throw new AutomationPackagePerObjectSaveUnsupportedException(String.format("""
-                    Saving by object name is unsupported for %1$s, please configure the entity to be stored in a specified single fragment, i.e.
-
-                    %2$s = %1$s.yml
-                    %3$s = %4$s
-                    """, entityName, String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), NewObjectFragmentMode.FRAGMENT.name()));
+                throw perObjectSaveUnsupported(entityName);
             }
         };
+    }
+
+    /**
+     * Determines the reference string for the YAML fragment list.
+     * <ul>
+     *     <li>{@code useWildcard == false}: the concrete path of this object's fragment
+     *     (e.g. {@code plans/My Plan.yml}), reusing {@link #determineRelativePathFor}.</li>
+     *     <li>{@code useWildcard == true} (PER_OBJECT mode): a per-object glob such as
+     *     {@code plans/*.yml}.</li>
+     * </ul>
+     * The wildcard case is built as a string rather than through a {@link Path}, because a wildcard
+     * filename is not representable as a Path on all platforms ('*' is an illegal character in a
+     * Windows path). The concrete case still goes through a Path.
+     */
+    private String determineFragmentReferenceString(PatchableYamlModel patchable, String entityName, boolean useWildcard) {
+        if (!useWildcard) {
+            return resourcePathMatchingResolver.getFragmentReferenceString(determineRelativePathFor(patchable, entityName));
+        }
+        FragmentLocation location = resolveFragmentLocation(entityName);
+        String base = resourcePathMatchingResolver.getFragmentReferenceString(new File(location.relativeFragmentPath()).toPath());
+        return switch (location.mode()) {
+            case NewObjectFragmentMode.FRAGMENT -> base;
+            case NewObjectFragmentMode.PER_OBJECT -> {
+                if (patchable instanceof NamedPatchableYamlModel) {
+                    yield base + ResourcePathMatchingResolver.getCanonicalPathSeparator() + "*.yml";
+                }
+                throw perObjectSaveUnsupported(entityName);
+            }
+        };
+    }
+
+    private FragmentLocation resolveFragmentLocation(String entityName) {
+        NewObjectFragmentMode mode = NewObjectFragmentMode.valueOf(properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), NewObjectFragmentMode.PER_OBJECT.name()));
+        String defaultRelativeFragmentPath = (mode == NewObjectFragmentMode.FRAGMENT) ? entityName + ".yml" : entityName;
+        String relativeFragmentPath = properties.getProperty(String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), defaultRelativeFragmentPath);
+        return new FragmentLocation(mode, relativeFragmentPath);
+    }
+
+    private AutomationPackagePerObjectSaveUnsupportedException perObjectSaveUnsupported(String entityName) {
+        return new AutomationPackagePerObjectSaveUnsupportedException(String.format("""
+            Saving by object name is unsupported for %1$s, please configure the entity to be stored in a specified single fragment, i.e.
+
+            %2$s = %1$s.yml
+            %3$s = %4$s
+            """, entityName, String.format(PROPERTY_NEW_OBJECT_FRAGMENT_PATH, entityName), String.format(PROPERTY_NEW_OBJECT_FRAGMENT_MODE, entityName), NewObjectFragmentMode.FRAGMENT.name()));
+    }
+
+    private record FragmentLocation(NewObjectFragmentMode mode, String relativeFragmentPath) {
     }
 
     private String sanitizeFilename(String inputName) {

@@ -120,12 +120,18 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
 
     @JsonIgnore
     public void setFragmentPath(Path path) {
-        resetLastModified();
         this.path = path;
+        resetLastModified();
     }
 
     private void resetLastModified() {
-        fileLastModified = System.currentTimeMillis();
+        // Baseline from the fragment file's own timestamp (not wall-clock) so concurrent-edit
+        // detection in writeToDisk() compares like-for-like filesystem timestamps. Mixing
+        // System.currentTimeMillis() with File.lastModified() breaks on filesystems with coarse
+        // timestamp granularity (e.g. Windows), where an external edit's file timestamp can round
+        // below the wall-clock value captured here, defeating the '>' check.
+        File file = (path != null) ? path.toFile() : null;
+        fileLastModified = (file != null && file.exists()) ? file.lastModified() : System.currentTimeMillis();
     }
 
     @JsonIgnore
