@@ -248,9 +248,6 @@ public class LocalIDEState implements ExecutionDiversion {
     }
 
     public void onShutdown() {
-        if (startupAwaitFuture != null) {
-            startupAwaitFuture.completeExceptionally(new RuntimeException("Shutting down while awaiting startup, this indicates an error condition. Consult the log for details."));
-        }
         logger.info("Shutting down, performing cleanup tasks");
         for (Path directory : directoriesToCleanupOnShutdown) {
             if (!Files.isDirectory(directory)) {
@@ -262,6 +259,10 @@ public class LocalIDEState implements ExecutionDiversion {
             } catch (Exception e) {
                 logger.error("Error while deleting directory {}", directory.toAbsolutePath(), e);
             }
+        }
+        // We're intentionally doing the cleanup above even on error, otherwise we would leak temporary directories.
+        if (startupAwaitFuture != null) {
+            startupAwaitFuture.completeExceptionally(new RuntimeException("Unexpected shutdown while starting up. Consult the log for error details."));
         }
         if (shutdownAwaitFuture != null) {
             logger.debug("Completing shutdown-await future");
