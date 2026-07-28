@@ -26,6 +26,7 @@ import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.automation.packages.*;
 import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.automation.packages.accessor.LayeredAutomationPackageAccessor;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
@@ -477,9 +478,17 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         ((LayeredResourceManager) contextResourceManager).pushManager(apManager.getResourceManager(), false);
 
         // Make the apResource: resolver see the isolated automation package: the global accessor
-        // installed at execution init does not contain the in-memory isolated AP, so override it with
-        // the isolated manager's accessor (mirrors the resource-manager layer pushed just above).
-        context.put(AutomationPackageAccessor.class, apManager.getAutomationPackageAccessor());
+        // installed at execution init does not contain the in-memory isolated AP. We layer the
+        // isolated accessor on top of the global one (mirroring the resource-manager layer pushed just
+        // above) rather than replacing it: an isolated execution may still run a globally-deployed
+        // keyword (surfaced through the layered function accessor) whose apResource: reference points
+        // to the global automation package, which must remain resolvable.
+        AutomationPackageAccessor globalAccessor = context.get(AutomationPackageAccessor.class);
+        AutomationPackageAccessor isolatedAccessor = apManager.getAutomationPackageAccessor();
+        AutomationPackageAccessor layeredAccessor = (globalAccessor != null)
+            ? new LayeredAutomationPackageAccessor(List.of(isolatedAccessor, globalAccessor))
+            : isolatedAccessor;
+        context.put(AutomationPackageAccessor.class, layeredAccessor);
 
         // call some hooks on import
         apManager.runExtensionsBeforeIsolatedExecution(automationPackage, context, apManager.getExtensions(), result);

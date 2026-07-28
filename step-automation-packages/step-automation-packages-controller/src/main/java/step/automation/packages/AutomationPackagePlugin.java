@@ -111,6 +111,18 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
         apResourceCacheRoot = new File(context.getConfiguration().getProperty(
             ApResourceCache.CACHE_DIR_PROPERTY, ApResourceCache.DEFAULT_CACHE_DIR));
+
+        // Install the apResource resolver on the global FileResolver used by the function types.
+        // Non-isolated (deployed) executions resolve keyword scripts / datasources through this global
+        // resolver (see AbstractFunctionType.registerFile), so it must know how to resolve
+        // apResource:<apId>:<path> references against the globally deployed automation packages.
+        // Isolated executions resolve through their own execution-context FileResolver, which is wired
+        // separately in AutomationPackageExecutionPlugin using the pushed isolated accessor.
+        context.setApResourceProvider(new AutomationPackageResourceProvider(
+            apResourceCacheRoot,
+            () -> packageAccessor,
+            archiveReference -> context.getFileResolver().resolve(archiveReference),
+            file -> automationPackageReaderRegistry.getReaderForFile(file).createAutomationPackageArchive(file, null, null)));
     }
 
     public static class AutomationPackageImportHook implements BiConsumer<Object, ImportContext> {
