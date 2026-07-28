@@ -84,7 +84,8 @@ public class IdeCommands {
         }
 
         protected void afterBackendStart() throws Exception {
-            String browserUrl = "http://localhost:4201/"; // FIXME revise
+            int port = determineFrontendPort();
+            String browserUrl = "http://localhost:" + port + "/";
             if (noBrowser) {
                 logger.info("The IDE backend started successfully. To access it, please navigate to: {}", browserUrl);
                 return;
@@ -113,6 +114,14 @@ public class IdeCommands {
             } catch (Exception e) {
                 logger.warn("Failed to launch browser: {}. Please manually navigate to: {}", e.getMessage(), url);
             }
+        }
+
+        private static int determineFrontendPort() {
+            // This uses some hardcoded logic, names and port numbers:
+            // If the app is bundled, return prod port, otherwise dev port.
+            String resourceName = "/dist/step-app/index.html";
+            boolean resourceExists = IdeCommands.class.getResource(resourceName) != null;
+            return resourceExists ? 8080 : 4201;
         }
 
         @Override
@@ -151,6 +160,8 @@ public class IdeCommands {
                     if (input.equals("q") || input.equals("quit")) {
                         logger.debug("User entered termination command: {}", input);
                         break; // Exiting the loop will complete this future
+                    } else {
+                        logger.warn("Unrecognized input, ignoring: {}", input);
                     }
                 }
             });
@@ -158,9 +169,9 @@ public class IdeCommands {
             CompletableFuture<Void> backendShutdown = new CompletableFuture<>();
             getState().setShutdownAwaitFuture(backendShutdown);
 
-            logger.info("The IDE is running. Type 'quit' (or 'q') to exit. You can also press Ctrl-C");
-
+            logger.info("The IDE is running. Type 'quit' (or 'q') to shutdown. You can also press Ctrl-C to terminate the process.");
             try {
+                // Wait for any of the futures to complete.
                 CompletableFuture.anyOf(backendShutdown, quitCommand).get();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
