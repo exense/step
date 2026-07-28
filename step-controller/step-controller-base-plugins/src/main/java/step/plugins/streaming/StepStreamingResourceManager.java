@@ -15,6 +15,7 @@ import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.framework.server.Session;
 import step.framework.server.access.AuthorizationManager;
+import step.plugins.streaming.util.MimeTypeUtil;
 import step.resources.AttachmentStorage;
 import step.streaming.common.QuotaExceededException;
 import step.streaming.common.StreamingResourceMetadata;
@@ -162,11 +163,12 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
 
     @Override
     public AttachmentMeta saveAttachment(Object executionContext, byte[] content, String filename, String mimeType) {
-        if (!(executionContext instanceof ExecutionContext)) {
+        if (!(executionContext instanceof ExecutionContext context)) {
             String className = executionContext == null ? "null" : executionContext.getClass().getName();
             return new SkippedAttachmentMeta(filename, mimeType, "UNEXPECTED: Invalid execution context type of class " + className);
         }
-        ExecutionContext context = (ExecutionContext) Objects.requireNonNull(executionContext);
+        // Java 16+ Voodoo: the (negative) instanceof check above actually defines the "context" variable and keeps it in scope here. :-)
+        // This is intentional; the reasoning is to keep the "happy path" straightforward, by allowing for that kind of guard clauses with early returns.
         StreamingResourceUploadContexts uploadContexts = context.get(StreamingResourceUploadContexts.class);
 
         if (uploadContexts == null) {
@@ -194,6 +196,11 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
     }
 
     public AttachmentMeta createAttachmentFromContent(byte[] content, String filename, String mimeType, String uploadContextId) throws QuotaExceededException, IOException {
+        Objects.requireNonNull(filename, "filename must not be null");
+        if (mimeType == null) {
+            // Try to determine from filename; remains null for unknown extensions
+            mimeType = MimeTypeUtil.getMimeTypeForFilename(filename);
+        }
         mimeType = sanitizeMimeType(mimeType);
         boolean supportsLineAccess = isLineAccessSupported(mimeType);
         StreamingResourceMetadata metadata = new StreamingResourceMetadata(filename, mimeType, supportsLineAccess);
@@ -222,8 +229,9 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
     }
 
     private static boolean isLineAccessSupported(String mimeType) {
-        // Very simple heuristic for now, should catch > 90% of the useful cases
-        // TODO: we can add a few other well-known textual formats if needed
-        return mimeType.startsWith("text/");
+        // Very simple heuristic, but should catch almost all useful cases
+        return mimeType.startsWith("text/")
+            || mimeType.equals("application/xml")
+            || mimeType.equals("application/json");
     }
 }
