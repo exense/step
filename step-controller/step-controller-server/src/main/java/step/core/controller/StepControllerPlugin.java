@@ -1,9 +1,6 @@
 package step.core.controller;
 
 import ch.exense.commons.app.Configuration;
-import io.github.classgraph.ClassGraph;
-import io.github.classgraph.ScanResult;
-import jakarta.ws.rs.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.controller.services.async.AsyncTaskManager;
@@ -11,6 +8,7 @@ import step.core.Controller;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.controller.errorhandling.ErrorFilter;
+import step.core.deployment.ApplicationServices;
 import step.core.deployment.ControllerServices;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
@@ -137,17 +135,9 @@ public class StepControllerPlugin extends AbstractControllerPlugin {
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
-        // Note: this is temporary; if it works, registerPackage in ControllerServer should use this logic instead.
-        String pkgName = ControllerServices.class.getPackage().getName();
-        try (ScanResult scanResult = new ClassGraph()
-            .enableAnnotationInfo()
-            .acceptPackages(pkgName)
-            .scan()) {
-
-            scanResult.getClassesWithAnnotation(Path.class.getName())
-                .loadClasses()
-                .forEach(clazz -> context.getServiceRegistrationCallback().registerService(clazz));
-        }
+        context.getServiceRegistrationCallback().registerPackage(ControllerServices.class.getPackage());
+        // testing, this is (theoretically) redundant with the line above, but package registration *might* be broken.
+        context.getServiceRegistrationCallback().registerService(ApplicationServices.class);
         context.getServiceRegistrationCallback().registerService(SchedulerServices.class);
         context.getServiceRegistrationCallback().registerService(ErrorFilter.class);
         context.getServiceRegistrationCallback().registerService(CORSRequestResponseFilter.class);
