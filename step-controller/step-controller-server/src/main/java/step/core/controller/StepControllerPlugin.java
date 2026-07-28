@@ -8,7 +8,6 @@ import step.core.Controller;
 import step.core.GlobalContext;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.controller.errorhandling.ErrorFilter;
-import step.core.deployment.ApplicationServices;
 import step.core.deployment.ControllerServices;
 import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionAccessor;
@@ -136,8 +135,6 @@ public class StepControllerPlugin extends AbstractControllerPlugin {
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         context.getServiceRegistrationCallback().registerPackage(ControllerServices.class.getPackage());
-        // testing, this is (theoretically) redundant with the line above, but package registration *might* be broken.
-        context.getServiceRegistrationCallback().registerService(ApplicationServices.class);
         context.getServiceRegistrationCallback().registerService(SchedulerServices.class);
         context.getServiceRegistrationCallback().registerService(ErrorFilter.class);
         context.getServiceRegistrationCallback().registerService(CORSRequestResponseFilter.class);
