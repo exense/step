@@ -6,6 +6,7 @@ import picocli.CommandLine;
 import step.cli.parameters.ApExecuteParameters;
 import step.core.Constants;
 import step.core.execution.model.ExecutionParameters;
+import step.ide.LocalIDE;
 import step.ide.LocalIDEState;
 import step.ide.api.IDEExecutorDelegate;
 import step.ide.api.IDEExecutorDelegateFactory;
@@ -13,6 +14,11 @@ import step.ide.api.IDEExecutorDelegateFactory;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 
 public class IdeCommands {
@@ -30,21 +36,51 @@ public class IdeCommands {
         public boolean noBrowser;
 
         @Override
-        public Integer call() throws Exception {
-            validateArguments();
-            startBackend();
-            afterBackendStart();
-            System.err.println("TODO SED-4429: PROPER TERMINATION HANDLING; FOR NOW, JUST STOP THE PROCESS");
-            Thread.sleep(Long.MAX_VALUE);
-            return 0;
+        public Integer call() {
+            try {
+                validateArguments();
+                startBackend();
+                afterBackendStart();
+                return awaitTermination();
+            } catch (CommandLine.ParameterException e) {
+                // This is handled by PicoCLI itself, it will result in ExitCode.USAGE (=2)
+                throw e;
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+                return CommandLine.ExitCode.SOFTWARE; // (=1)
+            }
         }
 
-        protected void validateArguments() {
+        protected void validateArguments() throws CommandLine.ParameterException {
+            // overridden in subclasses as needed
         }
 
         protected void startBackend() throws Exception {
-            LocalIDEState.get().setExecutorDelegateFactory(this);
-            step.ide.LocalIDE.main(new String[]{});
+            LocalIDEState state = LocalIDEState.get();
+            CompletableFuture<Void> awaitStartup = new CompletableFuture<>();
+            state.setStartupAwaitFuture(awaitStartup);
+            // Note that the start() method is currently invoked synchronously, i.e. it will block
+            // unit startup is either complete, or failed. This does not break any functionality,
+            // it just renders the timeout handling below useless -- the future will (should!) always
+            // be finished (either normally, or exceptionally) by the time start() returns.
+            // Not sure if doing it asynchronously (i.e. in a separate thread) has real benefits though.
+            new LocalIDE().start();
+            // Wait until startup is complete, handling various error scenarios
+            long timeoutSeconds = 60;
+            try {
+                // Wait for the backend to start, with timeout (see above note)
+                awaitStartup.get(timeoutSeconds, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                throw new Exception("Backend failed to start within the " + timeoutSeconds + " second timeout", e);
+            } catch (ExecutionException e) {
+                throw new Exception("Backend startup failed with an exception", e.getCause());
+            } catch (InterruptedException e) {
+                // Best practice: restore the interrupted status if we catch an InterruptedException
+                Thread.currentThread().interrupt();
+                throw new Exception("Thread was interrupted while waiting for backend to start", e);
+            }
+            // Wire the execution redirection so executions get run in an isolated context
+            state.setExecutorDelegateFactory(this);
         }
 
         protected void afterBackendStart() throws Exception {
@@ -80,7 +116,7 @@ public class IdeCommands {
         }
 
         @Override
-        public IDEExecutorDelegate createDelegate(File apFolder, ExecutionParameters executionParams) {
+        public IDEExecutorDelegate createIDEExecutorDelegate(File apFolder, ExecutionParameters executionParams) {
             ApExecuteParameters params = new ApExecuteParameters()
                 .setAutomationPackageFile(ApCommand.AbstractApCommand.prepareFile(Failable.call(apFolder::getCanonicalPath), "automation package", true))
                 .setAutomationPackageMavenArtifact(null)
@@ -104,6 +140,37 @@ public class IdeCommands {
                 .setReportOutputDir(Failable.call(() -> Files.createTempDirectory("step-ide-execution-").toFile())); // FIXME clean up tmp dir
             String url = "http://localhost:8080";
             return new ExecuteAutomationPackageTool(url, params);
+        }
+
+        private int awaitTermination() {
+            // This awaits specific user input
+            CompletableFuture<Void> quitCommand = CompletableFuture.runAsync(() -> {
+                Scanner scanner = new Scanner(System.in);
+                while (scanner.hasNextLine()) {
+                    String input = scanner.nextLine().trim().toLowerCase();
+                    if (input.equals("q") || input.equals("quit")) {
+                        logger.debug("User entered termination command: {}", input);
+                        break; // Exiting the loop will complete this future
+                    }
+                }
+            });
+            // This will be triggered when the backend is shutdown (e.g. using Ctrl-C, or via REST call)
+            CompletableFuture<Void> backendShutdown = new CompletableFuture<>();
+            getState().setShutdownAwaitFuture(backendShutdown);
+
+            logger.info("The IDE is running. Type 'quit' (or 'q') to exit. You can also press Ctrl-C");
+
+            try {
+                CompletableFuture.anyOf(backendShutdown, quitCommand).get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.error("Main thread interrupted.");
+                return 1;
+            } catch (ExecutionException e) {
+                logger.error("Error while waiting for backend shutdown: ", e);
+                return 1;
+            }
+            return 0;
         }
     }
 
@@ -142,7 +209,7 @@ public class IdeCommands {
         }
 
         @Override
-        protected void validateArguments() {
+        protected void validateArguments() throws CommandLine.ParameterException {
             try {
                 var ideState = getState();
                 if (initGroup == null || !initGroup.initialize) {
@@ -150,7 +217,7 @@ public class IdeCommands {
                     return;
                 }
                 // initialization requested
-                Path existingDescriptor = getState().validateInitializableAutomationPackageDirectory(apDirectory);
+                Path existingDescriptor = ideState.validateInitializableAutomationPackageDirectory(apDirectory);
                 if (existingDescriptor != null && !initGroup.force) {
                     throw new IllegalArgumentException("Automation Package descriptor already exists at " + existingDescriptor + ". Use --force to overwrite.");
                 }

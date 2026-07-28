@@ -44,6 +44,8 @@ public class LocalIDEState implements ExecutionDiversion {
     private IDEExecutorDelegateFactory executorDelegateFactory;
     private Path currentAutomationPackageDirectory;
     private FileResolver fileResolver;
+    private CompletableFuture<Void> startupAwaitFuture;
+    private CompletableFuture<Void> shutdownAwaitFuture;
 
     public static LocalIDEState get() {
         return instance;
@@ -202,7 +204,7 @@ public class LocalIDEState implements ExecutionDiversion {
     public String divertExecution(ExecutionParameters executionParams) {
         Objects.requireNonNull(currentAutomationPackageDirectory, "currentAutomationPackageDirectory not set; select an AP first");
         logger.info("Launching diverted execution for parameters: {}", Failable.call(() -> new ObjectMapper().writeValueAsString(executionParams)));
-        IDEExecutorDelegate executorDelegate = executorDelegateFactory.createDelegate(currentAutomationPackageDirectory.toFile(), executionParams);
+        IDEExecutorDelegate executorDelegate = executorDelegateFactory.createIDEExecutorDelegate(currentAutomationPackageDirectory.toFile(), executionParams);
         CompletableFuture<String> executionIdFuture = new CompletableFuture<>();
         CompletableFuture.runAsync((() -> {
             try {
@@ -230,7 +232,25 @@ public class LocalIDEState implements ExecutionDiversion {
         }
     }
 
+    public void setStartupAwaitFuture(CompletableFuture<Void> startupAwaitFuture) {
+        this.startupAwaitFuture = startupAwaitFuture;
+    }
+
+    public void setShutdownAwaitFuture(CompletableFuture<Void> shutdownAwaitFuture) {
+        this.shutdownAwaitFuture = shutdownAwaitFuture;
+    }
+
+    public void onStartupFinished() {
+        if (startupAwaitFuture != null) {
+            startupAwaitFuture.complete(null);
+            startupAwaitFuture = null;
+        }
+    }
+
     public void onShutdown() {
+        if (startupAwaitFuture != null) {
+            startupAwaitFuture.completeExceptionally(new RuntimeException("Shutting down while awaiting startup, this indicates an error condition. Consult the log for details."));
+        }
         logger.info("Shutting down, performing cleanup tasks");
         for (Path directory : directoriesToCleanupOnShutdown) {
             if (!Files.isDirectory(directory)) {
@@ -242,6 +262,10 @@ public class LocalIDEState implements ExecutionDiversion {
             } catch (Exception e) {
                 logger.error("Error while deleting directory {}", directory.toAbsolutePath(), e);
             }
+        }
+        if (shutdownAwaitFuture != null) {
+            logger.debug("Completing shutdown-await future");
+            shutdownAwaitFuture.complete(null);
         }
     }
 

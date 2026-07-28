@@ -13,7 +13,7 @@ public abstract class BaseCommand implements Callable<Integer> {
     protected CommandLine.Model.CommandSpec spec;
 
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
         // By default, each command simply prints its own usage instructions (same as "help")
         spec.commandLine().usage(spec.commandLine().getOut());
         return 0;

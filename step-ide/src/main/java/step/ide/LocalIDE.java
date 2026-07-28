@@ -52,7 +52,7 @@ public class LocalIDE {
         return configuration;
     }
 
-    private void start() throws Exception {
+    public void start() throws Exception {
         server.start();
     }
 }

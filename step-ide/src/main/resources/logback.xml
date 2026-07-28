@@ -13,4 +13,5 @@
     <appender-ref ref="STDOUT"/>
   </root>
   <logger name="step.ide" level="debug"/>
+  <logger name="step.cli" level="debug"/>
 </configuration>

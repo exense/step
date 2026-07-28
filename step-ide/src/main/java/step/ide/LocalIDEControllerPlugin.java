@@ -29,6 +29,12 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
     }
 
     @Override
+    public void finalizeStart(GlobalContext context) throws Exception {
+        logger.debug("LocalIDEControllerPlugin finalizeStart");
+        LocalIDEState.get().onStartupFinished();
+    }
+
+    @Override
     public void postShutdownHook() {
         LocalIDEState.get().onShutdown();
     }
