@@ -66,7 +66,8 @@ public class LocalFileSystemServices extends AbstractStepServices {
                     Files.isHidden(path)
                 );
             } catch (IOException e) {
-                logger.warn("Failed to create a file descriptor for path: {}", path, e);
+                // This could be broken symlinks etc., so don't spam the log with warnings
+                logger.debug("Failed to create a file descriptor for path: {}", path, e);
                 return null;
             }
         }
