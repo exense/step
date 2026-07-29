@@ -119,7 +119,7 @@ public class IdeCommands {
         private static int determineFrontendPort() {
             // This uses some hardcoded logic, names and port numbers:
             // If the app is bundled, return prod port, otherwise dev port.
-            String resourceName = "/dist/step-app/index.html";
+            String resourceName = "/dist/step-ide/index.html";
             boolean resourceExists = IdeCommands.class.getResource(resourceName) != null;
             return resourceExists ? 8080 : 4201;
         }
