@@ -210,7 +210,7 @@ public class GridPlugin extends AbstractControllerPlugin {
                 // Exclude all reserved attribute keys (prefixed with "$") as they're not supported by the time series
                 // ingestion pipelines. The agent type is the only exception, its key is remapped below.
                 Set<String> tokenAttributeKeys = gridReportBuilder.getTokenAttributeKeys().stream()
-                    .filter(key -> !key.startsWith(RESERVED_ATTRIBUTE_KEY_PREFIX) || key.equals(AGENT_TYPE_KEY))
+                    .filter(key -> key != null && (!key.startsWith(RESERVED_ATTRIBUTE_KEY_PREFIX) || key.equals(AGENT_TYPE_KEY)))
                     .collect(Collectors.toCollection(HashSet::new));
                 List<TokenGroupCapacity> usageByIdentity = gridReportBuilder.getUsageByIdentity(tokenAttributeKeys);
                 List<ControllerMetricSample> gridMetricSamples = new ArrayList<>();
