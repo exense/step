@@ -29,14 +29,6 @@ public class LocalIDEServices extends AbstractStepServices {
         super.init();
     }
 
-    // TODO remove one FE has switched over to new naming
-    @POST
-    @Path("ap/useExisting")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public void useExistingAPCompat(@QueryParam("directory") String directory) {
-        useExistingAP(directory);
-    }
-
     @POST
     @Path("ap/use-existing")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -64,14 +56,6 @@ public class LocalIDEServices extends AbstractStepServices {
             logger.error("Unable to use existing AP directory: {}", directory, e);
             throw new WebApplicationException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    // TODO remove once FE uses kebab-case
-    @POST
-    @Path("ap/initializeNew")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public void initializeNewAPCompat(@QueryParam("existingEmptyDirectory") String existingEmptyDirectory, @QueryParam("apName") String apName) {
-        initializeNewAP(existingEmptyDirectory, apName);
     }
 
     @POST
