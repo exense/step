@@ -88,7 +88,7 @@ public class LocalFileSystemServices extends AbstractStepServices {
 
         Path targetDir;
         try {
-            targetDir = ((pathString != null && !pathString.isBlank()) ? Paths.get(pathString) : home).normalize().toAbsolutePath();
+            targetDir = ((pathString != null && !pathString.isBlank()) ? Paths.get(pathString) : home).toAbsolutePath().normalize();
         } catch (InvalidPathException e) {
             throw new WebApplicationException("Invalid path: " + pathString, Response.Status.BAD_REQUEST);
         }
@@ -179,14 +179,14 @@ public class LocalFileSystemServices extends AbstractStepServices {
         }
 
         // 2. Resolve and normalize the parent path
-        Path parent = Paths.get(request.parentPath()).normalize().toAbsolutePath();
+        Path parent = Paths.get(request.parentPath()).toAbsolutePath().normalize();
 
         if (!Files.exists(parent) || !Files.isDirectory(parent)) {
             throw new WebApplicationException("Parent path is not a valid directory: " + parent, Response.Status.BAD_REQUEST);
         }
 
         // 3. Construct the target path
-        Path targetDir = parent.resolve(name).normalize().toAbsolutePath();
+        Path targetDir = parent.resolve(name).toAbsolutePath().normalize();
 
         // 4. Double-check that the resolution didn't escape the parent (Paranoia check, shouldn't be possible)
         if (!targetDir.getParent().equals(parent)) {

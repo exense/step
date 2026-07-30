@@ -19,6 +19,7 @@ import step.core.execution.model.ExecutionParameters;
 import step.ide.api.IDEExecutorDelegate;
 import step.ide.api.IDEExecutorDelegateFactory;
 import step.ide.collections.CurrentlyOpenedAutomationPackageCollectionFactory;
+import step.ide.exceptions.FileExistsException;
 import step.parameter.Parameter;
 import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plans.parser.yaml.YamlPlan;
@@ -144,9 +145,14 @@ public class LocalIDEState implements ExecutionDiversion {
         }
     }
 
-    public Path validateInitializableAutomationPackageDirectory(Path apDirectory) {
+    public void validateInitializableAutomationPackageDirectory(Path apDirectory, boolean allowExistingDescriptor) throws FileExistsException {
         Path resolvedDir = resolveAndCheckBaseDirectory(apDirectory, true);
-        return findMetadataFile(resolvedDir);
+        if (!allowExistingDescriptor) {
+            Path existingDescriptor = findMetadataFile(resolvedDir);
+            if (existingDescriptor != null) {
+                throw new FileExistsException(existingDescriptor);
+            }
+        }
     }
 
     private void initializeAPDirectory(Path apDir, String apName) throws Exception {

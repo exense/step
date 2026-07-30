@@ -174,7 +174,7 @@ public class ApCommand extends BaseCommand {
 
     @CommandLine.Command(name = "execute",
         description = "The CLI interface to execute automation packages in Step",
-        version = "step.ap.execute 1.0",
+        version = Constants.STEP_VERSION_STRING,
         mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
         subcommands = {CommandLine.HelpCommand.class})
     public static class ApExecuteCommand extends AbstractApCommand implements Callable<Integer> {

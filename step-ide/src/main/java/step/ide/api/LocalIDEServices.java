@@ -15,8 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.deployment.AbstractStepServices;
 import step.ide.LocalIDEState;
-
-import java.nio.file.Files;
+import step.ide.exceptions.FileExistsException;
 
 @Path("/local/ide")
 @Tag(name = "IDE")
@@ -80,16 +79,11 @@ public class LocalIDEServices extends AbstractStepServices {
 
         try {
             // more validation
-            if (LocalIDEState.get().validateInitializableAutomationPackageDirectory(path) != null) {
+            try {
+                LocalIDEState.get().validateInitializableAutomationPackageDirectory(path, false);
+            } catch (FileExistsException e) {
                 throw new WebApplicationException(
-                    "Directory already contains an automation package descriptor: " + path.toAbsolutePath(),
-                    Response.Status.BAD_REQUEST
-                );
-            }
-
-            if (Files.exists(path) && !Files.isWritable(path)) {
-                throw new WebApplicationException(
-                    "Not a writable directory: " + path.toAbsolutePath(),
+                    "Directory already contains an automation package descriptor, refusing to overwrite: " + e.existingPath.toAbsolutePath(),
                     Response.Status.BAD_REQUEST
                 );
             }

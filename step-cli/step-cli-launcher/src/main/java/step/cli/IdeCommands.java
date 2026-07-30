@@ -10,9 +10,9 @@ import step.ide.LocalIDE;
 import step.ide.LocalIDEState;
 import step.ide.api.IDEExecutorDelegate;
 import step.ide.api.IDEExecutorDelegateFactory;
+import step.ide.exceptions.FileExistsException;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
@@ -56,11 +56,11 @@ public class IdeCommands {
         }
 
         protected void startBackend() throws Exception {
-            LocalIDEState state = LocalIDEState.get();
+            LocalIDEState state = getState();
             CompletableFuture<Void> awaitStartup = new CompletableFuture<>();
             state.setStartupAwaitFuture(awaitStartup);
             // Note that the start() method is currently invoked synchronously, i.e. it will block
-            // unit startup is either complete, or failed. This does not break any functionality,
+            // until startup is either complete, or failed. This does not break any functionality,
             // it just renders the timeout handling below useless -- the future will (should!) always
             // be finished (either normally, or exceptionally) by the time start() returns.
             // Not sure if doing it asynchronously (i.e. in a separate thread) has real benefits though.
@@ -71,13 +71,13 @@ public class IdeCommands {
                 // Wait for the backend to start, with timeout (see above note)
                 awaitStartup.get(timeoutSeconds, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
-                throw new Exception("Backend failed to start within the " + timeoutSeconds + " second timeout", e);
+                throw new RuntimeException("Backend failed to start within the " + timeoutSeconds + " second timeout", e);
             } catch (ExecutionException e) {
-                throw new Exception("Backend startup failed with an exception", e.getCause());
+                throw new RuntimeException("Backend startup failed with an exception", e.getCause());
             } catch (InterruptedException e) {
                 // Best practice: restore the interrupted status if we catch an InterruptedException
                 Thread.currentThread().interrupt();
-                throw new Exception("Thread was interrupted while waiting for backend to start", e);
+                throw new RuntimeException("Thread was interrupted while waiting for backend to start", e);
             }
             // Wire the execution redirection so executions get run in an isolated context
             state.setExecutorDelegateFactory(this);
@@ -125,9 +125,9 @@ public class IdeCommands {
         }
 
         @Override
-        public IDEExecutorDelegate createIDEExecutorDelegate(File apFolder, ExecutionParameters executionParams) {
+        public IDEExecutorDelegate createIDEExecutorDelegate(File apDirectory, ExecutionParameters executionParams) {
             ApExecuteParameters params = new ApExecuteParameters()
-                .setAutomationPackageFile(ApCommand.AbstractApCommand.prepareFile(Failable.call(apFolder::getCanonicalPath), "automation package", true))
+                .setAutomationPackageFile(ApCommand.AbstractApCommand.prepareFile(Failable.call(apDirectory::getCanonicalPath), "automation package", true))
                 .setAutomationPackageMavenArtifact(null)
                 .setLibraryFile(null)
                 .setlibraryMavenArtifact(null)
@@ -145,8 +145,7 @@ public class IdeCommands {
                 .setExcludeCategories(null)
                 .setWrapIntoTestSet(false)
                 .setNumberOfThreads(null)
-                .setReports(null)
-                .setReportOutputDir(Failable.call(() -> Files.createTempDirectory("step-ide-execution-").toFile())); // FIXME clean up tmp dir
+                .setReports(null);
             String url = "http://localhost:8080";
             return new ExecuteAutomationPackageTool(url, params);
         }
@@ -232,9 +231,10 @@ public class IdeCommands {
                     return;
                 }
                 // initialization requested
-                Path existingDescriptor = ideState.validateInitializableAutomationPackageDirectory(apDirectory);
-                if (existingDescriptor != null && !initGroup.force) {
-                    throw new IllegalArgumentException("Automation Package descriptor already exists at " + existingDescriptor + ". Use --force to overwrite.");
+                try {
+                    ideState.validateInitializableAutomationPackageDirectory(apDirectory, initGroup.force);
+                } catch (FileExistsException e) {
+                    throw new IllegalArgumentException("Automation Package descriptor already exists at " + e.existingPath.toString() + ". Use --force to overwrite.");
                 }
             } catch (Exception e) {
                 throw new CommandLine.ParameterException(spec.commandLine(), e.getMessage());
