@@ -51,6 +51,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 import static step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder.SKIP_AUTO_PROVISIONING;
+import static step.core.agents.provisioning.AgentPoolProvisioningParameters.PROVISIONING_PARAMETER_DOCKER_IMAGE;
+import static step.core.agents.provisioning.AgentPoolProvisioningParameters.TOKEN_ATTRIBUTE_DOCKER_IMAGE;
+import static step.core.agents.provisioning.AgentPoolProvisioningParameters.TOKEN_ATTRIBUTE_DOCKER_SUPPORT;
 
 public class TokenForecastingTest {
     private static final Logger logger = LoggerFactory.getLogger(TokenForecastingTest.class);
@@ -278,6 +281,175 @@ public class TokenForecastingTest {
         assertTrue(forecast.criteriaWithoutMatch.isEmpty());
     }
 
+
+    /**
+     * Reproduces the forecasting issue occurring when the execution is routed to an agent pool supporting
+     * custom docker images, i.e. when the execution parameter "route_to_$dockerImage" is set.
+     * <p>
+     * The routing criteria "$dockerImage" is only matched against agent pool templates declaring the
+     * property "$supportsCustomDockerImage: true" (see {@link step.artefacts.handlers.functions.PreProvisioningTokenAffinityEvaluator}).
+     * The number of forecasted agents should therefore be exactly the same as without the routing criteria,
+     * the only difference being the target pool and the resulting provisioning parameters.
+     */
+    @Test
+    public void testWithCustomDockerImage() {
+        // Reference run without any routing criteria: the session is shared by both keywords, thus 1 token is required.
+        // Note: both pools are equivalent candidates here (dockerPool merely SUPPORTS custom images, it doesn't require one),
+        // and which one of the two is picked is arbitrary. Only the number of agents is asserted.
+        Forecast forecast = executePlanWithSpecifiedTokenPools(getPlanWithSessionAndTwoKeywords(null, null), agentPoolsWithAndWithoutDockerSupport());
+        assertTrue(forecast.criteriaWithoutMatch.isEmpty());
+        assertEquals(1, totalNumberOfAgents(forecast));
+
+        // Same plan, but routed to a pool supporting custom docker images via the execution parameter
+        forecast = executePlanWithSpecifiedTokenPools(getPlanWithSessionAndTwoKeywords(null, null), agentPoolsWithAndWithoutDockerSupport(),
+            null, Map.of("route_to_" + TOKEN_ATTRIBUTE_DOCKER_IMAGE, "test"));
+
+        // Expected: still 1 agent, taken from dockerPool, provisioned with the docker image "test"
+        assertSingleDockerAgentRequired(forecast);
+    }
+
+    /**
+     * The docker image can also be defined as token selection criteria of the session (function group) artefact,
+     * instead of globally as execution parameter. The criteria of the session are merged into the selection criteria
+     * of every keyword call it contains, thus the forecasting should be identical.
+     */
+    @Test
+    public void testWithCustomDockerImageDefinedOnSession() {
+        Forecast forecast = executePlanWithSpecifiedTokenPools(
+            getPlanWithSessionAndTwoKeywords(DOCKER_IMAGE_SELECTION_CRITERIA, null), agentPoolsWithAndWithoutDockerSupport());
+
+        assertSingleDockerAgentRequired(forecast);
+    }
+
+    /**
+     * The docker image can also be defined as token selection criteria of the keyword calls themselves.
+     * Both keywords request the same image and run within the same session, thus a single token is required.
+     */
+    @Test
+    public void testWithCustomDockerImageDefinedOnKeyword() {
+        Forecast forecast = executePlanWithSpecifiedTokenPools(
+            getPlanWithSessionAndTwoKeywords(null, DOCKER_IMAGE_SELECTION_CRITERIA), agentPoolsWithAndWithoutDockerSupport());
+
+        assertSingleDockerAgentRequired(forecast);
+    }
+
+    private static Plan getPlanWithSessionAndTwoKeywords(String sessionSelectionCriteria, String keywordSelectionCriteria) {
+        ThreadGroup threadGroup = new ThreadGroup();
+        threadGroup.setUsers(new DynamicValue<>(1));
+
+        FunctionGroup session = FunctionArtefacts.session();
+        if (sessionSelectionCriteria != null) {
+            session.setToken(new DynamicValue<>(sessionSelectionCriteria));
+        }
+
+        Plan plan = PlanBuilder.create()
+            .startBlock(threadGroup)
+            .startBlock(session)
+            .add(keywordWithSelectionCriteria(keywordSelectionCriteria))
+            .add(keywordWithSelectionCriteria(keywordSelectionCriteria))
+            .endBlock()
+            .endBlock().build();
+
+        return withTestFunction(plan);
+    }
+
+    /**
+     * Same routing as in {@link #testWithCustomDockerImage()} but without any session (function group).
+     * Each keyword call then reserves and releases its own token, thus the token reuse logic of
+     * {@link step.artefacts.handlers.functions.FunctionGroupSession} isn't involved at all.
+     */
+    @Test
+    public void testWithCustomDockerImageWithoutSession() {
+        // Reference run without any routing criteria: the 3 keywords run sequentially, thus 1 token is required
+        // (see the note in testWithCustomDockerImage() about the arbitrary pool selection)
+        Forecast forecast = executePlanWithSpecifiedTokenPools(getSequentialPlanWithThreeKeywords(null), agentPoolsWithAndWithoutDockerSupport());
+        assertTrue(forecast.criteriaWithoutMatch.isEmpty());
+        assertEquals(1, totalNumberOfAgents(forecast));
+
+        forecast = executePlanWithSpecifiedTokenPools(getSequentialPlanWithThreeKeywords(null), agentPoolsWithAndWithoutDockerSupport(),
+            null, Map.of("route_to_" + TOKEN_ATTRIBUTE_DOCKER_IMAGE, "test"));
+        assertSingleDockerAgentRequired(forecast);
+
+        // Same, but with the docker image defined as selection criteria of the keyword calls
+        forecast = executePlanWithSpecifiedTokenPools(getSequentialPlanWithThreeKeywords(DOCKER_IMAGE_SELECTION_CRITERIA), agentPoolsWithAndWithoutDockerSupport());
+        assertSingleDockerAgentRequired(forecast);
+    }
+
+    private static Plan getSequentialPlanWithThreeKeywords(String keywordSelectionCriteria) {
+        Plan plan = PlanBuilder.create()
+            .startBlock(BaseArtefacts.sequence())
+            .add(keywordWithSelectionCriteria(keywordSelectionCriteria))
+            .add(keywordWithSelectionCriteria(keywordSelectionCriteria))
+            .add(keywordWithSelectionCriteria(keywordSelectionCriteria))
+            .endBlock().build();
+
+        return withTestFunction(plan);
+    }
+
+    private static final String DOCKER_IMAGE_SELECTION_CRITERIA = dockerImageSelectionCriteria("test");
+
+    private static String dockerImageSelectionCriteria(String dockerImage) {
+        return "{\"" + TOKEN_ATTRIBUTE_DOCKER_IMAGE + "\":{\"value\":\"" + dockerImage + "\",\"dynamic\":false}}";
+    }
+
+    private static CallFunction keywordWithSelectionCriteria(String selectionCriteria) {
+        CallFunction keyword = FunctionArtefacts.keyword("test");
+        if (selectionCriteria != null) {
+            keyword.setToken(new DynamicValue<>(selectionCriteria));
+        }
+        return keyword;
+    }
+
+    /**
+     * pool1 doesn't support custom docker images, dockerPool does
+     */
+    private static Set<AgentPoolSpec> agentPoolsWithAndWithoutDockerSupport() {
+        return Set.of(
+            new AgentPoolSpec("pool1", Map.of("$agenttype", "default"), 1),
+            new AgentPoolSpec("dockerPool", Map.of("$agenttype", "default", TOKEN_ATTRIBUTE_DOCKER_SUPPORT, "true"), 1));
+    }
+
+    private static void assertSingleDockerAgentRequired(Forecast forecast) {
+        assertTrue(forecast.criteriaWithoutMatch.isEmpty());
+        assertEquals(Set.of(new AgentPoolRequirementSpec("dockerPool", Map.of(PROVISIONING_PARAMETER_DOCKER_IMAGE, "test"), 1)),
+            Set.copyOf(forecast.requirements));
+    }
+
+    /**
+     * A session requesting two different docker images cannot reuse the same agent token, as an agent runs
+     * one single docker image. Two agents of the docker enabled pool are therefore required, one per image.
+     */
+    @Test
+    public void testWithTwoCustomDockerImagesInOneSession() {
+        ThreadGroup threadGroup = new ThreadGroup();
+        threadGroup.setUsers(new DynamicValue<>(1));
+
+        Plan plan = PlanBuilder.create()
+            .startBlock(threadGroup)
+            .startBlock(FunctionArtefacts.session())
+            .add(keywordWithSelectionCriteria(dockerImageSelectionCriteria("imageA")))
+            .add(keywordWithSelectionCriteria(dockerImageSelectionCriteria("imageB")))
+            .endBlock()
+            .endBlock().build();
+
+        Forecast forecast = executePlanWithSpecifiedTokenPools(withTestFunction(plan), agentPoolsWithAndWithoutDockerSupport());
+
+        assertTrue(forecast.criteriaWithoutMatch.isEmpty());
+        assertEquals(Set.of(new AgentPoolRequirementSpec("dockerPool", Map.of(PROVISIONING_PARAMETER_DOCKER_IMAGE, "imageA"), 1),
+                new AgentPoolRequirementSpec("dockerPool", Map.of(PROVISIONING_PARAMETER_DOCKER_IMAGE, "imageB"), 1)),
+            Set.copyOf(forecast.requirements));
+    }
+
+    private static int totalNumberOfAgents(Forecast forecast) {
+        return forecast.requirements.stream().mapToInt(r -> r.numberOfAgents).sum();
+    }
+
+    private static Plan withTestFunction(Plan plan) {
+        MyFunction function = new MyFunction(jsonObjectInput -> new Output<>());
+        function.addAttribute(AbstractOrganizableObject.NAME, "test");
+        plan.setFunctions(List.of(function));
+        return plan;
+    }
 
     @Test
     public void testWithNestedSessions() {
@@ -1068,7 +1240,11 @@ public class TokenForecastingTest {
     }
 
     private static Forecast executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools, Integer autoNumberOfThreads) {
-        Map<String, String> executionParameters = new HashMap<>();
+        return executePlanWithSpecifiedTokenPools(plan, availableAgentPools, autoNumberOfThreads, Map.of());
+    }
+
+    private static Forecast executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools, Integer autoNumberOfThreads, Map<String, String> additionalExecutionParameters) {
+        Map<String, String> executionParameters = new HashMap<>(additionalExecutionParameters);
         if (autoNumberOfThreads != null) {
             executionParameters.put(ThreadPool.EXECUTION_THREADS_AUTO, String.valueOf(autoNumberOfThreads));
         }
