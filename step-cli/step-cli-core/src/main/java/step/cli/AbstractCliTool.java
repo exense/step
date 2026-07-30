@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 import step.automation.packages.client.RemoteAutomationPackageClientImpl;
 import step.automation.packages.client.model.AutomationPackageSource;
 import step.cli.parameters.Parameters;
-import step.client.AbstractRemoteClient;
+import step.client.RemoteClientConfiguration;
 import step.client.credentials.ControllerCredentials;
 import step.core.maven.MavenArtifactIdentifier;
 
@@ -93,20 +93,19 @@ public abstract class AbstractCliTool<T extends Parameters> implements CliToolLo
         return new ControllerCredentials(getUrl(), authToken == null || authToken.isEmpty() ? null : authToken);
     }
 
+    /**
+     * @return a {@link RemoteClientConfiguration} carrying both the credentials and the tenant
+     * (EE project name, if configured). Building clients from this configuration ensures the tenant
+     * header is set on the client and inherited by any nested client it creates.
+     */
+    protected RemoteClientConfiguration getRemoteClientConfiguration() {
+        String stepProjectName = parameters.getStepProjectName();
+        String tenant = (stepProjectName == null || stepProjectName.isEmpty()) ? null : stepProjectName;
+        return new RemoteClientConfiguration(getControllerCredentials(), tenant);
+    }
+
     protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
-        RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
-        addProjectHeaderToRemoteClient(client);
-        return client;
-    }
-
-    protected void addProjectHeaderToRemoteClient(String stepProjectName, AbstractRemoteClient remoteClient) {
-        if (stepProjectName != null && !stepProjectName.isEmpty()) {
-            remoteClient.getHeaders().addProjectName(stepProjectName);
-        }
-    }
-
-    protected void addProjectHeaderToRemoteClient(AbstractRemoteClient remoteClient) {
-        addProjectHeaderToRemoteClient(parameters.getStepProjectName(), remoteClient);
+        return new RemoteAutomationPackageClientImpl(getRemoteClientConfiguration());
     }
 
     protected String createMavenArtifactXml(MavenArtifactIdentifier identifier) {

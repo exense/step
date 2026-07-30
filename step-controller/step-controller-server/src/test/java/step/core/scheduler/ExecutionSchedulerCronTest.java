@@ -104,6 +104,49 @@ public class ExecutionSchedulerCronTest {
     }
 
     @Test
+    public void testNextExecutionDate() {
+        ExecutionScheduler executionScheduler = new ExecutionScheduler(controllerSettingAccessor, executionTaskAccessor, executor);
+
+        executionScheduler.start();
+
+        final ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters(new ExecutionParameters(), "0 0/1 * * * ?");
+        executiontTaskParameters.addAttribute(AbstractOrganizableObject.NAME, "task1");
+        executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters);
+
+        long now = System.currentTimeMillis();
+        Long nextExecutionDate = executionScheduler.getNextExecutionDate(executiontTaskParameters);
+
+        assertNotNull(nextExecutionDate);
+        assertTrue(nextExecutionDate > now);
+        assertTrue(nextExecutionDate <= now + 60_000);
+
+        executionScheduler.disableExecutionTask(executiontTaskParameters.getId().toHexString());
+        assertNull(executionScheduler.getNextExecutionDate(executiontTaskParameters));
+    }
+
+    @Test
+    public void testNextExecutionDateWithExcludedCron() throws Exception {
+        ExecutionScheduler executionScheduler = new ExecutionScheduler(controllerSettingAccessor, executionTaskAccessor, executor);
+
+        executionScheduler.start();
+
+        final ExecutiontTaskParameters executiontTaskParameters = new ExecutiontTaskParameters(new ExecutionParameters(), "0 0/1 * * * ?");
+        executiontTaskParameters.addAttribute(AbstractOrganizableObject.NAME, "task1");
+        CronExclusion cronExclusion = new CronExclusion();
+        cronExclusion.setCronExpression("0 0 0 1 1 ? 2099");
+        cronExclusion.setDescription("test");
+        executiontTaskParameters.setCronExclusions(List.of(cronExclusion));
+        executionScheduler.addOrUpdateExecutionTask(executiontTaskParameters);
+
+        long now = System.currentTimeMillis();
+        Long nextExecutionDate = executionScheduler.getNextExecutionDate(executiontTaskParameters);
+
+        assertNotNull(nextExecutionDate);
+        assertTrue(nextExecutionDate > now);
+        assertTrue(nextExecutionDate <= now + 60_000);
+    }
+
+    @Test
     public void testInvalidCases() {
         ExecutionScheduler executionScheduler = new ExecutionScheduler(controllerSettingAccessor, executionTaskAccessor, executor);
 

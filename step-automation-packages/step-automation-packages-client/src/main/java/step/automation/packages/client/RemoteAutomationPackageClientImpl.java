@@ -33,6 +33,7 @@ import step.client.ControllerClientException;
 import step.controller.services.async.AsyncTaskStatus;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
 import step.client.AbstractRemoteClient;
+import step.client.RemoteClientConfiguration;
 import step.client.credentials.ControllerCredentials;
 
 import java.util.List;
@@ -53,6 +54,10 @@ public class RemoteAutomationPackageClientImpl extends AbstractRemoteClient impl
 
     public RemoteAutomationPackageClientImpl(ControllerCredentials credentials) {
         super(credentials);
+    }
+
+    public RemoteAutomationPackageClientImpl(RemoteClientConfiguration configuration) {
+        super(configuration);
     }
 
     @Override

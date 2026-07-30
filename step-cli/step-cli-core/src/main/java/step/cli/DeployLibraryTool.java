@@ -59,10 +59,4 @@ public class DeployLibraryTool extends AbstractCliTool<LibraryDeployParameters> 
         }
     }
 
-    protected RemoteAutomationPackageClientImpl createRemoteAutomationPackageClient() {
-        RemoteAutomationPackageClientImpl client = new RemoteAutomationPackageClientImpl(getControllerCredentials());
-        addProjectHeaderToRemoteClient(parameters.getStepProjectName(), client);
-        return client;
-    }
-
 }
