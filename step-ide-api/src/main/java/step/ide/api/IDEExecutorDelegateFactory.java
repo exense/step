@@ -5,5 +5,5 @@ import step.core.execution.model.ExecutionParameters;
 import java.io.File;
 
 public interface IDEExecutorDelegateFactory {
-    IDEExecutorDelegate createDelegate(File apFolder, ExecutionParameters executionParams);
+    IDEExecutorDelegate createIDEExecutorDelegate(File apFolder, ExecutionParameters executionParams);
 }
