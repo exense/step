@@ -26,12 +26,12 @@ import step.resources.ResourceManagerImpl;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class LocalIDEState implements ExecutionDiversion {
     private static final Logger logger = LoggerFactory.getLogger(LocalIDEState.class);
@@ -39,7 +39,7 @@ public class LocalIDEState implements ExecutionDiversion {
 
     private final JavaAutomationPackageReader reader;
 
-    private final List<Path> directoriesToCleanupOnShutdown = new ArrayList<>();
+    private final List<Path> directoriesToCleanupOnShutdown = new CopyOnWriteArrayList<>();
     private ResourceManagerImpl resourceManager;
     private IDEExecutorDelegateFactory executorDelegateFactory;
     private Path currentAutomationPackageDirectory;
@@ -170,8 +170,10 @@ public class LocalIDEState implements ExecutionDiversion {
 
         logger.info("Initializing AP descriptor: {}", descriptor.toAbsolutePath());
 
-        if (apName == null) {
-            apName = apDir.getFileName().toString();
+        if (apName == null || apName.isBlank()) {
+            Path fileName = apDir.getFileName();
+            // Edge case: FS roots (/ or C:) apparently return a null filename
+            apName = fileName != null ? fileName.toString() : "root-directory";
         }
 
         String yamlName = apName.replace("\\", "\\\\").replace("\"", "\\\"");

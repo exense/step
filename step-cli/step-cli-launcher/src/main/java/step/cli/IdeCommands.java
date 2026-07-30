@@ -153,18 +153,22 @@ public class IdeCommands {
 
         private int awaitTermination() {
             // This awaits specific user input
-            CompletableFuture<Void> quitCommand = CompletableFuture.runAsync(() -> {
+            CompletableFuture<Void> quitCommand = new CompletableFuture<>();
+            Thread waitForQuitCommandThread = new Thread(() -> {
                 Scanner scanner = new Scanner(System.in);
                 while (scanner.hasNextLine()) {
                     String input = scanner.nextLine().trim().toLowerCase();
                     if (input.equals("q") || input.equals("quit")) {
                         logger.debug("User entered termination command: {}", input);
-                        break; // Exiting the loop will complete this future
+                        quitCommand.complete(null);
+                        break;
                     } else {
                         logger.warn("Unrecognized input, ignoring: {}", input);
                     }
                 }
-            });
+            }, "cli-quit-listener");
+            waitForQuitCommandThread.setDaemon(true);
+            waitForQuitCommandThread.start();
             // This will be triggered when the backend is shutdown (e.g. using Ctrl-C, or via REST call)
             CompletableFuture<Void> backendShutdown = new CompletableFuture<>();
             getState().setShutdownAwaitFuture(backendShutdown);

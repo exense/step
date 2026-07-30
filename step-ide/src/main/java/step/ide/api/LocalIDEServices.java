@@ -41,7 +41,12 @@ public class LocalIDEServices extends AbstractStepServices {
             directory = directory.substring(1);
         }
 
-        var apPath = java.nio.file.Path.of(directory);
+        java.nio.file.Path apPath;
+        try {
+            apPath = java.nio.file.Path.of(directory);
+        } catch (java.nio.file.InvalidPathException e) {
+            throw new WebApplicationException("Invalid directory path: " + e.getMessage(), Response.Status.BAD_REQUEST);
+        }
         var ideState = LocalIDEState.get();
 
         try {
@@ -66,7 +71,13 @@ public class LocalIDEServices extends AbstractStepServices {
             throw new WebApplicationException("existingEmptyDirectory is required", Response.Status.BAD_REQUEST);
         }
 
-        var path = java.nio.file.Path.of(existingEmptyDirectory);
+        java.nio.file.Path path;
+        try {
+            path = java.nio.file.Path.of(existingEmptyDirectory);
+        } catch (java.nio.file.InvalidPathException e) {
+            throw new WebApplicationException("Invalid directory path: " + e.getMessage(), Response.Status.BAD_REQUEST);
+        }
+
         try {
             // more validation
             if (LocalIDEState.get().validateInitializableAutomationPackageDirectory(path) != null) {
