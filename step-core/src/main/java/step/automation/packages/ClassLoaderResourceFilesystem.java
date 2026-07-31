@@ -28,6 +28,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -53,7 +55,7 @@ public class ClassLoaderResourceFilesystem {
     public static boolean isDirectory(URL resourceUrl) throws IOException {
         String protocol = resourceUrl.getProtocol();
         if (protocol.equals(FILE)) {
-            return new File(resourceUrl.getFile()).isDirectory();
+            return toFile(resourceUrl).isDirectory();
         } else if (protocol.equals(JAR)) {
             JarResourcePath jarResourcePath = new JarResourcePath(resourceUrl);
             try (ZipFile zip = new ZipFile(jarResourcePath.jarFile)) {
@@ -105,7 +107,7 @@ public class ClassLoaderResourceFilesystem {
         String protocol = resourceUrl.getProtocol();
 
         if (protocol.equals(FILE)) {
-            File folderToZip = new File(resourceUrl.getPath());
+            File folderToZip = toFile(resourceUrl);
             return new ExtractedDirectory(null, folderToZip, false);
         } else if (protocol.equals(JAR)) {
             JarResourcePath jarResourcePath = new JarResourcePath(resourceUrl);
@@ -138,7 +140,7 @@ public class ClassLoaderResourceFilesystem {
         if (ClassLoaderResourceFilesystem.isDirectory(resourceUrl)) {
             String protocol = resourceUrl.getProtocol();
             if (protocol.equals(FILE)) {
-                File directory = new File(resourceUrl.getPath());
+                File directory = toFile(resourceUrl);
                 return Arrays.stream(directory.listFiles()).map(f -> toURL(f.toURI())).collect(Collectors.toList());
             } else if (protocol.equals(JAR)) {
                 ClassLoaderResourceFilesystem.JarResourcePath jarResourcePath = new ClassLoaderResourceFilesystem.JarResourcePath(resourceUrl);
@@ -162,16 +164,48 @@ public class ClassLoaderResourceFilesystem {
         }
     }
 
+    /**
+     * Converts a {@code file:} URL into a {@link File}. The path of a URL is percent encoded (a space is
+     * {@code %20}, and a class loader does return such URLs), and can therefore not be used as a
+     * filesystem path as-is.
+     */
+    private static File toFile(URL fileUrl) {
+        try {
+            return new File(fileUrl.toURI());
+        } catch (URISyntaxException | IllegalArgumentException e) {
+            // Not every URL is a valid URI: one built by hand may contain characters that a URI requires
+            // to be escaped. Such a URL isn't encoded, so its path can be used as it is.
+            return new File(fileUrl.getPath());
+        }
+    }
+
+    /**
+     * Percent-decodes the path of a URL, for instance the path of an entry within a jar.
+     */
+    public static String decodePath(String encodedPath) {
+        try {
+            // URLDecoder implements the form encoding, in which a '+' stands for a space. In a URL path a
+            // '+' is a legal literal character, so protect the ones of the resource name before decoding.
+            return URLDecoder.decode(encodedPath.replace("+", "%2B"), StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            // Malformed escape sequence: the path isn't encoded, use it as it is.
+            return encodedPath;
+        }
+    }
+
     public static class JarResourcePath {
 
         public final String pathInJar;
         public final String jarFile;
 
         public JarResourcePath(URL url) throws MalformedURLException {
+            // The file of a jar URL looks like "file:/path/to/my%20jar.jar!/my%20folder/my%20file.txt".
+            // Both parts are percent encoded and have to be decoded before being used as a filesystem
+            // path, respectively as a zip entry name.
             String urlFile = url.getFile();
             int bangIndex = urlFile.indexOf('!');
-            pathInJar = urlFile.substring(bangIndex + 2);
-            jarFile = new URL(urlFile.substring(0, bangIndex)).getFile();
+            pathInJar = decodePath(urlFile.substring(bangIndex + 2));
+            jarFile = toFile(new URL(urlFile.substring(0, bangIndex))).getPath();
         }
     }
 }

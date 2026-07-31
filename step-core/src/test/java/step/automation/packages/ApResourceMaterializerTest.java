@@ -133,6 +133,27 @@ public class ApResourceMaterializerTest {
         assertEquals("a,b,c", Files.readString(file.toPath()));
     }
 
+    /**
+     * The archive is opened through the percent encoded URLs of a class loader. A space in the name of
+     * the archive (a jar downloaded twice by a browser ends up as "... (1).jar") or in the path of an
+     * entry must therefore not prevent its materialisation.
+     */
+    @Test
+    public void materialisesFromArchiveAndEntriesWithSpacesInTheirNames() throws Exception {
+        writeFile(new File(archiveFolder, "data/my pool.csv"), "x,y,z");
+        writeFile(new File(archiveFolder, "my scripts/my kw.groovy"), "println 'hi'");
+        File archiveWithSpaces = new File(tmp.getRoot(), "java-automation-package-0.0.0-SNAPSHOT (1).jar");
+        FileHelper.zip(archiveFolder, archiveWithSpaces);
+        Supplier<AutomationPackageArchive> supplier = () -> newArchive(archiveWithSpaces);
+
+        assertEquals("a,b,c", Files.readString(materializer.materialize(cacheRoot, "apA", "data/pool.csv", supplier).toPath()));
+        assertEquals("x,y,z", Files.readString(materializer.materialize(cacheRoot, "apA", "data/my pool.csv", supplier).toPath()));
+
+        File directory = materializer.materialize(cacheRoot, "apA", "my scripts", supplier);
+        assertTrue(directory.isDirectory());
+        assertEquals("println 'hi'", Files.readString(new File(directory, "my kw.groovy").toPath()));
+    }
+
     @Test
     public void concurrentResolveOfSameEntryIsConsistent() throws Exception {
         int threads = 8;
