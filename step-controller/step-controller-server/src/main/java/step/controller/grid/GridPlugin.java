@@ -31,6 +31,7 @@ import step.core.metrics.MetricTypeRegistry;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
+import step.core.timeseries.bucket.Aggregation;
 import step.core.timeseries.metric.MetricAggregation;
 import step.core.timeseries.metric.MetricAggregationType;
 import step.core.timeseries.metric.MetricRenderingSettings;
@@ -242,7 +243,7 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setAttributes(Arrays.asList(GRID_TOKEN_AGENT_TYPE, GRID_TOKEN_STATE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName(), GRID_TOKEN_STATE.getName()))
             .setUnit("1")
-            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+            .setDefaultAggregation(new MetricAggregation(Aggregation.AVG, Aggregation.SUM))
             .setRenderingSettings(new MetricRenderingSettings());
         gridTokensByState.addCustomField(IS_CONTROLLER_METRIC, true);
         metricTypeRegistry.registerMetricType(gridTokensByState);
@@ -255,7 +256,7 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setAttributes(List.of(GRID_TOKEN_AGENT_TYPE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")
-            .setDefaultAggregation(new MetricAggregation(MetricAggregationType.SUM))
+            .setDefaultAggregation(new MetricAggregation(Aggregation.AVG, Aggregation.SUM))
             .setRenderingSettings(new MetricRenderingSettings());
         gridTokensCapacity.addCustomField(IS_CONTROLLER_METRIC, true);
         metricTypeRegistry.registerMetricType(gridTokensCapacity);
