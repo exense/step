@@ -26,6 +26,16 @@ describe('Session auto-disposal', () => {
     expect(killed).toHaveBeenCalledTimes(1)
   })
 
+  test('.close() takes precedence over .kill()', async () => {
+    const session = new Session()
+    const closed = jest.fn()
+    const killed = jest.fn()
+    session.set('res', {close: closed, kill: killed})
+    await session.asyncDispose()
+    expect(closed).toHaveBeenCalledTimes(1)
+    expect(killed).not.toHaveBeenCalled()
+  })
+
   test('[Symbol.asyncDispose]() is awaited before asyncDispose() resolves', async () => {
     const session = new Session()
     let resolved = false
@@ -71,6 +81,37 @@ describe('Session auto-disposal', () => {
     expect(closed).toHaveBeenCalledTimes(1)
   })
 
+  test('resources stored via dot notation support the same disposal methods as session.set()', async () => {
+    const session = new Session()
+    const asyncDisposed = jest.fn().mockResolvedValue(undefined)
+    const disposed = jest.fn()
+    const killed = jest.fn()
+    session.asyncRes = {[Symbol.asyncDispose]: asyncDisposed}
+    session.syncRes = {[Symbol.dispose]: disposed}
+    session.killableRes = {kill: killed}
+    await session.asyncDispose()
+    expect(asyncDisposed).toHaveBeenCalledTimes(1)
+    expect(disposed).toHaveBeenCalledTimes(1)
+    expect(killed).toHaveBeenCalledTimes(1)
+  })
+
+  test('a failing dot-notation close is reported and does not stop the disposal', async () => {
+    const session = new Session()
+    const closed = jest.fn()
+    session.good = {close: closed}
+    session.bad = {close: () => { throw new Error('dot oops') }}
+    await expect(session.asyncDispose()).rejects.toThrow('dot oops')
+    expect(closed).toHaveBeenCalledTimes(1)
+  })
+
+  test('plain values stored via dot notation are skipped', async () => {
+    const session = new Session()
+    session.count = 42
+    session.label = 'hello'
+    session.nothing = null
+    await expect(session.asyncDispose()).resolves.toBeUndefined()
+  })
+
   test('resources with no disposal method are silently skipped', () => {
     const session = new Session()
     session.set('plain', { value: 42 })
@@ -94,8 +135,33 @@ describe('Session auto-disposal', () => {
     })
     const goodClosed = jest.fn()
     session.set('good', {close: goodClosed})
-    await session.asyncDispose()
+    await expect(session.asyncDispose()).rejects.toThrow('oops')
     expect(goodClosed).toHaveBeenCalledTimes(1)
+  })
+
+  test('resources are closed sequentially, in reverse insertion order', async () => {
+    const session = new Session()
+    const events = []
+    const asyncResource = (name) => ({
+      [Symbol.asyncDispose]: async () => {
+        events.push(`start-${name}`)
+        await new Promise(r => setTimeout(r, 10))
+        events.push(`end-${name}`)
+      }
+    })
+    session.set('first', asyncResource('first'))
+    session.set('second', asyncResource('second'))
+    await session.asyncDispose()
+    expect(events).toEqual(['start-second', 'end-second', 'start-first', 'end-first'])
+  })
+
+  test('a failing async close does not prevent the remaining resources from being closed', async () => {
+    const session = new Session()
+    const closed = jest.fn()
+    session.set('good', {close: closed})
+    session.set('bad', {[Symbol.asyncDispose]: async () => { throw new Error('async oops') }})
+    await expect(session.asyncDispose()).rejects.toThrow('async oops')
+    expect(closed).toHaveBeenCalledTimes(1)
   })
 
   test('multiple resources stored via session.set() are all disposed', async () => {

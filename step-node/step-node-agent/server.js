@@ -41,6 +41,7 @@ const agentContext = {
   gridSecurity: agentConf.gridSecurity,
   workingDir: agentConf.workingDir,
   npmProjectWorkspaceCleanupIdleTimeMs: agentConf.npmProjectWorkspaceCleanupIdleTimeMs,
+  forkShutdownTimeoutMs: agentConf.agentForker?.shutdownTimeoutMs,
   filemanagerPath: agentConf.fileManagerConfiguration?.path,
   gridMaxRetries: agentConf.gridMaxRetries,
   gridRetryDelayMs: agentConf.gridRetryDelayMs,
