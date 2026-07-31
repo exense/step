@@ -41,11 +41,12 @@ class FakeForkProcess extends EventEmitter {
   }
 }
 
-function forkedAgentFor(forkProcess, shutdownTimeoutMs = 50) {
+function forkedAgentFor(forkProcess, shutdownTimeoutMs = 50, terminationGracePeriodMs = 50) {
   const forkedAgent = Object.create(ForkedAgent.prototype)
   forkedAgent.forkProcess = forkProcess
   forkedAgent.shutdownTimeoutMs = shutdownTimeoutMs
-  // rmSync is called with force: true, so a non-existing directory is a no-op. The path is nested
+  forkedAgent.terminationGracePeriodMs = terminationGracePeriodMs
+  // rm is called with force: true, so a non-existing directory is a no-op. The path is nested
   // so that removing its parent is a no-op too, rather than targeting the temp directory itself.
   forkedAgent.agentForkerLibPath = path.join(os.tmpdir(), 'step-agent-fork-libs-that-does-not-exist', 'fork-test')
   return forkedAgent
@@ -89,7 +90,7 @@ describe('ForkedAgent.close()', () => {
     await expect(forkedAgentFor(forkProcess).close()).rejects.toThrow('had to be terminated')
 
     expect(forkProcess.receivedSignals).toEqual(['SIGTERM', 'SIGKILL'])
-  }, 15000)
+  })
 
   test('returns instead of hanging when the fork survives SIGKILL', async () => {
     const forkProcess = new FakeForkProcess()
@@ -98,7 +99,7 @@ describe('ForkedAgent.close()', () => {
 
     expect(forkProcess.receivedSignals).toEqual(['SIGTERM', 'SIGKILL'])
     expect(forkProcess.exitCode).toBeNull()
-  }, 20000)
+  })
 
   test('resolves immediately when the fork has already exited', async () => {
     const forkProcess = new FakeForkProcess()

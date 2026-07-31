@@ -8,10 +8,11 @@ const logger = require('../logger').child({ component: 'Agent' });
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 // How long the agent waits for a forked keyword process to release its session and exit on its own
-// before terminating it, and how long it then waits between SIGTERM and SIGKILL. The timeout is
-// configured under `agentForker.shutdownTimeoutMs`, the same conf entry as the Java agent.
+// before terminating it, and how long it then waits between SIGTERM and SIGKILL. They are configured
+// under `agentForker.shutdownTimeoutMs` (the same conf entry as the Java agent) and
+// `agentForker.terminationGracePeriodMs`.
 const DEFAULT_FORK_SHUTDOWN_TIMEOUT_MS = 40000;
-const FORK_TERMINATION_GRACE_PERIOD_MS = 5000;
+const DEFAULT_FORK_TERMINATION_GRACE_PERIOD_MS = 5000;
 
 // Resolve the bundled `ws` module path once, so it can be injected into forked keyword processes
 // (whose own require() resolves against the keyword project, not the agent). Used by live reporting
@@ -197,7 +198,7 @@ class Agent {
       let forkedAgent = session.get('forkedAgent');
       if (!forkedAgent) {
         logger.info('Starting agent fork in ' + npmProjectPath + ' for token ' + tokenId)
-        forkedAgent = createForkedAgent(npmProjectPath, this.agentContext.forkShutdownTimeoutMs);
+        forkedAgent = createForkedAgent(npmProjectPath, this.agentContext.forkShutdownTimeoutMs, this.agentContext.forkTerminationGracePeriodMs);
         session.set('forkedAgent', forkedAgent);
 
         if (properties['skipNpmInstall'] === 'true') {
@@ -353,14 +354,15 @@ async function readStepKeywordDirectory(npmProjectPath) {
   }
 }
 
-function createForkedAgent(keywordProjectPath, shutdownTimeoutMs) {
-  return new ForkedAgent(keywordProjectPath, shutdownTimeoutMs);
+function createForkedAgent(keywordProjectPath, shutdownTimeoutMs, terminationGracePeriodMs) {
+  return new ForkedAgent(keywordProjectPath, shutdownTimeoutMs, terminationGracePeriodMs);
 }
 
 class ForkedAgent {
 
-  constructor(keywordProjectPath, shutdownTimeoutMs) {
+  constructor(keywordProjectPath, shutdownTimeoutMs, terminationGracePeriodMs) {
     this.shutdownTimeoutMs = shutdownTimeoutMs ?? DEFAULT_FORK_SHUTDOWN_TIMEOUT_MS;
+    this.terminationGracePeriodMs = terminationGracePeriodMs ?? DEFAULT_FORK_TERMINATION_GRACE_PERIOD_MS;
     // Each fork gets its own lib directory: several forks can share the same keyword project (local
     // runs work directly in it, and a token whose session is re-created gets a new fork while the
     // previous one may still be closing). close() deletes this directory, so a fixed path would let
@@ -524,10 +526,10 @@ class ForkedAgent {
       timeoutError = new Error(`The forked keyword process did not exit within ${this.shutdownTimeoutMs}ms and had to be terminated. `
         + 'This usually means that a keyword or a session resource did not release properly.');
       this.forkProcess.kill('SIGTERM');
-      if (!await hasResolvedWithin(closePromise, FORK_TERMINATION_GRACE_PERIOD_MS)) {
-        logger.error(`The forked agent process is still alive ${FORK_TERMINATION_GRACE_PERIOD_MS}ms after SIGTERM. Killing it with SIGKILL.`);
+      if (!await hasResolvedWithin(closePromise, this.terminationGracePeriodMs)) {
+        logger.error(`The forked agent process is still alive ${this.terminationGracePeriodMs}ms after SIGTERM. Killing it with SIGKILL.`);
         this.forkProcess.kill('SIGKILL');
-        if (!await hasResolvedWithin(closePromise, FORK_TERMINATION_GRACE_PERIOD_MS)) {
+        if (!await hasResolvedWithin(closePromise, this.terminationGracePeriodMs)) {
           // Nothing else can be done here: waiting any longer would block the token release,
           // which is exactly what the timeout is meant to prevent.
           logger.error('The forked agent process could not be killed. Giving up waiting for its exit; the process may be left behind.');
@@ -536,12 +538,15 @@ class ForkedAgent {
     }
 
     try {
-      fs.rmSync(this.agentForkerLibPath, {recursive: true, force: true});
+      // Deleting a lib directory can be slow (many files, Windows retries on locked files), so the
+      // async variants are used here: a sync call would block the event loop of the whole agent,
+      // including the close() of every other fork.
+      await fs.promises.rm(this.agentForkerLibPath, {recursive: true, force: true});
       // Remove the shared parent too, but only once the last fork of this keyword project is gone.
       // It fails with ENOTEMPTY while other forks still have their lib directory in it, which is
       // the expected outcome and not an error.
       try {
-        fs.rmdirSync(path.dirname(this.agentForkerLibPath));
+        await fs.promises.rmdir(path.dirname(this.agentForkerLibPath));
       } catch {
         // still in use by another fork, or already removed
       }
