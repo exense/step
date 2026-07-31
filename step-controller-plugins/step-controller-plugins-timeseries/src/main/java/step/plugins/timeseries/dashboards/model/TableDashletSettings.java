@@ -2,7 +2,6 @@ package step.plugins.timeseries.dashboards.model;
 
 import jakarta.validation.constraints.NotNull;
 import step.core.timeseries.metric.MetricAggregation;
-import step.plugins.table.settings.ScreenInputColumnSettings;
 
 import java.util.List;
 
@@ -12,9 +11,10 @@ public class TableDashletSettings {
     private List<ColumnSelection> columns;
 
     /**
-     * Custom aggregation pipeline of the table. When null, the table aggregates the historical way: both the time and
-     * the group aggregations merge, and each selected {@link ColumnSelection} extracts one value out of the merged
-     * bucket. When set, both aggregations are scalar and the table displays one single value per row.
+     * Aggregation of the table. When null, the table aggregates the historical way: both the time and the group
+     * aggregations merge, and each selected {@link ColumnSelection} extracts one value out of the merged bucket. When
+     * set to a two-stage aggregation, both stages reduce their inputs to one value and the table displays one single
+     * value per row.
      */
     private MetricAggregation aggregation;
 
