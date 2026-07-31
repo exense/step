@@ -26,7 +26,7 @@ public class CurrentlyOpenedAutomationPackageCollectionFactory implements Collec
 
     public static CurrentlyOpenedAutomationPackageCollectionFactory getInstance() {
         if (INSTANCE == null) {
-            throw new IllegalStateException("No instance created yet");
+            throw new IllegalStateException("No CurrentlyOpenedAutomationPackageCollectionFactory instance created yet");
         }
         return INSTANCE;
     }
