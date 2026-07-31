@@ -334,6 +334,15 @@ describe('runner', () => {
         if (fs.existsSync(closePath)) fs.unlinkSync(closePath)
       }
     })
+
+    // A resource failing to close must not leave the fork alive: runner.close() has to
+    // report the failure instead of hanging on the fork's 'exit' event.
+    test('runner.close() rejects with the disposal error when a session resource fails to close', async () => {
+      const r = require('../api/runner/runner')()
+      r.setThrowExceptionOnError(false)
+      await r.run('StoreFailingCloseableKW', { errorMsg: 'disposal boom' })
+      await expect(r.close()).rejects.toThrow('disposal boom')
+    })
   })
 
   // ---------------------------------------------------------------------------
