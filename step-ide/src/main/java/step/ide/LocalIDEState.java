@@ -16,6 +16,7 @@ import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.collections.AutomationPackageCollectionFactory;
 import step.core.execution.ExecutionDiversion;
 import step.core.execution.model.ExecutionParameters;
+import step.ide.api.IDEExecutionRequest;
 import step.ide.api.IDEExecutorDelegate;
 import step.ide.api.IDEExecutorDelegateFactory;
 import step.ide.collections.CurrentlyOpenedAutomationPackageCollectionFactory;
@@ -28,15 +29,21 @@ import step.resources.ResourceManagerImpl;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 public class LocalIDEState implements ExecutionDiversion {
     private static final Logger logger = LoggerFactory.getLogger(LocalIDEState.class);
     private static final LocalIDEState instance = new LocalIDEState();
+
+    private static final long EXECUTION_LAUNCH_TIMEOUT_S = 600;
 
     private final JavaAutomationPackageReader reader;
 
@@ -47,6 +54,7 @@ public class LocalIDEState implements ExecutionDiversion {
     private FileResolver fileResolver;
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
+    private Configuration configuration;
 
     public static LocalIDEState get() {
         return instance;
@@ -210,9 +218,22 @@ public class LocalIDEState implements ExecutionDiversion {
 
     @Override
     public String divertExecution(ExecutionParameters executionParams) {
-        Objects.requireNonNull(currentAutomationPackageDirectory, "currentAutomationPackageDirectory not set; select an AP first");
-        logger.info("Launching diverted execution for parameters: {}", Failable.call(() -> new ObjectMapper().writeValueAsString(executionParams)));
-        IDEExecutorDelegate executorDelegate = executorDelegateFactory.createIDEExecutorDelegate(currentAutomationPackageDirectory.toFile(), executionParams);
+        Path apDir = requireCurrentAutomationPackageDirectory();
+        String description = executionParams.getDescription();
+        List<String> includedPlanNames = (description == null || description.isBlank()) ? List.of() : List.of(description);
+        return executeAutomationPackage(new IDEExecutionRequest(apDir, executionParams, includedPlanNames));
+    }
+
+    /**
+     * Executes an automation package through the configured delegate and returns the id of the launched execution.
+     * The package is not necessarily the currently opened one: the AI agent for instance is a packaged automation
+     * package of its own, executed against the opened package.
+     */
+    public String executeAutomationPackage(IDEExecutionRequest request) {
+        Objects.requireNonNull(executorDelegateFactory, "No IDEExecutorDelegateFactory set, the IDE was not started through the CLI launcher");
+        logger.info("Launching diverted execution of {} (plans: {}) for parameters: {}", request.automationPackage(),
+            request.includedPlanNames(), Failable.call(() -> new ObjectMapper().writeValueAsString(request.executionParameters())));
+        IDEExecutorDelegate executorDelegate = executorDelegateFactory.createDelegate(request);
         CompletableFuture<String> executionIdFuture = new CompletableFuture<>();
         CompletableFuture.runAsync((() -> {
             try {
@@ -225,6 +246,22 @@ public class LocalIDEState implements ExecutionDiversion {
         String executionId = executionIdFuture.join();
         logger.info("Diverted executionId: {}", executionId);
         return executionId;
+    }
+
+    public Path requireCurrentAutomationPackageDirectory() {
+        Path apDir = currentAutomationPackageDirectory;
+        if (apDir == null) {
+            throw new IllegalStateException("No automation package is currently opened, please open one first");
+        }
+        return apDir;
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
     }
 
     public void setFileResolver(FileResolver fileResolver) {

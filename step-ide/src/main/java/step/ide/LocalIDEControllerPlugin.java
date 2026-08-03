@@ -6,7 +6,9 @@ import step.core.GlobalContext;
 import step.core.execution.ExecutionDiversion;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.engine.plugins.ExecutionEnginePlugin;
 import step.ide.api.LocalFileSystemServices;
+import step.ide.api.LocalIDEAiServices;
 import step.ide.api.LocalIDEServices;
 import step.resources.ResourceManagerImpl;
 
@@ -21,11 +23,13 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
 
         state.setResourceManager((ResourceManagerImpl) context.getResourceManager());
         state.setFileResolver(context.getFileResolver());
+        state.setConfiguration(context.getConfiguration());
         context.put(ExecutionDiversion.class, state);
 
         var services = context.getServiceRegistrationCallback();
         services.registerService(LocalIDEServices.class);
         services.registerService(LocalFileSystemServices.class);
+        services.registerService(LocalIDEAiServices.class);
     }
 
     @Override
@@ -37,5 +41,10 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
     @Override
     public void postShutdownHook() {
         LocalIDEState.get().onShutdown();
+    }
+
+    @Override
+    public ExecutionEnginePlugin getExecutionEnginePlugin() {
+        return new IDEKeywordPropertiesPlugin(LocalIDEState.get().getConfiguration());
     }
 }

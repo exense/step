@@ -8,6 +8,7 @@ import step.core.Constants;
 import step.core.execution.model.ExecutionParameters;
 import step.ide.LocalIDE;
 import step.ide.LocalIDEState;
+import step.ide.api.IDEExecutionRequest;
 import step.ide.api.IDEExecutorDelegate;
 import step.ide.api.IDEExecutorDelegateFactory;
 import step.ide.exceptions.FileExistsException;
@@ -125,9 +126,11 @@ public class IdeCommands {
         }
 
         @Override
-        public IDEExecutorDelegate createIDEExecutorDelegate(File apDirectory, ExecutionParameters executionParams) {
+        public IDEExecutorDelegate createDelegate(IDEExecutionRequest request) {
+            File apPath = request.automationPackage().toFile();
+            ExecutionParameters executionParams = request.executionParameters();
             ApExecuteParameters params = new ApExecuteParameters()
-                .setAutomationPackageFile(ApCommand.AbstractApCommand.prepareFile(Failable.call(apDirectory::getCanonicalPath), "automation package", true))
+                .setAutomationPackageFile(ApCommand.AbstractApCommand.prepareFile(Failable.call(apPath::getCanonicalPath), "automation package", true))
                 .setAutomationPackageMavenArtifact(null)
                 .setLibraryFile(null)
                 .setlibraryMavenArtifact(null)
@@ -146,6 +149,9 @@ public class IdeCommands {
                 .setWrapIntoTestSet(false)
                 .setNumberOfThreads(null)
                 .setReports(null);
+            if (request.includedPlanNames() != null && !request.includedPlanNames().isEmpty()) {
+                params.setIncludePlanNames(request.includedPlanNames());
+            }
             String url = "http://localhost:8080";
             return new ExecuteAutomationPackageTool(url, params);
         }

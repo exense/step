@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.OptBoolean;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import step.core.entities.EntityOrigin;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.core.plans.agents.configuration.AgentProvisioningConfigurationDeserializer;
 import step.core.plans.agents.configuration.AgentProvisioningConfigurationSerializer;
@@ -48,6 +49,8 @@ public class YamlPlan extends PatchableYamlModelBase implements NamedPatchableYa
     private AgentProvisioningConfiguration agents;
 
     private List<String> categories;
+
+    private EntityOrigin origin;
 
     @JsonCreator
     public YamlPlan(@JacksonInject(useInput = OptBoolean.FALSE, optional = OptBoolean.TRUE) PatchingContext context) {
@@ -85,5 +88,13 @@ public class YamlPlan extends PatchableYamlModelBase implements NamedPatchableYa
 
     public void setCategories(List<String> categories) {
         this.categories = categories;
+    }
+
+    public EntityOrigin getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(EntityOrigin origin) {
+        this.origin = origin;
     }
 }

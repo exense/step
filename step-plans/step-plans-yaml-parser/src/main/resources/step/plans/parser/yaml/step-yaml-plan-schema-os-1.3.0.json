@@ -1,8 +1,23 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Step Automation Package",
-  "type": "object",
+  "title": "Plan",
   "$defs": {
+    "resourceReference": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
     "SmartDynamicValueBooleanDef": {
       "oneOf": [
         {
@@ -75,205 +90,6 @@
         },
         "additionalProperties": false
       }
-    },
-    "NodeDef": {
-      "type": "object",
-      "properties": {
-        "Node": {
-          "type": "object",
-          "properties": {
-            "description": {
-              "type": "string"
-            },
-            "useCustomTemplate": {
-              "type": "boolean"
-            },
-            "routing": {
-              "type": "object",
-              "properties": {}
-            },
-            "executeLocally": {
-              "type": "boolean"
-            },
-            "schema": {
-              "type": "object",
-              "properties": {}
-            },
-            "callTimeout": {
-              "$ref": "#/$defs/SmartDynamicValueNumDef"
-            },
-            "name": {
-              "default": "Node",
-              "type": "string"
-            },
-            "jsfile": {
-              "$ref": "#/$defs/SmartDynamicValueStringDef"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    "CompositeDef": {
-      "type": "object",
-      "properties": {
-        "Composite": {
-          "type": "object",
-          "properties": {
-            "description": {
-              "type": "string"
-            },
-            "useCustomTemplate": {
-              "type": "boolean"
-            },
-            "routing": {
-              "type": "object",
-              "properties": {}
-            },
-            "executeLocally": {
-              "type": "boolean"
-            },
-            "schema": {
-              "type": "object",
-              "properties": {}
-            },
-            "callTimeout": {
-              "$ref": "#/$defs/SmartDynamicValueNumDef"
-            },
-            "name": {
-              "default": "Composite",
-              "type": "string"
-            },
-            "plan": {
-              "$ref": "#/$defs/CompositePlanDef"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    "GeneralScriptDef": {
-      "type": "object",
-      "properties": {
-        "GeneralScript": {
-          "type": "object",
-          "properties": {
-            "description": {
-              "type": "string"
-            },
-            "useCustomTemplate": {
-              "type": "boolean"
-            },
-            "routing": {
-              "type": "object",
-              "properties": {}
-            },
-            "executeLocally": {
-              "type": "boolean"
-            },
-            "schema": {
-              "type": "object",
-              "properties": {}
-            },
-            "callTimeout": {
-              "$ref": "#/$defs/SmartDynamicValueNumDef"
-            },
-            "name": {
-              "default": "GeneralScript",
-              "type": "string"
-            },
-            "scriptLanguage": {
-              "enum": [
-                "java",
-                "javascript",
-                "groovy"
-              ]
-            },
-            "librariesFile": {
-              "$ref": "#/$defs/SmartDynamicValueStringDef"
-            },
-            "scriptFile": {
-              "$ref": "#/$defs/SmartDynamicValueStringDef"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    "JMeterDef": {
-      "type": "object",
-      "properties": {
-        "JMeter": {
-          "type": "object",
-          "properties": {
-            "description": {
-              "type": "string"
-            },
-            "useCustomTemplate": {
-              "type": "boolean"
-            },
-            "routing": {
-              "type": "object",
-              "properties": {}
-            },
-            "executeLocally": {
-              "type": "boolean"
-            },
-            "schema": {
-              "type": "object",
-              "properties": {}
-            },
-            "callTimeout": {
-              "$ref": "#/$defs/SmartDynamicValueNumDef"
-            },
-            "name": {
-              "default": "JMeter",
-              "type": "string"
-            },
-            "jmeterTestplan": {
-              "$ref": "#/$defs/SmartDynamicValueStringDef"
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
-    },
-    "KeywordDef": {
-      "type": "object",
-      "oneOf": [
-        {
-          "$ref": "#/$defs/NodeDef"
-        },
-        {
-          "$ref": "#/$defs/CompositeDef"
-        },
-        {
-          "$ref": "#/$defs/GeneralScriptDef"
-        },
-        {
-          "$ref": "#/$defs/JMeterDef"
-        }
-      ]
-    },
-    "resourceReference": {
-      "oneOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "id": {
-              "type": "string"
-            }
-          }
-        }
-      ]
     },
     "AssertDef": {
       "type": "object",
@@ -2702,10 +2518,38 @@
         }
       ]
     },
+    "originDef": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "by": {
+              "type": "string"
+            },
+            "model": {
+              "type": "string"
+            },
+            "timestamp": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "by"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
     "PlanDef": {
       "properties": {
         "name": {
           "type": "string"
+        },
+        "version": {
+          "const": "1.3.0"
         },
         "categories": {
           "type": "array",
@@ -2715,6 +2559,9 @@
         },
         "agents": {
           "$ref": "#/$defs/agentsDef"
+        },
+        "origin": {
+          "$ref": "#/$defs/originDef"
         },
         "root": {
           "$ref": "#/$defs/RootArtefactDef"
@@ -2731,6 +2578,9 @@
         "name": {
           "type": "string"
         },
+        "version": {
+          "const": "1.3.0"
+        },
         "root": {
           "$ref": "#/$defs/RootArtefactDef"
         }
@@ -2739,147 +2589,7 @@
         "root"
       ],
       "additionalProperties": false
-    },
-    "ScheduleDef": {
-      "type": "object",
-      "properties": {
-        "executionParameters": {
-          "type": "object",
-          "properties": {}
-        },
-        "assertionPlanName": {
-          "type": "string"
-        },
-        "planName": {
-          "type": "string"
-        },
-        "cronExclusions": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "cron": {
-          "type": "string"
-        },
-        "active": {
-          "type": "boolean"
-        },
-        "name": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    },
-    "StepParameterDef": {
-      "type": "object",
-      "properties": {
-        "scopeEntity": {
-          "type": "string"
-        },
-        "scope": {
-          "enum": [
-            "GLOBAL",
-            "APPLICATION",
-            "FUNCTION"
-          ]
-        },
-        "protectedValue": {
-          "type": "boolean"
-        },
-        "priority": {
-          "type": "number"
-        },
-        "activationScript": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        },
-        "value": {
-          "$ref": "#/$defs/SmartDynamicValueStringDef"
-        },
-        "key": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
-    },
-    "PlainTextPlanDef": {
-      "type": "object",
-      "properties": {
-        "file": {
-          "type": "string"
-        },
-        "categories": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "rootType": {
-          "enum": [
-            "Sequence",
-            "TestCase",
-            "TestScenario",
-            "TestSet",
-            "ThreadGroup"
-          ]
-        },
-        "name": {
-          "type": "string"
-        }
-      },
-      "additionalProperties": false
     }
   },
-  "properties": {
-    "version": {
-      "const": "1.2.0"
-    },
-    "name": {
-      "type": "string"
-    },
-    "attributes": {
-      "type": "object"
-    },
-    "keywords": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/KeywordDef"
-      }
-    },
-    "plans": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/PlanDef"
-      }
-    },
-    "fragments": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
-    },
-    "schedules": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/ScheduleDef"
-      }
-    },
-    "parameters": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/StepParameterDef"
-      }
-    },
-    "plansPlainText": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/PlainTextPlanDef"
-      }
-    }
-  },
-  "required": [],
-  "additionalProperties": true
+  "$ref": "#/$defs/PlanDef"
 }

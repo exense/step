@@ -42,8 +42,6 @@ import step.plans.parser.yaml.YamlPlanReader;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -329,7 +327,7 @@ public class AutomationPackageYamlFragmentManager {
             case NewObjectFragmentMode.FRAGMENT -> new File(location.relativeFragmentPath()).toPath();
             case NewObjectFragmentMode.PER_OBJECT -> {
                 if (patchable instanceof NamedPatchableYamlModel namedPatchableYamlModel) {
-                    yield new File(location.relativeFragmentPath()).toPath().resolve(sanitizeFilename(namedPatchableYamlModel.getName() + ".yml"));
+                    yield new File(location.relativeFragmentPath()).toPath().resolve(YamlFragmentFilenames.sanitizeFilename(namedPatchableYamlModel.getName() + ".yml"));
                 }
                 throw perObjectSaveUnsupported(entityName);
             }
@@ -382,9 +380,5 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     private record FragmentLocation(NewObjectFragmentMode mode, String relativeFragmentPath) {
-    }
-
-    private String sanitizeFilename(String inputName) {
-        return URLEncoder.encode(inputName, StandardCharsets.UTF_8).replace("+", " ");
     }
 }

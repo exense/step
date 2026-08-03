@@ -37,6 +37,7 @@ import step.core.Version;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
+import step.core.entities.EntityOrigin;
 import step.core.plans.Plan;
 import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
@@ -326,6 +327,10 @@ public class YamlPlanReader {
         Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
         setPlanName(plan, yamlPlan.getName());
         plan.setCategories(yamlPlan.getCategories());
+        EntityOrigin origin = yamlPlan.getOrigin();
+        if (origin != null && origin.getBy() != null) {
+            plan.addCustomField(EntityOrigin.CUSTOM_FIELD, origin.getBy());
+        }
         AgentProvisioningConfiguration agents = yamlPlan.getAgents();
         //If agents is not define in YAML, use default value of plan
         if (agents != null) {
@@ -349,6 +354,12 @@ public class YamlPlanReader {
     private void setYamlPlanFieldsFromPlan(YamlPlan yamlPlan, Plan plan) {
         yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
         yamlPlan.setCategories(plan.getCategories());
+        // the plan fragment is fully re-serialized from the business object on every save, so the origin marker has
+        // to be mapped back explicitly, otherwise editing an AI generated plan would silently drop it
+        Object origin = plan.getCustomField(EntityOrigin.CUSTOM_FIELD);
+        if (origin instanceof String && !((String) origin).isBlank()) {
+            yamlPlan.setOrigin(new EntityOrigin((String) origin));
+        }
         yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
         AgentProvisioningConfiguration agents = plan.getAgents();
         //don't set the value of agents if the default values is used to keep the Yaml short

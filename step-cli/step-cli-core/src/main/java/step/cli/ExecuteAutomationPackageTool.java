@@ -282,7 +282,13 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
         executionParameters.setCustomParameters(parameters.getExecutionParameters());
         executionParameters.setUserID(parameters.getUserId());
 
-        executionParameters.setPlanFilter(getPlanFilters(parameters.getIncludePlans(), parameters.getExcludePlans(), parameters.getIncludeCategories(), parameters.getExcludeCategories()));
+        List<String> includePlanNames = parameters.getIncludePlanNames();
+        if (includePlanNames != null && !includePlanNames.isEmpty()) {
+            // explicit plan names take precedence over the comma separated variant, which cannot express names containing commas
+            executionParameters.setPlanFilter(new PlanMultiFilter(List.of(new PlanByIncludedNamesFilter(includePlanNames))));
+        } else {
+            executionParameters.setPlanFilter(getPlanFilters(parameters.getIncludePlans(), parameters.getExcludePlans(), parameters.getIncludeCategories(), parameters.getExcludeCategories()));
+        }
         executionParameters.setWrapIntoTestSet(parameters.getWrapIntoTestSet());
         executionParameters.setNumberOfThreads(parameters.getNumberOfThreads());
 

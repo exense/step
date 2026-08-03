@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.accessors.DefaultJacksonMapperProvider;
+import step.core.entities.EntityOrigin;
 import step.core.plans.Plan;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
@@ -366,6 +367,68 @@ public class YamlPlanReaderTest {
             "src/test/resources/step/plans/parser/yaml/controls/test-expected-controls-tech-plan.yml",
             "src/test/resources/step/plans/parser/yaml/controls/test-controls-plan.yml"
         );
+    }
+
+    private static final String PLAN_WITH_ORIGIN = "version: " + YamlPlanVersions.ACTUAL_VERSION + "\n"
+        + "name: \"AI generated plan\"\n"
+        + "origin: ai\n"
+        + "root:\n"
+        + "  sequence:\n"
+        + "    children:\n"
+        + "      - echo:\n"
+        + "          text: \"hello\"\n";
+
+    /**
+     * The plain form of the origin marker must be readable and end up in the custom fields of the business object.
+     */
+    @Test
+    public void readOriginFromYaml() throws Exception {
+        Plan plan = readPlan(PLAN_WITH_ORIGIN);
+
+        Assert.assertEquals(EntityOrigin.BY_AI, plan.getCustomField(EntityOrigin.CUSTOM_FIELD));
+    }
+
+    /**
+     * The object form must already be accepted, so that the marker can be extended later without a schema change.
+     */
+    @Test
+    public void readOriginObjectFormFromYaml() throws Exception {
+        Plan plan = readPlan(PLAN_WITH_ORIGIN.replace("origin: ai\n", "origin:\n  by: ai\n  model: some-model\n"));
+
+        Assert.assertEquals(EntityOrigin.BY_AI, plan.getCustomField(EntityOrigin.CUSTOM_FIELD));
+    }
+
+    /**
+     * The plan fragment is fully re-serialized from the business object on every save, so without the reverse mapping
+     * editing an AI generated plan in the IDE would silently drop the marker.
+     */
+    @Test
+    public void originSurvivesTheRoundTripBackToYaml() throws Exception {
+        Plan plan = readPlan(PLAN_WITH_ORIGIN);
+
+        Assert.assertEquals("ai", writePlan(plan).get("origin").asText());
+    }
+
+    @Test
+    public void noOriginIsWrittenWhenTheCustomFieldIsAbsent() throws Exception {
+        Plan plan = readPlan(PLAN_WITH_ORIGIN.replace("origin: ai\n", ""));
+
+        Assert.assertNull(plan.getCustomField(EntityOrigin.CUSTOM_FIELD));
+        Assert.assertNull(writePlan(plan).get("origin"));
+    }
+
+    private Plan readPlan(String yamlPlan) throws Exception {
+        try (InputStream is = new ByteArrayInputStream(yamlPlan.getBytes(StandardCharsets.UTF_8))) {
+            return yamlReader.readYamlPlan(is);
+        }
+    }
+
+    private JsonNode writePlan(Plan plan) throws Exception {
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            yamlReader.writeYamlPlan(os, plan);
+            log.info("Converted yaml -->\n{}", os.toString(StandardCharsets.UTF_8));
+            return yamlReader.getYamlMapper().readTree(os.toByteArray());
+        }
     }
 
     /**

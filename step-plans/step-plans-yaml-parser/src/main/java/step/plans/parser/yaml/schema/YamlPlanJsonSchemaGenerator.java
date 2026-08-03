@@ -30,6 +30,7 @@ import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
 import step.core.Version;
 import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
+import step.core.entities.EntityOrigin;
 import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.*;
@@ -134,6 +135,8 @@ public class YamlPlanJsonSchemaGenerator {
             objectBuilder.add("categories", categoriesBuilder);
             //agents
             objectBuilder.add(AGENT_CONFIGURATION_YAML_NAME, YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), AGENT_CONFIGURATION_YAML_NAME + SchemaDefSuffix));
+            //origin
+            objectBuilder.add(EntityOrigin.YAML_FIELD, YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), EntityOrigin.YAML_FIELD + SchemaDefSuffix));
         }
         objectBuilder.add("root", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
         return objectBuilder;
@@ -164,6 +167,7 @@ public class YamlPlanJsonSchemaGenerator {
             defsBuilder.add(ROOT_ARTEFACT_DEF, createArtefactDef(artefactImplDefs.rootArtefactDefs));
             defsBuilder.add(AbstractYamlArtefact.ARTEFACT_ARRAY_DEF, createArtefactArrayDef());
             createPlanPoolConfigurationsDef(defsBuilder);
+            createEntityOriginDef(defsBuilder);
 
             defsBuilder.add(YamlJsonSchemaHelper.PLAN_DEF, createPlanDef(versionedPlans, false));
             defsBuilder.add(YamlJsonSchemaHelper.COMPOSITE_PLAN_DEF, createPlanDef(versionedPlans, true));
@@ -215,6 +219,29 @@ public class YamlPlanJsonSchemaGenerator {
         JsonObjectBuilder agentsDefBuilder = jsonProvider.createObjectBuilder();
         agentsDefBuilder.add("oneOf", arrayBuilder);
         defsBuilder.add(AGENT_CONFIGURATION_YAML_NAME + SchemaDefSuffix, agentsDefBuilder);
+    }
+
+    /**
+     * Definition for the generic {@link EntityOrigin} marker. Both the plain form (<code>origin: ai</code>) and the
+     * object form are accepted, so that the marker can be extended without a schema version change.
+     */
+    private void createEntityOriginDef(JsonObjectBuilder defsBuilder) {
+        JsonObjectBuilder objectFormProperties = jsonProvider.createObjectBuilder();
+        objectFormProperties.add("by", jsonProvider.createObjectBuilder().add("type", "string"));
+        objectFormProperties.add("model", jsonProvider.createObjectBuilder().add("type", "string"));
+        objectFormProperties.add("timestamp", jsonProvider.createObjectBuilder().add("type", "string"));
+
+        JsonObjectBuilder objectForm = jsonProvider.createObjectBuilder();
+        objectForm.add("type", "object");
+        objectForm.add("properties", objectFormProperties);
+        objectForm.add("required", jsonProvider.createArrayBuilder().add("by"));
+        objectForm.add("additionalProperties", false);
+
+        JsonArrayBuilder oneOf = jsonProvider.createArrayBuilder();
+        oneOf.add(jsonProvider.createObjectBuilder().add("type", "string"));
+        oneOf.add(objectForm);
+
+        defsBuilder.add(EntityOrigin.YAML_FIELD + SchemaDefSuffix, jsonProvider.createObjectBuilder().add("oneOf", oneOf));
     }
 
     private ArtefactDefinitions createArtefactImplDefs() throws JsonSchemaPreparationException {
