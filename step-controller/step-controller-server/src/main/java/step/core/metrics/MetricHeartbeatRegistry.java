@@ -57,9 +57,13 @@ public class MetricHeartbeatRegistry {
     }
 
     /**
-     * Records the last known sample for the given metric. Called from
-     * {@link MetricsExecutionPlugin#processMetrics} after each real dispatch.
-     * HISTOGRAM samples are silently ignored.
+     * Records the last known sample for the given metric. Only samples registered here are heartbeated: the sole
+     * producer is currently the thread group counter of {@link MetricsExecutionPlugin}, custom keyword metrics are
+     * dispatched once and never re-emitted. HISTOGRAM samples are silently ignored.
+     * <p>
+     * Metric types whose values are kept alive here must be declared as
+     * {@link step.core.timeseries.metric.MetricSamplingMode#SAMPLED} so that the UI stops carrying their last value
+     * forward once the heartbeat stops.
      */
     public void update(ExecutionMetricSample executionMetricSample) {
         if (executionMetricSample.sample.getType() == InstrumentType.HISTOGRAM) {
