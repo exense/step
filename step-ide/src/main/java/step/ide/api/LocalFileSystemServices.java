@@ -215,7 +215,7 @@ public class LocalFileSystemServices extends AbstractStepServices {
             throw new ControllerServiceException(Response.Status.FORBIDDEN.getStatusCode(), "Permission denied to create directory");
         } catch (IOException e) {
             logger.error("Failed to create directory: {}", targetDir, e);
-            throw new ControllerServiceException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Failed to create directory: " + e.getMessage());
+            throw new ControllerServiceException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Failed to create directory: " + e.getMessage(), e);
         }
     }
 }
