@@ -50,6 +50,11 @@
       <groupId>ch.exense.streaming</groupId>
       <artifactId>step-streaming-impl-websocket-client-upload</artifactId>
     </dependency>
+    <!-- Dependency of jersey-apache-connector, define explicit non-vulnerable version -->
+    <dependency>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.connectors</groupId>
       <artifactId>jersey-apache-connector</artifactId>
