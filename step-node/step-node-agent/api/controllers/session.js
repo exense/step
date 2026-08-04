@@ -23,48 +23,63 @@ try {
   logger = { debug: console.debug.bind(console), info: console.log.bind(console), warn: console.warn.bind(console), error: console.error.bind(console) };
 }
 
+/**
+ * Closes a single resource using the first disposal method it exposes, awaiting the result so
+ * that a resource is fully closed before the next one is touched. Resources without any disposal
+ * method are skipped. Returns the error if the close failed, null otherwise.
+ *
+ * Only one method is called: a resource exposing several of them offers variants of the same
+ * teardown, not complementary steps. They are tried from the most explicit and graceful to the
+ * most forceful, so close() wins over kill() when a resource has both (a Playwright BrowserServer
+ * for instance, where close() shuts the browser down gracefully and kill() terminates its
+ * process). A resource that really needs several calls should expose [Symbol.asyncDispose] and
+ * perform them there.
+ */
+async function closeResource(label, resource) {
+  if (!resource) return null;
+  try {
+    if (typeof resource[Symbol.asyncDispose] === 'function') {
+      await resource[Symbol.asyncDispose]();
+    } else if (typeof resource[Symbol.dispose] === 'function') {
+      resource[Symbol.dispose]();
+    } else if (typeof resource.close === 'function') {
+      await resource.close();
+    } else if (typeof resource.kill === 'function') {
+      await resource.kill();
+    } else {
+      return null;
+    }
+    logger.debug(`Successfully closed resource: ${label}`);
+    return null;
+  } catch (err) {
+    logger.error(`Failed to close resource ${label}:`, err);
+    return err;
+  }
+}
+
 class Session extends Map {
 
   async asyncDispose() {
     logger.info(`Async-disposing Session: Cleaning up ${this.size} resources...`);
-    const promises = [];
+    const failures = [];
 
-    for (const [key, resource] of this) {
-      try {
-        if (resource && typeof resource[Symbol.asyncDispose] === 'function') {
-          promises.push(resource[Symbol.asyncDispose]());
-        } else if (resource && typeof resource[Symbol.dispose] === 'function') {
-          resource[Symbol.dispose]();
-        } else if (resource && typeof resource.kill === 'function') {
-          resource.kill();
-        } else if (resource && typeof resource.close === 'function') {
-          const result = resource.close();
-          if (result && typeof result.then === 'function') promises.push(result);
-        }
-        logger.debug(`Successfully closed resource: ${key}`);
-      } catch (err) {
-        logger.error(`Failed to close resource ${key}:`, err);
-      }
+    // Resources are closed one after the other, in reverse insertion order: closing them in
+    // parallel breaks linked objects (a Playwright page cannot be closed once its browser is
+    // gone), and the resource created last is the one depending on the previously created ones.
+    for (const [key, resource] of [...this].reverse()) {
+      const err = await closeResource(key, resource);
+      if (err) failures.push(err);
     }
 
     // Clean up Object properties (Added via .dot notation)
-    for (const key of Object.keys(this)) {
-      const resource = this[key];
-      if (resource && typeof resource.close === 'function') {
-        try {
-          const result = resource.close();
-          if (result && typeof result.then === 'function') promises.push(result);
-        } catch (err) {
-          logger.error(`Failed to close dot-notation resource ${key}:`, err);
-        }
-      }
+    for (const key of Object.keys(this).reverse()) {
+      const err = await closeResource(`${key} (dot notation)`, this[key]);
+      if (err) failures.push(err);
     }
 
-    const results = await Promise.allSettled(promises);
     this.clear();
-    const failures = results.filter(r => r.status === 'rejected');
     if (failures.length > 0) {
-      throw new Error(failures.map(f => f.reason?.message || String(f.reason)).join('; '));
+      throw new Error(failures.map(err => err?.message || String(err)).join('; '));
     }
   }
 }
