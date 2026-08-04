@@ -8,12 +8,12 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.deployment.AbstractStepServices;
+import step.core.deployment.ControllerServiceException;
 import step.ide.LocalIDEState;
 import step.ide.exceptions.FileExistsException;
 
@@ -28,37 +28,41 @@ public class LocalIDEServices extends AbstractStepServices {
         super.init();
     }
 
+    private static void error(String message, Response.Status status) {
+        throw new ControllerServiceException(status.getStatusCode(), message);
+    }
+
     @POST
     @Path("ap/use-existing")
     @Consumes(MediaType.APPLICATION_JSON)
     public void useExistingAP(@QueryParam("directory") String directory) {
         if (directory == null || directory.isBlank()) {
-            throw new WebApplicationException("directory must not be empty", Response.Status.BAD_REQUEST);
+            error("directory must not be empty", Response.Status.BAD_REQUEST);
         }
         // Workaround for windows: Strip the leading slash if it looks like /C:
         if (directory.startsWith("/") && directory.length() > 2 && directory.charAt(2) == ':') {
             directory = directory.substring(1);
         }
 
-        java.nio.file.Path apPath;
+        java.nio.file.Path apPath = null;
         try {
             apPath = java.nio.file.Path.of(directory);
         } catch (java.nio.file.InvalidPathException e) {
-            throw new WebApplicationException("Invalid directory path: " + e.getMessage(), Response.Status.BAD_REQUEST);
+            error("Invalid directory path: " + e.getMessage(), Response.Status.BAD_REQUEST);
         }
         var ideState = LocalIDEState.get();
 
         try {
             ideState.validateExistingAutomationPackageDirectory(apPath);
         } catch (Exception e) {
-            throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+            error(e.getMessage(), Response.Status.BAD_REQUEST);
         }
         try {
             ideState.useExistingAutomationPackageDirectory(apPath);
         } catch (Exception e) {
             // Catch anything else (e.g., actual IO read errors during setup) as 500 Internal Error
             logger.error("Unable to use existing AP directory: {}", directory, e);
-            throw new WebApplicationException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -67,14 +71,14 @@ public class LocalIDEServices extends AbstractStepServices {
     @Consumes(MediaType.APPLICATION_JSON)
     public void initializeNewAP(@QueryParam("existingEmptyDirectory") String existingEmptyDirectory, @QueryParam("apName") String apName) {
         if (existingEmptyDirectory == null || existingEmptyDirectory.isBlank()) {
-            throw new WebApplicationException("existingEmptyDirectory is required", Response.Status.BAD_REQUEST);
+            error("existingEmptyDirectory is required", Response.Status.BAD_REQUEST);
         }
 
-        java.nio.file.Path path;
+        java.nio.file.Path path = null;
         try {
             path = java.nio.file.Path.of(existingEmptyDirectory);
         } catch (java.nio.file.InvalidPathException e) {
-            throw new WebApplicationException("Invalid directory path: " + e.getMessage(), Response.Status.BAD_REQUEST);
+            error("Invalid directory path: " + e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
         try {
@@ -82,20 +86,20 @@ public class LocalIDEServices extends AbstractStepServices {
             try {
                 LocalIDEState.get().validateInitializableAutomationPackageDirectory(path, false);
             } catch (FileExistsException e) {
-                throw new WebApplicationException(
+                error(
                     "Directory already contains an automation package descriptor, refusing to overwrite: " + e.existingPath.toAbsolutePath(),
                     Response.Status.BAD_REQUEST
                 );
             }
         } catch (IllegalArgumentException e) {
-            throw new WebApplicationException(e.getMessage(), Response.Status.BAD_REQUEST);
+            error(e.getMessage(), Response.Status.BAD_REQUEST);
         }
 
         try {
             LocalIDEState.get().useNewAutomationPackageDirectory(path, apName);
         } catch (Exception e) {
             logger.error("Unable to initialize new AP directory: {}", path.toAbsolutePath(), e);
-            throw new WebApplicationException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
 
     }
