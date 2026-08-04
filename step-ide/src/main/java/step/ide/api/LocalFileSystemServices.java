@@ -121,7 +121,7 @@ public class LocalFileSystemServices extends AbstractStepServices {
         } catch (AccessDeniedException e) {
             throw new ControllerServiceException(Response.Status.FORBIDDEN.getStatusCode(), "Permission denied to read directory: " + targetDir);
         } catch (IOException e) {
-            throw new ControllerServiceException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Failed to read directory: " + e.getMessage());
+            throw new ControllerServiceException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Failed to read directory: " + e.getMessage(), e);
         }
 
         // Locale-sensitive collator (note: not thread-safe, but cheap to construct, so no need for a field)
