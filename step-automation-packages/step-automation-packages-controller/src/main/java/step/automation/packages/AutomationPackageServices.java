@@ -953,8 +953,10 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      *                  at, typically the value currently held by the edited field. Alternatively
      *                  {@code apId} and {@code path} can be provided separately, {@code path} being
      *                  optional and defaulting to the root of the package.
-     * @return the content of the folder itself if the path points to a folder, of its parent folder if
-     * it points to a file, and of the closest existing ancestor folder otherwise. The folder that was
+     * @param filesOnly whether folders should be left out of the listing
+     * @param dirsOnly  whether files should be left out of the listing
+     * @return the content of the folder itself if the path points to a folder, and of its parent folder
+     * if it points to a file, so that the client can preselect that file. The folder that was
      * effectively listed is reported by {@link ApResourceFolderContent#path()}.
      */
     @GET
@@ -963,11 +965,15 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     @Secured(right = "automation-package-read")
     public ApResourceFolderContent browseApResources(@QueryParam("reference") String reference,
                                                      @QueryParam("apId") String apId,
-                                                     @QueryParam("path") String relativePath) {
+                                                     @QueryParam("path") String relativePath,
+                                                     @QueryParam("filesOnly") @DefaultValue("false") boolean filesOnly,
+                                                     @QueryParam("dirsOnly") @DefaultValue("false") boolean dirsOnly) {
         ApResourceTarget target = resolveApResourceTarget(reference, apId, relativePath);
         File archiveFile = getAutomationPackageArchiveFile(target.apId());
         try {
-            return ApResourceBrowser.browse(target.apId(), archiveFile, target.relativePath());
+            return ApResourceBrowser.browse(archiveFile, target.relativePath(),
+                path -> FileResolver.createPathForApResource(target.apId(), path),
+                ApResourceBrowser.EntryFilter.of(filesOnly, dirsOnly));
         } catch (ApResourceNotFoundException e) {
             throw new ControllerServiceException(HttpStatus.SC_NOT_FOUND, e.getMessage());
         } catch (IllegalArgumentException e) {
@@ -1008,7 +1014,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
 
     private ApResourceBrowser.ApResourceStream openApResource(ApResourceTarget target, File archiveFile) {
         try {
-            return ApResourceBrowser.openEntry(target.apId(), archiveFile, target.relativePath());
+            return ApResourceBrowser.openEntry(archiveFile, target.relativePath());
         } catch (ApResourceNotFoundException e) {
             throw new ControllerServiceException(HttpStatus.SC_NOT_FOUND, e.getMessage());
         } catch (IllegalArgumentException e) {

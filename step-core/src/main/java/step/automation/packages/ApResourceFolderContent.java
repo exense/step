@@ -22,14 +22,20 @@ import java.util.List;
 
 /**
  * The content of a single folder of an automation package archive.
+ * <p>
+ * The automation package is not identified here: it is already part of every
+ * {@link ApResourceEntry#resourceReference()}, and the local IDE mode has no package id at all.
  *
- * @param apId       the automation package the listed folder belongs to
- * @param path       the archive-root relative path of the folder that has actually been listed;
- *                   empty for the archive root. It may differ from the requested path, see
- *                   {@link ApResourceBrowser#browse(String, java.io.File, String)}
- * @param parentPath the path of the parent folder, or {@code null} when the archive root is listed
- * @param entries    the direct children of the folder: directories first, then files, each group
- *                   sorted alphabetically
+ * @param path              the archive-root relative path of the folder that has actually been listed;
+ *                          empty for the archive root. It may differ from the requested path, see
+ *                          {@link ApResourceBrowser#browse}
+ * @param parentPath        the path of the parent folder, or {@code null} when the archive root is listed
+ * @param resourceReference the reference of the listed folder itself, or {@code null} for the archive
+ *                          root, which has no reference. Needed to address a folder that is empty and
+ *                          therefore has no entry to pick it from
+ * @param entries           the direct children of the folder: directories first, then files, each group
+ *                          sorted by name
  */
-public record ApResourceFolderContent(String apId, String path, String parentPath, List<ApResourceEntry> entries) {
+public record ApResourceFolderContent(String path, String parentPath, String resourceReference,
+                                      List<ApResourceEntry> entries) {
 }

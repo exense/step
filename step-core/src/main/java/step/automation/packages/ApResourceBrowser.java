@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -37,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -45,7 +48,10 @@ import java.util.zip.ZipFile;
 
 /**
  * Read-only view on the content of an automation package archive, backing the UI file browser used to
- * pick an {@code apResource:} reference and the download of a single entry.
+ * pick a file of the package and the download of a single entry. The reference to be stored for the
+ * picked file is not built here but by the injected builder, so that the same browser serves the
+ * deployed package on the controller ({@code apResource:<apId>:<path>}) and the package being edited
+ * in the local IDE (a plain relative path).
  * <p>
  * It operates on the archive <b>file</b> only (a zip/jar, or an exploded folder for the local /
  * AP editor mode), deliberately not on {@link AutomationPackageArchive}: browsing needs the complete
@@ -64,55 +70,115 @@ public class ApResourceBrowser {
     }
 
     /**
+     * Which kind of entry a listing should retain, the archive counterpart of the
+     * {@code filesOnly} / {@code dirsOnly} filters of the local file system browser.
+     */
+    public enum EntryFilter {
+
+        ALL,
+        FILES_ONLY,
+        DIRECTORIES_ONLY;
+
+        /**
+         * Maps the {@code filesOnly} / {@code dirsOnly} query parameter pair, which is the form the
+         * clients use, onto the corresponding filter.
+         *
+         * @throws IllegalArgumentException if both are requested at once
+         */
+        public static EntryFilter of(boolean filesOnly, boolean dirsOnly) {
+            if (filesOnly && dirsOnly) {
+                throw new IllegalArgumentException("Cannot specify both filesOnly and dirsOnly");
+            }
+            return filesOnly ? FILES_ONLY : dirsOnly ? DIRECTORIES_ONLY : ALL;
+        }
+
+        private Predicate<ApResourceEntry> asPredicate() {
+            return switch (this) {
+                case FILES_ONLY -> entry -> !entry.directory();
+                case DIRECTORIES_ONLY -> ApResourceEntry::directory;
+                case ALL -> entry -> true;
+            };
+        }
+    }
+
+    /**
+     * Lists the direct children of a folder of the archive, keeping every entry.
+     *
+     * @see #browse(File, String, Function, EntryFilter)
+     */
+    public static ApResourceFolderContent browse(File archiveFile, String relativePath,
+                                                 Function<String, String> resourceReferenceBuilder) {
+        return browse(archiveFile, relativePath, resourceReferenceBuilder, EntryFilter.ALL);
+    }
+
+    /**
      * Lists the direct children of a folder of the archive.
      * <p>
      * The {@code relativePath} is where the browser should <i>open</i>, which is typically the value
-     * currently held by the field being edited. It is therefore resolved leniently: the folder itself
-     * if it is a directory, its parent folder if it is a file, and otherwise the closest existing
-     * ancestor (down to the archive root). The folder that was effectively listed is reported by
-     * {@link ApResourceFolderContent#path()}.
+     * currently held by the field being edited - normally a file. It is therefore resolved as follows:
+     * a directory is listed itself, a file lists its parent folder so that the client can preselect it,
+     * and anything else is reported as not found rather than silently falling back to an existing
+     * ancestor, which would hide a dangling reference behind a successful listing. The folder that was
+     * effectively listed is reported by {@link ApResourceFolderContent#path()}.
      *
-     * @param apId         the automation package id, used to build the reference of each entry
-     * @param archiveFile  the automation package archive: a zip/jar file or an exploded folder
-     * @param relativePath the archive-root relative path to open at; {@code null} or empty for the root
-     * @throws ApResourceNotFoundException if the archive itself cannot be found
+     * @param archiveFile              the automation package archive: a zip/jar file or an exploded folder
+     * @param relativePath             the archive-root relative path to open at; {@code null}, blank,
+     *                                 {@code /} or {@code .} for the root
+     * @param resourceReferenceBuilder builds the reference of an entry from its archive-root relative
+     *                                 path. This is what makes the browser usable in both modes without
+     *                                 knowing about them: the controller passes
+     *                                 {@code path -> FileResolver.createPathForApResource(apId, path)},
+     *                                 the local IDE the identity
+     * @param filter                   which kind of entry to retain
+     * @throws ApResourceNotFoundException if the archive itself, or {@code relativePath} in it, cannot
+     *                                     be found
      * @throws RuntimeException            if {@code relativePath} escapes the archive root
      */
-    public static ApResourceFolderContent browse(String apId, File archiveFile, String relativePath) {
-        Objects.requireNonNull(apId, "apId must not be null");
+    public static ApResourceFolderContent browse(File archiveFile, String relativePath,
+                                                 Function<String, String> resourceReferenceBuilder,
+                                                 EntryFilter filter) {
         Objects.requireNonNull(archiveFile, "archiveFile must not be null");
-        assertArchiveExists(apId, archiveFile);
+        Objects.requireNonNull(resourceReferenceBuilder, "resourceReferenceBuilder must not be null");
+        Objects.requireNonNull(filter, "filter must not be null");
+        assertArchiveExists(archiveFile);
         ArchiveIndex index = ArchiveIndex.of(archiveFile);
-        String folder = index.closestFolder(toRootRelativePath(relativePath));
-        return new ApResourceFolderContent(apId, folder, parentOf(folder), index.list(folder, apId));
+        String folder = index.folderToList(toRootRelativePath(relativePath), archiveFile);
+        return new ApResourceFolderContent(folder, parentOf(folder), referenceOfFolder(folder, resourceReferenceBuilder),
+            index.list(folder, resourceReferenceBuilder, filter));
+    }
+
+    /**
+     * @return the reference of the listed folder itself, or {@code null} for the archive root: the root
+     * has no relative path, hence no reference that could be resolved back
+     */
+    private static String referenceOfFolder(String folder, Function<String, String> resourceReferenceBuilder) {
+        return folder.isEmpty() ? null : resourceReferenceBuilder.apply(folder);
     }
 
     /**
      * Opens the content of a single archive entry for reading. The returned {@link ApResourceStream}
      * owns the underlying archive handle and must be closed by the caller.
      *
-     * @param apId         the automation package id, used for error messages only
      * @param archiveFile  the automation package archive: a zip/jar file or an exploded folder
      * @param relativePath the archive-root relative path of the entry
      * @throws ApResourceNotFoundException if the archive or the entry cannot be found
      * @throws IllegalArgumentException    if the entry is a directory - directories have no content to
-     *                                     stream, use {@link #browse(String, File, String)} instead
+     *                                     stream, use {@link #browse(File, String, Function)} instead
      * @throws RuntimeException            if {@code relativePath} is empty or escapes the archive root
      */
-    public static ApResourceStream openEntry(String apId, File archiveFile, String relativePath) {
-        Objects.requireNonNull(apId, "apId must not be null");
+    public static ApResourceStream openEntry(File archiveFile, String relativePath) {
         Objects.requireNonNull(archiveFile, "archiveFile must not be null");
         Objects.requireNonNull(relativePath, "relativePath must not be null");
-        assertArchiveExists(apId, archiveFile);
+        assertArchiveExists(archiveFile);
         String normalized = FileResolver.normalizeApRelativePath(relativePath);
-        return archiveFile.isDirectory() ? openFolderEntry(apId, archiveFile, normalized)
-            : openZipEntry(apId, archiveFile, normalized);
+        return archiveFile.isDirectory() ? openFolderEntry(archiveFile, normalized)
+            : openZipEntry(archiveFile, normalized);
     }
 
-    private static ApResourceStream openFolderEntry(String apId, File archiveFolder, String normalized) {
+    private static ApResourceStream openFolderEntry(File archiveFolder, String normalized) {
         File file = new File(archiveFolder, normalized);
         if (!file.exists()) {
-            throw entryNotFound(apId, normalized);
+            throw entryNotFound(normalized, archiveFolder);
         }
         if (file.isDirectory()) {
             throw isADirectory(normalized);
@@ -120,23 +186,23 @@ public class ApResourceBrowser {
         try {
             return new ApResourceStream(file.getName(), file.length(), new FileInputStream(file), null);
         } catch (IOException e) {
-            throw new RuntimeException("Unable to read apResource '" + normalized + "' of automation package " + apId, e);
+            throw new RuntimeException("Unable to read '" + normalized + "' in " + nameOfArchive(archiveFolder), e);
         }
     }
 
-    private static ApResourceStream openZipEntry(String apId, File archiveFile, String normalized) {
+    private static ApResourceStream openZipEntry(File archiveFile, String normalized) {
         ZipFile zip;
         try {
             zip = new ZipFile(archiveFile);
         } catch (IOException e) {
-            throw new RuntimeException("Unable to open the archive of automation package " + apId, e);
+            throw new RuntimeException("Unable to open the automation package archive " + nameOfArchive(archiveFile), e);
         }
         try {
             // Note: getEntry() falls back to the directory entry ('<name>/') when only that one exists,
             // which is how a folder is detected here.
             ZipEntry entry = zip.getEntry(normalized);
             if (entry == null) {
-                throw entryNotFound(apId, normalized);
+                throw entryNotFound(normalized, archiveFile);
             }
             if (entry.isDirectory()) {
                 throw isADirectory(normalized);
@@ -147,19 +213,30 @@ public class ApResourceBrowser {
             throw e;
         } catch (IOException e) {
             closeQuietly(zip);
-            throw new RuntimeException("Unable to read apResource '" + normalized + "' of automation package " + apId, e);
+            throw new RuntimeException("Unable to read '" + normalized + "' in " + nameOfArchive(archiveFile), e);
         }
     }
 
-    private static void assertArchiveExists(String apId, File archiveFile) {
+    private static void assertArchiveExists(File archiveFile) {
         if (!archiveFile.exists()) {
-            throw new ApResourceNotFoundException("The archive of automation package " + apId
-                + " could not be found: " + archiveFile.getAbsolutePath());
+            throw new ApResourceNotFoundException("The automation package archive could not be found: "
+                + archiveFile.getAbsolutePath());
         }
     }
 
-    private static ApResourceNotFoundException entryNotFound(String apId, String normalized) {
-        return new ApResourceNotFoundException("Resource '" + normalized + "' not found in automation package " + apId);
+    private static ApResourceNotFoundException entryNotFound(String normalized, File archiveFile) {
+        return new ApResourceNotFoundException("'" + normalized + "' not found in the automation package "
+            + nameOfArchive(archiveFile));
+    }
+
+    /**
+     * @return the name of the archive, to name it in a message about one of its entries. The absolute
+     * path is deliberately left out of those: the caller browsing the package has no use for the server
+     * side storage location. It is kept in {@link #assertArchiveExists(File)} only, where a missing
+     * archive is a server side problem rather than a bad request.
+     */
+    private static String nameOfArchive(File archiveFile) {
+        return archiveFile.getName();
     }
 
     private static IllegalArgumentException isADirectory(String normalized) {
@@ -356,42 +433,57 @@ public class ApResourceBrowser {
         }
 
         /**
-         * @return the closest folder of the archive to open at: {@code path} itself if it is a
-         * directory, otherwise its closest ancestor directory, down to the root (empty string)
+         * @return the folder to list for {@code path}: the archive root for an empty path, {@code path}
+         * itself if it is a directory, and its parent folder if it is a file - the browser being
+         * normally opened on the file the edited field currently holds
+         * @throws ApResourceNotFoundException if {@code path} is neither
          */
-        String closestFolder(String path) {
-            String current = path;
-            while (current != null && !current.isEmpty()) {
-                if (directories.contains(current)) {
-                    return current;
-                }
-                current = parentOf(current);
+        String folderToList(String path, File archiveFile) {
+            if (path.isEmpty() || directories.contains(path)) {
+                return path;
             }
-            return "";
+            if (files.containsKey(path)) {
+                return parentOf(path);
+            }
+            throw entryNotFound(path, archiveFile);
         }
 
-        List<ApResourceEntry> list(String folder, String apId) {
+        List<ApResourceEntry> list(String folder, Function<String, String> resourceReferenceBuilder,
+                                   EntryFilter filter) {
             List<ApResourceEntry> entries = new ArrayList<>();
             directories.stream().filter(directory -> isChildOf(folder, directory))
-                .forEach(directory -> entries.add(toEntry(directory, true, null, apId)));
+                .forEach(directory -> entries.add(toEntry(directory, true, null, resourceReferenceBuilder)));
             files.forEach((file, size) -> {
                 // an explicit directory entry wins over a file entry of the same path
                 if (isChildOf(folder, file) && !directories.contains(file)) {
-                    entries.add(toEntry(file, false, size, apId));
+                    entries.add(toEntry(file, false, size, resourceReferenceBuilder));
                 }
             });
-            entries.sort(Comparator.comparing((ApResourceEntry entry) -> !entry.directory())
-                .thenComparing(ApResourceEntry::name, String.CASE_INSENSITIVE_ORDER));
+            entries.removeIf(filter.asPredicate().negate());
+            entries.sort(byDirectoryThenName());
             return entries;
+        }
+
+        /**
+         * Directories first, then names collated the same way as the local file system browser:
+         * SECONDARY strength ignores case differences (a = A) but respects accents and umlauts (a &lt; ä).
+         * The collator is not thread-safe, but cheap enough to build per listing.
+         */
+        private static Comparator<ApResourceEntry> byDirectoryThenName() {
+            Collator collator = Collator.getInstance();
+            collator.setStrength(Collator.SECONDARY);
+            return Comparator.<ApResourceEntry, Boolean>comparing(ApResourceEntry::directory).reversed()
+                .thenComparing(ApResourceEntry::name, collator);
         }
 
         private static boolean isChildOf(String folder, String path) {
             return folder.equals(parentOf(path));
         }
 
-        private static ApResourceEntry toEntry(String path, boolean directory, Long size, String apId) {
-            return new ApResourceEntry(nameOf(path), path, directory, size,
-                FileResolver.createPathForApResource(apId, path));
+        private static ApResourceEntry toEntry(String path, boolean directory, Long size,
+                                               Function<String, String> resourceReferenceBuilder) {
+            return new ApResourceEntry(nameOf(path), path, directory, !directory, false, false, size,
+                resourceReferenceBuilder.apply(path));
         }
     }
 }

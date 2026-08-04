@@ -24,12 +24,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import step.attachments.ApResourceNotFoundException;
+import step.attachments.FileResolver;
+import step.automation.packages.ApResourceBrowser.EntryFilter;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -37,6 +40,12 @@ import java.util.zip.ZipOutputStream;
 import static org.junit.Assert.*;
 
 public class ApResourceBrowserTest {
+
+    /** The reference builder of the controller mode: a deployed automation package. */
+    private static final Function<String, String> AP_A = path -> FileResolver.createPathForApResource("apA", path);
+
+    /** The reference builder of the local IDE mode: the relative path is the reference. */
+    private static final Function<String, String> RELATIVE = Function.identity();
 
     @Rule
     public TemporaryFolder tmp = new TemporaryFolder();
@@ -70,79 +79,126 @@ public class ApResourceBrowserTest {
     @Test
     public void listsTheRootOfTheArchive() {
         for (File archive : List.of(archiveZip, archiveFolder)) {
-            ApResourceFolderContent content = ApResourceBrowser.browse("apA", archive, null);
+            ApResourceFolderContent content = ApResourceBrowser.browse(archive, null, AP_A);
             assertEquals("", content.path());
             assertNull(content.parentPath());
+            // the root itself has no relative path, hence no reference
+            assertNull(content.resourceReference());
             // directories first, then files, each alphabetically
             assertEquals(List.of("data", "k6", "automation-package.yml"), names(content));
 
             ApResourceEntry directory = content.entries().get(0);
             assertTrue(directory.directory());
+            assertFalse(directory.regularFile());
             assertNull(directory.size());
-            assertEquals("apResource:apA:data", directory.reference());
+            assertEquals("apResource:apA:data", directory.resourceReference());
 
             ApResourceEntry file = content.entries().get(2);
             assertFalse(file.directory());
+            assertTrue(file.regularFile());
             assertEquals("automation-package.yml", file.path());
             assertEquals(Long.valueOf("name: myAp".getBytes(StandardCharsets.UTF_8).length), file.size());
-            assertEquals("apResource:apA:automation-package.yml", file.reference());
+            assertEquals("apResource:apA:automation-package.yml", file.resourceReference());
+
+            // an archive carries no such attribute, in either flavour
+            assertFalse(file.hidden());
+            assertFalse(file.symlink());
         }
     }
 
     @Test
     public void listsANestedFolder() {
         for (File archive : List.of(archiveZip, archiveFolder)) {
-            ApResourceFolderContent content = ApResourceBrowser.browse("apA", archive, "k6/mytest");
+            ApResourceFolderContent content = ApResourceBrowser.browse(archive, "k6/mytest", AP_A);
             assertEquals("k6/mytest", content.path());
             assertEquals("k6", content.parentPath());
+            assertEquals("apResource:apA:k6/mytest", content.resourceReference());
             assertEquals(List.of("lib", "test.js"), names(content));
-            assertEquals("apResource:apA:k6/mytest/test.js", content.entries().get(1).reference());
+            assertEquals("apResource:apA:k6/mytest/test.js", content.entries().get(1).resourceReference());
+        }
+    }
+
+    /**
+     * The local IDE edits the YAML descriptor in place, whose authoring format is a plain relative
+     * path: there is no automation package id to build a reference with, so the path is the reference.
+     */
+    @Test
+    public void buildsPlainRelativeReferencesForTheLocalMode() {
+        for (File archive : List.of(archiveZip, archiveFolder)) {
+            ApResourceFolderContent content = ApResourceBrowser.browse(archive, "k6/mytest", RELATIVE);
+            assertEquals("k6/mytest", content.resourceReference());
+            assertEquals("k6/mytest/test.js", content.entries().get(1).resourceReference());
         }
     }
 
     @Test
     public void opensTheParentFolderWhenThePathIsAFile() {
         for (File archive : List.of(archiveZip, archiveFolder)) {
-            ApResourceFolderContent content = ApResourceBrowser.browse("apA", archive, "k6/mytest/test.js");
+            ApResourceFolderContent content = ApResourceBrowser.browse(archive, "k6/mytest/test.js", AP_A);
             assertEquals("k6/mytest", content.path());
             assertEquals(List.of("lib", "test.js"), names(content));
         }
     }
 
+    /**
+     * A dangling reference must be reported rather than swallowed behind the listing of some surviving
+     * ancestor folder.
+     */
     @Test
-    public void fallsBackToTheClosestExistingFolderForAnUnknownPath() {
+    public void failsOnAnUnknownPath() {
         for (File archive : List.of(archiveZip, archiveFolder)) {
-            ApResourceFolderContent content = ApResourceBrowser.browse("apA", archive, "k6/mytest/does/not/exist.js");
-            assertEquals("k6/mytest", content.path());
-
-            // nothing of the path exists: fall back to the root
-            assertEquals("", ApResourceBrowser.browse("apA", archive, "nowhere/at/all").path());
+            try {
+                ApResourceBrowser.browse(archive, "k6/mytest/does/not/exist.js", AP_A);
+                fail("expected ApResourceNotFoundException");
+            } catch (ApResourceNotFoundException expected) {
+                assertTrue(expected.getMessage().contains("k6/mytest/does/not/exist.js"));
+            }
         }
+    }
+
+    @Test
+    public void filtersTheListedEntries() {
+        for (File archive : List.of(archiveZip, archiveFolder)) {
+            assertEquals(List.of("automation-package.yml"),
+                names(ApResourceBrowser.browse(archive, null, AP_A, EntryFilter.FILES_ONLY)));
+            assertEquals(List.of("data", "k6"),
+                names(ApResourceBrowser.browse(archive, null, AP_A, EntryFilter.DIRECTORIES_ONLY)));
+            assertEquals(List.of("data", "k6", "automation-package.yml"),
+                names(ApResourceBrowser.browse(archive, null, AP_A, EntryFilter.ALL)));
+        }
+    }
+
+    @Test
+    public void mapsTheFilterQueryParameters() {
+        assertEquals(EntryFilter.ALL, EntryFilter.of(false, false));
+        assertEquals(EntryFilter.FILES_ONLY, EntryFilter.of(true, false));
+        assertEquals(EntryFilter.DIRECTORIES_ONLY, EntryFilter.of(false, true));
+        assertThrows(IllegalArgumentException.class, () -> EntryFilter.of(true, true));
     }
 
     @Test
     public void normalisesTheRequestedPath() {
         for (File archive : List.of(archiveZip, archiveFolder)) {
-            assertEquals("k6/mytest", ApResourceBrowser.browse("apA", archive, "./k6/mytest/").path());
-            assertEquals("k6/mytest", ApResourceBrowser.browse("apA", archive, "k6\\mytest").path());
-            assertEquals("", ApResourceBrowser.browse("apA", archive, "/").path());
+            assertEquals("k6/mytest", ApResourceBrowser.browse(archive, "./k6/mytest/", AP_A).path());
+            assertEquals("k6/mytest", ApResourceBrowser.browse(archive, "k6\\mytest", AP_A).path());
+            assertEquals("", ApResourceBrowser.browse(archive, "/", AP_A).path());
         }
     }
 
     @Test(expected = RuntimeException.class)
     public void browseRejectsTraversalEscape() {
-        ApResourceBrowser.browse("apA", archiveZip, "../escape");
+        ApResourceBrowser.browse(archiveZip, "../escape", AP_A);
     }
 
     @Test(expected = ApResourceNotFoundException.class)
     public void browseFailsOnMissingArchive() {
-        ApResourceBrowser.browse("apA", new File(tmp.getRoot(), "does-not-exist.zip"), null);
+        ApResourceBrowser.browse(new File(tmp.getRoot(), "does-not-exist.zip"), null, AP_A);
     }
 
     @Test
     public void opensTheContentOfAnEntry() throws Exception {
         for (File archive : List.of(archiveZip, archiveFolder)) {
-            try (ApResourceBrowser.ApResourceStream stream = ApResourceBrowser.openEntry("apA", archive, "data/pool.csv")) {
+            try (ApResourceBrowser.ApResourceStream stream = ApResourceBrowser.openEntry(archive, "data/pool.csv")) {
                 assertEquals("pool.csv", stream.getName());
                 assertEquals("a,b,c", new String(stream.getInputStream().readAllBytes(), StandardCharsets.UTF_8));
                 assertEquals(5L, stream.getSize());
@@ -154,7 +210,7 @@ public class ApResourceBrowserTest {
     public void openEntryFailsOnMissingEntry() {
         for (File archive : List.of(archiveZip, archiveFolder)) {
             try {
-                ApResourceBrowser.openEntry("apA", archive, "data/missing.csv");
+                ApResourceBrowser.openEntry(archive, "data/missing.csv");
                 fail("expected ApResourceNotFoundException");
             } catch (ApResourceNotFoundException expected) {
                 assertTrue(expected.getMessage().contains("data/missing.csv"));
@@ -166,7 +222,7 @@ public class ApResourceBrowserTest {
     public void openEntryFailsOnDirectory() {
         for (File archive : List.of(archiveZip, archiveFolder)) {
             try {
-                ApResourceBrowser.openEntry("apA", archive, "k6/mytest");
+                ApResourceBrowser.openEntry(archive, "k6/mytest");
                 fail("expected IllegalArgumentException");
             } catch (IllegalArgumentException expected) {
                 assertTrue(expected.getMessage().contains("is a directory"));
@@ -176,7 +232,7 @@ public class ApResourceBrowserTest {
 
     @Test(expected = RuntimeException.class)
     public void openEntryRejectsTraversalEscape() {
-        ApResourceBrowser.openEntry("apA", archiveZip, "../escape.txt");
+        ApResourceBrowser.openEntry(archiveZip, "../escape.txt");
     }
 
     /**
@@ -194,10 +250,10 @@ public class ApResourceBrowserTest {
             }
         }
 
-        ApResourceFolderContent root = ApResourceBrowser.browse("apA", flatZip, null);
+        ApResourceFolderContent root = ApResourceBrowser.browse(flatZip, null, AP_A);
         assertEquals(List.of("k6"), names(root));
 
-        ApResourceFolderContent nested = ApResourceBrowser.browse("apA", flatZip, "k6/mytest");
+        ApResourceFolderContent nested = ApResourceBrowser.browse(flatZip, "k6/mytest", AP_A);
         assertEquals(List.of("lib", "test.js"), names(nested));
     }
 }
