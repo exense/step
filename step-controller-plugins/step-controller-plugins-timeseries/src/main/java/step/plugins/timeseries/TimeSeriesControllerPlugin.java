@@ -73,6 +73,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
     public static final String PARAM_KEY_ANALYTICS_DASHBOARD_ID = "plugins.timeseries.analytics.dashboard.id";
     public static final String PARAM_KEY_RESPONSE_IDEAL_INTERVALS = "timeseries.response.intervals.ideal";
     public static final String PARAM_KEY_RESPONSE_MAX_INTERVALS = "timeseries.response.intervals.max";
+    public static final String PARAM_KEY_MAX_ALIGNMENT_INTERVALS = "timeseries.alignment.intervals.max";
 
     public static final String EXECUTION_DASHBOARD_PREPOPULATED_NAME = "Execution Dashboard";
     public static final String ANALYTICS_DASHBOARD_PREPOPULATED_NAME = "Analytics Dashboard";
@@ -125,6 +126,7 @@ public class TimeSeriesControllerPlugin extends AbstractControllerPlugin {
             .withAggregationConfig(new TimeSeriesAggregationConfig()
                 .setIdealResponseIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_IDEAL_INTERVALS, TimeSeriesAggregationConfig.DEFAULT_IDEAL_RESPONSE_INTERVALS))
                 .setResponseMaxIntervals(configuration.getPropertyAsInteger(PARAM_KEY_RESPONSE_MAX_INTERVALS, TimeSeriesAggregationConfig.DEFAULT_RESPONSE_MAX_INTERVALS))
+                .setMaxAlignmentIntervals(configuration.getPropertyAsInteger(PARAM_KEY_MAX_ALIGNMENT_INTERVALS, TimeSeriesAggregationConfig.DEFAULT_MAX_ALIGNMENT_INTERVALS))
             )
             .build();
         TimeSeriesIngestionPipeline mainIngestionPipeline = timeSeries.getIngestionPipeline();
