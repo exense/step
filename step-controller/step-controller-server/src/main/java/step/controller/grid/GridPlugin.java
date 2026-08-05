@@ -35,6 +35,7 @@ import step.core.timeseries.bucket.Aggregation;
 import step.core.timeseries.metric.MetricAggregation;
 import step.core.timeseries.metric.MetricAggregationType;
 import step.core.timeseries.metric.MetricRenderingSettings;
+import step.core.timeseries.metric.MetricSamplingMode;
 import step.core.timeseries.metric.MetricType;
 import step.functions.execution.ConfigurableTokenLifecycleStrategy;
 import step.grid.Grid;
@@ -83,6 +84,8 @@ public class GridPlugin extends AbstractControllerPlugin {
     public static final String GRID_FILENAMANGER_FILE_CLEANUP_INTERVAL_MINUTES = "grid.filenamanger.file.cleanup.interval.minutes";
     public static final String GRID_FILEMANAGER_FILE_CLEANUP_LAST_ACCESS_THRESHOLD_MINUTES = "grid.filemanager.file.cleanup.last.access.threshold.minutes";
     public static final String GRID_SECURITY_JWT_SECRET_KEY = "grid.security.jwtSecretKey";
+
+    public static final String RESERVED_ATTRIBUTE_KEY_PREFIX = "$";
 
     public static String GRID_SAMPLER_NAME = "grid_tokens_sampler";
     public static String GRID_BY_STATE_METRIC_NAME = "grid_tokens_by_state";
@@ -205,8 +208,11 @@ public class GridPlugin extends AbstractControllerPlugin {
 
             @Override
             public List<ControllerMetricSample> collectMetricSamples() {
-                Set<String> tokenAttributeKeys = new HashSet<>(gridReportBuilder.getTokenAttributeKeys());
-                tokenAttributeKeys.removeAll(List.of("$agentid", "$tokenid"));
+                // Exclude all reserved attribute keys (prefixed with "$") as they're not supported by the time series
+                // ingestion pipelines. The agent type is the only exception, its key is remapped below.
+                Set<String> tokenAttributeKeys = gridReportBuilder.getTokenAttributeKeys().stream()
+                    .filter(key -> key != null && (!key.startsWith(RESERVED_ATTRIBUTE_KEY_PREFIX) || key.equals(AGENT_TYPE_KEY)))
+                    .collect(Collectors.toCollection(HashSet::new));
                 List<TokenGroupCapacity> usageByIdentity = gridReportBuilder.getUsageByIdentity(tokenAttributeKeys);
                 List<ControllerMetricSample> gridMetricSamples = new ArrayList<>();
                 long now = System.currentTimeMillis();
@@ -240,6 +246,8 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setDisplayName("Grid tokens by state")
             .setDescription("Number of grid tokens currently in each lifecycle state, broken down by state and agent type.")
             .setInstrumentType(GAUGE.toLowerCase())
+            // Sampled by the MetricSamplerRegistry: no sample means that the corresponding tokens are gone
+            .setSamplingMode(MetricSamplingMode.SAMPLED)
             .setAttributes(Arrays.asList(GRID_TOKEN_AGENT_TYPE, GRID_TOKEN_STATE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName(), GRID_TOKEN_STATE.getName()))
             .setUnit("1")
@@ -253,6 +261,8 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setDisplayName("Grid tokens capacity")
             .setDescription("Total number of available grid tokens per agent type, representing the maximum execution concurrency of the grid.")
             .setInstrumentType(GAUGE.toLowerCase())
+            // Sampled by the MetricSamplerRegistry: no sample means that the agents are no longer connected
+            .setSamplingMode(MetricSamplingMode.SAMPLED)
             .setAttributes(List.of(GRID_TOKEN_AGENT_TYPE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")
