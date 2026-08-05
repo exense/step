@@ -121,6 +121,9 @@ public class IdeCommands {
             // If the app is bundled, return prod port, otherwise dev port.
             String resourceName = LocalIDEState.getIdeResourcePath() + "/index.html";
             boolean resourceExists = IdeCommands.class.getResource(resourceName) != null;
+            if (!resourceExists) {
+                logger.warn("Unable to find resource {} , assuming local development mode", resourceName);
+            }
             return resourceExists ? 8080 : 4201;
         }
 

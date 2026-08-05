@@ -51,7 +51,7 @@ public class LocalIDEState implements ExecutionDiversion {
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
 
-    private static String ideResourcePath = "/dist/step-ide"; // must NOT end with a slash; Overridden in the EE variant.
+    private static String ideResourcePath = "/dist/step-ide"; // must start, but not end, with a slash; Overridden in the EE variant.
 
     public static String getIdeResourcePath() {
         return ideResourcePath;
