@@ -119,7 +119,7 @@ public class IdeCommands {
         private static int determineFrontendPort() {
             // This uses some hardcoded logic, names and port numbers:
             // If the app is bundled, return prod port, otherwise dev port.
-            String resourceName = LocalIDEState.getIdeResourcePath() + "/index.html";
+            String resourceName = "/" + LocalIDEState.getIdeResourcePath() + "/index.html";
             boolean resourceExists = IdeCommands.class.getResource(resourceName) != null;
             if (!resourceExists) {
                 logger.warn("Unable to find resource {} , assuming local development mode", resourceName);
