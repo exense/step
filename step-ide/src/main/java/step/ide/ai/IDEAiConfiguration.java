@@ -11,17 +11,14 @@ import java.io.File;
  * and {@link #agentPlanName()} selects the plan implementing the agentic workflow. Restricting the execution to that
  * single plan is mandatory, as an isolated automation package execution otherwise runs every plan of the package.
  */
-public record IDEAiConfiguration(boolean enabled, File agentPackage, String agentPlanName, String workflow) {
+public record IDEAiConfiguration(boolean enabled, File agentPackage, String agentPlanName) {
 
     public static final String PROP_ENABLED = "plugins.ide.ai.enabled";
     public static final String PROP_AGENT_PACKAGE = "plugins.ide.ai.agentPackageFile";
     public static final String PROP_AGENT_PLAN = "plugins.ide.ai.agentPlanName";
-    public static final String PROP_WORKFLOW = "plugins.ide.ai.workflow";
 
     public static final String ENV_AGENT_PACKAGE = "STEP_IDE_AI_AGENT_PACKAGE";
     public static final String ENV_AGENT_PLAN = "STEP_IDE_AI_AGENT_PLAN";
-
-    public static final String DEFAULT_WORKFLOW = "test-generation";
 
     public static IDEAiConfiguration from(Configuration configuration) {
         boolean enabled = configuration.getPropertyAsBoolean(PROP_ENABLED, true);
@@ -29,8 +26,7 @@ public record IDEAiConfiguration(boolean enabled, File agentPackage, String agen
         return new IDEAiConfiguration(
             enabled,
             agentPackagePath == null ? null : new File(agentPackagePath),
-            trimToNull(configuration.getProperty(PROP_AGENT_PLAN)),
-            configuration.getProperty(PROP_WORKFLOW, DEFAULT_WORKFLOW)
+            trimToNull(configuration.getProperty(PROP_AGENT_PLAN))
         );
     }
 

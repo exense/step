@@ -50,17 +50,8 @@ public class LocalIDEAiServices extends AbstractStepServices {
     public static final String MODE_CREATE = "create";
     public static final String MODE_REGENERATE = "regenerate";
 
-    // Execution parameters handed to the AI agent package. Kept aligned with the enterprise AI testing feature so
-    // that a single agent package can serve both.
-    public static final String PARAM_WORKFLOW = "ai_workflow";
-    public static final String PARAM_EXECUTION_SOURCE = "ai_execution_source";
-    public static final String PARAM_TARGET_TYPE = "ai_target_type";
-    public static final String PARAM_TARGET_DIRECTORY = "ai_target_directory";
-    public static final String PARAM_INPUT = "ai_input";
-    public static final String PARAM_PERSIST = "ai_persist";
-
-    public static final String EXECUTION_SOURCE = "step-ide";
-    public static final String TARGET_TYPE = "AP_DIRECTORY";
+    public static final String PARAM_TARGET_DIRECTORY = "apDirectory";
+    public static final String PARAM_INPUT = "instructions";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final SpecMarkdownParser specMarkdownParser = new SpecMarkdownParser();
@@ -100,7 +91,7 @@ public class LocalIDEAiServices extends AbstractStepServices {
     }
 
     /** The payload handed to the agent as the {@value #PARAM_INPUT} execution parameter. */
-    private record AiInput(List<AiTestCaseInput> testcases, String hints) {
+    private record AiInput(List<AiTestCaseInput> testCases, String hints) {
     }
 
     @GET
@@ -222,22 +213,7 @@ public class LocalIDEAiServices extends AbstractStepServices {
     private ExecutionParameters buildExecutionParameters(IDEAiConfiguration aiConfiguration, File apDirectory,
                                                          List<AiTestCaseInput> testCases, String hints) {
         Map<String, String> customParameters = new HashMap<>();
-
-        // Build the legacy userScenario parameter. This will be replaced by the structured input PARAM_INPUT
-        StringBuilder scenarioBuilder = new StringBuilder();
-        for (AiTestCaseInput testCase : testCases) {
-            scenarioBuilder.append("=== SCENARIO ===");
-            scenarioBuilder.append("short_name: " + testCase.name());
-            scenarioBuilder.append("test_scenario:");
-            scenarioBuilder.append(testCase.spec());
-        }
-        customParameters.put("userScenario", scenarioBuilder.toString());
-
-        customParameters.put(PARAM_WORKFLOW, aiConfiguration.workflow());
-        customParameters.put(PARAM_EXECUTION_SOURCE, EXECUTION_SOURCE);
-        customParameters.put(PARAM_TARGET_TYPE, TARGET_TYPE);
         customParameters.put(PARAM_TARGET_DIRECTORY, canonicalPath(apDirectory));
-        customParameters.put(PARAM_PERSIST, Boolean.TRUE.toString());
         try {
             customParameters.put(PARAM_INPUT, objectMapper.writeValueAsString(new AiInput(testCases, hints)));
         } catch (Exception e) {
