@@ -161,15 +161,19 @@ public class AutomationPackageDescriptorReader {
         }
     }
 
-    private ObjectMapper createYamlObjectMapper() {
+    // Exposed as a static convenience method for other classes who need a "compatible" raw Yaml-capable mapper
+    public static ObjectMapper createBasicYamlObjectMapper() {
         YAMLFactory yamlFactory = new YAMLFactory();
 
         // Disable native type id to enable conversion to generic Documents
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
         yamlFactory.enable(YAMLGenerator.Feature.INDENT_ARRAYS_WITH_INDICATOR);
         yamlFactory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
-        ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+        return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+    }
 
+    private ObjectMapper createYamlObjectMapper() {
+        ObjectMapper yamlMapper = createBasicYamlObjectMapper();
 
         // register deserializers to read yaml plans
         SimpleModule module = planReader.registerAllSerializersAndDeserializers(yamlMapper, true);
