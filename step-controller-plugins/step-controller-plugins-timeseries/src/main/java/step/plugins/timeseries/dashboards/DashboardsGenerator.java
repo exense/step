@@ -397,7 +397,7 @@ public class DashboardsGenerator {
             .setSize(2)
             .setChartSettings(new ChartSettings()
                 .setPrimaryAxes(new AxesSettings()
-                    .setAggregation(new MetricAggregation(Aggregation.AVG, Aggregation.SUM))
+                    .setAggregation(new MetricAggregation(Aggregation.SAMPLED_AVG, Aggregation.SUM))
                     .setUnit("1")
                     .setDisplayType(AxesDisplayType.STACKED_BAR)
                     .setColorizationType(AxesColorizationType.FILL)

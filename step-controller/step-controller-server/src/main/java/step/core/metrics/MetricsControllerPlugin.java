@@ -77,7 +77,15 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
             .registerHook(s -> Map.of(METRICS_SAMPLING_INTERVAL_MS_UI_KEY, String.valueOf(samplingIntervalSeconds * 1000L)));
     }
 
-    private int getSamplingIntervalSeconds(Configuration configuration) {
+    /**
+     * @return the interval in ms at which the sampled metrics are produced, see
+     * {@link #METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY}
+     */
+    public static long getSamplingIntervalMs(Configuration configuration) {
+        return getSamplingIntervalSeconds(configuration) * 1000L;
+    }
+
+    public static int getSamplingIntervalSeconds(Configuration configuration) {
         int samplingIntervalSeconds = configuration.getPropertyAsInteger(METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY, METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
         if (samplingIntervalSeconds < 1) {
             logger.warn("Invalid value {} for property {}, falling back to the default of {} seconds.",

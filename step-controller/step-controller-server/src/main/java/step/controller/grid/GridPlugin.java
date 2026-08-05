@@ -251,7 +251,9 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setAttributes(Arrays.asList(GRID_TOKEN_AGENT_TYPE, GRID_TOKEN_STATE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName(), GRID_TOKEN_STATE.getName()))
             .setUnit("1")
-            .setDefaultAggregation(new MetricAggregation(Aggregation.AVG, Aggregation.SUM))
+            // The tokens of an agent which left the grid must not be counted as if they were still there for the whole
+            // time window, hence the sampled average rather than the plain one
+            .setDefaultAggregation(new MetricAggregation(Aggregation.SAMPLED_AVG, Aggregation.SUM))
             .setRenderingSettings(new MetricRenderingSettings());
         gridTokensByState.addCustomField(IS_CONTROLLER_METRIC, true);
         metricTypeRegistry.registerMetricType(gridTokensByState);
@@ -266,7 +268,9 @@ public class GridPlugin extends AbstractControllerPlugin {
             .setAttributes(List.of(GRID_TOKEN_AGENT_TYPE))
             .setDefaultGroupingAttributes(List.of(GRID_TOKEN_AGENT_TYPE.getName()))
             .setUnit("1")
-            .setDefaultAggregation(new MetricAggregation(Aggregation.AVG, Aggregation.SUM))
+            // The tokens of an agent which left the grid must not be counted as if they were still there for the whole
+            // time window, hence the sampled average rather than the plain one
+            .setDefaultAggregation(new MetricAggregation(Aggregation.SAMPLED_AVG, Aggregation.SUM))
             .setRenderingSettings(new MetricRenderingSettings());
         gridTokensCapacity.addCustomField(IS_CONTROLLER_METRIC, true);
         metricTypeRegistry.registerMetricType(gridTokensCapacity);

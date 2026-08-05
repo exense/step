@@ -85,7 +85,7 @@ public class DashboardTest {
                 .setGrouping(List.of())
                 .setChartSettings(new ChartSettings()
                     .setPrimaryAxes(new AxesSettings()
-                        .setAggregation(twoStageAggregation(Aggregation.AVG, Aggregation.SUM))
+                        .setAggregation(twoStageAggregation(Aggregation.SAMPLED_AVG, Aggregation.SUM))
                         .setDisplayType(AxesDisplayType.LINE)
                         .setUnit("ms"))),
             new DashboardItem()
@@ -104,7 +104,7 @@ public class DashboardTest {
 
         MetricAggregation primaryAggregation = found.getDashlets().get(0).getChartSettings().getPrimaryAxes().getAggregation();
         Assert.assertEquals(MetricAggregationType.TWO_STAGE, primaryAggregation.getType());
-        Assert.assertEquals(new TwoStageAggregation(Aggregation.AVG, Aggregation.SUM), primaryAggregation.getTwoStageAggregation());
+        Assert.assertEquals(new TwoStageAggregation(Aggregation.SAMPLED_AVG, Aggregation.SUM), primaryAggregation.getTwoStageAggregation());
 
         MetricAggregation tableAggregation = found.getDashlets().get(1).getTableSettings().getAggregation();
         Assert.assertEquals(MetricAggregationType.TWO_STAGE, tableAggregation.getType());

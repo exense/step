@@ -88,6 +88,7 @@ public class TimeSeriesHandler {
     private final TimeSeries timeSeries;
     private final int resolution;
     private final int samplingLimit;
+    private final long metricsSamplingIntervalMs;
 
     public TimeSeriesHandler(int resolution,
                              Set<String> timeSeriesIncludedAttributes,
@@ -98,7 +99,9 @@ public class TimeSeriesHandler {
                              TimeSeries timeSeries,
                              ReportNodeTimeSeries reportNodeTimeSeries,
                              AsyncTaskManager asyncTaskManager,
-                             int samplingLimit) {
+                             int samplingLimit,
+                             long metricsSamplingIntervalMs) {
+        this.metricsSamplingIntervalMs = metricsSamplingIntervalMs;
         this.resolution = resolution;
         this.timeSeriesIncludedAttributes = timeSeriesIncludedAttributes;
         this.timeSeriesExcludedAttributes = timeSeriesExcludedAttributes;
@@ -372,6 +375,9 @@ public class TimeSeriesHandler {
                     TimeSeriesFilterBuilder.buildFilter(request.getParams()))
             ))
             .withTimeAggregation(timeAggregation)
+            // Resolved on the server side and never taken from the request: the sampling interval is a property of
+            // the ingestion and defines the value the sampled aggregations return
+            .withSamplingInterval(metricsSamplingIntervalMs)
             .groupBy(request.getGroupDimensions(), groupAggregation);
         if (request.getCollectAttributeKeys() != null && !request.getCollectAttributeKeys().isEmpty()) {
             timeSeriesAggregationQuery.withAttributeCollection(request.getCollectAttributeKeys(),
