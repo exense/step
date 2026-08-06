@@ -147,18 +147,6 @@ public class LocalIDEAiServices extends AbstractStepServices {
         }
 
         List<AiTestCaseInput> testCases = normalizeTestCases(request);
-        AutomationPackageSpecStore specStore = specStore();
-        for (AiTestCaseInput testCase : testCases) {
-            try {
-                specStore.write(testCase.name(), testCase.spec());
-            } catch (IllegalArgumentException e) {
-                throw badRequest(e.getMessage());
-            } catch (IOException e) {
-                logger.error("Unable to write the spec of test case {}", testCase.name(), e);
-                throw new ControllerServiceException(500, e.getMessage());
-            }
-        }
-
         ExecutionParameters executionParameters = buildExecutionParameters(aiConfiguration, apDirectory, testCases, request.hints());
         String executionId = LocalIDEState.get().executeAutomationPackage(new IDEExecutionRequest(
             aiConfiguration.agentPackage().toPath(), executionParameters, List.of(aiConfiguration.agentPlanName())));
