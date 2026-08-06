@@ -27,7 +27,7 @@ public class LocalIDE {
         LocalIDEState.get().addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
         configuration.putProperty("resources.dir", resourcesDirectory.toString());
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
-        configuration.putProperty("ui.resource.root", "dist/step-ide");
+        configuration.putProperty("ui.resource.root", LocalIDEState.getIdeResourcePath());
         String jmeterHome = System.getenv("JMETER_HOME");
         if (jmeterHome != null) {
             configuration.putProperty("plugins.jmeter.home", jmeterHome);
