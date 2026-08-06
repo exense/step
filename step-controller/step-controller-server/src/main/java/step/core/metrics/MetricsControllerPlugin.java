@@ -101,7 +101,7 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
     public static int getSamplingIntervalSeconds(Configuration configuration) {
         int samplingIntervalSeconds = configuration.getPropertyAsInteger(METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY, METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
         if (samplingIntervalSeconds < 1 || ONE_MINUTE_SECONDS % samplingIntervalSeconds != 0) {
-            logger.warn("Invalid value {} for property {}: the sampling interval must be a divisor of one minute ({} seconds). Falling back to the default of {} seconds.",
+            logger.error("Invalid value {} for property {}: the sampling interval must be a divisor of one minute ({} seconds). Falling back to the default of {} seconds.",
                 samplingIntervalSeconds, METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY, ONE_MINUTE_SECONDS, METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
             samplingIntervalSeconds = METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT;
         }
