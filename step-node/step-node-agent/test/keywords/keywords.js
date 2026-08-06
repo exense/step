@@ -192,6 +192,13 @@ exports.StoreCloseableKW = async (input, output, session) => {
   })
 }
 
+// Resource whose close() rejects: session disposal fails when the fork is killed
+exports.StoreFailingCloseableKW = async (input, output, session) => {
+  session.set('failingResource', {
+    close: async () => { throw new Error(input['errorMsg'] || 'resource close failure') }
+  })
+}
+
 // --- backward compat: output.send() is no longer required but must still work ---
 
 exports.SendNoArgCompatKW = async (input, output) => {

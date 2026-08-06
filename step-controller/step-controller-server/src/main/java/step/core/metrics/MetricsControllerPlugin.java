@@ -1,15 +1,18 @@
 package step.core.metrics;
 
+import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.GlobalContext;
 import step.core.collections.Collection;
+import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.EntityConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.timeseries.metric.MetricAggregation;
 import step.core.timeseries.metric.MetricAggregationType;
 import step.core.timeseries.metric.MetricRenderingSettings;
+import step.core.timeseries.metric.MetricSamplingMode;
 import step.core.timeseries.metric.MetricType;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.framework.server.tables.Table;
@@ -29,6 +32,19 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
     private static final Logger logger = LoggerFactory.getLogger(MetricsControllerPlugin.class);
 
     public static final String IS_CONTROLLER_METRIC = "IS_CONTROLLER_METRIC";
+    /**
+     * Interval in seconds at which controller side gauge metrics are sampled (grid) and at which the last known
+     * gauge/counter values are re-emitted (executions). Both mechanisms share this single interval so that the
+     * frontend can rely on one value to decide how long a gauge value remains valid. Sub-second sampling is not
+     * supported, hence the interval is expressed in seconds.
+     */
+    public static final String METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY = "plugins.metrics.sampling.interval.seconds";
+    public static final int METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT = 15;
+    /**
+     * Key under which the sampling interval is exposed to the frontend, converted to milliseconds to match the unit
+     * of the other time related properties consumed by the charts.
+     */
+    public static final String METRICS_SAMPLING_INTERVAL_MS_UI_KEY = "plugins.metrics.sampling.interval.ms";
     public static final String EXECUTIONS_DURATION = "executions/duration";
     public static final String EXECUTIONS_COUNT = "executions/count";
     public static final String FAILURE_PERCENTAGE = "executions/failure-percentage";
@@ -53,7 +69,22 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
 
         createOrUpdateMetrics(context.require(MetricTypeRegistry.class));
 
-        initMetricSamplingAndHeartbeat(context);
+        int samplingIntervalSeconds = getSamplingIntervalSeconds(context.getConfiguration());
+        initMetricSamplingAndHeartbeat(samplingIntervalSeconds);
+
+        // Expose the interval to the UI, which uses it as the validity period of the last value of a gauge series
+        context.require(WebApplicationConfigurationManager.class)
+            .registerHook(s -> Map.of(METRICS_SAMPLING_INTERVAL_MS_UI_KEY, String.valueOf(samplingIntervalSeconds * 1000L)));
+    }
+
+    private int getSamplingIntervalSeconds(Configuration configuration) {
+        int samplingIntervalSeconds = configuration.getPropertyAsInteger(METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY, METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
+        if (samplingIntervalSeconds < 1) {
+            logger.warn("Invalid value {} for property {}, falling back to the default of {} seconds.",
+                samplingIntervalSeconds, METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY, METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
+            samplingIntervalSeconds = METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT;
+        }
+        return samplingIntervalSeconds;
     }
 
     /*
@@ -86,16 +117,23 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
         return out;
     }
 
-    protected void initMetricSamplingAndHeartbeat(GlobalContext context) {
-        metricSamplerRegistry = MetricSamplerRegistry.getInstance();
+    /**
+     * Starts the metric sampling and heartbeat schedulers, both driven by the same interval.
+     *
+     * @param samplingIntervalSeconds the sampling interval in seconds, must be greater than 0
+     */
+    protected void initMetricSamplingAndHeartbeat(int samplingIntervalSeconds) {
+        if (samplingIntervalSeconds < 1) {
+            throw new IllegalArgumentException("The sampling interval must be greater than 0 second, got " + samplingIntervalSeconds);
+        }
+        long samplingIntervalMs = samplingIntervalSeconds * 1000L;
 
         //Start the metric sampling scheduler
-        int intervalSeconds = context.getConfiguration().getPropertyAsInteger("plugins.measurements.gaugecollector.interval", 15);
-        metricSamplerRegistry.start(intervalSeconds * 1000L);
+        metricSamplerRegistry = MetricSamplerRegistry.getInstance();
+        metricSamplerRegistry.start(samplingIntervalMs);
 
         //Start the metric heartbeat scheduler
-        int heartbeatIntervalSec = context.getConfiguration().getPropertyAsInteger("plugins.metrics.metricheartbeat.interval", 15);
-        MetricHeartbeatRegistry.getInstance().start(heartbeatIntervalSec * 1000L);
+        MetricHeartbeatRegistry.getInstance().start(samplingIntervalMs);
     }
 
     private void createOrUpdateMetrics(MetricTypeRegistry metricTypeRegistry) {
@@ -192,6 +230,8 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
             .setDisplayName("Thread group")
             .setDescription("Number of concurrent virtual users or threads active in a thread group at a given point in time. The max value is the default aggregation.")
             .setInstrumentType(GAUGE.toLowerCase())
+            // Kept alive by the MetricHeartbeatRegistry while the execution runs: no sample means no more threads
+            .setSamplingMode(MetricSamplingMode.SAMPLED)
             .setAttributes(Arrays.asList(TYPE_ATRIBUTE, NAME_ATTRIBUTE, TASK_ATTRIBUTE, EXECUTION_ATTRIBUTE, PLAN_ATTRIBUTE))
             .setDefaultGroupingAttributes(List.of(NAME_ATTRIBUTE.getName()))
             .setUnit("1")

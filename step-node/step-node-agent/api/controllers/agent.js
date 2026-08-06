@@ -7,6 +7,13 @@ const logger = require('../logger').child({ component: 'Agent' });
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
+// How long the agent waits for a forked keyword process to release its session and exit on its own
+// before terminating it, and how long it then waits between SIGTERM and SIGKILL. They are configured
+// under `agentForker.shutdownTimeoutMs` (the same conf entry as the Java agent) and
+// `agentForker.terminationGracePeriodMs`.
+const DEFAULT_FORK_SHUTDOWN_TIMEOUT_MS = 40000;
+const DEFAULT_FORK_TERMINATION_GRACE_PERIOD_MS = 5000;
+
 // Resolve the bundled `ws` module path once, so it can be injected into forked keyword processes
 // (whose own require() resolves against the keyword project, not the agent). Used by live reporting
 // for streaming file uploads. If ws is missing, file uploads degrade to discarding.
@@ -191,7 +198,7 @@ class Agent {
       let forkedAgent = session.get('forkedAgent');
       if (!forkedAgent) {
         logger.info('Starting agent fork in ' + npmProjectPath + ' for token ' + tokenId)
-        forkedAgent = createForkedAgent(npmProjectPath);
+        forkedAgent = createForkedAgent(npmProjectPath, this.agentContext.forkShutdownTimeoutMs, this.agentContext.forkTerminationGracePeriodMs);
         session.set('forkedAgent', forkedAgent);
 
         if (properties['skipNpmInstall'] === 'true') {
@@ -347,15 +354,22 @@ async function readStepKeywordDirectory(npmProjectPath) {
   }
 }
 
-function createForkedAgent(keywordProjectPath) {
-  return new ForkedAgent(keywordProjectPath);
+function createForkedAgent(keywordProjectPath, shutdownTimeoutMs, terminationGracePeriodMs) {
+  return new ForkedAgent(keywordProjectPath, shutdownTimeoutMs, terminationGracePeriodMs);
 }
 
 class ForkedAgent {
 
-  constructor(keywordProjectPath) {
-    const agentForkerLibPath = path.join(keywordProjectPath, 'agent-fork-libs');
-    fs.mkdirSync(agentForkerLibPath, { recursive: true });
+  constructor(keywordProjectPath, shutdownTimeoutMs, terminationGracePeriodMs) {
+    this.shutdownTimeoutMs = shutdownTimeoutMs ?? DEFAULT_FORK_SHUTDOWN_TIMEOUT_MS;
+    this.terminationGracePeriodMs = terminationGracePeriodMs ?? DEFAULT_FORK_TERMINATION_GRACE_PERIOD_MS;
+    // Each fork gets its own lib directory: several forks can share the same keyword project (local
+    // runs work directly in it, and a token whose session is re-created gets a new fork while the
+    // previous one may still be closing). close() deletes this directory, so a fixed path would let
+    // one fork delete the libs another one is running from. mkdtemp guarantees a unique name.
+    const agentForkerLibsRoot = path.join(keywordProjectPath, 'agent-fork-libs');
+    fs.mkdirSync(agentForkerLibsRoot, { recursive: true });
+    const agentForkerLibPath = fs.mkdtempSync(path.join(agentForkerLibsRoot, 'fork-'));
     fs.copyFileSync(path.resolve(__dirname, 'agent-fork.js'), path.join(agentForkerLibPath, 'agent-fork.js'));
     fs.copyFileSync(path.join(__dirname, 'output.js'), path.join(agentForkerLibPath, 'output.js'));
     fs.copyFileSync(path.join(__dirname, 'session.js'), path.join(agentForkerLibPath, 'session.js'));
@@ -462,10 +476,18 @@ class ForkedAgent {
     }
   }
 
+  /**
+   * Asks the fork to release its session and exit, and waits for it to actually be gone.
+   *
+   * The wait is bounded at every step: a fork stuck in its session release (a hanging browser
+   * close, a keyword that never returns) is escalated to SIGTERM and then to SIGKILL. close()
+   * therefore always returns, so a stuck fork can never block the release of its token.
+   */
   async close() {
     let closeErrors = null;
+    const hasExited = this.forkProcess.exitCode !== null || this.forkProcess.signalCode !== null;
     const closePromise = new Promise(resolve => {
-      if (this.forkProcess.exitCode !== null) {
+      if (hasExited) {
         resolve();
       } else {
         // Listen for close errors reported by the fork before it exits.
@@ -480,17 +502,81 @@ class ForkedAgent {
         this.forkProcess.once('exit', resolve);
       }
     });
-    try {
-      this.forkProcess.send({ type: "KILL" });
-    } catch {
-      this.forkProcess.kill();
+    // Nothing to ask of a fork that is already gone: sending to it would only fail.
+    if (!hasExited) {
+      const terminateAfterFailedSend = (err) => {
+        logger.warn(`The KILL message could not be sent to the forked agent process: ${err.message}. Terminating it instead.`);
+        this.forkProcess.kill();
+      };
+      try {
+        // The send is asynchronous. Passing a callback makes a failure (typically a channel closed
+        // by a fork that died in the meantime) surface here rather than as an 'error' event on the
+        // process, which would be unhandled at this point and would take the whole agent down.
+        this.forkProcess.send({ type: "KILL" }, (err) => {
+          if (err) terminateAfterFailedSend(err);
+        });
+      } catch (e) {
+        terminateAfterFailedSend(e);
+      }
     }
-    await closePromise;
-    fs.rmSync(this.agentForkerLibPath, {recursive: true, force: true});
+
+    let timeoutError = null;
+    if (!await hasResolvedWithin(closePromise, this.shutdownTimeoutMs)) {
+      logger.warn(`The forked agent process did not exit within ${this.shutdownTimeoutMs}ms. Terminating it with SIGTERM.`);
+      timeoutError = new Error(`The forked keyword process did not exit within ${this.shutdownTimeoutMs}ms and had to be terminated. `
+        + 'This usually means that a keyword or a session resource did not release properly.');
+      this.forkProcess.kill('SIGTERM');
+      if (!await hasResolvedWithin(closePromise, this.terminationGracePeriodMs)) {
+        logger.error(`The forked agent process is still alive ${this.terminationGracePeriodMs}ms after SIGTERM. Killing it with SIGKILL.`);
+        this.forkProcess.kill('SIGKILL');
+        if (!await hasResolvedWithin(closePromise, this.terminationGracePeriodMs)) {
+          // Nothing else can be done here: waiting any longer would block the token release,
+          // which is exactly what the timeout is meant to prevent.
+          logger.error('The forked agent process could not be killed. Giving up waiting for its exit; the process may be left behind.');
+        }
+      }
+    }
+
+    try {
+      // Deleting a lib directory can be slow (many files, Windows retries on locked files), so the
+      // async variants are used here: a sync call would block the event loop of the whole agent,
+      // including the close() of every other fork.
+      await fs.promises.rm(this.agentForkerLibPath, {recursive: true, force: true});
+      // Remove the shared parent too, but only once the last fork of this keyword project is gone.
+      // It fails with ENOTEMPTY while other forks still have their lib directory in it, which is
+      // the expected outcome and not an error.
+      try {
+        await fs.promises.rmdir(path.dirname(this.agentForkerLibPath));
+      } catch {
+        // still in use by another fork, or already removed
+      }
+    } catch (e) {
+      // A killed fork may still hold its files open (typically on Windows). Failing to delete the
+      // copied libs must not fail the token release: the directory lives inside the npm project
+      // workspace and is removed with it when the workspace is cleaned up.
+      logger.warn(`Failed to delete the forked agent lib directory ${this.agentForkerLibPath}:`, e);
+    }
+
+    if (timeoutError) {
+      throw timeoutError;
+    }
     if (closeErrors && closeErrors.length > 0) {
       throw new Error(closeErrors.map(e => e.message).join('; '));
     }
   }
+}
+
+/**
+ * Resolves to true if the given promise settles within timeoutMs, false otherwise. The promise
+ * keeps running in either case; only the waiting is bounded.
+ */
+function hasResolvedWithin(promise, timeoutMs) {
+  let timeoutHandle;
+  const timeoutPromise = new Promise(resolve => {
+    timeoutHandle = setTimeout(() => resolve(false), timeoutMs);
+  });
+  return Promise.race([promise.then(() => true), timeoutPromise])
+    .finally(() => clearTimeout(timeoutHandle));
 }
 
 class CategorizedError extends Error {
@@ -503,3 +589,5 @@ class CategorizedError extends Error {
 }
 
 module.exports = Agent;
+// Exposed for testing the shutdown of forked keyword processes
+module.exports.ForkedAgent = ForkedAgent;
