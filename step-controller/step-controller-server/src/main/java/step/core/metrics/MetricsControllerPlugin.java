@@ -9,6 +9,7 @@ import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.EntityConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.timeseries.metric.MetricAggregation;
 import step.core.timeseries.metric.MetricAggregationType;
 import step.core.timeseries.metric.MetricRenderingSettings;
@@ -101,9 +102,8 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
     public static int getSamplingIntervalSeconds(Configuration configuration) {
         int samplingIntervalSeconds = configuration.getPropertyAsInteger(METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY, METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
         if (samplingIntervalSeconds < 1 || ONE_MINUTE_SECONDS % samplingIntervalSeconds != 0) {
-            logger.error("Invalid value {} for property {}: the sampling interval must be a divisor of one minute ({} seconds). Falling back to the default of {} seconds.",
-                samplingIntervalSeconds, METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY, ONE_MINUTE_SECONDS, METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
-            samplingIntervalSeconds = METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT;
+            throw new PluginCriticalException("Invalid value " + samplingIntervalSeconds + " for property " + METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY +
+                ": the sampling interval must be a divisor of one minute (" + ONE_MINUTE_SECONDS + " seconds).");
         }
         return samplingIntervalSeconds;
     }
