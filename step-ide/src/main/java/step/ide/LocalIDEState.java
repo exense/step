@@ -1,7 +1,6 @@
 package step.ide;
 
 import ch.exense.commons.app.Configuration;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.function.Failable;
@@ -27,7 +26,6 @@ import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plans.parser.yaml.YamlPlan;
 import step.resources.ResourceManagerImpl;
 
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -211,12 +209,7 @@ public class LocalIDEState implements ExecutionDiversion {
         try {
             Path apDescriptor = Objects.requireNonNull(findAutomationPackageDescriptorPath(currentAutomationPackageDirectory),
                 "Unexpected: unable to find automation package descriptor in " + currentAutomationPackageDirectory);
-            ObjectMapper mapper = AutomationPackageDescriptorReader.createBasicYamlObjectMapper();
-            try (InputStream is = Files.newInputStream(apDescriptor)) {
-                JsonNode rootNode = mapper.readTree(is);
-                JsonNode nameNode = rootNode.get("name");
-                return nameNode != null ? nameNode.asText() : "WARNING: AP name not set";
-            }
+            return Objects.requireNonNullElse(AutomationPackageDescriptorReader.getAutomationPackageName(apDescriptor), "WARNING: AP name not set");
         } catch (Exception e) {
             logger.error("Unexpected: failed to read automation package name from current automation package directory", e);
             return "ERROR while reading AP name, see log";
