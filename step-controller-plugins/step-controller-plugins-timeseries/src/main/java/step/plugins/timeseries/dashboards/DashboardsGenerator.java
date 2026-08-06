@@ -3,6 +3,7 @@ package step.plugins.timeseries.dashboards;
 import step.controller.grid.GridPlugin;
 import step.core.deployment.ControllerServiceException;
 import step.core.metrics.InstrumentType;
+import step.core.timeseries.bucket.Aggregation;
 import step.core.timeseries.metric.*;
 import step.plugins.timeseries.TimeSeriesControllerPlugin;
 import step.plugins.timeseries.dashboards.model.*;
@@ -396,7 +397,7 @@ public class DashboardsGenerator {
             .setSize(2)
             .setChartSettings(new ChartSettings()
                 .setPrimaryAxes(new AxesSettings()
-                    .setAggregation(new MetricAggregation(MetricAggregationType.AVG))
+                    .setAggregation(new MetricAggregation(Aggregation.SAMPLED_AVG, Aggregation.SUM))
                     .setUnit("1")
                     .setDisplayType(AxesDisplayType.STACKED_BAR)
                     .setColorizationType(AxesColorizationType.FILL)

@@ -1,5 +1,7 @@
 package step.plugins.timeseries.api;
 
+import step.core.timeseries.bucket.Aggregation;
+
 import java.util.*;
 
 public class FetchBucketsRequest {
@@ -8,6 +10,11 @@ public class FetchBucketsRequest {
     private String oqlFilter;
     private Map<String, Object> params;
     private Set<String> groupDimensions = new HashSet<>();
+    // Aggregation applied across the successive buckets of one series falling into the same time window.
+    // Defaults to MERGE, i.e. the historical behavior.
+    private Aggregation timeAggregation = Aggregation.MERGE;
+    // Aggregation applied across the series of one group. Defaults to MERGE, i.e. the historical behavior.
+    private Aggregation groupAggregation = Aggregation.MERGE;
     private Integer numberOfBuckets;
     private long intervalSize; // custom interval size, optional
     private List<Double> percentiles = Collections.emptyList();
@@ -47,6 +54,22 @@ public class FetchBucketsRequest {
 
     public void setGroupDimensions(Set<String> groupDimensions) {
         this.groupDimensions = groupDimensions;
+    }
+
+    public Aggregation getTimeAggregation() {
+        return timeAggregation;
+    }
+
+    public void setTimeAggregation(Aggregation timeAggregation) {
+        this.timeAggregation = timeAggregation;
+    }
+
+    public Aggregation getGroupAggregation() {
+        return groupAggregation;
+    }
+
+    public void setGroupAggregation(Aggregation groupAggregation) {
+        this.groupAggregation = groupAggregation;
     }
 
     public Integer getNumberOfBuckets() {
