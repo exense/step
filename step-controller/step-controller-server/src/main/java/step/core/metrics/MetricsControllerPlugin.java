@@ -9,6 +9,7 @@ import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.EntityConstants;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.timeseries.metric.MetricAggregation;
 import step.core.timeseries.metric.MetricAggregationType;
 import step.core.timeseries.metric.MetricRenderingSettings;
@@ -37,9 +38,13 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
      * gauge/counter values are re-emitted (executions). Both mechanisms share this single interval so that the
      * frontend can rely on one value to decide how long a gauge value remains valid. Sub-second sampling is not
      * supported, hence the interval is expressed in seconds.
+     * <p>
+     * Must be a divisor of one minute, as the resolutions of the time series are. See
+     * {@link #getSamplingIntervalSeconds(Configuration)}.
      */
     public static final String METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY = "plugins.metrics.sampling.interval.seconds";
     public static final int METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT = 15;
+    private static final int ONE_MINUTE_SECONDS = 60;
     /**
      * Key under which the sampling interval is exposed to the frontend, converted to milliseconds to match the unit
      * of the other time related properties consumed by the charts.
@@ -77,12 +82,28 @@ public class MetricsControllerPlugin extends AbstractControllerPlugin {
             .registerHook(s -> Map.of(METRICS_SAMPLING_INTERVAL_MS_UI_KEY, String.valueOf(samplingIntervalSeconds * 1000L)));
     }
 
-    private int getSamplingIntervalSeconds(Configuration configuration) {
+    /**
+     * @return the interval in ms at which the sampled metrics are produced, see
+     * {@link #METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY}
+     */
+    public static long getSamplingIntervalMs(Configuration configuration) {
+        return getSamplingIntervalSeconds(configuration) * 1000L;
+    }
+
+    /**
+     * The interval must divide one minute, as the resolutions of the time series do. A time aggregation reducing a
+     * series over the number of samples a time window is expected to hold requires the response resolution to be a
+     * multiple of both, see {@code Aggregation.SAMPLED_AVG}, and the finest resolution such a chart may be displayed
+     * at is therefore the least common multiple of the two. Both dividing one minute keeps it below one minute,
+     * whereas an interval of 25 seconds over a source resolution of one minute would raise it to 5 minutes.
+     *
+     * @return the configured sampling interval in seconds, the default one if the configured value is invalid
+     */
+    public static int getSamplingIntervalSeconds(Configuration configuration) {
         int samplingIntervalSeconds = configuration.getPropertyAsInteger(METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY, METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
-        if (samplingIntervalSeconds < 1) {
-            logger.warn("Invalid value {} for property {}, falling back to the default of {} seconds.",
-                samplingIntervalSeconds, METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY, METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
-            samplingIntervalSeconds = METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT;
+        if (samplingIntervalSeconds < 1 || ONE_MINUTE_SECONDS % samplingIntervalSeconds != 0) {
+            throw new PluginCriticalException("Invalid value " + samplingIntervalSeconds + " for property " + METRICS_SAMPLING_INTERVAL_SECONDS_PROPERTY +
+                ": the sampling interval must be a divisor of one minute (" + ONE_MINUTE_SECONDS + " seconds).");
         }
         return samplingIntervalSeconds;
     }
