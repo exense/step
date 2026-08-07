@@ -54,7 +54,7 @@ public class TimeSeriesHandlerTest {
             .build();
         AsyncTaskManager asyncTaskManager = new AsyncTaskManager();
         ReportNodeTimeSeries reportNodeTimeSeries = new ReportNodeTimeSeries(new InMemoryCollectionFactory(null), new Configuration());
-        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, Set.of(), measurementsCollection, metricSamplesCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT);
+        handler = new TimeSeriesHandler(BUCKET_RESOLUTION, TS_ATTRIBUTES, Set.of(), measurementsCollection, metricSamplesCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, SAMPLING_LIMIT, 15000L);
     }
 
     @Test

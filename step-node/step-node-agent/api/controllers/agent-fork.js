@@ -130,7 +130,15 @@ process.on('message', async ({ type, projectPath, functionName, input, propertie
       closeErrors.push({ message: 'An uncaught exception occurred after the last keyword call: ' + (pendingUncaughtException.message || String(pendingUncaughtException)) });
     }
     console.log("[Agent fork] Releasing session...")
-    await session.asyncDispose();
+    try {
+      await session.asyncDispose();
+    } catch (e) {
+      // A disposal failure must never prevent the process from exiting, otherwise the fork
+      // would stay alive forever and the parent's close() would hang waiting for its exit.
+      // The error is logged and reported to the parent via CLOSE_RESULT below.
+      console.error('[Agent fork] Error while releasing session:', e);
+      closeErrors.push({ message: 'An error occurred while releasing the session: ' + (e?.message || String(e)) });
+    }
     console.log("[Agent fork] Exiting...")
     if (closeErrors.length > 0) {
       // Use the send callback to ensure the message is flushed before we exit.
