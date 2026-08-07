@@ -50,7 +50,7 @@ public class ClassLoaderResourceFilesystem {
      * @return true if the resource referenced by the provided url is a directory
      * @throws IOException
      */
-    public static boolean isDirectory(URL resourceUrl) throws IOException {
+    public static boolean isDirectory(URL resourceUrl) throws IOException, URISyntaxException {
         String protocol = resourceUrl.getProtocol();
         if (protocol.equals(FILE)) {
             return new File(resourceUrl.getFile()).isDirectory();
@@ -167,8 +167,9 @@ public class ClassLoaderResourceFilesystem {
         public final String pathInJar;
         public final String jarFile;
 
-        public JarResourcePath(URL url) throws MalformedURLException {
-            String urlFile = url.getFile();
+        public JarResourcePath(URL url) throws MalformedURLException, URISyntaxException {
+            // use url.toURI().getSchemeSpecificPart() instead of url.getPath() in order to get the unencoded path (%20 replaced by " ")
+            String urlFile = url.toURI().getSchemeSpecificPart();
             int bangIndex = urlFile.indexOf('!');
             pathInJar = urlFile.substring(bangIndex + 2);
             jarFile = new URL(urlFile.substring(0, bangIndex)).getFile();

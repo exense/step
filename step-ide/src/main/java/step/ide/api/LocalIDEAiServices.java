@@ -19,7 +19,7 @@ import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.ide.IDEKeywordPropertiesPlugin;
 import step.ide.LocalIDEState;
-import step.ide.ai.AutomationPackageSpecStore;
+import step.ide.ai.AutomationPackageInstructionsStore;
 import step.ide.ai.IDEAiConfiguration;
 import step.ide.ai.SpecMarkdownParser;
 
@@ -71,6 +71,10 @@ public class LocalIDEAiServices extends AbstractStepServices {
     public record AiGenerateRequest(List<AiTestCaseInput> testCases, String specText, String hints) {
     }
 
+    /**
+     * @param specFile the file the spec was read from, relative to the automation package root, reported whether or
+     *                 not it exists so that the frontend can name it
+     */
     public record AiSpec(String testCaseName, String spec, boolean exists, String specFile) {
     }
 
@@ -90,7 +94,11 @@ public class LocalIDEAiServices extends AbstractStepServices {
     public record AiConfiguration(boolean available, boolean apiKeyConfigured, String message) {
     }
 
-    /** The payload handed to the agent as the {@value #PARAM_INPUT} execution parameter. */
+    /**
+     * The payload handed to the agent as the {@value #PARAM_INPUT} execution parameter. The agent persists it, with
+     * the test case names it resolved, as {@code specs/instructions.json} inside the generated automation package,
+     * which is where {@link #getSpec(String)} reads the specs back from.
+     */
     private record AiInput(List<AiTestCaseInput> testCases, String hints) {
     }
 
@@ -107,19 +115,21 @@ public class LocalIDEAiServices extends AbstractStepServices {
     }
 
     /**
-     * Returns the stored spec of a test case. Always answers 200: a missing spec is a normal situation (the plan may
-     * have been generated elsewhere), reported through {@link AiSpec#exists()}.
+     * Returns the spec of a test case, as recorded by the run that generated it in the serialized {@link AiInput} of
+     * the automation package ({@code specs/instructions.json}). Always answers 200: a missing spec is a normal
+     * situation (the package may have been created outside of this workflow, or the test case added by a later run
+     * that rewrote the instructions), reported through {@link AiSpec#exists()}.
      */
     @GET
     @Path("spec")
     @Produces(MediaType.APPLICATION_JSON)
     public AiSpec getSpec(@QueryParam("testCaseName") String testCaseName) {
-        AutomationPackageSpecStore specStore = specStore();
+        AutomationPackageInstructionsStore instructionsStore = instructionsStore();
+        String instructionsFile = instructionsStore.relativeInstructionsPath();
         try {
-            java.nio.file.Path specPath = specStore.specPath(testCaseName);
-            return specStore.read(testCaseName)
-                .map(spec -> new AiSpec(testCaseName, spec, true, specStore.relativize(specPath)))
-                .orElseGet(() -> new AiSpec(testCaseName, null, false, specStore.relativize(specPath)));
+            return instructionsStore.readSpec(testCaseName)
+                .map(spec -> new AiSpec(testCaseName, spec, true, instructionsFile))
+                .orElseGet(() -> new AiSpec(testCaseName, null, false, instructionsFile));
         } catch (IllegalArgumentException e) {
             throw badRequest(e.getMessage());
         } catch (IOException e) {
@@ -240,8 +250,8 @@ public class LocalIDEAiServices extends AbstractStepServices {
         return new ControllerServiceException(400, message);
     }
 
-    private AutomationPackageSpecStore specStore() {
-        return new AutomationPackageSpecStore(requireOpenedAutomationPackage());
+    private AutomationPackageInstructionsStore instructionsStore() {
+        return new AutomationPackageInstructionsStore(requireOpenedAutomationPackage());
     }
 
     private File requireOpenedAutomationPackage() {
