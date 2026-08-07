@@ -5,12 +5,18 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.DocumentObject;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollection;
+import step.core.collections.inmemory.InMemoryCollectionFactory;
+import step.core.timeseries.bucket.Aggregation;
 import step.core.timeseries.metric.MetricAggregation;
 import step.core.timeseries.metric.MetricAggregationType;
 import step.core.timeseries.metric.MetricAttribute;
 import step.core.timeseries.metric.MetricRenderingSettings;
+import step.core.timeseries.metric.TwoStageAggregation;
 import step.plugins.timeseries.dashboards.DashboardAccessor;
 import step.plugins.timeseries.dashboards.model.*;
 
@@ -63,6 +69,114 @@ public class DashboardTest {
         Assert.assertEquals(1, foundDashboards.size());
         Assert.assertEquals(legacyDashboard.getId(), foundDashboards.get(0).getId());
         Assert.assertEquals(legacyDashboard.getAttribute(AbstractOrganizableObject.NAME), foundDashboards.get(0).getAttribute(AbstractOrganizableObject.NAME));
+    }
+
+    /**
+     * An aggregation of type TWO_STAGE carries its two stages in its twoStageAggregation.
+     */
+    @Test
+    public void twoStageAggregationRoundTripTest() {
+        DashboardView dashboard = new DashboardView().setDashlets(List.of(
+            new DashboardItem()
+                .setName("Two-stage chart")
+                .setType(DashletType.CHART)
+                .setMetricKey(RESPONSE_TIME)
+                .setAttributes(List.of())
+                .setGrouping(List.of())
+                .setChartSettings(new ChartSettings()
+                    .setPrimaryAxes(new AxesSettings()
+                        .setAggregation(twoStageAggregation(Aggregation.SAMPLED_AVG, Aggregation.SUM))
+                        .setDisplayType(AxesDisplayType.LINE)
+                        .setUnit("ms"))),
+            new DashboardItem()
+                .setName("Two-stage table")
+                .setType(DashletType.TABLE)
+                .setMetricKey(RESPONSE_TIME)
+                .setAttributes(List.of())
+                .setGrouping(List.of())
+                .setTableSettings(new TableDashletSettings()
+                    .setColumns(List.of())
+                    .setAggregation(twoStageAggregation(Aggregation.MIN, Aggregation.MAX)))
+        ));
+        dashboard.addAttribute(AbstractOrganizableObject.NAME, "Two-stage dashboard");
+
+        DashboardView found = saveAndReload(dashboard);
+
+        MetricAggregation primaryAggregation = found.getDashlets().get(0).getChartSettings().getPrimaryAxes().getAggregation();
+        Assert.assertEquals(MetricAggregationType.TWO_STAGE, primaryAggregation.getType());
+        Assert.assertEquals(new TwoStageAggregation(Aggregation.SAMPLED_AVG, Aggregation.SUM), primaryAggregation.getTwoStageAggregation());
+
+        MetricAggregation tableAggregation = found.getDashlets().get(1).getTableSettings().getAggregation();
+        Assert.assertEquals(MetricAggregationType.TWO_STAGE, tableAggregation.getType());
+        Assert.assertEquals(new TwoStageAggregation(Aggregation.MIN, Aggregation.MAX), tableAggregation.getTwoStageAggregation());
+    }
+
+    private MetricAggregation twoStageAggregation(Aggregation timeAggregation, Aggregation groupAggregation) {
+        return new MetricAggregation(timeAggregation, groupAggregation);
+    }
+
+    /**
+     * Dashboards persisted before the two-stage aggregation existed must keep being readable: their aggregation simply
+     * carries no twoStageAggregation. This is the backward compatibility requirement, verified through a real Jackson
+     * round trip.
+     */
+    @Test
+    public void legacySingleStageDashboardIsReadableTest() {
+        MetricAggregation aggregation = readLegacyPrimaryAxes(percentileAggregationDocument(Map.of("pclValue", 90)))
+            .getAggregation();
+        Assert.assertNull(aggregation.getTwoStageAggregation());
+        Assert.assertEquals(MetricAggregationType.PERCENTILE, aggregation.getType());
+        Assert.assertEquals(90, aggregation.getParams().get("pclValue"));
+    }
+
+    /**
+     * Documents written by a development build, which carried the two stages inside the aggregation params, must still
+     * deserialize. The stray params are ignored and the aggregation falls back to single-stage.
+     */
+    @Test
+    public void dashboardWithStrayAggregationParamsIsReadableTest() {
+        MetricAggregation aggregation = readLegacyPrimaryAxes(
+            percentileAggregationDocument(Map.of("timeAggregation", "AVG", "groupAggregation", "SUM")))
+            .getAggregation();
+        Assert.assertNull(aggregation.getTwoStageAggregation());
+        Assert.assertEquals(MetricAggregationType.PERCENTILE, aggregation.getType());
+    }
+
+    private DocumentObject percentileAggregationDocument(Map<String, Object> params) {
+        DocumentObject aggregation = new DocumentObject();
+        aggregation.put("type", MetricAggregationType.PERCENTILE.name());
+        aggregation.put("params", params);
+        return aggregation;
+    }
+
+    /** Writes a raw dashboard document and reads it back through the typed collection, as the controller does. */
+    private AxesSettings readLegacyPrimaryAxes(DocumentObject aggregation) {
+        CollectionFactory collectionFactory = new InMemoryCollectionFactory(null);
+        DocumentObject primaryAxes = new DocumentObject();
+        primaryAxes.put("aggregation", aggregation);
+        primaryAxes.put("displayType", AxesDisplayType.LINE.name());
+        primaryAxes.put("unit", "ms");
+        DocumentObject chartSettings = new DocumentObject();
+        chartSettings.put("primaryAxes", primaryAxes);
+        DocumentObject dashlet = new DocumentObject();
+        dashlet.put("id", "dashlet-1");
+        dashlet.put("name", "Legacy dashlet");
+        dashlet.put("type", DashletType.CHART.name());
+        dashlet.put("metricKey", RESPONSE_TIME);
+        dashlet.put("chartSettings", chartSettings);
+        Document dashboard = new Document();
+        dashboard.put("attributes", Map.of(AbstractOrganizableObject.NAME, "Legacy dashboard"));
+        dashboard.put("dashlets", List.of(dashlet));
+        collectionFactory.getCollection("dashboards", Document.class).save(dashboard);
+
+        DashboardView found = collectionFactory.getCollection("dashboards", DashboardView.class)
+            .find(Filters.empty(), null, null, null, 0).findFirst().orElseThrow();
+        return found.getDashlets().get(0).getChartSettings().getPrimaryAxes();
+    }
+
+    private DashboardView saveAndReload(DashboardView dashboard) {
+        DashboardView saved = dashboardAccessor.save(dashboard);
+        return dashboardAccessor.findByIds(List.of(saved.getId().toString())).findFirst().orElseThrow();
     }
 
     private void assertTimeRangeEquals(TimeRange t1, TimeRange t2) {
