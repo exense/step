@@ -19,6 +19,7 @@
 package step.automation.packages.yaml;
 
 import com.fasterxml.jackson.databind.InjectableValues;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -45,8 +46,12 @@ import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 public class AutomationPackageDescriptorReader {
 
@@ -162,20 +167,40 @@ public class AutomationPackageDescriptorReader {
     }
 
     private ObjectMapper createYamlObjectMapper() {
-        YAMLFactory yamlFactory = new YAMLFactory();
-
-        // Disable native type id to enable conversion to generic Documents
-        yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-        yamlFactory.enable(YAMLGenerator.Feature.INDENT_ARRAYS_WITH_INDICATOR);
-        yamlFactory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
-        ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
-
+        ObjectMapper yamlMapper = createBasicYamlObjectMapper();
 
         // register deserializers to read yaml plans
         SimpleModule module = planReader.registerAllSerializersAndDeserializers(yamlMapper, true);
         yamlMapper.registerModule(module);
 
         return yamlMapper;
+    }
+
+    // Below are a few static convenience methods for others who may need access to some information about
+    // an AP, without requiring all the heavy lifting of actually being able to load and parse the entire AP.
+
+    public static ObjectMapper createBasicYamlObjectMapper() {
+        YAMLFactory yamlFactory = new YAMLFactory();
+
+        // Disable native type id to enable conversion to generic Documents
+        yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
+        yamlFactory.enable(YAMLGenerator.Feature.INDENT_ARRAYS_WITH_INDICATOR);
+        yamlFactory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
+        return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+    }
+
+    public static String getAutomationPackageName(Path apDescriptorFile) throws IOException {
+        try (InputStream stream = Files.newInputStream(Objects.requireNonNull(apDescriptorFile))) {
+            return getAutomationPackageName(stream);
+        }
+    }
+
+    public static String getAutomationPackageName(InputStream apDescriptorInputStream) throws IOException {
+        var mapper = createBasicYamlObjectMapper();
+        return Optional.ofNullable(mapper.readTree(apDescriptorInputStream))
+            .map(rootNode -> rootNode.get("name"))
+            .map(JsonNode::asText)
+            .orElse(null);
     }
 
     public YamlPlanReader getPlanReader() {

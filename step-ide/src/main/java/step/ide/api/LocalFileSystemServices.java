@@ -5,12 +5,12 @@ import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
-import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.deployment.AbstractStepServices;
+import step.core.deployment.ControllerServiceException;
 import step.core.filebrowser.DirectoryListing;
 import step.core.filebrowser.FileDescriptor;
 import step.core.filebrowser.FileDescriptors;
@@ -77,18 +77,18 @@ public class LocalFileSystemServices extends AbstractStepServices {
         @QueryParam("dirsOnly") @DefaultValue("false") boolean dirsOnly) {
 
         if (filesOnly && dirsOnly) {
-            throw new WebApplicationException("Cannot specify both filesOnly and dirsOnly", Response.Status.BAD_REQUEST);
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Cannot specify both filesOnly and dirsOnly");
         }
 
         Path targetDir;
         try {
             targetDir = ((pathString != null && !pathString.isBlank()) ? Paths.get(pathString) : home).toAbsolutePath().normalize();
         } catch (InvalidPathException e) {
-            throw new WebApplicationException("Invalid path: " + pathString, Response.Status.BAD_REQUEST);
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Invalid path: " + pathString);
         }
 
         if (!Files.exists(targetDir) || !Files.isDirectory(targetDir)) {
-            throw new WebApplicationException("Path is not a valid directory: " + targetDir, Response.Status.BAD_REQUEST);
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Path is not a valid directory: " + targetDir);
         }
 
         List<FileDescriptor> items = new ArrayList<>();
@@ -113,9 +113,9 @@ public class LocalFileSystemServices extends AbstractStepServices {
                 }
             }
         } catch (AccessDeniedException e) {
-            throw new WebApplicationException("Permission denied to read directory: " + targetDir, Response.Status.FORBIDDEN);
+            throw new ControllerServiceException(Response.Status.FORBIDDEN.getStatusCode(), "Permission denied to read directory: " + targetDir);
         } catch (IOException e) {
-            throw new WebApplicationException("Failed to read directory: " + e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw new ControllerServiceException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Failed to read directory: " + e.getMessage(), e);
         }
 
         items.sort(FileDescriptors.byDirectoryThenName());
@@ -157,20 +157,20 @@ public class LocalFileSystemServices extends AbstractStepServices {
     @jakarta.ws.rs.Produces(MediaType.APPLICATION_JSON)
     public FileDescriptor createDirectory(CreateDirectoryRequest request) {
         if (request == null || request.parentPath() == null || request.name() == null || request.name().isBlank()) {
-            throw new WebApplicationException("Parent path and directory name are required", Response.Status.BAD_REQUEST);
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Parent path and directory name are required");
         }
 
         // 1. Security: Strictly forbid path traversal characters in the new directory name
         String name = request.name().trim();
         if (name.contains("/") || name.contains("\\") || name.equals("..") || name.equals(".")) {
-            throw new WebApplicationException("Directory name contains invalid characters", Response.Status.BAD_REQUEST);
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Directory name contains invalid characters");
         }
 
         // 2. Resolve and normalize the parent path
         Path parent = Paths.get(request.parentPath()).toAbsolutePath().normalize();
 
         if (!Files.exists(parent) || !Files.isDirectory(parent)) {
-            throw new WebApplicationException("Parent path is not a valid directory: " + parent, Response.Status.BAD_REQUEST);
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Parent path is not a valid directory: " + parent);
         }
 
         // 3. Construct the target path
@@ -178,12 +178,12 @@ public class LocalFileSystemServices extends AbstractStepServices {
 
         // 4. Double-check that the resolution didn't escape the parent (Paranoia check, shouldn't be possible)
         if (!targetDir.getParent().equals(parent)) {
-            throw new WebApplicationException("Path traversal detected", Response.Status.BAD_REQUEST);
+            throw new ControllerServiceException(Response.Status.BAD_REQUEST.getStatusCode(), "Path traversal detected");
         }
 
         // 5. Edge Case: Target already exists
         if (Files.exists(targetDir)) {
-            throw new WebApplicationException("A file or directory with this name already exists", Response.Status.CONFLICT);
+            throw new ControllerServiceException(Response.Status.CONFLICT.getStatusCode(), "A file or directory with this name already exists");
         }
 
         // 6. Execution
@@ -200,10 +200,10 @@ public class LocalFileSystemServices extends AbstractStepServices {
             return descriptor;
         } catch (AccessDeniedException e) {
             logger.warn("Access denied while creating directory: {}", targetDir, e);
-            throw new WebApplicationException("Permission denied to create directory", Response.Status.FORBIDDEN);
+            throw new ControllerServiceException(Response.Status.FORBIDDEN.getStatusCode(), "Permission denied to create directory");
         } catch (IOException e) {
             logger.error("Failed to create directory: {}", targetDir, e);
-            throw new WebApplicationException("Failed to create directory: " + e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw new ControllerServiceException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), "Failed to create directory: " + e.getMessage(), e);
         }
     }
 }

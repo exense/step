@@ -23,7 +23,6 @@ import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.ThreadGroup;
-import step.core.GlobalContextBuilder;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionContext;
@@ -57,7 +56,7 @@ public class MetricsExecutionPluginTest extends AbstractKeyword {
     @Before
     public void setUp() throws Exception {
         MetricsControllerPlugin mc = new MetricsControllerPlugin();
-        mc.initMetricSamplingAndHeartbeat(GlobalContextBuilder.createGlobalContext());
+        mc.initMetricSamplingAndHeartbeat(MetricsControllerPlugin.METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
         MetricsExecutionPlugin.registerSamplesHandlers(new TestMetricSamplesHandler());
         engine = ExecutionEngine.builder().withPlugin(new MetricsExecutionPlugin())
             .withPlugin(new FunctionPlugin())

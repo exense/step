@@ -22,11 +22,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
-import step.core.GlobalContextBuilder;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.execution.ExecutionEngineContext;
-import step.core.metrics.*;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.engine.plugins.FunctionPlugin;
@@ -78,7 +75,7 @@ public class MetricsExecutionPluginMetricsTest extends AbstractKeyword {
     @Before
     public void setUp() throws Exception {
         MetricsControllerPlugin mc = new MetricsControllerPlugin();
-        mc.initMetricSamplingAndHeartbeat(GlobalContextBuilder.createGlobalContext());
+        mc.initMetricSamplingAndHeartbeat(MetricsControllerPlugin.METRICS_SAMPLING_INTERVAL_SECONDS_DEFAULT);
         capturingHandler = new CapturingMetricSamplesHandler();
         MetricsExecutionPlugin.registerSamplesHandlers(capturingHandler);
         engine = ExecutionEngine.builder()

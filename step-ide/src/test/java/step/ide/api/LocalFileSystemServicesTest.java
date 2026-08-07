@@ -1,12 +1,12 @@
 package step.ide.api;
 
-import jakarta.ws.rs.WebApplicationException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import step.core.filebrowser.DirectoryListing;
 import step.core.filebrowser.FileDescriptor;
+import step.core.deployment.ControllerServiceException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -149,8 +149,8 @@ public class LocalFileSystemServicesTest {
         try {
             service.listDirectory(homePath.toString(), false, true, true);
             fail("Expected WebApplicationException to be thrown");
-        } catch (WebApplicationException e) {
-            assertEquals(400, e.getResponse().getStatus());
+        } catch (ControllerServiceException e) {
+            assertEquals(400, e.getHttpErrorCode());
         }
     }
 
@@ -160,8 +160,8 @@ public class LocalFileSystemServicesTest {
         try {
             service.listDirectory(fakePath.toString(), false, false, false);
             fail("Expected WebApplicationException for non-existent path");
-        } catch (WebApplicationException e) {
-            assertEquals(400, e.getResponse().getStatus());
+        } catch (ControllerServiceException e) {
+            assertEquals(400, e.getHttpErrorCode());
         }
     }
 
@@ -171,8 +171,8 @@ public class LocalFileSystemServicesTest {
         try {
             service.listDirectory(filePath.toString(), false, false, false);
             fail("Expected WebApplicationException because path is a file");
-        } catch (WebApplicationException e) {
-            assertEquals(400, e.getResponse().getStatus());
+        } catch (ControllerServiceException e) {
+            assertEquals(400, e.getHttpErrorCode());
         }
     }
 
@@ -217,8 +217,8 @@ public class LocalFileSystemServicesTest {
             try {
                 service.createDirectory(req);
                 fail("Expected WebApplicationException for invalid payload: " + req);
-            } catch (WebApplicationException e) {
-                assertEquals(400, e.getResponse().getStatus());
+            } catch (ControllerServiceException e) {
+                assertEquals(400, e.getHttpErrorCode());
             }
         }
     }
@@ -238,8 +238,8 @@ public class LocalFileSystemServicesTest {
             try {
                 service.createDirectory(req);
                 fail("Expected WebApplicationException for malicious name: " + badName);
-            } catch (WebApplicationException e) {
-                assertEquals(400, e.getResponse().getStatus());
+            } catch (ControllerServiceException e) {
+                assertEquals(400, e.getHttpErrorCode());
             }
         }
     }
@@ -253,8 +253,8 @@ public class LocalFileSystemServicesTest {
         try {
             service.createDirectory(req);
             fail("Expected WebApplicationException because parent doesn't exist");
-        } catch (WebApplicationException e) {
-            assertEquals(400, e.getResponse().getStatus());
+        } catch (ControllerServiceException e) {
+            assertEquals(400, e.getHttpErrorCode());
         }
     }
 
@@ -268,8 +268,8 @@ public class LocalFileSystemServicesTest {
         try {
             service.createDirectory(req);
             fail("Expected WebApplicationException because parent is a file, not a directory");
-        } catch (WebApplicationException e) {
-            assertEquals(400, e.getResponse().getStatus());
+        } catch (ControllerServiceException e) {
+            assertEquals(400, e.getHttpErrorCode());
         }
     }
 
@@ -282,8 +282,8 @@ public class LocalFileSystemServicesTest {
         try {
             service.createDirectory(reqDir);
             fail("Expected 409 Conflict for existing directory");
-        } catch (WebApplicationException e) {
-            assertEquals(409, e.getResponse().getStatus());
+        } catch (ControllerServiceException e) {
+            assertEquals(409, e.getHttpErrorCode());
         }
 
         // "zebra.txt" is a file created in setUp() - conflict applies to files sharing the name too
@@ -293,8 +293,8 @@ public class LocalFileSystemServicesTest {
         try {
             service.createDirectory(reqFile);
             fail("Expected 409 Conflict for existing file");
-        } catch (WebApplicationException e) {
-            assertEquals(409, e.getResponse().getStatus());
+        } catch (ControllerServiceException e) {
+            assertEquals(409, e.getHttpErrorCode());
         }
     }
 }

@@ -11,6 +11,7 @@ import step.automation.packages.AutomationPackageHookRegistry;
 import step.automation.packages.JavaAutomationPackageArchive;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.collections.AutomationPackageCollectionFactory;
@@ -47,6 +48,16 @@ public class LocalIDEState implements ExecutionDiversion {
     private FileResolver fileResolver;
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
+
+    private static String ideResourcePath = "dist/step-ide"; // must neither start, nor end, with a slash; Overridden in the EE variant.
+
+    public static String getIdeResourcePath() {
+        return ideResourcePath;
+    }
+
+    public static void setIdeResourcePath(String ideResourcePath) {
+        LocalIDEState.ideResourcePath = ideResourcePath;
+    }
 
     public static LocalIDEState get() {
         return instance;
@@ -99,7 +110,7 @@ public class LocalIDEState implements ExecutionDiversion {
         this.fileResolver.setUnprefixedRoot(apDir);
     }
 
-    private Path findMetadataFile(Path apDirectory) {
+    private Path findAutomationPackageDescriptorPath(Path apDirectory) {
         for (String fileName : JavaAutomationPackageArchive.METADATA_FILES) {
             Path metadataFile = apDirectory.resolve(fileName);
             if (Files.isRegularFile(metadataFile)) {
@@ -140,7 +151,7 @@ public class LocalIDEState implements ExecutionDiversion {
 
     public void validateExistingAutomationPackageDirectory(Path apDirectory) {
         Path resolvedDir = resolveAndCheckBaseDirectory(apDirectory, false);
-        if (findMetadataFile(resolvedDir) == null) {
+        if (findAutomationPackageDescriptorPath(resolvedDir) == null) {
             throw new IllegalArgumentException("Directory " + resolvedDir + " does not contain an automation package descriptor");
         }
     }
@@ -148,7 +159,7 @@ public class LocalIDEState implements ExecutionDiversion {
     public void validateInitializableAutomationPackageDirectory(Path apDirectory, boolean allowExistingDescriptor) throws FileExistsException {
         Path resolvedDir = resolveAndCheckBaseDirectory(apDirectory, true);
         if (!allowExistingDescriptor) {
-            Path existingDescriptor = findMetadataFile(resolvedDir);
+            Path existingDescriptor = findAutomationPackageDescriptorPath(resolvedDir);
             if (existingDescriptor != null) {
                 throw new FileExistsException(existingDescriptor);
             }
@@ -170,7 +181,7 @@ public class LocalIDEState implements ExecutionDiversion {
             throw new IllegalArgumentException(error);
         }
 
-        Path descriptor = Objects.requireNonNullElseGet(findMetadataFile(apDir),
+        Path descriptor = Objects.requireNonNullElseGet(findAutomationPackageDescriptorPath(apDir),
             () -> apDir.resolve(JavaAutomationPackageArchive.METADATA_FILES.getFirst())
         );
 
@@ -195,8 +206,14 @@ public class LocalIDEState implements ExecutionDiversion {
         if (currentAutomationPackageDirectory == null) {
             return null;
         }
-        // FIXME: determine name
-        return "FIXME";
+        try {
+            Path apDescriptor = Objects.requireNonNull(findAutomationPackageDescriptorPath(currentAutomationPackageDirectory),
+                "Unexpected: unable to find automation package descriptor in " + currentAutomationPackageDirectory);
+            return Objects.requireNonNullElse(AutomationPackageDescriptorReader.getAutomationPackageName(apDescriptor), "WARNING: AP name not set");
+        } catch (Exception e) {
+            logger.error("Unexpected: failed to read automation package name from current automation package directory", e);
+            return "ERROR while reading AP name, see log";
+        }
     }
 
     public void closeCurrentAutomationPackage() {
