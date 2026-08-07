@@ -5,6 +5,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import step.core.filebrowser.DirectoryListing;
+import step.core.filebrowser.FileDescriptor;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -53,20 +56,20 @@ public class LocalFileSystemServicesTest {
 
     @Test
     public void testListDefaultHomeDirectory() {
-        LocalFileSystemServices.DirectoryListing result = service.listDirectory(null, false, false, false);
+        DirectoryListing result = service.listDirectory(null, false, false, false);
 
         assertNotNull(result);
-        assertEquals(homePath.toAbsolutePath().toString(), result.currentPath());
+        assertEquals(homePath.toAbsolutePath().toString(), result.path());
 
-        List<LocalFileSystemServices.FileDescriptor> items = result.items();
+        List<FileDescriptor> items = result.entries();
         assertEquals(5, items.size());
 
         // Verify directories are always first and alphabetized (case-insensitive)
         assertEquals("dirA", items.get(0).name());
-        assertTrue(items.get(0).isDirectory());
+        assertTrue(items.get(0).directory());
 
         assertEquals("DirB", items.get(1).name());
-        assertTrue(items.get(1).isDirectory());
+        assertTrue(items.get(1).directory());
 
         // Verify dynamic collation order for files
         Collator testCollator = Collator.getInstance();
@@ -79,56 +82,65 @@ public class LocalFileSystemServicesTest {
         assertEquals(expectedFiles.get(2), items.get(4).name());
 
         // Verify file sizes and types
-        LocalFileSystemServices.FileDescriptor appleDescriptor = items.stream()
+        FileDescriptor appleDescriptor = items.stream()
             .filter(fd -> fd.name().equals("apple.txt"))
             .findFirst()
             .orElseThrow();
 
-        assertEquals(12L, appleDescriptor.size());
-        assertTrue(appleDescriptor.isFile());
-        assertFalse(appleDescriptor.isDirectory());
-        assertFalse(appleDescriptor.isHidden());
+        assertEquals(Long.valueOf(12L), appleDescriptor.size());
+        assertTrue(appleDescriptor.regularFile());
+        assertFalse(appleDescriptor.directory());
+        assertFalse(appleDescriptor.hidden());
+        assertFalse(appleDescriptor.symlink());
+
+        // In this namespace the identity of an entry and the value stored when it is picked are both
+        // its absolute path
+        String applePath = homePath.resolve("apple.txt").toAbsolutePath().toString();
+        assertEquals(applePath, appleDescriptor.path());
+        assertEquals(applePath, appleDescriptor.resourceReference());
+        assertEquals(homePath.toAbsolutePath().toString(), result.resourceReference());
 
         // Zebra is empty
-        LocalFileSystemServices.FileDescriptor zebraDescriptor = items.stream()
+        FileDescriptor zebraDescriptor = items.stream()
             .filter(fd -> fd.name().equals("zebra.txt"))
             .findFirst()
             .orElseThrow();
-        assertEquals(0L, zebraDescriptor.size());
+        assertEquals(Long.valueOf(0L), zebraDescriptor.size());
     }
 
     @Test
     public void testListShowHiddenFiles() {
-        LocalFileSystemServices.DirectoryListing result = service.listDirectory("", true, false, false);
+        DirectoryListing result = service.listDirectory("", true, false, false);
 
-        assertEquals(6, result.items().size());
+        assertEquals(6, result.entries().size());
 
-        boolean foundHidden = result.items().stream()
-            .anyMatch(LocalFileSystemServices.FileDescriptor::isHidden);
+        boolean foundHidden = result.entries().stream()
+            .anyMatch(FileDescriptor::hidden);
         assertTrue("Hidden file should be present in the results", foundHidden);
     }
 
     @Test
     public void testListFilesOnly() {
-        LocalFileSystemServices.DirectoryListing result = service.listDirectory(homePath.toString(), false, true, false);
+        DirectoryListing result = service.listDirectory(homePath.toString(), false, true, false);
 
-        assertEquals(3, result.items().size());
-        for (LocalFileSystemServices.FileDescriptor item : result.items()) {
-            assertTrue(item.isFile());
-            assertFalse(item.isDirectory());
+        assertEquals(3, result.entries().size());
+        for (FileDescriptor item : result.entries()) {
+            assertTrue(item.regularFile());
+            assertFalse(item.directory());
         }
     }
 
     @Test
     public void testListDirsOnly() {
-        LocalFileSystemServices.DirectoryListing result = service.listDirectory(homePath.toString(), false, false, true);
+        DirectoryListing result = service.listDirectory(homePath.toString(), false, false, true);
 
-        assertEquals(2, result.items().size());
-        for (LocalFileSystemServices.FileDescriptor item : result.items()) {
-            assertTrue(item.isDirectory());
-            assertFalse(item.isFile());
-            // Directory sizes vary by OS (often 0, 4096, etc.), but we can ensure the property maps
-            assertTrue("Directory size should map without exception", item.size() >= 0);
+        assertEquals(2, result.entries().size());
+        for (FileDescriptor item : result.entries()) {
+            assertTrue(item.directory());
+            assertFalse(item.regularFile());
+            // The size a file system reports for a directory varies by OS (0, 4096, ...) and means
+            // nothing to the client, so it is reported as 'not applicable' rather than mapped
+            assertNull(item.size());
         }
     }
 
@@ -167,10 +179,10 @@ public class LocalFileSystemServicesTest {
     @Test
     public void testPathTraversalNormalization() {
         String traversalPath = homePath.resolve("dirA").resolve("..").toString();
-        LocalFileSystemServices.DirectoryListing result = service.listDirectory(traversalPath, false, false, false);
+        DirectoryListing result = service.listDirectory(traversalPath, false, false, false);
 
-        assertEquals(homePath.toAbsolutePath().toString(), result.currentPath());
-        assertEquals(5, result.items().size());
+        assertEquals(homePath.toAbsolutePath().toString(), result.path());
+        assertEquals(5, result.entries().size());
     }
 
     @Test
@@ -178,13 +190,13 @@ public class LocalFileSystemServicesTest {
         LocalFileSystemServices.CreateDirectoryRequest request =
             new LocalFileSystemServices.CreateDirectoryRequest(homePath.toString(), "new_test_folder");
 
-        LocalFileSystemServices.FileDescriptor result = service.createDirectory(request);
+        FileDescriptor result = service.createDirectory(request);
 
         // Verify the API response
         assertNotNull(result);
         assertEquals("new_test_folder", result.name());
-        assertTrue(result.isDirectory());
-        assertFalse(result.isFile());
+        assertTrue(result.directory());
+        assertFalse(result.regularFile());
 
         // Verify the filesystem was actually modified
         Path expectedPath = homePath.resolve("new_test_folder");

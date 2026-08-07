@@ -36,13 +36,6 @@ public class FileResolver {
     public static final String RESOURCE_PATH_SEPARATOR = ":";
 
     /**
-     * Placeholder {@code <apId>} used by the local IDE / exploded-folder mode, where there is no
-     * deployed {@link step.automation.packages.AutomationPackage} entity to key on. It is a mode
-     * marker, not a self-reference, and is unmistakable for a real (ObjectId) apId.
-     */
-    public static final String LOCAL_AP_ID = "local";
-
-    /**
      * used for direct access to files relative to the given filesystem path
      * when @{{@link FileResolver#resolve(String)} is called without any prefix
      */

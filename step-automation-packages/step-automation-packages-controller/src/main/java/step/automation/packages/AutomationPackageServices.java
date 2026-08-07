@@ -53,6 +53,7 @@ import step.core.deployment.ControllerServiceException;
 import step.core.entities.EntityConstants;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
+import step.core.filebrowser.DirectoryListing;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
 import step.framework.server.audit.AuditLogger;
@@ -911,7 +912,8 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
         // the path is not required to exist (yet), but it must be a valid archive relative path
         String normalizedPath = normalizeApRelativePath(relativePath);
-        assertAutomationPackageIsReadable(apId);
+        // the package must be visible in the current context, even though nothing of it is read here
+        getAutomationPackage(apId);
         return FileResolver.createPathForApResource(apId, normalizedPath);
     }
 
@@ -946,28 +948,28 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     }
 
     /**
-     * Lists the content of one folder of an automation package, to let the user pick a file to be
+     * Lists the content of one directory of an automation package, to let the user pick a file to be
      * referenced.
      *
      * @param reference the {@code apResource:<apId>:<relativePath>} reference the browser should open
      *                  at, typically the value currently held by the edited field. Alternatively
      *                  {@code apId} and {@code path} can be provided separately, {@code path} being
      *                  optional and defaulting to the root of the package.
-     * @param filesOnly whether folders should be left out of the listing
+     * @param filesOnly whether directories should be left out of the listing
      * @param dirsOnly  whether files should be left out of the listing
-     * @return the content of the folder itself if the path points to a folder, and of its parent folder
-     * if it points to a file, so that the client can preselect that file. The folder that was
-     * effectively listed is reported by {@link ApResourceFolderContent#path()}.
+     * @return the content of the directory itself if the path points to a directory, and of its parent
+     * directory if it points to a file, so that the client can preselect that file. The directory that
+     * was effectively listed is reported by {@link DirectoryListing#path()}.
      */
     @GET
     @Path("/ap-resources/browse")
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "automation-package-read")
-    public ApResourceFolderContent browseApResources(@QueryParam("reference") String reference,
-                                                     @QueryParam("apId") String apId,
-                                                     @QueryParam("path") String relativePath,
-                                                     @QueryParam("filesOnly") @DefaultValue("false") boolean filesOnly,
-                                                     @QueryParam("dirsOnly") @DefaultValue("false") boolean dirsOnly) {
+    public DirectoryListing browseApResources(@QueryParam("reference") String reference,
+                                              @QueryParam("apId") String apId,
+                                              @QueryParam("path") String relativePath,
+                                              @QueryParam("filesOnly") @DefaultValue("false") boolean filesOnly,
+                                              @QueryParam("dirsOnly") @DefaultValue("false") boolean dirsOnly) {
         ApResourceTarget target = resolveApResourceTarget(reference, apId, relativePath);
         File archiveFile = getAutomationPackageArchiveFile(target.apId());
         try {
@@ -1047,7 +1049,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      * package is visible in the current context.
      */
     private File getAutomationPackageArchiveFile(String apId) {
-        AutomationPackage automationPackage = assertAutomationPackageIsReadable(apId);
+        AutomationPackage automationPackage = getAutomationPackage(apId);
         String archiveReference = automationPackage.getAutomationPackageResource();
         if (archiveReference == null) {
             throw new ControllerServiceException(HttpStatus.SC_NOT_FOUND, "The automation package " + apId
@@ -1059,16 +1061,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 + apId + " could not be resolved from the reference " + archiveReference);
         }
         return archiveFile;
-    }
-
-    private AutomationPackage assertAutomationPackageIsReadable(String apId) {
-        if (FileResolver.LOCAL_AP_ID.equals(apId)) {
-            // 'apResource:local:...' addresses an exploded automation package folder, which only exists
-            // in the local (IDE / AP editor) mode and has no deployed package on the controller
-            throw badRequest("Local automation package resources ('" + FileResolver.LOCAL_AP_ID
-                + "' package id) cannot be accessed through the controller");
-        }
-        return getAutomationPackage(apId);
     }
 
     private String normalizeApRelativePath(String relativePath) {

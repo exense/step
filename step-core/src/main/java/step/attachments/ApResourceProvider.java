@@ -28,8 +28,8 @@ import java.io.File;
  * Consumers ({@code ExcelFileLookup}, {@code FileReaderDataPool}, the grid file registration in
  * {@code AbstractFunctionType}, ...) only ever receive a {@link File}, never a stream, so the
  * implementation is expected to materialise the archive entry lazily on first request. See the
- * {@code AutomationPackageResourceProvider} (main/isolated executions) and
- * {@code LocalApResourceProvider} (local IDE) implementations.
+ * {@code AutomationPackageResourceProvider} implementation, used by main, isolated and local IDE
+ * executions alike.
  */
 public interface ApResourceProvider {
 
@@ -37,8 +37,7 @@ public interface ApResourceProvider {
      * Resolve, materialising if necessary, the archive entry {@code relativePath} of the automation
      * package identified by {@code apId}.
      *
-     * @param apId         the automation package entity id, or {@link FileResolver#LOCAL_AP_ID} for
-     *                     the local / exploded-folder mode
+     * @param apId         the automation package entity id
      * @param relativePath the archive-root relative path of the entry
      * @return the materialised file; never {@code null}
      * @throws RuntimeException if the entry does not exist or cannot be materialised. Implementations

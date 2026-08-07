@@ -26,6 +26,8 @@ import org.junit.rules.TemporaryFolder;
 import step.attachments.ApResourceNotFoundException;
 import step.attachments.FileResolver;
 import step.automation.packages.ApResourceBrowser.EntryFilter;
+import step.core.filebrowser.DirectoryListing;
+import step.core.filebrowser.FileDescriptor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -50,21 +52,21 @@ public class ApResourceBrowserTest {
     @Rule
     public TemporaryFolder tmp = new TemporaryFolder();
 
-    private File archiveFolder;
+    private File archiveDirectory;
     private File archiveZip;
 
     @Before
     public void setUp() throws Exception {
-        // Build an exploded automation package folder, then also a zipped version of it, so that every
+        // Build an exploded automation package directory, then also a zipped version of it, so that every
         // assertion can be run against both flavours of archive.
-        archiveFolder = tmp.newFolder("ap-source");
-        writeFile(new File(archiveFolder, "automation-package.yml"), "name: myAp");
-        writeFile(new File(archiveFolder, "data/pool.csv"), "a,b,c");
-        writeFile(new File(archiveFolder, "k6/mytest/test.js"), "export default function(){}");
-        writeFile(new File(archiveFolder, "k6/mytest/lib/helper.js"), "export const x = 1;");
+        archiveDirectory = tmp.newFolder("ap-source");
+        writeFile(new File(archiveDirectory, "automation-package.yml"), "name: myAp");
+        writeFile(new File(archiveDirectory, "data/pool.csv"), "a,b,c");
+        writeFile(new File(archiveDirectory, "k6/mytest/test.js"), "export default function(){}");
+        writeFile(new File(archiveDirectory, "k6/mytest/lib/helper.js"), "export const x = 1;");
 
         archiveZip = new File(tmp.getRoot(), "ap.zip");
-        FileHelper.zip(archiveFolder, archiveZip);
+        FileHelper.zip(archiveDirectory, archiveZip);
     }
 
     private static void writeFile(File file, String content) throws Exception {
@@ -72,14 +74,14 @@ public class ApResourceBrowserTest {
         Files.writeString(file.toPath(), content);
     }
 
-    private static List<String> names(ApResourceFolderContent content) {
-        return content.entries().stream().map(ApResourceEntry::name).collect(Collectors.toList());
+    private static List<String> names(DirectoryListing content) {
+        return content.entries().stream().map(FileDescriptor::name).collect(Collectors.toList());
     }
 
     @Test
     public void listsTheRootOfTheArchive() {
-        for (File archive : List.of(archiveZip, archiveFolder)) {
-            ApResourceFolderContent content = ApResourceBrowser.browse(archive, null, AP_A);
+        for (File archive : List.of(archiveZip, archiveDirectory)) {
+            DirectoryListing content = ApResourceBrowser.browse(archive, null, AP_A);
             assertEquals("", content.path());
             assertNull(content.parentPath());
             // the root itself has no relative path, hence no reference
@@ -87,13 +89,13 @@ public class ApResourceBrowserTest {
             // directories first, then files, each alphabetically
             assertEquals(List.of("data", "k6", "automation-package.yml"), names(content));
 
-            ApResourceEntry directory = content.entries().get(0);
+            FileDescriptor directory = content.entries().get(0);
             assertTrue(directory.directory());
             assertFalse(directory.regularFile());
             assertNull(directory.size());
             assertEquals("apResource:apA:data", directory.resourceReference());
 
-            ApResourceEntry file = content.entries().get(2);
+            FileDescriptor file = content.entries().get(2);
             assertFalse(file.directory());
             assertTrue(file.regularFile());
             assertEquals("automation-package.yml", file.path());
@@ -107,9 +109,9 @@ public class ApResourceBrowserTest {
     }
 
     @Test
-    public void listsANestedFolder() {
-        for (File archive : List.of(archiveZip, archiveFolder)) {
-            ApResourceFolderContent content = ApResourceBrowser.browse(archive, "k6/mytest", AP_A);
+    public void listsANestedDirectory() {
+        for (File archive : List.of(archiveZip, archiveDirectory)) {
+            DirectoryListing content = ApResourceBrowser.browse(archive, "k6/mytest", AP_A);
             assertEquals("k6/mytest", content.path());
             assertEquals("k6", content.parentPath());
             assertEquals("apResource:apA:k6/mytest", content.resourceReference());
@@ -124,17 +126,17 @@ public class ApResourceBrowserTest {
      */
     @Test
     public void buildsPlainRelativeReferencesForTheLocalMode() {
-        for (File archive : List.of(archiveZip, archiveFolder)) {
-            ApResourceFolderContent content = ApResourceBrowser.browse(archive, "k6/mytest", RELATIVE);
+        for (File archive : List.of(archiveZip, archiveDirectory)) {
+            DirectoryListing content = ApResourceBrowser.browse(archive, "k6/mytest", RELATIVE);
             assertEquals("k6/mytest", content.resourceReference());
             assertEquals("k6/mytest/test.js", content.entries().get(1).resourceReference());
         }
     }
 
     @Test
-    public void opensTheParentFolderWhenThePathIsAFile() {
-        for (File archive : List.of(archiveZip, archiveFolder)) {
-            ApResourceFolderContent content = ApResourceBrowser.browse(archive, "k6/mytest/test.js", AP_A);
+    public void opensTheParentDirectoryWhenThePathIsAFile() {
+        for (File archive : List.of(archiveZip, archiveDirectory)) {
+            DirectoryListing content = ApResourceBrowser.browse(archive, "k6/mytest/test.js", AP_A);
             assertEquals("k6/mytest", content.path());
             assertEquals(List.of("lib", "test.js"), names(content));
         }
@@ -142,11 +144,11 @@ public class ApResourceBrowserTest {
 
     /**
      * A dangling reference must be reported rather than swallowed behind the listing of some surviving
-     * ancestor folder.
+     * ancestor directory.
      */
     @Test
     public void failsOnAnUnknownPath() {
-        for (File archive : List.of(archiveZip, archiveFolder)) {
+        for (File archive : List.of(archiveZip, archiveDirectory)) {
             try {
                 ApResourceBrowser.browse(archive, "k6/mytest/does/not/exist.js", AP_A);
                 fail("expected ApResourceNotFoundException");
@@ -158,7 +160,7 @@ public class ApResourceBrowserTest {
 
     @Test
     public void filtersTheListedEntries() {
-        for (File archive : List.of(archiveZip, archiveFolder)) {
+        for (File archive : List.of(archiveZip, archiveDirectory)) {
             assertEquals(List.of("automation-package.yml"),
                 names(ApResourceBrowser.browse(archive, null, AP_A, EntryFilter.FILES_ONLY)));
             assertEquals(List.of("data", "k6"),
@@ -178,7 +180,7 @@ public class ApResourceBrowserTest {
 
     @Test
     public void normalisesTheRequestedPath() {
-        for (File archive : List.of(archiveZip, archiveFolder)) {
+        for (File archive : List.of(archiveZip, archiveDirectory)) {
             assertEquals("k6/mytest", ApResourceBrowser.browse(archive, "./k6/mytest/", AP_A).path());
             assertEquals("k6/mytest", ApResourceBrowser.browse(archive, "k6\\mytest", AP_A).path());
             assertEquals("", ApResourceBrowser.browse(archive, "/", AP_A).path());
@@ -197,7 +199,7 @@ public class ApResourceBrowserTest {
 
     @Test
     public void opensTheContentOfAnEntry() throws Exception {
-        for (File archive : List.of(archiveZip, archiveFolder)) {
+        for (File archive : List.of(archiveZip, archiveDirectory)) {
             try (ApResourceBrowser.ApResourceStream stream = ApResourceBrowser.openEntry(archive, "data/pool.csv")) {
                 assertEquals("pool.csv", stream.getName());
                 assertEquals("a,b,c", new String(stream.getInputStream().readAllBytes(), StandardCharsets.UTF_8));
@@ -208,7 +210,7 @@ public class ApResourceBrowserTest {
 
     @Test
     public void openEntryFailsOnMissingEntry() {
-        for (File archive : List.of(archiveZip, archiveFolder)) {
+        for (File archive : List.of(archiveZip, archiveDirectory)) {
             try {
                 ApResourceBrowser.openEntry(archive, "data/missing.csv");
                 fail("expected ApResourceNotFoundException");
@@ -220,7 +222,7 @@ public class ApResourceBrowserTest {
 
     @Test
     public void openEntryFailsOnDirectory() {
-        for (File archive : List.of(archiveZip, archiveFolder)) {
+        for (File archive : List.of(archiveZip, archiveDirectory)) {
             try {
                 ApResourceBrowser.openEntry(archive, "k6/mytest");
                 fail("expected IllegalArgumentException");
@@ -236,11 +238,11 @@ public class ApResourceBrowserTest {
     }
 
     /**
-     * Zip archives are not required to carry explicit directory entries. The folders they only imply
+     * Zip archives are not required to carry explicit directory entries. The directories they only imply
      * must nevertheless be browsable.
      */
     @Test
-    public void listsFoldersOnlyImpliedByFileEntries() throws Exception {
+    public void listsDirectoriesOnlyImpliedByFileEntries() throws Exception {
         File flatZip = new File(tmp.getRoot(), "flat.zip");
         try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(flatZip))) {
             for (String entryName : List.of("k6/mytest/test.js", "k6/mytest/lib/helper.js")) {
@@ -250,10 +252,10 @@ public class ApResourceBrowserTest {
             }
         }
 
-        ApResourceFolderContent root = ApResourceBrowser.browse(flatZip, null, AP_A);
+        DirectoryListing root = ApResourceBrowser.browse(flatZip, null, AP_A);
         assertEquals(List.of("k6"), names(root));
 
-        ApResourceFolderContent nested = ApResourceBrowser.browse(flatZip, "k6/mytest", AP_A);
+        DirectoryListing nested = ApResourceBrowser.browse(flatZip, "k6/mytest", AP_A);
         assertEquals(List.of("lib", "test.js"), names(nested));
     }
 }

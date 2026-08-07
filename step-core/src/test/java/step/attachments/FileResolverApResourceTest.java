@@ -51,13 +51,6 @@ public class FileResolverApResourceTest {
     }
 
     @Test
-    public void extractsLocalApId() {
-        String ref = FileResolver.createPathForApResource(FileResolver.LOCAL_AP_ID, "data/pool.csv");
-        assertEquals("local", FileResolver.extractApId(ref));
-        assertEquals("data/pool.csv", FileResolver.extractApRelativePath(ref));
-    }
-
-    @Test
     public void relativePathMayContainSeparator_splitOnFirstColonOnly() {
         // The relative path is split on the first ':' after the apId, so any ':' within the path
         // itself (e.g. an odd file name) is preserved verbatim.
