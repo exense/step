@@ -20,7 +20,6 @@ package step.automation.packages;
 
 import ch.exense.commons.io.FileHelper;
 import com.google.common.util.concurrent.Striped;
-import step.attachments.ApResourceNotFoundException;
 import step.attachments.FileResolver;
 
 import java.io.File;
@@ -92,7 +91,7 @@ public class ApResourceMaterializer {
                 URL url = archive.getResource(normalized);
                 if (url == null) {
                     throw new ApResourceNotFoundException("Resource '" + relativePath
-                            + "' not found in automation package " + apId);
+                        + "' not found in automation package " + apId);
                 }
                 if (ClassLoaderResourceFilesystem.isDirectory(url)) {
                     materializeDirectory(url, target);
@@ -107,7 +106,7 @@ public class ApResourceMaterializer {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("Unable to materialise apResource '" + relativePath
-                    + "' of automation package " + apId, e);
+                + "' of automation package " + apId, e);
         } finally {
             lock.unlock();
         }

@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.attachments.ApResourceNotFoundException;
 import step.attachments.FileResolver;
 import step.core.filebrowser.FileDescriptors;
 import step.core.filebrowser.FileDescriptor;

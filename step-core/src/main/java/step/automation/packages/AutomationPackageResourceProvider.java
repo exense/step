@@ -18,8 +18,6 @@
  ******************************************************************************/
 package step.automation.packages;
 
-import step.attachments.ApResourceNotFoundException;
-import step.attachments.ApResourceProvider;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 
 import java.io.File;
@@ -81,7 +79,7 @@ public class AutomationPackageResourceProvider implements ApResourceProvider {
         Objects.requireNonNull(apId, "apId must not be null");
         Objects.requireNonNull(relativePath, "relativePath must not be null");
         return materializer.materialize(cacheRoot, apId, relativePath,
-                () -> archiveFactory.apply(resolveArchiveFile(apId)));
+            () -> archiveFactory.apply(resolveArchiveFile(apId)));
     }
 
     private File resolveArchiveFile(String apId) {
@@ -100,7 +98,7 @@ public class AutomationPackageResourceProvider implements ApResourceProvider {
         File archiveFile = archiveFileResolver.apply(archiveReference);
         if (archiveFile == null || !archiveFile.exists()) {
             throw new ApResourceNotFoundException("The archive of automation package " + apId
-                    + " could not be resolved from reference " + archiveReference);
+                + " could not be resolved from reference " + archiveReference);
         }
         return archiveFile;
     }

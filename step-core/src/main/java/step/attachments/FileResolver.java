@@ -19,6 +19,7 @@
 package step.attachments;
 
 import org.bson.types.ObjectId;
+import step.automation.packages.ApResourceProvider;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 import step.resources.ResourceRevisionFileHandle;

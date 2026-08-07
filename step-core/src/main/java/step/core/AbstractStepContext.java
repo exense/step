@@ -21,7 +21,7 @@ package step.core;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import step.attachments.ApResourceProvider;
+import step.automation.packages.ApResourceProvider;
 import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;

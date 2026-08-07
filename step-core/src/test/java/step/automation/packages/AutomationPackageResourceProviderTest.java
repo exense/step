@@ -23,7 +23,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import step.attachments.ApResourceNotFoundException;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 
 import java.io.File;
@@ -61,17 +60,17 @@ public class AutomationPackageResourceProviderTest {
      */
     private AutomationPackageAccessor accessorReturning(Map<String, AutomationPackage> byId) {
         return (AutomationPackageAccessor) Proxy.newProxyInstance(
-                getClass().getClassLoader(),
-                new Class<?>[]{AutomationPackageAccessor.class},
-                (proxy, method, args) -> {
-                    if (method.getName().equals("get") && args != null && args.length == 1 && args[0] instanceof String) {
-                        return byId.get((String) args[0]);
-                    }
-                    if (method.getName().equals("toString")) {
-                        return "stub-accessor";
-                    }
-                    return null;
-                });
+            getClass().getClassLoader(),
+            new Class<?>[]{AutomationPackageAccessor.class},
+            (proxy, method, args) -> {
+                if (method.getName().equals("get") && args != null && args.length == 1 && args[0] instanceof String) {
+                    return byId.get((String) args[0]);
+                }
+                if (method.getName().equals("toString")) {
+                    return "stub-accessor";
+                }
+                return null;
+            });
     }
 
     private AutomationPackage apWithArchiveReference(String reference) {
@@ -97,7 +96,7 @@ public class AutomationPackageResourceProviderTest {
             return archiveZip;
         };
         AutomationPackageResourceProvider provider =
-                new AutomationPackageResourceProvider(cacheRoot, () -> accessor, archiveResolver, AutomationPackageResourceProviderTest::newArchive);
+            new AutomationPackageResourceProvider(cacheRoot, () -> accessor, archiveResolver, AutomationPackageResourceProviderTest::newArchive);
 
         File file = provider.resolve("apA", "scripts/kw.groovy");
 
@@ -109,7 +108,7 @@ public class AutomationPackageResourceProviderTest {
     public void unknownApThrowsNotFound() {
         AutomationPackageAccessor accessor = accessorReturning(Map.of());
         AutomationPackageResourceProvider provider =
-                new AutomationPackageResourceProvider(cacheRoot, () -> accessor, ref -> archiveZip, AutomationPackageResourceProviderTest::newArchive);
+            new AutomationPackageResourceProvider(cacheRoot, () -> accessor, ref -> archiveZip, AutomationPackageResourceProviderTest::newArchive);
         try {
             provider.resolve("missing", "scripts/kw.groovy");
             fail("expected ApResourceNotFoundException");
@@ -122,7 +121,7 @@ public class AutomationPackageResourceProviderTest {
     public void missingAccessorThrows() {
         Supplier<AutomationPackageAccessor> noAccessor = () -> null;
         AutomationPackageResourceProvider provider =
-                new AutomationPackageResourceProvider(cacheRoot, noAccessor, ref -> archiveZip, AutomationPackageResourceProviderTest::newArchive);
+            new AutomationPackageResourceProvider(cacheRoot, noAccessor, ref -> archiveZip, AutomationPackageResourceProviderTest::newArchive);
         try {
             provider.resolve("apA", "scripts/kw.groovy");
             fail("expected RuntimeException");
@@ -135,7 +134,7 @@ public class AutomationPackageResourceProviderTest {
     public void apWithoutArchiveReferenceThrowsNotFound() {
         AutomationPackageAccessor accessor = accessorReturning(Map.of("apA", apWithArchiveReference(null)));
         AutomationPackageResourceProvider provider =
-                new AutomationPackageResourceProvider(cacheRoot, () -> accessor, ref -> archiveZip, AutomationPackageResourceProviderTest::newArchive);
+            new AutomationPackageResourceProvider(cacheRoot, () -> accessor, ref -> archiveZip, AutomationPackageResourceProviderTest::newArchive);
         try {
             provider.resolve("apA", "scripts/kw.groovy");
             fail("expected ApResourceNotFoundException");

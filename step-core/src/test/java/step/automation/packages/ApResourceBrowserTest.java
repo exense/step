@@ -23,7 +23,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import step.attachments.ApResourceNotFoundException;
 import step.attachments.FileResolver;
 import step.automation.packages.ApResourceBrowser.EntryFilter;
 import step.core.filebrowser.DirectoryListing;
@@ -43,10 +42,14 @@ import static org.junit.Assert.*;
 
 public class ApResourceBrowserTest {
 
-    /** The reference builder of the controller mode: a deployed automation package. */
+    /**
+     * The reference builder of the controller mode: a deployed automation package.
+     */
     private static final Function<String, String> AP_A = path -> FileResolver.createPathForApResource("apA", path);
 
-    /** The reference builder of the local IDE mode: the relative path is the reference. */
+    /**
+     * The reference builder of the local IDE mode: the relative path is the reference.
+     */
     private static final Function<String, String> RELATIVE = Function.identity();
 
     @Rule

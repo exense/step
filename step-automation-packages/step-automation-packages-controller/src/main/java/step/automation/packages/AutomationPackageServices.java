@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import step.attachments.ApResourceNotFoundException;
 import step.attachments.FileResolver;
 import step.automation.packages.execution.AutomationPackageExecutor;
 import step.controller.services.async.AsyncTaskStatus;
@@ -924,11 +923,11 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
      * The entry is streamed straight out of the package: unlike an execution, a download must neither
      * populate nor rely on the apResource cache.
      *
-     * @param reference    the {@code apResource:<apId>:<relativePath>} reference to download, as held
-     *                     by the referencing entity. Alternatively {@code apId} and {@code path} can
-     *                     be provided separately.
-     * @param inline       whether the content should be served as {@code inline} rather than as an
-     *                     attachment
+     * @param reference the {@code apResource:<apId>:<relativePath>} reference to download, as held
+     *                  by the referencing entity. Alternatively {@code apId} and {@code path} can
+     *                  be provided separately.
+     * @param inline    whether the content should be served as {@code inline} rather than as an
+     *                  attachment
      */
     @GET
     @Path("/ap-resources/content")

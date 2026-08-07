@@ -23,7 +23,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import step.attachments.ApResourceNotFoundException;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -163,7 +162,7 @@ public class ApResourceMaterializerTest {
         for (int i = 0; i < threads; i++) {
             final int idx = i;
             workers[i] = new Thread(() ->
-                    results[idx] = materializer.materialize(cacheRoot, "apA", "scripts/kw.groovy", zipSupplier(opens)));
+                results[idx] = materializer.materialize(cacheRoot, "apA", "scripts/kw.groovy", zipSupplier(opens)));
         }
         for (Thread w : workers) {
             w.start();
