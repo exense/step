@@ -19,6 +19,7 @@ import step.core.deployment.ControllerServiceException;
 import step.core.entities.EntityConstants;
 import step.core.execution.model.ExecutionAccessor;
 import step.core.metrics.MetricTypeRegistry;
+import step.core.metrics.MetricsControllerPlugin;
 import step.core.timeseries.*;
 import step.core.timeseries.metric.MetricType;
 import step.framework.server.security.Secured;
@@ -60,7 +61,8 @@ public class TimeSeriesService extends AbstractStepServices {
         int fieldsSamplingLimit = configuration.getPropertyAsInteger(TIME_SERIES_SAMPLING_LIMIT, 1000);
         maxNumberOfSeries = configuration.getPropertyAsInteger(TIME_SERIES_MAX_NUMBER_OF_SERIES, 1000);
         ReportNodeTimeSeries reportNodeTimeSeries = context.require(ReportNodeTimeSeries.class);
-        this.handler = new TimeSeriesHandler(resolution, handledAttributes, excludedAttributes, measurementCollection, metricSampleCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, fieldsSamplingLimit);
+        long metricsSamplingIntervalMs = MetricsControllerPlugin.getSamplingIntervalMs(configuration);
+        this.handler = new TimeSeriesHandler(resolution, handledAttributes, excludedAttributes, measurementCollection, metricSampleCollection, executionAccessor, timeSeries, reportNodeTimeSeries, asyncTaskManager, fieldsSamplingLimit, metricsSamplingIntervalMs);
     }
 
     @Secured(right = "execution-read")
