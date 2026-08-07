@@ -20,8 +20,8 @@ package step.automation.packages.yaml;
 
 import org.junit.Test;
 import step.automation.packages.AutomationPackageReadingException;
-import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
+import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.core.scheduler.automation.AutomationPackageSchedule;
 import step.core.scheduler.automation.AutomationPackageScheduleRegistration;
@@ -34,8 +34,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class AutomationPackageDescriptorReaderTest {
 
@@ -100,7 +104,7 @@ public class AutomationPackageDescriptorReaderTest {
             assertEquals("*/5 * * * *", firstTask.getCron());
             assertEquals("TEST", firstTask.getExecutionParameters().get("environment"));
 
-            assertEquals(Arrays.asList("importPlans.yml", "importKeywords.yml"), descriptor.getFragments());
+            assertEquals(Arrays.asList("importPlans.yml", "importKeywords.yml"), descriptor.getFragments().stream().map(f -> f.getValue()).collect(Collectors.toUnmodifiableList()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

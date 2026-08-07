@@ -67,7 +67,7 @@ public class AutomationPackagePlansAttributesApplier {
 
     protected StagingAutomationPackageContext prepareContext(AutomationPackage automationPackage, AutomationPackageOperationMode operationMode, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent,
                                                              String actorUser, ObjectEnricher enricher, Map<String, Object> extensions) {
-        return new StagingAutomationPackageContext(automationPackage, operationMode, resourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
+        return new StagingAutomationPackageContext(new AutomationPackageResourceUploader(), automationPackage, operationMode, resourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
     }
 
     private void applySpecialValuesForArtifact(AbstractArtefact artifact, StagingAutomationPackageContext apContext) {

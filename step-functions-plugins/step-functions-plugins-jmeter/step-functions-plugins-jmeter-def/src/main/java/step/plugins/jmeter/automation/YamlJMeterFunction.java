@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.jmeter.automation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import step.automation.packages.AutomationPackageResourceUploader;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
@@ -28,6 +29,7 @@ import step.plugins.jmeter.JMeterFunction;
 import step.resources.ResourceManager;
 
 @YamlModel(name = "JMeter")
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlJMeterFunction extends AbstractYamlFunction<JMeterFunction> {
 
     @YamlFieldCustomCopy
@@ -44,7 +46,7 @@ public class YamlJMeterFunction extends AbstractYamlFunction<JMeterFunction> {
     @Override
     protected void fillDeclaredFields(JMeterFunction function, StagingAutomationPackageContext context) {
         super.fillDeclaredFields(function, context);
-        AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
+        AutomationPackageResourceUploader resourceUploader = context.getResourceUploader();
 
         String testplanPath = jmeterTestplan.get();
         String testPlanRef = resourceUploader.applyResourceReference(testplanPath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);

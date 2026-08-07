@@ -18,26 +18,52 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
+import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
+import step.core.accessors.AbstractOrganizableObject;
+import step.core.yaml.PatchableYamlModel;
+import step.core.yaml.PatchingContext;
+import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchableYamlPrimitive;
 import step.plans.automation.YamlPlainTextPlan;
 import step.plans.parser.yaml.YamlPlan;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
 public interface AutomationPackageFragmentYaml {
 
-    List<YamlAutomationPackageKeyword> getKeywords();
+    PatchableYamlList<YamlAutomationPackageKeyword> getKeywords();
 
-    List<YamlPlan> getPlans();
+    PatchableYamlList<YamlPlan> getPlans();
 
     List<YamlPlainTextPlan> getPlansPlainText();
 
-    List<String> getFragments();
+    PatchableYamlList<PatchableYamlPrimitive<String>> getFragments();
 
-    Map<String, List<?>> getAdditionalFields();
+    Map<String, PatchableYamlList<?>> getAdditionalFields();
 
-    default <T> List<T> getAdditionalField(String k) {
-        return (List<T>) getAdditionalFields().get(k);
+    default <T> PatchableYamlList<T> getAdditionalField(String k) {
+        return (PatchableYamlList<T>) getAdditionalFields().get(k);
     }
+
+    void setAdditionalFields(String key, PatchableYamlList<?> value) throws IOException;
+
+    Path getFragmentPath();
+
+    void setFragmentPath(Path url);
+
+    PatchingContext getPatchingContext();
+
+    void setPatchingContext(PatchingContext context);
+
+    void writeToDisk();
+
+    boolean isEmpty();
+
+    <YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> void initializeMaps(YamlToBusinessObjectMapper<YO, BO> mapper, Map<AbstractOrganizableObject, PatchableYamlModel> patchableMap, Map<AbstractOrganizableObject, AutomationPackageFragmentYaml> fragmentMap);
+
+    <YO extends PatchableYamlModel> PatchableYamlList<YO> getListForYamlObject(String collectionName);
 }
