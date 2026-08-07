@@ -33,7 +33,7 @@ public class LocalIDE {
         LocalIDEState.get().addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
         configuration.putProperty("resources.dir", resourcesDirectory.toString());
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
-        configuration.putProperty("ui.resource.root", "dist/step-ide");
+        configuration.putProperty("ui.resource.root", LocalIDEState.getIdeResourcePath());
         applyEnvOverride(configuration, "JMETER_HOME", "plugins.jmeter.home");
         applyEnvOverride(configuration, IDEAiConfiguration.ENV_AGENT_PACKAGE, IDEAiConfiguration.PROP_AGENT_PACKAGE);
         applyEnvOverride(configuration, IDEAiConfiguration.ENV_AGENT_PLAN, IDEAiConfiguration.PROP_AGENT_PLAN);
