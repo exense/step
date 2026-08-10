@@ -154,15 +154,18 @@ public class FileResolver {
      * {@code String.replace}: {@link #extractResourceSubPath(String)} strips the {@code resource:}
      * prefix with a <i>global</i> {@code replace}, which would corrupt any occurrence of the prefix
      * inside the path itself. Parsing by index avoids that trap.
+     *
+     * @throws IllegalArgumentException if {@code path} is not a well formed {@code apResource:}
+     *                                  reference
      */
     private static String[] apResourceSeparatorSplit(String path) {
         if (!isApResource(path)) {
-            throw new RuntimeException("Not an apResource reference: " + path);
+            throw new IllegalArgumentException("Not an apResource reference: " + path);
         }
         String remainder = path.substring(AP_RESOURCE_PREFIX.length());
         int separator = remainder.indexOf(RESOURCE_PATH_SEPARATOR);
         if (separator < 0) {
-            throw new RuntimeException("Invalid apResource reference (missing relative path): " + path);
+            throw new IllegalArgumentException("Invalid apResource reference (missing relative path): " + path);
         }
         return new String[]{remainder.substring(0, separator), remainder.substring(separator + 1)};
     }
@@ -172,6 +175,9 @@ public class FileResolver {
      * and {@code /}, collapses {@code .}/{@code ..} segments) and rejects any path that escapes its
      * root. Used both to look the entry up in the archive and to build the on-disk cache target, so
      * a {@code ..} traversal cannot reach outside {@code <cacheRoot>/<apId>/}.
+     * @throws IllegalArgumentException if the path is empty or escapes the archive root. Note that a
+     *                                  path the file system itself cannot represent surfaces as an
+     *                                  {@code InvalidPathException}, which is one too
      */
     public static String normalizeApRelativePath(String relativePath) {
         String slashed = relativePath.replace('\\', '/');
@@ -183,7 +189,7 @@ public class FileResolver {
         }
         Path normalized = Path.of(slashed).normalize();
         if (normalized.isAbsolute() || normalized.startsWith("..") || normalized.toString().isEmpty()) {
-            throw new RuntimeException("Illegal apResource relative path (escapes the archive root): " + relativePath);
+            throw new IllegalArgumentException("Illegal apResource relative path (escapes the archive root): " + relativePath);
         }
         return normalized.toString().replace('\\', '/');
     }

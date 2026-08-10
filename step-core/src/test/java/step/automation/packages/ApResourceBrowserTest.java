@@ -190,7 +190,7 @@ public class ApResourceBrowserTest {
         }
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void browseRejectsTraversalEscape() {
         ApResourceBrowser.browse(archiveZip, "../escape", AP_A);
     }
@@ -235,7 +235,7 @@ public class ApResourceBrowserTest {
         }
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void openEntryRejectsTraversalEscape() {
         ApResourceBrowser.openEntry(archiveZip, "../escape.txt");
     }

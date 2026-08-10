@@ -1003,7 +1003,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
             }
             try {
                 return new ApResourceTarget(FileResolver.extractApId(reference), FileResolver.extractApRelativePath(reference));
-            } catch (RuntimeException e) {
+            } catch (IllegalArgumentException e) {
                 throw badRequest(e.getMessage());
             }
         }
@@ -1045,7 +1045,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
     private String normalizeApRelativePath(String relativePath) {
         try {
             return FileResolver.normalizeApRelativePath(relativePath);
-        } catch (RuntimeException e) {
+        } catch (IllegalArgumentException e) {
             throw badRequest(e.getMessage());
         }
     }

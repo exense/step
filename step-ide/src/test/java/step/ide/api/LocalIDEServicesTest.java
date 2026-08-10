@@ -100,6 +100,18 @@ public class LocalIDEServicesTest {
         assertStatus(404, () -> LocalIDEServices.browse(apDirectory, "data/missing.csv", false, false));
     }
 
+    /**
+     * A traversal is a malformed request, not a server error: it used to escape both catch clauses as a
+     * bare {@code RuntimeException} and surface as a 500. The controller endpoints
+     * ({@code /automation-packages/ap-resources/browse} and {@code /content}) map the very same
+     * exceptions the very same way, so this pins the behaviour of both.
+     */
+    @Test
+    public void reportsATraversalPathAsABadRequest() {
+        assertStatus(400, () -> LocalIDEServices.browse(apDirectory, "../secret", false, false));
+        assertStatus(400, () -> LocalIDEServices.content(apDirectory, "../secret", false));
+    }
+
     @Test
     public void servesTheContentOfAFile() throws Exception {
         Response response = LocalIDEServices.content(apDirectory, "data/pool.csv", false);

@@ -132,7 +132,7 @@ public class ApResourceBrowser {
      * @param filter                   which kind of entry to retain
      * @throws ApResourceNotFoundException if the archive itself, or {@code relativePath} in it, cannot
      *                                     be found
-     * @throws RuntimeException            if {@code relativePath} escapes the archive root
+     * @throws IllegalArgumentException    if {@code relativePath} escapes the archive root
      */
     public static DirectoryListing browse(File archiveFile, String relativePath,
                                           Function<String, String> resourceReferenceBuilder,
@@ -165,8 +165,8 @@ public class ApResourceBrowser {
      * @param relativePath the archive-root relative path of the entry
      * @throws ApResourceNotFoundException if the archive or the entry cannot be found
      * @throws IllegalArgumentException    if the entry is a directory - directories have no content to
-     *                                     stream, use {@link #browse(File, String, Function)} instead
-     * @throws RuntimeException            if {@code relativePath} is empty or escapes the archive root
+     *                                     stream, use {@link #browse(File, String, Function)} instead -
+     *                                     or if {@code relativePath} is empty or escapes the archive root
      */
     public static ApResourceStream openEntry(File archiveFile, String relativePath) {
         Objects.requireNonNull(archiveFile, "archiveFile must not be null");

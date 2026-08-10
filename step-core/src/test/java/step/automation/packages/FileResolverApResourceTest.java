@@ -69,7 +69,7 @@ public class FileResolverApResourceTest {
         assertEquals("dir/apResource:literal.txt", FileResolver.extractApRelativePath(ref));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void rejectsReferenceWithoutRelativePath() {
         FileResolver.extractApRelativePath("apResource:abc");
     }
@@ -83,11 +83,17 @@ public class FileResolverApResourceTest {
         assertEquals("kw.groovy", FileResolver.normalizeApRelativePath("scripts/../kw.groovy"));
     }
 
+    /**
+     * The exception type is part of the contract, not an implementation detail: the services exposing
+     * the apResource endpoints map {@link IllegalArgumentException} to a 400. A bare
+     * {@code RuntimeException} would fall through their catch clauses and be reported as a 500.
+     */
     @Test
     public void rejectsTraversalEscape() {
-        assertThrowsRuntime(() -> FileResolver.normalizeApRelativePath("../secret"));
-        assertThrowsRuntime(() -> FileResolver.normalizeApRelativePath("scripts/../../secret"));
-        assertThrowsRuntime(() -> FileResolver.normalizeApRelativePath("a/b/../../../c"));
+        assertThrowsIllegalArgument(() -> FileResolver.normalizeApRelativePath("../secret"));
+        assertThrowsIllegalArgument(() -> FileResolver.normalizeApRelativePath("scripts/../../secret"));
+        assertThrowsIllegalArgument(() -> FileResolver.normalizeApRelativePath("a/b/../../../c"));
+        assertThrowsIllegalArgument(() -> FileResolver.normalizeApRelativePath(""));
     }
 
     @Test
@@ -119,6 +125,15 @@ public class FileResolverApResourceTest {
             r.run();
             fail("Expected a RuntimeException");
         } catch (RuntimeException expected) {
+            // ok
+        }
+    }
+
+    private static void assertThrowsIllegalArgument(Runnable r) {
+        try {
+            r.run();
+            fail("Expected an IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
             // ok
         }
     }
