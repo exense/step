@@ -54,6 +54,12 @@
       <artifactId>step-automation-packages-collections</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <!-- for ApResourceContentResponse, shared with the controller side of the AP resource browser -->
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-automation-packages-controller</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

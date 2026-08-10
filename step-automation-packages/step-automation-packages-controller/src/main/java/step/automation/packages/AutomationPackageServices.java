@@ -943,7 +943,7 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         }
         File archiveFile = getAutomationPackageArchiveFile(target.apId());
         ApResourceBrowser.ApResourceStream stream = openApResource(target, archiveFile);
-        return getResponseForApResourceStream(stream, inline);
+        return ApResourceContentResponse.of(stream, inline);
     }
 
     /**
@@ -1021,26 +1021,6 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         } catch (IllegalArgumentException e) {
             throw badRequest(e.getMessage());
         }
-    }
-
-    private Response getResponseForApResourceStream(ApResourceBrowser.ApResourceStream apResource, boolean inline) {
-        StreamingOutput fileStream = output -> {
-            try (ApResourceBrowser.ApResourceStream stream = apResource) {
-                FileHelper.copy(stream.getInputStream(), output, 2048);
-            }
-        };
-        String contentDisposition = inline ? "inline" : "attachment";
-        return Response.ok(fileStream, getMimeType(apResource.getName()))
-            .header("content-disposition", String.format(contentDisposition + "; filename=\"%s\"", apResource.getName()))
-            .build();
-    }
-
-    private static String getMimeType(String fileName) {
-        String mimeType = URLConnection.guessContentTypeFromName(fileName);
-        if (mimeType == null) {
-            mimeType = fileName.endsWith(".log") ? "text/plain; charset=utf-8" : MediaType.APPLICATION_OCTET_STREAM;
-        }
-        return mimeType;
     }
 
     /**
