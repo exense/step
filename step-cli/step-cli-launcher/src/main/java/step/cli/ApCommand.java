@@ -8,12 +8,15 @@ import step.automation.packages.AutomationPackageReadingException;
 import step.cli.apignore.ApIgnoreFileFilter;
 import step.cli.parameters.ApDeployParameters;
 import step.cli.parameters.ApExecuteParameters;
+import step.cli.local.LocalAgentProvisioningConfiguration;
 import step.core.Constants;
 import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
@@ -215,6 +218,41 @@ public class ApCommand implements Callable<Integer> {
         @CommandLine.Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
         protected Map<String, String> executionParameters;
 
+        // Local execution only. Like every option, these can also be set in ~/stepcli.properties or in a file passed
+        // with --config, which is the only practical way to configure the Windows executable.
+
+        @CommandLine.Option(names = {"--localAgentJava"}, paramLabel = "<Path>",
+            description = "Local execution only. The directory of an installed Step Java agent to use instead of the one embedded in the CLI.")
+        protected Path localAgentJava;
+
+        @CommandLine.Option(names = {"--localAgentNode"}, paramLabel = "<Path>",
+            description = "Local execution only. The directory of an installed Step Node.js agent to use instead of installing it with npm. Either the step-node-agent package itself or a directory containing it in node_modules.")
+        protected Path localAgentNode;
+
+        @CommandLine.Option(names = {"--localAgentNodeVersion"}, paramLabel = "<Version>",
+            description = "Local execution only. The version of the step-node-agent npm package to install. Defaults to the version of this CLI.")
+        protected String localAgentNodeVersion;
+
+        @CommandLine.Option(names = {"--localAgentWorkDir"}, paramLabel = "<Path>",
+            description = "Local execution only. The directory the local agents are installed and run in. Defaults to a folder in the system temporary directory.")
+        protected Path localAgentWorkDir;
+
+        @CommandLine.Option(names = {"--localAgentTokens"}, paramLabel = "<Count>",
+            description = "Local execution only. The number of keywords a local agent can run in parallel.",
+            showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+            defaultValue = "" + LocalAgentProvisioningConfiguration.DEFAULT_TOKENS_PER_AGENT)
+        protected Integer localAgentTokens;
+
+        @CommandLine.Option(names = {"--localAgentStartTimeout"}, paramLabel = "<Seconds>",
+            description = "Local execution only. How long to wait for a local agent to start and connect.",
+            showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+            defaultValue = "" + LocalAgentProvisioningConfiguration.DEFAULT_START_TIMEOUT_SECONDS)
+        protected Integer localAgentStartTimeout;
+
+        @CommandLine.Option(names = {"--localAgentVmArgs"}, paramLabel = "<Args>",
+            description = "Local execution only. Additional JVM arguments for the local Java agent, for instance to attach a debugger to a keyword.")
+        protected String localAgentVmArgs;
+
         @Override
         public Integer call() throws Exception {
             super.call();
@@ -273,12 +311,33 @@ public class ApCommand implements Callable<Integer> {
                 packageLibraryFile = preparePackageLibraryFile(library);
             }
 
-            executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
+            executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories,
+                executionParameters, buildLocalAgentConfiguration());
+        }
+
+        protected LocalAgentProvisioningConfiguration buildLocalAgentConfiguration() {
+            LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration()
+                .setJavaAgentPath(localAgentJava)
+                .setNodeAgentPath(localAgentNode)
+                .setWorkDirectory(localAgentWorkDir)
+                .setJavaAgentVmArgs(localAgentVmArgs);
+            if (localAgentNodeVersion != null && !localAgentNodeVersion.isBlank()) {
+                configuration.setNodeAgentVersion(localAgentNodeVersion);
+            }
+            if (localAgentTokens != null) {
+                configuration.setTokensPerAgent(localAgentTokens);
+            }
+            if (localAgentStartTimeout != null) {
+                configuration.setAgentStartTimeout(Duration.ofSeconds(localAgentStartTimeout));
+            }
+            return configuration;
         }
 
         protected void executeLocally(File file, File libFile, String includePlans, String excludePlans, String includeCategories,
-                                      String excludeCategories, Map<String, String> executionParameters) {
-            new ApLocalExecuteCommandHandler().execute(file, libFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
+                                      String excludeCategories, Map<String, String> executionParameters,
+                                      LocalAgentProvisioningConfiguration localAgentConfiguration) {
+            new ApLocalExecuteCommandHandler().execute(file, libFile, includePlans, excludePlans, includeCategories,
+                excludeCategories, executionParameters, localAgentConfiguration);
         }
 
         public void checkStepUrlRequired() {

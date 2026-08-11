@@ -26,14 +26,14 @@ import step.automation.packages.junit.AbstractLocalPlanRunner;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
 import step.automation.packages.library.NoAutomationPackageLibraryProvider;
+import step.cli.local.LocalAgentProvisioningConfiguration;
+import step.cli.local.LocalAgentProvisioningPlugin;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
-import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 import step.core.plans.runner.PlanRunnerResult;
-import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.junit.runner.StepClassParserResult;
 
 import java.io.*;
@@ -50,13 +50,14 @@ public class ApLocalExecuteCommandHandler {
     private static final Logger log = LoggerFactory.getLogger(ApLocalExecuteCommandHandler.class);
 
     public void execute(File apFile, File libFile, String includePlans, String excludePlans, String includeCategories,
-                        String excludeCategories, Map<String, String> executionParameters) throws StepCliExecutionException {
-        try (ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
-            @Override
-            public void afterExecutionEnd(ExecutionContext context) {
-                super.afterExecutionEnd(context);
-            }
-        }).withPluginsFromClasspath().build()) {
+                        String excludeCategories, Map<String, String> executionParameters,
+                        LocalAgentProvisioningConfiguration localAgentConfiguration) throws StepCliExecutionException {
+        // The keywords run on real agents started as separate processes on this machine, so that a local execution
+        // exercises the same agents and the same class loader isolation as an execution on a Step platform, and
+        // supports every keyword language rather than only the Java ones.
+        try (ExecutionEngine executionEngine = ExecutionEngine.builder()
+            .withPlugin(new LocalAgentProvisioningPlugin(localAgentConfiguration))
+            .withPluginsFromClasspath().build()) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
             InputStream libFileInputStream = null;
