@@ -31,6 +31,7 @@ import step.cli.local.LocalAgentProvisioningPlugin;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.Artefact;
 import step.core.execution.ExecutionEngine;
+import step.core.execution.OperationMode;
 import step.core.plans.Plan;
 import step.core.plans.PlanFilter;
 import step.core.plans.runner.PlanRunnerResult;
@@ -56,6 +57,7 @@ public class ApLocalExecuteCommandHandler {
         // exercises the same agents and the same class loader isolation as an execution on a Step platform, and
         // supports every keyword language rather than only the Java ones.
         try (ExecutionEngine executionEngine = ExecutionEngine.builder()
+            .withOperationMode(OperationMode.LOCAL_AUTOMATION_PACKAGE_WITH_AGENTS)
             .withPlugin(new LocalAgentProvisioningPlugin(localAgentConfiguration))
             .withPluginsFromClasspath().build()) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
@@ -85,6 +87,7 @@ public class ApLocalExecuteCommandHandler {
 
                 log.info("The following plans will be executed: {}", listPlans.stream().map(StepClassParserResult::getName).collect(Collectors.toList()));
 
+                List<String> failedPlans = new ArrayList<>();
                 for (StepClassParserResult parserResult : listPlans) {
                     new AbstractLocalPlanRunner(parserResult, executionEngine) {
                         @Override
@@ -103,16 +106,19 @@ public class ApLocalExecuteCommandHandler {
                             }
                             detailMessage += "Execution tree is: " + executionTree;
                             log.error(detailMessage);
+                            failedPlans.add(parserResult.getName());
                         }
 
                         @Override
                         protected void onInitializingException(Exception exception) {
                             log.error("Execution initialization exception for plan {}.", parserResult.getName(), exception);
+                            failedPlans.add(parserResult.getName());
                         }
 
                         @Override
                         protected void onExecutionException(Exception exception) {
                             log.error("Execution exception for plan {}", parserResult.getName(), exception);
+                            failedPlans.add(parserResult.getName());
                         }
 
                         @Override
@@ -125,6 +131,14 @@ public class ApLocalExecuteCommandHandler {
                             return executionParameters;
                         }
                     }.runPlan();
+                }
+
+                // The details of each failure have been logged above. Reporting them here as well is what makes the
+                // command exit with an error: a local execution used in a pipeline has to fail the build when a plan
+                // fails, exactly like the remote one does.
+                if (!failedPlans.isEmpty()) {
+                    throw new StepCliExecutionException(failedPlans.size() + "/" + listPlans.size()
+                        + " plan(s) failed: " + failedPlans);
                 }
             } catch (FileNotFoundException e) {
                 throw new StepCliExecutionException("File not found: " + apFile.getAbsolutePath(), e);

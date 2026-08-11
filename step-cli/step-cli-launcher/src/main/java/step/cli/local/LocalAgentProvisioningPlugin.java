@@ -36,6 +36,7 @@ import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.engine.plugins.FunctionPlugin;
 import step.grid.Grid;
 import step.grid.client.GridClient;
 import step.grid.tokenpool.Interest;
@@ -59,7 +60,10 @@ import static step.core.plans.agents.configuration.AutomaticAgentProvisioningCon
  * It is deliberately <b>not</b> auto-discovered: the JUnit runner, where
  * running keywords in the same JVM is a feature rather than a limitation, must keep the in-JVM path.
  */
-@Plugin
+// Runs before FunctionPlugin, which builds the function execution service around whichever grid client it finds in
+// the context: the grid of the local agents has to be published before that. FunctionPlugin knows nothing about this
+// plugin, hence runsBefore rather than a dependency declared on its side.
+@Plugin(runsBefore = {FunctionPlugin.class})
 @IgnoreDuringAutoDiscovery
 public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin {
 

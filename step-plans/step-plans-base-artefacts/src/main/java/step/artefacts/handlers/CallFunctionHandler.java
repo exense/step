@@ -86,7 +86,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
-import static step.core.execution.OperationMode.isLocal;
+import static step.core.execution.OperationMode.runsKeywordsInProcess;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -222,8 +222,11 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
                 boolean closeFunctionGroupSessionAfterExecution = (functionGroupContext == null);
                 FunctionGroupSession functionGroupSession = getOrCreateFunctionGroupSession(functionExecutionService, functionGroupContext);
 
-                // Force local token selection for local plan executions
-                boolean forceLocalToken = isLocal(context.getOperationMode());
+                // Force local token selection for the local plan executions which run their keywords in this JVM.
+                // A local execution which provisions real agents, as the CLI does, must not: its keywords are routed
+                // to an agent exactly like on a controller, which is the only way to run a keyword of a language that
+                // has no in-JVM handler, Node.js and .NET being the obvious ones.
+                boolean forceLocalToken = runsKeywordsInProcess(context.getOperationMode());
                 TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
                 StreamingResourceUploadContext streamingUploadContext = null;

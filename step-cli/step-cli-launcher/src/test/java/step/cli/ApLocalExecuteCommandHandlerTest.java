@@ -34,9 +34,10 @@ import java.util.Map;
  * manager, extracts the Java agent embedded in its own jar, starts it as a separate process and runs the plans of the
  * package on it.
  * <p>
- * This is a smoke test of the whole path rather than an assertion on the plan results: the handler reports a failing
- * plan by logging it, not by throwing, so what is checked here is that deploying the package, provisioning the agent
- * and running every plan on it completes without error.
+ * The handler throws when a plan fails, so running to completion means every plan of the package passed. It does not
+ * mean the keywords ran on the agent though: a Java keyword runs just as happily on a local token in the CLI's own
+ * JVM, which is what silently happened until the routing was fixed. {@link NodeLocalExecutionTest} is the test that
+ * pins the routing down, Node.js having no in-JVM handler at all.
  */
 public class ApLocalExecuteCommandHandlerTest {
 
@@ -53,9 +54,6 @@ public class ApLocalExecuteCommandHandlerTest {
         new ApLocalExecuteCommandHandler()
             .execute(automationPackage, null, null, null, null, null, Map.of(), configuration);
 
-        // The handler logs plan failures instead of throwing, so completing without an exception proves very little
-        // on its own. The extracted agent is the evidence that the sample's Java keyword really was provisioned onto
-        // a forked agent, rather than the whole local execution having silently degraded to "no agent available".
         Assert.assertTrue("The Java agent should have been extracted and started",
             Files.isRegularFile(workDirectory.getRoot().toPath()
                 .resolve("agents").resolve("java").resolve(Constants.STEP_VERSION_STRING).resolve("step-agent.jar")));

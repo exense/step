@@ -39,6 +39,8 @@ import step.grid.Grid;
 import step.grid.client.GridClient;
 import step.grid.client.MockedGridClientImpl;
 
+import java.util.Objects;
+
 @Plugin(dependencies = {})
 public class FunctionPlugin extends AbstractExecutionEnginePlugin {
 
@@ -52,10 +54,12 @@ public class FunctionPlugin extends AbstractExecutionEnginePlugin {
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
         FileResolver fileResolver = context.getFileResolver();
 
-        gridClient = context.inheritFromParentOrComputeIfAbsent(parentContext, GridClient.class, k -> new MockedGridClientImpl());
-        if (parentContext != null) {
-            grid = parentContext.get(Grid.class);
-        }
+        // A plugin initialized before this one may have provided a grid of its own: the CLI does, for the agents it
+        // starts on the developer machine. Since inheritFromParentOrComputeIfAbsent looks at the parent context
+        // alone, such a client is only kept by falling back to it instead of to the mocked one.
+        gridClient = context.inheritFromParentOrComputeIfAbsent(parentContext, GridClient.class,
+            k -> Objects.requireNonNullElseGet(context.get(GridClient.class), MockedGridClientImpl::new));
+        grid = parentContext != null ? parentContext.get(Grid.class) : context.get(Grid.class);
 
         ObjectHookRegistry objectHookRegistry = context.inheritFromParentOrComputeIfAbsent(parentContext, ObjectHookRegistry.class, k -> new ObjectHookRegistry());
         functionAccessor = context.inheritFromParentOrComputeIfAbsent(parentContext, FunctionAccessor.class, k -> new InMemoryFunctionAccessorImpl());

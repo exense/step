@@ -24,15 +24,39 @@ public enum OperationMode {
 
     LOCAL, //Used for our Junit tests, LocalPlanRunner
 
-    LOCAL_AUTOMATION_PACKAGE; //Used for Local AP execution (external class loader)
+    LOCAL_AUTOMATION_PACKAGE, //Used for Local AP execution (external class loader)
+
+    LOCAL_AUTOMATION_PACKAGE_WITH_AGENTS; //Used for the CLI, which runs the keywords on agents forked on this machine
 
     /**
      * Returns {@code true} for any local execution mode, regardless of which classloader
      * strategy is used. Use this wherever the distinction between {@link #LOCAL} and
-     * {@link #LOCAL_AUTOMATION_PACKAGE} does not matter (e.g. forcing local token
-     * selection, skipping controller-only setup).
+     * {@link #LOCAL_AUTOMATION_PACKAGE} does not matter (e.g. skipping controller-only setup).
      */
     public static boolean isLocal(OperationMode operationMode) {
-        return (operationMode == LOCAL || operationMode == LOCAL_AUTOMATION_PACKAGE);
+        return operationMode == LOCAL || operationMode == LOCAL_AUTOMATION_PACKAGE
+            || operationMode == LOCAL_AUTOMATION_PACKAGE_WITH_AGENTS;
+    }
+
+    /**
+     * Returns {@code true} when the plans come from an automation package, which is then responsible for providing
+     * the keywords. Local executions which are not driven by an automation package instead take their keywords from
+     * the annotated classes found on the class path.
+     */
+    public static boolean isLocalAutomationPackage(OperationMode operationMode) {
+        return operationMode == LOCAL_AUTOMATION_PACKAGE || operationMode == LOCAL_AUTOMATION_PACKAGE_WITH_AGENTS;
+    }
+
+    /**
+     * Returns {@code true} when the keywords of the execution run in the JVM of the execution engine, on a local
+     * token, rather than on an agent.
+     * <p>
+     * This is the case for every local mode but {@link #LOCAL_AUTOMATION_PACKAGE_WITH_AGENTS}, where real agents are
+     * started on the machine and the keywords are routed to them exactly like on a controller. Running in the JVM is
+     * a feature of the JUnit runners, where the keywords under test are the ones of the project being built; it is a
+     * limitation everywhere else, as only Java keywords have an in-JVM handler.
+     */
+    public static boolean runsKeywordsInProcess(OperationMode operationMode) {
+        return operationMode == LOCAL || operationMode == LOCAL_AUTOMATION_PACKAGE;
     }
 }
