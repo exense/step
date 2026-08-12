@@ -33,20 +33,9 @@ public class GroovyPoolFactory implements KeyedPooledObjectFactory<GroovyPoolKey
     private static final Logger logger = LoggerFactory.getLogger(GroovyPoolFactory.class);
 
     private final CompilerConfiguration groovyCompilerConfiguration = new CompilerConfiguration();
-    private final GroovyClassLoader parentClassLoader;
-
 
     public GroovyPoolFactory(String scriptBaseClass) {
         super();
-
-        /*
-         Current groovy versions (5.0.x) have a bug where using a script base class triggers a class-loading loop
-         because the configuration basically says that every class must unconditionally extend that base class.
-         Meaning that when the base class is loaded, it will in turn attempt to load the base class first, etc.
-         The solution is simple: Have a classloader that can look up that base class "normally" without any
-         recursion trap, and give it to the shell as the parent for lookups. This breaks the recursion loop.
-         */
-        this.parentClassLoader = new GroovyClassLoader(Thread.currentThread().getContextClassLoader());
 
         if (scriptBaseClass != null) {
             groovyCompilerConfiguration.setScriptBaseClass(scriptBaseClass);
@@ -57,7 +46,18 @@ public class GroovyPoolFactory implements KeyedPooledObjectFactory<GroovyPoolKey
     public PooledObject<GroovyPoolEntry> makeObject(GroovyPoolKey groovyPoolKey) throws Exception {
         logger.debug("Creating new script: " + groovyPoolKey.getScript());
 
-        GroovyShell shell = new GroovyShell(parentClassLoader, groovyCompilerConfiguration);
+        final GroovyShell shell;
+        if (groovyCompilerConfiguration.getScriptBaseClass() != null) {
+            // Workaround for groovy quirk when base class is set:
+            // Introduce a separate class loader ONLY for resolving the base class. If we don't, the compiler
+            // configuration will cause the definition of the base class itself to ALSO extend the base class again,
+            // leading to recursive load/compile attempts that block the initialization for ~20-30 seconds.
+            var baseClassLoader = new GroovyClassLoader(Thread.currentThread().getContextClassLoader());
+            shell = new GroovyShell(baseClassLoader, groovyCompilerConfiguration);
+        } else {
+            shell = new GroovyShell(groovyCompilerConfiguration);
+        }
+
         Script script = shell.parse(groovyPoolKey.getScript());
 
         GroovyPoolEntry result = new GroovyPoolEntry(groovyPoolKey, script);
