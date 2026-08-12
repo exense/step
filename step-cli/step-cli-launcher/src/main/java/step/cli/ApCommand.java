@@ -320,7 +320,10 @@ public class ApCommand implements Callable<Integer> {
                 .setJavaAgentPath(localAgentJava)
                 .setNodeAgentPath(localAgentNode)
                 .setWorkDirectory(localAgentWorkDir)
-                .setJavaAgentVmArgs(localAgentVmArgs);
+                .setJavaAgentVmArgs(localAgentVmArgs)
+                // Verbose prints what the agents log, debug additionally raises the level they log at
+                .setVerbose(verbose)
+                .setDebug(debug);
             if (localAgentNodeVersion != null && !localAgentNodeVersion.isBlank()) {
                 configuration.setNodeAgentVersion(localAgentNodeVersion);
             }

@@ -55,13 +55,20 @@ public class LocalAgentProcess {
     private final String name;
     private final Process process;
     private final Path workingDirectory;
+    private final boolean printOutput;
     private final Deque<String> lastOutputLines = new ArrayDeque<>();
     private final CompletableFuture<Void> outputPump;
 
-    public LocalAgentProcess(String name, Process process, Path workingDirectory) {
+    /**
+     * @param printOutput whether to print what the agent logs. The output is always read — an agent whose output is
+     *                    not consumed eventually blocks on a full pipe, and the last lines explain a start failure —
+     *                    but printing it is reserved for the verbose mode.
+     */
+    public LocalAgentProcess(String name, Process process, Path workingDirectory, boolean printOutput) {
         this.name = Objects.requireNonNull(name, "name must not be null");
         this.process = Objects.requireNonNull(process, "process must not be null");
         this.workingDirectory = Objects.requireNonNull(workingDirectory, "workingDirectory must not be null");
+        this.printOutput = printOutput;
         this.outputPump = startOutputPump();
     }
 
@@ -70,7 +77,11 @@ public class LocalAgentProcess {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    logger.debug("{} -- {}", name, line);
+                    if (printOutput) {
+                        logger.info("{} -- {}", name, line);
+                    } else {
+                        logger.debug("{} -- {}", name, line);
+                    }
                     synchronized (lastOutputLines) {
                         lastOutputLines.addLast(line);
                         if (lastOutputLines.size() > RETAINED_OUTPUT_LINES) {

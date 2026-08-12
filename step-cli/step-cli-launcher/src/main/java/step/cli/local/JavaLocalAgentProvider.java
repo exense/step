@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -56,6 +57,7 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
     private static final Logger logger = LoggerFactory.getLogger(JavaLocalAgentProvider.class);
     private static final String AGENT_MAIN_CLASS = "step.grid.agent.AgentRunner";
     private static final String AGENT_CONF_FILE_NAME = "AgentConf.yaml";
+    private static final String LOGBACK_CONF_FILE_NAME = "logback-local-agent.xml";
     /** The agent bundle embedded in the CLI jar. Kept in sync by the build, see the launcher's pom. */
     static final String EMBEDDED_AGENT_RESOURCE = "step-local-java-agent.jar";
     private static final String INSTALLED_AGENT_NAME = "java";
@@ -107,6 +109,8 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
 
         List<String> command = new ArrayList<>();
         command.add(currentJavaExecutable());
+        command.add("-Dlogback.configurationFile=" + writeLogbackConfiguration(runDirectory).toAbsolutePath());
+        command.add("-Dstep.localAgent.logLevel=" + (configuration.isDebug() ? "debug" : "info"));
         command.addAll(vmArgs());
         command.add("-cp");
         command.add(String.join(File.pathSeparator, classpath));
@@ -124,7 +128,25 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
         } catch (IOException e) {
             throw new LocalAgentException("Error while starting the local Java agent", e);
         }
-        return new LocalAgentProcess("Local " + getDisplayName() + " agent", process, runDirectory);
+        return new LocalAgentProcess("Local " + getDisplayName() + " agent", process, runDirectory,
+            configuration.isVerbose());
+    }
+
+    /**
+     * Gives the agent a logging configuration of its own, writing to the console the CLI reads. Without one, logback
+     * falls back to its default, which prints every DEBUG statement of every library the agent contains.
+     */
+    private Path writeLogbackConfiguration(Path runDirectory) throws LocalAgentException {
+        Path logbackConfiguration = runDirectory.resolve(LOGBACK_CONF_FILE_NAME);
+        try (InputStream template = JavaLocalAgentProvider.class.getClassLoader().getResourceAsStream(LOGBACK_CONF_FILE_NAME)) {
+            if (template == null) {
+                throw new LocalAgentException("The logging configuration of the local agents is missing from the CLI");
+            }
+            Files.copy(template, logbackConfiguration, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new LocalAgentException("Error while writing the logging configuration of the local Java agent", e);
+        }
+        return logbackConfiguration;
     }
 
     /**
@@ -152,7 +174,11 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
     private Path extractEmbeddedAgent() throws LocalAgentException {
         Path installedDirectory = workspace.getInstalledAgentDirectory(INSTALLED_AGENT_NAME, Constants.STEP_VERSION_STRING);
         Path agentJar = installedDirectory.resolve(INSTALLED_AGENT_JAR_NAME);
-        if (Files.isRegularFile(agentJar)) {
+        // The directory is named after the version, which does not change between two builds of the same one. An
+        // extracted agent is therefore only reused when it is also the same size as the embedded one, otherwise
+        // every CLI rebuilt during development would go on running the agent of the first build, for ever.
+        long embeddedSize = embeddedAgentSize();
+        if (Files.isRegularFile(agentJar) && sizeOf(agentJar) == embeddedSize) {
             logger.debug("Using the Java agent already extracted in {}", installedDirectory);
             return agentJar;
         }
@@ -177,6 +203,32 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
             throw new LocalAgentException("Error while extracting the Java agent to " + installedDirectory, e);
         }
         return agentJar;
+    }
+
+    /**
+     * @return the size of the agent embedded in this CLI, or -1 when it cannot be determined. Read from the jar
+     * index rather than by reading the 20 MB of the agent itself.
+     */
+    private static long embeddedAgentSize() {
+        URL resource = JavaLocalAgentProvider.class.getClassLoader().getResource(EMBEDDED_AGENT_RESOURCE);
+        if (resource == null) {
+            return -1;
+        }
+        try {
+            return resource.openConnection().getContentLengthLong();
+        } catch (IOException e) {
+            logger.debug("Unable to determine the size of the embedded Java agent", e);
+            return -1;
+        }
+    }
+
+    private static long sizeOf(Path file) {
+        try {
+            return Files.size(file);
+        } catch (IOException e) {
+            logger.debug("Unable to determine the size of {}", file, e);
+            return -1;
+        }
     }
 
     private static boolean containsAtLeastOneJar(Path libDirectory) {

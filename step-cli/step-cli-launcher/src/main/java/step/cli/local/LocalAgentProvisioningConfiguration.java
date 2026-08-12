@@ -46,6 +46,8 @@ public class LocalAgentProvisioningConfiguration {
     private Duration agentStartTimeout = Duration.ofSeconds(DEFAULT_START_TIMEOUT_SECONDS);
     private Duration agentShutdownTimeout = DEFAULT_SHUTDOWN_TIMEOUT;
     private String javaAgentVmArgs;
+    private boolean verbose;
+    private boolean debug;
 
     /**
      * @return the directory of an already installed Java agent to use instead of the one embedded in the CLI, or
@@ -147,6 +149,35 @@ public class LocalAgentProvisioningConfiguration {
 
     public LocalAgentProvisioningConfiguration setJavaAgentVmArgs(String javaAgentVmArgs) {
         this.javaAgentVmArgs = javaAgentVmArgs;
+        return this;
+    }
+
+    /**
+     * Whether to print what the agents log.
+     * <p>
+     * The agents run in their own processes and their output is normally discarded, which keeps the output of a
+     * local execution as clean as one running against a controller. It is also the first thing needed to understand
+     * anything that goes wrong on an agent, hence this switch.
+     */
+    public boolean isVerbose() {
+        return verbose;
+    }
+
+    public LocalAgentProvisioningConfiguration setVerbose(boolean verbose) {
+        this.verbose = verbose;
+        return this;
+    }
+
+    /**
+     * Whether the agents log at debug level. Independent from {@link #isVerbose()}, which decides whether their
+     * output is shown: the retained lines used to explain a failed start benefit from the level too.
+     */
+    public boolean isDebug() {
+        return debug;
+    }
+
+    public LocalAgentProvisioningConfiguration setDebug(boolean debug) {
+        this.debug = debug;
         return this;
     }
 }

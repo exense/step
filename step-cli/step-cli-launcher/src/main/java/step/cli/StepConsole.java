@@ -18,6 +18,9 @@
  ******************************************************************************/
 package step.cli;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -66,6 +69,7 @@ public class StepConsole implements Callable<Integer> {
         public static final String TOKEN = "--token";
         public static final String STEP_USER = "--stepUser";
         public static final String VERBOSE = "--verbose";
+        public static final String DEBUG = "--debug";
         public static final String CONFIG = "-c";
         public static final String LOCAL = "--local";
         public static final String FORCE = "--force";
@@ -88,8 +92,11 @@ public class StepConsole implements Callable<Integer> {
         @Option(names = {STEP_USER}, description = "To execute on behalf of the provided user")
         protected String stepUser;
 
-        @Option(names = {VERBOSE}, defaultValue = "false", description = "Verbose mode: prints the applied configuration")
+        @Option(names = {VERBOSE}, defaultValue = "false", description = "Verbose mode: prints the applied configuration, the stack traces of the errors, and, for a local execution, what the agents log")
         protected boolean verbose;
+
+        @Option(names = {DEBUG}, defaultValue = "false", description = "Debug mode: logs at debug level, in the CLI and in the agents of a local execution. Implies --verbose.")
+        protected boolean debug;
 
         @Option(names = {FORCE}, defaultValue = "false", description = "To force execution in case of uncritical errors")
         protected boolean force;
@@ -195,8 +202,32 @@ public class StepConsole implements Callable<Integer> {
 
         @Override
         public Integer call() throws Exception {
+            applyLoggingOptions();
             printConfigIfRequired();
             return 0;
+        }
+
+        /**
+         * Applies the logging options of the command, which every command has to do before doing anything worth
+         * logging. Debug is verbose plus a level: asking for debug output and not being shown what the agents print
+         * would make no sense.
+         */
+        protected void applyLoggingOptions() {
+            if (debug) {
+                verbose = true;
+                setDebugLogLevel();
+            }
+        }
+
+        /**
+         * Raises the level of the CLI's own logging. It is done here rather than through the logging configuration
+         * because the level depends on an option, which is only known once the command line has been parsed.
+         */
+        private static void setDebugLogLevel() {
+            ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+            if (loggerFactory instanceof LoggerContext) {
+                ((LoggerContext) loggerFactory).getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(Level.DEBUG);
+            }
         }
     }
 

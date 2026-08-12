@@ -119,14 +119,17 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
         logger.debug("Starting the local Node.js agent with command: {}", command);
         Process process;
         try {
-            process = new ProcessBuilder(command)
+            ProcessBuilder processBuilder = new ProcessBuilder(command)
                 .directory(runDirectory.toFile())
-                .redirectErrorStream(true)
-                .start();
+                .redirectErrorStream(true);
+            // The agent logs to the console through winston, at the level of this variable
+            processBuilder.environment().put("LOG_LEVEL", configuration.isDebug() ? "debug" : "info");
+            process = processBuilder.start();
         } catch (IOException e) {
             throw new LocalAgentException("Error while starting the local Node.js agent", e);
         }
-        return new LocalAgentProcess("Local " + getDisplayName() + " agent", process, runDirectory);
+        return new LocalAgentProcess("Local " + getDisplayName() + " agent", process, runDirectory,
+            configuration.isVerbose());
     }
 
     /**

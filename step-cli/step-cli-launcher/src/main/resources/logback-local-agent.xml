@@ -1,0 +1,20 @@
+<!--
+  Logging configuration of the agents started for a local execution. It is extracted next to the agent's own
+  configuration and passed to it with -Dlogback.configurationFile.
+
+  Everything goes to the console, which the CLI reads and prints when it runs in verbose mode. Without this file
+  the agent would fall back to logback's own default, which logs every DEBUG statement of every library.
+
+  The level is that of the agent, not of the CLI: the CLI decides separately whether to show these lines.
+-->
+<configuration scan="false">
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="${step.localAgent.logLevel:-info}">
+    <appender-ref ref="STDOUT"/>
+  </root>
+</configuration>

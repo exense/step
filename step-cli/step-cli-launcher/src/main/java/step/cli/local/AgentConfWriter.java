@@ -50,17 +50,22 @@ public class AgentConfWriter {
      */
     public static final String LOOPBACK_HOST = "127.0.0.1";
 
+    /**
+     * How long an agent waits while reading from the grid, in milliseconds.
+     */
+    private static final int GRID_READ_TIMEOUT_MS = 20000;
+
     private final ObjectMapper yamlMapper = new ObjectMapper(
         new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
 
     /**
      * Writes the agent configuration and returns the file it was written to.
      *
-     * @param directory           the directory to write the configuration into
-     * @param fileName            the name of the configuration file, e.g. {@code AgentConf.yaml}
-     * @param context             the parameters of the agent to be started
-     * @param additionalSettings  agent type specific settings, merged into the configuration. Values already set by
-     *                            this writer must not be overridden.
+     * @param directory          the directory to write the configuration into
+     * @param fileName           the name of the configuration file, e.g. {@code AgentConf.yaml}
+     * @param context            the parameters of the agent to be started
+     * @param additionalSettings agent type specific settings, merged into the configuration. Values already set by
+     *                           this writer must not be overridden.
      */
     public Path write(Path directory, String fileName, LocalAgentStartContext context,
                       Map<String, Object> additionalSettings) throws IOException {
@@ -70,6 +75,7 @@ public class AgentConfWriter {
         // No agentPort: the agents bind to a free port chosen by the OS when none is configured. Reserving one here
         // would only add a race between the reservation and the agent actually binding it.
         conf.put("registrationPeriod", 1000);
+        conf.put("gridReadTimeout", GRID_READ_TIMEOUT_MS);
         conf.put("workingDir", "./work");
         conf.put("ssl", false);
 
