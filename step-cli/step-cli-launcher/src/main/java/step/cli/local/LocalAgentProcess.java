@@ -48,6 +48,7 @@ public class LocalAgentProcess {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalAgentProcess.class);
     private static final int RETAINED_OUTPUT_LINES = 50;
+    private static final long FORCIBLE_TERMINATION_TIMEOUT_MS = 5000;
     private static final int WORKING_DIRECTORY_DELETION_RETRIES = 5;
     private static final long WORKING_DIRECTORY_DELETION_RETRY_WAIT_MS = 100;
 
@@ -107,21 +108,30 @@ public class LocalAgentProcess {
      * only waits for that shutdown to complete and falls back to killing the process, so that a hanging or already
      * unreachable agent can never keep the CLI from terminating.
      *
-     * @param shutdownTimeoutMs how long to wait for the process to terminate on its own, and again for it to
-     *                          terminate after having been killed
+     * @param gracefulTimeoutMs how long to wait for the process to terminate on its own. Pass {@code 0} when the
+     *                          agent was not asked to shut down, or refused to: there is then nothing to wait for,
+     *                          and waiting would only delay the end of the execution by the whole timeout.
      */
-    public void stop(long shutdownTimeoutMs) {
+    public void stop(long gracefulTimeoutMs) {
         try {
-            if (!process.waitFor(shutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
-                logger.warn("{} did not shut down within {}ms. Destroying it forcibly.", name, shutdownTimeoutMs);
+            if (gracefulTimeoutMs > 0 && process.waitFor(gracefulTimeoutMs, TimeUnit.MILLISECONDS)) {
+                logger.debug("{} stopped.", name);
+            } else {
+                if (gracefulTimeoutMs > 0) {
+                    logger.warn("{} did not shut down within {}ms. Destroying it forcibly.", name, gracefulTimeoutMs);
+                } else {
+                    logger.debug("{} cannot be shut down through the grid. Destroying it.", name);
+                }
                 process.destroyForcibly();
-                if (!process.waitFor(shutdownTimeoutMs, TimeUnit.MILLISECONDS)) {
+                // Killing a process is not instantaneous, but it is not a graceful shutdown either: it takes
+                // milliseconds, and waiting the full shutdown timeout for it would make no sense.
+                if (!process.waitFor(FORCIBLE_TERMINATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                     logger.error("{} could not be stopped, even forcibly. Its working directory {} is left behind.",
                         name, workingDirectory);
                     return;
                 }
+                logger.debug("{} stopped.", name);
             }
-            logger.debug("{} stopped.", name);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.warn("Interrupted while waiting for {} to stop. Destroying it forcibly.", name);

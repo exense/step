@@ -48,6 +48,7 @@ public class LocalAgentWorkspace {
     private static final String WORKSPACE_DIRECTORY_NAME = "step-cli-local-agents";
     private static final String AGENT_DIRECTORY_PREFIX = "agent-";
     private static final String INSTALLED_AGENTS_DIRECTORY_NAME = "agents";
+    private static final String INSTALLED_LIBRARIES_DIRECTORY_NAME = "libraries";
 
     private final Path root;
 
@@ -102,5 +103,17 @@ public class LocalAgentWorkspace {
      */
     public Path getInstalledAgentDirectory(String agentName, String version) {
         return root.resolve(INSTALLED_AGENTS_DIRECTORY_NAME).resolve(agentName).resolve(version);
+    }
+
+    /**
+     * The directory a set of libraries sent to the agents is installed in, kept across runs for the same reason as
+     * the agents themselves.
+     *
+     * @param name    a name identifying the library set, e.g. {@code groovy}
+     * @param version the version they were extracted from, so that a CLI upgrade does not reuse stale libraries
+     * @return the directory, which is <b>not</b> created by this method
+     */
+    public Path getInstalledLibrariesDirectory(String name, String version) {
+        return root.resolve(INSTALLED_LIBRARIES_DIRECTORY_NAME).resolve(name).resolve(version);
     }
 }

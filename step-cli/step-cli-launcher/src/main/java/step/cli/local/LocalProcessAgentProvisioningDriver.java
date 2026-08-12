@@ -338,14 +338,19 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         for (StartedAgent startedAgent : session.startedAgents) {
             // Asking the agent to shut down itself rather than killing the process: it is the only graceful path on
             // Windows, where Process.destroy() terminates the process without running its shutdown hook.
+            boolean shutdownRequested = false;
             if (startedAgent.agentRef != null) {
                 try {
                     gridClient.shutdownAgent(startedAgent.agentRef);
+                    shutdownRequested = true;
                 } catch (Exception e) {
                     logger.debug("Unable to shut down {} through the grid. It will be terminated.", startedAgent.process.getName(), e);
                 }
             }
-            startedAgent.process.stop(shutdownTimeoutMs);
+            // An agent which was never asked to shut down, or which refused the request because it exposes no such
+            // service, has no reason to terminate on its own: waiting for it only delays the end of the execution by
+            // the whole timeout. The Node.js agent is in that case today, it has no /shutdown service.
+            startedAgent.process.stop(shutdownRequested ? shutdownTimeoutMs : 0);
         }
         session.startedAgents.clear();
     }

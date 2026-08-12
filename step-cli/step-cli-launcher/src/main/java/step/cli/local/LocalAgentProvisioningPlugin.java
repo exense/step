@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.cli.local;
 
+import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.functions.TokenForecastingContext;
@@ -42,6 +43,7 @@ import step.grid.client.GridClient;
 import step.grid.tokenpool.Interest;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -116,6 +118,8 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
             throw new PluginCriticalException("Error while initializing the local agents", e);
         }
 
+        declareScriptEngineLibraries(context, workspace);
+
         // Picked up by FunctionPlugin (grid client) and TokenForecastingExecutionPlugin (driver). All three are
         // Closeable and are registered in the context, which closes them when the execution engine is closed: the
         // grid client and the grid are shut down, and the driver stops any agent still running.
@@ -123,6 +127,39 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
         context.put(Grid.class, grid.getGrid());
         context.put(GridClient.class, grid.getGridClient());
         context.put(AgentProvisioningDriver.class, driver);
+    }
+
+    /**
+     * Points {@code plugins.<language>.libs} at the script engine libraries, the way the step.properties of a
+     * controller does. Without them a Groovy or JavaScript keyword reaches the agent and fails there with "Unable to
+     * find script engine": the engine lives in the CLI, and the agent runs in its own process with its own class path.
+     * <p>
+     * A value already configured wins, so that an agent can be sent a different Groovy than the one the CLI runs on.
+     */
+    private static void declareScriptEngineLibraries(ExecutionEngineContext context, LocalAgentWorkspace workspace) {
+        Configuration configuration = context.getConfiguration();
+        if (configuration == null) {
+            configuration = new Configuration();
+            context.setConfiguration(configuration);
+        }
+        ScriptEngineLibraries libraries = new ScriptEngineLibraries(workspace);
+        for (ScriptEngineLibraries.ScriptEngine engine : List.of(ScriptEngineLibraries.GROOVY, ScriptEngineLibraries.JAVASCRIPT)) {
+            String property = "plugins." + engine.language() + ".libs";
+            if (configuration.getProperty(property, null) != null) {
+                continue;
+            }
+            try {
+                Path directory = libraries.resolve(engine);
+                if (directory != null) {
+                    configuration.putProperty(property, directory.toString());
+                }
+            } catch (LocalAgentException e) {
+                // Not worth aborting the execution: only the keywords of that language are affected, and they fail
+                // with an error of their own naming the missing engine
+                logger.warn("The {} keywords will not be executable: unable to provide the script engine to the agents.",
+                    engine.language(), e);
+            }
+        }
     }
 
     @Override
