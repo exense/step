@@ -37,7 +37,9 @@ const STREAMING_UPLOAD_CONTEXT_ID = 'streamingUploadContextId';
 // forked keyword process (whose own require() resolves against the keyword project, not the agent).
 const WS_MODULE_ENV = 'STEP_AGENT_WS_MODULE';
 
-// Generous upper bound for a single file upload handshake (Java client uses 60s for each step).
+// Generous upper bound for a single step of the upload handshake (Java client uses 60s for each step).
+// Deliberately scoped to the handshake steps only: the time a keyword needs to produce the file, i.e.
+// the phase between start*Upload() and complete(), is not limited.
 const DEFAULT_UPLOAD_TIMEOUT_MS = 60_000;
 // Interval between polls of a growing file for newly appended bytes (Java: DEFAULT_FILE_POLL_INTERVAL_MS).
 const DEFAULT_FILE_POLL_INTERVAL_MS = 100;
@@ -92,11 +94,19 @@ function delay(ms) {
  *
  * Sending the whole file before calling complete() (the convenience uploadBinaryFile/uploadTextFile
  * path) is just the degenerate case where end-of-input is signalled immediately.
+ *
+ * Timeouts apply per handshake step only (accepting the upload, acknowledging it). The streaming
+ * phase itself is unbounded: a keyword may take arbitrarily long to produce the file, so no limit is
+ * placed on the duration between start*Upload() and complete().
+ *
+ * @param timeoutMs per-handshake-step timeout; overridable (mainly for tests), defaults to
+ *        DEFAULT_UPLOAD_TIMEOUT_MS.
  */
 class WebsocketUploadController {
-  constructor(WebSocket, endpointUri, filePath, metadata) {
+  constructor(WebSocket, endpointUri, filePath, metadata, timeoutMs = DEFAULT_UPLOAD_TIMEOUT_MS) {
     this.filePath = filePath;
     this.metadata = metadata;
+    this.timeoutMs = timeoutMs;
     this.md5 = crypto.createHash('md5');
     this.reference = null;
     this.state = 'CONNECTING';
@@ -121,11 +131,10 @@ class WebsocketUploadController {
     this.finalStatus.catch(() => {});
 
     this.socket = new WebSocket(endpointUri);
-    this.timeout = setTimeout(
-      () => this._fail(new Error(`Upload timed out after ${DEFAULT_UPLOAD_TIMEOUT_MS}ms`)),
-      DEFAULT_UPLOAD_TIMEOUT_MS
-    );
-    if (typeof this.timeout.unref === 'function') this.timeout.unref();
+    // Only the handshake steps are time-bounded (see _armTimeout); this one covers connecting and
+    // StartUpload -> ReadyForUpload.
+    this.timeout = null;
+    this._armTimeout('waiting for the server to accept the upload');
 
     this.socket.on('open', () => this.socket.send(JSON.stringify({ '@': 'StartUpload', metadata: this.metadata })));
     this.socket.on('message', (data) => this._onMessage(data));
@@ -133,10 +142,29 @@ class WebsocketUploadController {
     this.socket.on('error', (err) => this._abort(err));
   }
 
+  // (Re)arms the timeout for a single handshake step. Applied only to the steps in which we wait for
+  // the server (accepting the upload, acknowledging it); the streaming phase in between is left
+  // unbounded, since the keyword may take arbitrarily long to produce the file.
+  _armTimeout(phase) {
+    this._disarmTimeout();
+    this.timeout = setTimeout(
+      () => this._fail(new Error(`Upload timed out after ${this.timeoutMs}ms while ${phase}`)),
+      this.timeoutMs
+    );
+    if (typeof this.timeout.unref === 'function') this.timeout.unref();
+  }
+
+  _disarmTimeout() {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+      this.timeout = null;
+    }
+  }
+
   _settleResolve(value) {
     if (!this.settled) {
       this.settled = true;
-      clearTimeout(this.timeout);
+      this._disarmTimeout();
       this._resolveFinal(value);
     }
   }
@@ -144,7 +172,7 @@ class WebsocketUploadController {
   _settleReject(err) {
     if (!this.settled) {
       this.settled = true;
-      clearTimeout(this.timeout);
+      this._disarmTimeout();
       this._rejectFinal(err);
     }
   }
@@ -230,6 +258,7 @@ class WebsocketUploadController {
       if (this.settled) return; // socket may have been torn down between the final frame and now
       this.clientChecksum = this.md5.digest('hex');
       this.state = 'EXPECTING_ACK';
+      this._armTimeout('waiting for the upload acknowledgement');
       this.socket.send(JSON.stringify({ '@': 'FinishUpload', checksum: this.clientChecksum }));
     } catch (err) {
       // Let _onClose decide the final status (preserves a server quota close reason).
@@ -250,6 +279,9 @@ class WebsocketUploadController {
     if (this.state === 'CONNECTING' && type === 'ReadyForUpload') {
       this.reference = msg.reference;
       this.state = 'UPLOADING';
+      // Streaming phase: the keyword decides when the file is complete, so no time limit applies
+      // until FinishUpload is sent (re-armed there).
+      this._disarmTimeout();
       this._streamLoop();
     } else if (this.state === 'EXPECTING_ACK' && type === 'UploadAcknowledged') {
       if (msg.checksum !== this.clientChecksum) {
@@ -443,10 +475,10 @@ class StreamingUpload {
 }
 
 // Uploader (controller factory) backed by the WebSocket transport.
-function createWebsocketUploader(WebSocket, endpointUri) {
+function createWebsocketUploader(WebSocket, endpointUri, timeoutMs = DEFAULT_UPLOAD_TIMEOUT_MS) {
   return {
     startUpload(filePath, metadata) {
-      return new WebsocketUploadController(WebSocket, endpointUri, filePath, metadata);
+      return new WebsocketUploadController(WebSocket, endpointUri, filePath, metadata, timeoutMs);
     },
   };
 }
@@ -472,8 +504,11 @@ function buildWebsocketUploadUri(baseUrl, uploadPath, contextId) {
 /**
  * Builds the file-upload channel from the keyword properties, or a discarding one when no controller
  * streaming context is present (or the ws module is unavailable).
+ *
+ * @param {object} properties the merged keyword properties
+ * @param {{ timeoutMs?: number }} [options] per-handshake-step timeout override (mainly for tests)
  */
-function createFileUploads(properties) {
+function createFileUploads(properties, { timeoutMs = DEFAULT_UPLOAD_TIMEOUT_MS } = {}) {
   const contextId = properties[STREAMING_UPLOAD_CONTEXT_ID];
   if (!contextId) {
     return new StreamingUploads(discardingUploader);
@@ -496,13 +531,16 @@ function createFileUploads(properties) {
   }
   const endpointUri = buildWebsocketUploadUri(baseUrl, uploadPath, contextId);
   logger.debug(`Live reporting file uploads enabled, endpoint: ${baseUrl.replace(/^http/, 'ws')}/${uploadPath.replace(/^\/+/, '')}`);
-  return new StreamingUploads(createWebsocketUploader(WebSocket, endpointUri));
+  return new StreamingUploads(createWebsocketUploader(WebSocket, endpointUri, timeoutMs));
 }
 
 module.exports = {
+  DEFAULT_UPLOAD_TIMEOUT_MS,
   QuotaExceededError,
   StreamingUploads,
   StreamingUpload,
+  WebsocketUploadController,
+  createWebsocketUploader,
   discardingUploader,
   createFileUploads,
 };
