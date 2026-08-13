@@ -26,6 +26,7 @@ import step.core.agents.AgentTypeConstants;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,9 +35,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Starts the Node.js agent as a separate process.
  * <p>
  * The agent is not shipped with the CLI: it is a set of JavaScript files, and since it needs a Node.js runtime on the
- * machine anyway, embedding it would only save an npm install while making every CLI carry it. It is instead
- * installed with npm into the workspace on first use and reused afterwards, or taken from an existing installation
- * the user points at.
+ * machine anyway, embedding it would only save an npm install while making every CLI carry it. It is instead taken
+ * from an existing installation - the one the user points at, or a global {@code npm install -g step-node-agent} -
+ * and, failing that, installed with npm into the workspace on first use and reused afterwards.
  * <p>
  * Unlike the Java agent, whose runtime the CLI provides by construction, this one depends on what the developer
  * machine offers: {@code node} and {@code npm} have to be runnable. When they are not, the agent type is simply not
@@ -57,10 +58,13 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
      */
     private static final String AGENT_RUNTIME_DEPENDENCY = "express";
     private static final int NPM_INSTALL_TIMEOUT_MINUTES = 10;
+    private static final long NPM_LIST_TIMEOUT_MS = 30_000;
 
     private final LocalAgentProvisioningConfiguration configuration;
     private final LocalAgentWorkspace workspace;
     private final AgentConfWriter agentConfWriter = new AgentConfWriter();
+
+    private Boolean globallyInstalled;
 
     public NodeLocalAgentProvider(LocalAgentProvisioningConfiguration configuration, LocalAgentWorkspace workspace) {
         this.configuration = configuration;
@@ -99,7 +103,9 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
 
     @Override
     public LocalAgentProcess start(LocalAgentStartContext context) throws LocalAgentException {
-        Path mainScript = resolveAgentDirectory().resolve(AGENT_MAIN_SCRIPT);
+        // Resolved first: an agent which has to be installed, or which cannot be found at all, must fail before a port
+        // is reserved and a configuration written for it.
+        List<String> command = new ArrayList<>(resolveAgentCommand());
 
         Path runDirectory = context.getWorkingDirectory();
         // Unlike the Java agent, the Node.js agent falls back to a fixed port (3000) when none is configured and
@@ -114,8 +120,8 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
             throw new LocalAgentException("Error while writing the configuration of the local Node.js agent", e);
         }
 
-        List<String> command = List.of(OsCommands.NODE, mainScript.toAbsolutePath().toString(),
-            "-f", agentConf.toAbsolutePath().toString());
+        command.add("-f");
+        command.add(agentConf.toAbsolutePath().toString());
         logger.debug("Starting the local Node.js agent with command: {}", command);
         Process process;
         try {
@@ -126,10 +132,33 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
             processBuilder.environment().put("LOG_LEVEL", configuration.isDebug() ? "debug" : "info");
             process = processBuilder.start();
         } catch (IOException e) {
+            if (command.get(0).equals(OsCommands.STEP_NODE_AGENT)) {
+                // npm reported the agent as globally installed, so the command it created is not on the PATH of this
+                // process. Nothing this provider can do about it, but the user can.
+                throw new LocalAgentException("The globally installed Node.js agent could not be started: no "
+                    + OsCommands.STEP_NODE_AGENT + " command was found. Point --localAgentNode at the installation"
+                    + " directory of the agent instead.", e);
+            }
             throw new LocalAgentException("Error while starting the local Node.js agent", e);
         }
         return new LocalAgentProcess("Local " + getDisplayName() + " agent", process, runDirectory,
             configuration.isVerbose());
+    }
+
+    /**
+     * @return the command starting the agent, without its arguments. Either the command a global installation puts on
+     * the PATH, or node running the main script of an agent package.
+     */
+    // Package private for the sake of the tests, which cover the resolution without starting anything
+    List<String> resolveAgentCommand() throws LocalAgentException {
+        // A globally installed agent comes before the one installed in the workspace: installing it is an explicit act
+        // of the user, who then expects it to be the agent that runs, and it spares the CLI an installation of its
+        // own. Its version is whatever was installed, which is deliberate: overriding a global installation with the
+        // version of this CLI is not for the CLI to decide.
+        if (configuration.getNodeAgentPath() == null && isGloballyInstalled()) {
+            return List.of(OsCommands.STEP_NODE_AGENT);
+        }
+        return List.of(OsCommands.NODE, resolveAgentDirectory().resolve(AGENT_MAIN_SCRIPT).toAbsolutePath().toString());
     }
 
     /**
@@ -209,6 +238,50 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
     }
 
     /**
+     * Reports whether the agent is installed globally, i.e. whether {@code npm install -g step-node-agent} was run on
+     * this machine. Such an installation puts the {@code step-node-agent} command on the PATH, which is all that is
+     * needed to start it: where npm put the package, and whether that package looks runnable, are questions this
+     * provider does not have to answer.
+     * <p>
+     * Asked at most once: it starts an npm process, and a global installation appearing while the CLI runs is not a
+     * case worth paying that on every provisioning for.
+     */
+    private synchronized boolean isGloballyInstalled() {
+        if (globallyInstalled == null) {
+            globallyInstalled = lookupGlobalInstallation();
+        }
+        return globallyInstalled;
+    }
+
+    // Package private for the sake of the tests, which must not depend on what the build machine happens to have installed
+    boolean lookupGlobalInstallation() {
+        if (!OsCommands.isExecutableAvailable(OsCommands.NPM)) {
+            return false;
+        }
+        try {
+            OsCommands.Result result = OsCommands.run(List.of(OsCommands.NPM, "list", "-g", NPM_PACKAGE_NAME,
+                "--depth=0", "--no-progress"), null, NPM_LIST_TIMEOUT_MS);
+            // The exit code is deliberately ignored: npm reports a package it was asked about but did not find as an
+            // error, as it does any complaint about the global tree. The listed package itself is the answer.
+            String listed = result.output().lines().map(String::trim)
+                .filter(line -> line.contains(NPM_PACKAGE_NAME + "@"))
+                .findFirst().orElse(null);
+            if (listed == null) {
+                logger.debug("No globally installed Node.js agent found");
+                return false;
+            }
+            // The line carries the version, which is worth having in the logs: it is the user's, not the CLI's
+            logger.debug("Using the globally installed Node.js agent, as listed by npm: {}", listed);
+            return true;
+        } catch (IOException e) {
+            logger.debug("Unable to list the globally installed npm packages", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        return false;
+    }
+
+    /**
      * Installs the agent into the workspace, once per version. The installation is kept between runs: it downloads
      * from the npm registry, which is both slow and the only part of a local execution needing network access.
      */
@@ -260,8 +333,16 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
 
         static final boolean WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
         static final String NODE = "node";
-        /** npm is a shell script on Windows, and unlike an exe it is not resolved from a bare name. */
+        /**
+         * npm is a shell script on Windows, and unlike an exe it is not resolved from a bare name.
+         */
         static final String NPM = WINDOWS ? "npm.cmd" : "npm";
+        /**
+         * The command a global installation of the agent puts on the PATH. Like npm, it is a script rather than an
+         * exe: a shell prompt resolves it from the bare name through PATHEXT, whereas the CreateProcess call behind
+         * {@link ProcessBuilder} only ever appends {@code .exe} and needs the extension spelled out.
+         */
+        static final String STEP_NODE_AGENT = WINDOWS ? NPM_PACKAGE_NAME + ".cmd" : NPM_PACKAGE_NAME;
 
         private static final long VERSION_CHECK_TIMEOUT_MS = 10_000;
         private static final Map<String, Boolean> AVAILABILITY_CACHE = new ConcurrentHashMap<>();

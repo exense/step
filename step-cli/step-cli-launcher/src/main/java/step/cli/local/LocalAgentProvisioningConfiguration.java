@@ -64,8 +64,8 @@ public class LocalAgentProvisioningConfiguration {
     }
 
     /**
-     * @return the directory of an already installed Node.js agent to use, or {@code null} to install it with npm on
-     * first use
+     * @return the directory of an already installed Node.js agent to use, or {@code null} to use a globally installed
+     * one and, failing that, install it with npm on first use
      */
     public Path getNodeAgentPath() {
         return nodeAgentPath;
@@ -79,7 +79,8 @@ public class LocalAgentProvisioningConfiguration {
     /**
      * @return the version of the {@code step-node-agent} npm package to install. Defaults to the version of this
      * CLI, which is the one it was tested against; settable because the npm package is released independently and
-     * may not carry the exact same version.
+     * may not carry the exact same version. Only used for the installations the CLI makes itself: an agent installed
+     * globally or pointed at is used with the version it has.
      */
     public String getNodeAgentVersion() {
         return nodeAgentVersion;

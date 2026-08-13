@@ -133,7 +133,7 @@ public class LocalAgentProcess {
                 } else {
                     logger.debug("{} cannot be shut down through the grid. Destroying it.", name);
                 }
-                process.destroyForcibly();
+                destroyForciblyWithDescendants();
                 // Killing a process is not instantaneous, but it is not a graceful shutdown either: it takes
                 // milliseconds, and waiting the full shutdown timeout for it would make no sense.
                 if (!process.waitFor(FORCIBLE_TERMINATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
@@ -146,7 +146,7 @@ public class LocalAgentProcess {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.warn("Interrupted while waiting for {} to stop. Destroying it forcibly.", name);
-            process.destroyForcibly();
+            destroyForciblyWithDescendants();
             return;
         } finally {
             // The reader terminates on its own once the process closes its output stream, this is only to make sure
@@ -154,6 +154,21 @@ public class LocalAgentProcess {
             outputPump.cancel(true);
         }
         deleteWorkingDirectory();
+    }
+
+    /**
+     * Kills the process together with the processes it started.
+     * <p>
+     * The agent is not always the process started here: a globally installed Node.js agent is started through the
+     * command npm put on the PATH, which on Windows is a command file and therefore runs the agent as a child of
+     * cmd.exe. Killing that shell alone would leave the agent behind, holding its port, its registration on the grid
+     * and the files of the working directory this method's caller then tries to delete.
+     */
+    private void destroyForciblyWithDescendants() {
+        // Taken before anything is killed: the descendants of a dead process are no longer reachable through it
+        List<ProcessHandle> descendants = process.descendants().toList();
+        descendants.forEach(ProcessHandle::destroyForcibly);
+        process.destroyForcibly();
     }
 
     private void deleteWorkingDirectory() {

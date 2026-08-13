@@ -226,11 +226,11 @@ public class ApCommand implements Callable<Integer> {
         protected Path localAgentJava;
 
         @CommandLine.Option(names = {"--localAgentNode"}, paramLabel = "<Path>",
-            description = "Local execution only. The directory of an installed Step Node.js agent to use instead of installing it with npm. Either the step-node-agent package itself or a directory containing it in node_modules.")
+            description = "Local execution only. The directory of an installed Step Node.js agent to use. Either the step-node-agent package itself or a directory containing it in node_modules. Defaults to a globally installed step-node-agent, or to installing one with npm.")
         protected Path localAgentNode;
 
         @CommandLine.Option(names = {"--localAgentNodeVersion"}, paramLabel = "<Version>",
-            description = "Local execution only. The version of the step-node-agent npm package to install. Defaults to the version of this CLI.")
+            description = "Local execution only. The version of the step-node-agent npm package to install. Defaults to the version of this CLI. Not used when the agent is already installed globally.")
         protected String localAgentNodeVersion;
 
         @CommandLine.Option(names = {"--localAgentWorkDir"}, paramLabel = "<Path>",
