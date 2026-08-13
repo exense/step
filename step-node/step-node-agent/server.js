@@ -28,7 +28,7 @@ function parseAgentConf() {
 }
 
 logger.info('Creating agent context and tokens')
-const uuid = require('uuid/v4')
+const { v4: uuid } = require('uuid')
 const jwtUtils = require('./utils/jwtUtils')
 const agentType = 'node'
 const agent = {id: uuid()}
