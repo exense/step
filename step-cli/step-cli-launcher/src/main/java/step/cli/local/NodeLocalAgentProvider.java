@@ -92,6 +92,19 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
             || OsCommands.isExecutableAvailable(OsCommands.NPM);
     }
 
+    /**
+     * Names the runtime which is actually missing: with node installed and npm not, telling a user to install Node.js
+     * would send them looking at something they already have.
+     */
+    @Override
+    public String getInstallationHint() {
+        if (!OsCommands.isExecutableAvailable(OsCommands.NODE)) {
+            return "The Node.js agent runs on Node.js, which is not installed on this machine.";
+        }
+        return "The Node.js agent is installed with npm, which is not installed on this machine: install it, or point"
+            + " --localAgentNode at an installed " + NPM_PACKAGE_NAME + ".";
+    }
+
     private boolean isInstalled() {
         return isUsableAgentPackage(installedAgentDirectory());
     }

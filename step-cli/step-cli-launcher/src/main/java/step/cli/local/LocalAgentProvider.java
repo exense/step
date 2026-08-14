@@ -51,6 +51,15 @@ public interface LocalAgentProvider {
     boolean isAvailable();
 
     /**
+     * @return what a user has to do for this agent type to become {@link #isAvailable() available} on this machine, or
+     * {@code null} when there is nothing helpful to say. It is appended to the error of an execution requiring an
+     * agent type no provider offers, which is otherwise only able to name the type it could not route to.
+     */
+    default String getInstallationHint() {
+        return null;
+    }
+
+    /**
      * Starts the agent process. The returned handle is always started, never partially initialized: implementations
      * which fail half way have to clean up whatever they created before throwing.
      * <p>

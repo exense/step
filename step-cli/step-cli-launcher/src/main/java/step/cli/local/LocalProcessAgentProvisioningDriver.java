@@ -91,6 +91,11 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
     private final LocalAgentWorkspace workspace;
     private final LocalAgentProvisioningConfiguration configuration;
     private final Map<String, LocalAgentProvider> providersByAgentType;
+    /**
+     * Including the providers which are not available: they are the ones able to tell what is missing for their agent
+     * type, which is what an execution requiring it needs to hear.
+     */
+    private final Map<String, LocalAgentProvider> allProvidersByAgentType;
     private final Map<String, ProvisioningSession> provisioningSessions = new ConcurrentHashMap<>();
 
     public LocalProcessAgentProvisioningDriver(LocalExecutionGrid grid, LocalAgentWorkspace workspace,
@@ -100,7 +105,9 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         this.gridClient = grid.getGridClient();
         this.workspace = Objects.requireNonNull(workspace, "workspace must not be null");
         this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
-        this.providersByAgentType = Objects.requireNonNull(providers, "providers must not be null").stream()
+        this.allProvidersByAgentType = Objects.requireNonNull(providers, "providers must not be null").stream()
+            .collect(Collectors.toMap(LocalAgentProvider::getAgentType, p -> p));
+        this.providersByAgentType = providers.stream()
             .filter(provider -> {
                 boolean available = provider.isAvailable();
                 if (!available) {
@@ -135,6 +142,15 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
      */
     public Set<String> getAvailableAgentTypes() {
         return Set.copyOf(providersByAgentType.keySet());
+    }
+
+    /**
+     * @return what the user has to do for the given agent type to be available on this machine, or {@code null} when
+     * this distribution has no provider for it or the provider has nothing to add
+     */
+    String getInstallationHint(String agentType) {
+        LocalAgentProvider provider = allProvidersByAgentType.get(agentType);
+        return provider != null ? provider.getInstallationHint() : null;
     }
 
     static String agentPoolName(String agentType) {

@@ -57,11 +57,15 @@ public class LocalProcessAgentProvisioningDriverTest {
         Assert.assertTrue("The Java agent should be embedded in the CLI", provider.isAvailable());
 
         try (LocalExecutionGrid grid = new LocalExecutionGrid(configuration.getAgentStartTimeout(), workspace)) {
-            try (LocalProcessAgentProvisioningDriver driver =
-                     new LocalProcessAgentProvisioningDriver(grid, workspace, configuration, List.of(provider))) {
+            try (LocalProcessAgentProvisioningDriver driver = new LocalProcessAgentProvisioningDriver(grid, workspace,
+                configuration, List.of(provider, new UnavailableLocalAgentProvider()))) {
 
                 Set<AgentPoolSpec> availablePools = driver.getConfiguration().availableAgentPools;
-                Assert.assertEquals(1, availablePools.size());
+                Assert.assertEquals("An unavailable agent type is not offered", 1, availablePools.size());
+                // The unavailable provider is nevertheless the one able to say what is missing for its agent type
+                Assert.assertEquals(UnavailableLocalAgentProvider.INSTALLATION_HINT,
+                    driver.getInstallationHint(UnavailableLocalAgentProvider.AGENT_TYPE));
+                Assert.assertNull(driver.getInstallationHint("aTypeNoProviderKnows"));
                 AgentPoolSpec javaPool = availablePools.iterator().next();
                 Assert.assertEquals(Map.of(AgentTypes.AGENT_TYPE_KEY, AgentTypeConstants.AGENT_TYPE_JAVA), javaPool.attributes);
                 // One token per pool agent is what makes the forecast reach the driver as a number of tokens
@@ -125,6 +129,40 @@ public class LocalProcessAgentProvisioningDriverTest {
         public LocalAgentProcess start(LocalAgentStartContext context) throws LocalAgentException {
             startedProcess = delegate.start(context);
             return startedProcess;
+        }
+    }
+
+    /**
+     * An agent type this machine cannot start, as the .NET one is without an installation to point at.
+     */
+    private static class UnavailableLocalAgentProvider implements LocalAgentProvider {
+
+        static final String AGENT_TYPE = "anUnavailableType";
+        static final String INSTALLATION_HINT = "Install what this agent type runs on.";
+
+        @Override
+        public String getAgentType() {
+            return AGENT_TYPE;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Unavailable";
+        }
+
+        @Override
+        public boolean isAvailable() {
+            return false;
+        }
+
+        @Override
+        public String getInstallationHint() {
+            return INSTALLATION_HINT;
+        }
+
+        @Override
+        public LocalAgentProcess start(LocalAgentStartContext context) {
+            throw new UnsupportedOperationException("An unavailable agent type is never started");
         }
     }
 }

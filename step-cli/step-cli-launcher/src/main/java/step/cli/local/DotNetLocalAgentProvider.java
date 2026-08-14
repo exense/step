@@ -85,6 +85,13 @@ public class DotNetLocalAgentProvider implements LocalAgentProvider {
         return findBinDirectory(configured) != null;
     }
 
+    @Override
+    public String getInstallationHint() {
+        return "The .NET agent is a platform specific binary distribution and is not shipped with the CLI: point"
+            + " --localAgentDotNet or the " + AGENT_HOME_ENV_VAR + " environment variable at an installed Step .NET"
+            + " agent for this platform.";
+    }
+
     /**
      * @return the installation the user provided, or {@code null} when there is none. The option wins over the
      * environment variable, which is there to spare the developer from passing the same path at every execution.

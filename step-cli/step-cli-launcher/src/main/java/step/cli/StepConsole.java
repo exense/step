@@ -20,6 +20,11 @@ package step.cli;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.OutputStreamAppender;
+import ch.qos.logback.core.encoder.Encoder;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +56,12 @@ public class StepConsole implements Callable<Integer> {
 
     public static final Logger log = LoggerFactory.getLogger(StepConsole.class);
     public static final String MANAGED = "managed:";
+
+    /**
+     * The conversion words of logback's exception converters, {@code %ex} and {@code %throwable} with their variants
+     */
+    private static final List<String> EXCEPTION_CONVERSION_WORDS = List.of("%ex", "%exception", "%throwable",
+        "%xex", "%xexception", "%xthrowable", "%rex", "%rootexception", "%nopex", "%nopexception");
 
     @Override
     public Integer call() throws Exception {
@@ -215,20 +226,63 @@ public class StepConsole implements Callable<Integer> {
         protected void applyLoggingOptions() {
             if (debug) {
                 verbose = true;
-                setDebugLogLevel();
+            }
+            // Applied here rather than through the logging configuration because both depend on options, which are
+            // only known once the command line has been parsed
+            LoggerContext loggerContext = loggerContext();
+            if (loggerContext == null) {
+                return;
+            }
+            if (debug) {
+                loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(Level.DEBUG);
+            }
+            if (!verbose) {
+                suppressStackTraces(loggerContext);
             }
         }
 
-        /**
-         * Raises the level of the CLI's own logging. It is done here rather than through the logging configuration
-         * because the level depends on an option, which is only known once the command line has been parsed.
-         */
-        private static void setDebugLogLevel() {
+        private static LoggerContext loggerContext() {
             ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
-            if (loggerFactory instanceof LoggerContext) {
-                ((LoggerContext) loggerFactory).getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(Level.DEBUG);
-            }
+            return loggerFactory instanceof LoggerContext ? (LoggerContext) loggerFactory : null;
         }
+    }
+
+    /**
+     * Keeps the stack traces of the errors out of the output, which is what {@code --verbose} turns back on.
+     * <p>
+     * The errors the CLI reports are meant to be actionable on their own: a plan requiring an agent type this machine
+     * has no installation of is a matter of the message, and the fifty frames printed under it bury it. This is done
+     * on the appenders because most of these errors are logged by the execution engine, which the CLI shares with the
+     * controller - where a stack trace in the log file is exactly what one wants.
+     */
+    static void suppressStackTraces(LoggerContext loggerContext) {
+        loggerContext.getLoggerList()
+            .forEach(logger -> logger.iteratorForAppenders().forEachRemaining(StepConsole::suppressStackTraces));
+    }
+
+    private static void suppressStackTraces(Appender<ILoggingEvent> appender) {
+        if (!(appender instanceof OutputStreamAppender)) {
+            return;
+        }
+        Encoder<ILoggingEvent> encoder = ((OutputStreamAppender<ILoggingEvent>) appender).getEncoder();
+        if (!(encoder instanceof PatternLayoutEncoder)) {
+            return;
+        }
+        PatternLayoutEncoder patternEncoder = (PatternLayoutEncoder) encoder;
+        String pattern = patternEncoder.getPattern();
+        // %nopex only suppresses the stack trace logback appends by itself, hence the check: a pattern placing the
+        // exception explicitly says where it wants it, and is left alone. It also makes this idempotent.
+        if (pattern == null || rendersTheException(pattern)) {
+            return;
+        }
+        patternEncoder.stop();
+        patternEncoder.setPattern(pattern + "%nopex");
+        patternEncoder.start();
+    }
+
+    private static boolean rendersTheException(String pattern) {
+        String lowerCasePattern = pattern.toLowerCase(Locale.ROOT);
+        return EXCEPTION_CONVERSION_WORDS.stream().anyMatch(lowerCasePattern::contains);
     }
 
     public static void main(String... args) {

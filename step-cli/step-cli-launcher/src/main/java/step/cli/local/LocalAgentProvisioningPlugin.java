@@ -43,6 +43,7 @@ import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
 import step.grid.Grid;
+import step.grid.agent.AgentTypes;
 import step.grid.client.GridClient;
 import step.grid.tokenpool.Interest;
 
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect;
@@ -201,9 +203,8 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
             requiredAgentPools = tokenForecastingContext.getAgentPoolRequirementSpec();
             Set<Map<String, Interest>> criteriaWithoutMatch = tokenForecastingContext.getCriteriaWithoutMatch();
             if (!criteriaWithoutMatch.isEmpty()) {
-                // Typically a keyword of a language whose agent this distribution doesn't ship
-                throw new ProvisioningException("This plan requires agents which are not available for local execution: "
-                    + criteriaWithoutMatch);
+                // Typically a keyword of a language whose agent this machine has no installation of
+                throw new ProvisioningException(unavailableAgentsMessage(criteriaWithoutMatch, driver::getInstallationHint));
             }
         } else {
             List<AgentPoolRequirementSpec> configuredAgentPools = planAgentConfiguration.getAgentPoolRequirementSpecs();
@@ -239,6 +240,34 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
         } catch (Exception e) {
             throw new ProvisioningException("Error while starting the local agents", e);
         }
+    }
+
+    /**
+     * Turns the criteria no local agent pool matched into an error naming the agent types and, when their provider has
+     * one, what to do about them: the criteria as they are collected ({@code [{$agenttype=dotnet}]}) do say what is
+     * missing, but not that the .NET agent is the user's to install, nor how this CLI is told where it is.
+     */
+    // Package private for the sake of the tests, which cover the message without running an execution
+    // Qualified: step.functions.Function, the keyword, is the Function of this package
+    static String unavailableAgentsMessage(Set<Map<String, Interest>> criteriaWithoutMatch,
+                                           java.util.function.Function<String, String> installationHints) {
+        List<String> agentTypes = criteriaWithoutMatch.stream()
+            .map(criteria -> criteria.get(AgentTypes.AGENT_TYPE_KEY))
+            .filter(Objects::nonNull)
+            .map(Interest::getSelectionPattern)
+            .filter(Objects::nonNull)
+            .map(Pattern::pattern)
+            .distinct()
+            .collect(Collectors.toList());
+        if (agentTypes.isEmpty()) {
+            // Criteria this plugin cannot read as an agent type, reported as they were collected
+            return "This plan requires agents which are not available for local execution: " + criteriaWithoutMatch;
+        }
+        StringBuilder message = new StringBuilder("This plan requires agent types which are not available for local"
+            + " execution: " + String.join(", ", agentTypes) + ".");
+        agentTypes.stream().map(installationHints).filter(Objects::nonNull)
+            .forEach(hint -> message.append(" ").append(hint));
+        return message.toString();
     }
 
     @Override
