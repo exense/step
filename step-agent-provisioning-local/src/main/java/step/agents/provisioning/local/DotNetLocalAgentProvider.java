@@ -85,11 +85,26 @@ public class DotNetLocalAgentProvider implements LocalAgentProvider {
         return findBinDirectory(configured) != null;
     }
 
+    /**
+     * This agent type is unavailable for two different reasons - nothing configured, or something configured which is
+     * not usable - and telling a user who did configure an installation to configure one is worse than saying nothing.
+     * The second case is therefore answered by the validation itself, which knows what is wrong with the installation
+     * and names it.
+     */
     @Override
     public String getInstallationHint() {
-        return "The .NET agent is a platform specific binary distribution and is not shipped with the CLI: point"
-            + " --localAgentDotNet or the " + AGENT_HOME_ENV_VAR + " environment variable at an installed Step .NET"
-            + " agent for this platform.";
+        if (configuredAgentPath() == null) {
+            return "The .NET agent is a platform specific binary distribution and is not shipped with the CLI: point"
+                + " --localAgentDotNet or the " + AGENT_HOME_ENV_VAR + " environment variable at an installed Step .NET"
+                + " agent for this platform.";
+        }
+        try {
+            validateInstallation();
+            // The installation became usable since it was found unavailable, which leaves nothing to say
+            return null;
+        } catch (LocalAgentException e) {
+            return e.getMessage();
+        }
     }
 
     /**

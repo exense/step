@@ -102,7 +102,30 @@ public class DotNetLocalAgentProviderTest {
         Assume.assumeTrue("The environment variable is the documented fallback and is set on this machine",
             System.getenv(DotNetLocalAgentProvider.AGENT_HOME_ENV_VAR) == null);
 
-        Assert.assertFalse(new DotNetLocalAgentProvider(new LocalAgentProvisioningConfiguration()).isAvailable());
+        DotNetLocalAgentProvider provider = new DotNetLocalAgentProvider(new LocalAgentProvisioningConfiguration());
+
+        Assert.assertFalse(provider.isAvailable());
+        String hint = provider.getInstallationHint();
+        Assert.assertTrue(hint, hint.contains("--localAgentDotNet"));
+        Assert.assertTrue(hint, hint.contains(DotNetLocalAgentProvider.AGENT_HOME_ENV_VAR));
+    }
+
+    /**
+     * The hint is the whole explanation an execution requiring this agent type gets, and a user who did configure an
+     * installation must be told what is wrong with <b>it</b> rather than to configure one. A Windows path written in a
+     * properties file without doubling its backslashes arrives here as exactly such an installation: the path is
+     * mangled by the escaping rules of {@code java.util.Properties} and points nowhere.
+     */
+    @Test
+    public void reportsWhatIsWrongWithTheConfiguredInstallation() throws Exception {
+        Path notAnAgent = folder.newFolder("CDevAppsStep").toPath();
+
+        String hint = providerFor(notAnAgent).getInstallationHint();
+
+        Assert.assertTrue("Should name the configured installation: " + hint, hint.contains(notAnAgent.toString()));
+        Assert.assertTrue("Should say what is missing in it: " + hint, hint.contains(AGENT_EXECUTABLE));
+        Assert.assertFalse("Should not ask for what is already configured: " + hint,
+            hint.contains(DotNetLocalAgentProvider.AGENT_HOME_ENV_VAR));
     }
 
     /**
