@@ -8,7 +8,7 @@ import step.automation.packages.AutomationPackageReadingException;
 import step.cli.apignore.ApIgnoreFileFilter;
 import step.cli.parameters.ApDeployParameters;
 import step.cli.parameters.ApExecuteParameters;
-import step.cli.local.LocalAgentProvisioningConfiguration;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.core.Constants;
 import step.core.maven.MavenArtifactIdentifier;
 

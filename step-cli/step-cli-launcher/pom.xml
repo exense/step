@@ -57,28 +57,14 @@
     </dependency>
 
     <!--
-      Local execution of automation packages: the CLI embeds a grid the agents it starts register to.
-      Deliberately NOT depending on step-grid-agent: the agents run as separate processes out of their own,
-      isolated set of libraries, which is what keeps keywords away from the CLI's classpath. The Java agent is
-      embedded as a resource (see the maven-dependency-plugin execution below) for the very same reason.
+      Local execution of automation packages: starts real agents as separate processes and provisions them for the
+      execution. The Java agent they run is embedded as a resource by this module (see the maven-dependency-plugin
+      execution below), not by the step-agent-provisioning-local, which might be shared with consumers having no use for a 22 MB agent.
     -->
     <dependency>
       <groupId>ch.exense.step</groupId>
-      <artifactId>step-grid-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>ch.exense.step</groupId>
-      <artifactId>step-grid-client</artifactId>
-    </dependency>
-    <!-- Agent provisioning driver SPI and the token forecasting the local driver is driven by -->
-    <dependency>
-      <groupId>ch.exense.step</groupId>
-      <artifactId>step-plans-base-artefacts</artifactId>
+      <artifactId>step-agent-provisioning-local</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.dataformat</groupId>
-      <artifactId>jackson-dataformat-yaml</artifactId>
     </dependency>
 
     <dependency>
@@ -127,10 +113,12 @@
             </configuration>
           </execution>
           <!--
-            Embeds the Java agent used for local execution. It is copied in as a plain RESOURCE and must never become
-            a dependency: shade would unpack a dependency into the CLI jar and put the agent on the CLI's own
-            classpath, which is exactly the isolation problem running the agent as a separate process solves.
-            The name has to match JavaLocalAgentProvider.EMBEDDED_AGENT_RESOURCE.
+            Embeds the Java agent used for local execution, which is what makes the CLI self-contained. It is copied
+            in as a plain RESOURCE and must never become a dependency: shade would unpack a dependency into the CLI
+            jar and put the agent on the CLI's own classpath, which is exactly the isolation problem running the
+            agent as a separate process solves.
+            The name has to match JavaLocalAgentProvider.EMBEDDED_AGENT_RESOURCE, which reads it from the classpath
+            of whoever provides it.
           -->
           <execution>
             <id>copy-local-java-agent</id>

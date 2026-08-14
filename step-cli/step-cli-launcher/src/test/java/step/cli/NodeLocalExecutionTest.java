@@ -22,9 +22,9 @@ import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import step.cli.local.LocalAgentProvisioningConfiguration;
-import step.cli.local.LocalAgentWorkspace;
-import step.cli.local.NodeLocalAgentProvider;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
+import step.agents.provisioning.local.LocalAgentWorkspace;
+import step.agents.provisioning.local.NodeLocalAgentProvider;
 
 import java.io.File;
 import java.io.IOException;

@@ -22,7 +22,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import step.cli.local.LocalAgentProvisioningConfiguration;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.core.Constants;
 
 import java.io.File;

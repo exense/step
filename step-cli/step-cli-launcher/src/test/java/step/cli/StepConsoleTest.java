@@ -561,7 +561,7 @@ public class StepConsoleTest {
             private String includeCategories;
             private String excludeCategories;
             private Map<String, String> executionParameters;
-            public step.cli.local.LocalAgentProvisioningConfiguration localAgentConfiguration;
+            public step.agents.provisioning.local.LocalAgentProvisioningConfiguration localAgentConfiguration;
         }
 
         public TestApExecuteCommand(List<RemoteExecutionParams> remoteParams, List<LocalExecutionParams> localParams) {
@@ -590,7 +590,7 @@ public class StepConsoleTest {
         @Override
         protected void executeLocally(File file, File kwLibFile, String includePlans, String excludePlans,
                                       String includeCategories, String excludeCategories, Map<String, String> executionParameters,
-                                      step.cli.local.LocalAgentProvisioningConfiguration localAgentConfiguration) {
+                                      step.agents.provisioning.local.LocalAgentProvisioningConfiguration localAgentConfiguration) {
             if (localParams != null) {
                 LocalExecutionParams p = new LocalExecutionParams();
                 p.apFile = file;
