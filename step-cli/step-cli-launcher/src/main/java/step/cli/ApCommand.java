@@ -229,6 +229,11 @@ public class ApCommand implements Callable<Integer> {
             description = "Local execution only. The directory of an installed Step Node.js agent to use. Either the step-node-agent package itself or a directory containing it in node_modules. Defaults to a globally installed step-node-agent, or to installing one with npm.")
         protected Path localAgentNode;
 
+        @CommandLine.Option(names = {"--localAgentDotNet"}, paramLabel = "<Path>",
+            description = "Local execution only. The directory of an installed Step .NET agent, which is never installed by the CLI. "
+                + "Either the agent distribution or its bin directory. Defaults to the STEP_DOTNET_AGENT_HOME environment variable.")
+        protected Path localAgentDotNet;
+
         @CommandLine.Option(names = {"--localAgentNodeVersion"}, paramLabel = "<Version>",
             description = "Local execution only. The version of the step-node-agent npm package to install. Defaults to the version of this CLI. Not used when the agent is already installed globally.")
         protected String localAgentNodeVersion;
@@ -320,6 +325,7 @@ public class ApCommand implements Callable<Integer> {
             LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration()
                 .setJavaAgentPath(localAgentJava)
                 .setNodeAgentPath(localAgentNode)
+                .setDotNetAgentPath(localAgentDotNet)
                 .setWorkDirectory(localAgentWorkDir)
                 .setJavaAgentVmArgs(localAgentVmArgs)
                 // Verbose prints what the agents log, debug additionally raises the level they log at

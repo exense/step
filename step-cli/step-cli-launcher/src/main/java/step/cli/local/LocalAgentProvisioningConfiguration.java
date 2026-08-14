@@ -40,6 +40,7 @@ public class LocalAgentProvisioningConfiguration {
 
     private Path javaAgentPath;
     private Path nodeAgentPath;
+    private Path dotNetAgentPath;
     private String nodeAgentVersion = Constants.STEP_VERSION_STRING;
     private Path workDirectory;
     private int maxTokensPerAgent = DEFAULT_MAX_TOKENS_PER_AGENT;
@@ -88,6 +89,20 @@ public class LocalAgentProvisioningConfiguration {
 
     public LocalAgentProvisioningConfiguration setNodeAgentVersion(String nodeAgentVersion) {
         this.nodeAgentVersion = nodeAgentVersion;
+        return this;
+    }
+
+    /**
+     * @return the directory of an installed .NET agent to use, or {@code null} to fall back to the
+     * {@code STEP_DOTNET_AGENT_HOME} environment variable. Unlike the other agents, this one is never installed by the
+     * CLI: it is a platform specific binary distribution, which the user provides.
+     */
+    public Path getDotNetAgentPath() {
+        return dotNetAgentPath;
+    }
+
+    public LocalAgentProvisioningConfiguration setDotNetAgentPath(Path dotNetAgentPath) {
+        this.dotNetAgentPath = dotNetAgentPath;
         return this;
     }
 

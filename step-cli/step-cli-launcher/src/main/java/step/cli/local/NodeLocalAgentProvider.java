@@ -110,12 +110,15 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
         Path runDirectory = context.getWorkingDirectory();
         // Unlike the Java agent, the Node.js agent falls back to a fixed port (3000) when none is configured and
         // never picks a free one itself, so the port is reserved here and pinned together with the URL.
-        int agentPort = OsCommands.findFreeLoopbackPort();
+        int agentPort = LocalPorts.findFreeLoopbackPort();
         Path agentConf;
         try {
             agentConf = agentConfWriter.write(runDirectory, AGENT_CONF_FILE_NAME, context, Map.of(
                 "agentPort", agentPort,
-                "agentUrl", "http://" + AgentConfWriter.LOOPBACK_HOST + ":" + agentPort));
+                "agentUrl", "http://" + AgentConfWriter.LOOPBACK_HOST + ":" + agentPort,
+                // Read by the file manager of this agent, which otherwise gives every download from the grid the 3s
+                // it defaults to. Written here rather than by the writer: not every agent supports it.
+                "gridReadTimeout", AgentConfWriter.GRID_READ_TIMEOUT_MS));
         } catch (IOException e) {
             throw new LocalAgentException("Error while writing the configuration of the local Node.js agent", e);
         }
@@ -374,15 +377,6 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
                 Thread.currentThread().interrupt();
             }
             return false;
-        }
-
-        static int findFreeLoopbackPort() throws LocalAgentException {
-            try (java.net.ServerSocket socket = new java.net.ServerSocket(0, 1,
-                java.net.InetAddress.getByName(AgentConfWriter.LOOPBACK_HOST))) {
-                return socket.getLocalPort();
-            } catch (IOException e) {
-                throw new LocalAgentException("Unable to reserve a port for the local Node.js agent", e);
-            }
         }
 
         /**

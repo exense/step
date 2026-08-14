@@ -115,7 +115,8 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
         try {
             driver = new LocalProcessAgentProvisioningDriver(grid, workspace, configuration, List.of(
                 new JavaLocalAgentProvider(configuration, workspace),
-                new NodeLocalAgentProvider(configuration, workspace)));
+                new NodeLocalAgentProvider(configuration, workspace),
+                new DotNetLocalAgentProvider(configuration)));
         } catch (RuntimeException e) {
             closeQuietly(grid);
             grid = null;

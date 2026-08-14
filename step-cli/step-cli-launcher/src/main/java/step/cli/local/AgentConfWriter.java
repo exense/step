@@ -38,7 +38,11 @@ import java.util.Map;
  * processes is that they bring their own, isolated set of libraries.
  * <p>
  * All agent types share the same configuration shape (grid host, token groups with a capacity and token attributes),
- * so the same writer serves the Java agent's YAML and the Node.js agent's YAML alike.
+ * so the same writer serves the YAML of every agent type.
+ * <p>
+ * Only the settings <b>every</b> agent understands are written here; anything else is passed by the provider of the
+ * agent type concerned. This is not mere tidiness: the .NET agent rejects the settings it does not implement rather
+ * than ignoring them, and refuses to start when it is given, say, {@code ssl} or {@code gridReadTimeout}.
  */
 public class AgentConfWriter {
 
@@ -51,9 +55,10 @@ public class AgentConfWriter {
     public static final String LOOPBACK_HOST = "127.0.0.1";
 
     /**
-     * How long an agent waits while reading from the grid, in milliseconds.
+     * How long an agent waits while reading from the grid, in milliseconds. Not written by this class: not every agent
+     * supports it, see the class documentation.
      */
-    private static final int GRID_READ_TIMEOUT_MS = 20000;
+    public static final int GRID_READ_TIMEOUT_MS = 20000;
 
     private final ObjectMapper yamlMapper = new ObjectMapper(
         new YAMLFactory().disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER));
@@ -75,9 +80,7 @@ public class AgentConfWriter {
         // No agentPort: the agents bind to a free port chosen by the OS when none is configured. Reserving one here
         // would only add a race between the reservation and the agent actually binding it.
         conf.put("registrationPeriod", 1000);
-        conf.put("gridReadTimeout", GRID_READ_TIMEOUT_MS);
         conf.put("workingDir", "./work");
-        conf.put("ssl", false);
 
         Map<String, Object> tokenConf = new LinkedHashMap<>();
         tokenConf.put("attributes", new LinkedHashMap<>(context.getTokenAttributes()));

@@ -24,57 +24,86 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import step.grid.app.configuration.AppConfiguration;
+import step.grid.agent.AgentTypes;
+import step.grid.security.SymmetricSecurityConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
+/**
+ * Covers the configuration written for one agent run.
+ * <p>
+ * The settings written for every agent type are deliberately few: an agent is free to reject the settings it does not
+ * implement, and the .NET agent does exactly that, refusing to start when it is given {@code ssl} or
+ * {@code gridReadTimeout}. These tests pin which settings each agent type is given.
+ */
 public class AgentConfWriterTest {
 
     @Rule
-    public final TemporaryFolder folder = new TemporaryFolder();
+    public final TemporaryFolder runDirectory = new TemporaryFolder();
+
+    private final AgentConfWriter writer = new AgentConfWriter();
+
+    @Test
+    public void writesOnlyTheSettingsEveryAgentUnderstands() throws Exception {
+        Map<String, Object> conf = write(Map.of());
+
+        Assert.assertEquals("aGrid", conf.get("gridHost"));
+        Assert.assertEquals(AgentConfWriter.LOOPBACK_HOST, conf.get("agentHost"));
+        Assert.assertEquals("./work", conf.get("workingDir"));
+        Assert.assertEquals(1000, conf.get("registrationPeriod"));
+        // Not supported by every agent, and therefore written by the providers which need them
+        Assert.assertFalse("ssl must not be written for every agent type", conf.containsKey("ssl"));
+        Assert.assertFalse("gridReadTimeout must not be written for every agent type", conf.containsKey("gridReadTimeout"));
+    }
+
+    @Test
+    public void writesTheTokensAndTheirAttributes() throws Exception {
+        Map<String, Object> conf = write(Map.of());
+
+        Map<String, Object> tokenGroup = ((java.util.List<Map<String, Object>>) conf.get("tokenGroups")).get(0);
+        Assert.assertEquals(3, tokenGroup.get("capacity"));
+        Map<String, Object> tokenConf = (Map<String, Object>) tokenGroup.get("tokenConf");
+        Assert.assertEquals(Map.of(AgentTypes.AGENT_TYPE_KEY, "aType"), tokenConf.get("attributes"));
+    }
+
+    @Test
+    public void writesTheSecretTheAgentsAuthenticateWith() throws Exception {
+        Map<String, Object> conf = write(Map.of());
+
+        Assert.assertEquals(Map.of("jwtSecretKey", "aSecret"), conf.get("gridSecurity"));
+    }
 
     /**
-     * The read timeout of an agent is also the read timeout of its file downloads, and a keyword's libraries travel
-     * through those. Leaving it at the value an agent defaults to aborts the transfer of anything that takes longer,
-     * which showed up as a stack trace on the grid and a silently retried download: see the AgentConf.yaml of the
-     * agent distribution, which raises it for exactly this reason.
+     * The settings of one agent type are added to the ones written for every type.
      */
     @Test
-    public void raisesTheGridReadTimeoutAboveTheAgentDefault() throws Exception {
-        Map<String, Object> conf = write(Map.of());
+    public void writesTheSettingsOfTheAgentType() throws Exception {
+        Map<String, Object> conf = write(Map.of("workerName", "StepAgentWorker.exe", "agentPort", 12345));
 
-        Object gridReadTimeout = conf.get("gridReadTimeout");
-        Assert.assertNotNull("The agent configuration should set a grid read timeout", gridReadTimeout);
-        Assert.assertTrue("The grid read timeout should be raised above the agent default of "
-                + new AppConfiguration().getGridReadTimeout() + "ms, was " + gridReadTimeout,
-            (Integer) gridReadTimeout > new AppConfiguration().getGridReadTimeout());
+        Assert.assertEquals("StepAgentWorker.exe", conf.get("workerName"));
+        Assert.assertEquals(12345, conf.get("agentPort"));
+        Assert.assertEquals("./work", conf.get("workingDir"));
     }
 
+    /**
+     * A provider cannot override what this writer guarantees, a mistake which would silently break the isolation of
+     * the execution or the connection to the grid.
+     */
     @Test
-    public void pinsTheAgentToTheLoopbackInterface() throws Exception {
-        Map<String, Object> conf = write(Map.of());
+    public void doesNotLetAnAgentTypeOverrideTheSharedSettings() throws Exception {
+        Map<String, Object> conf = write(Map.of("gridHost", "anotherGrid"));
 
-        Assert.assertEquals(AgentConfWriter.LOOPBACK_HOST, conf.get("agentHost"));
+        Assert.assertEquals("aGrid", conf.get("gridHost"));
     }
 
-    @Test
-    public void doesNotLetAnAgentTypeOverrideTheSettingsItShares() throws Exception {
-        Map<String, Object> conf = write(Map.of("agentHost", "somewhere.else", "agentPort", 1234));
-
-        Assert.assertEquals("An agent type must not be able to override a shared setting",
-            AgentConfWriter.LOOPBACK_HOST, conf.get("agentHost"));
-        Assert.assertEquals("Settings of its own must be written though", 1234, conf.get("agentPort"));
-    }
-
-    @SuppressWarnings("unchecked")
     private Map<String, Object> write(Map<String, Object> additionalSettings) throws IOException {
-        Path directory = folder.getRoot().toPath();
-        LocalAgentStartContext context = new LocalAgentStartContext("http://127.0.0.1:1234", directory, 2,
-            Map.of("$agenttype", "default"), null);
+        SymmetricSecurityConfiguration security = new SymmetricSecurityConfiguration("aSecret");
+        LocalAgentStartContext context = new LocalAgentStartContext("aGrid", runDirectory.getRoot().toPath(), 3,
+            Map.of(AgentTypes.AGENT_TYPE_KEY, "aType"), security);
 
-        Path confFile = new AgentConfWriter().write(directory, "AgentConf.yaml", context, additionalSettings);
+        Path confFile = writer.write(runDirectory.getRoot().toPath(), "AgentConf.yaml", context, additionalSettings);
 
         return new ObjectMapper(new YAMLFactory()).readValue(confFile.toFile(), Map.class);
     }

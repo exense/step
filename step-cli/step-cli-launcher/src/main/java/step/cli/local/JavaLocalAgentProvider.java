@@ -99,10 +99,13 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
         Path runDirectory = context.getWorkingDirectory();
         Path agentConf;
         try {
-            agentConf = agentConfWriter.write(runDirectory, AGENT_CONF_FILE_NAME, context,
+            agentConf = agentConfWriter.write(runDirectory, AGENT_CONF_FILE_NAME, context, Map.of(
                 // The local agents never fork: they are already the isolated process the CLI provisioned for this
                 // execution, and a second level of forking would only add a start-up delay per keyword.
-                Map.of("agentForker", Map.of("enabled", false)));
+                "agentForker", Map.of("enabled", false),
+                // Settings of the Java agent rather than of every agent, hence written here and not by the writer
+                "gridReadTimeout", AgentConfWriter.GRID_READ_TIMEOUT_MS,
+                "ssl", false));
         } catch (IOException e) {
             throw new LocalAgentException("Error while writing the configuration of the local Java agent", e);
         }
