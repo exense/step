@@ -30,23 +30,25 @@ import java.nio.file.Path;
 /**
  * The directory the local agents are installed and run in.
  * <p>
- * It holds two things with very different lifetimes:
+ * It holds things with very different lifetimes:
  * <ul>
- *   <li>{@code agents/} — the agents themselves, extracted from the CLI or installed with npm on first use and
- *       <b>kept</b> across runs. Re-extracting 20 MB or re-running an npm install on every execution would make the
- *       local execution needlessly slow.</li>
+ *   <li>{@code agents/} and {@code libraries/} — the agents themselves, extracted from the CLI or installed with npm
+ *       on first use, and the libraries sent to them. <b>Kept</b> across runs: re-extracting 20 MB or re-running an
+ *       npm install on every execution would make the local execution needlessly slow.</li>
  *   <li>{@code agent-*} — one throw-away directory per running agent, deleted when it is stopped.</li>
+ *   <li>{@code grid-*} — the file manager of the embedded grid, deleted when the grid is stopped.</li>
  * </ul>
  * A CLI killed with a SIGKILL, or a developer closing the terminal, never gets the chance to clean up, so the
- * run directories left over by a previous run are swept when the workspace is created rather than being left to
- * accumulate. This mirrors what {@code AgentForker.cleanupStaleForkedAgentFiles} does for forked agents. The
- * installed agents are of course not swept.
+ * throw-away directories left over by a previous run are swept when the workspace is created rather than being left
+ * to accumulate. This mirrors what {@code AgentForker.cleanupStaleForkedAgentFiles} does for forked agents. The
+ * installed agents and libraries are of course not swept.
  */
 public class LocalAgentWorkspace {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalAgentWorkspace.class);
     private static final String WORKSPACE_DIRECTORY_NAME = "step-cli-local-agents";
     private static final String AGENT_DIRECTORY_PREFIX = "agent-";
+    private static final String GRID_DIRECTORY_PREFIX = "grid-";
     private static final String INSTALLED_AGENTS_DIRECTORY_NAME = "agents";
     private static final String INSTALLED_LIBRARIES_DIRECTORY_NAME = "libraries";
 
@@ -64,21 +66,23 @@ public class LocalAgentWorkspace {
     }
 
     /**
-     * Removes the run directories left behind by a previous run. Any directory found here at this point belongs to
-     * a run which is over: the CLI is a short lived process which cleans its own directories up as it stops them.
+     * Removes the throw-away directories left behind by a previous run. Any directory found here at this point
+     * belongs to a run which is over: the CLI is a short lived process which cleans its own directories up as it
+     * stops the agents and the grid they belong to.
      */
     private void sweepStaleRunDirectories() {
-        File[] staleDirectories = root.toFile().listFiles(
-            (dir, name) -> name.startsWith(AGENT_DIRECTORY_PREFIX) && new File(dir, name).isDirectory());
+        File[] staleDirectories = root.toFile().listFiles((dir, name) ->
+            (name.startsWith(AGENT_DIRECTORY_PREFIX) || name.startsWith(GRID_DIRECTORY_PREFIX))
+                && new File(dir, name).isDirectory());
         if (staleDirectories == null) {
             return;
         }
         for (File staleDirectory : staleDirectories) {
-            logger.info("Removing the local agent directory {} left over by a previous run.", staleDirectory);
+            logger.info("Removing the directory {} left over by a previous run.", staleDirectory);
             try {
                 FileUtils.deleteDirectory(staleDirectory);
             } catch (IOException e) {
-                logger.warn("Failed to delete the stale local agent directory {}.", staleDirectory, e);
+                logger.warn("Failed to delete the stale directory {}.", staleDirectory, e);
             }
         }
     }
@@ -90,6 +94,14 @@ public class LocalAgentWorkspace {
      */
     public Path createAgentRunDirectory(String agentType) throws IOException {
         return Files.createTempDirectory(root, AGENT_DIRECTORY_PREFIX + agentType + "-");
+    }
+
+    /**
+     * Creates a dedicated, empty directory for the file manager of the embedded grid, which caches there everything
+     * the grid sends to the agents.
+     */
+    public Path createGridRunDirectory() throws IOException {
+        return Files.createTempDirectory(root, GRID_DIRECTORY_PREFIX);
     }
 
     /**

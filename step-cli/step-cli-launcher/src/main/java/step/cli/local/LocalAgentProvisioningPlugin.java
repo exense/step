@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.functions.TokenForecastingContext;
 import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
+import step.artefacts.handlers.functions.TokenSelectionCriteriaFilter;
 import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import step.core.agents.provisioning.driver.AgentProvisioningDriver;
 import step.core.agents.provisioning.driver.AgentProvisioningRequest;
@@ -38,16 +39,22 @@ import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
+import step.functions.Function;
+import step.functions.accessor.FunctionAccessor;
+import step.functions.type.FunctionTypeRegistry;
 import step.grid.Grid;
 import step.grid.client.GridClient;
 import step.grid.tokenpool.Interest;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect;
 
@@ -92,20 +99,17 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
         // Failures here are raised as PluginCriticalException, carrying on would leave the engine without a grid and without a
         // provisioning driver, and every plan would then fail with a misleading "no agent available for local
         // execution" instead of with the actual reason the local execution could not be set up.
-        try {
-            grid = new LocalExecutionGrid(configuration.getAgentStartTimeout());
-        } catch (Exception e) {
-            throw new PluginCriticalException("Error while starting the local grid", e);
-        }
-
         LocalAgentWorkspace workspace;
         try {
             workspace = new LocalAgentWorkspace(configuration.getWorkDirectory());
         } catch (IOException e) {
-            // The grid is not in the context yet at this point, so nothing else would ever stop it
-            closeQuietly(grid);
-            grid = null;
             throw new PluginCriticalException("Error while creating the working directory of the local agents", e);
+        }
+
+        try {
+            grid = new LocalExecutionGrid(configuration.getAgentStartTimeout(), workspace);
+        } catch (Exception e) {
+            throw new PluginCriticalException("Error while starting the local grid", e);
         }
 
         try {
@@ -162,14 +166,33 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
         }
     }
 
+    /**
+     * Registers the filter reducing the token selection criteria to what a local execution can honour.
+     */
+    @Override
+    public void initializeExecutionContext(ExecutionEngineContext executionEngineContext, ExecutionContext context) {
+        if (driver != null) {
+            context.put(TokenSelectionCriteriaFilter.class, new LocalTokenSelectionCriteriaFilter());
+        }
+    }
+
+    /**
+     * @return the keywords available to this execution, or {@code null} when they cannot be listed
+     */
+    private static Collection<Function> functionsOf(ExecutionContext context) {
+        FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
+        if (functionAccessor == null) {
+            return null;
+        }
+        List<Function> functions = new ArrayList<>();
+        functionAccessor.getAll().forEachRemaining(functions::add);
+        return functions;
+    }
+
     @Override
     public void provisionRequiredResources(ExecutionContext context) {
         AgentProvisioningConfiguration planAgentConfiguration = Objects.requireNonNullElse(
             context.getPlan().getAgents(), new AutomaticAgentProvisioningConfiguration(auto_detect));
-        if (!planAgentConfiguration.enableAgentProvisioning()) {
-            logger.debug("Agent provisioning is disabled for this plan");
-            return;
-        }
 
         List<AgentPoolRequirementSpec> requiredAgentPools;
         if (planAgentConfiguration.enableAutomaticTokenNumberCalculation()) {
@@ -182,10 +205,19 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
                     + criteriaWithoutMatch);
             }
         } else {
-            requiredAgentPools = planAgentConfiguration.getAgentPoolRequirementSpecs();
-            if (requiredAgentPools == null) {
+            List<AgentPoolRequirementSpec> configuredAgentPools = planAgentConfiguration.getAgentPoolRequirementSpecs();
+            if (configuredAgentPools == null) {
                 throw new ProvisioningException("The agent configuration of the plan returned no agent pool requirement");
             }
+            requiredAgentPools = LocalAgentPoolRequirements.forRequiredAgentTypes(functionsOf(context),
+                context.get(FunctionTypeRegistry.class), driver.getAvailableAgentTypes(),
+                configuration.getMaxTokensPerAgent());
+            logger.info("This plan configures its agent pools manually ({}). Those pools are those of a Step "
+                    + "instance and do not exist here: one agent of each required type is started with {} tokens "
+                    + "instead ({}).",
+                configuredAgentPools.stream().map(p -> p.agentPoolTemplateName).collect(Collectors.joining(", ")),
+                configuration.getMaxTokensPerAgent(),
+                requiredAgentPools.stream().map(p -> p.agentPoolTemplateName).collect(Collectors.joining(", ")));
         }
 
         if (requiredAgentPools.isEmpty()) {

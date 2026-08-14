@@ -237,11 +237,12 @@ public class ApCommand implements Callable<Integer> {
             description = "Local execution only. The directory the local agents are installed and run in. Defaults to a folder in the system temporary directory.")
         protected Path localAgentWorkDir;
 
-        @CommandLine.Option(names = {"--localAgentTokens"}, paramLabel = "<Count>",
-            description = "Local execution only. The number of keywords a local agent can run in parallel.",
+        @CommandLine.Option(names = {"--localAgentMaxTokens"}, paramLabel = "<Count>",
+            description = "Local execution only. The maximum number of keywords a local agent can run in parallel. "
+                + "Agents are sized on what the execution requires, up to this limit.",
             showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
-            defaultValue = "" + LocalAgentProvisioningConfiguration.DEFAULT_TOKENS_PER_AGENT)
-        protected Integer localAgentTokens;
+            defaultValue = "" + LocalAgentProvisioningConfiguration.DEFAULT_MAX_TOKENS_PER_AGENT)
+        protected Integer localAgentMaxTokens;
 
         @CommandLine.Option(names = {"--localAgentStartTimeout"}, paramLabel = "<Seconds>",
             description = "Local execution only. How long to wait for a local agent to start and connect.",
@@ -327,8 +328,8 @@ public class ApCommand implements Callable<Integer> {
             if (localAgentNodeVersion != null && !localAgentNodeVersion.isBlank()) {
                 configuration.setNodeAgentVersion(localAgentNodeVersion);
             }
-            if (localAgentTokens != null) {
-                configuration.setTokensPerAgent(localAgentTokens);
+            if (localAgentMaxTokens != null) {
+                configuration.setMaxTokensPerAgent(localAgentMaxTokens);
             }
             if (localAgentStartTimeout != null) {
                 configuration.setAgentStartTimeout(Duration.ofSeconds(localAgentStartTimeout));

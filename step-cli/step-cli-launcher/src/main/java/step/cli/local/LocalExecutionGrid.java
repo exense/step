@@ -18,7 +18,7 @@
  ******************************************************************************/
 package step.cli.local;
 
-import ch.exense.commons.io.FileHelper;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.grid.GridImpl;
@@ -27,8 +27,8 @@ import step.grid.client.LocalGridClientImpl;
 import step.grid.security.SymmetricSecurityConfiguration;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Base64;
@@ -48,8 +48,14 @@ public class LocalExecutionGrid implements Closeable {
     private final GridImpl grid;
     private final LocalGridClientImpl gridClient;
     private final SymmetricSecurityConfiguration security;
+    private final Path fileManagerDirectory;
 
-    public LocalExecutionGrid(Duration agentStartTimeout) throws Exception {
+    /**
+     * @param workspace the workspace the file manager of this grid caches its files in. Using it rather than a
+     *                  temporary directory of its own is what gets that cache deleted: it is deleted with this grid,
+     *                  and swept by the next run should this CLI be killed before it can do so.
+     */
+    public LocalExecutionGrid(Duration agentStartTimeout, LocalAgentWorkspace workspace) throws Exception {
         // The grid listens on all interfaces, so it is protected with a secret rather than left open to anything
         // running on the machine. The secret is generated per invocation and never leaves this process and the
         // configuration files of the agents it starts, both of which are gone when the CLI terminates.
@@ -58,11 +64,10 @@ public class LocalExecutionGrid implements Closeable {
         GridImpl.GridImplConfig gridConfig = new GridImpl.GridImplConfig();
         gridConfig.setSecurity(security);
 
-        File fileManagerDirectory = FileHelper.createTempFolder("stepCliGridFileManager");
-        fileManagerDirectory.deleteOnExit();
+        fileManagerDirectory = workspace.createGridRunDirectory();
 
         // Port 0: the OS assigns a free port, which keeps concurrent CLI invocations from colliding
-        grid = new GridImpl(fileManagerDirectory, 0, gridConfig);
+        grid = new GridImpl(fileManagerDirectory.toFile(), 0, gridConfig);
         grid.start();
         logger.debug("Started the local grid on port {}", grid.getServerPort());
 
@@ -109,8 +114,8 @@ public class LocalExecutionGrid implements Closeable {
     }
 
     /**
-     * Stops the grid. The grid client is left alone: it is registered in the execution engine context, which closes
-     * it itself.
+     * Stops the grid and deletes the files its file manager cached. The grid client is left alone: it is registered
+     * in the execution engine context, which closes it itself.
      */
     @Override
     public void close() throws IOException {
@@ -119,6 +124,20 @@ public class LocalExecutionGrid implements Closeable {
             grid.stop();
         } catch (Exception e) {
             throw new IOException("Error while stopping the local grid", e);
+        } finally {
+            deleteFileManagerDirectory();
+        }
+    }
+
+    /**
+     * Deleted only after the grid has been stopped, which is what closes the files it was still holding. A failure is
+     * not worth failing an execution which is over: the directory is swept the next time a local execution starts.
+     */
+    private void deleteFileManagerDirectory() {
+        try {
+            FileUtils.deleteDirectory(fileManagerDirectory.toFile());
+        } catch (IOException e) {
+            logger.warn("Failed to delete the file manager directory {} of the local grid.", fileManagerDirectory, e);
         }
     }
 }

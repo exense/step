@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.cli;
 
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,7 +25,6 @@ import org.junit.rules.TemporaryFolder;
 import step.cli.local.LocalAgentProvisioningConfiguration;
 import step.cli.local.LocalAgentWorkspace;
 import step.cli.local.NodeLocalAgentProvider;
-import step.core.Constants;
 
 import java.io.File;
 import java.io.IOException;
@@ -69,17 +67,12 @@ public class NodeLocalExecutionTest {
 
         File automationPackage = buildAutomationPackage();
 
-        // Fails the test if any plan of the package fails, the handler reports plan failures by throwing
+        // The execution itself is the assertion: the handler reports a failed plan by throwing, and the only way this
+        // plan can pass is a Node.js keyword having run on a Node.js agent. Where that agent came from is deliberately
+        // not asserted: the CLI uses a globally installed step-node-agent when there is one, and only installs it into
+        // the workspace otherwise, so both are a correct outcome.
         new ApLocalExecuteCommandHandler()
             .execute(automationPackage, null, null, null, null, null, Map.of(), configuration);
-
-        Assert.assertTrue("The Node.js agent should have been installed and started",
-            Files.isRegularFile(installedNodeAgentDirectory().resolve("server.js")));
-    }
-
-    private Path installedNodeAgentDirectory() {
-        return workDirectory.getRoot().toPath().resolve("agents").resolve("node")
-            .resolve(Constants.STEP_VERSION_STRING).resolve("node_modules").resolve("step-node-agent");
     }
 
     /**

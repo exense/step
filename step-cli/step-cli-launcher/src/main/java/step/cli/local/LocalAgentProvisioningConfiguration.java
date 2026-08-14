@@ -34,7 +34,7 @@ import java.time.Duration;
  */
 public class LocalAgentProvisioningConfiguration {
 
-    public static final int DEFAULT_TOKENS_PER_AGENT = 10;
+    public static final int DEFAULT_MAX_TOKENS_PER_AGENT = 5;
     public static final int DEFAULT_START_TIMEOUT_SECONDS = 60;
     private static final Duration DEFAULT_SHUTDOWN_TIMEOUT = Duration.ofSeconds(15);
 
@@ -42,7 +42,7 @@ public class LocalAgentProvisioningConfiguration {
     private Path nodeAgentPath;
     private String nodeAgentVersion = Constants.STEP_VERSION_STRING;
     private Path workDirectory;
-    private int tokensPerAgent = DEFAULT_TOKENS_PER_AGENT;
+    private int maxTokensPerAgent = DEFAULT_MAX_TOKENS_PER_AGENT;
     private Duration agentStartTimeout = Duration.ofSeconds(DEFAULT_START_TIMEOUT_SECONDS);
     private Duration agentShutdownTimeout = DEFAULT_SHUTDOWN_TIMEOUT;
     private String javaAgentVmArgs;
@@ -105,16 +105,17 @@ public class LocalAgentProvisioningConfiguration {
     }
 
     /**
-     * The number of tokens a local agent provides, which is also the ceiling on what an execution gets: a token is a
-     * thread able to run a keyword, and an unconstrained forecast (a thread group with a high user count, say) would
-     * otherwise size the local agent far beyond what a developer machine can run.
+     * The ceiling on the number of tokens a local agent is started with. A token is a thread able to run a keyword,
+     * and an agent is otherwise sized on what the execution is forecast to need: this only keeps an unconstrained
+     * forecast - a thread group with a high user count, say - from sizing an agent far beyond what a developer
+     * machine can run.
      */
-    public int getTokensPerAgent() {
-        return tokensPerAgent;
+    public int getMaxTokensPerAgent() {
+        return maxTokensPerAgent;
     }
 
-    public LocalAgentProvisioningConfiguration setTokensPerAgent(int tokensPerAgent) {
-        this.tokensPerAgent = tokensPerAgent;
+    public LocalAgentProvisioningConfiguration setMaxTokensPerAgent(int maxTokensPerAgent) {
+        this.maxTokensPerAgent = maxTokensPerAgent;
         return this;
     }
 

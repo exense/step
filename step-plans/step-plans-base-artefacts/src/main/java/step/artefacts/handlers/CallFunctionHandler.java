@@ -27,6 +27,7 @@ import org.bson.types.ObjectId;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler.FunctionGroupContext;
 import step.artefacts.handlers.functions.FunctionGroupSession;
+import step.artefacts.handlers.functions.TokenSelectionCriteriaFilter;
 import step.artefacts.handlers.functions.TokenSelectionCriteriaMapBuilder;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.attachments.AttachmentMeta;
@@ -115,7 +116,8 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
         functionExecutionService = context.require(FunctionExecutionService.class);
         reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
         dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
-        this.tokenSelectionCriteriaMapBuilder = new TokenSelectionCriteriaMapBuilder(functionTypeRegistry, dynamicJsonObjectResolver);
+        this.tokenSelectionCriteriaMapBuilder = new TokenSelectionCriteriaMapBuilder(functionTypeRegistry,
+            dynamicJsonObjectResolver, context.get(TokenSelectionCriteriaFilter.class));
         this.functionLocator = new FunctionLocator(functionAccessor, new SelectorHelper(dynamicJsonObjectResolver));
         this.useLegacyOutput = context.getConfiguration().getPropertyAsBoolean(KEYWORD_OUTPUT_LEGACY_FORMAT, false);
     }

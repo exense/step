@@ -67,12 +67,24 @@ import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_P
  * <b>One process per agent type.</b> The forecast is expressed in agents of a given pool, but a developer machine is
  * not a cluster: starting one JVM per forecast agent would trade a lot of memory and start-up time for an isolation
  * nobody asked for locally. The tokens forecast for a type are therefore served by a single agent process configured
- * with that many tokens, capped by {@link LocalAgentProvisioningConfiguration#getTokensPerAgent()}.
+ * with that many tokens, capped by {@link LocalAgentProvisioningConfiguration#getMaxTokensPerAgent()}.
+ * <p>
+ * <b>One token per pool agent.</b> The local pools are declared with a single token each, which is what makes the
+ * agents be sized on what the execution actually needs. The forecasting turns a number of required tokens into a
+ * number of agents of a pool - {@code ceil(tokens / pool.numberOfTokens)} - and only that number reaches a driver:
+ * with a pool of ten tokens, everything between one and ten tokens arrives here as "one agent" and would be served
+ * by ten. Declaring the granularity of the pool as one token is not a trick, it states what a local agent is: unlike
+ * a pool of machines, its size is a number written into its configuration file.
  */
 public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDriver {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalProcessAgentProvisioningDriver.class);
     private static final String AGENT_POOL_NAME_PREFIX = "local-";
+    /**
+     * The number of tokens an agent of a local pool provides. See the class documentation: it is what lets the
+     * forecast reach this driver as a number of tokens rather than as a number of agents.
+     */
+    private static final int TOKENS_PER_POOL_AGENT = 1;
 
     private final LocalGridClientImpl gridClient;
     private final LocalExecutionGrid grid;
@@ -113,12 +125,19 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
                 agentPoolName(provider.getAgentType()),
                 provider.getDisplayName() + " (local)",
                 Map.of(AgentTypes.AGENT_TYPE_KEY, provider.getAgentType()),
-                configuration.getTokensPerAgent(),
+                TOKENS_PER_POOL_AGENT,
                 Set.of()))
             .collect(Collectors.toSet());
     }
 
-    private static String agentPoolName(String agentType) {
+    /**
+     * @return the agent types this driver is able to start on this machine
+     */
+    public Set<String> getAvailableAgentTypes() {
+        return Set.copyOf(providersByAgentType.keySet());
+    }
+
+    static String agentPoolName(String agentType) {
         return AGENT_POOL_NAME_PREFIX + agentType;
     }
 
@@ -178,7 +197,8 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
     /**
      * Folds the forecast, expressed in numbers of agents per pool, into a number of tokens per agent type.
      */
-    private Map<String, Integer> calculateTokensByAgentType(List<AgentPoolRequirementSpec> requirementSpecs) {
+    // Package private for the sake of the tests, which cover the sizing without starting any agent
+    Map<String, Integer> calculateTokensByAgentType(List<AgentPoolRequirementSpec> requirementSpecs) {
         Map<String, AgentPoolSpec> availablePools = getAvailableAgentPoolSpecs().stream()
             .collect(Collectors.toMap(s -> s.name, s -> s));
 
@@ -195,14 +215,17 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         }
 
         tokensByAgentType.replaceAll((agentType, tokens) -> {
-            int cappedTokens = Math.min(tokens, configuration.getTokensPerAgent());
-            if (cappedTokens < tokens) {
-                logger.warn("The execution requires {} {} tokens, more than the {} a single local agent provides. "
-                        + "Capping to {}: parallel steps will queue instead of running side by side. "
-                        + "Raise --localAgentTokens if this machine can take more.",
-                    tokens, agentType, configuration.getTokensPerAgent(), cappedTokens);
+            int maxTokens = configuration.getMaxTokensPerAgent();
+            if (tokens > maxTokens) {
+                logger.warn("This execution requires {} {} tokens, more than the {} a local agent is allowed to "
+                        + "provide. The agent is started with {} tokens: parallel steps will queue instead of running "
+                        + "side by side. Raise --localAgentMaxTokens if this machine can take more.",
+                    tokens, agentType, maxTokens, maxTokens);
+                return maxTokens;
             }
-            return cappedTokens;
+            // An agent without tokens would never become usable, and the execution would wait for it until it times
+            // out. Requirements are normally at least one agent, but a manual configuration can ask for none.
+            return Math.max(tokens, 1);
         });
         return tokensByAgentType;
     }

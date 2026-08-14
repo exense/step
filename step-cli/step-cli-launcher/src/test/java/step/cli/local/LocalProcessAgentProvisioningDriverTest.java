@@ -47,7 +47,7 @@ public class LocalProcessAgentProvisioningDriverTest {
     @Test
     public void startsAndStopsAJavaAgent() throws Exception {
         LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration()
-            .setTokensPerAgent(2)
+            .setMaxTokensPerAgent(2)
             .setWorkDirectory(workDirectory.getRoot().toPath())
             .setAgentStartTimeout(Duration.ofSeconds(90));
 
@@ -56,7 +56,7 @@ public class LocalProcessAgentProvisioningDriverTest {
             new RecordingLocalAgentProvider(new JavaLocalAgentProvider(configuration, workspace));
         Assert.assertTrue("The Java agent should be embedded in the CLI", provider.isAvailable());
 
-        try (LocalExecutionGrid grid = new LocalExecutionGrid(configuration.getAgentStartTimeout())) {
+        try (LocalExecutionGrid grid = new LocalExecutionGrid(configuration.getAgentStartTimeout(), workspace)) {
             try (LocalProcessAgentProvisioningDriver driver =
                      new LocalProcessAgentProvisioningDriver(grid, workspace, configuration, List.of(provider))) {
 
@@ -64,10 +64,13 @@ public class LocalProcessAgentProvisioningDriverTest {
                 Assert.assertEquals(1, availablePools.size());
                 AgentPoolSpec javaPool = availablePools.iterator().next();
                 Assert.assertEquals(Map.of(AgentTypes.AGENT_TYPE_KEY, AgentTypeConstants.AGENT_TYPE_JAVA), javaPool.attributes);
+                // One token per pool agent is what makes the forecast reach the driver as a number of tokens
+                Assert.assertEquals(1, javaPool.numberOfTokens);
 
                 AgentProvisioningRequest request = new AgentProvisioningRequest();
                 request.executionId = "testExecution";
-                request.agentPoolRequirementSpecs = List.of(new AgentPoolRequirementSpec(javaPool.name, 1));
+                // Two agents of a pool of one token: one process with two tokens
+                request.agentPoolRequirementSpecs = List.of(new AgentPoolRequirementSpec(javaPool.name, 2));
 
                 String requestId = driver.initializeTokenProvisioningRequest(request);
                 driver.executeTokenProvisioningRequest(requestId);
