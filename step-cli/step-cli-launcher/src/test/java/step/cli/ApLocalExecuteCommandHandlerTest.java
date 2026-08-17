@@ -27,7 +27,10 @@ import step.core.Constants;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Executes an automation package locally, end to end: the CLI deploys it into its embedded automation package
@@ -57,5 +60,15 @@ public class ApLocalExecuteCommandHandlerTest {
         Assert.assertTrue("The Java agent should have been extracted and started",
             Files.isRegularFile(workDirectory.getRoot().toPath()
                 .resolve("agents").resolve("java").resolve(Constants.STEP_VERSION_STRING).resolve("step-agent.jar")));
+
+        // The run directories are deleted as the grid and the agents are stopped. On Windows this only works if
+        // nothing holds their files open anymore, which is why the local grid is stopped after the execution engine:
+        // the class loaders of the local tokens read the handler jars straight out of the file manager of that grid.
+        Assert.assertEquals("No run directory should have been left over", List.of(), leftOverRunDirectories());
+    }
+
+    private List<String> leftOverRunDirectories() {
+        String[] names = workDirectory.getRoot().list((dir, name) -> name.startsWith("grid-") || name.startsWith("agent-"));
+        return names == null ? List.of() : Arrays.stream(names).sorted().collect(Collectors.toList());
     }
 }

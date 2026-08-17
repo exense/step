@@ -47,6 +47,7 @@ import step.grid.agent.AgentTypes;
 import step.grid.client.GridClient;
 import step.grid.tokenpool.Interest;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -70,13 +71,16 @@ import static step.core.plans.agents.configuration.AutomaticAgentProvisioningCon
  * <p>
  * It is deliberately <b>not</b> auto-discovered: the JUnit runner, where
  * running keywords in the same JVM is a feature rather than a limitation, must keep the in-JVM path.
+ * <p>
+ * Unlike most plugins it is {@link Closeable}, and has to be closed by whoever built it, after the execution engine it
+ * was given to. See {@link #close()}.
  */
 // Runs before FunctionPlugin, which builds the function execution service around whichever grid client it finds in
 // the context: the grid of the local agents has to be published before that. FunctionPlugin knows nothing about this
 // plugin, hence runsBefore rather than a dependency declared on its side.
 @Plugin(runsBefore = {FunctionPlugin.class})
 @IgnoreDuringAutoDiscovery
-public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin {
+public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalAgentProvisioningPlugin.class);
     private static final String PROVISIONING_REQUEST_ID = "$provisioningRequestId";
@@ -84,6 +88,7 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
     private final LocalAgentProvisioningConfiguration configuration;
     private LocalExecutionGrid grid;
     private LocalProcessAgentProvisioningDriver driver;
+    private boolean closed;
 
     public LocalAgentProvisioningPlugin() {
         this(new LocalAgentProvisioningConfiguration());
@@ -95,6 +100,10 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
+        if (closed) {
+            // Would otherwise publish the grid client of a grid which has been stopped, and fail every keyword later
+            throw new PluginCriticalException("This local agent provisioning plugin has been closed and cannot be reused");
+        }
         if (driver != null) {
             return;
         }
@@ -125,15 +134,18 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
             throw new PluginCriticalException("Error while initializing the local agents", e);
         }
 
-        declareScriptEngineLibraries(context, workspace);
-
-        // Picked up by FunctionPlugin (grid client) and TokenForecastingExecutionPlugin (driver). All three are
-        // Closeable and are registered in the context, which closes them when the execution engine is closed: the
-        // grid client and the grid are shut down, and the driver stops any agent still running.
-        context.put(LocalExecutionGrid.class, grid);
+        // Picked up by FunctionPlugin (grid client) and TokenForecastingExecutionPlugin (driver). Both are Closeable
+        // and are closed by the context when the execution engine is closed: the grid client releases the class
+        // loaders of the local tokens and the driver stops any agent still running. The grid itself is deliberately
+        // not registered here, see close().
         context.put(Grid.class, grid.getGrid());
         context.put(GridClient.class, grid.getGridClient());
         context.put(AgentProvisioningDriver.class, driver);
+
+        // Last, and deliberately so: the script engines only concern the keywords of two languages, while an
+        // execution without the driver in its context fails on every keyword, with a "no agent type available"
+        // which points at everything except the actual cause.
+        declareScriptEngineLibraries(context, workspace);
     }
 
     /**
@@ -160,9 +172,11 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
                 if (directory != null) {
                     configuration.putProperty(property, directory.toString());
                 }
-            } catch (LocalAgentException e) {
+            } catch (Exception e) {
                 // Not worth aborting the execution: only the keywords of that language are affected, and they fail
-                // with an error of their own naming the missing engine
+                // with an error of their own naming the missing engine. Every exception is caught, not only the
+                // expected one: resolving the engines reads how the application itself is packaged, and the way that
+                // fails is not ours to predict.
                 logger.warn("The {} keywords will not be executable: unable to provide the script engine to the agents.",
                     engine.language(), e);
             }
@@ -281,6 +295,27 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
             driver.deprovisionTokens(provisioningRequestId);
         } catch (Exception e) {
             throw new DeprovisioningException("Error while stopping the local agents", e);
+        }
+    }
+
+    /**
+     * Stops the local grid and deletes the files its file manager cached.
+     * <p>
+     * Done here rather than by registering the grid in the execution engine context, because the context closes what
+     * it holds in no particular order, while this has to happen <b>last</b>: the local tokens of the grid client load
+     * their handlers (the composite handler of every plan calling a composite keyword, for one) with class loaders
+     * reading the jars straight out of the file manager directory of this grid. Deleting it before the grid client
+     * released them leaves the files open, and Windows refuses to delete an open file.
+     * <p>
+     * The caller closes this plugin after the execution engine it was given to, typically by declaring it as the first
+     * resource of the same try-with-resources.
+     */
+    @Override
+    public void close() throws IOException {
+        closed = true;
+        if (grid != null) {
+            grid.close();
+            grid = null;
         }
     }
 

@@ -56,10 +56,13 @@ public class ApLocalExecuteCommandHandler {
         // The keywords run on real agents started as separate processes on this machine, so that a local execution
         // exercises the same agents and the same class loader isolation as an execution on a Step platform, and
         // supports every keyword language rather than only the Java ones.
-        try (ExecutionEngine executionEngine = ExecutionEngine.builder()
-            .withOperationMode(OperationMode.LOCAL_AUTOMATION_PACKAGE_WITH_AGENTS)
-            .withPlugin(new LocalAgentProvisioningPlugin(localAgentConfiguration))
-            .withPluginsFromClasspath().build()) {
+        // Declared before the engine, and therefore closed after it: the local grid it stops is still in use as long
+        // as the engine has not released the class loaders of its local tokens.
+        try (LocalAgentProvisioningPlugin localAgents = new LocalAgentProvisioningPlugin(localAgentConfiguration);
+             ExecutionEngine executionEngine = ExecutionEngine.builder()
+                 .withOperationMode(OperationMode.LOCAL_AUTOMATION_PACKAGE_WITH_AGENTS)
+                 .withPlugin(localAgents)
+                 .withPluginsFromClasspath().build()) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
             InputStream libFileInputStream = null;
@@ -155,6 +158,9 @@ public class ApLocalExecuteCommandHandler {
                     }
                 }
             }
+        } catch (IOException e) {
+            // Only the shutdown of the local agents can reach this: the body above handles its own IO errors
+            throw new StepCliExecutionException("Error while stopping the local execution environment", e);
         }
     }
 

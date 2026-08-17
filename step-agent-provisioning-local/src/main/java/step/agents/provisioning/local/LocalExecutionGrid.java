@@ -116,6 +116,10 @@ public class LocalExecutionGrid implements Closeable {
     /**
      * Stops the grid and deletes the files its file manager cached. The grid client is left alone: it is registered
      * in the execution engine context, which closes it itself.
+     * <p>
+     * To be called once the grid client has been closed, and not before: the local tokens of that client execute
+     * handlers with class loaders reading the jars directly out of the file manager directory deleted here, and an
+     * open file is a file Windows refuses to delete.
      */
     @Override
     public void close() throws IOException {
