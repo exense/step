@@ -63,6 +63,17 @@ public class StepConsole implements Callable<Integer> {
     private static final List<String> EXCEPTION_CONVERSION_WORDS = List.of("%ex", "%exception", "%throwable",
         "%xex", "%xexception", "%xthrowable", "%rex", "%rootexception", "%nopex", "%nopexception");
 
+    /**
+     * The loggers {@code --debug} raises to DEBUG: the Step packages, and only those.
+     * <p>
+     * Raising the root logger instead would also turn on the debug output of every library the CLI embeds, and Jetty
+     * alone prints enough of it to bury what the developer asked for. A library which does need to be looked at can
+     * still be turned up with a logging configuration of its own, passed with {@code -Dlogback.configurationFile}.
+     * <p>
+     * The agents of a local execution are configured the same way, in {@code logback-local-agent.xml}.
+     */
+    static final List<String> DEBUG_LOGGERS = List.of("step", "ch.exense");
+
     @Override
     public Integer call() throws Exception {
         // call help by default
@@ -234,7 +245,7 @@ public class StepConsole implements Callable<Integer> {
                 return;
             }
             if (debug) {
-                loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(Level.DEBUG);
+                enableDebugLogging(loggerContext);
             }
             if (!verbose) {
                 suppressStackTraces(loggerContext);
@@ -245,6 +256,14 @@ public class StepConsole implements Callable<Integer> {
             ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
             return loggerFactory instanceof LoggerContext ? (LoggerContext) loggerFactory : null;
         }
+    }
+
+    /**
+     * Raises {@link #DEBUG_LOGGERS} to DEBUG, leaving every other logger, and the root logger, at the level the
+     * logging configuration gave them.
+     */
+    static void enableDebugLogging(LoggerContext loggerContext) {
+        DEBUG_LOGGERS.forEach(name -> loggerContext.getLogger(name).setLevel(Level.DEBUG));
     }
 
     /**

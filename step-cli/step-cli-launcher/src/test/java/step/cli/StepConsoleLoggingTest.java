@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.cli;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
@@ -107,6 +108,24 @@ public class StepConsoleLoggingTest {
         StepConsole.suppressStackTraces(loggerContext);
 
         Assert.assertTrue(appender.isStarted());
+    }
+
+    /**
+     * What {@code --debug} is for: the debug output of Step, in the CLI and in the code it shares with the
+     * controller. The libraries stay where the logging configuration put them, or the lines the developer asked for
+     * would be lost in those of Jetty.
+     */
+    @Test
+    public void debugRaisesTheStepLoggersOnly() {
+        loggerContext.getLogger(Logger.ROOT_LOGGER_NAME).setLevel(Level.INFO);
+
+        StepConsole.enableDebugLogging(loggerContext);
+
+        Assert.assertEquals(Level.DEBUG, loggerContext.getLogger("step.cli.ApLocalExecuteCommandHandler").getEffectiveLevel());
+        Assert.assertEquals(Level.DEBUG, loggerContext.getLogger("step.grid.filemanager.FileManagerImpl").getEffectiveLevel());
+        Assert.assertEquals(Level.DEBUG, loggerContext.getLogger("ch.exense.commons.io.FileHelper").getEffectiveLevel());
+        Assert.assertEquals(Level.INFO, loggerContext.getLogger("org.eclipse.jetty.server.Server").getEffectiveLevel());
+        Assert.assertEquals(Level.INFO, loggerContext.getLogger(Logger.ROOT_LOGGER_NAME).getEffectiveLevel());
     }
 
     private PatternLayoutEncoder rootLoggerEncoder(String pattern) {

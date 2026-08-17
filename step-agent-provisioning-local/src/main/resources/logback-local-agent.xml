@@ -6,6 +6,10 @@
   the agent would fall back to logback's own default, which logs every DEBUG statement of every library.
 
   The level is that of the agent, not of the CLI: the CLI decides separately whether to show these lines.
+
+  Only the Step loggers follow that level. The root logger stays at info, because in debug the libraries the agent
+  brings - Jetty above all - print enough to bury the agent's own output. Kept in sync with
+  StepConsole.DEBUG_LOGGERS, which does the same for the CLI itself.
 -->
 <configuration scan="false">
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
@@ -14,7 +18,10 @@
     </encoder>
   </appender>
 
-  <root level="${step.localAgent.logLevel:-info}">
+  <logger name="step" level="${step.localAgent.logLevel:-info}"/>
+  <logger name="ch.exense" level="${step.localAgent.logLevel:-info}"/>
+
+  <root level="info">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>
