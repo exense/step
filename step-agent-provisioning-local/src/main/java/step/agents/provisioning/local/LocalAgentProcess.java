@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,6 +48,12 @@ public class LocalAgentProcess {
     private static final Logger logger = LoggerFactory.getLogger(LocalAgentProcess.class);
     private static final int RETAINED_OUTPUT_LINES = 50;
     private static final long FORCIBLE_TERMINATION_TIMEOUT_MS = 5000;
+    /**
+     * How long the end of a stopped process' output is waited for. Bounded, because the output of a process which
+     * could not be terminated never ends. Reaching it takes microseconds: the process is gone by then, and what is
+     * left to read is what its pipe still holds.
+     */
+    private static final long OUTPUT_PUMP_TIMEOUT_MS = 1000;
     private static final int WORKING_DIRECTORY_DELETION_RETRIES = 5;
     private static final long WORKING_DIRECTORY_DELETION_RETRY_WAIT_MS = 100;
 
@@ -57,7 +62,7 @@ public class LocalAgentProcess {
     private final Path workingDirectory;
     private final boolean printOutput;
     private final Deque<String> lastOutputLines = new ArrayDeque<>();
-    private final CompletableFuture<Void> outputPump;
+    private final Thread outputPump;
 
     /**
      * @param printOutput whether to print what the agent logs. The output is always read — an agent whose output is
@@ -72,31 +77,45 @@ public class LocalAgentProcess {
         this.outputPump = startOutputPump();
     }
 
-    private CompletableFuture<Void> startOutputPump() {
-        return CompletableFuture.runAsync(() -> {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (printOutput) {
-                        logger.info("{} -- {}", name, line);
-                    } else {
-                        logger.debug("{} -- {}", name, line);
-                    }
-                    synchronized (lastOutputLines) {
-                        lastOutputLines.addLast(line);
-                        if (lastOutputLines.size() > RETAINED_OUTPUT_LINES) {
-                            lastOutputLines.removeFirst();
-                        }
+    private Thread startOutputPump() {
+        Thread pump = new Thread(this::pumpOutput, name + " output");
+        // A daemon on purpose: the pump of a process which survived even a forcible destroy blocks for ever, and must
+        // never be what keeps the CLI from exiting. Nothing can stop it from the outside - a blocking read on a
+        // process pipe answers neither to Thread.interrupt() nor to closing the stream, which blocks the caller
+        // instead on Windows - so the end of the process' output is the only thing that ends it.
+        pump.setDaemon(true);
+        pump.start();
+        return pump;
+    }
+
+    private void pumpOutput() {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (printOutput) {
+                    logger.info("{} -- {}", name, line);
+                } else {
+                    logger.debug("{} -- {}", name, line);
+                }
+                synchronized (lastOutputLines) {
+                    lastOutputLines.addLast(line);
+                    if (lastOutputLines.size() > RETAINED_OUTPUT_LINES) {
+                        lastOutputLines.removeFirst();
                     }
                 }
-            } catch (IOException e) {
-                logger.debug("Error while reading the output of {}", name, e);
             }
-        });
+        } catch (IOException e) {
+            logger.debug("Error while reading the output of {}", name, e);
+        }
     }
 
     public String getName() {
         return name;
+    }
+
+    // Package private for the sake of the tests, which check that the pump can never keep this JVM alive
+    Thread getOutputPump() {
+        return outputPump;
     }
 
     public boolean isAlive() {
@@ -149,11 +168,27 @@ public class LocalAgentProcess {
             destroyForciblyWithDescendants();
             return;
         } finally {
-            // The reader terminates on its own once the process closes its output stream, this is only to make sure
-            // the thread is not left running should that not happen.
-            outputPump.cancel(true);
+            awaitOutputPump();
         }
         deleteWorkingDirectory();
+    }
+
+    /**
+     * Waits for the end of the process' output, so that everything the agent printed has been logged and retained by
+     * the time this returns. The pump ends by itself when the process closes its output, which is what terminating it
+     * does; the wait is bounded because a process which could not be terminated never closes it, and the pump is then
+     * left running as the daemon thread it is.
+     */
+    private void awaitOutputPump() {
+        try {
+            outputPump.join(OUTPUT_PUMP_TIMEOUT_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        if (outputPump.isAlive()) {
+            logger.debug("The output of {} is still being read {}ms after it was stopped. Its process is still running.",
+                name, OUTPUT_PUMP_TIMEOUT_MS);
+        }
     }
 
     /**

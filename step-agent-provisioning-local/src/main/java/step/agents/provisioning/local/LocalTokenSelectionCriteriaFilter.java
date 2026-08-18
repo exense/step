@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
 
@@ -70,7 +71,16 @@ public class LocalTokenSelectionCriteriaFilter implements TokenSelectionCriteria
             if (SUPPORTED_CRITERIA.contains(criterion)) {
                 supported.put(criterion, interest);
             } else {
-                dropped.put(criterion, interest.getSelectionPattern().pattern());
+                String patternStr = "unknown";
+                if (interest != null) {
+                    Pattern pattern = interest.getSelectionPattern();
+                    if (pattern != null) {
+                        patternStr = pattern.pattern();
+                    } else {
+                        patternStr = interest.toString();
+                    }
+                }
+                dropped.put(criterion, patternStr);
             }
         });
 

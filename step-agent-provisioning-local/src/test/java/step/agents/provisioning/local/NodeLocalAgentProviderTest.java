@@ -29,69 +29,55 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Covers the agent installations a user can point {@code --localAgentNode} at. None of these tests starts node: they
- * are about what the provider accepts and, more importantly, about failing with an actionable message instead of
- * letting node die on a broken installation.
+ * Covers what the provider starts, and what it refuses to. None of these tests starts node: they are about the
+ * command the provider resolves and, more importantly, about failing with an actionable message instead of letting
+ * node die on a directory holding no agent.
  */
 public class NodeLocalAgentProviderTest {
 
     @Rule
     public final TemporaryFolder folder = new TemporaryFolder();
 
+    /**
+     * What a user points {@code --localAgentNode} at: the project directory where they ran
+     * {@code npm install ./step-node-agent-<version>.tgz}, which is where npm generated the command starting it.
+     */
     @Test
-    public void acceptsTheAgentPackageItself() throws Exception {
-        Path agent = installedAgent(folder.getRoot().toPath().resolve("agent"));
+    public void startsTheAgentInstalledInTheConfiguredProject() throws Exception {
+        Path project = folder.getRoot().toPath().resolve("my-project");
+        Path command = installedAgent(project);
 
-        Assert.assertEquals(agent, providerFor(agent).resolveAgentDirectory());
+        Assert.assertEquals(List.of(command.toString()), providerFor(project).resolveAgentCommand());
     }
 
     /**
-     * The layout of an {@code npm install --prefix} and of a global install, and the one this provider uses for its
-     * own installations. A user pointing at the prefix rather than at the package is making a reasonable guess.
+     * A source checkout, a directory holding the agent package but no installation, an empty directory: all the same
+     * thing here, an installation that was never made. The message has to say what was expected and how to get it.
      */
     @Test
-    public void acceptsADirectoryContainingTheAgentInNodeModules() throws Exception {
-        Path prefix = folder.getRoot().toPath().resolve("prefix");
-        Path agent = installedAgent(prefix.resolve("node_modules").resolve("step-node-agent"));
-
-        Assert.assertEquals(agent, providerFor(prefix).resolveAgentDirectory());
-    }
-
-    /**
-     * npm is free to hoist the dependencies of the agent to the installation prefix instead of leaving them in the
-     * package, which must not be mistaken for a package without dependencies.
-     */
-    @Test
-    public void acceptsDependenciesHoistedToTheInstallationPrefix() throws Exception {
-        Path prefix = folder.getRoot().toPath().resolve("prefix");
-        Path agent = prefix.resolve("node_modules").resolve("step-node-agent");
-        Files.createDirectories(agent);
-        Files.createFile(agent.resolve("server.js"));
-        Files.createDirectories(prefix.resolve("node_modules").resolve("express"));
-
-        Assert.assertEquals(agent, providerFor(agent).resolveAgentDirectory());
-    }
-
-    @Test
-    public void rejectsASourceCheckoutWithoutInstalledDependencies() throws Exception {
-        Path checkout = folder.getRoot().toPath().resolve("step-node-agent");
-        Files.createDirectories(checkout);
-        Files.createFile(checkout.resolve("server.js"));
-
-        LocalAgentException exception = Assert.assertThrows(LocalAgentException.class,
-            () -> providerFor(checkout).resolveAgentDirectory());
-        Assert.assertTrue("Should point at the missing dependencies: " + exception.getMessage(),
-            exception.getMessage().contains("npm install"));
-    }
-
-    @Test
-    public void rejectsADirectoryWhichHoldsNoAgent() throws Exception {
+    public void rejectsADirectoryWithNoInstalledAgent() throws Exception {
         Path empty = folder.newFolder("empty").toPath();
 
         LocalAgentException exception = Assert.assertThrows(LocalAgentException.class,
-            () -> providerFor(empty).resolveAgentDirectory());
-        Assert.assertTrue("Should point at the missing main script: " + exception.getMessage(),
-            exception.getMessage().contains("server.js"));
+            () -> providerFor(empty).resolveAgentCommand());
+        Assert.assertTrue("Should name the expected command: " + exception.getMessage(),
+            exception.getMessage().contains(Path.of("node_modules", ".bin",
+                NodeLocalAgentProvider.OsCommands.STEP_NODE_AGENT).toString()));
+        Assert.assertTrue("Should say how to install the agent: " + exception.getMessage(),
+            exception.getMessage().contains("npm install"));
+    }
+
+    /**
+     * The package unpacked next to a {@code node_modules} of its own is not an installation either: only the command
+     * npm generates says that npm ran.
+     */
+    @Test
+    public void rejectsAnUnpackedPackageWhichWasNeverInstalled() throws Exception {
+        Path checkout = folder.getRoot().toPath().resolve("step-node-agent");
+        Files.createDirectories(checkout.resolve("node_modules").resolve("express"));
+        Files.createFile(checkout.resolve("server.js"));
+
+        Assert.assertThrows(LocalAgentException.class, () -> providerFor(checkout).resolveAgentCommand());
     }
 
     /**
@@ -109,21 +95,22 @@ public class NodeLocalAgentProviderTest {
      */
     @Test
     public void prefersTheConfiguredAgentOverTheGloballyInstalledOne() throws Exception {
-        Path configured = installedAgent(folder.getRoot().toPath().resolve("agent"));
+        Path project = folder.getRoot().toPath().resolve("my-project");
+        Path command = installedAgent(project);
 
-        Assert.assertEquals(
-            List.of(NodeLocalAgentProvider.OsCommands.NODE, configured.resolve("server.js").toAbsolutePath().toString()),
-            provider(configured, true).resolveAgentCommand());
+        Assert.assertEquals(List.of(command.toString()), provider(project, true).resolveAgentCommand());
     }
 
     /**
-     * @return an agent package as an installation provides it, i.e. with its dependencies
+     * Installs an agent into a project the way npm does, as far as this provider is concerned: the generated command.
+     *
+     * @return the command npm generated, which is what the provider is expected to start
      */
-    private static Path installedAgent(Path packageRoot) throws IOException {
-        Files.createDirectories(packageRoot);
-        Files.createFile(packageRoot.resolve("server.js"));
-        Files.createDirectories(packageRoot.resolve("node_modules").resolve("express"));
-        return packageRoot;
+    private static Path installedAgent(Path project) throws IOException {
+        Path binDirectory = project.resolve("node_modules").resolve(".bin");
+        Files.createDirectories(binDirectory);
+        return Files.createFile(binDirectory.resolve(NodeLocalAgentProvider.OsCommands.STEP_NODE_AGENT))
+            .toAbsolutePath();
     }
 
     private NodeLocalAgentProvider providerFor(Path configuredAgent) throws IOException {

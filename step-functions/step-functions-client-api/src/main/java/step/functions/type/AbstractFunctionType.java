@@ -57,6 +57,8 @@ public abstract class AbstractFunctionType<T extends Function> {
     // Unfortunately there's currently no common project between AbstractFunctionType and AbstractFunctionHandler
     public static final String AUTOMATION_PACKAGE_FILE = "$automationPackageFile";
 
+    private static final Pattern JAVA_AGENT_TYPE_PATTERN = Pattern.compile(AgentTypeConstants.AGENT_TYPE_JAVA);
+
     protected FileResolver fileResolver;
     protected LoadingCache<String, File> fileResolverCache;
 
@@ -99,7 +101,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 
     public Map<String, Interest> getTokenSelectionCriteria(T function) {
         Map<String, Interest> criteria = new HashMap<>();
-        criteria.put(AgentTypes.AGENT_TYPE_KEY, new Interest(Pattern.compile(AgentTypeConstants.AGENT_TYPE_JAVA), true));
+        criteria.put(AgentTypes.AGENT_TYPE_KEY, new Interest(JAVA_AGENT_TYPE_PATTERN, true));
         return criteria;
     }
 

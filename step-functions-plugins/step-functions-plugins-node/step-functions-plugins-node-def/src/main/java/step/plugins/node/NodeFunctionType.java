@@ -34,6 +34,7 @@ import step.grid.tokenpool.Interest;
 public class NodeFunctionType extends AbstractFunctionType<NodeFunction> {
 
     public static final String FILE = "$node.js.file";
+    private static final Pattern NODEAGENT_TYPE_PATTERN = Pattern.compile(AgentTypeConstants.AGENT_TYPE_NODEJS);
 
     @Override
     public void init() {
@@ -54,7 +55,7 @@ public class NodeFunctionType extends AbstractFunctionType<NodeFunction> {
     @Override
     public Map<String, Interest> getTokenSelectionCriteria(NodeFunction function) {
         Map<String, Interest> criteria = new HashMap<>();
-        criteria.put(AgentTypes.AGENT_TYPE_KEY, new Interest(Pattern.compile(AgentTypeConstants.AGENT_TYPE_NODEJS), true));
+        criteria.put(AgentTypes.AGENT_TYPE_KEY, new Interest(NODEAGENT_TYPE_PATTERN, true));
         return criteria;
     }
 

@@ -141,7 +141,11 @@ public class ScriptEngineLibraries {
             for (URL library : libraries.values()) {
                 copyLibrary(library, temporaryDirectory);
             }
-            Files.move(temporaryDirectory, directory, StandardCopyOption.ATOMIC_MOVE);
+            try {
+                Files.move(temporaryDirectory, directory, StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+                Files.move(temporaryDirectory, directory, StandardCopyOption.REPLACE_EXISTING);
+            }
         } catch (IOException e) {
             deleteQuietly(temporaryDirectory);
             if (Files.isDirectory(directory)) {
