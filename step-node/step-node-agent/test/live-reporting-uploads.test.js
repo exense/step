@@ -8,6 +8,8 @@ const {
   StreamingUploads,
   QuotaExceededError,
 } = require('../api/controllers/live-reporting')
+// The timeout is injectable so that the tests below can exercise it without waiting a minute.
+const { createFileUploads } = require('../api/controllers/live-reporting/file-uploads')
 
 /**
  * Mock streaming upload server implementing the server side of the protocol.
@@ -36,9 +38,11 @@ function startMockUploadServer(options = {}) {
           socket.close(1008, 'QuotaExceededException: file too large')
           return
         }
+        if (options.neverReady) return // leave the client waiting for ReadyForUpload
         socket.send(JSON.stringify({ '@': 'ReadyForUpload', reference: { uri: options.referenceUri || 'streaming://resource/abc' } }))
       } else if (msg['@'] === 'FinishUpload') {
         conn.clientChecksum = msg.checksum
+        if (options.neverAcknowledge) return // leave the client waiting for UploadAcknowledged
         const serverChecksum = options.corruptChecksum
           ? 'deadbeef'
           : crypto.createHash('md5').update(conn.binary).digest('hex')
@@ -252,6 +256,75 @@ describe('live reporting - streaming a growing file', () => {
       await expect(upload.complete()).rejects.toThrow('closed before the upload was completed')
     } finally {
       fs.unlinkSync(file)
+      wss.close()
+    }
+  })
+})
+
+describe('live reporting - upload timeouts', () => {
+  // Short enough to keep the tests fast, but with enough headroom that the handshake steps against
+  // the local mock server never hit it when the test suites run in parallel.
+  const TIMEOUT_MS = 500
+
+  test('does not limit the time between start*Upload() and complete()', async () => {
+    const { wss, port, connections } = await startMockUploadServer()
+    const file = writeTempFile('') // start empty, produced slowly below
+    const uploads = createFileUploads(uploadProps(port), { timeoutMs: TIMEOUT_MS })
+    try {
+      const upload = uploads.startTextFileUpload(file)
+      // Wait for the handshake (the part that *is* time-bounded) to complete, so that the span
+      // measured below covers only the production phase.
+      for (let i = 0; upload.reference == null && i < 100; i++) await new Promise((r) => setTimeout(r, 10))
+      expect(upload.reference).not.toBeNull()
+
+      // Produce the file over a span several times longer than the per-step timeout: the phase
+      // between start*Upload() and complete() must not be time-bounded.
+      const startedAt = Date.now()
+      const chunks = ['line-1\n', 'line-2\n', 'line-3\n', 'line-4\n']
+      for (const chunk of chunks) {
+        await new Promise((r) => setTimeout(r, TIMEOUT_MS))
+        fs.appendFileSync(file, chunk)
+      }
+      const status = await upload.complete()
+
+      const expected = chunks.join('')
+      expect(Date.now() - startedAt).toBeGreaterThan(TIMEOUT_MS * 3)
+      expect(status.transferStatus).toBe('COMPLETED')
+      expect(status.size).toBe(Buffer.byteLength(expected))
+      expect(connections[0].binary.toString()).toBe(expected)
+    } finally {
+      fs.unlinkSync(file)
+      await uploads.close()
+      wss.close()
+    }
+  })
+
+  test('times out when the server never accepts the upload', async () => {
+    const { wss, port } = await startMockUploadServer({ neverReady: true })
+    const file = writeTempFile('content')
+    const uploads = createFileUploads(uploadProps(port), { timeoutMs: TIMEOUT_MS })
+    try {
+      await expect(uploads.uploadBinaryFile(file)).rejects
+        .toThrow(`Upload timed out after ${TIMEOUT_MS}ms while waiting for the server to accept the upload`)
+    } finally {
+      fs.unlinkSync(file)
+      await uploads.close()
+      wss.close()
+    }
+  })
+
+  test('times out when the server never acknowledges the upload', async () => {
+    const { wss, port, connections } = await startMockUploadServer({ neverAcknowledge: true })
+    const file = writeTempFile('content')
+    const uploads = createFileUploads(uploadProps(port), { timeoutMs: TIMEOUT_MS })
+    try {
+      await expect(uploads.uploadBinaryFile(file)).rejects
+        .toThrow(`Upload timed out after ${TIMEOUT_MS}ms while waiting for the upload acknowledgement`)
+      // The bytes did reach the server: only the final acknowledgement step timed out.
+      expect(connections[0].binary.toString()).toBe('content')
+    } finally {
+      fs.unlinkSync(file)
+      await uploads.close()
       wss.close()
     }
   })
