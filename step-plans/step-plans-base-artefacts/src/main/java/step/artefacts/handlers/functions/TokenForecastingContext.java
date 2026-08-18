@@ -191,7 +191,7 @@ public class TokenForecastingContext {
 
             @Override
             public TokenWrapper getLocalTokenHandle() {
-                return newTokenWrapper(true, null);
+                return newTokenWrapper(true, null, Map.of());
             }
 
             private final ConcurrentHashMap<String, Key> tokens = new ConcurrentHashMap<>();
@@ -201,27 +201,27 @@ public class TokenForecastingContext {
                 Key pool;
                 TokenWrapper tokenWrapper;
                 if (skipAutoProvisioning) {
-                    tokenWrapper = newTokenWrapper(false, null);
+                    tokenWrapper = newTokenWrapper(false, null, interests);
                 } else {
                     try {
                         pool = TokenForecastingContext.this.requireToken(interests, 1);
-                        tokenWrapper = newTokenWrapper(false, pool);
+                        tokenWrapper = newTokenWrapper(false, pool, interests);
                         // Keep track of the pool associated to this token. We need this information in the release() method
                         tokens.put(tokenWrapper.getID(), pool);
                     } catch (NoMatchingTokenPoolException e) {
                         // No token pool matches the selection criteria. Keep track of these criteria
                         reportFailedSelection(interests);
-                        tokenWrapper = newTokenWrapper(false, null);
+                        tokenWrapper = newTokenWrapper(false, null, interests);
                     }
                 }
                 return tokenWrapper;
             }
 
-            private TokenWrapper newTokenWrapper(boolean isLocal, Key key) {
+            private TokenWrapper newTokenWrapper(boolean isLocal, Key key, Map<String, Interest> selectionCriteria) {
                 TokenWrapper tokenWrapper = new TokenWrapper();
                 Token token = new Token();
                 token.setAgentid(isLocal ? "local" : "remote");
-                token.setAttributes(key != null ? key.matchingPools.stream().findFirst().orElseThrow().attributes : Map.of());
+                token.setAttributes(key != null ? simulateProvisionedTokenAttributes(key, selectionCriteria) : Map.of());
                 token.setId(UUID.randomUUID().toString());
                 tokenWrapper.setToken(token);
                 return tokenWrapper;
@@ -240,6 +240,32 @@ public class TokenForecastingContext {
                 throw new IllegalStateException("This method shouldn't be called");
             }
         };
+    }
+
+    /**
+     * Builds the attributes of the simulated agent token used during the forecasting.
+     * <p>
+     * The attributes of the matching agent pool template are used as a base. Some token attributes are however only
+     * populated at provisioning time (an example is $dockerImage) and are therefore missing from the agent pool template.
+     * Without them the simulated token wouldn't match the very selection criteria that led to its selection, which would
+     * for instance break the token reuse within sessions (see {@link FunctionGroupSession#getRemoteToken}).
+     * These attributes are thus simulated based on the selection criteria that requested them. The criteria concerned are
+     * the ones handled by one of the registered {@link step.core.agents.provisioning.AgentPoolProvisioningParameter}
+     *
+     * @param key               the key of the reserved token, providing the matching agent pool templates
+     * @param selectionCriteria the selection criteria the token has been selected with
+     * @return the attributes of the simulated agent token
+     */
+    private static Map<String, String> simulateProvisionedTokenAttributes(Key key, Map<String, Interest> selectionCriteria) {
+        Map<String, String> attributes = new HashMap<>(key.matchingPools.stream().findFirst().orElseThrow().attributes);
+        selectionCriteria.forEach((criterionAttribute, interest) -> {
+            boolean populatedAtProvisioningTime = supportedParameters.stream()
+                .anyMatch(p -> p.preProvisioningTokenSelectionCriteriaTransformer.apply(Map.entry(criterionAttribute, interest)) != null);
+            if (populatedAtProvisioningTime) {
+                attributes.put(criterionAttribute, interest.getSelectionPattern().pattern());
+            }
+        });
+        return attributes;
     }
 
     private void reportFailedSelection(Map<String, Interest> interests) {

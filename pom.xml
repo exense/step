@@ -44,7 +44,7 @@
     <maven.compiler.release>21</maven.compiler.release>
     <!-- internal dependencies -->
     <step-grid.version>0.0.0-MASTER-SNAPSHOT</step-grid.version>
-    <step-framework.version>3.0.1</step-framework.version>
+    <step-framework.version>0.0.0-MASTER-SNAPSHOT</step-framework.version>
 
     <!-- external, non-transitive, dependencies -->
     <dep.groovy.version>5.0.4</dep.groovy.version>
@@ -303,6 +303,13 @@
         <artifactId>httpclient</artifactId>
         <version>4.5.14</version>
       </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents.client5</groupId>
+        <artifactId>httpclient5</artifactId>
+        <version>5.6.3</version>
+      </dependency>
+
 
       <!-- These are not for the maven builds, but for the actual sources implementing maven functionality -->
       <dependency>

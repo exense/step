@@ -28,7 +28,7 @@ function parseAgentConf() {
 }
 
 logger.info('Creating agent context and tokens')
-const uuid = require('uuid/v4')
+const { v4: uuid } = require('uuid')
 const jwtUtils = require('./utils/jwtUtils')
 const agentType = 'node'
 const agent = {id: uuid()}
@@ -41,6 +41,8 @@ const agentContext = {
   gridSecurity: agentConf.gridSecurity,
   workingDir: agentConf.workingDir,
   npmProjectWorkspaceCleanupIdleTimeMs: agentConf.npmProjectWorkspaceCleanupIdleTimeMs,
+  forkShutdownTimeoutMs: agentConf.agentForker?.shutdownTimeoutMs,
+  forkTerminationGracePeriodMs: agentConf.agentForker?.terminationGracePeriodMs,
   filemanagerPath: agentConf.fileManagerConfiguration?.path,
   gridMaxRetries: agentConf.gridMaxRetries,
   gridRetryDelayMs: agentConf.gridRetryDelayMs,
