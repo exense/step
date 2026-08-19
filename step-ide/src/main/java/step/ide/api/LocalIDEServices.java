@@ -152,6 +152,9 @@ public class LocalIDEServices extends AbstractStepServices {
 
     /**
      * Lists the content of one directory of the automation package currently open in the editor.
+     * <p>
+     * What the {@code .apignore} of the package excludes is left out, as it would be left out of the
+     * deployed package: the editor must not offer a reference to a file that will not be there.
      *
      * @param path      the AP-root relative path to open at, typically the value currently held by the
      *                  edited field. A directory is listed itself, a file lists its parent directory so
@@ -170,6 +173,9 @@ public class LocalIDEServices extends AbstractStepServices {
 
     /**
      * Downloads the content of a file of the automation package currently open in the editor.
+     * <p>
+     * A file excluded by the {@code .apignore} is a 404 here too, with a message saying so rather than
+     * claiming it does not exist - the editor shows it, it is simply not part of the package.
      *
      * @param path   the AP-root relative path of the file
      * @param inline whether the content should be served as {@code inline} rather than as an attachment

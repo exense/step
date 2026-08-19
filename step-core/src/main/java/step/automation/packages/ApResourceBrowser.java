@@ -19,6 +19,7 @@
 package step.automation.packages;
 
 import step.attachments.FileResolver;
+import step.automation.packages.apignore.ApIgnoreFileFilter;
 import step.core.filebrowser.FileDescriptors;
 import step.core.filebrowser.FileDescriptor;
 import step.core.filebrowser.DirectoryListing;
@@ -28,8 +29,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -41,7 +45,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -57,6 +60,12 @@ import java.util.zip.ZipFile;
  * AP editor mode), deliberately not on {@link AutomationPackageArchive}: browsing needs the complete
  * entry list, which a {@link ClassLoader}-based archive cannot enumerate, and it needs no class
  * loading at all.
+ * <p>
+ * An exploded directory is filtered by its {@code .apignore} (see {@link ApIgnoreFileFilter}), so that
+ * the picker offers exactly what the CLI would put into the package. A zip is not: the CLI applies the
+ * very same filter when it builds it, so its ignored entries are already gone, and interpreting a
+ * {@code .apignore} that happens to sit inside an archive would hide entries that <i>are</i> part of
+ * that package.
  * <p>
  * Nothing is materialised into the {@code apResource:} cache here — that cache is owned by the
  * execution path ({@link ApResourceMaterializer}) and a UI browse or download must not pollute it,
@@ -120,6 +129,9 @@ public class ApResourceBrowser {
      * and anything else is reported as not found rather than silently falling back to an existing
      * ancestor, which would hide a dangling reference behind a successful listing. The directory that was
      * effectively listed is reported by {@link DirectoryListing#path()}.
+     * <p>
+     * An exploded package is listed as its {@code .apignore} defines it: an excluded entry is not part
+     * of the package and is therefore invisible here, opening at it being a not found.
      *
      * @param archiveFile              the automation package archive: a zip/jar file or an exploded directory
      * @param relativePath             the archive-root relative path to open at; {@code null}, blank,
@@ -163,7 +175,10 @@ public class ApResourceBrowser {
      *
      * @param archiveFile  the automation package archive: a zip/jar file or an exploded directory
      * @param relativePath the archive-root relative path of the entry
-     * @throws ApResourceNotFoundException if the archive or the entry cannot be found
+     * @throws ApResourceNotFoundException if the archive or the entry cannot be found, or if the entry
+     *                                     is excluded from an exploded package by its {@code .apignore}
+     *                                     - it exists, but it is not part of the package, so it cannot
+     *                                     be downloaded any more than it can be listed
      * @throws IllegalArgumentException    if the entry is a directory - directories have no content to
      *                                     stream, use {@link #browse(File, String, Function)} instead -
      *                                     or if {@code relativePath} is empty or escapes the archive root
@@ -181,6 +196,9 @@ public class ApResourceBrowser {
         File file = new File(archiveDirectory, normalized);
         if (!file.exists()) {
             throw entryNotFound(normalized, archiveDirectory);
+        }
+        if (isIgnored(archiveDirectory, normalized)) {
+            throw entryIgnored(normalized, archiveDirectory);
         }
         if (file.isDirectory()) {
             throw isADirectory(normalized);
@@ -229,6 +247,41 @@ public class ApResourceBrowser {
     private static ApResourceNotFoundException entryNotFound(String normalized, File archiveFile) {
         return new ApResourceNotFoundException("'" + normalized + "' not found in the automation package "
             + nameOfArchive(archiveFile));
+    }
+
+    /**
+     * The entry exists on disk but is not part of the package, which is worth saying rather than
+     * reporting it as missing: the caller is looking at a file they can see in their editor.
+     */
+    private static ApResourceNotFoundException entryIgnored(String normalized, File archiveDirectory) {
+        return new ApResourceNotFoundException("'" + normalized + "' is excluded from the automation package "
+            + nameOfArchive(archiveDirectory) + " by its " + ApIgnoreFileFilter.AP_IGNORE_FILE_NAME + " file");
+    }
+
+    /**
+     * @return whether the {@code .apignore} of an exploded package excludes {@code normalized}, either
+     * directly or through one of its parent directories - a rejected directory is never entered, so
+     * everything below it is out of the package too, see {@link ArchiveIndex#indexDirectory(File)}
+     */
+    private static boolean isIgnored(File archiveDirectory, String normalized) {
+        ApIgnoreFileFilter apIgnore;
+        try {
+            apIgnore = ApIgnoreFileFilter.of(archiveDirectory.toPath());
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to read the " + ApIgnoreFileFilter.AP_IGNORE_FILE_NAME
+                + " file of the automation package " + nameOfArchive(archiveDirectory), e);
+        }
+        if (apIgnore == null) {
+            return false;
+        }
+        Path path = archiveDirectory.toPath();
+        for (String segment : normalized.split(SEPARATOR)) {
+            path = path.resolve(segment);
+            if (!apIgnore.accept(path)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -354,18 +407,43 @@ public class ApResourceBrowser {
             return index;
         }
 
+        /**
+         * Walks the exploded package, leaving out whatever its {@code .apignore} excludes. The walk is
+         * a {@link Files#walkFileTree} rather than a {@link Files#walk} for the sake of
+         * {@link FileVisitResult#SKIP_SUBTREE}: {@code FileHelper.zip} applies the filter to
+         * directories as well and does not recurse into a rejected one, so a per-path filter would
+         * disagree with the archive the CLI builds - a pattern such as {@code /target} prunes the whole
+         * subtree there, while {@code target/x.txt} matches no pattern of its own and would survive here.
+         */
         private void indexDirectory(File root) throws IOException {
             Path rootPath = root.toPath();
-            try (Stream<Path> walk = Files.walk(rootPath)) {
-                walk.filter(path -> !path.equals(rootPath)).forEach(path -> {
-                    String relative = toRelativePath(rootPath.relativize(path));
-                    if (Files.isDirectory(path)) {
-                        directories.add(relative);
-                    } else {
-                        files.put(relative, path.toFile().length());
+            ApIgnoreFileFilter apIgnore = ApIgnoreFileFilter.of(rootPath);
+            Files.walkFileTree(rootPath, new SimpleFileVisitor<>() {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path directory, BasicFileAttributes attributes) {
+                    if (directory.equals(rootPath)) {
+                        return FileVisitResult.CONTINUE;
                     }
-                });
-            }
+                    if (isIgnored(directory)) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    directories.add(toRelativePath(rootPath.relativize(directory)));
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+                    if (!isIgnored(file)) {
+                        files.put(toRelativePath(rootPath.relativize(file)), attributes.size());
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                private boolean isIgnored(Path path) {
+                    return apIgnore != null && !apIgnore.accept(path);
+                }
+            });
         }
 
         /**

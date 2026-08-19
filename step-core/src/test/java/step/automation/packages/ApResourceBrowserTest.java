@@ -240,6 +240,98 @@ public class ApResourceBrowserTest {
         ApResourceBrowser.openEntry(archiveZip, "../escape.txt");
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // .apignore - the exploded flavour only. These cannot join the loops above: the fixture zip is
+    // built without a filter, whereas the CLI applies the very same .apignore when it builds the
+    // archive to deploy, so the two flavours agree in practice but not on this fixture.
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * @return the exploded archive of {@link #setUp()}, with the given {@code .apignore} at its root
+     */
+    private File archiveDirectoryIgnoring(String... patterns) throws Exception {
+        writeFile(new File(archiveDirectory, ".apignore"), String.join("\n", patterns));
+        return archiveDirectory;
+    }
+
+    @Test
+    public void excludesWhatTheApIgnoreExcludes() throws Exception {
+        File archive = archiveDirectoryIgnoring("*.csv", "/k6");
+
+        // 'data' survives as an empty directory - only its content matched, as when the CLI zips it
+        assertEquals(List.of("data", "automation-package.yml"), names(ApResourceBrowser.browse(archive, null, AP_A)));
+        assertEquals(List.of(), names(ApResourceBrowser.browse(archive, "data", AP_A)));
+    }
+
+    /**
+     * The file declaring the patterns is not part of the package either - the CLI leaves it out of the
+     * archive it builds, so the browser must not offer a reference to it.
+     */
+    @Test
+    public void excludesTheApIgnoreFileItself() throws Exception {
+        File archive = archiveDirectoryIgnoring("*.log");
+
+        assertEquals(List.of("data", "k6", "automation-package.yml"), names(ApResourceBrowser.browse(archive, null, AP_A)));
+    }
+
+    /**
+     * A directory rejected by the .apignore is not entered at all, exactly as {@code FileHelper.zip}
+     * does not recurse into one when the CLI builds the archive. The nested file matches no pattern of
+     * its own, so a per-entry filter would keep it and produce a listing the deployed package would not.
+     */
+    @Test
+    public void excludesTheWholeSubtreeOfAnExcludedDirectory() throws Exception {
+        File archive = archiveDirectoryIgnoring("/k6");
+
+        assertEquals(List.of("data", "automation-package.yml"), names(ApResourceBrowser.browse(archive, null, AP_A)));
+        try {
+            ApResourceBrowser.browse(archive, "k6/mytest/test.js", AP_A);
+            fail("expected ApResourceNotFoundException");
+        } catch (ApResourceNotFoundException expected) {
+            assertTrue(expected.getMessage().contains("k6/mytest/test.js"));
+        }
+    }
+
+    /**
+     * A 404, and one that says why: the file is there, the editor shows it, it is simply not part of
+     * the package.
+     */
+    @Test
+    public void openEntryReportsAnExcludedEntryAsIgnored() throws Exception {
+        File archive = archiveDirectoryIgnoring("/k6");
+
+        for (String excluded : List.of("k6/mytest/test.js", ".apignore")) {
+            try {
+                ApResourceBrowser.openEntry(archive, excluded);
+                fail("expected ApResourceNotFoundException");
+            } catch (ApResourceNotFoundException expected) {
+                assertTrue(expected.getMessage(), expected.getMessage().contains(excluded));
+                assertTrue(expected.getMessage(), expected.getMessage().contains(".apignore"));
+            }
+        }
+    }
+
+    @Test
+    public void listsEverythingWithoutAnApIgnore() {
+        assertEquals(List.of("data", "k6", "automation-package.yml"), names(ApResourceBrowser.browse(archiveDirectory, null, AP_A)));
+    }
+
+    /**
+     * A zip carries no .apignore of its own to interpret: the CLI already applied it when building the
+     * archive, and hiding entries that are genuinely in the package would be wrong.
+     */
+    @Test
+    public void doesNotInterpretAnApIgnoreFoundInAZip() throws Exception {
+        archiveDirectoryIgnoring("/k6");
+        File zipWithApIgnore = new File(tmp.getRoot(), "with-apignore.zip");
+        FileHelper.zip(archiveDirectory, zipWithApIgnore);
+
+        // containment rather than an exact list: where '.apignore' sorts among the file names is the
+        // collator's business, and not what this test is about
+        assertTrue(names(ApResourceBrowser.browse(zipWithApIgnore, null, AP_A))
+            .containsAll(List.of("data", "k6", ".apignore", "automation-package.yml")));
+    }
+
     /**
      * Zip archives are not required to carry explicit directory entries. The directories they only imply
      * must nevertheless be browsable.

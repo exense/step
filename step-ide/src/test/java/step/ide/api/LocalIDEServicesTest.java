@@ -112,6 +112,26 @@ public class LocalIDEServicesTest {
         assertStatus(400, () -> LocalIDEServices.content(apDirectory, "../secret", false));
     }
 
+    /**
+     * The editor must not offer a reference to a file the deployed package will not contain, and must
+     * not serve its content either. The 404 says why - the file is right there in the editor.
+     */
+    @Test
+    public void hidesWhatTheApIgnoreExcludes() throws IOException {
+        writeFile(".apignore", "/data\n");
+
+        assertEquals(List.of("scripts", "automation-package.yml"),
+            names(LocalIDEServices.browse(apDirectory, null, false, false)));
+
+        try {
+            LocalIDEServices.content(apDirectory, "data/pool.csv", false);
+            fail("expected a 404");
+        } catch (ControllerServiceException e) {
+            assertEquals(404, e.getHttpErrorCode());
+            assertTrue(e.getMessage(), e.getMessage().contains(".apignore"));
+        }
+    }
+
     @Test
     public void servesTheContentOfAFile() throws Exception {
         Response response = LocalIDEServices.content(apDirectory, "data/pool.csv", false);

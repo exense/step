@@ -5,7 +5,7 @@ import picocli.CommandLine;
 import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageFromFolderProvider;
 import step.automation.packages.AutomationPackageReadingException;
-import step.cli.apignore.ApIgnoreFileFilter;
+import step.automation.packages.apignore.ApIgnoreFileFilter;
 import step.cli.parameters.ApDeployParameters;
 import step.cli.parameters.ApExecuteParameters;
 import step.core.Constants;
@@ -65,10 +65,9 @@ public class ApCommand extends BaseCommand {
                     }
 
                     Function<File, Boolean> fileFilter = null;
-                    File apIgnoreFile = new File(file, StepConsole.AP_IGNORE_NAME);
-                    if (apIgnoreFile.exists()) {
-                        ApIgnoreFileFilter gitIgnore = new ApIgnoreFileFilter(file.toPath(), apIgnoreFile.toPath());
-                        fileFilter = file1 -> !file1.getName().equals(StepConsole.AP_IGNORE_NAME) && gitIgnore.accept(file1.toPath());
+                    ApIgnoreFileFilter apIgnore = ApIgnoreFileFilter.of(file.toPath());
+                    if (apIgnore != null) {
+                        fileFilter = candidate -> apIgnore.accept(candidate.toPath());
                     }
 
                     File tempDirectory = Files.createTempDirectory("stepcli").toFile();
