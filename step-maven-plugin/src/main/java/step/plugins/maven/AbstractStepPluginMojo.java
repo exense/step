@@ -268,7 +268,8 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
      * Parses a map passed as a single string, which is the form a map has to take to be passed as a system property.
      *
      * @param raw           the entries, separated by a semicolon (ex: key1=value1;key2=value2). The first '=' of an
-     *                      entry separates the key from its value, so that values may contain '=' themselves.
+     *                      entry separates the key from its value, so that values may contain '=' themselves. Keys are
+     *                      trimmed and must not be empty; values are taken as-is, so that leading spaces are preserved.
      * @param parameterName how the parameter is named in the error message reported for a malformed entry
      */
     protected Map<String, String> parseKeyValuePairs(String raw, String parameterName) {
@@ -279,7 +280,7 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
             entry = entry.trim();
             if (entry.isEmpty()) continue;
             String[] parts = entry.split("=", 2);
-            if (parts.length != 2) {
+            if (parts.length != 2 || parts[0].trim().isEmpty()) {
                 throw new IllegalArgumentException(
                     "Invalid " + parameterName + " format '" + entry + "', expected 'key=value'. " +
                         "Multiple parameters should be separated by a semicolon ';' (ex: key1=value1;key2=value2).");
