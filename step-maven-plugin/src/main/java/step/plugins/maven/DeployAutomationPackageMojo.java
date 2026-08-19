@@ -29,10 +29,14 @@ import step.client.credentials.ControllerCredentials;
 import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
+import java.util.Map;
 
 @Mojo(name = "deploy-automation-package")
 public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
 
+    private static final String PLANS_ATTRIBUTE_NAME = "plans attribute";
+    private static final String FUNCTIONS_ATTRIBUTE_NAME = "keywords attribute";
+    private static final String TOKEN_SELECTION_CRITERION_NAME = "token selection criterion";
 
     @Parameter(property = "step-deploy-automation-package.async")
     private Boolean async;
@@ -75,6 +79,26 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
     @Parameter(property = "step-deploy-automation-package.deployment-timeout", required = false)
     private Integer deploymentTimeout;
 
+    @Parameter
+    private Map<String, String> plansAttributes;
+    // Individual string properties to support passing the maps above as system properties.
+    // Format: key1=value1;key2=value2. When set, these values are merged with (and override) the ones from the pom.xml.
+    @Parameter(property = "step-deploy-automation-package.plans-attributes")
+    private String plansAttributesRaw;
+
+    @Parameter
+    private Map<String, String> functionsAttributes;
+    @Parameter(property = "step-deploy-automation-package.functions-attributes")
+    private String functionsAttributesRaw;
+
+    @Parameter
+    private Map<String, String> tokenSelectionCriteria;
+    @Parameter(property = "step-deploy-automation-package.token-selection-criteria")
+    private String tokenSelectionCriteriaRaw;
+
+    @Parameter(property = "step-deploy-automation-package.execute-functions-locally")
+    private Boolean executeFunctionsLocally;
+
     @Override
     protected ControllerCredentials getControllerCredentials() {
         String authToken = getAuthToken();
@@ -97,6 +121,13 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
 
     protected DeployAutomationPackageTool createTool(final String url, final String projectName, final String authToken, final Boolean async,
                                                      final String apVersion, final String activationExpr, Boolean forceRefreshOfSnapshots) throws MojoExecutionException {
+        return new MavenDeployAutomationPackageTool(
+            url, buildDeployParameters(projectName, authToken, async, apVersion, activationExpr, forceRefreshOfSnapshots)
+        );
+    }
+
+    protected ApDeployParameters buildDeployParameters(final String projectName, final String authToken, final Boolean async,
+                                                       final String apVersion, final String activationExpr, Boolean forceRefreshOfSnapshots) throws MojoExecutionException {
         MavenArtifactIdentifier remoteApMavenIdentifier = getRemoteMavenIdentifier();
         File localApFile = remoteApMavenIdentifier != null ? null : DeployAutomationPackageMojo.this.getFileToUpload();
 
@@ -105,8 +136,7 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
         MavenArtifactIdentifier libraryMavenArtifact = library != null ? library.toMavenArtifactIdentifier() : null;
         String libraryName = library != null && library.isManagedLibraryNameConfigured() ? library.getManaged() : null;
 
-        return new MavenDeployAutomationPackageTool(
-            url, new ApDeployParameters()
+        return new ApDeployParameters()
             .setAutomationPackageMavenArtifact(remoteApMavenIdentifier)
             .setAutomationPackageFile(localApFile)
             .setLibraryFile(libraryFile)
@@ -119,7 +149,10 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
             .setDeploymentTimeout(getDeploymentTimeout())
             .setVersionName(apVersion)
             .setActivationExpression(activationExpr)
-        );
+            .setPlansAttributes(getPlansAttributes())
+            .setFunctionsAttributes(getFunctionsAttributes())
+            .setTokenSelectionCriteria(getTokenSelectionCriteria())
+            .setExecuteFunctionsLocally(getExecuteFunctionsLocally());
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -250,6 +283,50 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
 
     public void setDeploymentTimeout(Integer deploymentTimeout) {
         this.deploymentTimeout = deploymentTimeout;
+    }
+
+    public Map<String, String> getPlansAttributes() {
+        return mergeWithRawValues(plansAttributes, plansAttributesRaw, PLANS_ATTRIBUTE_NAME);
+    }
+
+    public void setPlansAttributes(Map<String, String> plansAttributes) {
+        this.plansAttributes = plansAttributes;
+    }
+
+    public void setPlansAttributesRaw(String plansAttributesRaw) {
+        this.plansAttributesRaw = plansAttributesRaw;
+    }
+
+    public Map<String, String> getFunctionsAttributes() {
+        return mergeWithRawValues(functionsAttributes, functionsAttributesRaw, FUNCTIONS_ATTRIBUTE_NAME);
+    }
+
+    public void setFunctionsAttributes(Map<String, String> functionsAttributes) {
+        this.functionsAttributes = functionsAttributes;
+    }
+
+    public void setFunctionsAttributesRaw(String functionsAttributesRaw) {
+        this.functionsAttributesRaw = functionsAttributesRaw;
+    }
+
+    public Map<String, String> getTokenSelectionCriteria() {
+        return mergeWithRawValues(tokenSelectionCriteria, tokenSelectionCriteriaRaw, TOKEN_SELECTION_CRITERION_NAME);
+    }
+
+    public void setTokenSelectionCriteria(Map<String, String> tokenSelectionCriteria) {
+        this.tokenSelectionCriteria = tokenSelectionCriteria;
+    }
+
+    public void setTokenSelectionCriteriaRaw(String tokenSelectionCriteriaRaw) {
+        this.tokenSelectionCriteriaRaw = tokenSelectionCriteriaRaw;
+    }
+
+    public Boolean getExecuteFunctionsLocally() {
+        return executeFunctionsLocally;
+    }
+
+    public void setExecuteFunctionsLocally(Boolean executeFunctionsLocally) {
+        this.executeFunctionsLocally = executeFunctionsLocally;
     }
 
     protected boolean isLocalMavenArtifact() {
