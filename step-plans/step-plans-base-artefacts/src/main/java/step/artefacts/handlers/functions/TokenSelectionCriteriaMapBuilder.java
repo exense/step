@@ -39,10 +39,21 @@ public class TokenSelectionCriteriaMapBuilder {
 
     private final FunctionTypeRegistry functionTypeRegistry;
     protected final TokenSelectorHelper tokenSelectorHelper;
+    private final TokenSelectionCriteriaFilter selectionCriteriaFilter;
 
     public TokenSelectionCriteriaMapBuilder(FunctionTypeRegistry functionTypeRegistry, DynamicJsonObjectResolver dynamicJsonObjectResolver) {
+        this(functionTypeRegistry, dynamicJsonObjectResolver, null);
+    }
+
+    /**
+     * @param selectionCriteriaFilter an optional filter applied to the criteria of every keyword call, or {@code null}
+     *                                to select tokens with the criteria as they were defined
+     */
+    public TokenSelectionCriteriaMapBuilder(FunctionTypeRegistry functionTypeRegistry, DynamicJsonObjectResolver dynamicJsonObjectResolver,
+                                            TokenSelectionCriteriaFilter selectionCriteriaFilter) {
         this.tokenSelectorHelper = new TokenSelectorHelper(dynamicJsonObjectResolver);
         this.functionTypeRegistry = functionTypeRegistry;
+        this.selectionCriteriaFilter = selectionCriteriaFilter;
     }
 
     public boolean isLocalTokenRequired(CallFunction callFunction, Function function) {
@@ -52,7 +63,7 @@ public class TokenSelectionCriteriaMapBuilder {
     public Map<String, Interest> buildSelectionCriteriaMap(CallFunction callFunction, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
         Map<String, Interest> allSelectionCriteria = _buildSelectionCriteriaMap(callFunction, function, functionGroupContext, bindings);
         allSelectionCriteria.remove(SKIP_AUTO_PROVISIONING);
-        return allSelectionCriteria;
+        return selectionCriteriaFilter != null ? selectionCriteriaFilter.filter(allSelectionCriteria) : allSelectionCriteria;
     }
 
     private Map<String, Interest> _buildSelectionCriteriaMap(CallFunction callFunction, Function function, FunctionGroupHandler.FunctionGroupContext functionGroupContext, Map<String, Object> bindings) {
