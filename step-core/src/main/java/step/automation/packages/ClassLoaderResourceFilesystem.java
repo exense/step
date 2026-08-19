@@ -34,6 +34,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -113,26 +114,65 @@ public class ClassLoaderResourceFilesystem {
             JarResourcePath jarResourcePath = new JarResourcePath(resourceUrl);
             File tempFolder = FileHelper.createTempFolder();
             Path extractedDirectory = tempFolder.toPath().resolve(jarResourcePath.pathInJar);
-            try (FileSystem fileSystem = FileSystems.newFileSystem(resourceUrl.toURI(), Collections.emptyMap())) {
-                Path resourcePath = fileSystem.getPath("/" + jarResourcePath.pathInJar);
-                try (Stream<Path> walk = Files.walk(resourcePath)) {
-                    walk.forEach(path -> {
-                        try {
-                            Path target = extractedDirectory.resolve(resourcePath.relativize(path).toString());
-                            if (Files.isDirectory(path)) {
-                                Files.createDirectories(target);
-                            } else {
-                                Files.copy(path, target);
-                            }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
-                }
-            }
+            extractDirectory(resourceUrl, extractedDirectory);
             return new ExtractedDirectory(tempFolder, extractedDirectory.toFile(), true);
         } else {
             throw unsupportedProtocol(protocol);
+        }
+    }
+
+    /**
+     * Extracts the content of the directory denoted by {@code resourceUrl} into {@code destination},
+     * which is created if needed. This is the variant to use when the caller already knows where the
+     * content has to end up: {@link #extractDirectory(URL)} extracts a jar entry into a temporary
+     * directory of its own, and copying that to the real destination afterwards walks and writes the
+     * whole tree a second time.
+     * <p>
+     * Note that a {@code file:} resource is copied rather than moved: {@link #extractDirectory(URL)}
+     * hands out the original directory in that case, which must be left where it is.
+     *
+     * @param resourceUrl the url of a resource. It supports jar and file protocols. A valid URL for jar
+     *                    looks like "jar:file:/path/to/myjar.jar!/folder"
+     * @param destination the directory to extract the content into
+     */
+    public static void extractDirectory(URL resourceUrl, Path destination) throws IOException, URISyntaxException {
+        String protocol = resourceUrl.getProtocol();
+
+        if (protocol.equals(FILE)) {
+            copyTree(toFile(resourceUrl).toPath(), destination);
+        } else if (protocol.equals(JAR)) {
+            JarResourcePath jarResourcePath = new JarResourcePath(resourceUrl);
+            try (FileSystem fileSystem = FileSystems.newFileSystem(resourceUrl.toURI(), Collections.emptyMap())) {
+                copyTree(fileSystem.getPath("/" + jarResourcePath.pathInJar), destination);
+            }
+        } else {
+            throw unsupportedProtocol(protocol);
+        }
+    }
+
+    /**
+     * Recursively copies a directory tree. {@code source} and {@code destination} may belong to
+     * different {@link FileSystem}s - a zip one and the default one when extracting a jar entry - which
+     * is why the relative path is rebuilt from its string form rather than resolved directly.
+     * <p>
+     * Domain-free filesystem utility - candidate to be promoted to {@code ch.exense.commons.io.FileHelper}
+     * in exense-commons, which has no {@link Path} based recursive copy today.
+     */
+    private static void copyTree(Path source, Path destination) throws IOException {
+        try (Stream<Path> walk = Files.walk(source)) {
+            walk.forEach(path -> {
+                try {
+                    Path target = destination.resolve(source.relativize(path).toString());
+                    if (Files.isDirectory(path)) {
+                        Files.createDirectories(target);
+                    } else {
+                        Files.createDirectories(target.getParent());
+                        Files.copy(path, target, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         }
     }
 

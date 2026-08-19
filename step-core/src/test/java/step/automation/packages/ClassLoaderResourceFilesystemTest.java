@@ -125,9 +125,44 @@ public class ClassLoaderResourceFilesystemTest {
         }
     }
 
+    /**
+     * The variant the materialiser uses: the content lands directly in the directory the caller names,
+     * rather than in a temporary directory of its own that the caller would then have to copy over.
+     */
+    @Test
+    public void testExtractJarProtocolIntoProvidedDestination() throws Exception {
+        URL zip = this.getClass().getClassLoader().getResource("folder.zip");
+        try (URLClassLoader classLoader = new URLClassLoader(new URL[]{zip})) {
+            Path destination = FileHelper.createTempFolder().toPath().resolve("destination");
+
+            ClassLoaderResourceFilesystem.extractDirectory(classLoader.getResource("folder"), destination);
+
+            assertTrue(Files.isDirectory(destination.resolve("subfolder")));
+            assertTrue(Files.isRegularFile(destination.resolve("TestResource.txt")));
+        }
+    }
+
+    /**
+     * A {@code file:} resource is a directory of the caller, not a temporary one: it is copied into the
+     * destination and left where it is.
+     */
+    @Test
+    public void testExtractFileProtocolIntoProvidedDestination() throws Exception {
+        Path source = FileHelper.createTempFolder().toPath();
+        FileHelper.unzip(this.getClass().getClassLoader().getResource("folder.zip").openStream(), source.toFile());
+        Path destination = FileHelper.createTempFolder().toPath().resolve("destination");
+
+        ClassLoaderResourceFilesystem.extractDirectory(source.resolve("folder").toUri().toURL(), destination);
+
+        assertTrue(Files.isDirectory(destination.resolve("subfolder")));
+        assertTrue(Files.isRegularFile(destination.resolve("TestResource.txt")));
+        assertTrue(Files.isRegularFile(source.resolve("folder/TestResource.txt")));
+    }
+
     @Test
     public void testUnsupportedProtocol() {
         assertThrows(RuntimeException.class, () -> ClassLoaderResourceFilesystem.extractDirectory(new URL("http", "myHost", "myFile")));
+        assertThrows(RuntimeException.class, () -> ClassLoaderResourceFilesystem.extractDirectory(new URL("http", "myHost", "myFile"), Path.of("destination")));
         assertThrows(RuntimeException.class, () -> ClassLoaderResourceFilesystem.isDirectory(new URL("http", "myHost", "myFile")));
     }
 }

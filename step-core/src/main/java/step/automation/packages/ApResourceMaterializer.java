@@ -34,7 +34,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 /**
  * Materialises a single entry of an automation package archive into
@@ -127,53 +126,26 @@ public class ApResourceMaterializer {
         }
     }
 
+    /**
+     * The content is extracted straight into the temporary sibling of the target rather than into a
+     * temporary directory of its own that would then have to be copied over: a directory resource is
+     * a whole subtree, and walking and writing it twice is worth avoiding.
+     */
     private void materializeDirectory(URL url, File target) throws Exception {
-        try (ClassLoaderResourceFilesystem.ExtractedDirectory extracted = ClassLoaderResourceFilesystem.extractDirectory(url)) {
-            Path parent = target.toPath().getParent();
-            Path tmp = Files.createTempDirectory(parent, TMP_PREFIX);
-            try {
-                copyTree(extracted.directory.toPath(), tmp);
-                atomicMove(tmp, target.toPath());
-            } finally {
-                // No-op on the success path: atomicMove has renamed tmp onto target, so it no longer
-                // exists. This only removes a stray temp tree left behind when the copy or move threw.
-                if (Files.exists(tmp)) {
-                    FileHelper.deleteFolder(tmp.toFile());
-                }
+        Path parent = target.toPath().getParent();
+        Path tmp = Files.createTempDirectory(parent, TMP_PREFIX);
+        try {
+            ClassLoaderResourceFilesystem.extractDirectory(url, tmp);
+            atomicMove(tmp, target.toPath());
+        } finally {
+            // No-op on the success path: atomicMove has renamed tmp onto target, so it no longer
+            // exists. This only removes a stray temp tree left behind when the extraction or move threw.
+            if (Files.exists(tmp)) {
+                FileHelper.deleteFolder(tmp.toFile());
             }
         }
     }
 
-    /**
-     * Recursively copies a directory tree. Domain-free filesystem utility — candidate to be promoted
-     * to {@code ch.exense.commons.io.FileHelper} in exense-commons (which has no {@code Path}-based
-     * recursive copy today) and shared with {@code ClassLoaderResourceFilesystem.extractDirectory},
-     * which hand-rolls the same walk-and-copy. Kept local until there is a second consumer.
-     */
-    private static void copyTree(Path source, Path destination) throws IOException {
-        try (Stream<Path> walk = Files.walk(source)) {
-            walk.forEach(path -> {
-                try {
-                    Path relative = source.relativize(path);
-                    Path targetPath = destination.resolve(relative.toString());
-                    if (Files.isDirectory(path)) {
-                        Files.createDirectories(targetPath);
-                    } else {
-                        Files.createDirectories(targetPath.getParent());
-                        Files.copy(path, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        }
-    }
-
-    /**
-     * Atomic move with a defensive fallback. Domain-free filesystem utility — candidate to be
-     * promoted to {@code ch.exense.commons.io.FileHelper} in exense-commons (which has no atomic move
-     * today). Kept local until there is a second consumer.
-     */
     /**
      * Opens a stream for {@code url} without caching. For a {@code jar:} URL the default
      * {@link java.net.JarURLConnection} caches the underlying {@code JarFile}, which keeps the archive
@@ -186,6 +158,11 @@ public class ApResourceMaterializer {
         return connection.getInputStream();
     }
 
+    /**
+     * Atomic move with a defensive fallback. Domain-free filesystem utility — candidate to be
+     * promoted to {@code ch.exense.commons.io.FileHelper} in exense-commons (which has no atomic move
+     * today). Kept local until there is a second consumer.
+     */
     private static void atomicMove(Path source, Path target) throws IOException {
         try {
             Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
