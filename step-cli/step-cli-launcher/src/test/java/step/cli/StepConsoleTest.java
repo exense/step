@@ -169,16 +169,16 @@ public class StepConsoleTest {
         // several pairs within one option, and one option repeated
         int res = runMain(histories, "ap", "deploy", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "-u=http://localhost:8080",
             "--plansAttributes=planKey1=planValue1|planKey2=planValue2",
-            "--functionsAttributes=keywordKey1=keywordValue1", "--functionsAttributes=keywordKey2=keywordValue2",
+            "--keywordsAttributes=keywordKey1=keywordValue1", "--keywordsAttributes=keywordKey2=keywordValue2",
             "--tokenSelectionCriteria=os=linux|team=core",
-            "--executeFunctionsLocally");
+            "--executeKeywordsLocally");
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, deployExecHistory.size());
         TestApDeployCommand.ExecutionParams usedParams = deployExecHistory.get(0);
         Assert.assertEquals(Map.of("planKey1", "planValue1", "planKey2", "planValue2"), usedParams.params.getPlansAttributes());
-        Assert.assertEquals(Map.of("keywordKey1", "keywordValue1", "keywordKey2", "keywordValue2"), usedParams.params.getFunctionsAttributes());
+        Assert.assertEquals(Map.of("keywordKey1", "keywordValue1", "keywordKey2", "keywordValue2"), usedParams.params.getKeywordsAttributes());
         Assert.assertEquals(Map.of("os", "linux", "team", "core"), usedParams.params.getTokenSelectionCriteria());
-        Assert.assertTrue(usedParams.params.getExecuteFunctionsLocally());
+        Assert.assertTrue(usedParams.params.getExecuteKeywordsLocally());
 
         // not configured: the package is deployed without any attribute nor routing criteria
         deployExecHistory.clear();
@@ -187,9 +187,9 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertNull(usedParams.params.getPlansAttributes());
-        Assert.assertNull(usedParams.params.getFunctionsAttributes());
+        Assert.assertNull(usedParams.params.getKeywordsAttributes());
         Assert.assertNull(usedParams.params.getTokenSelectionCriteria());
-        Assert.assertFalse(usedParams.params.getExecuteFunctionsLocally());
+        Assert.assertFalse(usedParams.params.getExecuteKeywordsLocally());
 
         // configured in a properties file
         deployExecHistory.clear();
@@ -199,9 +199,9 @@ public class StepConsoleTest {
         Assert.assertEquals(1, deployExecHistory.size());
         usedParams = deployExecHistory.get(0);
         Assert.assertEquals(Map.of("planKey1", "defaultPlanValue1", "planKey2", "defaultPlanValue2"), usedParams.params.getPlansAttributes());
-        Assert.assertEquals(Map.of("keywordKey1", "defaultKeywordValue1"), usedParams.params.getFunctionsAttributes());
+        Assert.assertEquals(Map.of("keywordKey1", "defaultKeywordValue1"), usedParams.params.getKeywordsAttributes());
         Assert.assertEquals(Map.of("os", "linux"), usedParams.params.getTokenSelectionCriteria());
-        Assert.assertTrue(usedParams.params.getExecuteFunctionsLocally());
+        Assert.assertTrue(usedParams.params.getExecuteKeywordsLocally());
     }
 
 

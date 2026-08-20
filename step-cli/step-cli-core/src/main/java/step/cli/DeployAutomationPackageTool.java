@@ -55,8 +55,8 @@ public class DeployAutomationPackageTool extends AbstractCliTool<ApDeployParamet
                     createPackageSource(parameters.getAutomationPackageFile(), mavenAutomationPackageXml),
                     createLibrarySource(parameters.getLibraryFile(), mavenPackageLibraryXml, parameters.getManagedLibraryName()),
                     parameters.getVersionName(), parameters.getActivationExpression(),
-                    parameters.getPlansAttributes(), parameters.getFunctionsAttributes(),
-                    parameters.getTokenSelectionCriteria(), parameters.getExecuteFunctionsLocally(),
+                    parameters.getPlansAttributes(), parameters.getKeywordsAttributes(),
+                    parameters.getTokenSelectionCriteria(), parameters.getExecuteKeywordsLocally(),
                     parameters.getAsync(), parameters.getForceRefreshOfSnapshots(),
                     deploymentTimeoutSeconds * 1000L
                 );

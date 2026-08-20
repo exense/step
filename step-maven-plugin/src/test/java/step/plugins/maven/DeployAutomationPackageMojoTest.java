@@ -51,9 +51,9 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
 
         // nothing configured: the package is deployed without any attribute nor routing criteria
         Assert.assertNull(mojo.deployParameters.getPlansAttributes());
-        Assert.assertNull(mojo.deployParameters.getFunctionsAttributes());
+        Assert.assertNull(mojo.deployParameters.getKeywordsAttributes());
         Assert.assertNull(mojo.deployParameters.getTokenSelectionCriteria());
-        Assert.assertNull(mojo.deployParameters.getExecuteFunctionsLocally());
+        Assert.assertNull(mojo.deployParameters.getExecuteKeywordsLocally());
     }
 
     /**
@@ -70,18 +70,18 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         plansAttributes.put("planKey2", "xmlPlanValue2");
         mojo.setPlansAttributes(plansAttributes);
         mojo.setPlansAttributesRaw("planKey1=rawPlanValue1;planKey3=rawPlanValue3");
-        mojo.setFunctionsAttributes(Map.of("keywordKey1", "xmlKeywordValue1"));
+        mojo.setKeywordsAttributes(Map.of("keywordKey1", "xmlKeywordValue1"));
         mojo.setTokenSelectionCriteriaRaw("os=linux;team=core");
-        mojo.setExecuteFunctionsLocally(true);
+        mojo.setExecuteKeywordsLocally(true);
         mojo.execute();
 
         ApDeployParameters params = mojo.deployParameters;
         // the values of the system property take precedence over the ones of the pom.xml
         Assert.assertEquals(Map.of("planKey1", "rawPlanValue1", "planKey2", "xmlPlanValue2", "planKey3", "rawPlanValue3"),
             params.getPlansAttributes());
-        Assert.assertEquals(Map.of("keywordKey1", "xmlKeywordValue1"), params.getFunctionsAttributes());
+        Assert.assertEquals(Map.of("keywordKey1", "xmlKeywordValue1"), params.getKeywordsAttributes());
         Assert.assertEquals(Map.of("os", "linux", "team", "core"), params.getTokenSelectionCriteria());
-        Assert.assertEquals(Boolean.TRUE, params.getExecuteFunctionsLocally());
+        Assert.assertEquals(Boolean.TRUE, params.getExecuteKeywordsLocally());
     }
 
     @Test

@@ -9,9 +9,9 @@ public class ApDeployParameters extends ApParameters<ApDeployParameters> {
     private Boolean forceRefreshOfSnapshots;
     private Integer deploymentTimeout;
     private Map<String, String> plansAttributes;
-    private Map<String, String> functionsAttributes;
+    private Map<String, String> keywordsAttributes;
     private Map<String, String> tokenSelectionCriteria;
-    private Boolean executeFunctionsLocally;
+    private Boolean executeKeywordsLocally;
 
     public Boolean getAsync() {
         return async;
@@ -67,12 +67,12 @@ public class ApDeployParameters extends ApParameters<ApDeployParameters> {
     /**
      * @return the attributes to be applied to all the keywords of the package, or {@code null} to apply none.
      */
-    public Map<String, String> getFunctionsAttributes() {
-        return functionsAttributes;
+    public Map<String, String> getKeywordsAttributes() {
+        return keywordsAttributes;
     }
 
-    public ApDeployParameters setFunctionsAttributes(Map<String, String> functionsAttributes) {
-        this.functionsAttributes = functionsAttributes;
+    public ApDeployParameters setKeywordsAttributes(Map<String, String> keywordsAttributes) {
+        this.keywordsAttributes = keywordsAttributes;
         return this;
     }
 
@@ -92,12 +92,12 @@ public class ApDeployParameters extends ApParameters<ApDeployParameters> {
     /**
      * @return whether all the keywords of the package have to be executed locally (i.e. on the controller).
      */
-    public Boolean getExecuteFunctionsLocally() {
-        return executeFunctionsLocally;
+    public Boolean getExecuteKeywordsLocally() {
+        return executeKeywordsLocally;
     }
 
-    public ApDeployParameters setExecuteFunctionsLocally(Boolean executeFunctionsLocally) {
-        this.executeFunctionsLocally = executeFunctionsLocally;
+    public ApDeployParameters setExecuteKeywordsLocally(Boolean executeKeywordsLocally) {
+        this.executeKeywordsLocally = executeKeywordsLocally;
         return this;
     }
 

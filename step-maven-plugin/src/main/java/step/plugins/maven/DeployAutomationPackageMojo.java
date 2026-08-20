@@ -35,7 +35,7 @@ import java.util.Map;
 public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
 
     private static final String PLANS_ATTRIBUTE_NAME = "plans attribute";
-    private static final String FUNCTIONS_ATTRIBUTE_NAME = "keywords attribute";
+    private static final String KEYWORDS_ATTRIBUTE_NAME = "keywords attribute";
     private static final String TOKEN_SELECTION_CRITERION_NAME = "token selection criterion";
 
     @Parameter(property = "step-deploy-automation-package.async")
@@ -87,17 +87,17 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
     private String plansAttributesRaw;
 
     @Parameter
-    private Map<String, String> functionsAttributes;
-    @Parameter(property = "step-deploy-automation-package.functions-attributes")
-    private String functionsAttributesRaw;
+    private Map<String, String> keywordsAttributes;
+    @Parameter(property = "step-deploy-automation-package.keywords-attributes")
+    private String keywordsAttributesRaw;
 
     @Parameter
     private Map<String, String> tokenSelectionCriteria;
     @Parameter(property = "step-deploy-automation-package.token-selection-criteria")
     private String tokenSelectionCriteriaRaw;
 
-    @Parameter(property = "step-deploy-automation-package.execute-functions-locally")
-    private Boolean executeFunctionsLocally;
+    @Parameter(property = "step-deploy-automation-package.execute-keywords-locally")
+    private Boolean executeKeywordsLocally;
 
     @Override
     protected ControllerCredentials getControllerCredentials() {
@@ -150,9 +150,9 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
             .setVersionName(apVersion)
             .setActivationExpression(activationExpr)
             .setPlansAttributes(getPlansAttributes())
-            .setFunctionsAttributes(getFunctionsAttributes())
+            .setKeywordsAttributes(getKeywordsAttributes())
             .setTokenSelectionCriteria(getTokenSelectionCriteria())
-            .setExecuteFunctionsLocally(getExecuteFunctionsLocally());
+            .setExecuteKeywordsLocally(getExecuteKeywordsLocally());
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -297,16 +297,16 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
         this.plansAttributesRaw = plansAttributesRaw;
     }
 
-    public Map<String, String> getFunctionsAttributes() {
-        return mergeWithRawValues(functionsAttributes, functionsAttributesRaw, FUNCTIONS_ATTRIBUTE_NAME);
+    public Map<String, String> getKeywordsAttributes() {
+        return mergeWithRawValues(keywordsAttributes, keywordsAttributesRaw, KEYWORDS_ATTRIBUTE_NAME);
     }
 
-    public void setFunctionsAttributes(Map<String, String> functionsAttributes) {
-        this.functionsAttributes = functionsAttributes;
+    public void setKeywordsAttributes(Map<String, String> keywordsAttributes) {
+        this.keywordsAttributes = keywordsAttributes;
     }
 
-    public void setFunctionsAttributesRaw(String functionsAttributesRaw) {
-        this.functionsAttributesRaw = functionsAttributesRaw;
+    public void setKeywordsAttributesRaw(String keywordsAttributesRaw) {
+        this.keywordsAttributesRaw = keywordsAttributesRaw;
     }
 
     public Map<String, String> getTokenSelectionCriteria() {
@@ -321,12 +321,12 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
         this.tokenSelectionCriteriaRaw = tokenSelectionCriteriaRaw;
     }
 
-    public Boolean getExecuteFunctionsLocally() {
-        return executeFunctionsLocally;
+    public Boolean getExecuteKeywordsLocally() {
+        return executeKeywordsLocally;
     }
 
-    public void setExecuteFunctionsLocally(Boolean executeFunctionsLocally) {
-        this.executeFunctionsLocally = executeFunctionsLocally;
+    public void setExecuteKeywordsLocally(Boolean executeKeywordsLocally) {
+        this.executeKeywordsLocally = executeKeywordsLocally;
     }
 
     protected boolean isLocalMavenArtifact() {

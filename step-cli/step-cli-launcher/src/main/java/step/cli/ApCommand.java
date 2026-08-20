@@ -117,9 +117,9 @@ public class ApCommand implements Callable<Integer> {
         public static final String VERSION_NAME = "--versionName";
         public static final String FORCE_REFRESH_OF_SNAPSHOTS = "--forceRefreshOfSnapshots";
         public static final String PLANS_ATTRIBUTES = "--plansAttributes";
-        public static final String FUNCTIONS_ATTRIBUTES = "--functionsAttributes";
+        public static final String KEYWORDS_ATTRIBUTES = "--keywordsAttributes";
         public static final String TOKEN_SELECTION_CRITERIA = "--tokenSelectionCriteria";
-        public static final String EXECUTE_FUNCTIONS_LOCALLY = "--executeFunctionsLocally";
+        public static final String EXECUTE_KEYWORDS_LOCALLY = "--executeKeywordsLocally";
 
         @CommandLine.Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
             description = "Updating an existing package while executions based on it are running will be delayed until these executions end. With this property set to true, the deployment will not wait in case of such delayed updates and will return as soon as the update has been scheduled.")
@@ -144,18 +144,18 @@ public class ApCommand implements Callable<Integer> {
             split = "\\|", splitSynopsisLabel = "|")
         protected Map<String, String> plansAttributes;
 
-        @CommandLine.Option(names = {FUNCTIONS_ATTRIBUTES}, defaultValue = NULL_VALUE, showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+        @CommandLine.Option(names = {KEYWORDS_ATTRIBUTES}, defaultValue = NULL_VALUE, showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
             description = "The attributes to be applied to all the keywords of this package, corresponding to custom screen inputs defined for the keywords.",
             split = "\\|", splitSynopsisLabel = "|")
-        protected Map<String, String> functionsAttributes;
+        protected Map<String, String> keywordsAttributes;
 
-        @CommandLine.Option(names = {TOKEN_SELECTION_CRITERIA}, description = "The token selection criteria to be applied to all the keywords of this package, i.e. the attributes an agent token must have for the keywords to be routed to it. Example: --tokenSelectionCriteria=os=linux|team=core. These criteria are merged with the one set at the keyword level giving higher priority to the package ones",
+        @CommandLine.Option(names = {TOKEN_SELECTION_CRITERIA}, description = "The token selection criteria to be applied to all the keywords of this package, i.e. the attributes an agent token must have for the keywords to be routed to it. Example: --tokenSelectionCriteria=os=linux|team=core. These criteria are merged with the ones set at the keyword level giving higher priority to the package ones",
             split = "\\|", splitSynopsisLabel = "|")
         protected Map<String, String> tokenSelectionCriteria;
 
-        @CommandLine.Option(names = {EXECUTE_FUNCTIONS_LOCALLY}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
-            description = "To execute all the keywords of this package locally (i.e. on the controller) instead of routing them to an agent. Note that keywords requiring a local execution are executed locally regardless of this option.")
-        protected boolean executeFunctionsLocally;
+        @CommandLine.Option(names = {EXECUTE_KEYWORDS_LOCALLY}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+            description = "Forces all keywords in this package to execute locally on the controller rather than on an agent. Keywords already configured individually to run locally, or that are composite keywords, will always run locally regardless of this setting.")
+        protected boolean executeKeywordsLocally;
 
         @Override
         public Integer call() throws Exception {
@@ -181,9 +181,9 @@ public class ApCommand implements Callable<Integer> {
                 .setVersionName(versionName)
                 .setActivationExpression(activationExpression)
                 .setPlansAttributes(plansAttributes)
-                .setFunctionsAttributes(functionsAttributes)
+                .setKeywordsAttributes(keywordsAttributes)
                 .setTokenSelectionCriteria(tokenSelectionCriteria)
-                .setExecuteFunctionsLocally(executeFunctionsLocally)
+                .setExecuteKeywordsLocally(executeKeywordsLocally)
                 .setlibraryMavenArtifact(packageLibraryMavenArtifact)
                 .setManagedLibraryName(managedLibraryName)
                 .setLibraryFile(packageLibraryMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library));

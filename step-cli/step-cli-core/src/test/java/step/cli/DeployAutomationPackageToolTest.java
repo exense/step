@@ -69,7 +69,7 @@ public class DeployAutomationPackageToolTest {
         }
 
         Map<String, String> plansAttributes = Map.of("planAttribute", "planValue");
-        Map<String, String> functionsAttributes = Map.of("keywordAttribute", "keywordValue");
+        Map<String, String> keywordsAttributes = Map.of("keywordAttribute", "keywordValue");
         Map<String, String> tokenSelectionCriteria = Map.of("os", "linux");
 
         RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
@@ -79,9 +79,9 @@ public class DeployAutomationPackageToolTest {
                 .setAutomationPackageFile(testFile)
                 .setAsync(false)
                 .setPlansAttributes(plansAttributes)
-                .setFunctionsAttributes(functionsAttributes)
+                .setKeywordsAttributes(keywordsAttributes)
                 .setTokenSelectionCriteria(tokenSelectionCriteria)
-                .setExecuteFunctionsLocally(true),
+                .setExecuteKeywordsLocally(true),
             automationPackageClient
         );
         tool.execute();
@@ -90,7 +90,7 @@ public class DeployAutomationPackageToolTest {
             .createOrUpdateAutomationPackage(
                 Mockito.any(), Mockito.isNull(),
                 Mockito.isNull(), Mockito.isNull(),
-                Mockito.eq(plansAttributes), Mockito.eq(functionsAttributes),
+                Mockito.eq(plansAttributes), Mockito.eq(keywordsAttributes),
                 Mockito.eq(tokenSelectionCriteria), Mockito.eq(true),
                 Mockito.anyBoolean(), Mockito.isNull(), Mockito.anyLong()
             );
