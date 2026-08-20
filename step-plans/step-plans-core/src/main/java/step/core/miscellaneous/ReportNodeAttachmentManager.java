@@ -18,30 +18,27 @@
  ******************************************************************************/
 package step.core.miscellaneous;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.attachments.AttachmentMeta;
+import step.attachments.SkippedAttachmentMeta;
+import step.core.artefacts.reports.ReportNode;
+import step.core.execution.ExecutionContext;
+import step.resources.AttachmentStorage;
+import step.resources.InvalidResourceFormatException;
+import step.resources.LayeredResourceManager;
+import step.resources.Resource;
+import step.resources.ResourceManager;
+import step.resources.ResourceRevisionContainer;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import org.bson.types.ObjectId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import step.attachments.AttachmentMeta;
-import step.attachments.SkippedAttachmentMeta;
-import step.core.artefacts.reports.ReportNode;
-import step.core.execution.ExecutionContext;
-import step.core.variables.UndefinedVariableException;
-import step.core.variables.VariablesManager;
-import step.resources.*;
-
 
 // TODO refactor this class to remove the ExecutionContext dependency
 public class ReportNodeAttachmentManager {
-
-    public static String QUOTA_COUNT_VARNAME = "tec.quota.attachments.count";
-
-    public static String QUOTA_VARNAME = "tec.quota.attachments";
 
     private static final Logger logger = LoggerFactory.getLogger(ReportNodeAttachmentManager.class);
 
@@ -74,29 +71,6 @@ public class ReportNodeAttachmentManager {
         this.resourceManager = resourceManager;
     }
 
-    private boolean checkAndUpateAttachmentQuota() {
-        synchronized (context) {
-            VariablesManager varManager = context.getVariablesManager();
-
-            Integer count;
-            try {
-                count = varManager.getVariableAsInteger(QUOTA_COUNT_VARNAME) + 1;
-                varManager.updateVariable(QUOTA_COUNT_VARNAME, count);
-            } catch (UndefinedVariableException e) {
-                count = 1;
-                varManager.putVariable(context.getReport(), QUOTA_COUNT_VARNAME, count);
-            }
-
-            Integer quota = varManager.getVariableAsInteger(QUOTA_VARNAME, 100);
-
-            if (quota == count) {
-                logger.info(context.getExecutionId().toString() + ". Maximum number of attachment (" + quota + ") reached. Next attachments will be skipped.");
-            }
-
-            return quota >= count;
-        }
-    }
-
     private static byte[] exceptionToAttachment(Throwable e) {
         StringWriter w = new StringWriter();
         e.printStackTrace(new PrintWriter(w));
@@ -112,28 +86,22 @@ public class ReportNodeAttachmentManager {
     }
 
     public AttachmentMeta createAttachment(byte[] content, String filename, String mimeType) {
-        if (checkAndUpateAttachmentQuota()) {
-            return createResourceWithoutQuotaCheck(ResourceManager.RESOURCE_TYPE_ATTACHMENT, content, filename, mimeType);
-        } else {
-            String message = String.format("The attachment %s has been skipped because the execution generated more than" +
-                " the maximum number of attachments permitted. This quota can be changed by setting the variable %s with an higher value.", filename, QUOTA_VARNAME);
-            if (logger.isDebugEnabled()) {
-                logger.debug("Execution {} - {}", context.getExecutionId(), message);
-            }
-            return new SkippedAttachmentMeta(filename, mimeType, message);
+        AttachmentStorage attachmentStorage = context.getAttachmentStorage();
+        if (attachmentStorage == null) {
+            logger.error("{}: Unable to create attachment {} because attachmentStorage is not set", context, filename);
+            return new SkippedAttachmentMeta(filename, mimeType, "attachmentStorage not defined");
         }
+        return attachmentStorage.saveAttachment(context, content, filename, mimeType);
     }
 
+    // By now, this method is only used for creating resources of type RESOURCE_TYPE_TEMP.
     public AttachmentMeta createResourceWithoutQuotaCheck(String resourceType, byte[] content, String filename, String mimeType) {
+        if (!ResourceManager.RESOURCE_TYPE_TEMP.equals(resourceType)) {
+            throw new IllegalArgumentException("The only supported resource type for this operation is: " + ResourceManager.RESOURCE_TYPE_TEMP);
+        }
         ResourceRevisionContainer container;
         try {
-            if (ResourceManager.RESOURCE_TYPE_ATTACHMENT.equals(resourceType) && context == null) {
-                throw new IllegalStateException("No context present, unable to create attachment");
-            }
             container = resourceManager.createResourceContainer(resourceType, filename, null);
-            if (ResourceManager.RESOURCE_TYPE_ATTACHMENT.equals(resourceType)) {
-                container.getResource().setExecutionId(context.getExecutionId());
-            }
             try {
                 BufferedOutputStream bos = new BufferedOutputStream(container.getOutputStream());
                 bos.write(content);
@@ -158,7 +126,7 @@ public class ReportNodeAttachmentManager {
             attachmentMeta.setMimeType(mimeType);
             return attachmentMeta;
         } catch (IOException e1) {
-            throw new RuntimeException("Error while createing resource container", e1);
+            throw new RuntimeException("Error while creating resource container", e1);
         }
     }
 
