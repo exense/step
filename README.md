@@ -139,3 +139,5 @@ Contributions are welcome. Please open an issue to discuss a bug or feature requ
 ## License
 
 This project is licensed under the [GNU Affero General Public License v3.0](LICENSE).
+
+Just a test.
