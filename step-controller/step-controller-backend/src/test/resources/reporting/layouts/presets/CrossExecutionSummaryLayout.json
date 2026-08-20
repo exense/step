@@ -1,0 +1,99 @@
+{
+  "id": "6a5a49dfcbff3f2ff375c874",
+  "name": "Summary",
+  "reportType": "CrossExecution",
+  "layout": {
+    "widgets": [
+      {
+        "widgetType": "successRate",
+        "position": {
+          "row": 1,
+          "column": 1,
+          "widthInCells": 2,
+          "heightInCells": 1
+        }
+      },
+      {
+        "widgetType": "totalExecutions",
+        "position": {
+          "row": 1,
+          "column": 5,
+          "widthInCells": 2,
+          "heightInCells": 1
+        }
+      },
+      {
+        "widgetType": "summaryExecutions",
+        "position": {
+          "row": 2,
+          "column": 1,
+          "widthInCells": 2,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "crossExecutionStatus",
+        "position": {
+          "row": 2,
+          "column": 3,
+          "widthInCells": 6,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "callsCount",
+        "position": {
+          "row": 8,
+          "column": 1,
+          "widthInCells": 8,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "errors",
+        "position": {
+          "row": 11,
+          "column": 1,
+          "widthInCells": 8,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "executions",
+        "position": {
+          "row": 14,
+          "column": 1,
+          "widthInCells": 8,
+          "heightInCells": 3
+        }
+      },
+      {
+        "widgetType": "averageExecutionDuration",
+        "position": {
+          "row": 1,
+          "column": 3,
+          "widthInCells": 2,
+          "heightInCells": 1
+        }
+      },
+      {
+        "widgetType": "failedExecutions",
+        "position": {
+          "row": 1,
+          "column": 7,
+          "widthInCells": 2,
+          "heightInCells": 1
+        }
+      },
+      {
+        "widgetType": "heatMap",
+        "position": {
+          "row": 5,
+          "column": 1,
+          "widthInCells": 8,
+          "heightInCells": 3
+        }
+      }
+    ]
+  }
+}

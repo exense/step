@@ -18,26 +18,31 @@
  ******************************************************************************/
 package step.expressions;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 
@@ -202,12 +207,16 @@ public class ExpressionHandlerTest {
 
     @Test
     public void testScriptBaseClass() {
+        // 3 seconds should be ample, even in a "cold", slow environment.
+        long deadline = System.currentTimeMillis() + 3000;
+        logger.info("testScriptBaseClass start={}, deadline={}", new Date(System.currentTimeMillis()), new Date(deadline));
         Object o;
         try (ExpressionHandler e = new ExpressionHandler("step.expressions.GroovyFunctions")) {
             o = e.evaluateGroovyExpression("yyyyMMdd", null);
         }
         SimpleDateFormat f = new SimpleDateFormat("yyyyMMdd");
         assertEquals(f.format(new Date()), o.toString());
+        assertTrue("Probable regression: Groovy expression evaluation with base class definition took longer than 3 seconds", System.currentTimeMillis() <= deadline);
     }
 
     @Test
