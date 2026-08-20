@@ -119,7 +119,7 @@ public class ApCommand implements Callable<Integer> {
         public static final String PLANS_ATTRIBUTES = "--plansAttributes";
         public static final String KEYWORDS_ATTRIBUTES = "--keywordsAttributes";
         public static final String TOKEN_SELECTION_CRITERIA = "--tokenSelectionCriteria";
-        public static final String EXECUTE_KEYWORDS_LOCALLY = "--executeKeywordsLocally";
+        public static final String EXECUTE_KEYWORDS_ON_CONTROLLER = "--executeKeywordsOnController";
 
         @CommandLine.Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
             description = "Updating an existing package while executions based on it are running will be delayed until these executions end. With this property set to true, the deployment will not wait in case of such delayed updates and will return as soon as the update has been scheduled.")
@@ -153,9 +153,9 @@ public class ApCommand implements Callable<Integer> {
             split = "\\|", splitSynopsisLabel = "|")
         protected Map<String, String> tokenSelectionCriteria;
 
-        @CommandLine.Option(names = {EXECUTE_KEYWORDS_LOCALLY}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+        @CommandLine.Option(names = {EXECUTE_KEYWORDS_ON_CONTROLLER}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
             description = "Forces all keywords in this package to execute locally on the controller rather than on an agent. Keywords already configured individually to run locally, or that are composite keywords, will always run locally regardless of this setting.")
-        protected boolean executeKeywordsLocally;
+        protected boolean executeKeywordsOnController;
 
         @Override
         public Integer call() throws Exception {
@@ -183,7 +183,7 @@ public class ApCommand implements Callable<Integer> {
                 .setPlansAttributes(plansAttributes)
                 .setKeywordsAttributes(keywordsAttributes)
                 .setTokenSelectionCriteria(tokenSelectionCriteria)
-                .setExecuteKeywordsLocally(executeKeywordsLocally)
+                .setExecuteKeywordsOnController(executeKeywordsOnController)
                 .setlibraryMavenArtifact(packageLibraryMavenArtifact)
                 .setManagedLibraryName(managedLibraryName)
                 .setLibraryFile(packageLibraryMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library));

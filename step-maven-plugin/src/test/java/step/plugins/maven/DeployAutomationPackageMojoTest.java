@@ -53,7 +53,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         Assert.assertNull(mojo.deployParameters.getPlansAttributes());
         Assert.assertNull(mojo.deployParameters.getKeywordsAttributes());
         Assert.assertNull(mojo.deployParameters.getTokenSelectionCriteria());
-        Assert.assertNull(mojo.deployParameters.getExecuteKeywordsLocally());
+        Assert.assertNull(mojo.deployParameters.getExecuteKeywordsOnController());
     }
 
     /**
@@ -72,7 +72,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
         mojo.setPlansAttributesRaw("planKey1=rawPlanValue1;planKey3=rawPlanValue3");
         mojo.setKeywordsAttributes(Map.of("keywordKey1", "xmlKeywordValue1"));
         mojo.setTokenSelectionCriteriaRaw("os=linux;team=core");
-        mojo.setExecuteKeywordsLocally(true);
+        mojo.setExecuteKeywordsOnController(true);
         mojo.execute();
 
         ApDeployParameters params = mojo.deployParameters;
@@ -81,7 +81,7 @@ public class DeployAutomationPackageMojoTest extends AbstractMojoTest {
             params.getPlansAttributes());
         Assert.assertEquals(Map.of("keywordKey1", "xmlKeywordValue1"), params.getKeywordsAttributes());
         Assert.assertEquals(Map.of("os", "linux", "team", "core"), params.getTokenSelectionCriteria());
-        Assert.assertEquals(Boolean.TRUE, params.getExecuteKeywordsLocally());
+        Assert.assertEquals(Boolean.TRUE, params.getExecuteKeywordsOnController());
     }
 
     @Test

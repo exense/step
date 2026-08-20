@@ -96,8 +96,8 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
     @Parameter(property = "step-deploy-automation-package.token-selection-criteria")
     private String tokenSelectionCriteriaRaw;
 
-    @Parameter(property = "step-deploy-automation-package.execute-keywords-locally")
-    private Boolean executeKeywordsLocally;
+    @Parameter(property = "step-deploy-automation-package.execute-keywords-on-controller")
+    private Boolean executeKeywordsOnController;
 
     @Override
     protected ControllerCredentials getControllerCredentials() {
@@ -152,7 +152,7 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
             .setPlansAttributes(getPlansAttributes())
             .setKeywordsAttributes(getKeywordsAttributes())
             .setTokenSelectionCriteria(getTokenSelectionCriteria())
-            .setExecuteKeywordsLocally(getExecuteKeywordsLocally());
+            .setExecuteKeywordsOnController(getExecuteKeywordsOnController());
     }
 
     protected File getFileToUpload() throws MojoExecutionException {
@@ -321,12 +321,12 @@ public class DeployAutomationPackageMojo extends AbstractAutomationPackageMojo {
         this.tokenSelectionCriteriaRaw = tokenSelectionCriteriaRaw;
     }
 
-    public Boolean getExecuteKeywordsLocally() {
-        return executeKeywordsLocally;
+    public Boolean getExecuteKeywordsOnController() {
+        return executeKeywordsOnController;
     }
 
-    public void setExecuteKeywordsLocally(Boolean executeKeywordsLocally) {
-        this.executeKeywordsLocally = executeKeywordsLocally;
+    public void setExecuteKeywordsOnController(Boolean executeKeywordsOnController) {
+        this.executeKeywordsOnController = executeKeywordsOnController;
     }
 
     protected boolean isLocalMavenArtifact() {

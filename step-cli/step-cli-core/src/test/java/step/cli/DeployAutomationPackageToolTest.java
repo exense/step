@@ -81,7 +81,7 @@ public class DeployAutomationPackageToolTest {
                 .setPlansAttributes(plansAttributes)
                 .setKeywordsAttributes(keywordsAttributes)
                 .setTokenSelectionCriteria(tokenSelectionCriteria)
-                .setExecuteKeywordsLocally(true),
+                .setExecuteKeywordsOnController(true),
             automationPackageClient
         );
         tool.execute();

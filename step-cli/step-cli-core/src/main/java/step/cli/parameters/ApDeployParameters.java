@@ -11,7 +11,7 @@ public class ApDeployParameters extends ApParameters<ApDeployParameters> {
     private Map<String, String> plansAttributes;
     private Map<String, String> keywordsAttributes;
     private Map<String, String> tokenSelectionCriteria;
-    private Boolean executeKeywordsLocally;
+    private Boolean executeKeywordsOnController;
 
     public Boolean getAsync() {
         return async;
@@ -90,14 +90,14 @@ public class ApDeployParameters extends ApParameters<ApDeployParameters> {
     }
 
     /**
-     * @return whether all the keywords of the package have to be executed locally (i.e. on the controller).
+     * @return whether all the keywords of the package have to be executed on the controller rather than on an agent.
      */
-    public Boolean getExecuteKeywordsLocally() {
-        return executeKeywordsLocally;
+    public Boolean getExecuteKeywordsOnController() {
+        return executeKeywordsOnController;
     }
 
-    public ApDeployParameters setExecuteKeywordsLocally(Boolean executeKeywordsLocally) {
-        this.executeKeywordsLocally = executeKeywordsLocally;
+    public ApDeployParameters setExecuteKeywordsOnController(Boolean executeKeywordsOnController) {
+        this.executeKeywordsOnController = executeKeywordsOnController;
         return this;
     }
 
