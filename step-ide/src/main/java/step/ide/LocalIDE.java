@@ -4,7 +4,6 @@ import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.framework.server.ControllerServer;
-import step.ide.ai.IDEAiConfiguration;
 
 import java.io.File;
 import java.io.InputStream;
@@ -35,10 +34,6 @@ public class LocalIDE {
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
         configuration.putProperty("ui.resource.root", LocalIDEState.getIdeResourcePath());
         applyEnvOverride(configuration, "JMETER_HOME", "plugins.jmeter.home");
-        applyEnvOverride(configuration, IDEAiConfiguration.ENV_AGENT_PACKAGE, IDEAiConfiguration.PROP_AGENT_PACKAGE);
-        applyEnvOverride(configuration, IDEAiConfiguration.ENV_AGENT_PLAN, IDEAiConfiguration.PROP_AGENT_PLAN);
-        applyEnvOverride(configuration, IDEKeywordPropertiesPlugin.ENV_ANTHROPIC_API_KEY,
-            IDEKeywordPropertiesPlugin.KEYWORD_PROPERTY_PREFIX + IDEKeywordPropertiesPlugin.ENV_ANTHROPIC_API_KEY);
         server = new IDEControllerServer(configuration);
     }
 
