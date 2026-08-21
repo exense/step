@@ -510,6 +510,9 @@
             "selectionAttributes": {
               "$ref": "#/$defs/DynamicKeywordInputsDef"
             },
+            "plan": {
+              "type": "string"
+            },
             "planId": {
               "type": "string"
             }

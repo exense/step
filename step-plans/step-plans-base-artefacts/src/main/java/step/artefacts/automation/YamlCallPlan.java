@@ -18,13 +18,17 @@
  ******************************************************************************/
 package step.artefacts.automation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import step.artefacts.CallPlan;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.model.AbstractYamlArtefact;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
 
     private String planId;
+
+    private String plan;
 
     @YamlFieldCustomCopy
     private YamlDynamicInputs selectionAttributes = new YamlDynamicInputs("{}");
@@ -56,6 +60,21 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
         if (artefact.getSelectionAttributes() != null) {
             this.selectionAttributes = YamlDynamicInputs.fromDynamicValue(artefact.getSelectionAttributes());
         }
+    }
 
+    public String getPlanId() {
+        return planId;
+    }
+
+    public void setPlanId(String planId) {
+        this.planId = planId;
+    }
+
+    public void setPlan(String plan) {
+        this.plan = plan;
+    }
+
+    public String getPlan() {
+        return plan;
     }
 }
