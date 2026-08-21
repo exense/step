@@ -912,7 +912,11 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         // the path is not required to exist (yet), but it must be a valid archive relative path
         String normalizedPath = normalizeApRelativePath(relativePath);
         // the package must be visible in the current context, even though nothing of it is read here
-        getAutomationPackage(apId);
+        if (FileResolver.LOCAL_AP_ID.equals(apId)) {
+            currentlyEditedAutomationPackageDirectory();
+        } else {
+            getAutomationPackage(apId);
+        }
         return FileResolver.createPathForApResource(apId, normalizedPath);
     }
 
@@ -1025,9 +1029,13 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
 
     /**
      * Resolves the archive file of a deployed automation package, after having checked that the
-     * package is visible in the current context.
+     * package is visible in the current context — or, for the {@code local} id, the directory of the
+     * package currently open in the editor, which {@link ApResourceBrowser} browses like any archive.
      */
     private File getAutomationPackageArchiveFile(String apId) {
+        if (FileResolver.LOCAL_AP_ID.equals(apId)) {
+            return currentlyEditedAutomationPackageDirectory();
+        }
         AutomationPackage automationPackage = getAutomationPackage(apId);
         String archiveReference = automationPackage.getAutomationPackageResource();
         if (archiveReference == null) {
@@ -1040,6 +1048,28 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
                 + apId + " could not be resolved from the reference " + archiveReference);
         }
         return archiveFile;
+    }
+
+    /**
+     * @return the directory of the automation package currently open in the editor
+     * @throws ControllerServiceException 400 on a distribution that has no editor — {@code local} is
+     *                                    then simply not a package id — and 409 when the editor has no
+     *                                    package open, which is a state problem rather than a
+     *                                    malformed request: the very same call succeeds once one is
+     *                                    opened
+     */
+    private File currentlyEditedAutomationPackageDirectory() {
+        LocalAutomationPackageDirectoryProvider provider = getContext().get(LocalAutomationPackageDirectoryProvider.class);
+        if (provider == null) {
+            throw badRequest("'" + FileResolver.LOCAL_AP_ID + "' is not a valid automation package id here. "
+                + "It addresses the automation package open in the Step IDE.");
+        }
+        java.nio.file.Path directory = provider.getCurrentAutomationPackageDirectory();
+        if (directory == null) {
+            throw new ControllerServiceException(HttpStatus.SC_CONFLICT,
+                "No automation package is currently open in the editor");
+        }
+        return directory.toFile();
     }
 
     private String normalizeApRelativePath(String relativePath) {

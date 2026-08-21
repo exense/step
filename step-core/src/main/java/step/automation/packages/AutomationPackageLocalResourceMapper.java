@@ -18,25 +18,94 @@
  ******************************************************************************/
 package step.automation.packages;
 
-/* Note: This class is used to provide a (required) AutomationPackageResourceUploader object for the
-(required) StagingContext when creating an AutomationPackageYamlFragmentManager for the IDE (which
-allows to edit Automation packages in place).
-If you find a better name for this class, or a way to not require it, feel free to refactor.
+import step.attachments.FileResolver;
+import step.core.dynamicbeans.DynamicValue;
+import step.core.plans.Plan;
+
+/**
+ * The editor counterpart of {@link AutomationPackageResourceMapper}: where that one maps the plain
+ * relative path held by the YAML descriptor to the {@code apResource:<apId>:} reference of a deployed
+ * package, this one maps it to {@code apResource:local:<relativePath>} - the form the entities carry
+ * <b>in memory</b> while the package is being edited.
+ * <p>
+ * It is the {@code AutomationPackageResourceMapper} of the staging context that
+ * {@code AutomationPackageReader.getAutomationPackageYamlFragmentManager} builds for the editor, which
+ * is what makes every keyword plugin and the data sources of a plan produce the local form without
+ * knowing anything about the editor.
+ * <p>
+ * The descriptor itself is not touched: {@code AutomationPackageYamlFragmentManager.save} strips the
+ * prefix again on the way back to YAML. Doing so buys three things a plain relative path cannot give:
+ * the reference is validated against the automation package root ({@link FileResolver#normalizeApRelativePath}),
+ * every consumer that branches on the reference format ({@code ExcelFileLookup},
+ * {@code AbstractScriptFunctionType}, ...) takes the same branch as for a deployed package, and the
+ * value is self-describing for the clients.
+ *
+ * @see FileResolver#LOCAL_AP_ID
  */
-public class AutomationPackageLocalResourceMapper extends AutomationPackageResourceUploader {
+public class AutomationPackageLocalResourceMapper extends AutomationPackageResourceMapper {
 
     @Override
     public String applyUniqueResourceReference(String resourceReference,
-                                               String resourceType,
                                                StagingAutomationPackageContext context) {
-        return resourceReference;
+        return applyResourceReference(resourceReference, context);
     }
 
+    /**
+     * The inverse: what an entity carries as {@code apResource:local:<relativePath>} is written back to
+     * the descriptor as {@code <relativePath>}. Anything else - a {@code resource:<id>}, a reference to
+     * a deployed package, a path - is returned untouched.
+     * <p>
+     * Called by the {@code setDeclaredFieldsFromObject} of each keyword plugin, and by
+     * {@link ResourceReferences} for the data sources of a plan.
+     */
+    public static String toDescriptorReference(String reference) {
+        return FileResolver.isLocalApResource(reference) ? FileResolver.extractApRelativePath(reference) : reference;
+    }
+
+    /**
+     * @return the descriptor form of a reference held by a {@link DynamicValue}. An absent reference
+     * becomes an <b>empty</b> value rather than none: a yaml model serialized with {@code NON_DEFAULT}
+     * inclusion compares what it holds against its own default through {@link DynamicValue#equals},
+     * which reads both values, so a value holding nothing at all cannot be written. A dynamic
+     * expression is returned as it is - there is no path in it to map back.
+     */
+    public static DynamicValue<String> toDescriptorReference(DynamicValue<String> reference) {
+        if (reference != null && reference.isDynamic()) {
+            return reference;
+        }
+        String value = reference == null ? null : reference.getValue();
+        return new DynamicValue<>(value == null ? "" : toDescriptorReference(value));
+    }
+
+    /**
+     * Puts the descriptor form back for every data source of a plan, for the time of a mapping. Unlike
+     * a keyword, whose plugin maps its own fields, a plan holds its references inside its artefact tree.
+     *
+     * @return the undo, to be closed once the plan has been mapped - the live entity keeps the reference
+     * form for the rest of the editing session
+     */
+    public static ResourceReferences.Restoration toDescriptorReferences(Plan plan) {
+        return ResourceReferences.apply(plan.getRoot(), AutomationPackageLocalResourceMapper::toDescriptorReference);
+    }
+
+    /**
+     * @return {@code null} for an absent reference, an already prefixed reference untouched (a
+     * hand-written {@code resource:<id>} keeps working, and the mapping stays idempotent), and
+     * {@code apResource:local:<normalisedPath>} for a relative path
+     * @throws IllegalArgumentException if the path escapes the automation package root - an
+     *                                  automation package is self-contained, so this is a broken
+     *                                  descriptor rather than an exotic reference
+     */
     @Override
     public String applyResourceReference(String resourceReference,
-                                         String resourceType,
                                          StagingAutomationPackageContext context) {
-        return resourceReference;
+        if (resourceReference == null || resourceReference.isEmpty()) {
+            return null;
+        }
+        if (FileResolver.isResource(resourceReference) || FileResolver.isApResource(resourceReference)) {
+            return resourceReference;
+        }
+        return FileResolver.createPathForLocalApResource(FileResolver.normalizeApRelativePath(resourceReference));
     }
 
 }

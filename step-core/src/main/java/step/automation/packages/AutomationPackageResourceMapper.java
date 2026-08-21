@@ -25,22 +25,25 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Rewrites the resource references of an automation package at deploy time. It rewrites a plain
- * archive-relative reference into an {@code apResource:<apId>:<relativePath>} reference, which is
- * resolved on the fly from the automation package archive at execution time (see
+ * Maps the resource references of an automation package at deploy time, from the form its descriptor
+ * holds - a path relative to the package root - into an {@code apResource:<apId>:<relativePath>}
+ * reference, resolved on the fly from the package archive at execution time (see
  * {@link ApResourceMaterializer}).
  * <p>
- * The IDE / local mode keeps the plain reference untouched via
- * {@link AutomationPackageLocalResourceMapper}, which overrides both public methods.
+ * Nothing is uploaded or copied: a file embedded in an automation package stays in it. This class was
+ * called {@code AutomationPackageResourceUploader} while it did copy each file into a Step
+ * {@code Resource} of its own - which is precisely what the {@code apResource:} scheme replaced.
+ * <p>
+ * The editor maps to its own form instead - see {@link AutomationPackageLocalResourceMapper}, which
+ * overrides both public methods.
  */
-public class AutomationPackageResourceUploader {
+public class AutomationPackageResourceMapper {
 
     private final Map<String, String> uniqueResourceReferences = new ConcurrentHashMap<>();
 
     public String applyUniqueResourceReference(String resourceReference,
-                                               String resourceType,
                                                StagingAutomationPackageContext context) {
-        return uniqueResourceReferences.computeIfAbsent(resourceReference, key -> applyResourceReference(resourceReference, resourceType, context));
+        return uniqueResourceReferences.computeIfAbsent(resourceReference, key -> applyResourceReference(resourceReference, context));
     }
 
     /**
@@ -55,10 +58,19 @@ public class AutomationPackageResourceUploader {
      * </ul>
      */
     public String applyResourceReference(String resourceReference,
-                                         String resourceType,
                                          StagingAutomationPackageContext context) {
         if (resourceReference == null || resourceReference.isEmpty()) {
             return null;
+        }
+        if (FileResolver.isLocalApResource(resourceReference)) {
+            // The editor form never reaches this far: the YAML holds plain relative paths, and
+            // AutomationPackageYamlFragmentManager.save strips the prefix before writing. Getting one
+            // here means an entity was staged straight out of the editor, and returning it untouched
+            // as the branch below does would deploy a reference nothing can resolve.
+            throw new RuntimeException("The reference " + resourceReference + " of the automation package "
+                + context.getAutomationPackage().getId().toHexString() + " is an editor-local reference and "
+                + "cannot be deployed. This is an internal error - such references must be resolved to a "
+                + "relative path before the package is read.");
         }
         if (FileResolver.isResource(resourceReference) || FileResolver.isApResource(resourceReference)) {
             return resourceReference;

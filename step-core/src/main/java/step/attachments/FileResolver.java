@@ -37,6 +37,17 @@ public class FileResolver {
     public static final String RESOURCE_PATH_SEPARATOR = ":";
 
     /**
+     * The {@code <apId>} standing for "the automation package currently open in the editor", used by
+     * the AP editor instead of an entity id — which only exists once a package is deployed.
+     * <p>
+     * An {@code apResource:local:} reference is <b>in-memory only</b>: the YAML descriptor holds the
+     * plain relative path, and {@code AutomationPackageLocalResourceMapper} maps the two on read and
+     * write. It must therefore never reach a deployment, see
+     * {@code AutomationPackageResourceMapper.applyResourceReference}.
+     */
+    public static final String LOCAL_AP_ID = "local";
+
+    /**
      * used for direct access to files relative to the given filesystem path
      * when @{{@link FileResolver#resolve(String)} is called without any prefix
      */
@@ -124,10 +135,28 @@ public class FileResolver {
     }
 
     /**
+     * @return whether {@code path} is an {@code apResource:} reference to the automation package
+     * currently open in the editor, rather than to a deployed one
+     */
+    public static boolean isLocalApResource(String path) {
+        // deliberately a plain prefix test rather than extractApId, which throws on a malformed
+        // reference - this is a predicate, callers use it to decide whether to look closer
+        return path != null && path.startsWith(AP_RESOURCE_PREFIX + LOCAL_AP_ID + RESOURCE_PATH_SEPARATOR);
+    }
+
+    /**
      * Builds an {@code apResource:<apId>:<relativePath>} reference.
      */
     public static String createPathForApResource(String apId, String relativePath) {
         return AP_RESOURCE_PREFIX + apId + RESOURCE_PATH_SEPARATOR + relativePath;
+    }
+
+    /**
+     * Builds an {@code apResource:local:<relativePath>} reference, the in-memory form used by the AP
+     * editor. See {@link #LOCAL_AP_ID}.
+     */
+    public static String createPathForLocalApResource(String relativePath) {
+        return createPathForApResource(LOCAL_AP_ID, relativePath);
     }
 
     /**

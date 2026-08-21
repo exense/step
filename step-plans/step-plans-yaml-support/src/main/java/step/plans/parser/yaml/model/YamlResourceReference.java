@@ -58,9 +58,18 @@ public class YamlResourceReference {
         }
     }
 
+    /**
+     * The inverse of {@link #toDynamicValue()}: a {@code resource:<id>} comes back as a resource id, and
+     * anything else - a path relative to the automation package above all - as the simple reference it
+     * was written as. Labelling every value as a resource id, as this did, turned the path of a data
+     * source into an id on the way back to the descriptor.
+     */
     public static YamlResourceReference fromDynamicValue(DynamicValue<String> res) {
-        // TODO: now we only support file resources resource ids in plans
-        return new YamlResourceReference(null, res.getValue().replaceFirst(FileResolver.RESOURCE_PREFIX, ""));
+        String reference = res.getValue();
+        if (FileResolver.isResource(reference)) {
+            return new YamlResourceReference(null, reference.substring(FileResolver.RESOURCE_PREFIX.length()));
+        }
+        return new YamlResourceReference(reference, null);
     }
 
     public String getSimpleString() {

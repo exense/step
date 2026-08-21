@@ -26,9 +26,9 @@ import jakarta.ws.rs.core.StreamingOutput;
 import java.net.URLConnection;
 
 /**
- * Serves the content of a single automation package entry, shared by the controller service
- * ({@code /automation-packages/ap-resources/content}) and the local IDE one
- * ({@code /local/ide/ap/content}) so that both download the same way.
+ * Serves the content of a single automation package entry for
+ * {@code /automation-packages/ap-resources/content}, whether the entry comes from a deployed archive
+ * or from the exploded directory of the package open in the editor.
  */
 public class ApResourceContentResponse {
 

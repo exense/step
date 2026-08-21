@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import org.apache.commons.io.FileUtils;
+import step.attachments.FileResolver;
 import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.automation.packages.yaml.AutomationPackageWriteToDiskException;
@@ -159,10 +160,30 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
             if (file.exists() && file.lastModified() > fileLastModified) {
                 throw new AutomationPackageConcurrentEditException(MessageFormat.format("Automation package fragment {0} was edited outside the editor.", path));
             }
-            FileUtils.writeStringToFile(file, context.getCurrentYaml(), StandardCharsets.UTF_8);
+            String yaml = context.getCurrentYaml();
+            assertNoEditorInternalReference(yaml);
+            FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
             resetLastModified();
         } catch (IOException e) {
             throw new AutomationPackageWriteToDiskException(MessageFormat.format("Error when writing automation package fragment {0} back to disk.", path), e);
+        }
+    }
+
+    /**
+     * The {@code apResource:local:} form belongs to the editor's memory, never to the descriptor: each
+     * keyword plugin maps it back in {@code setDeclaredFieldsFromObject}, and the data sources of a plan
+     * in {@code AutomationPackageLocalResourceMapper.toDescriptorReferences}. A plugin that forgets to
+     * would otherwise write an internal reference into a file the user owns and commits, so the write is
+     * refused instead - loudly, and before the file is touched.
+     */
+    private void assertNoEditorInternalReference(String yaml) {
+        String editorReferencePrefix = FileResolver.AP_RESOURCE_PREFIX + FileResolver.LOCAL_AP_ID + FileResolver.RESOURCE_PATH_SEPARATOR;
+        if (yaml.contains(editorReferencePrefix)) {
+            throw new AutomationPackageWriteToDiskException(MessageFormat.format(
+                "Refusing to write the automation package fragment {0}: it holds an editor internal "
+                    + "reference ({1}). This is an internal error - such a reference must be mapped back "
+                    + "to the path it was authored with before the fragment is written.",
+                path, editorReferencePrefix));
         }
     }
 
