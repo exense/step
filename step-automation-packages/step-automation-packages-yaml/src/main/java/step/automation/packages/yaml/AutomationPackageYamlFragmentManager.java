@@ -107,7 +107,7 @@ public class AutomationPackageYamlFragmentManager {
             .forEach(f -> initializeMaps(f, yamlObjectMappers));
 
         yamlObjectMappers.forEach(m -> {
-            if (m instanceof ReferenceHandlingObjectMapper<?> referencingMapper) {
+            if (m instanceof ReferenceHandlingObjectMapper referencingMapper) {
                 referencingMapper.setReferences();
             }
         });
@@ -177,9 +177,27 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     @SuppressWarnings("unchecked")
-    public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO save(BO object) {
-
+    public <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO save(BO object) {
         BusinessObjectToYamlMapper<BO, YO> mapper = (BusinessObjectToYamlMapper<BO, YO>) mappers.get(object.getClass());
+
+        if (mapper instanceof ReferenceHandlingObjectMapper referenceHandlingObjectMapper) {
+            referenceHandlingObjectMapper.getReferrers(object).forEach(this::saveSingle);
+            BO newObject = saveSingle(mapper, object);
+            referenceHandlingObjectMapper.updateReferences(newObject);
+            return newObject;
+        } else {
+            return saveSingle(object);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO saveSingle(BO object) {
+        BusinessObjectToYamlMapper<BO, YO> mapper = (BusinessObjectToYamlMapper<BO, YO>) mappers.get(object.getClass());
+        return saveSingle(mapper, object);
+    }
+
+    private synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO saveSingle(BusinessObjectToYamlMapper<BO, YO> mapper, BO object) {
+
         if (mapper == null) {
             throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());
         }
@@ -206,6 +224,16 @@ public class AutomationPackageYamlFragmentManager {
         BusinessObjectToYamlMapper<BO, ?> mapper = (BusinessObjectToYamlMapper<BO, ?>) mappers.get(object.getClass());
         if (mapper == null) {
             throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());
+        }
+
+        if (mapper instanceof ReferenceHandlingObjectMapper referencingMapper) {
+            Collection<AbstractOrganizableObject> referrers = referencingMapper.getReferrers(object);
+            if (!referrers.isEmpty()) {
+                String referrersList = referrers.stream().map(r -> r.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.joining(", "));
+                throw new AutomationPackageUpdateException(object.getAttribute(AbstractOrganizableObject.NAME) + " is referenced by " + referrersList + ", please remove the references before deleting.");
+            } else {
+                referencingMapper.removeReferences(object);
+            }
         }
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
         removeFragmentEntity(fragment, fragment.getListForYamlObject(mapper.getCollectionName()), object);

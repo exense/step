@@ -22,9 +22,13 @@ import java.util.Collection;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-public interface ReferenceHandlingObjectMapper<BO extends AbstractOrganizableObject> {
+public interface ReferenceHandlingObjectMapper {
 
     void setReferences();
 
-    Collection<BO> getReferrers(BO object);
+    void updateReferences(AbstractOrganizableObject object);
+
+    Collection<AbstractOrganizableObject> getReferrers(AbstractOrganizableObject object);
+
+    void removeReferences(AbstractOrganizableObject object);
 }

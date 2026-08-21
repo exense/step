@@ -9,16 +9,19 @@ import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
 import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.yaml.model.NamedYamlArtefact;
 import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.YamlPlanReader;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
@@ -43,12 +46,12 @@ import java.util.Set;
 @YamlToBusinessObjectMapping
 public class PlanMapper implements BusinessObjectToYamlMapper<Plan, YamlPlan>,
     YamlToBusinessObjectMapper<YamlPlan, Plan>,
-    ReferenceHandlingObjectMapper<Plan> {
+    ReferenceHandlingObjectMapper {
 
     private final YamlPlanReader planReader;
 
-    private final Map<String, Plan> idToPlanMap = new HashMap<>();
-    private final Map<Plan, Set<Plan>> planToReferencingPlansMap = new HashMap<>();
+    private final Map<String, AbstractOrganizableObject> idToObjectMap = new HashMap<>();
+    private final Map<String, Set<AbstractOrganizableObject>> idToReferencingObjectMap = new HashMap<>();
 
     public PlanMapper(YamlPlanReader planReader) {
         this.planReader = planReader;
@@ -65,7 +68,7 @@ public class PlanMapper implements BusinessObjectToYamlMapper<Plan, YamlPlan>,
         node.getYamlArtefact().getChildren().forEach(this::setNameReferences);
 
         if (node.getYamlArtefact() instanceof YamlCallPlan yamlCallPlan) {
-            Plan plan = idToPlanMap.get(yamlCallPlan.getPlanId());
+            AbstractOrganizableObject plan = idToObjectMap.get(yamlCallPlan.getPlanId());
             if (plan != null) {
                 yamlCallPlan.setPlan(plan.getAttribute(AbstractOrganizableObject.NAME));
                 yamlCallPlan.setPlanId(null);
@@ -76,7 +79,7 @@ public class PlanMapper implements BusinessObjectToYamlMapper<Plan, YamlPlan>,
     @Override
     public Plan toBusinessObject(YamlPlan yamlPlan) {
         Plan plan = planReader.yamlPlanToPlan(yamlPlan);
-        idToPlanMap.put(plan.getId().toString(), plan);
+        idToObjectMap.put(plan.getId().toString(), plan);
         return plan;
     }
 
@@ -86,27 +89,54 @@ public class PlanMapper implements BusinessObjectToYamlMapper<Plan, YamlPlan>,
     }
 
     @Override
-    public void setReferences() {
-        Map<String, Plan> nameToPlanMap = new HashMap<>();
-        idToPlanMap.values().forEach(p -> nameToPlanMap.put(p.getAttribute(AbstractOrganizableObject.NAME), p));
-        idToPlanMap.values().forEach(p -> setReferences(nameToPlanMap, p, p.getRoot()));
+    public void updateReferences(AbstractOrganizableObject object) {
+        idToReferencingObjectMap.clear();
+        setReferences();
     }
 
-    private void setReferences(Map<String, Plan> nameToPlanMap, Plan plan, AbstractArtefact node) {
-        node.getChildren().forEach(a -> setReferences(nameToPlanMap, plan, a));
+    @Override
+    public void setReferences() {
+        Map<String, String> nameToIdMap = idToObjectMap.values().stream()
+            .collect(Collectors.toMap(
+                p -> p.getAttribute(AbstractOrganizableObject.NAME),
+                p -> p.getId().toString()));
+        idToObjectMap.values().forEach(p -> {
+            if (p instanceof Plan plan) {
+                setReferences(nameToIdMap, plan, plan.getRoot());
+            }
+        });
+    }
+
+    private void setReferences(Map<String, String> nameToIdMap, Plan plan, AbstractArtefact node) {
+        node.getChildren().forEach(a -> setReferences(nameToIdMap, plan, a));
 
         if (node instanceof CallPlan callPlan) {
-            Plan referencedPlan = nameToPlanMap.get(callPlan.getPlan());
-            planToReferencingPlansMap.computeIfAbsent(referencedPlan, p -> new HashSet<>()).add(plan);
-            if (plan != null) {
-                callPlan.setPlanId(plan.getId().toString());
-                callPlan.setPlan(null);
+            String planName = callPlan.getPlan();
+            String planId = callPlan.getPlanId();
+            if ((planName != null && !planName.trim().isEmpty()) || planId != null) {
+                String referencedPlanId = nameToIdMap.getOrDefault(planName, planId);
+                if (referencedPlanId != null) {
+                    idToReferencingObjectMap.computeIfAbsent(referencedPlanId, p -> new HashSet<>()).add(plan);
+                    callPlan.setPlanId(referencedPlanId);
+                    callPlan.setPlan(null);
+                } else {
+                    callPlan.setSelectionAttributes(new DynamicValue<>("{\"name\": {\"value\": \"" + callPlan.getPlan() + "\", \"dynamic\": false}}"));
+                    callPlan.setPlan(null);
+                }
             }
         }
     }
 
     @Override
-    public Collection<Plan> getReferrers(Plan plan) {
-        return planToReferencingPlansMap.get(plan);
+    public Collection<AbstractOrganizableObject> getReferrers(AbstractOrganizableObject plan) {
+        idToObjectMap.put(plan.getId().toString(), plan);
+        return idToReferencingObjectMap.getOrDefault(plan.getId().toString(), Collections.emptySet());
+    }
+
+    @Override
+    public void removeReferences(AbstractOrganizableObject object) {
+        idToObjectMap.remove(object.getId().toString());
+        idToReferencingObjectMap.clear();
+        setReferences();
     }
 }
