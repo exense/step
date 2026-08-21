@@ -54,7 +54,9 @@ public class DeployAutomationPackageTool extends AbstractCliTool<ApDeployParamet
                 updateResult = automationPackageClient.createOrUpdateAutomationPackage(
                     createPackageSource(parameters.getAutomationPackageFile(), mavenAutomationPackageXml),
                     createLibrarySource(parameters.getLibraryFile(), mavenPackageLibraryXml, parameters.getManagedLibraryName()),
-                    parameters.getVersionName(), parameters.getActivationExpression(), null, null, null, null,
+                    parameters.getVersionName(), parameters.getActivationExpression(),
+                    parameters.getPlansAttributes(), parameters.getKeywordsAttributes(),
+                    parameters.getTokenSelectionCriteria(), parameters.getExecuteKeywordsOnController(),
                     parameters.getAsync(), parameters.getForceRefreshOfSnapshots(),
                     deploymentTimeoutSeconds * 1000L
                 );
