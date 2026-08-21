@@ -97,6 +97,14 @@ public class AutomationPackageManager {
     private final int maxParallelVersionsPerPackage;
     private final ObjectHookRegistry objectHookRegistry;
 
+    /**
+     * Materialisation root for {@code apResource:} files. Set only on the MAIN manager (see
+     * {@code AutomationPackagePlugin}); {@code null} for local/isolated managers, whose cache is
+     * cleaned at isolated-context close instead. When set, {@link #deleteAutomationPackageEntities}
+     * wipes {@code <apResourceCacheRoot>/<apId>} — under the write lock, on both redeploy and delete.
+     */
+    private File apResourceCacheRoot;
+
 
     /**
      * The automation package manager used to store/delete automation packages. To run the automation package in isolated
@@ -324,7 +332,33 @@ public class AutomationPackageManager {
         }
     }
 
+    public File getApResourceCacheRoot() {
+        return apResourceCacheRoot;
+    }
+
+    public void setApResourceCacheRoot(File apResourceCacheRoot) {
+        this.apResourceCacheRoot = apResourceCacheRoot;
+    }
+
+    /**
+     * Wipes the materialised {@code apResource:} cache of the given package, if a cache root is
+     * configured. Called from {@link #deleteAutomationPackageEntities} which runs under the AP write
+     * lock, so no execution can be reading the wiped entries. The path is keyed by the (stable) AP id,
+     * so on a redeploy this clears stale content that the next resolve re-materialises fresh.
+     */
+    private void wipeApResourceCache(AutomationPackage automationPackage) {
+        if (apResourceCacheRoot == null || automationPackage == null) {
+            return;
+        }
+        String apId = automationPackage.getId().toHexString();
+        if (!ApResourceCache.wipe(apResourceCacheRoot, apId)) {
+            log.warn("Unable to fully wipe the apResource cache directory {}",
+                ApResourceCache.apDirectory(apResourceCacheRoot, apId).getAbsolutePath());
+        }
+    }
+
     protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, AutomationPackage newPackage, String actorUser, WriteAccessValidator writeAccessValidator) {
+        wipeApResourceCache(automationPackage);
         deleteFunctions(automationPackage);
         deletePlans(automationPackage);
 
@@ -893,7 +927,7 @@ public class AutomationPackageManager {
             try {
                 boolean hooked = automationPackageHookRegistry.onPrepareStaging(
                     hookEntry.fieldName,
-                    new StagingAutomationPackageContext(new AutomationPackageResourceUploader(), newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, actorUser, enricherForIncludedEntities, extensions),
+                    new StagingAutomationPackageContext(new AutomationPackageResourceMapper(), newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, actorUser, enricherForIncludedEntities, extensions),
                     packageContent,
                     hookEntry.values,
                     oldPackage, staging, objectPredicate);
@@ -993,7 +1027,7 @@ public class AutomationPackageManager {
 
     protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
                                                      AutomationPackage oldPackage, ResourceManager stagingResourceManager, String actorUser) {
-        StagingAutomationPackageContext apContext = new StagingAutomationPackageContext(new AutomationPackageResourceUploader(), newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
+        StagingAutomationPackageContext apContext = new StagingAutomationPackageContext(new AutomationPackageResourceMapper(), newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids

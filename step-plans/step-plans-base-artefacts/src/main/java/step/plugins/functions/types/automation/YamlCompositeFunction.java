@@ -19,6 +19,8 @@
 package step.plugins.functions.types.automation;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import step.automation.packages.AutomationPackageResourceMapper;
+import step.automation.packages.ResourceReferences;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.accessors.AbstractOrganizableObject;
@@ -58,8 +60,14 @@ public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunctio
         super.fillDeclaredFields(res, context);
         if (plan != null) {
             res.setPlan(yamlPlanToPlan(plan));
+            // The plan of a composite carries data sources like any other, and they are references to
+            // files of the automation package. These must be mapped to AP resources too.
+            AutomationPackageResourceMapper resourceMapper = context.getResourceMapper();
+            ResourceReferences.apply(res.getPlan().getRoot(), reference ->
+                resourceMapper.applyResourceReference(reference, context));
         }
     }
+
 
     private Plan yamlPlanToPlan(YamlPlan yamlPlan) {
         Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());

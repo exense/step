@@ -16,19 +16,37 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.cli.apignore;
+package step.automation.packages.apignore;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
+/**
+ * The exclusion patterns declared by the {@code .apignore} file at the root of an automation package
+ * directory, in a gitignore-like syntax. It decides what belongs to the package: the CLI applies it
+ * when it builds the archive to deploy or execute, and the browser applies it when it lists an
+ * exploded package, so that the picker offers exactly what would be deployed.
+ */
 public class ApIgnoreFileFilter {
+
+    public static final String AP_IGNORE_FILE_NAME = ".apignore";
 
     private final List<PathMatcher> ignoreMatchers = new ArrayList<>();
     private final Path rootDirectory;
+
+    /**
+     * @param rootDirectory the root of the automation package, against which the patterns are anchored
+     * @return the filter declared by {@code <rootDirectory>/.apignore}, or {@code null} if the package
+     * declares none - in which case nothing is filtered out at all
+     * @throws IOException if the {@code .apignore} file exists but cannot be read
+     */
+    public static ApIgnoreFileFilter of(Path rootDirectory) throws IOException {
+        Path apIgnoreFile = rootDirectory.resolve(AP_IGNORE_FILE_NAME);
+        return Files.isRegularFile(apIgnoreFile) ? new ApIgnoreFileFilter(rootDirectory, apIgnoreFile) : null;
+    }
 
     public ApIgnoreFileFilter(Path rootDirectory, Path gitIgnoreFile) throws IOException {
         this.rootDirectory = rootDirectory;
@@ -68,7 +86,18 @@ public class ApIgnoreFileFilter {
         return normalizedPattern;
     }
 
+    /**
+     * @param path a file or directory below the root directory this filter was built for
+     * @return whether it belongs to the automation package, i.e. is matched by none of the declared
+     * patterns. The {@code .apignore} file itself never belongs to it - wherever it is found, as in the
+     * CLI, even though only the one at the root is honoured
+     */
     public boolean accept(Path path) {
+        Path fileName = path.getFileName();
+        if (fileName != null && fileName.toString().equals(AP_IGNORE_FILE_NAME)) {
+            return false;
+        }
+
         String relativePathStr = File.separator + rootDirectory.relativize(path).normalize().toString();
 
         for (PathMatcher matcher : ignoreMatchers) {

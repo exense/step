@@ -158,7 +158,9 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
 
         String scriptFilename = function.getScriptFile().get();
 
-        if (scriptFilename.startsWith(FileResolver.RESOURCE_PREFIX)) {
+        // A resource:/apResource: script is resolved on the fly, not materialised as a local script
+        // file here — otherwise a junk file literally named "apResource:<apId>:..." would be created.
+        if (FileResolver.isResource(scriptFilename) || FileResolver.isApResource(scriptFilename)) {
             return null;
         }
 
@@ -224,7 +226,10 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
                 copy.setScriptFile(new DynamicValue<>(""));//reset script to setup a new one
                 String scriptFileValue = scriptFile.get();
 
-                boolean isResource = FileResolver.isResource(scriptFileValue);
+                // Both resource: and apResource: scripts must be resolved and re-created as a
+                // standalone resource, so the copy is detached from the original (an apResource: copy
+                // left as-is would stay bound to the source automation package's lifecycle).
+                boolean isResource = FileResolver.isResource(scriptFileValue) || FileResolver.isApResource(scriptFileValue);
                 if (isResource) {
                     scriptFileValue = fileResolver.resolve(scriptFileValue).getAbsolutePath();
                     newFile = setupScriptFileAsResource(copy, new FileInputStream(scriptFileValue));

@@ -13,7 +13,6 @@ import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.DataSetArtefact;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
-import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
@@ -288,13 +287,13 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             Assert.assertEquals("Test excel plan", forEachExcelPlan.getAttribute(AbstractOrganizableObject.NAME));
             ForEachBlock forEachArtefact = (ForEachBlock) forEachExcelPlan.getRoot().getChildren().get(0);
             ExcelDataPool excelDataPool = (ExcelDataPool) forEachArtefact.getDataSource();
-            checkUploadedResource(excelDataPool.getFile(), "excel1.xlsx");
+            checkApResourceReference(excelDataPool.getFile(), "excel1.xlsx");
 
             List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(1, storedFunctions.size());
             JMeterFunction jMeterFunction = (JMeterFunction) storedFunctions.get(0);
             DynamicValue<String> jmeterTestplanRef = jMeterFunction.getJmeterTestplan();
-            checkUploadedResource(jmeterTestplanRef, "jmeterProject1.xml");
+            checkApResourceReference(jmeterTestplanRef, "jmeterProject1.xml");
 
             executePlanWithAssertion(forEachExcelPlan);
 
@@ -303,7 +302,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             Assert.assertEquals("Test excel plan in before section", planWithDatasetInBefore.getAttribute(AbstractOrganizableObject.NAME));
             DataSetArtefact dataSet = (DataSetArtefact) planWithDatasetInBefore.getRoot().getBefore().getSteps().get(0);
             ExcelDataPool excelDataPool2 = (ExcelDataPool) dataSet.getDataSource();
-            checkUploadedResource(excelDataPool2.getFile(), "excel1.xlsx");
+            checkApResourceReference(excelDataPool2.getFile(), "excel1.xlsx");
 
             executePlanWithAssertion(planWithDatasetInBefore);
         }
@@ -1340,15 +1339,14 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         Assert.assertEquals(expectedKwOrigin, kwLibResource.getOrigin());
     }
 
-    private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
-        FileResolver fileResolver = new FileResolver(resourceManager);
-        String resourceReferenceString = fileResourceReference.get();
-        Assert.assertTrue("Uploaded resources does not have the RESOURCE_PREFIX", resourceReferenceString.startsWith(FileResolver.RESOURCE_PREFIX));
-        String resourceId = FileResolver.resolveResourceId(resourceReferenceString);
-        File excelFile = fileResolver.resolve(resourceId);
-        Assert.assertNotNull(excelFile);
-        Resource resource = resourceManager.getResource(resourceId);
-        Assert.assertEquals(expectedFileName, resource.getResourceName());
+    private void checkApResourceReference(DynamicValue<String> fileResourceReference, String expectedFileName) {
+        // Embedded files are no longer uploaded as standalone resources; the reference is rewritten to
+        // an apResource: pointer into the automation package archive (resolved on the fly at execution).
+        String reference = fileResourceReference.get();
+        Assert.assertTrue("Expected an apResource: reference but got: " + reference, FileResolver.isApResource(reference));
+        String relativePath = FileResolver.extractApRelativePath(reference);
+        Assert.assertTrue("apResource path '" + relativePath + "' should end with " + expectedFileName,
+            relativePath.endsWith(expectedFileName));
     }
 
     protected SampleUploadingResult uploadSample1WithAsserts(AutomationPackageFileSource sample1FileSource, boolean createNew, boolean async, boolean expectedDelay,
@@ -1590,12 +1588,28 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         return criteria;
     }
 
+    private File apResourceCacheRoot;
+
+    private File getApResourceCacheRoot() {
+        if (apResourceCacheRoot == null) {
+            try {
+                apResourceCacheRoot = Files.createTempDirectory("ap-cache-test").toFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return apResourceCacheRoot;
+    }
+
     protected ExecutionEngine.Builder newExecutionEngineBuilder() {
+        // Wire the apResource resolver with the real (deployed) accessor and the manager's reader
+        // registry so plans reading apResource: datasources/scripts materialise them at execution.
         ExecutionEngine.Builder builder = ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(),
             new FunctionPlugin(),
             new GeneralScriptFunctionPlugin(),
             new ThreadPoolPlugin(),
-            new AutomationPackageExecutionPlugin(automationPackageLocks, new InMemoryAutomationPackageAccessorImpl())));
+            new AutomationPackageExecutionPlugin(automationPackageLocks, automationPackageAccessor,
+                getApResourceCacheRoot(), manager.getAutomationPackageReaderRegistry())));
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
         parentContext.put(FunctionAccessor.class, functionAccessor);
         parentContext.setPlanAccessor(planAccessor);

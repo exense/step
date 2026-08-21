@@ -27,8 +27,12 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.functions.Function;
 import step.plugins.functions.types.CompositeFunction;
+import step.plugins.java.GeneralScriptFunction;
+import step.plugins.jmeter.JMeterFunction;
+import step.plugins.node.NodeFunction;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -36,6 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class AutomationPackageKeywordCollectionTest extends AutomationPackageCollectionTestBase {
@@ -80,6 +85,67 @@ public class AutomationPackageKeywordCollectionTest extends AutomationPackageCol
         functionCollection.save(compositeFunction);
 
         assertFilesEqual(expectedFilesPath.resolve("keywordsAfterCompositeModification.yml"), destinationDirectory.toPath().resolve("keywords.yml"));
+    }
+
+    /**
+     * The files a keyword refers to are held as apResource:local: references while the package is
+     * open, so that they are validated against the package root and resolved like the files of a
+     * deployed package. See AutomationPackageLocalResourceMapper.
+     */
+    @Test
+    public void testKeywordResourcesAreReadAsLocalApResources() throws IOException {
+        GeneralScriptFunction keyword = (GeneralScriptFunction) findKeyword("GeneralScript keyword from AP");
+
+        assertEquals("apResource:local:jsProject/jsSample.js", keyword.getScriptFile().get());
+        assertEquals("apResource:local:lib/fakeLib.jar", keyword.getLibrariesFile().get());
+    }
+
+    /**
+     * ... and the descriptor keeps the relative path it was authored with: the reference form is
+     * in-memory only, and this is the round trip that proves it. Asserted on the written file rather
+     * than through a re-read, since it is the YAML itself that the user owns.
+     */
+    @Test
+    public void testKeywordResourcesAreWrittenBackAsRelativePaths() throws IOException {
+        GeneralScriptFunction keyword = (GeneralScriptFunction) findKeyword("GeneralScript keyword from AP");
+        keyword.getAttributes().put(AbstractOrganizableObject.NAME, "Renamed GeneralScript keyword");
+
+        functionCollection.save(keyword);
+
+        String writtenKeywords = Files.readString(destinationDirectory.toPath().resolve("keywords.yml"));
+        assertTrue(writtenKeywords, writtenKeywords.contains("scriptFile: \"jsProject/jsSample.js\""));
+        assertTrue(writtenKeywords, writtenKeywords.contains("librariesFile: \"lib/fakeLib.jar\""));
+        assertFalse(writtenKeywords, writtenKeywords.contains("apResource:"));
+        // and the entity is left as it was, for the rest of the editing session
+        assertEquals("apResource:local:jsProject/jsSample.js", keyword.getScriptFile().get());
+    }
+
+    /**
+     * Every keyword type goes through the same mapper, so none of them holds a plain path any more, and
+     * each maps its own fields back - see Yaml*Function.setDeclaredFieldsFromObject.
+     */
+    @Test
+    public void testResourcesOfEveryKeywordTypeRoundTrip() throws IOException {
+        JMeterFunction jmeter = (JMeterFunction) findKeyword("JMeter keyword from automation package");
+        NodeFunction node = (NodeFunction) findKeyword("NodeAutomation");
+
+        assertEquals("apResource:local:jmeterProject1/jmeterProject1.xml", jmeter.getJmeterTestplan().get());
+        assertEquals("apResource:local:nodeProject/nodeSample.ts", node.getJsFile().get());
+
+        functionCollection.save(jmeter);
+        functionCollection.save(node);
+
+        String writtenKeywords = Files.readString(destinationDirectory.toPath().resolve("keywords.yml"));
+        assertTrue(writtenKeywords, writtenKeywords.contains("jmeterTestplan: \"jmeterProject1/jmeterProject1.xml\""));
+        assertTrue(writtenKeywords, writtenKeywords.contains("jsfile: \"nodeProject/nodeSample.ts\""));
+        assertFalse(writtenKeywords, writtenKeywords.contains("apResource:"));
+    }
+
+    private Function findKeyword(String name) {
+        Optional<Function> keyword = functionCollection
+            .find(Filters.equals("attributes.name", name), null, null, null, 100).findFirst();
+        assertTrue("keyword not found: " + name, keyword.isPresent());
+        return keyword.get();
     }
 
     @Test

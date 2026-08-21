@@ -40,7 +40,12 @@ public class ExcelFileLookup {
 
     public File lookup(String workbookPath) {
         File workBookFile;
-        if (workbookPath.contains("/") || workbookPath.contains("\\")) {
+        if (fileResolver != null && (FileResolver.isResource(workbookPath) || FileResolver.isApResource(workbookPath))) {
+            // A resource:/apResource: reference must go through the resolver. It contains separators
+            // (":" and, for apResource paths, possibly "/") that would otherwise be misread below as a
+            // raw filesystem path.
+            workBookFile = fileResolver.resolve(workbookPath);
+        } else if (workbookPath.contains("/") || workbookPath.contains("\\")) {
             workBookFile = new File(workbookPath);
         } else {
             workBookFile = fileResolver != null ? fileResolver.resolve(workbookPath) : null;

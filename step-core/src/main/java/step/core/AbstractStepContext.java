@@ -21,6 +21,7 @@ package step.core;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import step.automation.packages.ApResourceProvider;
 import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
@@ -39,6 +40,7 @@ public abstract class AbstractStepContext extends AbstractContext {
     private DynamicBeanResolver dynamicBeanResolver;
     private ResourceManager resourceManager;
     private FileResolver fileResolver;
+    private ApResourceProvider apResourceProvider;
     private LoadingCache<String, File> fileResolverCache;
     // Keep track of the default resource manager created at initialization of the context
     private LocalResourceManagerImpl localResourceManager;
@@ -63,6 +65,9 @@ public abstract class AbstractStepContext extends AbstractContext {
         setResourceManager(resourceManager);
         expressionHandler = parentContext.getExpressionHandler();
         dynamicBeanResolver = parentContext.getDynamicBeanResolver();
+        // Propagate the apResource: resolver so a provider installed on a parent context (e.g. the
+        // execution engine context in local/JUnit mode) reaches the derived execution contexts.
+        setApResourceProvider(parentContext.getApResourceProvider());
     }
 
     public ExpressionHandler getExpressionHandler() {
@@ -94,8 +99,25 @@ public abstract class AbstractStepContext extends AbstractContext {
         return fileResolver;
     }
 
+    /**
+     * Sets the provider used to resolve {@code apResource:} references. Stored on the context so it
+     * survives resource-manager swaps: {@link #updateFileResolver()} rebuilds the {@link FileResolver}
+     * on every {@link #setResourceManager(ResourceManager)} and re-applies this provider to it.
+     */
+    public void setApResourceProvider(ApResourceProvider apResourceProvider) {
+        this.apResourceProvider = apResourceProvider;
+        if (fileResolver != null) {
+            fileResolver.setApResourceProvider(apResourceProvider);
+        }
+    }
+
+    public ApResourceProvider getApResourceProvider() {
+        return apResourceProvider;
+    }
+
     private void updateFileResolver() {
         this.fileResolver = new FileResolver(resourceManager);
+        this.fileResolver.setApResourceProvider(apResourceProvider);
         this.fileResolverCache = CacheBuilder.newBuilder().concurrencyLevel(4)
             .maximumSize(1000)
             .expireAfterWrite(500, TimeUnit.MILLISECONDS)

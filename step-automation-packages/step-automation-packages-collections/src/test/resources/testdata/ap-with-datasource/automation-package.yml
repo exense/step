@@ -1,0 +1,12 @@
+schemaVersion: 1.0.0
+name: "AP with a data source"
+plans:
+  - name: "Data driven plan"
+    root:
+      testCase:
+        children:
+          - dataSet:
+              dataSource:
+                excel:
+                  file: "data/pool.xlsx"
+                  headers: true

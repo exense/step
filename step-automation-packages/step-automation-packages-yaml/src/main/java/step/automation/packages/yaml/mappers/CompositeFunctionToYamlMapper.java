@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages.yaml.mappers;
 
+import step.automation.packages.AutomationPackageLocalResourceMapper;
+import step.automation.packages.ResourceReferences;
 import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
 import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
@@ -44,7 +46,12 @@ public class CompositeFunctionToYamlMapper extends AbstractFunctionToYamlMapper<
 
         Plan plan = compositeFunction.getPlan();
         if (plan != null) {
-            YamlPlan yamlPlan = planReader.planToYamlPlan(compositeFunction.getPlan());
+            // As for plans, AP resource references in the composite's plan are transformed back to relative path
+            YamlPlan yamlPlan;
+            try (ResourceReferences.Restoration restoration =
+                     AutomationPackageLocalResourceMapper.toDescriptorReferences(plan)) {
+                yamlPlan = planReader.planToYamlPlan(plan);
+            }
             yamlPlan.setName(null);
             yamlComposite.setPlan(yamlPlan);
         }
