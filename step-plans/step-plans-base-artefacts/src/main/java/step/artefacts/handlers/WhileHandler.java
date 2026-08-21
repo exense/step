@@ -35,8 +35,7 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
 
     @Override
     protected void createReportSkeleton_(WhileReportNode parentNode, While testArtefact) {
-        //stop creating skeleton for while artefact as it may end up in infinite loop
-        //evaluateExpressionAndDelegate(parentNode, testArtefact, false);
+        evaluateExpressionAndDelegate(parentNode, testArtefact, false);
     }
 
     @Override
@@ -44,12 +43,32 @@ public class WhileHandler extends ArtefactHandler<While, WhileReportNode> {
         evaluateExpressionAndDelegate(node, testArtefact, true);
     }
 
+    /**
+     * Evaluates the condition of the While artefact and delegates the execution or the skeleton creation of each
+     * iteration to a {@link Sequence} work artefact wrapping the children of the While artefact.
+     * <p>
+     * During the execution phase (execution = true), the loop is repeated until one of the exit criteria of the
+     * artefact is reached: the condition or the post condition evaluates to false, the timeout is exceeded, the
+     * configured maximum number of iterations is reached, or the execution is interrupted.
+     * <p>
+     * During the skeleton creation phase (execution = false), the number of iterations is capped to 1. The number of
+     * iterations of a While artefact isn't known before the execution, thus repeating the loop in this phase would
+     * end up in an infinite loop. One iteration is sufficient for the token forecasting: the iterations of a While
+     * artefact are executed sequentially and therefore all require the same resources (agent tokens).
+     * The condition is evaluated in this phase too. If it evaluates to false or cannot be evaluated at all (which is
+     * the case when it references variables that are only defined at execution time), no skeleton is created for the
+     * children of this artefact and the resources they require are therefore not forecasted.
+     *
+     * @param node         the report node of the While artefact
+     * @param testArtefact the While artefact
+     * @param execution    true to execute the iterations, false to only create the report skeleton of one iteration
+     */
     private void evaluateExpressionAndDelegate(WhileReportNode node, While testArtefact, boolean execution) {
         long timeout = testArtefact.getTimeout().getOrDefault(Long.class, 0l);
         long maxTime = System.currentTimeMillis() + timeout;
 
         Integer maxIterationsValue = testArtefact.getMaxIterations().get();
-        int maxIterations = maxIterationsValue == null ? 0 : maxIterationsValue;
+        int maxIterations = execution ? maxIterationsValue == null ? 0 : maxIterationsValue : 1;
         int currIterationsCount = 0;
 
         int failedLoops = 0;
