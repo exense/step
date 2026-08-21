@@ -1,7 +1,8 @@
 package step.automation.packages.mappers.interfaces;
 
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.yaml.PatchableYamlModel;
+
+import java.util.Collection;
 
 /*******************************************************************************
  * Copyright (C) 2026, exense GmbH
@@ -21,10 +22,13 @@ import step.core.yaml.PatchableYamlModel;
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
+public interface ReferenceHandlingObjectMapper {
 
-public interface YamlToBusinessObjectMapper<YO extends PatchableYamlModel, BO extends AbstractOrganizableObject> {
+    void setReferences();
 
-    BO toBusinessObject(YO yamlModel);
+    void updateReferences(AbstractOrganizableObject object);
 
-    public String getCollectionName();
+    Collection<AbstractOrganizableObject> getReferrers(AbstractOrganizableObject object);
+
+    void removeReferences(AbstractOrganizableObject object);
 }

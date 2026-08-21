@@ -11,6 +11,8 @@ import step.ide.api.LocalFileSystemServices;
 import step.ide.api.LocalIDEServices;
 import step.resources.ResourceManagerImpl;
 
+import java.io.File;
+
 @Plugin
 public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
     private static final Logger logger = LoggerFactory.getLogger(LocalIDEControllerPlugin.class);
@@ -44,5 +46,10 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
         return new IDEKeywordPropertiesPlugin(LocalIDEState.get().getConfiguration());
+    }
+
+    @Override
+    public void initializeData(GlobalContext context) throws Exception {
+        LocalIDEState.get().useExistingAutomationPackageDirectory(new File("/Users/cyril/exense/step-backend/step/step-ap-ide/work").toPath());
     }
 }

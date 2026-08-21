@@ -23,6 +23,7 @@ import step.automation.packages.ResourcePathMatchingResolver;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
 import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
+import step.automation.packages.mappers.interfaces.ReferenceHandlingObjectMapper;
 import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
 import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapping;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
@@ -83,7 +84,7 @@ public class AutomationPackageYamlFragmentManager {
     protected Properties properties = new Properties();
     public final AutomationPackageFragmentYaml descriptorYaml;
 
-    private final Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> businessObjectToYamlMappers;
+    private final Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> mappers = new HashMap<>();
 
     public AutomationPackageYamlFragmentManager(ResourcePathMatchingResolver resourcePathMatchingResolver, AutomationPackageDescriptorYaml descriptorYaml, Set<AutomationPackageFragmentYaml> fragments, AutomationPackageDescriptorReader descriptorReader, StagingAutomationPackageContext stagingContext) {
         this.resourcePathMatchingResolver = resourcePathMatchingResolver;
@@ -91,62 +92,71 @@ public class AutomationPackageYamlFragmentManager {
 
         apRoot = descriptorYaml.getFragmentPath().getParent();
 
-        Map<Class<?>, Object> injectables = new HashMap<>();
+        Map<Class<?>, Object> singletons = new HashMap<>();
 
-        injectables.put(YamlPlanReader.class, descriptorReader.getPlanReader());
-        injectables.put(StagingAutomationPackageContext.class, stagingContext);
+        singletons.put(YamlPlanReader.class, descriptorReader.getPlanReader());
+        singletons.put(StagingAutomationPackageContext.class, stagingContext);
 
-        businessObjectToYamlMappers = createBusinessObjectToYamlMappers(injectables);
-        Collection<YamlToBusinessObjectMapper<?, ?>> yamlToBusinessObjectMappers = createYamlToBusinessObjectMappers(injectables);
+        createBusinessObjectToYamlMappers(singletons);
+        Collection<YamlToBusinessObjectMapper<?, ?>> yamlObjectMappers = createYamlToBusinessObjectMappers(singletons);
 
-        initializeMaps(descriptorYaml, yamlToBusinessObjectMappers);
+        initializeMaps(descriptorYaml, yamlObjectMappers);
 
         fragments.stream()
             .filter(f -> f != descriptorYaml)
-            .forEach(f -> initializeMaps(f, yamlToBusinessObjectMappers));
+            .forEach(f -> initializeMaps(f, yamlObjectMappers));
+
+        yamlObjectMappers.forEach(m -> {
+            if (m instanceof ReferenceHandlingObjectMapper referencingMapper) {
+                referencingMapper.setReferences();
+            }
+        });
     }
 
-    private Map<Class<?>, BusinessObjectToYamlMapper<?, ?>> createBusinessObjectToYamlMappers(Map<Class<?>, Object> injectables) {
-        var mappers = new HashMap<Class<?>, BusinessObjectToYamlMapper<?, ?>>();
+    private void createBusinessObjectToYamlMappers(Map<Class<?>, Object> singletons) {
 
         for (Class<?> annotatedClass : CachedAnnotationScanner.getClassesWithAnnotation(BusinessObjectToYamlMapping.class)) {
             BusinessObjectToYamlMapping annotation = annotatedClass.getAnnotation(BusinessObjectToYamlMapping.class);
-            mappers.put(annotation.sourceClass(), instantiateWithInjectables(BusinessObjectToYamlMapping.class, annotatedClass, injectables));
+            mappers.put(annotation.sourceClass(), (BusinessObjectToYamlMapper<?, ?>) constructSingleton(annotatedClass, singletons));
         }
-
-        return mappers;
     }
 
-    private Collection<YamlToBusinessObjectMapper<?, ?>> createYamlToBusinessObjectMappers(Map<Class<?>, Object> injectables) {
+
+    private Collection<YamlToBusinessObjectMapper<?, ?>> createYamlToBusinessObjectMappers(Map<Class<?>, Object> singletons) {
         List<YamlToBusinessObjectMapper<?, ?>> list = new ArrayList<>();
-
         for (Class<?> annotatedClass : CachedAnnotationScanner.getClassesWithAnnotation(YamlToBusinessObjectMapping.class)) {
-            list.add(instantiateWithInjectables(YamlToBusinessObjectMapping.class, annotatedClass, injectables));
+            list.add((YamlToBusinessObjectMapper<?, ?>) constructSingleton(annotatedClass, singletons));
         }
-
         return list;
+    }
+
+
+    private <T> T constructSingleton(Class<T> annotatedClass, Map<Class<?>, Object> singletons) {
+        return (T) constructSingleton(annotatedClass, singletons, annotatedClass);
     }
 
     // Instantiates a class found by scanning annotations; The class must have exactly one constructor
     // whose arguments can be found in the injectables map.
     @SuppressWarnings("unchecked")
-    private <T> T instantiateWithInjectables(Class<?> annotationType, Class<?> annotatedClass, Map<Class<?>, Object> injectables) {
-        var constructors = annotatedClass.getConstructors();
-        if (constructors.length != 1) {
-            throw new IllegalStateException("Expected exactly one constructor for @" + annotationType.getSimpleName() + "-annotated class "
-                + annotatedClass.getName() + ", but found " + constructors.length);
-        }
-
-        var constructor = constructors[0];
-        try {
-            var parameters = Arrays.stream(constructor.getParameterTypes())
-                .map(injectables::get)
-                .toArray();
-
-            return (T) constructor.newInstance(parameters);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private <T, RT> T constructSingleton(Class<T> singletonClass, Map<Class<?>, Object> singletons, Class<RT> rootClass) {
+        return (T) singletons.computeIfAbsent(singletonClass, clazz -> {
+            var constructors = singletonClass.getConstructors();
+            if (constructors.length != 1) {
+                throw new IllegalStateException("Expected exactly one constructor for singleton class "
+                    + singletonClass.getName() + ", but found " + constructors.length);
+            }
+            var constructor = constructors[0];
+            try {
+                return constructor.newInstance(Arrays.stream(constructor.getParameterTypes()).map(dependentSignletonClass -> {
+                    if (dependentSignletonClass == rootClass) {
+                        throw new IllegalArgumentException("Circular singleton dependency while trying to instantiate " + rootClass.getName());
+                    }
+                    return constructSingleton(dependentSignletonClass, singletons, rootClass);
+                }).toArray());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     private void initializeMaps(AutomationPackageFragmentYaml fragment, Collection<YamlToBusinessObjectMapper<?, ?>> yamlObjectMappers) {
@@ -167,9 +177,27 @@ public class AutomationPackageYamlFragmentManager {
     }
 
     @SuppressWarnings("unchecked")
-    public synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO save(BO object) {
+    public <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO save(BO object) {
+        BusinessObjectToYamlMapper<BO, YO> mapper = (BusinessObjectToYamlMapper<BO, YO>) mappers.get(object.getClass());
 
-        BusinessObjectToYamlMapper<BO, YO> mapper = (BusinessObjectToYamlMapper<BO, YO>) businessObjectToYamlMappers.get(object.getClass());
+        if (mapper instanceof ReferenceHandlingObjectMapper referenceHandlingObjectMapper) {
+            referenceHandlingObjectMapper.getReferrers(object).forEach(this::saveSingle);
+            BO newObject = saveSingle(mapper, object);
+            referenceHandlingObjectMapper.updateReferences(newObject);
+            return newObject;
+        } else {
+            return saveSingle(object);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO saveSingle(BO object) {
+        BusinessObjectToYamlMapper<BO, YO> mapper = (BusinessObjectToYamlMapper<BO, YO>) mappers.get(object.getClass());
+        return saveSingle(mapper, object);
+    }
+
+    private synchronized <BO extends AbstractOrganizableObject, YO extends PatchableYamlModel> BO saveSingle(BusinessObjectToYamlMapper<BO, YO> mapper, BO object) {
+
         if (mapper == null) {
             throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());
         }
@@ -193,9 +221,19 @@ public class AutomationPackageYamlFragmentManager {
 
     @SuppressWarnings("unchecked")
     public synchronized <BO extends AbstractOrganizableObject> void remove(BO object) {
-        BusinessObjectToYamlMapper<BO, ?> mapper = (BusinessObjectToYamlMapper<BO, ?>) businessObjectToYamlMappers.get(object.getClass());
+        BusinessObjectToYamlMapper<BO, ?> mapper = (BusinessObjectToYamlMapper<BO, ?>) mappers.get(object.getClass());
         if (mapper == null) {
             throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());
+        }
+
+        if (mapper instanceof ReferenceHandlingObjectMapper referencingMapper) {
+            Collection<AbstractOrganizableObject> referrers = referencingMapper.getReferrers(object);
+            if (!referrers.isEmpty()) {
+                String referrersList = referrers.stream().map(r -> r.getAttribute(AbstractOrganizableObject.NAME)).collect(Collectors.joining(", "));
+                throw new AutomationPackageUpdateException(object.getAttribute(AbstractOrganizableObject.NAME) + " is referenced by " + referrersList + ", please remove the references before deleting.");
+            } else {
+                referencingMapper.removeReferences(object);
+            }
         }
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
         removeFragmentEntity(fragment, fragment.getListForYamlObject(mapper.getCollectionName()), object);
