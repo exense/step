@@ -309,6 +309,39 @@ public class ReportLayoutPluginTest {
 
     // --- preset layout content ---
 
+    // --- report type on presets ---
+
+    @Test
+    public void initializeData_presetWithoutReportType_defaultsToSingleExecution() throws Exception {
+        File folder = tempFolder.newFolder("presets");
+        // Legacy preset file (no reportType field), as already deployed in the field
+        writePresetFile(folder, "legacy.json", "Legacy Preset");
+        setPresetsFolder(folder);
+
+        plugin.initializeData(context);
+
+        List<ReportLayout> presets = getAllPresets();
+        assertEquals(1, presets.size());
+        assertEquals(ReportLayout.ReportLayoutType.SingleExecution, presets.get(0).reportType);
+    }
+
+    @Test
+    public void initializeData_presetWithExplicitCrossExecutionReportType_isPreserved() throws Exception {
+        File folder = tempFolder.newFolder("presets");
+        String id = new ObjectId().toHexString();
+        try (FileWriter writer = new FileWriter(new File(folder, "cross.json"))) {
+            writer.write("{\"id\":\"" + id + "\",\"name\":\"Cross Preset\",\"reportType\":\"CrossExecution\",\"layout\":{\"type\":\"test\"}}");
+        }
+        setPresetsFolder(folder);
+
+        plugin.initializeData(context);
+
+        List<ReportLayout> presets = getAllPresets();
+        assertEquals(1, presets.size());
+        assertEquals("Cross Preset", presets.get(0).getAttribute(AbstractOrganizableObject.NAME));
+        assertEquals(ReportLayout.ReportLayoutType.CrossExecution, presets.get(0).reportType);
+    }
+
     @Test
     public void initializeData_presetLayoutHasCorrectContent() throws Exception {
         File folder = tempFolder.newFolder("presets");

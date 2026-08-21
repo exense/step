@@ -38,7 +38,6 @@ public class IDEKeywordPropertiesPlugin extends AbstractExecutionEnginePlugin {
     private static final Logger logger = LoggerFactory.getLogger(IDEKeywordPropertiesPlugin.class);
 
     public static final String KEYWORD_PROPERTY_PREFIX = "keyword.property.";
-    public static final String ENV_ANTHROPIC_API_KEY = "ANTHROPIC_API_KEY";
 
     private static final Pattern SECRET_KEY_PATTERN = Pattern.compile(".*(api[_-]?key|token|secret|password).*", Pattern.CASE_INSENSITIVE);
 
@@ -61,15 +60,19 @@ public class IDEKeywordPropertiesPlugin extends AbstractExecutionEnginePlugin {
         ReportNode rootNode = context.getReport();
         VariablesManager variablesManager = context.getVariablesManager();
 
-        // TODO instead of doing this in a generic way, we should add the properties required by the AI agent to the IDEAiConfiguration, retrieve the IDEAiConfiguration object here and inject them here
         properties.stringPropertyNames().stream()
             .filter(key -> key.startsWith(KEYWORD_PROPERTY_PREFIX))
             .forEach(key -> {
+                String name = key.substring(KEYWORD_PROPERTY_PREFIX.length());
+                // an unset property falls back to the environment variable of the same name, so that secrets can be
+                // provided without ever being written to a file
                 String value = properties.getProperty(key);
+                if (value == null || value.isBlank()) {
+                    value = System.getenv(name);
+                }
                 if (value == null || value.isBlank()) {
                     return;
                 }
-                String name = key.substring(KEYWORD_PROPERTY_PREFIX.length());
                 boolean secret = SECRET_KEY_PATTERN.matcher(name).matches();
                 logger.debug("Injecting IDE keyword property {}{}", name, secret ? " (protected)" : "");
                 Object variableValue = secret ? new ProtectedVariable(name, value) : value;

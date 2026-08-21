@@ -8,7 +8,6 @@ import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.engine.plugins.ExecutionEnginePlugin;
 import step.ide.api.LocalFileSystemServices;
-import step.ide.api.LocalIDEAiServices;
 import step.ide.api.LocalIDEServices;
 import step.resources.ResourceManagerImpl;
 
@@ -29,7 +28,6 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
         var services = context.getServiceRegistrationCallback();
         services.registerService(LocalIDEServices.class);
         services.registerService(LocalFileSystemServices.class);
-        services.registerService(LocalIDEAiServices.class);
     }
 
     @Override
