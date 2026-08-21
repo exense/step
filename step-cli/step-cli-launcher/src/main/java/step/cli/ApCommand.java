@@ -140,16 +140,16 @@ public class ApCommand implements Callable<Integer> {
         protected int deploymentTimeout;
 
         @CommandLine.Option(names = {PLANS_ATTRIBUTES}, defaultValue = NULL_VALUE, showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
-            description = "The attributes to be applied to all the plans of this package, corresponding to custom screen inputs defined for the plans.",
+            description = "The attributes to be applied to all the plans of this package, corresponding to custom screen inputs defined for the plans. Example: --plansAttributes=\"app=myApp|team=core\".",
             split = "\\|", splitSynopsisLabel = "|")
         protected Map<String, String> plansAttributes;
 
         @CommandLine.Option(names = {KEYWORDS_ATTRIBUTES}, defaultValue = NULL_VALUE, showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
-            description = "The attributes to be applied to all the keywords of this package, corresponding to custom screen inputs defined for the keywords.",
+            description = "The attributes to be applied to all the keywords of this package, corresponding to custom screen inputs defined for the keywords. Example: --keywordsAttributes=\"app=myApp|team=core\".",
             split = "\\|", splitSynopsisLabel = "|")
         protected Map<String, String> keywordsAttributes;
 
-        @CommandLine.Option(names = {TOKEN_SELECTION_CRITERIA}, description = "The token selection criteria to be applied to all the keywords of this package, i.e. the attributes an agent token must have for the keywords to be routed to it. Example: --tokenSelectionCriteria=os=linux|team=core. These criteria are merged with the ones set at the keyword level giving higher priority to the package ones",
+        @CommandLine.Option(names = {TOKEN_SELECTION_CRITERIA}, description = "The token selection criteria to be applied to all the keywords of this package, i.e. the attributes an agent token must have for the keywords to be routed to it. Example: --tokenSelectionCriteria=\"os=linux|team=core\".",
             split = "\\|", splitSynopsisLabel = "|")
         protected Map<String, String> tokenSelectionCriteria;
 
