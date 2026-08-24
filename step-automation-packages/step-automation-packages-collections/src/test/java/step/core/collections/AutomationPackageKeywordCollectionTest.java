@@ -166,11 +166,11 @@ public class AutomationPackageKeywordCollectionTest extends AutomationPackageCol
         setPropertiesWriteToFragment(YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME, "keywords.yml");
         functionCollection.save(keyword);
 
-        assertEquals("apResource:local:keywords/New_Groovy_keyword.groovy", keyword.getScriptFile().get());
-        assertTrue(new File(destinationDirectory, "keywords/New_Groovy_keyword.groovy").exists());
+        assertEquals("apResource:local:groovy/New_Groovy_keyword.groovy", keyword.getScriptFile().get());
+        assertTrue(new File(destinationDirectory, "groovy/New_Groovy_keyword.groovy").exists());
 
         String writtenKeywords = Files.readString(destinationDirectory.toPath().resolve("keywords.yml"));
-        assertTrue(writtenKeywords, writtenKeywords.contains("scriptFile: \"keywords/New_Groovy_keyword.groovy\""));
+        assertTrue(writtenKeywords, writtenKeywords.contains("scriptFile: \"groovy/New_Groovy_keyword.groovy\""));
         assertFalse(writtenKeywords, writtenKeywords.contains("apResource:"));
         assertFalse(writtenKeywords, writtenKeywords.contains("resource:"));
     }

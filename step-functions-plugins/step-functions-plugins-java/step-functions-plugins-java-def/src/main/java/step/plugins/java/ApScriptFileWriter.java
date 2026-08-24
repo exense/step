@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.plugins.java;
 
-import ch.exense.commons.app.Configuration;
 import step.attachments.FileResolver;
 import step.automation.packages.LocalApResourceWriter;
 import step.core.accessors.AbstractOrganizableObject;
@@ -47,25 +46,18 @@ import java.util.Objects;
  */
 public class ApScriptFileWriter {
 
-    /**
-     * Where the script of a keyword created from the editor is placed, relative to the package root.
-     * Overridable with the {@value #SCRIPT_DIRECTORY_PROPERTY} property.
-     */
-    public static final String DEFAULT_SCRIPT_DIRECTORY = "keywords";
-
-    public static final String SCRIPT_DIRECTORY_PROPERTY = "keywords.script.ap.dir";
-
     private final Path automationPackageRoot;
     private final String scriptDirectory;
 
     /**
      * @param automationPackageRoot the root directory of the automation package open in the editor, as
      *                              returned by {@code ApResourceProvider.getEditableRoot()}
+     * @param scriptDirectory       where a generated script is placed, relative to the package root -
+     *                              {@code AbstractScriptFunctionType.getApScriptDirectory}
      */
-    public ApScriptFileWriter(Path automationPackageRoot, Configuration configuration) {
+    public ApScriptFileWriter(Path automationPackageRoot, String scriptDirectory) {
         this.automationPackageRoot = Objects.requireNonNull(automationPackageRoot, "automationPackageRoot must not be null");
-        Objects.requireNonNull(configuration, "configuration must not be null");
-        this.scriptDirectory = configuration.getProperty(SCRIPT_DIRECTORY_PROPERTY, DEFAULT_SCRIPT_DIRECTORY);
+        this.scriptDirectory = Objects.requireNonNull(scriptDirectory, "scriptDirectory must not be null");
     }
 
     /**

@@ -33,6 +33,7 @@ import ch.exense.commons.app.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
+import step.automation.packages.ApFileNames;
 import step.core.AbstractContext;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
@@ -175,7 +176,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
         if (automationPackageRoot != null) {
             // automationPackageRoot is only set in the editor, and the script goes there rather than in
             // scriptDir, which is a directory of a controller installation
-            return apScriptFileWriter(automationPackageRoot).create(function, scriptFileExtension(function), templateStream);
+            return apScriptFileWriter(automationPackageRoot, function).create(function, scriptFileExtension(function), templateStream);
         }
 
         String scriptFilename = function.getScriptFile().get();
@@ -234,8 +235,23 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
     /**
      * @return the writer creating the script files of the automation package open in the editor
      */
-    protected ApScriptFileWriter apScriptFileWriter(Path automationPackageRoot) {
-        return new ApScriptFileWriter(automationPackageRoot, configuration);
+    protected ApScriptFileWriter apScriptFileWriter(Path automationPackageRoot, GeneralScriptFunction function) {
+        return new ApScriptFileWriter(automationPackageRoot, getApScriptDirectory(function));
+    }
+
+    /**
+     * Where the editor places the script it generates for a keyword, relative to the package root: one
+     * directory per language - {@code groovy}, {@code javascript} - so that a package's sources are sorted
+     * by what they are, and so that nothing lands in {@code keywords}, which is where the YAML fragment of
+     * a keyword goes (see {@code AutomationPackageYamlFragmentManager}).
+     * <p>
+     * A function type whose scripts are more than their language overrides this - EE's Oryon keywords go
+     * to {@code oryon} rather than being mixed into the plain Groovy ones.
+     *
+     * @see ApFileNames#sanitize(String) applied because the language is a value the user can set
+     */
+    protected String getApScriptDirectory(GeneralScriptFunction function) {
+        return ApFileNames.sanitize(getScriptLanguage(function));
     }
 
     protected String scriptFileExtension(GeneralScriptFunction function) {
@@ -245,7 +261,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
     protected File setupScriptFileAsResource(GeneralScriptFunction function, InputStream templateStream) throws SetupFunctionException {
         Path automationPackageRoot = getEditableAutomationPackageRoot();
         if (automationPackageRoot != null) {
-            return apScriptFileWriter(automationPackageRoot).create(function, scriptFileExtension(function), templateStream);
+            return apScriptFileWriter(automationPackageRoot, function).create(function, scriptFileExtension(function), templateStream);
         }
 
         ResourceManager resourceManager = fileResolver.getResourceManager();
@@ -273,7 +289,7 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
         if (function.getScriptLanguage().get().equals("groovy") || function.getScriptLanguage().get().equals("javascript")) {
             Path automationPackageRoot = getEditableAutomationPackageRoot();
             if (automationPackageRoot != null) {
-                copy.setScriptFile(new DynamicValue<>(apScriptFileWriter(automationPackageRoot)
+                copy.setScriptFile(new DynamicValue<>(apScriptFileWriter(automationPackageRoot, copy)
                     .copy(copy, scriptFileExtension(copy), scriptFile.get(), fileResolver)));
                 return copy;
             }

@@ -117,22 +117,38 @@ public class GeneralScriptFunctionTypeTest {
 
         editorFunctionType().setupFunction(function);
 
-        assertEquals("apResource:local:keywords/My_Keyword.groovy", function.getScriptFile().get());
+        assertEquals("apResource:local:groovy/My_Keyword.groovy", function.getScriptFile().get());
         // the template ships with this plugin, so the editor doesn't create an empty script even though
         // it has no controller directory to take one from
-        assertTrue(Files.readString(apRoot.resolve("keywords/My_Keyword.groovy")).contains("context.setPayloadJson"));
+        assertTrue(Files.readString(apRoot.resolve("groovy/My_Keyword.groovy")).contains("context.setPayloadJson"));
+    }
+
+    /**
+     * One directory per language, so that a package's sources are sorted by what they are - and so that
+     * nothing generated lands in {@code keywords}, which is where the YAML fragment of a keyword goes.
+     */
+    @Test
+    public void placesTheScriptInTheDirectoryOfItsLanguage() throws Exception {
+        GeneralScriptFunction function = groovyKeyword("Kw", "");
+        function.setScriptLanguage(new DynamicValue<>("javascript"));
+
+        editorFunctionType().setupFunction(function);
+
+        assertEquals("apResource:local:javascript/Kw.js", function.getScriptFile().get());
+        assertTrue(Files.exists(apRoot.resolve("javascript/Kw.js")));
+        assertFalse(Files.exists(apRoot.resolve("keywords")));
     }
 
     @Test
     public void doesNotOverwriteAnExistingScript() throws Exception {
-        Files.createDirectories(apRoot.resolve("keywords"));
-        Files.writeString(apRoot.resolve("keywords/Kw.groovy"), "the user's script");
+        Files.createDirectories(apRoot.resolve("groovy"));
+        Files.writeString(apRoot.resolve("groovy/Kw.groovy"), "the user's script");
 
         GeneralScriptFunction function = groovyKeyword("Kw", "");
         editorFunctionType().setupFunction(function);
 
-        assertEquals("apResource:local:keywords/Kw_2.groovy", function.getScriptFile().get());
-        assertEquals("the user's script", Files.readString(apRoot.resolve("keywords/Kw.groovy")));
+        assertEquals("apResource:local:groovy/Kw_2.groovy", function.getScriptFile().get());
+        assertEquals("the user's script", Files.readString(apRoot.resolve("groovy/Kw.groovy")));
     }
 
     @Test
@@ -164,7 +180,7 @@ public class GeneralScriptFunctionTypeTest {
         editorFunctionType().setupFunction(function);
 
         assertEquals("resource:507f1f77bcf86cd799439011", function.getScriptFile().get());
-        assertFalse(Files.exists(apRoot.resolve("keywords")));
+        assertFalse(Files.exists(apRoot.resolve("groovy")));
     }
 
     @Test
@@ -186,7 +202,7 @@ public class GeneralScriptFunctionTypeTest {
         GeneralScriptFunction copy = editorFunctionType().copyFunction(groovyKeyword("Kw", ""));
 
         assertEquals("", copy.getScriptFile().get());
-        assertFalse(Files.exists(apRoot.resolve("keywords")));
+        assertFalse(Files.exists(apRoot.resolve("groovy")));
     }
 
     @Test
@@ -198,6 +214,6 @@ public class GeneralScriptFunctionTypeTest {
 
         // unchanged server behaviour: the script becomes a Step resource
         assertTrue(function.getScriptFile().get(), FileResolver.isResource(function.getScriptFile().get()));
-        assertFalse(Files.exists(apRoot.resolve("keywords")));
+        assertFalse(Files.exists(apRoot.resolve("groovy")));
     }
 }
