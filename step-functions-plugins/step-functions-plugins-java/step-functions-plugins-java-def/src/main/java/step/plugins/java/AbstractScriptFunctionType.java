@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +52,12 @@ import static step.resources.ResourceManager.RESOURCE_TYPE_FUNCTIONS;
 public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction> extends AbstractFunctionType<T> {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractScriptFunctionType.class);
+
+    /**
+     * The templates are part of the controller distribution, which the Step IDE is not. A copy travels
+     * with this plugin so that a keyword created from the editor gets a script with something in it.
+     */
+    private static final String BUNDLED_TEMPLATES_PATH = "templates/";
 
     protected Configuration configuration;
 
@@ -132,16 +139,24 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
     }
 
     protected InputStream getTemplateFileInputStream(String templateFilename) throws SetupFunctionException {
-        File templateScript = new File(configuration.getProperty("controller.dir") + "/data/templates/" + templateFilename);
-        try {
-            boolean templateExists = templateScript.exists();
-            if (!templateExists) {
-                log.warn("Default template file not found: " + templateScript.getAbsolutePath());
-            }
-            return templateExists ? new FileInputStream(templateScript) : null;
-        } catch (FileNotFoundException e) {
-            throw new SetupFunctionException("Unable to apply template. The file '" + templateScript.getAbsolutePath() + "' doesn't exist");
+        if (templateFilename == null) {
+            return null;
         }
+        File templateScript = new File(configuration.getProperty("controller.dir") + "/data/templates/" + templateFilename);
+        if (templateScript.exists()) {
+            try {
+                return new FileInputStream(templateScript);
+            } catch (FileNotFoundException e) {
+                throw new SetupFunctionException("Unable to apply template. The file '" + templateScript.getAbsolutePath() + "' doesn't exist");
+            }
+        }
+        // The distribution's template takes precedence - it is the one an administrator can edit - and the
+        // bundled copy takes over where there is no controller directory to hold one, i.e. in the IDE.
+        InputStream bundledTemplate = AbstractScriptFunctionType.class.getResourceAsStream(BUNDLED_TEMPLATES_PATH + templateFilename);
+        if (bundledTemplate == null) {
+            log.warn("Default template file not found: " + templateScript.getAbsolutePath());
+        }
+        return bundledTemplate;
     }
 
     protected File setupScriptFile(GeneralScriptFunction function, String templateFilename) throws SetupFunctionException {
@@ -156,10 +171,18 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
                                    String scriptDir) throws SetupFunctionException {
         File scriptFile;
 
+        Path automationPackageRoot = getEditableAutomationPackageRoot();
+        if (automationPackageRoot != null) {
+            // automationPackageRoot is only set in the editor, and the script goes there rather than in
+            // scriptDir, which is a directory of a controller installation
+            return apScriptFileWriter(automationPackageRoot).create(function, scriptFileExtension(function), templateStream);
+        }
+
         String scriptFilename = function.getScriptFile().get();
 
-        // A resource:/apResource: script is resolved on the fly, not materialised as a local script
-        // file here — otherwise a junk file literally named "apResource:<apId>:..." would be created.
+        // The keyword was created against a script that already exists - a Step resource or a file of an
+        // automation package - so there is nothing to set up. Both are resolved on the fly at execution
+        // time; taking the reference for a path would create a file literally named "resource:<id>".
         if (FileResolver.isResource(scriptFilename) || FileResolver.isApResource(scriptFilename)) {
             return null;
         }
@@ -198,7 +221,33 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
         return setupScriptFileAsResource(function, getTemplateFileInputStream(templateFilename));
     }
 
+    /**
+     * @return the root directory of the automation package open in the editor, or {@code null} on a Step
+     * server, where automation packages are immutable archives. The {@link FileResolver} is the only
+     * dependency a function type has that knows about them, which is why the question is asked of it.
+     * @throws IllegalStateException if the editor has no automation package open
+     */
+    protected Path getEditableAutomationPackageRoot() {
+        return fileResolver == null ? null : fileResolver.getEditableApRoot();
+    }
+
+    /**
+     * @return the writer creating the script files of the automation package open in the editor
+     */
+    protected ApScriptFileWriter apScriptFileWriter(Path automationPackageRoot) {
+        return new ApScriptFileWriter(automationPackageRoot, configuration);
+    }
+
+    protected String scriptFileExtension(GeneralScriptFunction function) {
+        return fileExtensionMap.get(getScriptLanguage(function));
+    }
+
     protected File setupScriptFileAsResource(GeneralScriptFunction function, InputStream templateStream) throws SetupFunctionException {
+        Path automationPackageRoot = getEditableAutomationPackageRoot();
+        if (automationPackageRoot != null) {
+            return apScriptFileWriter(automationPackageRoot).create(function, scriptFileExtension(function), templateStream);
+        }
+
         ResourceManager resourceManager = fileResolver.getResourceManager();
         String newScriptFilename = getScriptFilename(function);
         InputStream resourceIS = Objects.requireNonNullElse(templateStream, InputStream.nullInputStream());
@@ -222,6 +271,12 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
         DynamicValue<String> scriptFile = function.getScriptFile();//copy of the source script file
         File newFile = null;
         if (function.getScriptLanguage().get().equals("groovy") || function.getScriptLanguage().get().equals("javascript")) {
+            Path automationPackageRoot = getEditableAutomationPackageRoot();
+            if (automationPackageRoot != null) {
+                copy.setScriptFile(new DynamicValue<>(apScriptFileWriter(automationPackageRoot)
+                    .copy(copy, scriptFileExtension(copy), scriptFile.get(), fileResolver)));
+                return copy;
+            }
             try {
                 copy.setScriptFile(new DynamicValue<>(""));//reset script to setup a new one
                 String scriptFileValue = scriptFile.get();

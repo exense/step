@@ -18,21 +18,29 @@
  ******************************************************************************/
 package step.core.collections;
 
+import ch.exense.commons.app.Configuration;
 import org.junit.Before;
 import org.junit.Test;
 import step.artefacts.Echo;
+import step.attachments.FileResolver;
+import step.automation.packages.ApResourceProvider;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.Function;
+import step.functions.type.FunctionTypeConfiguration;
 import step.plugins.functions.types.CompositeFunction;
 import step.plugins.java.GeneralScriptFunction;
+import step.plugins.java.GeneralScriptFunctionType;
 import step.plugins.jmeter.JMeterFunction;
 import step.plugins.node.NodeFunction;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -139,6 +147,58 @@ public class AutomationPackageKeywordCollectionTest extends AutomationPackageCol
         assertTrue(writtenKeywords, writtenKeywords.contains("jmeterTestplan: \"jmeterProject1/jmeterProject1.xml\""));
         assertTrue(writtenKeywords, writtenKeywords.contains("jsfile: \"nodeProject/nodeSample.ts\""));
         assertFalse(writtenKeywords, writtenKeywords.contains("apResource:"));
+    }
+
+    /**
+     * A keyword created from the editor gets its script inside the automation package, and the descriptor
+     * the plain relative path - the whole chain, from the keyword type creating the file to the YAML it
+     * ends up in. On a Step server the same call creates a Step resource instead, which here would leave
+     * the package without its script and the descriptor with a resource id.
+     */
+    @Test
+    public void testKeywordCreatedFromTheEditorGetsItsScriptInThePackage() throws Exception {
+        GeneralScriptFunction keyword = new GeneralScriptFunction();
+        keyword.addAttribute(AbstractOrganizableObject.NAME, "New Groovy keyword");
+        keyword.setScriptLanguage(new DynamicValue<>("groovy"));
+        keyword.setScriptFile(new DynamicValue<>(""));
+
+        new EditorGeneralScriptFunctionType(destinationDirectory.toPath()).setupFunction(keyword);
+        setPropertiesWriteToFragment(YamlAutomationPackageKeyword.KEYWORDS_ENTITY_NAME, "keywords.yml");
+        functionCollection.save(keyword);
+
+        assertEquals("apResource:local:keywords/New_Groovy_keyword.groovy", keyword.getScriptFile().get());
+        assertTrue(new File(destinationDirectory, "keywords/New_Groovy_keyword.groovy").exists());
+
+        String writtenKeywords = Files.readString(destinationDirectory.toPath().resolve("keywords.yml"));
+        assertTrue(writtenKeywords, writtenKeywords.contains("scriptFile: \"keywords/New_Groovy_keyword.groovy\""));
+        assertFalse(writtenKeywords, writtenKeywords.contains("apResource:"));
+        assertFalse(writtenKeywords, writtenKeywords.contains("resource:"));
+    }
+
+    /**
+     * The keyword type as the editor wires it: an {@code ApResourceProvider} reporting the open package as
+     * editable is what tells it to create the script there. The dependencies are injected through
+     * protected setters, hence the subclass.
+     */
+    private static class EditorGeneralScriptFunctionType extends GeneralScriptFunctionType {
+        EditorGeneralScriptFunctionType(Path automationPackageRoot) {
+            super(new Configuration());
+            FileResolver fileResolver = new FileResolver(null);
+            fileResolver.setApResourceProvider(new ApResourceProvider() {
+                @Override
+                public File resolve(String apId, String relativePath) {
+                    return automationPackageRoot.resolve(relativePath).toFile();
+                }
+
+                @Override
+                public Path getEditableRoot() {
+                    return automationPackageRoot;
+                }
+            });
+            setFunctionTypeConfiguration(new FunctionTypeConfiguration());
+            setFileResolver(fileResolver);
+            setObjectHookRegistry(new ObjectHookRegistry());
+        }
     }
 
     private Function findKeyword(String name) {

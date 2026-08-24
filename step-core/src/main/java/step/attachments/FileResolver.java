@@ -74,6 +74,15 @@ public class FileResolver {
         this.apResourceProvider = apResourceProvider;
     }
 
+    /**
+     * @return the root directory of the automation package that may be written to, or {@code null}
+     * where automation packages are immutable, which is everywhere but the editor
+     * @see ApResourceProvider#getEditableRoot()
+     */
+    public Path getEditableApRoot() {
+        return apResourceProvider == null ? null : apResourceProvider.getEditableRoot();
+    }
+
     public File resolve(String path) {
         File file;
         if (path.startsWith(ATTACHMENT_PREFIX)) {

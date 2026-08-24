@@ -19,6 +19,7 @@
 package step.automation.packages;
 
 import java.io.File;
+import java.nio.file.Path;
 
 /**
  * Resolves a file embedded in an automation package archive, referenced through the
@@ -46,4 +47,23 @@ public interface ApResourceProvider {
      *                          and mask a genuine (e.g. isolated-mode) error.
      */
     File resolve(String apId, String relativePath);
+
+    /**
+     * Whether new files may be created in an automation package here, and where.
+     * <p>
+     * Only the editor can answer anything but {@code null}: everywhere else an automation package is an
+     * immutable archive. It is what lets a keyword type create the script of a new keyword inside the
+     * package being edited rather than as a Step {@code Resource} - see
+     * {@code AbstractScriptFunctionType.setupScriptFileAsResource}, which has no other way of knowing
+     * where it runs.
+     *
+     * @return the root directory of the automation package open in the editor, or {@code null} where
+     * automation packages are immutable (a Step server, an execution)
+     * @throws IllegalStateException if this <i>is</i> an editor but no automation package is open -
+     *                               creating a file into a package that is not there is an error, not
+     *                               a reason to fall back to the server behaviour
+     */
+    default Path getEditableRoot() {
+        return null;
+    }
 }

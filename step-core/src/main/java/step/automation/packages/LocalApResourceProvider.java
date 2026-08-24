@@ -76,6 +76,16 @@ public class LocalApResourceProvider implements ApResourceProvider {
     }
 
     /**
+     * The package open in the editor is an exploded directory the user owns, so it is the one place
+     * where a file <i>may</i> be created - which is what makes a keyword created from the editor land in
+     * the automation package rather than in a Step resource.
+     */
+    @Override
+    public Path getEditableRoot() {
+        return currentAutomationPackageDirectory();
+    }
+
+    /**
      * @throws IllegalStateException if no automation package is open — the reference is fine, there is
      *                               simply nothing to resolve it against
      */
