@@ -8,7 +8,6 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
-import step.engine.plugins.LocalFunctionPlugin;
 import step.functions.Function;
 import step.functions.manager.FunctionManagerImpl;
 import step.handlers.javahandler.Keyword;
@@ -24,12 +23,16 @@ import step.plugins.java.GeneralScriptFunction;
 
 import java.io.*;
 import java.lang.reflect.Method;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+
+import static step.plugins.java.GeneralScriptFunction.$_MARK_AS_KEYWORD_FROM_AUTOMATION_PACKAGE_LIBRARY;
 
 public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAutomationPackageArchive> {
 
@@ -58,9 +61,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
     @Override
     protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(JavaAutomationPackageArchive archive, AutomationPackageContent res) throws AutomationPackageReadingException {
         try (AnnotationScanner annotationScanner = archive.createAnnotationScanner()) {
-            // this code duplicates the StepJarParser, but here we don't set the scriptFile and librariesFile to GeneralScriptFunctions
-            // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
-            List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, null, null);
+            List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, archive);
             if (!scannedKeywords.isEmpty()) {
                 log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
             }
@@ -165,7 +166,20 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
         return result;
     }
 
-    private static List<ScriptAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, String scriptFile, String librariesFile) throws JsonSchemaPreparationException {
+    /**
+     * Extracts annotated Keywords from the provided annotation scanner and AP archive.
+     *
+     * <p>Note: script and library resources are assigned to the Keywords at a later stage,
+     * after the related Step resources have been created. Keywords declared in a library
+     * are marked with the custom field {@code $_MARK_AS_KEYWORD_FROM_AUTOMATION_PACKAGE_LIBRARY}
+     * and will use that library as their script JAR.
+     *
+     * @param annotationScanner the scanner backed by a classloader containing both the main AP JAR
+     *                          and the (optional) library JAR
+     * @param archive           the Automation Package (AP archive and its library) from which
+     *                          Keywords are being extracted
+     */
+    private static List<ScriptAutomationPackageKeyword> extractAnnotatedKeywords(AnnotationScanner annotationScanner, AutomationPackageArchive archive) throws JsonSchemaPreparationException {
         List<ScriptAutomationPackageKeyword> scannedKeywords = new ArrayList<>();
         Set<Method> methods = annotationScanner.getMethodsWithAnnotation(Keyword.class);
         if (!methods.isEmpty()) {
@@ -187,13 +201,22 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
                     function.setAttributes(new HashMap<>());
                     function.getAttributes().put(AbstractOrganizableObject.NAME, functionName);
 
-                    // to be filled by AutomationPackageKeywordsAttributesApplier
-                    if (scriptFile != null) {
-                        function.setScriptFile(new DynamicValue<>(scriptFile));
-                    }
-
-                    if (librariesFile != null) {
-                        function.setLibrariesFile(new DynamicValue<>(librariesFile));
+                    // Determine whether this keyword originates from the library JAR.
+                    // If so, the library JAR is its own "main" script file and it has no additional libraries.
+                    // Because the actual script and libraries are set later while preparing the staging in applyAutomationPackageContext,
+                    // we mark the function with a flag here.
+                    // We use ClassGraph's scan metadata (via annotationScanner) to determine the source
+                    File libraryFile = archive.getLibraryFile();
+                    if (libraryFile != null) {
+                        try {
+                            URI libraryJarUri = libraryFile.toURI();
+                            URL classpathElementUrl = annotationScanner.getClasspathElementUrl(m.getDeclaringClass().getName());
+                            if (classpathElementUrl != null && libraryJarUri.equals(classpathElementUrl.toURI())) {
+                                function.addCustomField($_MARK_AS_KEYWORD_FROM_AUTOMATION_PACKAGE_LIBRARY, true);
+                            }
+                        } catch (URISyntaxException e) {
+                            log.warn("Could not determine classpath element URI for method {}, skipping library JAR check", m.getName(), e);
+                        }
                     }
 
                     function.getCallTimeout().setValue(annotation.timeout());
