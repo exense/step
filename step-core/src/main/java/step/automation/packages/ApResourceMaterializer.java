@@ -118,10 +118,11 @@ public class ApResourceMaterializer {
             try (InputStream in = openStreamWithoutCaching(url)) {
                 Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
             }
-            atomicMove(tmp, target.toPath());
+            publish(tmp, target.toPath());
         } finally {
-            // No-op on the success path: atomicMove has renamed tmp onto target, so it no longer
-            // exists. This only deletes a stray temp left behind when the copy or move above threw.
+            // No-op on the success path: publish has renamed tmp onto target, so it no longer exists.
+            // This only deletes a stray temp left behind when the copy or move above threw, or when
+            // another writer had already materialised the entry.
             Files.deleteIfExists(tmp);
         }
     }
@@ -136,10 +137,11 @@ public class ApResourceMaterializer {
         Path tmp = Files.createTempDirectory(parent, TMP_PREFIX);
         try {
             ClassLoaderResourceFilesystem.extractDirectory(url, tmp);
-            atomicMove(tmp, target.toPath());
+            publish(tmp, target.toPath());
         } finally {
-            // No-op on the success path: atomicMove has renamed tmp onto target, so it no longer
-            // exists. This only removes a stray temp tree left behind when the extraction or move threw.
+            // No-op on the success path: publish has renamed tmp onto target, so it no longer exists.
+            // This only removes a stray temp tree left behind when the extraction or move threw, or
+            // when another writer had already materialised the entry.
             if (Files.exists(tmp)) {
                 FileHelper.deleteFolder(tmp.toFile());
             }
@@ -159,20 +161,47 @@ public class ApResourceMaterializer {
     }
 
     /**
+     * Makes the content written to {@code source} visible at {@code target}, in one step.
+     * <p>
+     * A move that fails <b>onto a target that now exists</b> is a success, not an error: another writer
+     * has materialised the very same entry - the same package id and the same path, and a redeploy wipes
+     * the package's directory before anything is written into it again - so what is there is kept. The
+     * striped lock and the double check of {@link #materialize} hold within this JVM, so it takes a
+     * second process on the same cache root to get here.
+     * <p>
+     * The outcome is tested rather than the exception type, because the type depends on the platform and
+     * on what is being moved: a directory onto an existing one is {@code DirectoryNotEmptyException} on
+     * unix and {@code AccessDeniedException} on Windows, a file onto an open one is
+     * {@code AccessDeniedException} there too, and a provider that ignores
+     * {@link StandardCopyOption#REPLACE_EXISTING} would raise {@code FileAlreadyExistsException}. A
+     * failure that leaves nothing at {@code target} - no permission on the directory, no space - is a
+     * real one and propagates.
+     */
+    static void publish(Path source, Path target) throws IOException {
+        try {
+            atomicMove(source, target);
+        } catch (IOException e) {
+            if (!Files.exists(target)) {
+                throw e;
+            }
+        }
+    }
+
+    /**
      * Atomic move with a defensive fallback. Domain-free filesystem utility — candidate to be
      * promoted to {@code ch.exense.commons.io.FileHelper} in exense-commons (which has no atomic move
      * today). Kept local until there is a second consumer.
      */
     private static void atomicMove(Path source, Path target) throws IOException {
         try {
-            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } catch (AtomicMoveNotSupportedException e) {
             // Defensive fallback. We always create the temp in the target's own parent directory, so
             // source and target share a filesystem and the usual cause of this exception (a
             // cross-filesystem move, EXDEV) cannot occur here. It can still be thrown by exotic
             // java.nio providers that simply don't implement atomic move (some FUSE/overlay or
             // network filesystems), in which case a plain same-filesystem move (rename) is used.
-            Files.move(source, target);
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 }

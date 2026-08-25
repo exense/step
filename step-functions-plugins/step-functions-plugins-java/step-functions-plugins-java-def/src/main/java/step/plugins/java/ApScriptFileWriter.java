@@ -70,24 +70,25 @@ public class ApScriptFileWriter {
      * package - is left alone entirely: the script exists already, there is nothing to set up.
      *
      * @param fileExtension  the extension of the created file, without the dot
-     * @param templateStream the initial content, {@code null} for an empty script
+     * @param templateStream the initial content, {@code null} for an empty script. <b>Closed by this
+     *                       method</b>, whether it is read or not - both cases above leave it unread
      * @return the created or referenced file, or {@code null} if there was nothing to create
      */
     public File create(GeneralScriptFunction function, String fileExtension, InputStream templateStream) throws SetupFunctionException {
-        String scriptFilename = function.getScriptFile().get();
-        if (FileResolver.isResource(scriptFilename)
-            || (FileResolver.isApResource(scriptFilename) && !FileResolver.isLocalApResource(scriptFilename))) {
-            return null;
-        }
-        try {
+        try (InputStream template = templateStream) {
+            String scriptFilename = function.getScriptFile().get();
+            if (FileResolver.isResource(scriptFilename)
+                || (FileResolver.isApResource(scriptFilename) && !FileResolver.isLocalApResource(scriptFilename))) {
+                return null;
+            }
             String relativePath;
             if (scriptFilename == null || scriptFilename.isBlank()) {
                 relativePath = LocalApResourceWriter.createFile(automationPackageRoot, scriptDirectory,
-                    function.getAttributes().get(AbstractOrganizableObject.NAME), fileExtension, templateStream);
+                    function.getAttributes().get(AbstractOrganizableObject.NAME), fileExtension, template);
             } else {
                 relativePath = FileResolver.normalizeApRelativePath(FileResolver.isLocalApResource(scriptFilename)
                     ? FileResolver.extractApRelativePath(scriptFilename) : scriptFilename);
-                LocalApResourceWriter.createFileIfMissing(automationPackageRoot, relativePath, templateStream);
+                LocalApResourceWriter.createFileIfMissing(automationPackageRoot, relativePath, template);
             }
             function.getScriptFile().setValue(FileResolver.createPathForLocalApResource(relativePath));
             return automationPackageRoot.resolve(relativePath).toFile();

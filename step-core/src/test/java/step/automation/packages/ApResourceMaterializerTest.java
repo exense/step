@@ -26,6 +26,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -174,5 +176,62 @@ public class ApResourceMaterializerTest {
             assertNotNull(r);
             assertEquals("println 'hello'", Files.readString(r.toPath()));
         }
+    }
+
+    /**
+     * Publication is the last step of a materialisation, and the one another writer can lose: the lock
+     * and the double check of {@code materialize} hold within this JVM, so a second process on the same
+     * cache root gets here with the target already in place. That is the same entry - same package id,
+     * same path - so it is a success, and what is on disk is kept.
+     * <p>
+     * Driven directly rather than through {@code materialize}, whose fast path returns before ever
+     * reaching the move.
+     */
+    @Test
+    public void publishOntoAnExistingFileSucceeds() throws Exception {
+        Path target = Files.writeString(tmp.newFolder("published").toPath().resolve("kw.groovy"), "materialised");
+        Path source = Files.writeString(target.getParent().resolve(".ap-1.tmp"), "the same thing");
+
+        ApResourceMaterializer.publish(source, target);
+
+        assertTrue(Files.exists(target));
+    }
+
+    @Test
+    public void publishOntoAnExistingDirectorySucceeds() throws Exception {
+        Path parent = tmp.newFolder("published-directory").toPath();
+        Path target = Files.createDirectory(parent.resolve("scripts"));
+        Files.writeString(target.resolve("kw.groovy"), "materialised");
+        Path source = Files.createDirectory(parent.resolve(".ap-1"));
+        Files.writeString(source.resolve("kw.groovy"), "the same thing");
+
+        ApResourceMaterializer.publish(source, target);
+
+        // no platform replaces a directory that holds something, so the one that was there is kept
+        assertEquals("materialised", Files.readString(target.resolve("kw.groovy")));
+    }
+
+    @Test
+    public void publishOntoAnEmptyDirectorySucceeds() throws Exception {
+        Path parent = tmp.newFolder("published-empty-directory").toPath();
+        Path target = Files.createDirectory(parent.resolve("scripts"));
+        Path source = Files.createDirectory(parent.resolve(".ap-1"));
+        Files.writeString(source.resolve("kw.groovy"), "materialised");
+
+        ApResourceMaterializer.publish(source, target);
+
+        assertTrue(Files.exists(target));
+    }
+
+    /**
+     * A move that leaves nothing at the target is a real failure - no permission on the directory, no
+     * space - and must not be read as a lost race.
+     */
+    @Test
+    public void publishOfAMissingSourceThrows() throws Exception {
+        Path parent = tmp.newFolder("published-nothing").toPath();
+
+        assertThrows(NoSuchFileException.class,
+            () -> ApResourceMaterializer.publish(parent.resolve(".ap-1.tmp"), parent.resolve("kw.groovy")));
     }
 }

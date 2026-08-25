@@ -32,8 +32,10 @@ import step.functions.type.FunctionTypeConfiguration;
 import step.resources.LocalResourceManagerImpl;
 import step.resources.ResourceManager;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -203,6 +205,44 @@ public class GeneralScriptFunctionTypeTest {
 
         assertEquals("", copy.getScriptFile().get());
         assertFalse(Files.exists(apRoot.resolve("groovy")));
+    }
+
+    /**
+     * The template is opened by the caller and handed over, so the setup owns it: a keyword created every
+     * time a user clicks would otherwise leave one open stream behind each time - on the distribution's
+     * template, or on the script a clone reads. The two paths that never read it are the ones worth
+     * pinning, since a stream is easy to close where it is consumed and easy to forget where it is not.
+     */
+    @Test
+    public void closesTheTemplateStreamItIsGiven() throws Exception {
+        RecordingInputStream template = new RecordingInputStream("println 'hello'");
+        editorFunctionType().setupScriptFileAsResource(groovyKeyword("Kw", ""), template);
+        assertTrue("the template of a created script", template.closed);
+
+        RecordingInputStream unread = new RecordingInputStream("println 'hello'");
+        editorFunctionType().setupScriptFileAsResource(groovyKeyword("Kw", "resource:507f1f77bcf86cd799439011"), unread);
+        assertTrue("the template of a keyword referencing a Step resource", unread.closed);
+
+        Files.createDirectories(apRoot.resolve("scripts"));
+        Files.writeString(apRoot.resolve("scripts/existing.groovy"), "the user's script");
+        RecordingInputStream skipped = new RecordingInputStream("println 'hello'");
+        editorFunctionType().setupScriptFileAsResource(groovyKeyword("Kw", "scripts/existing.groovy"), skipped);
+        assertTrue("the template of a keyword whose script exists already", skipped.closed);
+    }
+
+    private static class RecordingInputStream extends ByteArrayInputStream {
+
+        private boolean closed;
+
+        RecordingInputStream(String content) {
+            super(content.getBytes(StandardCharsets.UTF_8));
+        }
+
+        @Override
+        public void close() throws IOException {
+            closed = true;
+            super.close();
+        }
     }
 
     @Test

@@ -160,62 +160,68 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
         return bundledTemplate;
     }
 
-    protected File setupScriptFile(GeneralScriptFunction function, String templateFilename) throws SetupFunctionException {
-        return setupScriptFile(function, getTemplateFileInputStream(templateFilename));
-    }
-
     protected File setupScriptFile(GeneralScriptFunction function, InputStream templateStream) throws SetupFunctionException {
         return setupScriptFile(function, templateStream, configuration.getProperty("keywords.script.scriptdir"));
     }
 
+    /**
+     * @param templateStream the content of the script to create, {@code null} for an empty one.
+     *                       <b>Closed by this method</b>, whether it is read or not - a keyword created
+     *                       against a script that exists already leaves it unread
+     */
     protected File setupScriptFile(GeneralScriptFunction function, InputStream templateStream,
                                    String scriptDir) throws SetupFunctionException {
-        File scriptFile;
+        try (InputStream template = templateStream) {
+            File scriptFile;
 
-        Path automationPackageRoot = getEditableAutomationPackageRoot();
-        if (automationPackageRoot != null) {
-            // automationPackageRoot is only set in the editor, and the script goes there rather than in
-            // scriptDir, which is a directory of a controller installation
-            return apScriptFileWriter(automationPackageRoot, function).create(function, scriptFileExtension(function), templateStream);
-        }
+            Path automationPackageRoot = getEditableAutomationPackageRoot();
+            if (automationPackageRoot != null) {
+                // automationPackageRoot is only set in the editor, and the script goes there rather than in
+                // scriptDir, which is a directory of a controller installation
+                return apScriptFileWriter(automationPackageRoot, function).create(function, scriptFileExtension(function), template);
+            }
 
-        String scriptFilename = function.getScriptFile().get();
+            String scriptFilename = function.getScriptFile().get();
 
-        // The keyword was created against a script that already exists - a Step resource or a file of an
-        // automation package - so there is nothing to set up. Both are resolved on the fly at execution
-        // time; taking the reference for a path would create a file literally named "resource:<id>".
-        if (FileResolver.isResource(scriptFilename) || FileResolver.isApResource(scriptFilename)) {
-            return null;
-        }
+            // The keyword was created against a script that already exists - a Step resource or a file of an
+            // automation package - so there is nothing to set up. Both are resolved on the fly at execution
+            // time; taking the reference for a path would create a file literally named "resource:<id>".
+            if (FileResolver.isResource(scriptFilename) || FileResolver.isApResource(scriptFilename)) {
+                return null;
+            }
 
-        if (scriptFilename == null || scriptFilename.trim().length() == 0) {
-            scriptFile = getDefaultScriptFile(function, scriptDir);
-            function.getScriptFile().setValue(scriptFile.getAbsolutePath());
-        } else {
-            scriptFile = new File(scriptFilename);
-        }
+            if (scriptFilename == null || scriptFilename.trim().length() == 0) {
+                scriptFile = getDefaultScriptFile(function, scriptDir);
+                function.getScriptFile().setValue(scriptFile.getAbsolutePath());
+            } else {
+                scriptFile = new File(scriptFilename);
+            }
 
-        if (!scriptFile.exists()) {
-            File folder = scriptFile.getParentFile();
-            if (!folder.exists()) {
+            if (!scriptFile.exists()) {
+                File folder = scriptFile.getParentFile();
+                if (!folder.exists()) {
+                    try {
+                        Files.createDirectory(folder.toPath());
+                    } catch (IOException e) {
+                        throw new SetupFunctionException("Unable to create script folder '" + folder.getAbsolutePath() + "' for function '" + function.getAttributes().get(AbstractOrganizableObject.NAME), e);
+                    }
+                }
                 try {
-                    Files.createDirectory(folder.toPath());
+                    scriptFile.createNewFile();
                 } catch (IOException e) {
                     throw new SetupFunctionException("Unable to create script folder '" + folder.getAbsolutePath() + "' for function '" + function.getAttributes().get(AbstractOrganizableObject.NAME), e);
                 }
-            }
-            try {
-                scriptFile.createNewFile();
-            } catch (IOException e) {
-                throw new SetupFunctionException("Unable to create script folder '" + folder.getAbsolutePath() + "' for function '" + function.getAttributes().get(AbstractOrganizableObject.NAME), e);
+
+                if (template != null) {
+                    applyTemplate(scriptFile, template);
+                }
             }
 
-            if (templateStream != null) {
-                applyTemplate(scriptFile, templateStream);
-            }
+            return scriptFile;
+        } catch (IOException e) {
+            throw new SetupFunctionException("Unable to read the template of the script of function '"
+                + function.getAttributes().get(AbstractOrganizableObject.NAME) + "'", e);
         }
-
-        return scriptFile;
     }
 
     protected File setupScriptFileAsResource(GeneralScriptFunction function, String templateFilename) throws SetupFunctionException {
@@ -258,27 +264,33 @@ public abstract class AbstractScriptFunctionType<T extends GeneralScriptFunction
         return fileExtensionMap.get(getScriptLanguage(function));
     }
 
+    /**
+     * @param templateStream the content of the script to create, {@code null} for an empty one.
+     *                       <b>Closed by this method</b>, whether it is read or not
+     */
     protected File setupScriptFileAsResource(GeneralScriptFunction function, InputStream templateStream) throws SetupFunctionException {
-        Path automationPackageRoot = getEditableAutomationPackageRoot();
-        if (automationPackageRoot != null) {
-            return apScriptFileWriter(automationPackageRoot, function).create(function, scriptFileExtension(function), templateStream);
-        }
+        try (InputStream template = templateStream) {
+            Path automationPackageRoot = getEditableAutomationPackageRoot();
+            if (automationPackageRoot != null) {
+                return apScriptFileWriter(automationPackageRoot, function).create(function, scriptFileExtension(function), template);
+            }
 
-        ResourceManager resourceManager = fileResolver.getResourceManager();
-        String newScriptFilename = getScriptFilename(function);
-        InputStream resourceIS = Objects.requireNonNullElse(templateStream, InputStream.nullInputStream());
-        // apply context attributes of the function package to the function
-        AbstractContext context = new AbstractContext() {
-        };
-        try {
+            ResourceManager resourceManager = fileResolver.getResourceManager();
+            String newScriptFilename = getScriptFilename(function);
+            InputStream resourceIS = Objects.requireNonNullElse(template, InputStream.nullInputStream());
+            // apply context attributes of the function package to the function
+            AbstractContext context = new AbstractContext() {
+            };
             objectHookRegistry.rebuildContext(context, function);
             ObjectEnricher objectEnricher = objectHookRegistry.getObjectEnricher(context);
             Resource resource = resourceManager.createResource(RESOURCE_TYPE_FUNCTIONS, resourceIS, newScriptFilename, objectEnricher, null);
             function.getScriptFile().setValue(fileResolver.createPathForResourceId(resource.getId().toHexString()));
+            return fileResolver.resolve(function.getScriptFile().get());
+        } catch (SetupFunctionException e) {
+            throw e;
         } catch (Exception e) {
             throw new SetupFunctionException("Unable to create the default script as resource", e);
         }
-        return fileResolver.resolve(function.getScriptFile().get());
     }
 
     @Override
