@@ -159,6 +159,98 @@ public class ClassLoaderResourceFilesystemTest {
         assertTrue(Files.isRegularFile(source.resolve("folder/TestResource.txt")));
     }
 
+    /**
+     * The two halves of a jar url are percent encoded, and each is read from the view of the reference
+     * that suits it - the jar from the encoded one, so that it can still become a {@link File} through
+     * its URI, the entry from the decoded one, since it becomes a zip entry name.
+     */
+    @Test
+    public void testJarResourcePathDecodesBothHalves() throws Exception {
+        var jarResourcePath = new ClassLoaderResourceFilesystem.JarResourcePath(
+            new URL("jar:file:/tmp/my%20jar.jar!/my%20folder/my%20file.txt"));
+
+        assertEquals("my folder/my file.txt", jarResourcePath.pathInJar);
+        // built from a path rather than compared to a literal: the separator is the platform's
+        assertEquals(new File("/tmp/my jar.jar").getPath(), jarResourcePath.jarFile);
+    }
+
+    /**
+     * A '+' is a legal literal character of a url path, and only the form encoding reads it as a space.
+     * {@code URLDecoder} implements that form encoding, which is why the decoding goes through
+     * {@link java.net.URI} - and why {@code decodePath}, still used for urls that are no valid URIs,
+     * protects the '+' by hand before delegating to it.
+     */
+    @Test
+    public void testJarResourcePathKeepsAPlusOfAnEntryName() throws Exception {
+        var jarResourcePath = new ClassLoaderResourceFilesystem.JarResourcePath(
+            new URL("jar:file:/tmp/my%20jar.jar!/folder/file+1%20(copy).txt"));
+
+        assertEquals("folder/file+1 (copy).txt", jarResourcePath.pathInJar);
+    }
+
+    /**
+     * An escape in the jar path shifts the separator between the encoded and the decoded form, so each
+     * half has to be split from its own.
+     */
+    @Test
+    public void testJarResourcePathSplitsEachFormAtItsOwnSeparator() throws Exception {
+        var jarResourcePath = new ClassLoaderResourceFilesystem.JarResourcePath(
+            new URL("jar:file:/tmp/a%20b%20c%20d/jar.jar!/x.txt"));
+
+        assertEquals("x.txt", jarResourcePath.pathInJar);
+        assertEquals(new File("/tmp/a b c d/jar.jar").getPath(), jarResourcePath.jarFile);
+    }
+
+    /**
+     * The entry names of a real archive, read through a class loader as they are in production: a class
+     * loader encodes, so every one of these urls is a valid URI and comes back as the name that was
+     * written into the jar.
+     */
+    @Test
+    public void testJarResourcePathOfTheEntriesOfAnArchive() throws Exception {
+        List<String> entryNames = List.of("my file.txt", "plus+file.txt", "100%.txt", "a#b.txt");
+        File jar = new File(FileHelper.createTempFolder(), "my app (fat).jar");
+        try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(jar))) {
+            for (String entryName : entryNames) {
+                out.putNextEntry(new ZipEntry("my folder/" + entryName));
+                out.write("content".getBytes(StandardCharsets.UTF_8));
+                out.closeEntry();
+            }
+        }
+
+        try (URLClassLoader classLoader = new URLClassLoader(new URL[]{jar.toURI().toURL()})) {
+            for (String entryName : entryNames) {
+                URL url = classLoader.getResource("my folder/" + entryName);
+                var jarResourcePath = new ClassLoaderResourceFilesystem.JarResourcePath(url);
+
+                assertEquals("my folder/" + entryName, jarResourcePath.pathInJar);
+                assertEquals(jar.getPath(), jarResourcePath.jarFile);
+            }
+        }
+    }
+
+    /**
+     * {@link URL} accepts strings that a URI rejects, a literal space for instance. A class loader never
+     * produces one - such a url was built by hand instead of through {@link File#toURI()} - so it is
+     * reported rather than guessed at.
+     */
+    @Test
+    public void testJarResourcePathRejectsAUrlThatIsNoValidUri() {
+        assertThrows(IllegalArgumentException.class, () -> new ClassLoaderResourceFilesystem.JarResourcePath(
+            new URL("jar:file:/tmp/my jar.jar!/my folder/my file.txt")));
+    }
+
+    /**
+     * <b>Known limitation, pinned deliberately:</b> a jar on a UNC share is refused, because
+     * {@code new File(URI)} rejects a URI carrying an authority. {@code Paths.get(URI)} would resolve it.
+     * Update this test when that is fixed rather than deleting it.
+     */
+    @Test
+    public void testJarResourcePathDoesNotSupportAUncShare() {
+        assertThrows(IllegalArgumentException.class, () -> new ClassLoaderResourceFilesystem.JarResourcePath(
+            new URL("jar:file://server/share/my%20jar.jar!/my%20file.txt")));
+    }
+
     @Test
     public void testUnsupportedProtocol() {
         assertThrows(RuntimeException.class, () -> ClassLoaderResourceFilesystem.extractDirectory(new URL("http", "myHost", "myFile")));

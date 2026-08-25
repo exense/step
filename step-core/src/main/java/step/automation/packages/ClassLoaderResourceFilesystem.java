@@ -205,17 +205,22 @@ public class ClassLoaderResourceFilesystem {
     }
 
     /**
-     * Converts a {@code file:} URL into a {@link File}. The path of a URL is percent encoded (a space is
-     * {@code %20}, and a class loader does return such URLs), and can therefore not be used as a
-     * filesystem path as-is.
+     * Converts a {@code file:} url into a {@link File}. The path of a url is percent encoded (a space is
+     * {@code %20}, and a class loader does return such urls), so it cannot be used as a filesystem path
+     * as it is - the conversion goes through {@link URI}, which decodes it.
+     *
+     * @throws IllegalArgumentException if the url is not a valid URI, or names something no file can be
+     *                                  made of - a UNC share, whose authority {@code new File(URI)}
+     *                                  rejects. Every url this class is given comes from a
+     *                                  {@link ClassLoader} or from {@link File#toURI()}, both of which
+     *                                  encode; one that does not was built by hand, and is reported
+     *                                  rather than guessed at.
      */
     private static File toFile(URL fileUrl) {
         try {
             return new File(fileUrl.toURI());
         } catch (URISyntaxException | IllegalArgumentException e) {
-            // Not every URL is a valid URI: one built by hand may contain characters that a URI requires
-            // to be escaped. Such a URL isn't encoded, so its path can be used as it is.
-            return new File(fileUrl.getPath());
+            throw new IllegalArgumentException("Unable to convert the url " + fileUrl + " into a file", e);
         }
     }
 
@@ -238,14 +243,37 @@ public class ClassLoaderResourceFilesystem {
         public final String pathInJar;
         public final String jarFile;
 
+        /**
+         * Splits a jar url - {@code jar:file:/path/to/my%20jar.jar!/my%20folder/my%20file.txt} - into the
+         * jar to open and the entry to read from it. Both halves are percent encoded, and each is read
+         * from the form of the url that suits its use:
+         * <ul>
+         *     <li>the <b>jar</b> from the encoded form: it stays a url, and {@link #toFile(URL)} turns it
+         *     into a file through {@link URI}, which is what makes a filesystem path out of a drive
+         *     letter, an escape or a separator;</li>
+         *     <li>the <b>entry</b> from the decoded form: it is used as a zip entry name.</li>
+         * </ul>
+         *
+         * @throws IllegalArgumentException if the url is not a valid URI. {@link URL} accepts strings a
+         *                                  URI rejects - a literal space, a {@code [} - but a class
+         *                                  loader never produces one: such a url is only a string built by hand
+         *                                  instead of through {@link File#toURI()}.
+         */
         public JarResourcePath(URL url) throws MalformedURLException {
-            // The file of a jar URL looks like "file:/path/to/my%20jar.jar!/my%20folder/my%20file.txt".
-            // Both parts are percent encoded and have to be decoded before being used as a filesystem
-            // path, respectively as a zip entry name.
-            String urlFile = url.getFile();
-            int bangIndex = urlFile.indexOf('!');
-            pathInJar = decodePath(urlFile.substring(bangIndex + 2));
-            jarFile = toFile(new URL(urlFile.substring(0, bangIndex))).getPath();
+            URI uri = toURI(url);
+            String encoded = uri.getRawSchemeSpecificPart();
+            String decoded = uri.getSchemeSpecificPart();
+            jarFile = toFile(new URL(encoded.substring(0, encoded.indexOf('!')))).getPath();
+            // each form is split at its own '!': an escape in the jar path shifts the separator
+            pathInJar = decoded.substring(decoded.indexOf('!') + 2);
+        }
+
+        private static URI toURI(URL url) {
+            try {
+                return url.toURI();
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("The url " + url + " is not a valid URI", e);
+            }
         }
     }
 }

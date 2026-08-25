@@ -98,10 +98,10 @@ public class AutomationPackageManager {
     private final ObjectHookRegistry objectHookRegistry;
 
     /**
-     * Materialisation root for {@code apResource:} files. Set only on the MAIN manager (see
-     * {@code AutomationPackagePlugin}); {@code null} for local/isolated managers, whose cache is
-     * cleaned at isolated-context close instead. When set, {@link #deleteAutomationPackageEntities}
-     * wipes {@code <apResourceCacheRoot>/<apId>} — under the write lock, on both redeploy and delete.
+     * Materialisation cache root for {@code apResource:} files. It is passed to the manager to handle cleanup only,
+     * the materialization itself is handled by the {@code FileResolver}
+     * {@code null} for local/isolated managers. Local clean up the cache with the engine,
+     * isolated when closing the IsolatedPackageExecutionContext
      */
     private File apResourceCacheRoot;
 
