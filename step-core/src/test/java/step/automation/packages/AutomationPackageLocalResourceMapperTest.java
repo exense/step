@@ -29,9 +29,11 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * The reference format of the automation package editor: what the descriptor holds as a plain
- * relative path is held in memory as {@code apResource:local:<path>}, and never the other way round -
- * the deployed form is built by {@link AutomationPackageResourceMapper}, which must refuse an
- * editor-local reference outright.
+ * relative path is held in memory as {@code apResource:local:<path>}, and never the other way round.
+ * <p>
+ * The last tests are about {@link AutomationPackageResourceMapper} instead, where the two differ:
+ * the deploy mapper refuses an authored {@code apResource:} reference, while this one lets it
+ * through and normalises it away on the next save.
  */
 public class AutomationPackageLocalResourceMapperTest {
 
@@ -63,6 +65,11 @@ public class AutomationPackageLocalResourceMapperTest {
         assertThrows(IllegalArgumentException.class, () -> apply("../outside.csv"));
     }
 
+    /**
+     * The editor is deliberately more permissive than the deploy mapper, which refuses a hand-written
+     * {@code apResource:} reference: refusing here would mean refusing to open the package, leaving
+     * the user nowhere to fix it. The reference is written back as a plain path on the next save.
+     */
     @Test
     public void leavesAnAlreadyPrefixedReferenceUntouched() {
         // a hand written resource: keeps working, and the mapping stays idempotent
@@ -83,19 +90,40 @@ public class AutomationPackageLocalResourceMapperTest {
     }
 
     /**
-     * The editor form is in-memory only: the descriptor holds the relative path, and
-     * {@code AutomationPackageYamlFragmentManager.save} strips the prefix before writing. One reaching
-     * the deploy path means an entity was staged straight out of the editor - which would otherwise be
-     * returned untouched and deployed as a reference nothing can resolve.
+     * An {@code apResource:} reference is what the deploy mapper <i>produces</i>, so a descriptor
+     * holding one was written by hand - the editor writes the plain relative path back, and a
+     * descriptor is read into fresh entities every time, so this is never a second pass over an
+     * already mapped reference. Both the editor form and a reference to another package are refused
+     * by the same branch, with a message telling the author what to write instead.
      */
     @Test
-    public void theUploaderRefusesAnEditorLocalReference() {
+    public void theUploaderRefusesAnAuthoredApResourceReference() {
         AutomationPackageResourceMapper uploader = new AutomationPackageResourceMapper();
 
-        RuntimeException e = assertThrows(RuntimeException.class,
-            () -> uploader.applyResourceReference("apResource:local:data/pool.csv", context(uploader)));
+        for (String authored : new String[]{"apResource:local:data/pool.csv",
+            "apResource:66c1f0f0f0f0f0f0f0f0f0f0:data/pool.csv"}) {
+            RuntimeException e = assertThrows(authored, RuntimeException.class,
+                () -> uploader.applyResourceReference(authored, context(uploader)));
 
-        assertTrue(e.getMessage(), e.getMessage().contains("cannot be deployed"));
+            assertTrue(e.getMessage(), e.getMessage().contains(authored));
+            assertTrue(e.getMessage(), e.getMessage().contains("cannot be written in a descriptor"));
+        }
+    }
+
+    /**
+     * A {@code resource:} reference is an authored form rather than a leftover, so the deploy mapper
+     * has to let it through: the schema declares the file of a data source as
+     * {@code oneOf: [string, {id: <string>}]}, and {@code YamlResourceReference.toDynamicValue} turns
+     * the {@code {id: ...}} form into {@code resource:<id>} before the mapper sees it. Treating it as
+     * a path would look for {@code resource:<id>} in the archive - or fail to build a path from it at
+     * all, on a file system that has no colons.
+     */
+    @Test
+    public void theUploaderLeavesAStepResourceUntouched() {
+        AutomationPackageResourceMapper uploader = new AutomationPackageResourceMapper();
+
+        assertEquals("resource:66c1f0f0f0f0f0f0f0f0f0f0",
+            uploader.applyResourceReference("resource:66c1f0f0f0f0f0f0f0f0f0f0", context(uploader)));
     }
 
     private String apply(String reference) {

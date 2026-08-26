@@ -35,12 +35,15 @@ import step.resources.ResourceManager;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -137,8 +140,28 @@ public class GeneralScriptFunctionTypeTest {
         editorFunctionType().setupFunction(function);
 
         assertEquals("apResource:local:javascript/Kw.js", function.getScriptFile().get());
-        assertTrue(Files.exists(apRoot.resolve("javascript/Kw.js")));
+        // the content, not just the file: a template missing from the jar creates an empty script and
+        // says so only in a log line, which an existence check would not notice
+        assertTrue(Files.readString(apRoot.resolve("javascript/Kw.js")).contains("context.setPayloadJson"));
         assertFalse(Files.exists(apRoot.resolve("keywords")));
+    }
+
+    /**
+     * The templates ship with this plugin because the IDE has no controller directory to read one from,
+     * so nothing but this test stands between a language named here and a keyword created empty. It
+     * enumerates the mapping rather than listing languages, so a language added to it is covered by
+     * the same assertion.
+     */
+    @Test
+    public void bundlesTheTemplateOfEveryLanguageThatNamesOne() throws Exception {
+        GeneralScriptFunctionType functionType = editorFunctionType();
+
+        for (Map.Entry<String, String> language : GeneralScriptFunctionType.TEMPLATE_BY_LANGUAGE.entrySet()) {
+            try (InputStream template = functionType.getTemplateFileInputStream(language.getValue())) {
+                assertNotNull(language.toString(), template);
+                assertFalse(language.toString(), new String(template.readAllBytes(), StandardCharsets.UTF_8).isBlank());
+            }
+        }
     }
 
     @Test

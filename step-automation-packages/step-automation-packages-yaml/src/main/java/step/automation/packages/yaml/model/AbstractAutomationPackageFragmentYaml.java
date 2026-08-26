@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.automation.packages.mappers.interfaces.YamlToBusinessObjectMapper;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
@@ -48,6 +50,12 @@ import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractAutomationPackageFragmentYaml implements AutomationPackageFragmentYaml {
+
+    private static final Logger log = LoggerFactory.getLogger(AbstractAutomationPackageFragmentYaml.class);
+
+    static final String EDITOR_REFERENCE_PREFIX =
+        FileResolver.AP_RESOURCE_PREFIX + FileResolver.LOCAL_AP_ID + FileResolver.RESOURCE_PATH_SEPARATOR;
+
     private PatchableYamlList<PatchableYamlPrimitive<String>> fragments;
     private PatchableYamlList<YamlAutomationPackageKeyword> keywords;
     private PatchableYamlList<YamlPlan> plans;
@@ -160,8 +168,7 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
             if (file.exists() && file.lastModified() > fileLastModified) {
                 throw new AutomationPackageConcurrentEditException(MessageFormat.format("Automation package fragment {0} was edited outside the editor.", path));
             }
-            String yaml = context.getCurrentYaml();
-            assertNoEditorInternalReference(yaml);
+            String yaml = withoutEditorInternalReferences(context.getCurrentYaml(), path);
             FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
             resetLastModified();
         } catch (IOException e) {
@@ -172,19 +179,31 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     /**
      * The {@code apResource:local:} form belongs to the editor's memory, never to the descriptor: each
      * keyword plugin maps it back in {@code setDeclaredFieldsFromObject}, and the data sources of a plan
-     * in {@code YamlResourceReference.fromDynamicValue}. A plugin that forgets to would otherwise write
-     * an internal reference into a file the user owns and commits, so the write is refused instead -
-     * loudly, and before the file is touched.
+     * in {@code YamlResourceReference.fromDynamicValue}. This is the net under those, so that a property
+     * one of them does not cover cannot write an internal reference into a file the user owns and
+     * commits.
+     * <p>
+     * It <b>repairs</b> rather than refuses, because reaching here is a bug of ours and not of the
+     * user's: reading is generic - {@code ResourceReferences} maps whatever carries
+     * {@code @EntityReference(type = resources)} - while writing is per model and hand written, so a
+     * new keyword type or a new artefact field is mapped one way and not the other. The user can do
+     * nothing about that, and refusing would leave them unable to save at all. Removing the prefix is
+     * not a guess either: {@code apResource:local:<path>} is the in-memory form of {@code <path>}, so
+     * what lands on disk is exactly what the missing mapping would have produced.
+     * <p>
+     * It stays a last resort rather than becoming the mapping itself: it works on the serialized text,
+     * so it cannot tell a reference from the same characters typed into a description - the one case
+     * where it changes something it should not, and the reason the warning asks for a report.
      */
-    private void assertNoEditorInternalReference(String yaml) {
-        String editorReferencePrefix = FileResolver.AP_RESOURCE_PREFIX + FileResolver.LOCAL_AP_ID + FileResolver.RESOURCE_PATH_SEPARATOR;
-        if (yaml.contains(editorReferencePrefix)) {
-            throw new AutomationPackageWriteToDiskException(MessageFormat.format(
-                "Refusing to write the automation package fragment {0}: it holds an editor internal "
-                    + "reference ({1}). This is an internal error - such a reference must be mapped back "
-                    + "to the path it was authored with before the fragment is written.",
-                path, editorReferencePrefix));
+    static String withoutEditorInternalReferences(String yaml, Path fragmentPath) {
+        if (!yaml.contains(EDITOR_REFERENCE_PREFIX)) {
+            return yaml;
         }
+        log.warn("The automation package fragment {} was serialized holding the editor internal reference "
+                + "prefix '{}'. It has been removed so that the fragment written to disk stays valid, but "
+                + "this is unexpected. Please report it.",
+            fragmentPath, EDITOR_REFERENCE_PREFIX);
+        return yaml.replace(EDITOR_REFERENCE_PREFIX, "");
     }
 
     @Override

@@ -65,8 +65,13 @@ public class AutomationPackageResourceMapper {
      * Rewrites {@code resourceReference} into an {@code apResource:} reference.
      * <ul>
      *     <li>{@code null} / empty → {@code null} (no reference).</li>
-     *     <li>An already-absolute reference ({@code resource:} from a pre-change package, or an
-     *     {@code apResource:} one) is returned untouched — back-compatibility and idempotency.</li>
+     *     <li>An {@code apResource:} reference is <b>rejected</b>: it is what this method produces,
+     *     so a descriptor holding one was written by hand.</li>
+     *     <li>A {@code resource:} reference is returned untouched. This is an authored form, not a
+     *     leftover: the schema declares the file of a data source as
+     *     {@code oneOf: [string, {id: <string>}]}, and {@code YamlResourceReference.toDynamicValue}
+     *     turns the {@code {id: ...}} form into {@code resource:<id>} before it gets here. A keyword
+     *     whose script is a Step resource of the controller reaches this the same way.</li>
      *     <li>A plain archive-relative path is validated against the archive (a missing entry fails
      *     now, at deploy time, not mid-execution) and rewritten to
      *     {@code apResource:<apId>:<normalisedRelativePath>}.</li>
@@ -77,17 +82,16 @@ public class AutomationPackageResourceMapper {
         if (resourceReference == null || resourceReference.isEmpty()) {
             return null;
         }
-        if (FileResolver.isLocalApResource(resourceReference)) {
-            // The editor form never reaches this far: the YAML holds plain relative paths, and
-            // AutomationPackageYamlFragmentManager.save strips the prefix before writing. Getting one
-            // here means an entity was staged straight out of the editor, and returning it untouched
-            // as the branch below does would deploy a reference nothing can resolve.
-            throw new RuntimeException("The reference " + resourceReference + " of the automation package "
-                + context.getAutomationPackage().getId().toHexString() + " is an editor-local reference and "
-                + "cannot be deployed. This is an internal error - such references must be resolved to a "
-                + "relative path before the package is read.");
+        if (FileResolver.isApResource(resourceReference)) {
+            // Nothing produces one in a descriptor: this is either hand-written or a bug.
+            // Deploying it as it stands would either pin the entity to another package or, for the editor form,
+            // leaving a reference nothing resolves.
+            throw new RuntimeException("Invalid resource reference '" + resourceReference + "' in the "
+                + "automation package: an apResource: reference is built by Step when a package is "
+                + "deployed and cannot be written in a descriptor. Use the path of the file relative "
+                + "to the root of the automation package instead.");
         }
-        if (FileResolver.isResource(resourceReference) || FileResolver.isApResource(resourceReference)) {
+        if (FileResolver.isResource(resourceReference)) {
             return resourceReference;
         }
         // Normalise once so deploy-time validation and runtime materialisation use the exact same path.

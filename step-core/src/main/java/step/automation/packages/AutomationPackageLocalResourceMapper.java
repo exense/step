@@ -78,6 +78,12 @@ public class AutomationPackageLocalResourceMapper extends AutomationPackageResou
     }
 
     /**
+     * Unlike {@link AutomationPackageResourceMapper#applyResourceReference}, which refuses a
+     * hand-written {@code apResource:} reference, this one lets it through. Refusing would mean
+     * refusing to <i>open</i> the package for editing, leaving the user nowhere to fix it; and the
+     * editor needs no rescue, since the reference is written back as a plain path on the next save.
+     * Opening the package and saving is therefore one way to act on the deployment error.
+     *
      * @return {@code null} for an absent reference, an already prefixed reference untouched (a
      * hand-written {@code resource:<id>} keeps working, and the mapping stays idempotent), and
      * {@code apResource:local:<normalisedPath>} for a relative path
