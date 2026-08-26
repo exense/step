@@ -43,8 +43,9 @@ import java.util.stream.Stream;
 
 /**
  * Rewrites the resource references of an artefact tree - a data source above all, which the keyword
- * plugins do not map themselves. Extracted from {@code AutomationPackagePlansAttributesApplier}, whose
- * traversal this is, so that the same walk serves the deploy direction and the editor's write-back.
+ * plugins do not map themselves. The traversal of
+ * {@link AutomationPackageResourceMapper#applyToPlan}, which is its only caller: use that one, it is
+ * what decides the form a reference takes.
  * <p>
  * A property holds a reference when its getter says so, with
  * {@link EntityReference}{@code (type = }{@link EntityConstants#resources}{@code )}. That declaration is
@@ -56,7 +57,7 @@ import java.util.stream.Stream;
  * some of them are conditional. {@code YamlK6Function} builds three different shapes out of two fields,
  * and only that class can tell which one it produced.
  */
-public class ResourceReferences {
+class ResourceReferences {
 
     private static final String STEP_PACKAGE = "step";
 
@@ -67,45 +68,32 @@ public class ResourceReferences {
     }
 
     /**
-     * The undo of an {@link #apply(AbstractArtefact, UnaryOperator)} call. Closing it puts the previous
-     * values back, which is what lets an entity be written in one form while staying in another.
-     */
-    public interface Restoration extends AutoCloseable {
-        @Override
-        void close();
-    }
-
-    /**
      * Applies {@code mapping} to every declared resource reference of the artefact tree rooted at
      * {@code root}, children and before/after blocks included.
      * <p>
      * A {@code resource:<id>} reference is left alone - it is already absolute - as is a dynamic value,
      * which has no path to rewrite.
-     *
-     * @return the undo; ignore it unless the change is meant to be temporary
      */
-    public static Restoration apply(AbstractArtefact root, UnaryOperator<String> mapping) {
+    static void apply(AbstractArtefact root, UnaryOperator<String> mapping) {
         Objects.requireNonNull(mapping, "mapping must not be null");
-        List<Runnable> undo = new ArrayList<>();
-        applyToArtefact(root, mapping, undo);
-        return () -> undo.forEach(Runnable::run);
+        applyToArtefact(root, mapping);
     }
 
-    private static void applyToArtefact(AbstractArtefact artefact, UnaryOperator<String> mapping, List<Runnable> undo) {
+    private static void applyToArtefact(AbstractArtefact artefact, UnaryOperator<String> mapping) {
         if (artefact == null) {
             return;
         }
-        applyRecursively(artefact, mapping, undo);
-        applyToSteps(artefact.getChildren(), mapping, undo);
+        applyRecursively(artefact, mapping);
+        applyToSteps(artefact.getChildren(), mapping);
         Optional.ofNullable(artefact.getBefore()).map(ChildrenBlock::getSteps)
-            .ifPresent(steps -> applyToSteps(steps, mapping, undo));
+            .ifPresent(steps -> applyToSteps(steps, mapping));
         Optional.ofNullable(artefact.getAfter()).map(ChildrenBlock::getSteps)
-            .ifPresent(steps -> applyToSteps(steps, mapping, undo));
+            .ifPresent(steps -> applyToSteps(steps, mapping));
     }
 
-    private static void applyToSteps(List<AbstractArtefact> steps, UnaryOperator<String> mapping, List<Runnable> undo) {
+    private static void applyToSteps(List<AbstractArtefact> steps, UnaryOperator<String> mapping) {
         if (steps != null) {
-            steps.forEach(step -> applyToArtefact(step, mapping, undo));
+            steps.forEach(step -> applyToArtefact(step, mapping));
         }
     }
 
@@ -113,16 +101,16 @@ public class ResourceReferences {
      * Walks the object itself and its nested Step objects - the data source of a for-each block is a
      * field of the artefact, not an artefact of its own.
      */
-    private static void applyRecursively(Object object, UnaryOperator<String> mapping, List<Runnable> undo) {
+    private static void applyRecursively(Object object, UnaryOperator<String> mapping) {
         if (object == null) {
             return;
         }
         for (PropertyDescriptor property : referencePropertiesOf(object.getClass())) {
-            applyToProperty(object, property, mapping, undo);
+            applyToProperty(object, property, mapping);
         }
         for (Field nested : nestedFieldsOf(object.getClass())) {
             try {
-                applyRecursively(nested.get(object), mapping, undo);
+                applyRecursively(nested.get(object), mapping);
             } catch (IllegalAccessException e) {
                 throw new RuntimeException("Unable to read the field " + nested.getName() + " of "
                     + object.getClass().getName(), e);
@@ -130,20 +118,17 @@ public class ResourceReferences {
         }
     }
 
-    private static void applyToProperty(Object object, PropertyDescriptor property, UnaryOperator<String> mapping,
-                                        List<Runnable> undo) {
+    private static void applyToProperty(Object object, PropertyDescriptor property, UnaryOperator<String> mapping) {
         Object value = read(object, property);
         if (value instanceof String) {
             String reference = (String) value;
             if (!FileResolver.isResource(reference)) {
                 write(object, property, mapping.apply(reference));
-                undo.add(() -> write(object, property, value));
             }
         } else if (value instanceof DynamicValue) {
             String reference = asString(((DynamicValue<?>) value).getValue());
             if (reference != null && !FileResolver.isResource(reference)) {
                 write(object, property, new DynamicValue<>(mapping.apply(reference)));
-                undo.add(() -> write(object, property, value));
             }
         } else if (value != null) {
             throw new RuntimeException("Unsupported type " + value.getClass() + " for the resource reference "

@@ -172,9 +172,9 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     /**
      * The {@code apResource:local:} form belongs to the editor's memory, never to the descriptor: each
      * keyword plugin maps it back in {@code setDeclaredFieldsFromObject}, and the data sources of a plan
-     * in {@code AutomationPackageLocalResourceMapper.toDescriptorReferences}. A plugin that forgets to
-     * would otherwise write an internal reference into a file the user owns and commits, so the write is
-     * refused instead - loudly, and before the file is touched.
+     * in {@code YamlResourceReference.fromDynamicValue}. A plugin that forgets to would otherwise write
+     * an internal reference into a file the user owns and commits, so the write is refused instead -
+     * loudly, and before the file is touched.
      */
     private void assertNoEditorInternalReference(String yaml) {
         String editorReferencePrefix = FileResolver.AP_RESOURCE_PREFIX + FileResolver.LOCAL_AP_ID + FileResolver.RESOURCE_PATH_SEPARATOR;

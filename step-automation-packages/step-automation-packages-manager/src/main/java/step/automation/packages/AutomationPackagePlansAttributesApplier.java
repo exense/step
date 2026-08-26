@@ -59,8 +59,7 @@ public class AutomationPackagePlansAttributesApplier {
     public static void applySpecialAttributesToPlans(StagingAutomationPackageContext apContext, Iterable<Plan> plans) {
         AutomationPackageResourceMapper resourceMapper = apContext.getResourceMapper();
         for (Plan plan : plans) {
-            ResourceReferences.apply(plan.getRoot(),
-                reference -> resourceMapper.applyResourceReference(reference, apContext));
+            resourceMapper.applyToPlan(plan, apContext);
         }
     }
 

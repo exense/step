@@ -19,6 +19,7 @@
 package step.automation.packages;
 
 import step.attachments.FileResolver;
+import step.core.plans.Plan;
 
 import java.net.URL;
 import java.util.Map;
@@ -44,6 +45,20 @@ public class AutomationPackageResourceMapper {
     public String applyUniqueResourceReference(String resourceReference,
                                                StagingAutomationPackageContext context) {
         return uniqueResourceReferences.computeIfAbsent(resourceReference, key -> applyResourceReference(resourceReference, context));
+    }
+
+    /**
+     * Applies {@link #applyResourceReference} to every resource reference of a plan. Unlike a keyword,
+     * whose plugin maps its own fields, a plan holds its references inside its artefact tree.
+     * <p>
+     * There is deliberately no inverse of this: a plan is written back by the yaml models, where
+     * {@code YamlResourceReference} renders any {@code apResource:} reference as the path the
+     * descriptor holds. That direction needs no context, so it belongs to the format - this one needs
+     * the package the reference is being read for, and the archive to validate it against, so it
+     * belongs here.
+     */
+    public void applyToPlan(Plan plan, StagingAutomationPackageContext context) {
+        ResourceReferences.apply(plan.getRoot(), reference -> applyResourceReference(reference, context));
     }
 
     /**

@@ -20,9 +20,7 @@ package step.automation.packages.yaml;
 
 import org.apache.commons.io.FileUtils;
 import step.automation.packages.ApFileNames;
-import step.automation.packages.AutomationPackageLocalResourceMapper;
 import step.automation.packages.ResourcePathMatchingResolver;
-import step.automation.packages.ResourceReferences;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
 import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
@@ -32,7 +30,6 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.plans.Plan;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.NamedPatchableYamlModel;
 import step.core.yaml.PatchableYamlModel;
@@ -177,16 +174,7 @@ public class AutomationPackageYamlFragmentManager {
         if (mapper == null) {
             throw new AutomationPackageUpdateException("No BusinessObjectToYamlMapper registered for class: " + object.getClass().getName());
         }
-        YO newYamlObject;
-        // TODO ugly implementation to transform back apResources to pure string path in YAML for resource references in Plans
-        if (object instanceof Plan) {
-            try (ResourceReferences.Restoration restoration =
-                     AutomationPackageLocalResourceMapper.toDescriptorReferences((Plan) object)) {
-                newYamlObject = mapper.toYamlObject(object);
-            }
-        } else {
-            newYamlObject = mapper.toYamlObject(object);
-        }
+        YO newYamlObject = mapper.toYamlObject(object);
 
         AutomationPackageFragmentYaml fragment = fragmentMap.get(object);
 
