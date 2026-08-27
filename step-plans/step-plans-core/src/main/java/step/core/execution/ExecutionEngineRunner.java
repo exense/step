@@ -24,13 +24,16 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
-import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ParentSource;
+import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanBuilder;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanNode;
-import step.core.execution.model.*;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionParameters;
+import step.core.execution.model.ExecutionStatus;
+import step.core.execution.model.ReportExport;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.runner.PlanRunnerResult;
@@ -45,7 +48,11 @@ import step.engine.execution.ExecutionVeto;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -262,7 +269,7 @@ public class ExecutionEngineRunner {
 
     private PlanRunnerResult result(String executionId) {
         return new PlanRunnerResult(executionId, executionContext.getExecutionAccessor(), executionContext.getReportNodeAccessor(),
-            executionContext.getResourceManager());
+            executionContext.getAttachmentStorage());
     }
 
     private ImportResult importPlan(ExecutionContext context) {

@@ -60,7 +60,14 @@ import step.framework.server.tables.TableRegistry;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.FunctionEntity;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
-import step.resources.*;
+import step.resources.InMemoryResourceAccessor;
+import step.resources.InMemoryResourceRevisionAccessor;
+import step.resources.LocalResourceManagerImpl;
+import step.resources.ResourceAccessor;
+import step.resources.ResourceEntity;
+import step.resources.ResourceManager;
+import step.resources.ResourceRevision;
+import step.resources.ResourceRevisionAccessor;
 
 import java.io.File;
 import java.io.IOException;
@@ -102,8 +109,10 @@ public class GlobalContextBuilder {
         ResourceAccessor resourceAccessor = new InMemoryResourceAccessor();
         InMemoryResourceRevisionAccessor resourceRevisionAccessor = new InMemoryResourceRevisionAccessor();
         try {
-            File rootFolder = FileHelper.createTempFolder();
-            ResourceManager resourceManager = new ResourceManagerImpl(rootFolder, resourceAccessor, resourceRevisionAccessor);
+            // WARNING: The following folder is leaked unless it's cleaned up
+            // in the referencing unit tests (e.g. using ResourceManager#cleanup) - tracked in SED-4849
+            File resourceRootFolder = FileHelper.createTempFolder("step-resourceManager-");
+            ResourceManager resourceManager = new LocalResourceManagerImpl(resourceRootFolder, resourceAccessor, resourceRevisionAccessor);
             context.setResourceManager(resourceManager);
         } catch (IOException e) {
             logger.error("Unable to create temp folder for the resource manager", e);
