@@ -24,15 +24,21 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.TestSet;
-import step.attachments.SkippedAttachmentMeta;
-import step.attachments.StreamingAttachmentMeta;
-import step.reports.CustomReportType;
 import step.attachments.AttachmentMeta;
-import step.core.artefacts.reports.*;
+import step.attachments.SkippedAttachmentMeta;
+import step.core.artefacts.reports.ReportNode;
+import step.core.artefacts.reports.ReportNodeStatus;
+import step.core.artefacts.reports.ReportNodeVisitorEventHandler;
+import step.core.artefacts.reports.ReportTreeAccessor;
+import step.core.artefacts.reports.ReportTreeVisitor;
 import step.core.artefacts.reports.ReportTreeVisitor.ReportNodeEvent;
-import step.resources.ResourceRevisionFileHandle;
+import step.reports.CustomReportType;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
@@ -41,7 +47,10 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -344,7 +353,7 @@ public class JUnit4ReportWriter implements ReportWriter {
     }
 
     private void writeAttachmentTag(String testCaseId, AttachmentMeta attachment, Writer writer, String reportFileName) {
-        if (junit4ReportConfig.isAddAttachments() && junit4ReportConfig.getAttachmentResourceManager() != null) {
+        if (junit4ReportConfig.isAddAttachments() && junit4ReportConfig.getAttachmentStorage() != null) {
             // Writes tags similar to the following example to the report:
             // [[ATTACHMENT|screenshots/dashboard.png]]
             if (attachment instanceof SkippedAttachmentMeta) {

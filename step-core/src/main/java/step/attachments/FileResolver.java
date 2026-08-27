@@ -30,7 +30,7 @@ import java.nio.file.Path;
 
 public class FileResolver {
 
-    public static final String ATTACHMENT_PREFIX = "attachment:";
+    public static final String ATTACHMENT_PREFIX_OBSOLETE = "attachment:";
     public static final String RESOURCE_PREFIX = "resource:";
     public static final String RESOURCE_PATH_SEPARATOR = ":";
 
@@ -57,9 +57,9 @@ public class FileResolver {
 
     public File resolve(String path) {
         File file;
-        if (path.startsWith(ATTACHMENT_PREFIX)) {
-            throw new RuntimeException("Attachments have been migrated to the ResourceManager. The reference " + path +
-                " isn't valid anymore. Your attachment should be migrated to the ResourceManager.");
+        if (path.startsWith(ATTACHMENT_PREFIX_OBSOLETE)) {
+            throw new RuntimeException("Attachments have been migrated to use the AttachmentStorage. The reference " + path +
+                " isn't valid anymore. Please update your code to use the AttachmentStorage instead.");
         } else if (path.startsWith(RESOURCE_PREFIX)) {
             file = getResourceRevisionFileHandleForPath(path).getResourceFile();
         } else {
@@ -125,7 +125,7 @@ public class FileResolver {
     public FileHandle resolveFileHandle(String path) {
         File file;
         ResourceRevisionFileHandle resourceRevisionFileHandle;
-        if (path.startsWith(ATTACHMENT_PREFIX)) {
+        if (path.startsWith(ATTACHMENT_PREFIX_OBSOLETE)) {
             throw new RuntimeException("Attachments have been migrated to the ResourceManager. The reference " + path +
                 " isn't valid anymore. Your attachment should be migrated to the ResourceManager.");
         } else if (path.startsWith(RESOURCE_PREFIX)) {

@@ -18,20 +18,20 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.regex.Pattern;
-
-import com.google.common.io.Files;
-
 import step.artefacts.Export;
-import step.artefacts.reports.EchoReportNode;
 import step.attachments.AttachmentMeta;
+import step.attachments.SkippedAttachmentMeta;
 import step.core.artefacts.handlers.ArtefactHandler;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
-import step.resources.ResourceManager;
+import step.resources.AttachmentStorage;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.regex.Pattern;
 
 public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
 
@@ -70,18 +70,24 @@ public class ExportHandler extends ArtefactHandler<Export, ReportNode> {
                         if (file.isDirectory()) {
                             List<?> list = (List<?>) value;
                             for (Object object : list) {
-                                if (object instanceof AttachmentMeta) {
-                                    AttachmentMeta attachmentMeta = (AttachmentMeta) object;
-                                    ResourceManager resourceManager = context.getResourceManager();
-                                    File fileToCopy = resourceManager.getResourceFile(attachmentMeta.getId().toString()).getResourceFile();
+                                if (object instanceof AttachmentMeta attachmentMeta) {
+                                    if (attachmentMeta instanceof SkippedAttachmentMeta) {
+                                        continue;
+                                    }
                                     // Export only if the file name matches the defined filter
-                                    if (filter == null || filter.matcher(fileToCopy.getName()).matches()) {
+                                    String fileName = attachmentMeta.getName();
+                                    if (filter == null || filter.matcher(fileName).matches()) {
+                                        AttachmentStorage storage = context.getAttachmentStorage();
+                                        if (storage == null) {
+                                            throw new RuntimeException("Attachment storage is null");
+                                        }
                                         String filenamePrefix = testArtefact.getPrefix() != null ? testArtefact.getPrefix().get() : "";
-                                        File target = new File(file + "/" + filenamePrefix + fileToCopy.getName());
-                                        try {
-                                            Files.copy(fileToCopy, target);
-                                        } catch (IOException e) {
-                                            throw new RuntimeException("Error while copying file " + fileToCopy.getName() + " to " + target.getAbsolutePath());
+                                        File target = new File(file, filenamePrefix + fileName);
+                                        try (InputStream in = storage.getAttachmentStream(attachmentMeta.getId().toString());
+                                             OutputStream out = new FileOutputStream(target)) {
+                                            in.transferTo(out);
+                                        } catch (Exception e) {
+                                            throw new RuntimeException("Error while saving " + fileName + " to " + target.getAbsolutePath());
                                         }
                                     }
                                 }

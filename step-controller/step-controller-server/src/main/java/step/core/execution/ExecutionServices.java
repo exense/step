@@ -157,7 +157,9 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "execution-read")
     public List<ResolvedExecutionNotice> getExecutionNotices(@PathParam("id") String id) {
-        return executionNoticeManager.resolve(executionAccessor.get(id));
+        Execution execution = executionAccessor.get(id);
+        assertEntityIsReadableInContext(execution);
+        return executionNoticeManager.resolve(execution);
     }
 
     @Operation(description = "Returns the execution overview (the execution enriched with its resolved notices) for the given execution id.")
@@ -167,6 +169,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     @Secured(right = "execution-read")
     public ExecutionOverview getExecutionOverview(@PathParam("id") String id) {
         Execution execution = executionAccessor.get(id);
+        assertEntityIsReadableInContext(execution);
         return new ExecutionOverview(execution, executionNoticeManager.resolve(execution));
     }
 
@@ -479,6 +482,7 @@ public class ExecutionServices extends AbstractStepAsyncServices {
     @Secured(right = "execution-delete")
     public void deleteExecution(@PathParam("id") String id) {
         Execution execution = executionAccessor.get(id);
+        assertEntityIsEditableInContext(execution);
         if (!execution.getStatus().equals(ExecutionStatus.ENDED)) {
             throw new ControllerServiceException("Only ended executions can be deleted.");
         }
