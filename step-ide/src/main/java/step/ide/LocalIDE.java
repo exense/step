@@ -21,13 +21,19 @@ public class LocalIDE {
     }
 
     public LocalIDE() throws Exception {
+        var ideState = LocalIDEState.get();
         Configuration configuration = loadConfiguration();
+        for (var cfg : ideState.startupHooks.onConfigure) {
+            // Startup hooks could throw exceptions, or outright stop the entire execution using System.exit.
+            // That's intentional, and the reason why they're called as early as possible.
+            cfg.accept(configuration);
+        }
         var resourcesDirectory = Files.createTempDirectory("step-ide-resources-");
         var fileManagerDirectory = Files.createTempDirectory("step-ide-filemanager-");
         LocalIDEState.get().addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
         configuration.putProperty("resources.dir", resourcesDirectory.toString());
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
-        configuration.putProperty("ui.resource.root", LocalIDEState.getIdeResourcePath());
+        configuration.putProperty("ui.resource.root", ideState.getIdeResourcePath());
         String jmeterHome = System.getenv("JMETER_HOME");
         if (jmeterHome != null) {
             configuration.putProperty("plugins.jmeter.home", jmeterHome);
@@ -50,6 +56,7 @@ public class LocalIDE {
         Configuration configuration = new Configuration();
         InputStream propsStream = Objects.requireNonNull(LocalIDE.class.getClassLoader().getResourceAsStream("ide.properties"), "ide.properties resource not found");
         configuration.getUnderlyingPropertyObject().load(propsStream);
+        propsStream.close();
         return configuration;
     }
 

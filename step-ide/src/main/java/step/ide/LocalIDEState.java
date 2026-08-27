@@ -28,12 +28,14 @@ import step.resources.ResourceManagerImpl;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 public class LocalIDEState implements ExecutionDiversion {
     private static final Logger logger = LoggerFactory.getLogger(LocalIDEState.class);
@@ -42,21 +44,21 @@ public class LocalIDEState implements ExecutionDiversion {
     private final JavaAutomationPackageReader reader;
 
     private final List<Path> directoriesToCleanupOnShutdown = new CopyOnWriteArrayList<>();
+    public final StartupHooks startupHooks = new StartupHooks();
     private ResourceManagerImpl resourceManager;
     private IDEExecutorDelegateFactory executorDelegateFactory;
     private Path currentAutomationPackageDirectory;
     private FileResolver fileResolver;
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
+    private String ideResourcePath = "dist/step-ide"; // must neither start, nor end, with a slash; Overridden in the EE variant.
 
-    private static String ideResourcePath = "dist/step-ide"; // must neither start, nor end, with a slash; Overridden in the EE variant.
-
-    public static String getIdeResourcePath() {
+    public String getIdeResourcePath() {
         return ideResourcePath;
     }
 
-    public static void setIdeResourcePath(String ideResourcePath) {
-        LocalIDEState.ideResourcePath = ideResourcePath;
+    public void setIdeResourcePath(String ideResourcePath) {
+        this.ideResourcePath = ideResourcePath;
     }
 
     public static LocalIDEState get() {
@@ -293,6 +295,11 @@ public class LocalIDEState implements ExecutionDiversion {
             logger.debug("Completing shutdown-await future");
             shutdownAwaitFuture.complete(null);
         }
+    }
+
+    public class StartupHooks {
+
+        public final List<Consumer<Configuration>> onConfigure = new ArrayList<>();
     }
 
 }
