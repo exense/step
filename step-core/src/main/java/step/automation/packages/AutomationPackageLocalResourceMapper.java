@@ -57,6 +57,10 @@ public class AutomationPackageLocalResourceMapper extends AutomationPackageResou
      * Called by the {@code setDeclaredFieldsFromObject} of each keyword plugin. The data sources of a
      * plan do not go through here: {@code YamlResourceReference} maps them on the way to yaml, for
      * every writer of a plan rather than for the editor alone.
+     *
+     * @return the descriptor form, {@code null} <b>only</b> for a {@code null} reference - a caller
+     * that has already excluded null needs no further check, which is what {@code
+     * YamlK6Function.descriptorPath} relies on to map the separators of the result
      */
     public static String toDescriptorReference(String reference) {
         return FileResolver.isLocalApResource(reference) ? FileResolver.extractApRelativePath(reference) : reference;

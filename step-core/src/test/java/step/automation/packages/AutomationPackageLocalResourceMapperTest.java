@@ -20,10 +20,14 @@
 package step.automation.packages;
 
 import org.junit.Test;
+import step.core.dynamicbeans.DynamicValue;
+
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -124,6 +128,57 @@ public class AutomationPackageLocalResourceMapperTest {
 
         assertEquals("resource:66c1f0f0f0f0f0f0f0f0f0f0",
             uploader.applyResourceReference("resource:66c1f0f0f0f0f0f0f0f0f0f0", context(uploader)));
+    }
+
+    /**
+     * The way back, called by the {@code setDeclaredFieldsFromObject} of every keyword plugin: only the
+     * editor form is unwrapped, everything else is what the descriptor already held.
+     */
+    @Test
+    public void writesTheEditorFormBackAsThePathItWasAuthoredWith() {
+        assertEquals("scripts/kw.groovy",
+            AutomationPackageLocalResourceMapper.toDescriptorReference("apResource:local:scripts/kw.groovy"));
+        assertEquals("resource:66c1f0f0f0f0f0f0f0f0f0f0",
+            AutomationPackageLocalResourceMapper.toDescriptorReference("resource:66c1f0f0f0f0f0f0f0f0f0f0"));
+        assertEquals("scripts/kw.groovy",
+            AutomationPackageLocalResourceMapper.toDescriptorReference("scripts/kw.groovy"));
+    }
+
+    /**
+     * Null in, null out - and nothing else maps to null. Callers rely on it to keep working on the
+     * result: {@code YamlK6Function.descriptorPath} excludes a null value of its own and then maps the
+     * separators of whatever comes back.
+     */
+    @Test
+    public void mapsOnlyAnAbsentReferenceToNull() {
+        assertNull(AutomationPackageLocalResourceMapper.toDescriptorReference((String) null));
+        assertNotNull(AutomationPackageLocalResourceMapper.toDescriptorReference("apResource:local:kw.groovy"));
+        assertNotNull(AutomationPackageLocalResourceMapper.toDescriptorReference(""));
+    }
+
+    /**
+     * The {@link DynamicValue} overload turns an absent reference into an <b>empty</b> value rather
+     * than none: a yaml model serialized with {@code NON_DEFAULT} compares what it holds against its
+     * own default through {@link DynamicValue#equals}, which reads both values, so a value holding
+     * nothing at all cannot be written.
+     */
+    @Test
+    public void writesAnAbsentDynamicReferenceAsAnEmptyValue() {
+        assertEquals("", AutomationPackageLocalResourceMapper.toDescriptorReference((DynamicValue<String>) null).getValue());
+        assertEquals("", AutomationPackageLocalResourceMapper.toDescriptorReference(new DynamicValue<String>()).getValue());
+        assertEquals("scripts/kw.groovy", AutomationPackageLocalResourceMapper
+            .toDescriptorReference(new DynamicValue<>("apResource:local:scripts/kw.groovy")).getValue());
+    }
+
+    /**
+     * A dynamic expression holds no path to map back, so it is returned as it is rather than being
+     * flattened into the value it last evaluated to.
+     */
+    @Test
+    public void leavesADynamicExpressionAlone() {
+        DynamicValue<String> expression = new DynamicValue<>("scriptFile", "");
+
+        assertSame(expression, AutomationPackageLocalResourceMapper.toDescriptorReference(expression));
     }
 
     private String apply(String reference) {
