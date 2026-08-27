@@ -18,11 +18,9 @@
  ******************************************************************************/
 package step.expressions;
 
+import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyShell;
 import groovy.lang.Script;
-
-
-import org.apache.commons.pool2.DestroyMode;
 import org.apache.commons.pool2.KeyedPooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
@@ -34,11 +32,11 @@ public class GroovyPoolFactory implements KeyedPooledObjectFactory<GroovyPoolKey
 
     private static final Logger logger = LoggerFactory.getLogger(GroovyPoolFactory.class);
 
-    private CompilerConfiguration groovyCompilerConfiguration = new CompilerConfiguration();
-
+    private final CompilerConfiguration groovyCompilerConfiguration = new CompilerConfiguration();
 
     public GroovyPoolFactory(String scriptBaseClass) {
         super();
+
         if (scriptBaseClass != null) {
             groovyCompilerConfiguration.setScriptBaseClass(scriptBaseClass);
         }
@@ -47,7 +45,19 @@ public class GroovyPoolFactory implements KeyedPooledObjectFactory<GroovyPoolKey
     @Override
     public PooledObject<GroovyPoolEntry> makeObject(GroovyPoolKey groovyPoolKey) throws Exception {
         logger.debug("Creating new script: " + groovyPoolKey.getScript());
-        GroovyShell shell = new GroovyShell(groovyCompilerConfiguration);
+
+        final GroovyShell shell;
+        if (groovyCompilerConfiguration.getScriptBaseClass() != null) {
+            // Workaround for groovy quirk when base class is set:
+            // Introduce a separate class loader ONLY for resolving the base class. If we don't, the compiler
+            // configuration will cause the definition of the base class itself to ALSO extend the base class again,
+            // leading to recursive load/compile attempts that block the initialization for ~20-30 seconds.
+            var baseClassLoader = new GroovyClassLoader(Thread.currentThread().getContextClassLoader());
+            shell = new GroovyShell(baseClassLoader, groovyCompilerConfiguration);
+        } else {
+            shell = new GroovyShell(groovyCompilerConfiguration);
+        }
+
         Script script = shell.parse(groovyPoolKey.getScript());
 
         GroovyPoolEntry result = new GroovyPoolEntry(groovyPoolKey, script);

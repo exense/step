@@ -19,7 +19,7 @@
 package step.reporting;
 
 import ch.exense.commons.app.Configuration;
-import step.resources.ResourceManager;
+import step.resources.AttachmentStorage;
 
 public class Junit4ReportConfig {
 
@@ -27,16 +27,16 @@ public class Junit4ReportConfig {
     private final boolean addLinksToStepFrontend;
     private String attachmentsSubfolder;
     private String attachmentsRootFolder;
-    private ResourceManager attachmentResourceManager;
+    private AttachmentStorage attachmentStorage;
     private Configuration serverConfiguration;
 
     private Junit4ReportConfig(String attachmentsSubfolder, String attachmentsRootFolder,
-                               ResourceManager attachmentResourceManager,
+                               AttachmentStorage attachmentStorage,
                                boolean addAttachments, boolean addLinksToStepFrontend,
                                Configuration serverConfiguration) {
         this.attachmentsSubfolder = attachmentsSubfolder;
         this.attachmentsRootFolder = attachmentsRootFolder;
-        this.attachmentResourceManager = attachmentResourceManager;
+        this.attachmentStorage = attachmentStorage;
         this.addAttachments = addAttachments;
         this.addLinksToStepFrontend = addLinksToStepFrontend;
         this.serverConfiguration = serverConfiguration;
@@ -50,8 +50,8 @@ public class Junit4ReportConfig {
         return attachmentsRootFolder;
     }
 
-    public ResourceManager getAttachmentResourceManager() {
-        return attachmentResourceManager;
+    public AttachmentStorage getAttachmentStorage() {
+        return attachmentStorage;
     }
 
     public boolean isAddAttachments() {
@@ -71,7 +71,7 @@ public class Junit4ReportConfig {
         private boolean addLinksToStepFrontend = true;
         private String attachmentSubfolder;
         private String attachmentRootFolder;
-        private ResourceManager attachmentResourceManager;
+        private AttachmentStorage attachmentStorage;
         private Configuration serverConfiguration;
 
         public Builder setAttachmentSubfolder(String attachmentSubfolder) {
@@ -84,8 +84,8 @@ public class Junit4ReportConfig {
             return this;
         }
 
-        public Builder setAttachmentResourceManager(ResourceManager attachmentResourceManager) {
-            this.attachmentResourceManager = attachmentResourceManager;
+        public Builder setAttachmentStorage(AttachmentStorage attachmentStorage) {
+            this.attachmentStorage = attachmentStorage;
             return this;
         }
 
@@ -106,7 +106,7 @@ public class Junit4ReportConfig {
 
         public Junit4ReportConfig createConfig() {
             return new Junit4ReportConfig(
-                attachmentSubfolder, attachmentRootFolder, attachmentResourceManager,
+                attachmentSubfolder, attachmentRootFolder, attachmentStorage,
                 addAttachments, addLinksToStepFrontend, serverConfiguration
             );
         }

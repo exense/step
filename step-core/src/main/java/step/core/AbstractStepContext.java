@@ -26,7 +26,13 @@ import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.expressions.ExpressionHandler;
-import step.resources.*;
+import step.resources.AttachmentStorage;
+import step.resources.InMemoryResourceAccessor;
+import step.resources.InMemoryResourceRevisionAccessor;
+import step.resources.LayeredResourceManager;
+import step.resources.LocalAttachmentStorage;
+import step.resources.LocalResourceManagerImpl;
+import step.resources.ResourceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,25 +50,31 @@ public abstract class AbstractStepContext extends AbstractContext {
     private LoadingCache<String, File> fileResolverCache;
     // Keep track of the default resource manager created at initialization of the context
     private LocalResourceManagerImpl localResourceManager;
+    // Similar to the resource manager, attachmentStorage can be shared by multiple context, but only one of them owns it.
+    private AttachmentStorage attachmentStorage;
+    private AttachmentStorage ownedAttachmentStorage;
 
     protected void setDefaultAttributes() {
         expressionHandler = new ExpressionHandler();
         dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
         // Create a local resource manager in a dedicated folder per default
-        localResourceManager = new LocalResourceManagerImpl(getContextFolderAsFile(), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
+        localResourceManager = new LocalResourceManagerImpl(getContextFolderAsFile("resources"), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
         setResourceManager(localResourceManager);
+        ownedAttachmentStorage = new LocalAttachmentStorage(getContextFolderAsFile("attachments"));
+        setAttachmentStorage(ownedAttachmentStorage);
     }
 
-    private File getContextFolderAsFile() {
+    private File getContextFolderAsFile(String suffix) {
         String tmpPath = System.getProperty("java.io.tmpdir");
         tmpPath = (tmpPath.endsWith(File.separator)) ? tmpPath : tmpPath + File.separator;
-        String dirName = tmpPath + "stepContext_" + getClass().getSimpleName() + "_" + contextId;
+        String dirName = tmpPath + "stepContext_" + getClass().getSimpleName() + "_" + contextId + "_" + suffix;
         return new File(dirName);
     }
 
     protected void useAllAttributesFromParentContext(AbstractStepContext parentContext) {
         ResourceManager resourceManager = new LayeredResourceManager(parentContext.getResourceManager(), true);
         setResourceManager(resourceManager);
+        setAttachmentStorage(parentContext.getAttachmentStorage());
         expressionHandler = parentContext.getExpressionHandler();
         dynamicBeanResolver = parentContext.getDynamicBeanResolver();
         // Propagate the apResource: resolver so a provider installed on a parent context (e.g. the
@@ -93,6 +105,14 @@ public abstract class AbstractStepContext extends AbstractContext {
     public void setResourceManager(ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
         updateFileResolver();
+    }
+
+    public AttachmentStorage getAttachmentStorage() {
+        return attachmentStorage;
+    }
+
+    public void setAttachmentStorage(AttachmentStorage attachmentStorage) {
+        this.attachmentStorage = attachmentStorage;
     }
 
     public FileResolver getFileResolver() {
@@ -137,9 +157,12 @@ public abstract class AbstractStepContext extends AbstractContext {
         try {
             super.close();
         } finally {
-            // Cleanup the default resource manager
+            // Cleanup the default resource manager, and attachment storage
             if (localResourceManager != null) {
                 localResourceManager.cleanup();
+            }
+            if (ownedAttachmentStorage != null) {
+                ownedAttachmentStorage.cleanupIfNeeded();
             }
         }
     }

@@ -106,6 +106,21 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <!--
+    The following dependencies are transitive, and made explicit here to facilitate dependent projects' resolution.
+    For some reason, maven loses the versions that we explicitly define for them (using Step's
+    dependencyManagement section) in cases where this artifact is directly referenced from an OUTSIDE project.
+    This means they resolve to old, vulnerable versions (which are flagged by security scanners), even though
+    Step actually already includes unaffected updated versions.
+    The easiest workaround to fix this is to simply redeclare the dependencies here again;
+    they're then resolved with the correct versions that Step actually ships with.
+    (Note: the scope is kept the same as it is when transitively resolving).
+    -->
+    <dependency>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
+    </dependency>
+
   </dependencies>
 
   <build>
