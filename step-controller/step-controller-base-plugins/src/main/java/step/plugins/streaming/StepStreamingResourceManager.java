@@ -232,6 +232,7 @@ public class StepStreamingResourceManager extends DefaultStreamingResourceManage
         // Very simple heuristic, but should catch almost all useful cases
         return mimeType.startsWith("text/")
             || mimeType.equals("application/xml")
+            || mimeType.equals("application/yaml")
             || mimeType.equals("application/json");
     }
 }
