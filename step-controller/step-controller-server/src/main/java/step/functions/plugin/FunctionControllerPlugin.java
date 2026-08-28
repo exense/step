@@ -86,7 +86,7 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
         FunctionManager functionManager = new FunctionManagerImpl(functionAccessor, functionTypeRegistry);
         FunctionExecutionService functionExecutionService = new FunctionExecutionServiceImpl(gridClient, functionTypeRegistry, context.getDynamicBeanResolver());
 
-        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler(), context.getStringInterpolator()));
 
         context.put(FunctionAccessor.class, functionAccessor);
         SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);

@@ -114,7 +114,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
         reportNodeAccessor = context.getReportNodeAccessor();
         functionExecutionService = context.require(FunctionExecutionService.class);
         reportNodeAttachmentManager = new ReportNodeAttachmentManager(context);
-        dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+        dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler(), context.getStringInterpolator()));
         this.tokenSelectionCriteriaMapBuilder = new TokenSelectionCriteriaMapBuilder(functionTypeRegistry, dynamicJsonObjectResolver);
         this.functionLocator = new FunctionLocator(functionAccessor, new SelectorHelper(dynamicJsonObjectResolver));
         this.useLegacyOutput = context.getConfiguration().getPropertyAsBoolean(KEYWORD_OUTPUT_LEGACY_FORMAT, false);

@@ -154,9 +154,9 @@ public class ParameterManager {
                 DynamicValue<String> parameterValue = parameter.getValue();
                 if (!isProtected && parameterValue != null) {
                     try {
-                        if (parameterValue.isDynamic()) {
-                            dynamicBeanResolver.evaluate(parameter, bindings);
-                        }
+                        // Plain values are evaluated too: they may contain expressions to be interpolated,
+                        // which like dynamic values may reference other parameters
+                        dynamicBeanResolver.evaluate(parameter, bindings);
                         String resolvedValue = parameter.value.get(); //throw an error if evaluation failed
                         bindings.put(k, resolvedValue);
                         resolvedParamKeys.add(k);

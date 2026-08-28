@@ -41,6 +41,7 @@ import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
+import step.core.dynamicbeans.StringInterpolator;
 import step.core.entities.Bean;
 import step.core.entities.Entity;
 import step.core.entities.EntityConstants;
@@ -186,11 +187,12 @@ public class Controller {
             configuration.getPropertyAsInteger("tec.expressions.pool.maxTotalPerKey", 50),
             configuration.getPropertyAsInteger("tec.expressions.pool.maxIdlePerKey", -1),
             configuration.getPropertyAsInteger("tec.expressions.pool.monitoringIntervalSeconds", 60)));
-        context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler(),
-            configuration.getPropertyAsBoolean("plan.dynamicvalues.stringinterpolation.enabled", true))));
+        context.setStringInterpolator(new StringInterpolator(context.getExpressionHandler(),
+            configuration.getPropertyAsBoolean("plan.dynamicvalues.stringinterpolation.enabled", true)));
+        context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler(), context.getStringInterpolator())));
 
         context.setEntityManager(new EntityManager());
-        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler(), context.getStringInterpolator()));
         SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
         PlanLocator planLocator = new PlanLocator(context.getPlanAccessor(), selectorHelper);
 

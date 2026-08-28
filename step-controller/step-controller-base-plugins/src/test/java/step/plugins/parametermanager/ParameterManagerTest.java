@@ -46,6 +46,7 @@ import step.core.collections.Filters;
 import step.core.collections.mongodb.MongoDBCollectionFactory;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
+import step.core.plugins.exceptions.PluginCriticalException;
 import step.expressions.ExpressionHandler;
 import step.parameter.Parameter;
 import step.commons.activation.Expression;
@@ -101,6 +102,71 @@ public class ParameterManagerTest {
 
         params = m.getAllParameterValues(bindings, t -> false);
         Assert.assertEquals(0, params.size());
+    }
+
+    // Interpolation of plain (non dynamic) parameter values
+
+    @Test
+    public void testPlainValueInterpolation() {
+        InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+        ParameterManager m = newParameterManager(accessor);
+
+        accessor.save(new Parameter(null, "host", "myhost", "desc"));
+        // A plain value referencing another parameter, resolved by the iterative resolution
+        accessor.save(new Parameter(null, "url", "http://${host}:8080/api", "desc"));
+        accessor.save(new Parameter(null, "plain", "no placeholder here", "desc"));
+        accessor.save(new Parameter(null, "escaped", "$${host}", "desc"));
+
+        Map<String, String> params = m.getAllParameterValues(new HashMap<>(), null);
+        Assert.assertEquals("myhost", params.get("host"));
+        Assert.assertEquals("http://myhost:8080/api", params.get("url"));
+        Assert.assertEquals("no placeholder here", params.get("plain"));
+        Assert.assertEquals("${host}", params.get("escaped"));
+    }
+
+    @Test
+    public void testPlainValueInterpolationUsesContextBindings() {
+        InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+        ParameterManager m = newParameterManager(accessor);
+
+        accessor.save(new Parameter(null, "greeting", "Hello ${user}", "desc"));
+
+        Map<String, Object> bindings = new HashMap<>();
+        bindings.put("user", "poire");
+        Assert.assertEquals("Hello poire", m.getAllParameterValues(bindings, null).get("greeting"));
+    }
+
+    @Test
+    public void testProtectedParametersAreNotInterpolated() {
+        InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+        ParameterManager m = newParameterManager(accessor);
+
+        accessor.save(new Parameter(null, "host", "myhost", "desc"));
+        Parameter protectedParameter = new Parameter(null, "secret", "pwd=${host}", "desc");
+        protectedParameter.setProtectedValue(true);
+        accessor.save(protectedParameter);
+
+        Map<String, String> params = m.getAllParameterValues(new HashMap<>(), null);
+        Assert.assertEquals("pwd=${host}", params.get("secret"));
+    }
+
+    @Test
+    public void testCyclicPlainValuesAreReported() {
+        InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>();
+        ParameterManager m = newParameterManager(accessor);
+
+        accessor.save(new Parameter(null, "a", "${b}", "desc"));
+        accessor.save(new Parameter(null, "b", "${a}", "desc"));
+
+        PluginCriticalException e = Assert.assertThrows(PluginCriticalException.class,
+            () -> m.getAllParameterValues(new HashMap<>(), null));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("could not be resolved"));
+    }
+
+    private ParameterManager newParameterManager(InMemoryAccessor<Parameter> accessor) {
+        Configuration configuration = new Configuration();
+        configuration.putProperty("tec.activator.scriptEngine", "groovy");
+        return new ParameterManager(accessor, null, configuration, resolver);
     }
 
     @Category(PerformanceTest.class)

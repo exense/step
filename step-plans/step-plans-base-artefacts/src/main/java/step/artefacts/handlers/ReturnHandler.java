@@ -39,7 +39,7 @@ public class ReturnHandler extends ArtefactHandler<Return, ReportNode> {
 
     @Override
     public void init(ExecutionContext context) {
-        dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
+        dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler(), context.getStringInterpolator()));
         super.init(context);
     }
 

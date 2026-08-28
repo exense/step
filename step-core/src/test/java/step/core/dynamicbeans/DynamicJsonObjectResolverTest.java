@@ -19,6 +19,7 @@
 package step.core.dynamicbeans;
 
 import java.io.StringReader;
+import java.util.Map;
 
 import jakarta.json.Json;
 import jakarta.json.JsonObject;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import step.expressions.ExpressionHandler;
+import step.expressions.ProtectedVariable;
 
 public class DynamicJsonObjectResolverTest {
 
@@ -51,5 +53,74 @@ public class DynamicJsonObjectResolverTest {
         Assert.assertEquals("test", output.getJsonObject("testRecursive2").getString("testString"));
     }
 
+    // Interpolation of plain (non dynamic) values
 
+    @Test
+    public void testPlainValueIsInterpolated() {
+        JsonObject output = resolver.evaluate(json("{'in':{'dynamic':false,'value':'Hello ${name}'}}"), Map.of("name", "John"));
+        Assert.assertEquals("Hello John", output.getString("in"));
+    }
+
+    @Test
+    public void testPlainValueWithoutExpressionIsUnchanged() {
+        JsonObject output = resolver.evaluate(json("{'in':{'dynamic':false,'value':'Hello world'}}"), Map.of("name", "John"));
+        Assert.assertEquals("Hello world", output.getString("in"));
+    }
+
+    @Test
+    public void testEscapedPlaceholder() {
+        JsonObject output = resolver.evaluate(json("{'in':{'dynamic':false,'value':'$${name}'}}"), Map.of("name", "John"));
+        Assert.assertEquals("${name}", output.getString("in"));
+    }
+
+    @Test
+    public void testBackslashesAndQuotesArePreserved() {
+        JsonObject output = resolver.evaluate(json("{'in':{'dynamic':false,'value':'C:\\\\temp\\\\${name}'}}"), Map.of("name", "John"));
+        Assert.assertEquals("C:\\temp\\John", output.getString("in"));
+    }
+
+    @Test
+    public void testNonStringPlainValuesAreNotInterpolated() {
+        JsonObject output = resolver.evaluate(json("{'i':{'dynamic':false,'value':5},'b':{'dynamic':false,'value':true}}"), Map.of());
+        Assert.assertEquals(5, output.getInt("i"));
+        Assert.assertTrue(output.getBoolean("b"));
+    }
+
+    @Test
+    public void testMalformedExpression() {
+        RuntimeException e = Assert.assertThrows(RuntimeException.class,
+            () -> resolver.evaluate(json("{'in':{'dynamic':false,'value':'Hello ${name'}}"), Map.of("name", "John")));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("no matching '}'"));
+    }
+
+    @Test
+    public void testInterpolationDisabled() {
+        DynamicJsonObjectResolver disabledResolver = new DynamicJsonObjectResolver(
+            new DynamicJsonValueResolver(new ExpressionHandler(), new StringInterpolator(new ExpressionHandler(), false)));
+        JsonObject output = disabledResolver.evaluate(json("{'in':{'dynamic':false,'value':'Hello ${name}'}}"), Map.of("name", "John"));
+        Assert.assertEquals("Hello ${name}", output.getString("in"));
+    }
+
+    @Test
+    public void testProtectedValueInterpolation() {
+        JsonObject input = json("{'in':{'dynamic':false,'value':'pwd=${secret}'}}");
+        Map<String, Object> bindings = Map.of("secret", new ProtectedVariable("secret", "myPassword"));
+
+        DynamicJsonObjectResolver.DualJsonResult result = resolver.evaluateWithDualResults(input, bindings, true);
+        Assert.assertEquals("pwd=myPassword", result.getNormalResult().getString("in"));
+        Assert.assertEquals("pwd=***secret***", result.getObfuscatedResult().getString("in"));
+    }
+
+    @Test
+    public void testProtectedValueIsNotLeakedWithoutProtectedAccess() {
+        JsonObject input = json("{'in':{'dynamic':false,'value':'pwd=${secret}'}}");
+        Map<String, Object> bindings = Map.of("secret", new ProtectedVariable("secret", "myPassword"));
+
+        RuntimeException e = Assert.assertThrows(RuntimeException.class, () -> resolver.evaluate(input, bindings));
+        Assert.assertFalse(e.getMessage(), e.getMessage().contains("myPassword"));
+    }
+
+    private static JsonObject json(String json) {
+        return Json.createReader(new StringReader(json.replace('\'', '"'))).readObject();
+    }
 }

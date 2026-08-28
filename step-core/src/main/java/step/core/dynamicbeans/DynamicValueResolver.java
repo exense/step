@@ -27,10 +27,10 @@ import step.expressions.ProtectedVariable;
 public class DynamicValueResolver {
 
     private final ExpressionHandler expressionHandler;
-    private final boolean stringInterpolationEnabled;
+    private final StringInterpolator stringInterpolator;
 
     public DynamicValueResolver(ExpressionHandler expressionHandler) {
-        this(expressionHandler, true);
+        this(expressionHandler, new StringInterpolator(expressionHandler));
     }
 
     /**
@@ -39,9 +39,13 @@ public class DynamicValueResolver {
      *                                   are interpolated. When disabled, plain values are always returned as is
      */
     public DynamicValueResolver(ExpressionHandler expressionHandler, boolean stringInterpolationEnabled) {
+        this(expressionHandler, new StringInterpolator(expressionHandler, stringInterpolationEnabled));
+    }
+
+    public DynamicValueResolver(ExpressionHandler expressionHandler, StringInterpolator stringInterpolator) {
         super();
         this.expressionHandler = expressionHandler;
-        this.stringInterpolationEnabled = stringInterpolationEnabled;
+        this.stringInterpolator = stringInterpolator;
     }
 
     public void evaluate(DynamicValue<?> dynamicValue, Map<String, Object> bindings) {
@@ -54,56 +58,19 @@ public class DynamicValueResolver {
     }
 
     private EvaluationResult interpolateIfRequired(DynamicValue<?> dynamicValue, Map<String, Object> bindings) {
-        Object value = dynamicValue.value;
-        // Fast path: only string values may contain expressions or escape sequences, both of which start with a $
-        if (!stringInterpolationEnabled || !(value instanceof String) || ((String) value).indexOf('$') < 0) {
-            return null;
-        }
         EvaluationResult result = new EvaluationResult();
         try {
-            InterpolatedString interpolatedString = InterpolatedString.parse((String) value);
-            if (interpolatedString.isVerbatim()) {
+            StringInterpolator.Result interpolation = stringInterpolator.interpolate(dynamicValue.value, bindings, dynamicValue.hasProtectedAccess());
+            if (interpolation == null) {
                 return null;
             }
-            interpolate(interpolatedString, bindings, dynamicValue.hasProtectedAccess(), result);
+            // The obfuscated value is identical to the clear one unless a protected variable was interpolated
+            result.setResultValue(interpolation.getObfuscatedValue());
+            result.setProtectedValue(interpolation.getValue());
         } catch (Exception e) {
             result.setEvaluationException(e);
         }
         return result;
-    }
-
-    /**
-     * Evaluates the expressions of the provided parsed string and concatenates them with its literal segments.
-     * The literal segments are never passed to the expression handler, which is what makes the interpolation
-     * safe with respect to quotes, backslashes and line breaks contained in the value.
-     */
-    private void interpolate(InterpolatedString interpolatedString, Map<String, Object> bindings, boolean hasProtectedAccess, EvaluationResult result) {
-        StringBuilder clearValue = new StringBuilder();
-        StringBuilder obfuscatedValue = new StringBuilder();
-        boolean containsProtectedValues = false;
-        for (InterpolatedString.Segment segment : interpolatedString.getSegments()) {
-            if (segment.isExpression()) {
-                Object o = expressionHandler.evaluateGroovyExpression(segment.getText(), bindings, hasProtectedAccess);
-                if (o instanceof ProtectedVariable) {
-                    // The clear value of a protected variable is only rendered into the result returned to
-                    // callers with protected access. It is never rendered into the obfuscated result
-                    ProtectedVariable protectedVariable = (ProtectedVariable) o;
-                    obfuscatedValue.append(protectedVariable.obfuscatedValue);
-                    clearValue.append(hasProtectedAccess ? String.valueOf(protectedVariable.value) : protectedVariable.obfuscatedValue);
-                    containsProtectedValues = true;
-                } else {
-                    // Covers GString results as well, whose toString() renders the interpolated value
-                    String stringValue = String.valueOf(o);
-                    clearValue.append(stringValue);
-                    obfuscatedValue.append(stringValue);
-                }
-            } else {
-                clearValue.append(segment.getText());
-                obfuscatedValue.append(segment.getText());
-            }
-        }
-        result.setResultValue(containsProtectedValues ? obfuscatedValue.toString() : clearValue.toString());
-        result.setProtectedValue(clearValue.toString());
     }
 
     private EvaluationResult getEvaluationResult(String expression, Map<String, Object> bindings, boolean hasProtectedAccess) {
