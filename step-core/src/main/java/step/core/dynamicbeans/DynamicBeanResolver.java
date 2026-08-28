@@ -105,7 +105,13 @@ public class DynamicBeanResolver {
     public void evaluateDynamicValue(Map<String, Object> bindings, DynamicValue<?> value) {
         if (value != null) {
             valueResolver.evaluate(value, bindings);
-            evaluate(value.get(), bindings);
+            if (!value.isEvaluationFailed()) {
+                // Recurse into the result, which may itself contain dynamic values.
+                // Failed evaluations are skipped on purpose: calling get() would rethrow the evaluation error and
+                // thus prevent the sibling values of the bean from being evaluated at all. The error is kept on the
+                // value and reported by get() at the point where the value is actually used
+                evaluate(value.get(), bindings);
+            }
         }
     }
 

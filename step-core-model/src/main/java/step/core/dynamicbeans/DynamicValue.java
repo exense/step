@@ -131,6 +131,14 @@ public class DynamicValue<T> {
         this.interpolatedLiteral = interpolationResult != null;
     }
 
+    /**
+     * @return true if the last evaluation of this value failed. The exception isn't thrown at evaluation time but
+     * by {@link #get()}, i.e. at the point where the value is actually used
+     */
+    boolean isEvaluationFailed() {
+        return evalutationResult != null && evalutationResult.evaluationException != null;
+    }
+
     public String getExpression() {
         return expression;
     }
