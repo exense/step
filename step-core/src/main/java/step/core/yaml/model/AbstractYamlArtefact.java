@@ -69,7 +69,6 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
     protected DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
     protected DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
 
-    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
 
     @YamlFieldCustomCopy
     @YamlFieldOrder(YamlFieldPriority.Low)
@@ -77,6 +76,7 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
     @YamlFieldCustomCopy
     @YamlFieldOrder(YamlFieldPriority.Low)
+    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
     protected List<NamedYamlArtefact> children = new ArrayList<>();
 
     @YamlFieldCustomCopy

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.artefacts.AbstractArtefact;
 import step.core.yaml.SerializationUtils;
+import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
 
 import java.io.IOException;
@@ -39,7 +40,8 @@ import java.util.stream.Stream;
  */
 public class SimpleYamlArtefact<T extends AbstractArtefact> extends AbstractYamlArtefact<T> {
 
-    protected ObjectNode fieldValues;
+    @YamlFieldCustomCopy
+    private ObjectNode fieldValues;
 
     public SimpleYamlArtefact(Class<T> techArtefactClass, ObjectNode fieldValues, ObjectMapper yamlObjectMapper) {
         this.artefactClass = techArtefactClass;
