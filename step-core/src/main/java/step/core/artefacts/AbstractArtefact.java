@@ -31,6 +31,8 @@ import step.core.accessors.MapSerializer;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +50,6 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
     protected String description;
 
-    protected List<AbstractArtefact> children = new ArrayList<>();
 
     @JsonSerialize(using = MapSerializer.class)
     @JsonDeserialize(using = MapDeserializer.class)
@@ -61,7 +62,13 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
     private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
     private boolean isWorkArtefact = false;
 
+    @YamlFieldOrder(YamlFieldPriority.Low)
     private ChildrenBlock before;
+
+    @YamlFieldOrder(YamlFieldPriority.Low)
+    protected List<AbstractArtefact> children = new ArrayList<>();
+    
+    @YamlFieldOrder(YamlFieldPriority.Low)
     private ChildrenBlock after;
 
     public AbstractArtefact() {

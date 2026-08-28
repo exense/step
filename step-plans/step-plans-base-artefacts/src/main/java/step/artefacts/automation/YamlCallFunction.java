@@ -23,16 +23,21 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 
 public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
 
-    protected DynamicValue<String> resultMap = new DynamicValue<>();
+    @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.Top)
+    protected YamlKeywordDefinition keyword = new YamlKeywordDefinition(null, null, "{}");
 
     @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.Top)
     protected YamlDynamicInputs inputs = new YamlDynamicInputs("{}");
 
-    @YamlFieldCustomCopy
-    protected YamlKeywordDefinition keyword = new YamlKeywordDefinition(null, null, "{}");
+    @YamlFieldOrder(YamlFieldPriority.Normal)
+    protected DynamicValue<String> resultMap = new DynamicValue<>();
 
     public YamlCallFunction() {
         super(CallFunction.class);

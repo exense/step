@@ -20,6 +20,8 @@ package step.artefacts.automation;
 
 import step.artefacts.CallPlan;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 import step.core.yaml.model.AbstractYamlArtefact;
 
 public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
@@ -27,9 +29,11 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
     private String planId;
 
     @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.Top)
     private YamlDynamicInputs selectionAttributes = new YamlDynamicInputs("{}");
 
     @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.Top)
     protected YamlDynamicInputs input = new YamlDynamicInputs("{}");
 
     public YamlCallPlan() {

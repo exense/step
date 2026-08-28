@@ -24,10 +24,13 @@ import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.deser.BeanDeserializer;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.std.CollectionDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
+import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -44,6 +47,8 @@ import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlListDeserializer;
 import step.core.yaml.deserialization.PatchableYamlModelDeserializer;
@@ -67,6 +72,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -235,6 +241,27 @@ public class YamlPlanReader {
             @Override
             public void setupModule(SetupContext context) {
                 super.setupModule(context);
+
+                // Bean serializer to have control over field ordering using YamlFieldOrder annotation
+                context.addBeanSerializerModifier(new BeanSerializerModifier() {
+                    @Override
+                    public List<BeanPropertyWriter> orderProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
+
+                        List<BeanPropertyWriter> orderedList = new ArrayList<>();
+
+                        for (YamlFieldPriority priority : YamlFieldPriority.values()) {
+                            for (BeanPropertyWriter property : beanProperties) {
+                                YamlFieldOrder order = property.getAnnotation(YamlFieldOrder.class);
+                                YamlFieldPriority fieldPriority = order == null ? YamlFieldPriority.Normal : order.value();
+                                if (priority == fieldPriority) {
+                                    orderedList.add(property);
+                                }
+                            }
+                        }
+
+                        return orderedList;
+                    }
+                });
 
                 context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
                     @Override
