@@ -6,4 +6,8 @@ public class AutomationPackageWriteToDiskException extends AutomationPackageUpda
     public AutomationPackageWriteToDiskException(String s, Exception e) {
         super(s, e);
     }
+
+    public AutomationPackageWriteToDiskException(String s) {
+        super(s);
+    }
 }

@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages;
 
+import ch.exense.commons.io.FileHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -32,6 +33,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.bson.types.ObjectId;
@@ -50,6 +52,7 @@ import step.core.deployment.ControllerServiceException;
 import step.core.entities.EntityConstants;
 import step.core.execution.model.AutomationPackageExecutionParameters;
 import step.core.execution.model.IsolatedAutomationPackageExecutionParameters;
+import step.core.filebrowser.DirectoryListing;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.maven.MavenArtifactIdentifierFromXmlParser;
 import step.framework.server.audit.AuditLogger;
@@ -61,9 +64,11 @@ import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 import step.resources.Resource;
 import step.resources.ResourceManager;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -873,5 +878,209 @@ public class AutomationPackageServices extends AbstractStepAsyncServices {
         } catch (AutomationPackageManagerException e) {
             throw new ControllerServiceException(e.getMessage(), e);
         }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // apResource services
+    //
+    // Files embedded in an automation package are not uploaded as Step resources anymore: they stay
+    // in the package and are referenced as 'apResource:<apId>:<relativePath>'. The three services
+    // below are the client side counterpart of that scheme - build a reference, download the content
+    // of a reference, and browse a package to pick one. The reference format is assembled and parsed
+    // here and never by the clients.
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Builds the {@code apResource:} reference of a file of an automation package, for the case where
+     * the user types the relative path by hand rather than picking it from the file browser.
+     *
+     * @param apId         the id of the automation package the file belongs to
+     * @param relativePath the path of the file, relative to the root of the automation package
+     * @return the reference to be stored in the referencing entity
+     */
+    @GET
+    @Path("/ap-resources/reference")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Secured(right = "automation-package-read")
+    public String getApResourceReference(@QueryParam("apId") String apId, @QueryParam("path") String relativePath) {
+        if (apId == null || apId.isBlank()) {
+            throw badRequest("The query parameter 'apId' must be provided");
+        }
+        if (relativePath == null || relativePath.isBlank()) {
+            throw badRequest("The query parameter 'path' must be provided");
+        }
+        // the path is not required to exist (yet), but it must be a valid archive relative path
+        String normalizedPath = normalizeApRelativePath(relativePath);
+        // the package must be visible in the current context, even though nothing of it is read here
+        if (FileResolver.LOCAL_AP_ID.equals(apId)) {
+            currentlyEditedAutomationPackageDirectory();
+        } else {
+            getAutomationPackage(apId);
+        }
+        return FileResolver.createPathForApResource(apId, normalizedPath);
+    }
+
+    /**
+     * Downloads the content of a file of an automation package, the {@code apResource:} counterpart of
+     * {@code GET /resources/{id}/content}.
+     * <p>
+     * The entry is streamed straight out of the package: unlike an execution, a download must neither
+     * populate nor rely on the apResource cache.
+     *
+     * @param reference the {@code apResource:<apId>:<relativePath>} reference to download, as held
+     *                  by the referencing entity. Alternatively {@code apId} and {@code path} can
+     *                  be provided separately.
+     * @param inline    whether the content should be served as {@code inline} rather than as an
+     *                  attachment
+     */
+    @GET
+    @Path("/ap-resources/content")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Secured(right = "automation-package-read")
+    public Response getApResourceContent(@QueryParam("reference") String reference,
+                                         @QueryParam("apId") String apId,
+                                         @QueryParam("path") String relativePath,
+                                         @QueryParam("inline") boolean inline) {
+        ApResourceTarget target = resolveApResourceTarget(reference, apId, relativePath);
+        if (target.relativePath() == null || target.relativePath().isBlank()) {
+            throw badRequest("The path of the apResource to download must be provided");
+        }
+        File archiveFile = getAutomationPackageArchiveFile(target.apId());
+        ApResourceBrowser.ApResourceStream stream = openApResource(target, archiveFile);
+        return ApResourceContentResponse.of(stream, inline);
+    }
+
+    /**
+     * Lists the content of one directory of an automation package, to let the user pick a file to be
+     * referenced.
+     *
+     * @param reference the {@code apResource:<apId>:<relativePath>} reference the browser should open
+     *                  at, typically the value currently held by the edited field. Alternatively
+     *                  {@code apId} and {@code path} can be provided separately, {@code path} being
+     *                  optional and defaulting to the root of the package.
+     * @param filesOnly whether directories should be left out of the listing
+     * @param dirsOnly  whether files should be left out of the listing
+     * @return the content of the directory itself if the path points to a directory, and of its parent
+     * directory if it points to a file, so that the client can preselect that file. The directory that
+     * was effectively listed is reported by {@link DirectoryListing#path()}.
+     */
+    @GET
+    @Path("/ap-resources/browse")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured(right = "automation-package-read")
+    public DirectoryListing browseApResources(@QueryParam("reference") String reference,
+                                              @QueryParam("apId") String apId,
+                                              @QueryParam("path") String relativePath,
+                                              @QueryParam("filesOnly") @DefaultValue("false") boolean filesOnly,
+                                              @QueryParam("dirsOnly") @DefaultValue("false") boolean dirsOnly) {
+        ApResourceTarget target = resolveApResourceTarget(reference, apId, relativePath);
+        File archiveFile = getAutomationPackageArchiveFile(target.apId());
+        try {
+            return ApResourceBrowser.browse(archiveFile, target.relativePath(),
+                path -> FileResolver.createPathForApResource(target.apId(), path),
+                ApResourceBrowser.EntryFilter.of(filesOnly, dirsOnly));
+        } catch (ApResourceNotFoundException e) {
+            throw new ControllerServiceException(HttpStatus.SC_NOT_FOUND, e.getMessage());
+        } catch (IllegalArgumentException e) {
+            throw badRequest(e.getMessage());
+        }
+    }
+
+    private record ApResourceTarget(String apId, String relativePath) {
+    }
+
+    /**
+     * Accepts the apResource to work on either as a whole reference - the form the referencing
+     * entities hold and the clients pass around - or as an explicit id and path pair, for the case
+     * where no reference exists yet.
+     */
+    private ApResourceTarget resolveApResourceTarget(String reference, String apId, String relativePath) {
+        boolean hasReference = reference != null && !reference.isBlank();
+        boolean hasApId = apId != null && !apId.isBlank();
+        if (hasReference) {
+            if (hasApId) {
+                throw badRequest("The query parameters 'reference' and 'apId' are mutually exclusive");
+            }
+            if (!FileResolver.isApResource(reference)) {
+                throw badRequest("Invalid apResource reference: '" + reference
+                    + "'. References must be given in the format 'apResource:<apId>:<relativePath>'.");
+            }
+            try {
+                return new ApResourceTarget(FileResolver.extractApId(reference), FileResolver.extractApRelativePath(reference));
+            } catch (IllegalArgumentException e) {
+                throw badRequest(e.getMessage());
+            }
+        }
+        if (!hasApId) {
+            throw badRequest("Either the query parameter 'reference' or the query parameter 'apId' must be provided");
+        }
+        return new ApResourceTarget(apId, relativePath);
+    }
+
+    private ApResourceBrowser.ApResourceStream openApResource(ApResourceTarget target, File archiveFile) {
+        try {
+            return ApResourceBrowser.openEntry(archiveFile, target.relativePath());
+        } catch (ApResourceNotFoundException e) {
+            throw new ControllerServiceException(HttpStatus.SC_NOT_FOUND, e.getMessage());
+        } catch (IllegalArgumentException e) {
+            throw badRequest(e.getMessage());
+        }
+    }
+
+    /**
+     * Resolves the archive file of a deployed automation package, after having checked that the
+     * package is visible in the current context — or, for the {@code local} id, the directory of the
+     * package currently open in the editor, which {@link ApResourceBrowser} browses like any archive.
+     */
+    private File getAutomationPackageArchiveFile(String apId) {
+        if (FileResolver.LOCAL_AP_ID.equals(apId)) {
+            return currentlyEditedAutomationPackageDirectory();
+        }
+        AutomationPackage automationPackage = getAutomationPackage(apId);
+        String archiveReference = automationPackage.getAutomationPackageResource();
+        if (archiveReference == null) {
+            throw new ControllerServiceException(HttpStatus.SC_NOT_FOUND, "The automation package " + apId
+                + " has no package file. This is the case for automation packages deployed before Step 29.0");
+        }
+        File archiveFile = getContext().getFileResolver().resolve(archiveReference);
+        if (archiveFile == null || !archiveFile.exists()) {
+            throw new ControllerServiceException(HttpStatus.SC_NOT_FOUND, "The package file of the automation package "
+                + apId + " could not be resolved from the reference " + archiveReference);
+        }
+        return archiveFile;
+    }
+
+    /**
+     * @return the directory of the automation package currently open in the editor
+     * @throws ControllerServiceException 400 on a distribution that has no editor — {@code local} is
+     *                                    then simply not a package id — and 409 when the editor has no
+     *                                    package open, which is a state problem rather than a
+     *                                    malformed request: the very same call succeeds once one is
+     *                                    opened
+     */
+    private File currentlyEditedAutomationPackageDirectory() {
+        LocalAutomationPackageDirectoryProvider provider = getContext().get(LocalAutomationPackageDirectoryProvider.class);
+        if (provider == null) {
+            throw badRequest("'" + FileResolver.LOCAL_AP_ID + "' is not a valid automation package id here. "
+                + "It addresses the automation package open in the Step IDE.");
+        }
+        java.nio.file.Path directory = provider.getCurrentAutomationPackageDirectory();
+        if (directory == null) {
+            throw new ControllerServiceException(HttpStatus.SC_CONFLICT,
+                "No automation package is currently open in the editor");
+        }
+        return directory.toFile();
+    }
+
+    private String normalizeApRelativePath(String relativePath) {
+        try {
+            return FileResolver.normalizeApRelativePath(relativePath);
+        } catch (IllegalArgumentException e) {
+            throw badRequest(e.getMessage());
+        }
+    }
+
+    private static ControllerServiceException badRequest(String message) {
+        return new ControllerServiceException(HttpStatus.SC_BAD_REQUEST, message);
     }
 }
