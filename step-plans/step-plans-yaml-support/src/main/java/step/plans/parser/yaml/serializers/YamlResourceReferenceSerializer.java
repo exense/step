@@ -35,6 +35,12 @@ public class YamlResourceReferenceSerializer extends StepYamlSerializer<YamlReso
         super(yamlObjectMapper);
     }
 
+    /**
+     * Writes nothing at all for a reference holding neither form, which is only correct because
+     * {@link YamlResourceReference#isEmpty()} answers the same question the same way and keeps such a
+     * reference out of the yaml entirely. Should the two ever disagree, jackson writes the property
+     * name and gets no value for it, and the plan around it stops being serializable.
+     */
     @Override
     public void serialize(YamlResourceReference value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         if (value.getSimpleString() != null && !value.getSimpleString().isEmpty()) {

@@ -1,4 +1,4 @@
-package step.cli.apignore;
+package step.automation.packages.apignore;
 
 import org.junit.Test;
 
@@ -33,7 +33,7 @@ public class ApIgnoreFileFilterTest {
 
         assertFalse(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "ignore-folder-pattern/anything")));
         assertTrue(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "ignore-folder-pattern-for-file")));
-        assertFalse(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "src/test/resources/step/cli/apignore/folder/any-sub-folder/file.txt")));
+        assertFalse(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "src/test/resources/step/automation/packages/apignore/folder/any-sub-folder/file.txt")));
         assertFalse(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "folder/sub-folder/any-sub-folder/file.txt")));
         assertFalse(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "/root-ignore-folder")));
         assertTrue(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "/sub/root-ignore-folder")));
@@ -55,4 +55,18 @@ public class ApIgnoreFileFilterTest {
         assertTrue(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "somefile")));
     }
 
+    /**
+     * The file declaring the patterns is not part of the automation package either - the CLI excludes it
+     * from the archive it builds, so the browser must not offer it.
+     */
+    @Test
+    public void neverAcceptsTheApIgnoreFileItself() throws IOException, URISyntaxException {
+        URL resource = ApIgnoreFileFilterTest.class.getResource(".apignore");
+        File file = Paths.get(resource.toURI()).toFile();
+        Path rootPath = Paths.get("").toAbsolutePath();
+        ApIgnoreFileFilter apIgnoreFileFilter = new ApIgnoreFileFilter(rootPath, file.toPath());
+
+        assertFalse(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), ".apignore")));
+        assertFalse(apIgnoreFileFilter.accept(Path.of(rootPath.toString(), "folder/.apignore")));
+    }
 }

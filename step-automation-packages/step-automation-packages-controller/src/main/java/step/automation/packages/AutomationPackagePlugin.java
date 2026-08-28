@@ -70,6 +70,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
     private static final String CONFIGURATION_MAX_VERSIONS_PER_AP = "automation.packages.max.versions.per.package";
     protected AutomationPackageLocks automationPackageLocks;
     private AutomationPackageAccessor packageAccessor;
+    private AutomationPackageReaderRegistry automationPackageReaderRegistry;
+    private File apResourceCacheRoot;
 
     @Override
     public void serverStart(GlobalContext context) throws Exception {
@@ -102,10 +104,25 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         AutomationPackageSerializationRegistry serRegistry = new AutomationPackageSerializationRegistry();
         context.put(AutomationPackageSerializationRegistry.class, serRegistry);
 
-        AutomationPackageReaderRegistry automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry);
+        automationPackageReaderRegistry = new AutomationPackageReaderRegistry(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry);
         JavaAutomationPackageReader javaAutomationPackageReader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serRegistry, context.getConfiguration());
         automationPackageReaderRegistry.register(javaAutomationPackageReader);
         context.put(AutomationPackageReaderRegistry.class, automationPackageReaderRegistry);
+
+        apResourceCacheRoot = new File(context.getConfiguration().getProperty(
+            ApResourceCache.CACHE_DIR_PROPERTY, ApResourceCache.DEFAULT_CACHE_DIR));
+
+        // Install the apResource resolver on the global FileResolver used by the function types.
+        // Non-isolated (deployed) executions resolve keyword scripts / datasources through this global
+        // resolver (see AbstractFunctionType.registerFile), so it must know how to resolve
+        // apResource:<apId>:<path> references against the globally deployed automation packages.
+        // Isolated executions resolve through their own execution-context FileResolver, which is wired
+        // separately in AutomationPackageExecutionPlugin using the pushed isolated accessor.
+        context.setApResourceProvider(new AutomationPackageResourceProvider(
+            apResourceCacheRoot,
+            () -> packageAccessor,
+            archiveReference -> context.getFileResolver().resolve(archiveReference),
+            file -> automationPackageReaderRegistry.getReaderForFile(file).createAutomationPackageArchive(file, null, null)));
     }
 
     public static class AutomationPackageImportHook implements BiConsumer<Object, ImportContext> {
@@ -153,6 +170,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
                 maxVersionPerPackage,
                 context.get(ObjectHookRegistry.class)
             );
+            // Only the MAIN manager owns the apResource cache lifecycle (wipe on redeploy/delete).
+            packageManager.setApResourceCacheRoot(apResourceCacheRoot);
             context.put(AutomationPackageManager.class, packageManager);
         }
     }
@@ -181,7 +200,8 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
 
     @Override
     public ExecutionEnginePlugin getExecutionEnginePlugin() {
-        return new AutomationPackageExecutionPlugin(automationPackageLocks, packageAccessor);
+        return new AutomationPackageExecutionPlugin(automationPackageLocks, packageAccessor,
+            apResourceCacheRoot, automationPackageReaderRegistry);
     }
 
     private static class MavenConfigProviderImpl implements AutomationPackageMavenConfig.ConfigProvider {

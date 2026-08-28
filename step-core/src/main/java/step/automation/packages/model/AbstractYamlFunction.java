@@ -19,6 +19,7 @@
 package step.automation.packages.model;
 
 import jakarta.json.JsonObject;
+import step.automation.packages.AutomationPackageLocalResourceMapper;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
@@ -113,6 +114,18 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
         copyFieldsToObject(res, true);
     }
 
+    /**
+     * The inverse of {@link #fillDeclaredFields(Function, StagingAutomationPackageContext)}, the way
+     * {@code fillYamlArtefactFields} is the inverse of {@code fillArtefactFields} for artefacts:
+     * {@code copyFieldsFromObject} handles the plain fields, and a subclass overrides this to handle
+     * whatever it declared {@code @YamlFieldCustomCopy} - its resource references above all, which are
+     * mapped back to the form the descriptor holds with
+     * {@link AutomationPackageLocalResourceMapper#toDescriptorReference(DynamicValue)}.
+     * <p>
+     * This is where a conditional mapping belongs. {@code YamlK6Function} turns one authored script path
+     * into three different shapes of the business object, and only that class can recompose the original
+     * from them - which is why nothing generic may rewrite a keyword's references.
+     */
     public void setDeclaredFieldsFromObject(T res) {
         Optional.ofNullable(res.getAttribute(AbstractOrganizableObject.NAME)).ifPresent(this::setName);
         routing = res.getTokenSelectionCriteria();
