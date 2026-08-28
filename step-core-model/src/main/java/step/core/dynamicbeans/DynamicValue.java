@@ -29,6 +29,9 @@ public class DynamicValue<T> {
     @JsonIgnore
     EvaluationResult evalutationResult;
 
+    @JsonIgnore
+    boolean interpolatedLiteral;
+
     String expression;
 
     String expressionType;
@@ -52,24 +55,28 @@ public class DynamicValue<T> {
 
     @SuppressWarnings("unchecked")
     public T get() {
-        if (!isDynamic()) {
+        if (!isDynamic() && !interpolatedLiteral) {
             return value;
         } else {
-            if (evalutationResult != null) {
-                if (evalutationResult.evaluationException != null) {
-                    Throwable cause = evalutationResult.evaluationException.getCause();
-                    String errorMsg = evalutationResult.evaluationException.getMessage();
-                    if (cause != null) {
-                        errorMsg = errorMsg + ". Groovy error: >>> " + cause.getMessage() + " <<<";
-                    }
-                    throw new RuntimeException(errorMsg, evalutationResult.evaluationException);
-                } else {
-                    Object result = hasProtectedAccess() ? evalutationResult.getProtectedValue() : evalutationResult.getResultValue();
-                    return (T) result;
+            return evaluationResult();
+        }
+    }
+
+    private T evaluationResult() {
+        if (evalutationResult != null) {
+            if (evalutationResult.evaluationException != null) {
+                Throwable cause = evalutationResult.evaluationException.getCause();
+                String errorMsg = evalutationResult.evaluationException.getMessage();
+                if (cause != null) {
+                    errorMsg = errorMsg + ". Groovy error: >>> " + cause.getMessage() + " <<<";
                 }
+                throw new RuntimeException(errorMsg, evalutationResult.evaluationException);
             } else {
-                throw new RuntimeException("Expression hasn't been evaluated.");
+                Object result = hasProtectedAccess() ? evalutationResult.getProtectedValue() : evalutationResult.getResultValue();
+                return (T) result;
             }
+        } else {
+            throw new RuntimeException("Expression hasn't been evaluated.");
         }
     }
 
@@ -107,6 +114,21 @@ public class DynamicValue<T> {
 
     public void setValue(T value) {
         this.value = value;
+        if (interpolatedLiteral) {
+            // Discard the interpolation result of the previous value
+            setInterpolationResult(null);
+        }
+    }
+
+    /**
+     * Sets the result of the interpolation of the expressions contained in a plain (non dynamic) string value.
+     * A null result means that the value contains no expression and is to be returned as is by {@link #get()}
+     *
+     * @param interpolationResult the result of the interpolation or null if the value requires no interpolation
+     */
+    void setInterpolationResult(EvaluationResult interpolationResult) {
+        this.evalutationResult = interpolationResult;
+        this.interpolatedLiteral = interpolationResult != null;
     }
 
     public String getExpression() {
@@ -132,6 +154,7 @@ public class DynamicValue<T> {
     protected DynamicValue<T> _cloneValue(DynamicValue<T> clone) {
         clone.dynamic = dynamic;
         clone.evalutationResult = null;
+        clone.interpolatedLiteral = false;
         clone.expression = expression;
         clone.expressionType = expressionType;
         clone.value = value;

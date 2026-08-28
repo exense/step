@@ -186,7 +186,8 @@ public class Controller {
             configuration.getPropertyAsInteger("tec.expressions.pool.maxTotalPerKey", 50),
             configuration.getPropertyAsInteger("tec.expressions.pool.maxIdlePerKey", -1),
             configuration.getPropertyAsInteger("tec.expressions.pool.monitoringIntervalSeconds", 60)));
-        context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler())));
+        context.setDynamicBeanResolver(new DynamicBeanResolver(new DynamicValueResolver(context.getExpressionHandler(),
+            configuration.getPropertyAsBoolean("plan.dynamicvalues.stringinterpolation.enabled", true))));
 
         context.setEntityManager(new EntityManager());
         DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
