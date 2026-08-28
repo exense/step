@@ -22,6 +22,7 @@ import org.junit.Test;
 import step.core.dynamicbeans.DynamicValue;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -85,6 +86,26 @@ public class YamlResourceReferenceTest {
     @Test
     public void anAbsentReferenceIsEmpty() {
         assertTrue(of(null).isEmpty());
+    }
+
+    /**
+     * Empty has to mean the same thing here as it does to the serializer, which writes nothing for a
+     * blank field. A blank counted as non-empty made jackson write a property name the serializer
+     * then refused to fill, which broke the serialization of the whole plan - see
+     * {@code YamlPlanResourceReferenceTest.anEmptyReferenceIsLeftOutOfTheYaml}.
+     */
+    @Test
+    public void aBlankReferenceIsEmptyToo() {
+        assertTrue(of("").isEmpty());
+        assertTrue("a resource: carrying no id has nothing to write either", of("resource:").isEmpty());
+        assertTrue(new YamlResourceReference("", "").isEmpty());
+    }
+
+    @Test
+    public void aReferenceThatHasSomethingToWriteIsNotEmpty() {
+        assertFalse(of("data/my book.xlsx").isEmpty());
+        assertFalse(of("resource:644fbe4e38a61e07cc3a4df9").isEmpty());
+        assertFalse(of("apResource:local:data/my book.xlsx").isEmpty());
     }
 
     /**

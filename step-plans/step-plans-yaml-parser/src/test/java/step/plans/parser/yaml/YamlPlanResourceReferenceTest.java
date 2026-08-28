@@ -24,12 +24,14 @@ import step.artefacts.DataSetArtefact;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.datapool.excel.ExcelDataPool;
+import step.datapool.gsheet.GoogleSheetv4DataPoolConfiguration;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -91,6 +93,46 @@ public class YamlPlanResourceReferenceTest {
         workbookOfTheYamlOf(plan);
 
         assertEquals("apResource:local:data/my book.xlsx", workbookOfThePlan(plan));
+    }
+
+    /**
+     * A data source whose reference defaults to the empty string - {@code GoogleSheetv4DataPoolConfiguration}
+     * does, where the file and the excel pool default to a null value - used to make the whole plan
+     * unserializable, and so unsavable from the editor. {@code isEmpty} saw a non-null field and let
+     * jackson write the property name, then the serializer found nothing worth writing and left that
+     * name dangling; the failure surfaces far away as
+     * {@code Cannot deserialize value of type JsonNode from Object value (token FIELD_NAME)}.
+     */
+    @Test
+    public void anEmptyReferenceIsLeftOutOfTheYaml() throws IOException {
+        JsonNode gsheet = gsheetOfTheYamlOf(new GoogleSheetv4DataPoolConfiguration());
+
+        assertTrue(gsheet.toString(), gsheet.isObject());
+        assertFalse(gsheet.toString(), gsheet.has("serviceAccountKey"));
+    }
+
+    @Test
+    public void theKeyOfAGSheetIsWrittenLikeAnyOtherResource() throws IOException {
+        GoogleSheetv4DataPoolConfiguration dataPool = new GoogleSheetv4DataPoolConfiguration();
+        dataPool.setServiceAccountKey(new DynamicValue<>("apResource:local:keys/service account.json"));
+
+        assertEquals("\"keys/service account.json\"",
+            gsheetOfTheYamlOf(dataPool).path("serviceAccountKey").toString());
+    }
+
+    private JsonNode gsheetOfTheYamlOf(GoogleSheetv4DataPoolConfiguration dataPool) throws IOException {
+        DataSetArtefact dataSet = new DataSetArtefact();
+        dataSet.setDataSourceType("gsheet");
+        dataSet.setDataSource(dataPool);
+
+        Plan plan = new Plan(dataSet);
+        YamlPlanReader.setPlanName(plan, "test plan");
+
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            reader.writeYamlPlan(os, plan);
+            return reader.getYamlMapper().readTree(os.toByteArray())
+                .path("root").path("dataSet").path("dataSource").path("gsheet");
+        }
     }
 
     private static Plan planReadingTheWorkbook(String reference) {

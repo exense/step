@@ -102,7 +102,20 @@ public class YamlResourceReference {
         this.resourceId = resourceId;
     }
 
+    /**
+     * Empty means <i>nothing to write</i>, and so has to agree with {@code YamlResourceReferenceSerializer},
+     * which writes a value only for a non-blank field, and with {@link #toDynamicValue()}, which reads
+     * one only under the same condition. Answering on nullness alone let a blank reference - the
+     * default of {@code GoogleSheetv4DataPoolConfiguration.serviceAccountKey}, and any
+     * {@code resource:} with no id - through jackson's {@code NON_EMPTY} filter, so the property name
+     * was written and then the serializer declined to write its value. That leaves the generator with
+     * a dangling field name and breaks the serialization of the whole plan, far from here.
+     */
     public boolean isEmpty() {
-        return this.resourceId == null && this.simpleString == null;
+        return isBlank(simpleString) && isBlank(resourceId);
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isEmpty();
     }
 }
