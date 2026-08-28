@@ -35,9 +35,9 @@ import java.nio.file.Files;
  * attribute it holds ({@code AbstractContext.close}), so the cache lives exactly as long as the engine
  * that owns it - one JUnit suite, one CLI invocation.
  * <p>
- * A shutdown hook does the same as a fallback, because nothing runs {@code close()} when the process is
- * killed or calls {@code System.exit} - and {@code Files.createTempDirectory} has no lifecycle of its own
- * and {@code File.deleteOnExit} would not help either, since it refuses a directory that is not empty.
+ * Closing the engine is deliberately the <b>only</b> trigger. Making sure the engine is closed at all when the process is
+ * interrupted belongs to whoever owns the engine, which for the one path that reaches this class is
+ * {@code CliShutdownHook} in the CLI.
  */
 public class LocalApResourceCacheRoot implements Closeable {
 
@@ -46,10 +46,9 @@ public class LocalApResourceCacheRoot implements Closeable {
     protected static final String DIRECTORY_PREFIX = "ap-cache-local";
 
     private final File root;
-    private final Thread shutdownHook;
 
     /**
-     * Creates the cache directory and registers its deletion for the end of the JVM.
+     * Creates the cache directory. It is deleted by {@link #close()} and by nothing else.
      */
     public static LocalApResourceCacheRoot create() {
         try {
@@ -61,8 +60,6 @@ public class LocalApResourceCacheRoot implements Closeable {
 
     protected LocalApResourceCacheRoot(File root) {
         this.root = root;
-        this.shutdownHook = new Thread(this::delete, "ap-cache-local-cleanup");
-        Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
 
     public File getRoot() {
@@ -71,18 +68,13 @@ public class LocalApResourceCacheRoot implements Closeable {
 
     @Override
     public void close() {
-        if (delete()) {
-            try {
-                Runtime.getRuntime().removeShutdownHook(shutdownHook);
-            } catch (IllegalStateException e) {
-                // The JVM is already shutting down, so the hook is running or has run: nothing to remove
-            }
-        }
-        // On a failure the hook stays registered and tries again at the end of the JVM, by which time
-        // whatever held a file - a keyword process, a file handle of the run - has usually let go.
+        delete();
     }
 
     /**
+     * A failure is logged rather than thrown: a cache that could not be deleted is a temporary directory
+     * left behind, not a reason to fail the run that just finished.
+     *
      * @return true if the directory is gone, whether this call removed it or it was already deleted
      */
     private synchronized boolean delete() {
@@ -90,7 +82,7 @@ public class LocalApResourceCacheRoot implements Closeable {
             return true;
         }
         if (FileHelper.deleteFolder(root)) {
-            logger.debug("Deleted the local apResource cache directory {}", root.getAbsolutePath());
+            logger.info("Deleted the local apResource cache directory {}", root.getAbsolutePath());
             return true;
         }
         logger.warn("The local apResource cache directory {} could not be fully deleted", root.getAbsolutePath());

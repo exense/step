@@ -53,8 +53,8 @@ public class LocalApResourceCacheRootTest {
     }
 
     /**
-     * The shutdown hook does the same as a fallback, so both may run: the second one must find nothing to
-     * do rather than fail.
+     * The cache is closed as an attribute of the execution engine context, and a caller holding it may
+     * close it too: the second call must find nothing to do rather than fail.
      */
     @Test
     public void closingTwiceIsANoOp() {
