@@ -58,10 +58,6 @@ public class YamlEscapingMigrationTest {
 
     // Plans written against the old schema
 
-    /**
-     * Note the {@code $$}: before the interpolation existed it was simply two literal dollars, so it has to survive
-     * as two dollars. Escaping only {@code ${} would silently turn it into one
-     */
     @Test
     public void testOldPlanKeepsItsLiteralValues() throws Exception {
         Plan plan = readPlan("1.2.0", PLACEHOLDERS);
@@ -87,7 +83,7 @@ public class YamlEscapingMigrationTest {
             "      value: \"Jane\"\n" +
             "  - echo:\n" +
             "      text:\n" +
-            "        expression: '\"Hello \" + name'\n");
+            "        expression: '\"Hello ${name}\"'\n");
         Assert.assertEquals(List.of("Hello Jane"), execute(plan));
     }
 

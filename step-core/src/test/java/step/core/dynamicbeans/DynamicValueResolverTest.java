@@ -19,6 +19,7 @@
 package step.core.dynamicbeans;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -114,20 +115,29 @@ public class DynamicValueResolverTest {
         Assert.assertFalse(v1.interpolatedLiteral);
     }
 
+    /**
+     * A value which doesn't contain ${ is used as is and is never even parsed, whatever dollars it contains
+     */
     @Test
-    public void testValueWithLoneDollarIsReturnedAsIs() {
-        DynamicValue<String> v1 = new DynamicValue<>("Price: $5 and $name");
-        newResolver().evaluate(v1, NAME_BINDING);
-        Assert.assertEquals("Price: $5 and $name", v1.get());
-        Assert.assertNull(v1.evalutationResult);
+    public void testValueWithoutExpressionPrefixIsReturnedAsIs() {
+        for (String literal : List.of("Price: $5 and $name", "pid $$", "a$$b", "$", "100% $$ done")) {
+            DynamicValue<String> v1 = new DynamicValue<>(literal);
+            newResolver().evaluate(v1, NAME_BINDING);
+            Assert.assertEquals(literal, v1.get());
+            Assert.assertNull("No evaluation should have taken place for <" + literal + ">", v1.evalutationResult);
+            Assert.assertFalse(v1.interpolatedLiteral);
+        }
     }
 
     @Test
     public void testEscapedPlaceholder() {
         // The escape sequence is resolved without any evaluation taking place
         Assert.assertEquals("${name}", interpolate("$${name}", NAME_BINDING));
-        Assert.assertEquals("$John", interpolate("$$${name}", NAME_BINDING));
-        Assert.assertEquals("$${name}", interpolate("$$$${name}", NAME_BINDING));
+        Assert.assertEquals("$${name}", interpolate("$$${name}", NAME_BINDING));
+        // Only ${ is significant, so a value without it is never altered
+        Assert.assertEquals("a$$b", interpolate("a$$b", NAME_BINDING));
+        // A literal $ in front of an expression is written with the expression itself
+        Assert.assertEquals("$John", interpolate("${'$'}${name}", NAME_BINDING));
     }
 
     /**
@@ -182,7 +192,7 @@ public class DynamicValueResolverTest {
         DynamicValue<String> v1 = new DynamicValue<>("Hello ${name");
         newResolver().evaluate(v1, NAME_BINDING);
         RuntimeException e = Assert.assertThrows(RuntimeException.class, v1::get);
-        Assert.assertTrue(e.getMessage(), e.getMessage().contains("no matching '}'"));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("no '}' found"));
     }
 
     @Test

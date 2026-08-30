@@ -140,7 +140,7 @@ public class StringInterpolationEscaper {
      * @return the escaped document, or null if it isn't a JSON object or if nothing had to be escaped
      */
     private static String escapeNestedDocument(String json) {
-        if (json == null || json.isBlank() || json.indexOf('$') < 0) {
+        if (json == null || json.isBlank() || !json.contains(InterpolatedString.EXPRESSION_PREFIX)) {
             return null;
         }
         Map<String, Object> parsed;

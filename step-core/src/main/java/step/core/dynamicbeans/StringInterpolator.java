@@ -93,15 +93,12 @@ public class StringInterpolator {
      * @throws RuntimeException             if the evaluation of one of the expressions fails
      */
     public Result interpolate(Object value, Map<String, Object> bindings, boolean hasProtectedAccess) {
-        // Fast path: only string values may contain expressions or escape sequences, both of which start with a $
-        if (!(value instanceof String) || ((String) value).indexOf('$') < 0) {
+        // Fast path: only string values can be interpolated, and only ${ is significant. Both an expression and its
+        // escape sequence contain it, so a value without it is always used as is
+        if (!(value instanceof String) || !((String) value).contains(InterpolatedString.EXPRESSION_PREFIX)) {
             return null;
         }
-        InterpolatedString interpolatedString = InterpolatedString.parse((String) value);
-        if (interpolatedString.isVerbatim()) {
-            return null;
-        }
-        return interpolate(interpolatedString, bindings, hasProtectedAccess);
+        return interpolate(InterpolatedString.parse((String) value), bindings, hasProtectedAccess);
     }
 
     private Result interpolate(InterpolatedString interpolatedString, Map<String, Object> bindings, boolean hasProtectedAccess) {

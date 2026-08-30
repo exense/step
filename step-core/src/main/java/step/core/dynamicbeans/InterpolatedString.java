@@ -32,20 +32,31 @@ import com.google.common.cache.CacheBuilder;
  * The syntax is intentionally kept minimal and is <b>not</b> the Groovy GString syntax. Only the following
  * sequences are interpreted, everything else (in particular backslashes and quotes) is preserved verbatim:
  * <ul>
- *     <li><code>${...}</code> delimits an expression. The content is passed as is to the expression handler.
- *     The closing brace is located by balancing braces while skipping over Groovy string literals, so that
- *     expressions such as <code>${ map['}'] }</code> or <code>${ list.collect{ it } }</code> are supported.</li>
- *     <li><code>$$</code> is the escape sequence for a single literal <code>$</code>. It applies everywhere,
- *     not only in front of a brace, which makes the escaping complete: <code>$${name}</code> renders the
- *     literal <code>${name}</code>, <code>$$${name}</code> renders a <code>$</code> followed by the value of
- *     the expression <code>name</code>, and <code>$$$${name}</code> renders the literal <code>$${name}</code>.</li>
- *     <li>A <code>$</code> which is followed neither by a <code>$</code> nor by a <code>{</code> is a literal
- *     <code>$</code>. In particular <code>$name</code> is <b>not</b> interpolated, only the braced form is.</li>
+ *     <li><code>${...}</code> delimits an expression, ended by the <b>first</b> <code>}</code>. The content is
+ *     passed as is to the expression handler. An expression can therefore not contain a brace, which rules out
+ *     closures and map literals - those belong in the expression mode of the field, which stays available for
+ *     anything the placeholder syntax can't express.</li>
+ *     <li><code>$${</code> is the escape sequence for a literal <code>${</code>, following the convention used
+ *     by Apache Commons Text and docker compose. Nothing else is an escape: a value which doesn't contain
+ *     <code>${</code> is never altered, so <code>a$$b</code>, <code>100$$</code> and <code>Price: $5</code> are
+ *     all preserved verbatim.</li>
+ *     <li>A <code>$</code> which doesn't open or escape an expression is a literal <code>$</code>. In particular
+ *     <code>$name</code> is <b>not</b> interpolated, only the braced form is.</li>
  * </ul>
+ * A literal <code>$</code> immediately followed by an expression is written <code>${'$'}${name}</code>, the
+ * placeholder syntax having no way to express it directly.
+ * <p>
  * Instances are immutable and cached, as the same literals are typically re-parsed for every execution of
  * every artefact instance.
  */
 public class InterpolatedString {
+
+    /**
+     * The only sequence which is significant in a plain value: it either opens an expression or, doubled, escapes
+     * one. A value which doesn't contain it is always used as is
+     */
+    public static final String EXPRESSION_PREFIX = "${";
+    private static final String ESCAPED_EXPRESSION_PREFIX = "$${";
 
     private static final int PARSE_CACHE_SIZE = 1000;
 
@@ -92,14 +103,11 @@ public class InterpolatedString {
     private final String source;
     private final List<Segment> segments;
     private final boolean containsExpressions;
-    private final boolean verbatim;
 
     private InterpolatedString(String source, List<Segment> segments) {
         this.source = source;
         this.segments = Collections.unmodifiableList(segments);
         this.containsExpressions = segments.stream().anyMatch(Segment::isExpression);
-        this.verbatim = !containsExpressions &&
-            (segments.isEmpty() ? source.isEmpty() : segments.size() == 1 && segments.get(0).getText().equals(source));
     }
 
     /**
@@ -127,35 +135,24 @@ public class InterpolatedString {
      * Escapes the provided literal so that interpolating the result yields the literal back, unchanged.
      * <p>
      * This is the exact inverse of {@link #parse(String)} and is used by the migrations which have to preserve the
-     * meaning of the values authored before the interpolation existed. Only the {@code $} characters which became
-     * significant are doubled, so a value that contains neither {@code ${} nor {@code $$} is returned as is:
+     * meaning of the values authored before the interpolation existed. Only {@code ${} is significant, so a value
+     * which doesn't contain it is returned unchanged - in particular a value containing {@code $$} or a lone
+     * {@code $} is never rewritten:
      * <ul>
      *     <li>{@code a${b}} becomes {@code a$${b}}</li>
-     *     <li>{@code a$$b} becomes {@code a$$$b}</li>
-     *     <li>{@code Price: $5} is returned unchanged</li>
+     *     <li>{@code a$$b}, {@code 100$$} and {@code Price: $5} are returned unchanged</li>
      * </ul>
-     * Note that the operation is <b>not</b> idempotent: escaping an already escaped value escapes it twice.
+     * Note that the operation is <b>not</b> idempotent: escaping an already escaped value escapes it twice. The
+     * migrations using it are therefore gated on the version of the migrated document.
      *
      * @param literal the literal to escape, may be null
      * @return the escaped literal
      */
     public static String escape(String literal) {
-        if (literal == null || literal.indexOf('$') < 0) {
-            return literal;
+        if (literal == null) {
+            return null;
         }
-        int length = literal.length();
-        StringBuilder escaped = new StringBuilder(length + 4);
-        for (int i = 0; i < length; i++) {
-            char c = literal.charAt(i);
-            escaped.append(c);
-            if (c == '$' && i + 1 < length) {
-                char next = literal.charAt(i + 1);
-                if (next == '$' || next == '{') {
-                    escaped.append('$');
-                }
-            }
-        }
-        return escaped.toString();
+        return literal.replace(EXPRESSION_PREFIX, ESCAPED_EXPRESSION_PREFIX);
     }
 
     public String getSource() {
@@ -173,13 +170,6 @@ public class InterpolatedString {
         return containsExpressions;
     }
 
-    /**
-     * @return true if the string contains neither an expression nor an escape sequence and is therefore to be
-     * used as is. This is the case for the vast majority of the plain values
-     */
-    public boolean isVerbatim() {
-        return verbatim;
-    }
 
     private static InterpolatedString doParse(String source) {
         List<Segment> segments = new ArrayList<>();
@@ -189,33 +179,35 @@ public class InterpolatedString {
         int i = 0;
         while (i < length) {
             char c = source.charAt(i);
-            if (c == '$' && i + 1 < length) {
-                char next = source.charAt(i + 1);
-                if (next == '$') {
-                    // Escape sequence: emit a single literal $
-                    literal.append('$');
-                    i += 2;
-                    continue;
+            if (c == '$' && i + 2 < length && source.charAt(i + 1) == '$' && source.charAt(i + 2) == '{') {
+                // Escape sequence: emit a literal ${
+                literal.append(EXPRESSION_PREFIX);
+                i += 3;
+                continue;
+            }
+            if (c == '$' && i + 1 < length && source.charAt(i + 1) == '{') {
+                int expressionStart = i + 2;
+                int expressionEnd = source.indexOf('}', expressionStart);
+                if (expressionEnd < 0) {
+                    throw new StringInterpolationException("Unterminated expression in '" + source + "': no '}' found after the '${' at position " + i + ". Use '$${' if a literal '${' was intended.");
                 }
-                if (next == '{') {
-                    int expressionStart = i + 2;
-                    int expressionEnd = findClosingBrace(source, expressionStart);
-                    if (expressionEnd < 0) {
-                        throw new StringInterpolationException("Unterminated expression in '" + source + "': no matching '}' found for the '${' at position " + i + ". Use '$${' if a literal '${' was intended.");
-                    }
-                    String expression = source.substring(expressionStart, expressionEnd);
-                    if (expression.trim().isEmpty()) {
-                        throw new StringInterpolationException("Empty expression at position " + i + " in '" + source + "'. Use '$${}' if a literal '${}' was intended.");
-                    }
-                    if (literal.length() > 0) {
-                        segments.add(new Segment(false, literal.toString(), literalOffset));
-                        literal.setLength(0);
-                    }
-                    segments.add(new Segment(true, expression, i));
-                    i = expressionEnd + 1;
-                    literalOffset = i;
-                    continue;
+                String expression = source.substring(expressionStart, expressionEnd);
+                if (expression.trim().isEmpty()) {
+                    throw new StringInterpolationException("Empty expression at position " + i + " in '" + source + "'. Use '$${}' if a literal '${}' was intended.");
                 }
+                if (expression.indexOf('{') >= 0) {
+                    throw new StringInterpolationException("The expression '" + expression + "' at position " + i + " in '" + source
+                        + "' contains a brace. Expressions embedded in a plain value are delimited by the first '}' and can therefore not contain "
+                        + "closures or map literals. Use the expression mode of the field for such expressions.");
+                }
+                if (literal.length() > 0) {
+                    segments.add(new Segment(false, literal.toString(), literalOffset));
+                    literal.setLength(0);
+                }
+                segments.add(new Segment(true, expression, i));
+                i = expressionEnd + 1;
+                literalOffset = i;
+                continue;
             }
             literal.append(c);
             i++;
@@ -224,83 +216,5 @@ public class InterpolatedString {
             segments.add(new Segment(false, literal.toString(), literalOffset));
         }
         return new InterpolatedString(source, segments);
-    }
-
-    /**
-     * Searches the closing brace matching the opening brace of an expression, skipping over any brace contained
-     * in a Groovy string literal
-     *
-     * @param source the string being parsed
-     * @param from   the position of the first character following the opening brace
-     * @return the position of the matching closing brace or -1 if there is none
-     */
-    private static int findClosingBrace(String source, int from) {
-        int length = source.length();
-        int depth = 1;
-        int i = from;
-        while (i < length) {
-            char c = source.charAt(i);
-            if (c == '\'' || c == '"') {
-                i = skipStringLiteral(source, i);
-                if (i < 0) {
-                    return -1;
-                }
-                continue;
-            }
-            if (c == '{') {
-                depth++;
-            } else if (c == '}') {
-                depth--;
-                if (depth == 0) {
-                    return i;
-                }
-            }
-            i++;
-        }
-        return -1;
-    }
-
-    /**
-     * Skips over a Groovy string literal, supporting single and triple quoted literals, backslash escapes and
-     * the placeholders nested in double quoted GStrings
-     *
-     * @param source the string being parsed
-     * @param start  the position of the opening quote
-     * @return the position of the first character following the string literal or -1 if it is unterminated
-     */
-    private static int skipStringLiteral(String source, int start) {
-        int length = source.length();
-        char quote = source.charAt(start);
-        boolean triple = isTripleQuoteAt(source, start, quote);
-        int i = start + (triple ? 3 : 1);
-        while (i < length) {
-            char c = source.charAt(i);
-            if (c == '\\') {
-                i += 2;
-                continue;
-            }
-            if (quote == '"' && c == '$' && i + 1 < length && source.charAt(i + 1) == '{') {
-                int nestedEnd = findClosingBrace(source, i + 2);
-                if (nestedEnd < 0) {
-                    return -1;
-                }
-                i = nestedEnd + 1;
-                continue;
-            }
-            if (c == quote) {
-                if (!triple) {
-                    return i + 1;
-                }
-                if (isTripleQuoteAt(source, i, quote)) {
-                    return i + 3;
-                }
-            }
-            i++;
-        }
-        return -1;
-    }
-
-    private static boolean isTripleQuoteAt(String source, int position, char quote) {
-        return position + 2 < source.length() && source.charAt(position + 1) == quote && source.charAt(position + 2) == quote;
     }
 }

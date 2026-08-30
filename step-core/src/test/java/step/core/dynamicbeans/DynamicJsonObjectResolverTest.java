@@ -90,7 +90,7 @@ public class DynamicJsonObjectResolverTest {
     public void testMalformedExpression() {
         RuntimeException e = Assert.assertThrows(RuntimeException.class,
             () -> resolver.evaluate(json("{'in':{'dynamic':false,'value':'Hello ${name'}}"), Map.of("name", "John")));
-        Assert.assertTrue(e.getMessage(), e.getMessage().contains("no matching '}'"));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("no '}' found"));
     }
 
     @Test

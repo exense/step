@@ -54,7 +54,6 @@ public abstract class AbstractStepContext extends AbstractContext {
 
     protected void setDefaultAttributes() {
         expressionHandler = new ExpressionHandler();
-
         dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
         // Create a local resource manager in a dedicated folder per default
         localResourceManager = new LocalResourceManagerImpl(getContextFolderAsFile("resources"), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
@@ -85,7 +84,6 @@ public abstract class AbstractStepContext extends AbstractContext {
     public void setExpressionHandler(ExpressionHandler expressionHandler) {
         this.expressionHandler = expressionHandler;
     }
-
 
     public DynamicBeanResolver getDynamicBeanResolver() {
         return dynamicBeanResolver;

@@ -46,11 +46,15 @@ public class StringInterpolationEscaperTest {
         Assert.assertEquals("Price: $5", valueAt(document, "root", "text"));
     }
 
+    /**
+     * Only ${ became significant, so a value containing a doubled dollar is left alone. This keeps the migration
+     * away from shell scripts, passwords and the like
+     */
     @Test
-    public void testDoubleDollarIsEscapedToo() {
-        Map<String, Object> document = document("{'root':{'text':{'dynamic':false,'value':'pid $$'}}}");
-        Assert.assertTrue(StringInterpolationEscaper.escapeDocument(document));
-        Assert.assertEquals("pid $$$", valueAt(document, "root", "text"));
+    public void testDoubleDollarIsNotEscaped() {
+        Map<String, Object> document = document("{'root':{'text':{'dynamic':false,'value':'pid $$ of $$'}}}");
+        Assert.assertFalse(StringInterpolationEscaper.escapeDocument(document));
+        Assert.assertEquals("pid $$ of $$", valueAt(document, "root", "text"));
     }
 
     @Test

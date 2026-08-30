@@ -36,7 +36,7 @@ import static step.core.collections.CollectionFactory.VERSION_COLLECTION_SUFFIX;
 /**
  * Since Step 3.31 the plain (non dynamic) string values of the plans and parameters may embed expressions using the
  * {@code ${...}} placeholder syntax. Values authored before that were used literally, so any of them containing
- * {@code ${} or {@code $$} would change meaning, and would in most cases fail the execution with an unresolvable
+ * {@code ${} would change meaning, and would in most cases fail the execution with an unresolvable
  * placeholder.
  * <p>
  * This task escapes all such values so that they keep resolving to exactly what they were before the upgrade. Users

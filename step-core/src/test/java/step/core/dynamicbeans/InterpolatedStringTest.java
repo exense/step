@@ -37,7 +37,6 @@ public class InterpolatedStringTest {
     @Test
     public void testNoPlaceholder() {
         InterpolatedString parsed = InterpolatedString.parse("Hello world");
-        Assert.assertTrue(parsed.isVerbatim());
         Assert.assertFalse(parsed.containsExpressions());
         Assert.assertEquals("Hello world", render("Hello world"));
     }
@@ -45,7 +44,6 @@ public class InterpolatedStringTest {
     @Test
     public void testEmptyString() {
         InterpolatedString parsed = InterpolatedString.parse("");
-        Assert.assertTrue(parsed.isVerbatim());
         Assert.assertTrue(parsed.getSegments().isEmpty());
     }
 
@@ -53,7 +51,6 @@ public class InterpolatedStringTest {
     public void testSinglePlaceholder() {
         Assert.assertEquals("John", render("${name}"));
         Assert.assertTrue(InterpolatedString.parse("${name}").containsExpressions());
-        Assert.assertFalse(InterpolatedString.parse("${name}").isVerbatim());
     }
 
     @Test
@@ -86,38 +83,51 @@ public class InterpolatedStringTest {
 
     @Test
     public void testEscapedPlaceholder() {
-        // $${name} renders the literal ${name}
+        // $${name} renders the literal ${name}: no expression, but the escape sequence still had to be resolved,
+        // so the rendered text differs from the source
         Assert.assertEquals("${name}", render("$${name}"));
         Assert.assertFalse(InterpolatedString.parse("$${name}").containsExpressions());
-        // ... but it is not verbatim: the escape sequence had to be resolved
-        Assert.assertFalse(InterpolatedString.parse("$${name}").isVerbatim());
+        Assert.assertNotEquals("$${name}", render("$${name}"));
     }
 
+    /**
+     * Only the sequence $${ is an escape, so every leading dollar beyond it stays literal. One dollar in, one
+     * dollar out - no counting
+     */
+    @Test
+    public void testDollarsInFrontOfAnEscapeStayLiteral() {
+        Assert.assertEquals("${name}", render("$${name}"));
+        Assert.assertEquals("$${name}", render("$$${name}"));
+        Assert.assertEquals("$$${name}", render("$$$${name}"));
+        Assert.assertEquals("$$$${name}", render("$$$$${name}"));
+    }
+
+    /**
+     * A value which contains no ${ is never altered. This is what lets the migration leave the overwhelming
+     * majority of the existing values untouched
+     */
+    @Test
+    public void testDoubledDollarIsOnlyAnEscapeInFrontOfABrace() {
+        Assert.assertEquals("100$$", render("100$$"));
+        Assert.assertEquals("a$$b", render("a$$b"));
+        Assert.assertEquals("$$", render("$$"));
+    }
+
+    /**
+     * The placeholder syntax can't express a literal $ directly in front of an expression, the expression itself
+     * is used for that
+     */
     @Test
     public void testLiteralDollarFollowedByPlaceholder() {
-        // $$${name} renders a literal $ followed by the value of the expression
-        Assert.assertEquals("$John", render("$$${name}"));
-    }
-
-    @Test
-    public void testEscapedEscape() {
-        // $$$${name} renders the literal $${name}
-        Assert.assertEquals("$${name}", render("$$$${name}"));
-        // and one more level: 5 dollars are 2 escapes followed by a placeholder
-        Assert.assertEquals("$$John", render("$$$$${name}"));
-    }
-
-    @Test
-    public void testEscapeAppliesEverywhere() {
-        Assert.assertEquals("100$", render("100$$"));
-        Assert.assertEquals("a$b", render("a$$b"));
-        Assert.assertEquals("$", render("$$"));
+        List<Segment> segments = InterpolatedString.parse("${'$'}${name}").getSegments();
+        Assert.assertEquals(2, segments.size());
+        Assert.assertEquals("'$'", segments.get(0).getText());
+        Assert.assertEquals("name", segments.get(1).getText());
     }
 
     @Test
     public void testLoneDollarIsLiteral() {
         Assert.assertEquals("Price: $5", render("Price: $5"));
-        Assert.assertTrue(InterpolatedString.parse("Price: $5").isVerbatim());
         Assert.assertEquals("Cost $10 for John", render("Cost $10 for ${name}"));
         Assert.assertEquals("trailing $", render("trailing $"));
     }
@@ -126,7 +136,6 @@ public class InterpolatedStringTest {
     public void testUnbracedDollarIsNotInterpolated() {
         // Only the braced form is interpolated, contrary to groovy GStrings
         Assert.assertEquals("$name", render("$name"));
-        Assert.assertTrue(InterpolatedString.parse("$name").isVerbatim());
         Assert.assertEquals("John and $name", render("${name} and $name"));
     }
 
@@ -154,33 +163,18 @@ public class InterpolatedStringTest {
 
     // Expression delimiting
 
+    /**
+     * The expression ends at the first closing brace. Anything needing a brace of its own belongs in the
+     * expression mode of the field
+     */
     @Test
-    public void testNestedBracesInExpression() {
-        Assert.assertEquals(" [1,2].collect{ it } ", expression("${ [1,2].collect{ it } }"));
-        Assert.assertEquals("a.b{c{d}}e", expression("${a.b{c{d}}e}"));
-    }
-
-    @Test
-    public void testBracesInStringLiteralsOfExpression() {
-        Assert.assertEquals(" map['}'] ", expression("${ map['}'] }"));
-        Assert.assertEquals(" \"}\" ", expression("${ \"}\" }"));
-        Assert.assertEquals(" '${' ", expression("${ '${' }"));
-    }
-
-    @Test
-    public void testNestedGStringInExpression() {
-        Assert.assertEquals(" \"a${b}c\" ", expression("${ \"a${b}c\" }"));
-    }
-
-    @Test
-    public void testTripleQuotedStringInExpression() {
-        Assert.assertEquals(" \"\"\"}\"\"\" ", expression("${ \"\"\"}\"\"\" }"));
-        Assert.assertEquals(" '''}''' ", expression("${ '''}''' }"));
-    }
-
-    @Test
-    public void testEscapedQuoteInStringLiteralOfExpression() {
-        Assert.assertEquals(" 'it\\'s }' ", expression("${ 'it\\'s }' }"));
+    public void testExpressionEndsAtTheFirstClosingBrace() {
+        Assert.assertEquals(" a.b.c ", expression("${ a.b.c }"));
+        Assert.assertEquals(" list.size() ", expression("${ list.size() }"));
+        Assert.assertEquals(" map['k'] ", expression("${ map['k'] }"));
+        Assert.assertEquals(" a ? b : c ", expression("${ a ? b : c }"));
+        // Text following the expression is literal, even when it contains further braces
+        Assert.assertEquals("John} tail", render("${name}} tail"));
     }
 
     // Error cases
@@ -189,18 +183,25 @@ public class InterpolatedStringTest {
     public void testUnterminatedExpression() {
         StringInterpolationException e = Assert.assertThrows(StringInterpolationException.class,
             () -> InterpolatedString.parse("unbalanced ${name"));
-        Assert.assertTrue(e.getMessage(), e.getMessage().contains("no matching '}'"));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("no '}' found"));
         Assert.assertTrue(e.getMessage(), e.getMessage().contains("$${"));
     }
 
+    /**
+     * A closure or a map literal would otherwise be silently truncated at its first brace and reach groovy as a
+     * broken snippet. The error names the restriction and the way out instead
+     */
     @Test
-    public void testUnterminatedNestedBrace() {
-        Assert.assertThrows(StringInterpolationException.class, () -> InterpolatedString.parse("${ a{b }"));
-    }
+    public void testExpressionContainingABraceIsRejected() {
+        StringInterpolationException e = Assert.assertThrows(StringInterpolationException.class,
+            () -> InterpolatedString.parse("${ items.collect{ it.id } }"));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("contains a brace"));
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("expression mode"));
 
-    @Test
-    public void testUnterminatedStringLiteralInExpression() {
-        Assert.assertThrows(StringInterpolationException.class, () -> InterpolatedString.parse("${ 'abc }"));
+        Assert.assertThrows(StringInterpolationException.class, () -> InterpolatedString.parse("${ {-> 'x'}() }"));
+        // Brackets are not braces: a list or a map access remains supported
+        Assert.assertEquals(" [1,2].sum() ", expression("${ [1,2].sum() }"));
+        Assert.assertEquals(" map['k'] ", expression("${ map['k'] }"));
     }
 
     @Test
@@ -219,15 +220,29 @@ public class InterpolatedStringTest {
     // Escaping of pre-existing literals (used by the migrations)
 
     @Test
-    public void testEscapeOnlyTouchesSignificantDollars() {
+    public void testEscapeOnlyTouchesTheExpressionPrefix() {
         Assert.assertEquals("a$${b}", InterpolatedString.escape("a${b}"));
-        Assert.assertEquals("a$$$b", InterpolatedString.escape("a$$b"));
-        // Nothing became significant here, the value is returned as is
+        Assert.assertEquals("$${a}and$${b}", InterpolatedString.escape("${a}and${b}"));
+        // A value which contains no ${ is never rewritten by the migration
+        Assert.assertEquals("a$$b", InterpolatedString.escape("a$$b"));
         Assert.assertEquals("Price: $5", InterpolatedString.escape("Price: $5"));
         Assert.assertEquals("Hello $name", InterpolatedString.escape("Hello $name"));
         Assert.assertEquals("no dollar at all", InterpolatedString.escape("no dollar at all"));
         Assert.assertEquals("trailing $", InterpolatedString.escape("trailing $"));
         Assert.assertNull(InterpolatedString.escape(null));
+    }
+
+    /**
+     * The migration only ever has to rewrite the values containing ${, which is what makes its diff small and
+     * its effect easy to state
+     */
+    @Test
+    public void testValuesWithoutTheExpressionPrefixAreNeverRewritten() {
+        for (String untouched : List.of("plain text", "a$$b", "100$$", "$", "$$", "Price: $5", "Hello $name",
+            "C:\\logs\\file.txt", "{\"a\":\"b\"}", "50% $$ done")) {
+            Assert.assertSame("Should have been returned as is: " + untouched,
+                untouched, InterpolatedString.escape(untouched));
+        }
     }
 
     /**
@@ -253,7 +268,11 @@ public class InterpolatedStringTest {
             "${JOB_NAME}-$$-${BUILD_ID}",
             "unbalanced ${name",
             "empty ${}",
-            "100%$$${x}");
+            "100%$$${x}",
+            // Values which the parser would reject if they were not escaped first
+            "${ items.collect{ it.id } }",
+            "${ [a:1] }",
+            "trailing brace ${a}} and }${b}");
         for (String literal : literals) {
             String escaped = InterpolatedString.escape(literal);
             Assert.assertEquals("Round trip failed for <" + literal + "> escaped as <" + escaped + ">",

@@ -37,8 +37,8 @@ import step.migration.MigrationContext;
 
 /**
  * Since the schema version 1.3.0 the plain values of a plan may embed expressions using the {@code ${...}} placeholder
- * syntax. Values authored against an earlier schema were used literally, so any of them containing {@code ${} or
- * {@code $$} would change meaning, and would in most cases fail the execution with an unresolvable placeholder.
+ * syntax. Values authored against an earlier schema were used literally, so any of them containing {@code ${} would
+ * change meaning, and would in most cases fail the execution with an unresolvable placeholder.
  * <p>
  * This task escapes those values so that a package written against schema 1.2.0 or earlier keeps behaving exactly as
  * it did. Authors opt into the interpolation by bumping the {@code version} of their descriptor and removing the
