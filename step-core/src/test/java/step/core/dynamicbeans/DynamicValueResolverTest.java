@@ -186,17 +186,18 @@ public class DynamicValueResolverTest {
     }
 
     @Test
-    public void testStringInterpolationDisabled() {
+    public void testInterpolationOfPlainValueDisabled() {
+        // Used for the values holding a structured document, see NoStringInterpolation
         DynamicValue<String> v1 = new DynamicValue<>("Hello ${name}");
-        new DynamicValueResolver(new ExpressionHandler(), false).evaluate(v1, NAME_BINDING);
+        newResolver().evaluate(v1, NAME_BINDING, false);
         Assert.assertEquals("Hello ${name}", v1.get());
         Assert.assertNull(v1.evalutationResult);
     }
 
     @Test
-    public void testStringInterpolationDisabledDoesNotAffectDynamicValues() {
+    public void testInterpolationOfPlainValueDisabledDoesNotAffectDynamicValues() {
         DynamicValue<String> v1 = new DynamicValue<>("\"Hello ${name}\"", "");
-        new DynamicValueResolver(new ExpressionHandler(), false).evaluate(v1, NAME_BINDING);
+        newResolver().evaluate(v1, NAME_BINDING, false);
         Assert.assertEquals("Hello John", v1.get());
     }
 

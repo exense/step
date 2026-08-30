@@ -72,25 +72,13 @@ public class StringInterpolator {
     }
 
     private final ExpressionHandler expressionHandler;
-    private final boolean enabled;
-
-    public StringInterpolator(ExpressionHandler expressionHandler) {
-        this(expressionHandler, true);
-    }
 
     /**
      * @param expressionHandler the handler used to evaluate the expressions
-     * @param enabled           whether the interpolation is enabled. When disabled, {@link #interpolate} always
-     *                          returns null and the values are therefore always used as is
      */
-    public StringInterpolator(ExpressionHandler expressionHandler, boolean enabled) {
+    public StringInterpolator(ExpressionHandler expressionHandler) {
         super();
         this.expressionHandler = expressionHandler;
-        this.enabled = enabled;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
     }
 
     /**
@@ -106,7 +94,7 @@ public class StringInterpolator {
      */
     public Result interpolate(Object value, Map<String, Object> bindings, boolean hasProtectedAccess) {
         // Fast path: only string values may contain expressions or escape sequences, both of which start with a $
-        if (!enabled || !(value instanceof String) || ((String) value).indexOf('$') < 0) {
+        if (!(value instanceof String) || ((String) value).indexOf('$') < 0) {
             return null;
         }
         InterpolatedString interpolatedString = InterpolatedString.parse((String) value);

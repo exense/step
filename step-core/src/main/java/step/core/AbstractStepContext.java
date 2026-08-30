@@ -24,7 +24,6 @@ import com.google.common.cache.LoadingCache;
 import step.attachments.FileResolver;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValueResolver;
-import step.core.dynamicbeans.StringInterpolator;
 import step.expressions.ExpressionHandler;
 import step.resources.AttachmentStorage;
 import step.resources.InMemoryResourceAccessor;
@@ -43,7 +42,6 @@ public abstract class AbstractStepContext extends AbstractContext {
 
     private final UUID contextId = UUID.randomUUID();
     private ExpressionHandler expressionHandler;
-    private StringInterpolator stringInterpolator;
     private DynamicBeanResolver dynamicBeanResolver;
     private ResourceManager resourceManager;
     private FileResolver fileResolver;
@@ -56,8 +54,8 @@ public abstract class AbstractStepContext extends AbstractContext {
 
     protected void setDefaultAttributes() {
         expressionHandler = new ExpressionHandler();
-        stringInterpolator = new StringInterpolator(expressionHandler);
-        dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler, stringInterpolator));
+
+        dynamicBeanResolver = new DynamicBeanResolver(new DynamicValueResolver(expressionHandler));
         // Create a local resource manager in a dedicated folder per default
         localResourceManager = new LocalResourceManagerImpl(getContextFolderAsFile("resources"), new InMemoryResourceAccessor(), new InMemoryResourceRevisionAccessor());
         setResourceManager(localResourceManager);
@@ -77,7 +75,6 @@ public abstract class AbstractStepContext extends AbstractContext {
         setResourceManager(resourceManager);
         setAttachmentStorage(parentContext.getAttachmentStorage());
         expressionHandler = parentContext.getExpressionHandler();
-        stringInterpolator = parentContext.getStringInterpolator();
         dynamicBeanResolver = parentContext.getDynamicBeanResolver();
     }
 
@@ -89,16 +86,6 @@ public abstract class AbstractStepContext extends AbstractContext {
         this.expressionHandler = expressionHandler;
     }
 
-    /**
-     * @return the interpolator used to resolve the expressions contained in plain (non dynamic) string values
-     */
-    public StringInterpolator getStringInterpolator() {
-        return stringInterpolator;
-    }
-
-    public void setStringInterpolator(StringInterpolator stringInterpolator) {
-        this.stringInterpolator = stringInterpolator;
-    }
 
     public DynamicBeanResolver getDynamicBeanResolver() {
         return dynamicBeanResolver;

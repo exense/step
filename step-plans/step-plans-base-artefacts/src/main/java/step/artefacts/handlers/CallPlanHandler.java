@@ -47,7 +47,7 @@ public class CallPlanHandler extends ArtefactHandler<CallPlan, ReportNode> {
     @Override
     public void init(ExecutionContext context) {
         super.init(context);
-        dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler(), context.getStringInterpolator()));
+        dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(context.getExpressionHandler()));
         planLocator = new PlanLocator(context.getPlanAccessor(), new SelectorHelper(dynamicJsonObjectResolver));
     }
 

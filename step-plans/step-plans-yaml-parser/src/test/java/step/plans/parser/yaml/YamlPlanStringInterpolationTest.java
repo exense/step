@@ -149,7 +149,9 @@ public class YamlPlanStringInterpolationTest {
      * tests and are indented here to the level of the children list of the root sequence
      */
     private Plan readPlan(String children) throws IOException, step.plans.parser.yaml.schema.YamlPlanValidationException {
-        StringBuilder yamlPlan = new StringBuilder("version: 1.0.0\n" +
+        // The interpolation of plain values requires the schema 1.3.0 or later. Older plans keep their literal
+        // values, see YamlEscapingMigrationTest
+        StringBuilder yamlPlan = new StringBuilder("version: 1.3.0\n" +
             "name: \"string interpolation\"\n" +
             "root:\n" +
             "  sequence:\n" +

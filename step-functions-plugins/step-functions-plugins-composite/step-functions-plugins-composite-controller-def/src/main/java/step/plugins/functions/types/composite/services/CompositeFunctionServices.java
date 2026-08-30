@@ -104,7 +104,7 @@ public class CompositeFunctionServices extends AbstractStepServices {
         Plan result = null;
         PlanNavigator planNavigator = new PlanNavigator(plan);
         CallPlan artefact = (CallPlan) planNavigator.findArtefactById(artefactId);
-        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler(), getContext().getStringInterpolator()));
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
         SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
         PlanLocator planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
         ObjectPredicate objectPredicate = objectPredicateFactory.getObjectPredicate(getSession());

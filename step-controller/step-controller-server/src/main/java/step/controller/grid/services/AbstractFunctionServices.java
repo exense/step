@@ -88,7 +88,7 @@ public abstract class AbstractFunctionServices extends AbstractEntityServices<Fu
         functionAccessor = getContext().get(FunctionAccessor.class);
         functionManager = getContext().get(FunctionManager.class);
         functionExecutionService = getContext().get(FunctionExecutionService.class);
-        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler(), getContext().getStringInterpolator()));
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
         selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
         functionLocator = new FunctionLocator(functionAccessor, selectorHelper);
         objectPredicateFactory = getContext().get(ObjectPredicateFactory.class);

@@ -28,7 +28,6 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.core.dynamicbeans.DynamicJsonValueResolver;
-import step.core.dynamicbeans.StringInterpolator;
 import step.core.execution.ExecutionContext;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.Plan;
@@ -46,13 +45,9 @@ public class LocalRepository extends AbstractRepository {
     private final PlanLocator planLocator;
 
     public LocalRepository(PlanAccessor planAccessor, ExpressionHandler expressionHandler) {
-        this(planAccessor, expressionHandler, new StringInterpolator(expressionHandler));
-    }
-
-    public LocalRepository(PlanAccessor planAccessor, ExpressionHandler expressionHandler, StringInterpolator stringInterpolator) {
         super(Set.of(RepositoryObjectReference.PLAN_ID));
         this.planAccessor = planAccessor;
-        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler, stringInterpolator));
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(expressionHandler));
         SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
         planLocator = new PlanLocator(planAccessor, selectorHelper);
     }

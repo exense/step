@@ -64,7 +64,7 @@ public class DynamicBeanResolver {
                     if (!Modifier.isStatic(modifiers) && !Modifier.isFinal(modifiers)) {
                         if (field.getType().equals(DynamicValue.class)) {
                             Object value = field.get(o);
-                            evaluateDynamicValue(bindings, (DynamicValue<?>) value);
+                            evaluateDynamicValue(bindings, (DynamicValue<?>) value, !field.isAnnotationPresent(NoStringInterpolation.class));
                         } else if (field.isAnnotationPresent(ContainsDynamicValues.class)) {
                             Object value = field.get(o);
                             recursivelyEvaluateValue(bindings, value);
@@ -78,7 +78,7 @@ public class DynamicBeanResolver {
                     if (method != null) {
                         if (DynamicValue.class.isAssignableFrom(method.getReturnType())) {
                             Object value = method.invoke(o);
-                            evaluateDynamicValue(bindings, (DynamicValue<?>) value);
+                            evaluateDynamicValue(bindings, (DynamicValue<?>) value, !method.isAnnotationPresent(NoStringInterpolation.class));
                         } else if (method.isAnnotationPresent(ContainsDynamicValues.class)) {
                             Object value = method.invoke(o);
                             recursivelyEvaluateValue(bindings, value);
@@ -103,8 +103,16 @@ public class DynamicBeanResolver {
     }
 
     public void evaluateDynamicValue(Map<String, Object> bindings, DynamicValue<?> value) {
+        evaluateDynamicValue(bindings, value, true);
+    }
+
+    /**
+     * @param interpolatePlainValue whether the expressions contained in a plain (non dynamic) string value are
+     *                              interpolated. False for the values annotated with {@link NoStringInterpolation}
+     */
+    public void evaluateDynamicValue(Map<String, Object> bindings, DynamicValue<?> value, boolean interpolatePlainValue) {
         if (value != null) {
-            valueResolver.evaluate(value, bindings);
+            valueResolver.evaluate(value, bindings, interpolatePlainValue);
             if (!value.isEvaluationFailed()) {
                 // Recurse into the result, which may itself contain dynamic values.
                 // Failed evaluations are skipped on purpose: calling get() would rethrow the evaluation error and

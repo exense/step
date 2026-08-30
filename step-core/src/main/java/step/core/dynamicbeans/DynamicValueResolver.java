@@ -33,15 +33,6 @@ public class DynamicValueResolver {
         this(expressionHandler, new StringInterpolator(expressionHandler));
     }
 
-    /**
-     * @param expressionHandler          the handler used to evaluate the groovy expressions
-     * @param stringInterpolationEnabled whether the expressions contained in plain (non dynamic) string values
-     *                                   are interpolated. When disabled, plain values are always returned as is
-     */
-    public DynamicValueResolver(ExpressionHandler expressionHandler, boolean stringInterpolationEnabled) {
-        this(expressionHandler, new StringInterpolator(expressionHandler, stringInterpolationEnabled));
-    }
-
     public DynamicValueResolver(ExpressionHandler expressionHandler, StringInterpolator stringInterpolator) {
         super();
         this.expressionHandler = expressionHandler;
@@ -49,11 +40,21 @@ public class DynamicValueResolver {
     }
 
     public void evaluate(DynamicValue<?> dynamicValue, Map<String, Object> bindings) {
+        evaluate(dynamicValue, bindings, true);
+    }
+
+    /**
+     * @param interpolatePlainValue whether the expressions contained in a plain (non dynamic) string value are
+     *                              interpolated. False for the values holding a structured document, whose
+     *                              expressions are resolved by the resolver of that document instead. See
+     *                              {@link NoStringInterpolation}
+     */
+    public void evaluate(DynamicValue<?> dynamicValue, Map<String, Object> bindings, boolean interpolatePlainValue) {
         if (dynamicValue.isDynamic()) {
             dynamicValue.evalutationResult = getEvaluationResult(dynamicValue.expression, bindings, dynamicValue.hasProtectedAccess());
         } else {
             // A null result means that the value requires no interpolation and is to be returned as is
-            dynamicValue.setInterpolationResult(interpolateIfRequired(dynamicValue, bindings));
+            dynamicValue.setInterpolationResult(interpolatePlainValue ? interpolateIfRequired(dynamicValue, bindings) : null);
         }
     }
 

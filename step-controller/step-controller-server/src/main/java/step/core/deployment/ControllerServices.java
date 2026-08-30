@@ -83,7 +83,7 @@ public class ControllerServices extends AbstractStepServices {
         controller = context.require(Controller.class);
         reportAccessor = context.getReportAccessor();
 
-        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler(), getContext().getStringInterpolator()));
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(getContext().getExpressionHandler()));
         SelectorHelper selectorHelper = new SelectorHelper(dynamicJsonObjectResolver);
         planLocator = new PlanLocator(getContext().getPlanAccessor(), selectorHelper);
         objectHooks = context.get(ObjectHookRegistry.class);

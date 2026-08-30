@@ -216,6 +216,63 @@ public class InterpolatedStringTest {
         Assert.assertThrows(IllegalArgumentException.class, () -> InterpolatedString.parse(null));
     }
 
+    // Escaping of pre-existing literals (used by the migrations)
+
+    @Test
+    public void testEscapeOnlyTouchesSignificantDollars() {
+        Assert.assertEquals("a$${b}", InterpolatedString.escape("a${b}"));
+        Assert.assertEquals("a$$$b", InterpolatedString.escape("a$$b"));
+        // Nothing became significant here, the value is returned as is
+        Assert.assertEquals("Price: $5", InterpolatedString.escape("Price: $5"));
+        Assert.assertEquals("Hello $name", InterpolatedString.escape("Hello $name"));
+        Assert.assertEquals("no dollar at all", InterpolatedString.escape("no dollar at all"));
+        Assert.assertEquals("trailing $", InterpolatedString.escape("trailing $"));
+        Assert.assertNull(InterpolatedString.escape(null));
+    }
+
+    /**
+     * The essential property of the migration: whatever the value was, escaping it and interpolating the result
+     * gives the original value back
+     */
+    @Test
+    public void testEscapedLiteralsAreInterpolatedBackToThemselves() {
+        List<String> literals = List.of(
+            "no placeholder",
+            "${name}",
+            "Hello ${name} and ${item}",
+            "$${name}",
+            "$$$${name}",
+            "a$$b",
+            "$$",
+            "$",
+            "Price: $5",
+            "Hello $name",
+            "C:\\logs\\${date}.txt",
+            "{\"user\":\"${name}\"}",
+            "line1\nline2 ${name}",
+            "${JOB_NAME}-$$-${BUILD_ID}",
+            "unbalanced ${name",
+            "empty ${}",
+            "100%$$${x}");
+        for (String literal : literals) {
+            String escaped = InterpolatedString.escape(literal);
+            Assert.assertEquals("Round trip failed for <" + literal + "> escaped as <" + escaped + ">",
+                literal, renderLiteralsOnly(escaped));
+        }
+    }
+
+    /**
+     * Renders a parsed string that is expected to contain no expression at all, which is what escaping guarantees
+     */
+    private static String renderLiteralsOnly(String source) {
+        StringBuilder result = new StringBuilder();
+        for (Segment segment : InterpolatedString.parse(source).getSegments()) {
+            Assert.assertFalse("Unexpected expression in escaped value: " + source, segment.isExpression());
+            result.append(segment.getText());
+        }
+        return result.toString();
+    }
+
     // Caching
 
     @Test

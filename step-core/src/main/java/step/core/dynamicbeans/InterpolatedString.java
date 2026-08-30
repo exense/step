@@ -123,6 +123,41 @@ public class InterpolatedString {
         return parsed;
     }
 
+    /**
+     * Escapes the provided literal so that interpolating the result yields the literal back, unchanged.
+     * <p>
+     * This is the exact inverse of {@link #parse(String)} and is used by the migrations which have to preserve the
+     * meaning of the values authored before the interpolation existed. Only the {@code $} characters which became
+     * significant are doubled, so a value that contains neither {@code ${} nor {@code $$} is returned as is:
+     * <ul>
+     *     <li>{@code a${b}} becomes {@code a$${b}}</li>
+     *     <li>{@code a$$b} becomes {@code a$$$b}</li>
+     *     <li>{@code Price: $5} is returned unchanged</li>
+     * </ul>
+     * Note that the operation is <b>not</b> idempotent: escaping an already escaped value escapes it twice.
+     *
+     * @param literal the literal to escape, may be null
+     * @return the escaped literal
+     */
+    public static String escape(String literal) {
+        if (literal == null || literal.indexOf('$') < 0) {
+            return literal;
+        }
+        int length = literal.length();
+        StringBuilder escaped = new StringBuilder(length + 4);
+        for (int i = 0; i < length; i++) {
+            char c = literal.charAt(i);
+            escaped.append(c);
+            if (c == '$' && i + 1 < length) {
+                char next = literal.charAt(i + 1);
+                if (next == '$' || next == '{') {
+                    escaped.append('$');
+                }
+            }
+        }
+        return escaped.toString();
+    }
+
     public String getSource() {
         return source;
     }

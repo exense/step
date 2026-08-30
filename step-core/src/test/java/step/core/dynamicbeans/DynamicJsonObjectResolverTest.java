@@ -94,11 +94,11 @@ public class DynamicJsonObjectResolverTest {
     }
 
     @Test
-    public void testInterpolationDisabled() {
-        DynamicJsonObjectResolver disabledResolver = new DynamicJsonObjectResolver(
-            new DynamicJsonValueResolver(new ExpressionHandler(), new StringInterpolator(new ExpressionHandler(), false)));
-        JsonObject output = disabledResolver.evaluate(json("{'in':{'dynamic':false,'value':'Hello ${name}'}}"), Map.of("name", "John"));
-        Assert.assertEquals("Hello ${name}", output.getString("in"));
+    public void testNestedPlainValuesAreInterpolated() {
+        // The leaves of a nested structure are interpolated by the resolver of that structure
+        JsonObject output = resolver.evaluate(json("{'outer':{'dynamic':false,'value':'plain'},'in':{'dynamic':false,'value':'Hello ${name}'}}"), Map.of("name", "John"));
+        Assert.assertEquals("plain", output.getString("outer"));
+        Assert.assertEquals("Hello John", output.getString("in"));
     }
 
     @Test
