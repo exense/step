@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.plans.parser.yaml;
+package step.plans.parser.yaml.migrations;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -36,6 +36,7 @@ import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
+import step.plans.parser.yaml.YamlPlanReader;
 import step.core.plans.runner.PlanRunnerResult;
 import step.engine.plugins.BasePlugin;
 import step.threadpool.ThreadPoolPlugin;
@@ -45,7 +46,7 @@ import step.threadpool.ThreadPoolPlugin;
  * string interpolation they must keep resolving to exactly what they did, which is what the escaping migration
  * guarantees. Bumping the schema version is how an author opts into the interpolation.
  */
-public class YamlEscapingMigrationTest {
+public class EscapeStringInterpolationYamlMigrationTaskTest {
 
     private static final String PLACEHOLDERS =
         "  - set:\n" +
