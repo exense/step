@@ -54,9 +54,9 @@ public class LocalIDE {
 
     private static Configuration loadConfiguration() throws Exception {
         Configuration configuration = new Configuration();
-        InputStream propsStream = Objects.requireNonNull(LocalIDE.class.getClassLoader().getResourceAsStream("ide.properties"), "ide.properties resource not found");
-        configuration.getUnderlyingPropertyObject().load(propsStream);
-        propsStream.close();
+        try (InputStream propsStream = Objects.requireNonNull(LocalIDE.class.getClassLoader().getResourceAsStream("ide.properties"), "ide.properties resource not found");) {
+            configuration.getUnderlyingPropertyObject().load(propsStream);
+        }
         return configuration;
     }
 
