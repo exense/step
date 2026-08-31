@@ -22,13 +22,16 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * The directory the local agents are installed and run in.
+ * The directory the local agents are installed and run in. Unless one is configured, it is
+ * {@code step-cli-local-agents} under the system temporary directory — that same directory on every run rather than a
+ * fresh temporary one, which is what the caching and the sweep below rely on.
  * <p>
  * It holds things with very different lifetimes:
  * <ul>
@@ -54,6 +57,9 @@ public class LocalAgentWorkspace {
 
     private final Path root;
 
+    /**
+     * @param configuredRoot the directory to work in, or {@code null} for the default one
+     */
     public LocalAgentWorkspace(Path configuredRoot) throws IOException {
         this.root = configuredRoot != null ? configuredRoot.toAbsolutePath() : defaultRoot();
         Files.createDirectories(root);
@@ -71,19 +77,24 @@ public class LocalAgentWorkspace {
      * stops the agents and the grid they belong to.
      */
     private void sweepStaleRunDirectories() {
-        File[] staleDirectories = root.toFile().listFiles((dir, name) ->
-            (name.startsWith(AGENT_DIRECTORY_PREFIX) || name.startsWith(GRID_DIRECTORY_PREFIX))
-                && new File(dir, name).isDirectory());
-        if (staleDirectories == null) {
-            return;
-        }
-        for (File staleDirectory : staleDirectories) {
-            logger.info("Removing the directory {} left over by a previous run.", staleDirectory);
-            try {
-                FileUtils.deleteDirectory(staleDirectory);
-            } catch (IOException e) {
-                logger.warn("Failed to delete the stale directory {}.", staleDirectory, e);
+        try (DirectoryStream<Path> staleDirectories = Files.newDirectoryStream(root, path -> {
+            String name = path.getFileName().toString();
+            return (name.startsWith(AGENT_DIRECTORY_PREFIX) || name.startsWith(GRID_DIRECTORY_PREFIX))
+                && Files.isDirectory(path);
+        })) {
+            for (Path staleDirectory : staleDirectories) {
+                logger.info("Removing the directory {} left over by a previous run.", staleDirectory);
+                try {
+                    FileUtils.deleteDirectory(staleDirectory.toFile());
+                } catch (IOException e) {
+                    logger.warn("Failed to delete the stale directory {}.", staleDirectory, e);
+                }
             }
+        } catch (IOException | DirectoryIteratorException e) {
+            // Unchecked when it is raised while iterating, and sweeping is housekeeping: it must not fail the
+            // execution it is making room for.
+            logger.warn("Failed to list the workspace directory {}. The directories left over by a previous run are"
+                + " not swept.", root, e);
         }
     }
 

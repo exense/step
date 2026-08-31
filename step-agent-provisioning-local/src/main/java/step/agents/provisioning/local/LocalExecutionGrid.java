@@ -57,7 +57,7 @@ public class LocalExecutionGrid implements Closeable {
      */
     public LocalExecutionGrid(Duration agentStartTimeout, LocalAgentWorkspace workspace) throws Exception {
         // The grid listens on all interfaces, so it is protected with a secret rather than left open to anything
-        // running on the machine. The secret is generated per invocation and never leaves this process and the
+        // able to connect. The secret is generated per invocation and never leaves this process and the
         // configuration files of the agents it starts, both of which are gone when the CLI terminates.
         security = new SymmetricSecurityConfiguration(generateSecretKey());
 
@@ -117,9 +117,7 @@ public class LocalExecutionGrid implements Closeable {
      * Stops the grid and deletes the files its file manager cached. The grid client is left alone: it is registered
      * in the execution engine context, which closes it itself.
      * <p>
-     * To be called once the grid client has been closed, and not before: the local tokens of that client execute
-     * handlers with class loaders reading the jars directly out of the file manager directory deleted here, and an
-     * open file is a file Windows refuses to delete.
+     * To be called once the grid client has been closed, as the client depends on files that this method deletes.
      */
     @Override
     public void close() throws IOException {

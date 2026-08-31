@@ -304,7 +304,11 @@ public class ScriptEngineLibraries {
     }
 
     private static String[] nestedParts(URL location) throws LocalAgentException {
-        String[] parts = location.toString().substring("jar:".length()).split("!/");
+        String url = location.toString();
+        if (!url.startsWith("jar:")) {
+            throw new LocalAgentException("Unable to read the library " + location + ": not a nested library location.");
+        }
+        String[] parts = url.substring("jar:".length()).split("!/");
         if (parts.length < 2 || parts[1].isEmpty()) {
             throw new LocalAgentException("Unable to read the library " + location + ": no nested library in it.");
         }

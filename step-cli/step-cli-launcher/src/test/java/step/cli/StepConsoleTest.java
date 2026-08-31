@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.cli.parameters.ApDeployParameters;
 import step.cli.parameters.ApExecuteParameters;
 import step.cli.parameters.LibraryDeployParameters;
@@ -564,7 +565,7 @@ public class StepConsoleTest {
             private String includeCategories;
             private String excludeCategories;
             private Map<String, String> executionParameters;
-            public step.agents.provisioning.local.LocalAgentProvisioningConfiguration localAgentConfiguration;
+            public LocalAgentProvisioningConfiguration localAgentConfiguration;
         }
 
         public TestApExecuteCommand(List<RemoteExecutionParams> remoteParams, List<LocalExecutionParams> localParams) {

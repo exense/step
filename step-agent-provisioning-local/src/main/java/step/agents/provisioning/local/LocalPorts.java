@@ -43,7 +43,7 @@ class LocalPorts {
         try (ServerSocket socket = new ServerSocket(0, 1, InetAddress.getByName(AgentConfWriter.LOOPBACK_HOST))) {
             return socket.getLocalPort();
         } catch (IOException e) {
-            throw new LocalAgentException("Unable to reserve a port for a local agent", e);
+            throw new LocalAgentException("Unable to find a free port", e);
         }
     }
 }

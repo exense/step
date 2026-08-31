@@ -56,7 +56,7 @@ public class StepConsoleLoggingTest {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         Logger logger = rootLoggerWriting(output, "%msg%n");
 
-        StepConsole.suppressStackTraces(loggerContext);
+        StepConsoleLogging.suppressStackTraces(loggerContext);
         logger.error("This plan requires agents which are not available for local execution",
             new IllegalStateException("no .NET agent installed"));
 
@@ -75,7 +75,7 @@ public class StepConsoleLoggingTest {
     public void leavesAPatternWhichPlacesTheExceptionAlone() {
         PatternLayoutEncoder encoder = rootLoggerEncoder("%msg%n%xEx");
 
-        StepConsole.suppressStackTraces(loggerContext);
+        StepConsoleLogging.suppressStackTraces(loggerContext);
 
         Assert.assertEquals("%msg%n%xEx", encoder.getPattern());
     }
@@ -87,9 +87,9 @@ public class StepConsoleLoggingTest {
     public void appliesTheSameSuppressionTwiceWithoutChangingThePatternTwice() {
         PatternLayoutEncoder encoder = rootLoggerEncoder("%msg%n");
 
-        StepConsole.suppressStackTraces(loggerContext);
+        StepConsoleLogging.suppressStackTraces(loggerContext);
         String afterFirstCall = encoder.getPattern();
-        StepConsole.suppressStackTraces(loggerContext);
+        StepConsoleLogging.suppressStackTraces(loggerContext);
 
         Assert.assertEquals(afterFirstCall, encoder.getPattern());
     }
@@ -105,7 +105,7 @@ public class StepConsoleLoggingTest {
         appender.start();
         loggerContext.getLogger(Logger.ROOT_LOGGER_NAME).addAppender(appender);
 
-        StepConsole.suppressStackTraces(loggerContext);
+        StepConsoleLogging.suppressStackTraces(loggerContext);
 
         Assert.assertTrue(appender.isStarted());
     }
@@ -119,7 +119,7 @@ public class StepConsoleLoggingTest {
     public void debugRaisesTheStepLoggersOnly() {
         loggerContext.getLogger(Logger.ROOT_LOGGER_NAME).setLevel(Level.INFO);
 
-        StepConsole.enableDebugLogging(loggerContext);
+        StepConsoleLogging.enableDebugLogging(loggerContext);
 
         Assert.assertEquals(Level.DEBUG, loggerContext.getLogger("step.cli.ApLocalExecuteCommandHandler").getEffectiveLevel());
         Assert.assertEquals(Level.DEBUG, loggerContext.getLogger("step.grid.filemanager.FileManagerImpl").getEffectiveLevel());

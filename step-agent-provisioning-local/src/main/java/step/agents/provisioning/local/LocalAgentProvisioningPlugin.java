@@ -104,9 +104,6 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
             // Would otherwise publish the grid client of a grid which has been stopped, and fail every keyword later
             throw new PluginCriticalException("This local agent provisioning plugin has been closed and cannot be reused");
         }
-        if (driver != null) {
-            return;
-        }
         // Failures here are raised as PluginCriticalException, carrying on would leave the engine without a grid and without a
         // provisioning driver, and every plan would then fail with a misleading "no agent available for local
         // execution" instead of with the actual reason the local execution could not be set up.

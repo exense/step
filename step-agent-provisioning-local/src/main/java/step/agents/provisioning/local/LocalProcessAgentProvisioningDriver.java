@@ -424,8 +424,8 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         final Set<StartedAgent> startedAgents = new HashSet<>();
         /**
          * Isolates the tokens of this execution from the ones of any other, exactly as the Kubernetes driver does.
-         * The execution id is used when available so that the agent configurations left behind by a crash can be
-         * traced back to the execution they belonged to.
+         * The partition is added to the token attributes of the provisioned agent and used a selection criteria by the execution.
+         * The execution id is used (fallback to random UUID for JUnit tests).
          */
         final String tokenPartition;
 
