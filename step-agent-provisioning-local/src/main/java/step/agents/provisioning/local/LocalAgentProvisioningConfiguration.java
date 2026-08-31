@@ -22,6 +22,8 @@ import step.core.Constants;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * The settings of a local execution.
@@ -37,6 +39,11 @@ public class LocalAgentProvisioningConfiguration {
     public static final int DEFAULT_MAX_TOKENS_PER_AGENT = 5;
     public static final int DEFAULT_START_TIMEOUT_SECONDS = 60;
     private static final Duration DEFAULT_SHUTDOWN_TIMEOUT = Duration.ofSeconds(15);
+    /**
+     * The floor under which a timeout is not one: no agent process starts, and none acts on a shutdown request, in
+     * under a second. It is also the granularity the CLI exposes these timeouts with.
+     */
+    private static final Duration MINIMUM_TIMEOUT = Duration.ofSeconds(1);
 
     private Path javaAgentPath;
     private Path nodeAgentPath;
@@ -46,7 +53,7 @@ public class LocalAgentProvisioningConfiguration {
     private int maxTokensPerAgent = DEFAULT_MAX_TOKENS_PER_AGENT;
     private Duration agentStartTimeout = Duration.ofSeconds(DEFAULT_START_TIMEOUT_SECONDS);
     private Duration agentShutdownTimeout = DEFAULT_SHUTDOWN_TIMEOUT;
-    private String javaAgentVmArgs;
+    private List<String> javaAgentVmArgs = List.of();
     private boolean verbose;
     private boolean debug;
 
@@ -130,6 +137,10 @@ public class LocalAgentProvisioningConfiguration {
     }
 
     public LocalAgentProvisioningConfiguration setMaxTokensPerAgent(int maxTokensPerAgent) {
+        if (maxTokensPerAgent < 1) {
+            // An agent allowed no token runs no keyword, and is started for nothing
+            throw new IllegalArgumentException("maxTokensPerAgent must be at least 1, but was " + maxTokensPerAgent);
+        }
         this.maxTokensPerAgent = maxTokensPerAgent;
         return this;
     }
@@ -143,29 +154,46 @@ public class LocalAgentProvisioningConfiguration {
     }
 
     public LocalAgentProvisioningConfiguration setAgentStartTimeout(Duration agentStartTimeout) {
-        this.agentStartTimeout = agentStartTimeout;
+        this.agentStartTimeout = requireUsableTimeout(agentStartTimeout, "agentStartTimeout");
         return this;
     }
 
+    /**
+     * @return how long an agent asked to shut down is given to do so before it is destroyed
+     */
     public Duration getAgentShutdownTimeout() {
         return agentShutdownTimeout;
     }
 
     public LocalAgentProvisioningConfiguration setAgentShutdownTimeout(Duration agentShutdownTimeout) {
-        this.agentShutdownTimeout = agentShutdownTimeout;
+        this.agentShutdownTimeout = requireUsableTimeout(agentShutdownTimeout, "agentShutdownTimeout");
         return this;
     }
 
     /**
-     * @return extra JVM arguments for the Java agent, mainly to attach a debugger or tune the heap while
-     * troubleshooting a keyword locally
+     * Rejects the timeouts no agent could ever meet, {@code Duration.ZERO} being the one a user may well read as
+     * "unlimited": an agent is given a timeout of zero to mean that it was never asked to stop and is to be destroyed
+     * right away.
      */
-    public String getJavaAgentVmArgs() {
+    private static Duration requireUsableTimeout(Duration timeout, String name) {
+        Objects.requireNonNull(timeout, name + " must not be null");
+        if (timeout.compareTo(MINIMUM_TIMEOUT) < 0) {
+            throw new IllegalArgumentException(name + " must be at least " + MINIMUM_TIMEOUT.toSeconds()
+                + "s, but was " + timeout);
+        }
+        return timeout;
+    }
+
+    /**
+     * @return extra JVM arguments for the Java agent, mainly to attach a debugger or tune the heap while
+     * troubleshooting a keyword locally. One argument per element, so that an argument may contain spaces.
+     */
+    public List<String> getJavaAgentVmArgs() {
         return javaAgentVmArgs;
     }
 
-    public LocalAgentProvisioningConfiguration setJavaAgentVmArgs(String javaAgentVmArgs) {
-        this.javaAgentVmArgs = javaAgentVmArgs;
+    public LocalAgentProvisioningConfiguration setJavaAgentVmArgs(List<String> javaAgentVmArgs) {
+        this.javaAgentVmArgs = javaAgentVmArgs == null ? List.of() : List.copyOf(javaAgentVmArgs);
         return this;
     }
 

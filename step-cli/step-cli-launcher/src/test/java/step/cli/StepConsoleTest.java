@@ -322,7 +322,7 @@ public class StepConsoleTest {
         Histories histories = new Histories(null, null, null, localExecuteHistory);
 
         // all parameters
-        int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD", "-ep=key1=value1|key2=value2", "-ep=key3=value3");
+        int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD", "-ep=key1=value1|key2=value2", "-ep=key3=value3", "--localAgentVmArgs=-Xmx4g", "--localAgentVmArgs=-XX:HeapDumpPath=C:\\Program Files\\dumps");
 
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, localExecuteHistory.size());
@@ -333,6 +333,8 @@ public class StepConsoleTest {
         Assert.assertEquals("CatC,CatD", usedParams.excludeCategories);
         Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.executionParameters);
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+        Assert.assertEquals(List.of("-Xmx4g", "-XX:HeapDumpPath=C:\\Program Files\\dumps"),
+            usedParams.localAgentConfiguration.getJavaAgentVmArgs());
 
         // minimum parameters
         localExecuteHistory.clear();
@@ -343,6 +345,7 @@ public class StepConsoleTest {
         usedParams = localExecuteHistory.get(0);
         Assert.assertEquals(Map.of(), usedParams.executionParameters);
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+        Assert.assertEquals(List.of(), usedParams.localAgentConfiguration.getJavaAgentVmArgs());
 
         // properties files
         localExecuteHistory.clear();

@@ -51,6 +51,13 @@ public class AgentConfWriter {
      * left to the agent to determine, because agents fall back to resolving the canonical host name of the machine
      * (see {@code BaseServer.getOrBuildActualUrl}), which on a VPN, a multi-homed machine or one with a restricted DNS
      * resolves to a name the grid then fails to call back on.
+     * <p>
+     * TODO IPv6: the IPv4 loopback is pinned here, so a machine with no IPv4 stack at all is not supported.
+     * {@link java.net.InetAddress#getLoopbackAddress()} would yield {@code ::1} there, but the value would then have
+     * to be bracketed everywhere it goes into a URL, and the grid would not follow: its
+     * {@code BaseServer.getOrBuildActualUrl} concatenates the host into the agent URL unbracketed and resolves the
+     * local host through {@link java.net.Inet4Address}. Supporting IPv6-only machines is a change to the grid and to
+     * all three agents, not to this constant.
      */
     public static final String LOOPBACK_HOST = "127.0.0.1";
 

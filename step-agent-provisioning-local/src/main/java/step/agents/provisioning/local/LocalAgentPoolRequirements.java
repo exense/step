@@ -18,9 +18,9 @@
  ******************************************************************************/
 package step.agents.provisioning.local;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import step.core.accessors.AbstractOrganizableObject;
 import step.core.agents.provisioning.AgentPoolRequirementSpec;
+import step.core.execution.ProvisioningException;
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
@@ -28,9 +28,10 @@ import step.grid.agent.AgentTypes;
 import step.grid.tokenpool.Interest;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,28 +49,28 @@ import java.util.stream.Collectors;
  */
 class LocalAgentPoolRequirements {
 
-    private static final Logger logger = LoggerFactory.getLogger(LocalAgentPoolRequirements.class);
-
     private LocalAgentPoolRequirements() {
     }
 
     /**
-     * @param functions          the keywords available to the execution, used to determine which agent types it needs
+     * @param functions            the keywords available to the execution, used to determine which agent types it needs
      * @param functionTypeRegistry the registry resolving the type, and thus the required agent, of a keyword
      * @param availableAgentTypes  the agent types which can be started on this machine
      * @param tokensPerAgent       the number of tokens to give each started agent
-     * @return one requirement per required agent type, or one per available agent type when none could be determined
+     * @param installationHints    what the user has to do for an agent type to become available, by agent type
+     * @return one requirement per required agent type, empty when no keyword needs an agent of its own
+     * @throws ProvisioningException when a keyword requires an agent this machine cannot start, or one whose agent
+     * type cannot be determined
      */
     static List<AgentPoolRequirementSpec> forRequiredAgentTypes(Collection<Function> functions,
                                                                FunctionTypeRegistry functionTypeRegistry,
-                                                               Set<String> availableAgentTypes, int tokensPerAgent) {
+                                                               Set<String> availableAgentTypes, int tokensPerAgent,
+                                                               java.util.function.Function<String, String> installationHints) {
         Set<String> requiredAgentTypes = requiredAgentTypes(functions, functionTypeRegistry);
-        requiredAgentTypes.retainAll(availableAgentTypes);
-        if (requiredAgentTypes.isEmpty()) {
-            // Either the keywords are unknown at this point, or none of them declares an agent type this machine can
-            // serve. Starting everything available is the only answer left which lets the execution run at all.
-            logger.debug("No agent type could be derived from the keywords. Starting one agent of each available type.");
-            requiredAgentTypes = new LinkedHashSet<>(availableAgentTypes);
+        Set<String> unavailableAgentTypes = new HashSet<>(requiredAgentTypes);
+        unavailableAgentTypes.removeAll(availableAgentTypes);
+        if (!unavailableAgentTypes.isEmpty()) {
+            throw new ProvisioningException(unavailableAgentTypesMessage(unavailableAgentTypes, installationHints));
         }
         return requiredAgentTypes.stream()
             .map(agentType -> new AgentPoolRequirementSpec(LocalProcessAgentProvisioningDriver.agentPoolName(agentType),
@@ -78,31 +79,55 @@ class LocalAgentPoolRequirements {
     }
 
     /**
+     * @return the message reporting agent types no local agent can serve, telling for each one what the user has to
+     * do about it when its provider knows
+     */
+    static String unavailableAgentTypesMessage(Collection<String> agentTypes,
+                                               java.util.function.Function<String, String> installationHints) {
+        StringBuilder message = new StringBuilder("This plan requires agent types which are not available for local"
+            + " execution: " + String.join(", ", agentTypes) + ".");
+        agentTypes.stream().map(installationHints).filter(Objects::nonNull)
+            .forEach(hint -> message.append(" ").append(hint));
+        return message.toString();
+    }
+
+    /**
      * @return the agent types the given keywords need, as their function types declare them. Keywords running in the
      * engine itself, composite keywords being the usual case, need no agent and are left out.
      */
     private static Set<String> requiredAgentTypes(Collection<Function> functions, FunctionTypeRegistry functionTypeRegistry) {
-        Set<String> agentTypes = new LinkedHashSet<>();
-        if (functions == null || functionTypeRegistry == null) {
-            return agentTypes;
-        }
+        Set<String> agentTypes = new HashSet<>();
         for (Function function : functions) {
-            if (function.requiresLocalExecution()) {
-                continue;
-            }
-            try {
-                AbstractFunctionType<Function> functionType = functionTypeRegistry.getFunctionTypeByFunction(function);
-                Map<String, Interest> criteria = functionType.getTokenSelectionCriteria(function);
-                Interest agentType = criteria != null ? criteria.get(AgentTypes.AGENT_TYPE_KEY) : null;
-                if (agentType != null) {
-                    agentTypes.add(agentType.getSelectionPattern().pattern());
-                }
-            } catch (RuntimeException e) {
-                // An unregistered function type is not worth failing the provisioning for: the keyword itself fails
-                // with a far clearer error when it is called.
-                logger.debug("Unable to determine the agent type of the keyword {}", function.getAttribute("name"), e);
+            if (!function.requiresLocalExecution()) {
+                agentTypes.add(agentTypeOf(function, functionTypeRegistry));
             }
         }
         return agentTypes;
+    }
+
+    /**
+     * @return the agent type the given keyword declares through its function type
+     * @throws ProvisioningException when the type of the keyword is unknown to this application or declares no agent
+     * type: the keyword would be provisioned no agent and fail when called
+     */
+    private static String agentTypeOf(Function function, FunctionTypeRegistry functionTypeRegistry) {
+        Map<String, Interest> criteria;
+        try {
+            AbstractFunctionType<Function> functionType = functionTypeRegistry.getFunctionTypeByFunction(function);
+            criteria = functionType.getTokenSelectionCriteria(function);
+        } catch (RuntimeException e) {
+            throw new ProvisioningException("Unable to determine the agent required by the keyword "
+                + nameOf(function) + ": its type is not supported by this local execution.", e);
+        }
+        Interest agentType = criteria != null ? criteria.get(AgentTypes.AGENT_TYPE_KEY) : null;
+        if (agentType == null || agentType.getSelectionPattern() == null) {
+            throw new ProvisioningException("Unable to determine the agent required by the keyword "
+                + nameOf(function) + ": its type declares no agent type.");
+        }
+        return agentType.getSelectionPattern().pattern();
+    }
+
+    private static String nameOf(Function function) {
+        return function.getAttribute(AbstractOrganizableObject.NAME);
     }
 }

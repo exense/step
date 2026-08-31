@@ -201,9 +201,13 @@ public class LocalAgentProcess {
      */
     private void destroyForciblyWithDescendants() {
         // Taken before anything is killed: the descendants of a dead process are no longer reachable through it
-        List<ProcessHandle> descendants = process.descendants().toList();
-        descendants.forEach(ProcessHandle::destroyForcibly);
-        process.destroyForcibly();
+        try {
+            List<ProcessHandle> descendants = process.descendants().toList();
+            descendants.forEach(ProcessHandle::destroyForcibly);
+            process.destroyForcibly();
+        } catch (Throwable t) {
+            logger.error("Unable to destroy process {} due to {}", name, t);
+        }
     }
 
     private void deleteWorkingDirectory() {

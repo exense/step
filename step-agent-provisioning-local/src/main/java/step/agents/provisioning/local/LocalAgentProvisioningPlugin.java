@@ -194,16 +194,32 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
     }
 
     /**
-     * @return the keywords available to this execution, or {@code null} when they cannot be listed
+     * @return the keywords available to this execution
+     * @throws ProvisioningException when the engine has no keyword accessor, which no agent can make up for: every
+     *                               keyword call fails on the very same accessor
      */
     private static Collection<Function> functionsOf(ExecutionContext context) {
         FunctionAccessor functionAccessor = context.get(FunctionAccessor.class);
         if (functionAccessor == null) {
-            return null;
+            throw new ProvisioningException("The agents required by this plan cannot be determined: this execution has"
+                + " no keyword accessor. The execution engine was built without " + FunctionPlugin.class.getSimpleName() + ".");
         }
         List<Function> functions = new ArrayList<>();
         functionAccessor.getAll().forEachRemaining(functions::add);
         return functions;
+    }
+
+    /**
+     * @return the registry resolving the type, and thus the required agent, of a keyword
+     * @throws ProvisioningException see {@link #functionsOf(ExecutionContext)}
+     */
+    private static FunctionTypeRegistry functionTypeRegistryOf(ExecutionContext context) {
+        FunctionTypeRegistry functionTypeRegistry = context.get(FunctionTypeRegistry.class);
+        if (functionTypeRegistry == null) {
+            throw new ProvisioningException("The agents required by this plan cannot be determined: this execution has"
+                + " no function type registry. The execution engine was built without " + FunctionPlugin.class.getSimpleName() + ".");
+        }
+        return functionTypeRegistry;
     }
 
     @Override
@@ -223,17 +239,22 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
         } else {
             List<AgentPoolRequirementSpec> configuredAgentPools = planAgentConfiguration.getAgentPoolRequirementSpecs();
             if (configuredAgentPools == null) {
-                throw new ProvisioningException("The agent configuration of the plan returned no agent pool requirement");
+                throw new ProvisioningException("Automatic agent calculation is disabled, but no manual agent requirements are defined.");
             }
             requiredAgentPools = LocalAgentPoolRequirements.forRequiredAgentTypes(functionsOf(context),
-                context.get(FunctionTypeRegistry.class), driver.getAvailableAgentTypes(),
-                configuration.getMaxTokensPerAgent());
-            logger.info("This plan configures its agent pools manually ({}). Those pools are those of a Step "
-                    + "instance and do not exist here: one agent of each required type is started with {} tokens "
-                    + "instead ({}).",
-                configuredAgentPools.stream().map(p -> p.agentPoolTemplateName).collect(Collectors.joining(", ")),
-                configuration.getMaxTokensPerAgent(),
-                requiredAgentPools.stream().map(p -> p.agentPoolTemplateName).collect(Collectors.joining(", ")));
+                functionTypeRegistryOf(context), driver.getAvailableAgentTypes(),
+                configuration.getMaxTokensPerAgent(), driver::getInstallationHint);
+            String configuredPoolNames = configuredAgentPools.stream().map(p -> p.agentPoolTemplateName)
+                .collect(Collectors.joining(", "));
+            if (requiredAgentPools.isEmpty()) {
+                logger.info("This plan configures its agent pools manually ({}), but none of its keywords requires an "
+                    + "agent: none is started.", configuredPoolNames);
+            } else {
+                logger.info("This plan configures its agent pools manually ({}). Those pools are those of a Step "
+                        + "instance and do not exist here: one agent of each required type is started with {} tokens "
+                        + "instead ({}).", configuredPoolNames, configuration.getMaxTokensPerAgent(),
+                    requiredAgentPools.stream().map(p -> p.agentPoolTemplateName).collect(Collectors.joining(", ")));
+            }
         }
 
         if (requiredAgentPools.isEmpty()) {
@@ -261,8 +282,6 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
      * one, what to do about them: the criteria as they are collected ({@code [{$agenttype=dotnet}]}) do say what is
      * missing, but not that the .NET agent is the user's to install, nor how this CLI is told where it is.
      */
-    // Package private for the sake of the tests, which cover the message without running an execution
-    // Qualified: step.functions.Function, the keyword, is the Function of this package
     static String unavailableAgentsMessage(Set<Map<String, Interest>> criteriaWithoutMatch,
                                            java.util.function.Function<String, String> installationHints) {
         List<String> agentTypes = criteriaWithoutMatch.stream()
@@ -277,11 +296,7 @@ public class LocalAgentProvisioningPlugin extends AbstractExecutionEnginePlugin 
             // Criteria this plugin cannot read as an agent type, reported as they were collected
             return "This plan requires agents which are not available for local execution: " + criteriaWithoutMatch;
         }
-        StringBuilder message = new StringBuilder("This plan requires agent types which are not available for local"
-            + " execution: " + String.join(", ", agentTypes) + ".");
-        agentTypes.stream().map(installationHints).filter(Objects::nonNull)
-            .forEach(hint -> message.append(" ").append(hint));
-        return message.toString();
+        return LocalAgentPoolRequirements.unavailableAgentTypesMessage(agentTypes, installationHints);
     }
 
     @Override

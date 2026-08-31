@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.JarURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,7 +35,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.jar.JarEntry;
 import java.util.stream.Stream;
 
 /**
@@ -58,10 +59,14 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
     private static final String AGENT_MAIN_CLASS = "step.grid.agent.AgentRunner";
     private static final String AGENT_CONF_FILE_NAME = "AgentConf.yaml";
     private static final String LOGBACK_CONF_FILE_NAME = "logback-local-agent.xml";
-    /** The agent bundle embedded in the CLI jar. Kept in sync by the build, see the launcher's pom. */
+    /**
+     * The agent bundle embedded in the CLI jar. Kept in sync by the build, see the launcher's pom.
+     */
     static final String EMBEDDED_AGENT_RESOURCE = "step-local-java-agent.jar";
     private static final String INSTALLED_AGENT_NAME = "java";
     private static final String INSTALLED_AGENT_JAR_NAME = "step-agent.jar";
+    /** Records which embedded agent the extracted one was extracted from. */
+    private static final String INSTALLED_AGENT_IDENTITY_FILE_NAME = INSTALLED_AGENT_JAR_NAME + ".id";
     private static final String LIB_DIRECTORY_NAME = "lib";
 
     private final LocalAgentProvisioningConfiguration configuration;
@@ -171,17 +176,17 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
     }
 
     /**
-     * Extracts the embedded agent bundle, once per CLI version. The extracted bundle is kept between runs: it is
+     * Extracts the embedded agent bundle, once per build of the CLI. The extracted bundle is kept between runs: it is
      * ~20 MB and rewriting it on every local execution would be pure waste.
+     * <p>
+     * It is kept in a directory named after the version, which is the same for every build of that version, so what
+     * it was extracted from is recorded next to it and it is reused only while that still matches.
      */
     private Path extractEmbeddedAgent() throws LocalAgentException {
         Path installedDirectory = workspace.getInstalledAgentDirectory(INSTALLED_AGENT_NAME, Constants.STEP_VERSION_STRING);
         Path agentJar = installedDirectory.resolve(INSTALLED_AGENT_JAR_NAME);
-        // The directory is named after the version, which does not change between two builds of the same one. An
-        // extracted agent is therefore only reused when it is also the same size as the embedded one, otherwise
-        // every CLI rebuilt during development would go on running the agent of the first build, for ever.
-        long embeddedSize = embeddedAgentSize();
-        if (Files.isRegularFile(agentJar) && sizeOf(agentJar) == embeddedSize) {
+        EmbeddedAgent embeddedAgent = identifyEmbeddedAgent();
+        if (isExtractedAgentUsable(agentJar, identityFileOf(installedDirectory), embeddedAgent)) {
             logger.debug("Using the Java agent already extracted in {}", installedDirectory);
             return agentJar;
         }
@@ -202,26 +207,72 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
             } finally {
                 Files.deleteIfExists(temporaryJar);
             }
+            // Written once the jar is in place, so that an interrupted extraction leaves an agent which does not
+            // match and is extracted again.
+            if (embeddedAgent != null) {
+                Files.writeString(identityFileOf(installedDirectory), embeddedAgent.identity());
+            }
         } catch (IOException e) {
             throw new LocalAgentException("Error while extracting the Java agent to " + installedDirectory, e);
         }
         return agentJar;
     }
 
+    /** The size and a checksum of the agent embedded in this CLI. */
+    record EmbeddedAgent(long size, String identity) {
+    }
+
+    private static Path identityFileOf(Path installedDirectory) {
+        return installedDirectory.resolve(INSTALLED_AGENT_IDENTITY_FILE_NAME);
+    }
+
     /**
-     * @return the size of the agent embedded in this CLI, or -1 when it cannot be determined. Read from the jar
-     * index rather than by reading the 20 MB of the agent itself.
+     * Whether the agent extracted by an earlier run is the one this CLI embeds and can be run as it is. The recorded
+     * identity tells which embedded agent it was extracted from; the size is checked against the file itself, which
+     * that identity cannot vouch for.
+     *
+     * @param embedded what this CLI embeds, or {@code null} when it could not be identified
      */
-    private static long embeddedAgentSize() {
+    static boolean isExtractedAgentUsable(Path agentJar, Path identityFile, EmbeddedAgent embedded) {
+        return embedded != null && embedded.identity().equals(readIdentity(identityFile))
+            && Files.isRegularFile(agentJar) && sizeOf(agentJar) == embedded.size();
+    }
+
+    /**
+     * @return the identity recorded next to an extracted agent, or {@code null} when there is none to read
+     */
+    private static String readIdentity(Path identityFile) {
+        try {
+            return Files.readString(identityFile).trim();
+        } catch (IOException e) {
+            logger.debug("Unable to read the identity of the extracted Java agent from {}", identityFile.toAbsolutePath(), e);
+            return null;
+        }
+    }
+
+    /**
+     * @return the size and the CRC-32 of the agent this CLI embeds, read from the index of the CLI jar so that
+     * identifying it never costs a read of its 20 MB. {@code null} when the CLI is not packaged as a jar and has no
+     * index to read them from, which extracts the agent afresh on every run rather than risking a stale one.
+     */
+    private static EmbeddedAgent identifyEmbeddedAgent() {
         URL resource = JavaLocalAgentProvider.class.getClassLoader().getResource(EMBEDDED_AGENT_RESOURCE);
         if (resource == null) {
-            return -1;
+            return null;
         }
         try {
-            return resource.openConnection().getContentLengthLong();
+            // Nothing is opened here: the entry is read from the index, through the jar file the JVM keeps open and
+            // shared anyway.
+            if (resource.openConnection() instanceof JarURLConnection jarConnection) {
+                JarEntry entry = jarConnection.getJarEntry();
+                if (entry != null && entry.getCrc() != -1) {
+                    return new EmbeddedAgent(entry.getSize(), entry.getSize() + ":" + entry.getCrc());
+                }
+            }
+            return null;
         } catch (IOException e) {
-            logger.debug("Unable to determine the size of the embedded Java agent", e);
-            return -1;
+            logger.debug("Unable to identify the Java agent embedded in this CLI", e);
+            return null;
         }
     }
 
@@ -229,7 +280,7 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
         try {
             return Files.size(file);
         } catch (IOException e) {
-            logger.debug("Unable to determine the size of {}", file, e);
+            logger.debug("Unable to determine the size of {}", file.toAbsolutePath(), e);
             return -1;
         }
     }
@@ -255,9 +306,6 @@ public class JavaLocalAgentProvider implements LocalAgentProvider {
     }
 
     private List<String> vmArgs() {
-        return Optional.ofNullable(configuration.getJavaAgentVmArgs())
-            .filter(args -> !args.isBlank())
-            .map(args -> List.of(args.trim().split("\\s+")))
-            .orElseGet(List::of);
+        return configuration.getJavaAgentVmArgs().stream().filter(arg -> !arg.isBlank()).toList();
     }
 }

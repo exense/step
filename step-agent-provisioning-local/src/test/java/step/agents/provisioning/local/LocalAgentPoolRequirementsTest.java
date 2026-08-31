@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import step.core.agents.AgentTypeConstants;
 import step.core.agents.provisioning.AgentPoolRequirementSpec;
+import step.core.execution.ProvisioningException;
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
@@ -45,12 +46,13 @@ public class LocalAgentPoolRequirementsTest {
         Set.of(AgentTypeConstants.AGENT_TYPE_JAVA, AgentTypeConstants.AGENT_TYPE_NODEJS);
     private static final String JAVA_POOL = "local-" + AgentTypeConstants.AGENT_TYPE_JAVA;
     private static final String NODE_POOL = "local-" + AgentTypeConstants.AGENT_TYPE_NODEJS;
+    private static final java.util.function.Function<String, String> INSTALLATION_HINTS =
+        agentType -> AgentTypeConstants.AGENT_TYPE_DOTNET.equals(agentType) ? "Install the .NET agent." : null;
 
     @Test
     public void startsOneAgentPerRequiredAgentType() {
-        List<AgentPoolRequirementSpec> requirements = LocalAgentPoolRequirements.forRequiredAgentTypes(
-            List.of(function(AgentTypeConstants.AGENT_TYPE_JAVA), function(AgentTypeConstants.AGENT_TYPE_NODEJS)),
-            new FunctionTypeRegistryStub(), AVAILABLE_AGENT_TYPES, 5);
+        List<AgentPoolRequirementSpec> requirements = forRequiredAgentTypes(
+            List.of(function(AgentTypeConstants.AGENT_TYPE_JAVA), function(AgentTypeConstants.AGENT_TYPE_NODEJS)), 5);
 
         Assert.assertEquals(Set.of(JAVA_POOL, NODE_POOL), poolNames(requirements));
         requirements.forEach(r -> Assert.assertEquals(5, r.numberOfAgents));
@@ -62,9 +64,8 @@ public class LocalAgentPoolRequirementsTest {
      */
     @Test
     public void sizesEachAgentWithTheMaximumNumberOfTokens() {
-        List<AgentPoolRequirementSpec> requirements = LocalAgentPoolRequirements.forRequiredAgentTypes(
-            List.of(function(AgentTypeConstants.AGENT_TYPE_JAVA)), new FunctionTypeRegistryStub(),
-            AVAILABLE_AGENT_TYPES, 3);
+        List<AgentPoolRequirementSpec> requirements =
+            forRequiredAgentTypes(List.of(function(AgentTypeConstants.AGENT_TYPE_JAVA)), 3);
 
         Assert.assertEquals(1, requirements.size());
         Assert.assertEquals(JAVA_POOL, requirements.get(0).agentPoolTemplateName);
@@ -79,43 +80,54 @@ public class LocalAgentPoolRequirementsTest {
         Function localFunction = function(AgentTypeConstants.AGENT_TYPE_JAVA);
         localFunction.setExecuteLocally(true);
 
-        List<AgentPoolRequirementSpec> requirements = LocalAgentPoolRequirements.forRequiredAgentTypes(
-            List.of(localFunction, function(AgentTypeConstants.AGENT_TYPE_NODEJS)), new FunctionTypeRegistryStub(),
-            AVAILABLE_AGENT_TYPES, 5);
+        List<AgentPoolRequirementSpec> requirements =
+            forRequiredAgentTypes(List.of(localFunction, function(AgentTypeConstants.AGENT_TYPE_NODEJS)), 5);
 
         Assert.assertEquals(Set.of(NODE_POOL), poolNames(requirements));
     }
 
     /**
-     * An agent type this distribution cannot start is left out rather than requested and rejected later.
+     * A plan whose keywords all run in the engine needs no agent at all, and starting any would only cost the time of
+     * starting it.
      */
     @Test
-    public void ignoresTheAgentTypesWhichAreNotAvailable() {
-        List<AgentPoolRequirementSpec> requirements = LocalAgentPoolRequirements.forRequiredAgentTypes(
-            List.of(function(AgentTypeConstants.AGENT_TYPE_JAVA), function(AgentTypeConstants.AGENT_TYPE_DOTNET)),
-            new FunctionTypeRegistryStub(), AVAILABLE_AGENT_TYPES, 5);
-
-        Assert.assertEquals(Set.of(JAVA_POOL), poolNames(requirements));
-    }
-
-    /**
-     * Without keywords to derive the types from, everything available is started: it is the only answer which lets the
-     * execution run at all.
-     */
-    @Test
-    public void startsEveryAvailableAgentTypeWhenNoneCanBeDerived() {
-        List<AgentPoolRequirementSpec> requirements = LocalAgentPoolRequirements.forRequiredAgentTypes(
-            List.of(), new FunctionTypeRegistryStub(), AVAILABLE_AGENT_TYPES, 5);
-
-        Assert.assertEquals(Set.of(JAVA_POOL, NODE_POOL), poolNames(requirements));
+    public void startsNoAgentWhenNoKeywordRequiresOne() {
+        Assert.assertEquals(List.of(), forRequiredAgentTypes(List.of(), 5));
     }
 
     @Test
-    public void startsEveryAvailableAgentTypeWithoutAFunctionAccessor() {
-        List<AgentPoolRequirementSpec> requirements = LocalAgentPoolRequirements.forRequiredAgentTypes(
-            null, new FunctionTypeRegistryStub(), AVAILABLE_AGENT_TYPES, 5);
+    public void failsWhenARequiredAgentTypeIsNotAvailable() {
+        ProvisioningException exception = Assert.assertThrows(ProvisioningException.class, () -> forRequiredAgentTypes(
+            List.of(function(AgentTypeConstants.AGENT_TYPE_JAVA), function(AgentTypeConstants.AGENT_TYPE_DOTNET)), 5));
 
-        Assert.assertEquals(Set.of(JAVA_POOL, NODE_POOL), poolNames(requirements));
+        Assert.assertEquals("This plan requires agent types which are not available for local execution: "
+            + AgentTypeConstants.AGENT_TYPE_DOTNET + ". Install the .NET agent.", exception.getMessage());
+    }
+
+    @Test
+    public void failsWhenTheTypeOfAKeywordIsUnknown() {
+        ProvisioningException exception = Assert.assertThrows(ProvisioningException.class,
+            () -> forRequiredAgentTypes(List.of(function(null)), 5));
+
+        Assert.assertEquals("Unable to determine the agent required by the keyword keywordWithoutType: its type is"
+            + " not supported by this local execution.", exception.getMessage());
+    }
+
+    @Test
+    public void failsWhenTheTypeOfAKeywordDeclaresNoAgentType() {
+        Function function = function(AgentTypeConstants.AGENT_TYPE_JAVA);
+
+        ProvisioningException exception = Assert.assertThrows(ProvisioningException.class,
+            () -> LocalAgentPoolRequirements.forRequiredAgentTypes(List.of(function),
+                new FunctionTypeRegistryStub(false), AVAILABLE_AGENT_TYPES, 5, INSTALLATION_HINTS));
+
+        Assert.assertEquals("Unable to determine the agent required by the keyword keywordFor"
+            + AgentTypeConstants.AGENT_TYPE_JAVA + ": its type declares no agent type.", exception.getMessage());
+    }
+
+    private static List<AgentPoolRequirementSpec> forRequiredAgentTypes(List<Function> functions, int tokensPerAgent) {
+        return LocalAgentPoolRequirements.forRequiredAgentTypes(functions, new FunctionTypeRegistryStub(true),
+            AVAILABLE_AGENT_TYPES, tokensPerAgent, INSTALLATION_HINTS);
     }
 
     private static Set<String> poolNames(List<AgentPoolRequirementSpec> requirements) {
@@ -124,16 +136,23 @@ public class LocalAgentPoolRequirementsTest {
 
     /**
      * @return a keyword whose function type requires the given agent type, which is how a real function type declares
-     * the agent its keywords need (see {@link AbstractFunctionType#getTokenSelectionCriteria})
+     * the agent its keywords need (see {@link AbstractFunctionType#getTokenSelectionCriteria}), or a keyword the
+     * registry has no type for when it is {@code null}
      */
     private static Function function(String agentType) {
         Function function = new Function();
-        function.addAttribute("name", "keywordFor" + agentType);
+        function.addAttribute("name", agentType == null ? "keywordWithoutType" : "keywordFor" + agentType);
         function.addAttribute("agentType", agentType);
         return function;
     }
 
     private static class FunctionTypeRegistryStub implements FunctionTypeRegistry {
+
+        private final boolean declaresTheAgentType;
+
+        private FunctionTypeRegistryStub(boolean declaresTheAgentType) {
+            this.declaresTheAgentType = declaresTheAgentType;
+        }
 
         @Override
         public AbstractFunctionType<Function> getFunctionType(String functionType) {
@@ -142,12 +161,18 @@ public class LocalAgentPoolRequirementsTest {
 
         @Override
         public AbstractFunctionType<Function> getFunctionTypeByFunction(Function function) {
+            if (function.getAttribute("agentType") == null) {
+                // As a registry does for a keyword of a type this application does not have
+                throw new RuntimeException("Unsupported function type");
+            }
             return new AbstractFunctionType<>() {
                 @Override
                 public Map<String, Interest> getTokenSelectionCriteria(Function f) {
                     Map<String, Interest> criteria = new HashMap<>();
-                    criteria.put(AgentTypes.AGENT_TYPE_KEY,
-                        new Interest(Pattern.compile(f.getAttribute("agentType")), true));
+                    if (declaresTheAgentType) {
+                        criteria.put(AgentTypes.AGENT_TYPE_KEY,
+                            new Interest(Pattern.compile(f.getAttribute("agentType")), true));
+                    }
                     return criteria;
                 }
 

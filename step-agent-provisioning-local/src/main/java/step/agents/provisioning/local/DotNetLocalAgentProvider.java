@@ -229,7 +229,7 @@ public class DotNetLocalAgentProvider implements LocalAgentProvider {
         }
         logger.debug("Making {} executable", file);
         if (!file.toFile().setExecutable(true)) {
-            logger.warn("Unable to make {} executable. Run 'chmod +x' on it if the agent fails to start.", file);
+            logger.warn("Unable to make {} executable. Run 'chmod +x' on it if the agent fails to start.", file.toAbsolutePath());
         }
     }
 }

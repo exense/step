@@ -255,9 +255,11 @@ public class ApCommand implements Callable<Integer> {
             defaultValue = "" + LocalAgentProvisioningConfiguration.DEFAULT_START_TIMEOUT_SECONDS)
         protected Integer localAgentStartTimeout;
 
-        @CommandLine.Option(names = {"--localAgentVmArgs"}, paramLabel = "<Args>",
-            description = "Local execution only. Additional JVM arguments for the local Java agent, for instance to attach a debugger to a keyword.")
-        protected String localAgentVmArgs;
+        @CommandLine.Option(names = {"--localAgentVmArgs"}, paramLabel = "<Arg>",
+            description = "Local execution only. An additional JVM argument for the local Java agent, for instance to attach a debugger to a keyword. "
+                + "Repeat the option to pass several arguments (--localAgentVmArgs=-Xms1g --localAgentVmArgs=-Xmx4g). Wrap in double quotes"
+                + " arguments containing spaces.")
+        protected List<String> localAgentVmArgs;
 
         @Override
         public Integer call() throws Exception {
