@@ -49,7 +49,6 @@ import step.core.dynamicbeans.DynamicJsonValueResolver;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
 import step.core.execution.ExecutionContextWrapper;
-import step.core.execution.OperationMode;
 import step.core.json.JsonProviderCache;
 import step.core.miscellaneous.ReportNodeAttachmentManager;
 import step.core.objectenricher.ObjectEnricher;
@@ -87,7 +86,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static step.artefacts.handlers.functions.TokenForecastingExecutionPlugin.getTokenForecastingContext;
 import static step.core.agents.provisioning.AgentPoolConstants.TOKEN_ATTRIBUTE_PARTITION;
-import static step.core.execution.OperationMode.runsKeywordsInProcess;
 
 public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunctionReportNode> {
 
@@ -228,7 +226,7 @@ public class CallFunctionHandler extends ArtefactHandler<CallFunction, CallFunct
                 // A local execution which provisions real agents, as the CLI does, must not: its keywords are routed
                 // to an agent exactly like on a controller, which is the only way to run a keyword of a language that
                 // has no in-JVM handler, Node.js and .NET being the obvious ones.
-                boolean forceLocalToken = runsKeywordsInProcess(context.getOperationMode());
+                boolean forceLocalToken = context.getOperationMode().runsKeywordsInProcess();
                 TokenWrapper token = selectToken(node, testArtefact, function, functionGroupContext, functionGroupSession, forceLocalToken);
 
                 StreamingResourceUploadContext streamingUploadContext = null;

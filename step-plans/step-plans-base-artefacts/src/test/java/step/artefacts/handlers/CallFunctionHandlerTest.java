@@ -102,7 +102,7 @@ public class CallFunctionHandlerTest extends AbstractFunctionHandlerTest {
         parameterManager = new ParameterManager(parameterAccessor, null, new Configuration(), resolver);
         ExecutionEngine.Builder builder = ExecutionEngine.builder();
         if (currentTestName.equals("testInputsByPassProtection")) {
-            ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+            ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL_PLAN, true);
             Configuration configuration = new Configuration();
             configuration.putProperty(CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS, "true");
             parentContext.setConfiguration(configuration);

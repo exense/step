@@ -60,7 +60,7 @@ public class ApLocalExecuteCommandHandler {
         // as the engine has not released the class loaders of its local tokens.
         try (LocalAgentProvisioningPlugin localAgents = new LocalAgentProvisioningPlugin(localAgentConfiguration);
              ExecutionEngine executionEngine = ExecutionEngine.builder()
-                 .withOperationMode(OperationMode.LOCAL_AUTOMATION_PACKAGE_WITH_AGENTS)
+                 .withOperationMode(OperationMode.CLI)
                  .withPlugin(localAgents)
                  .withPluginsFromClasspath().build()) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
