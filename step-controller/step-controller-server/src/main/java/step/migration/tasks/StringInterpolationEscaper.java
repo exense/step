@@ -1,22 +1,22 @@
-/*******************************************************************************
- * Copyright (C) 2020, exense GmbH
+/*
+ * Copyright (C) 2026, exense GmbH
  *
- * This file is part of STEP
+ * This file is part of Step
  *
- * STEP is free software: you can redistribute it and/or modify
+ * Step is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * STEP is distributed in the hope that it will be useful,
+ * Step is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
- ******************************************************************************/
-package step.core.dynamicbeans;
+ * along with Step.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package step.migration.tasks;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +24,9 @@ import java.util.Set;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import step.core.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.InterpolatedString;
+import step.core.dynamicbeans.NoStringInterpolation;
 
 /**
  * Escapes the plain values of a document authored before the string interpolation existed, so that they keep being

@@ -18,18 +18,17 @@
  ******************************************************************************/
 package step.migration.tasks;
 
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Stream;
-
 import step.core.Version;
 import step.core.collections.Collection;
 import step.core.collections.CollectionFactory;
 import step.core.collections.Document;
 import step.core.collections.Filters;
-import step.core.dynamicbeans.StringInterpolationEscaper;
 import step.migration.MigrationContext;
 import step.migration.MigrationTask;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Stream;
 
 import static step.core.collections.CollectionFactory.VERSION_COLLECTION_SUFFIX;
 
