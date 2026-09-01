@@ -58,7 +58,7 @@ public class LocalIDEState implements ExecutionDiversion {
     }
 
     public void setIdeResourcePath(String ideResourcePath) {
-        this.ideResourcePath = ideResourcePath;
+        this.ideResourcePath = Objects.requireNonNull(ideResourcePath, "ideResourcePath must not be null");
     }
 
     public static LocalIDEState get() {
@@ -297,7 +297,12 @@ public class LocalIDEState implements ExecutionDiversion {
         }
     }
 
-    public class StartupHooks {
+    /**
+     * This is a trivial class allowing to influence startup behavior by providing one-shot hooks for lifecycle events.
+     * This is as simple as can be, no synchronization or access control is enforced (nor required) here; Currently
+     * only the EE variant defines additional hooks by directly manipulating the exposed data.
+     */
+    public static class StartupHooks {
 
         public final List<Consumer<Configuration>> onConfigure = new ArrayList<>();
     }
