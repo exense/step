@@ -594,7 +594,7 @@ public class StepConsoleTest {
         @Override
         protected void executeLocally(File file, File kwLibFile, String includePlans, String excludePlans,
                                       String includeCategories, String excludeCategories, Map<String, String> executionParameters,
-                                      step.agents.provisioning.local.LocalAgentProvisioningConfiguration localAgentConfiguration) {
+                                      LocalAgentProvisioningConfiguration localAgentConfiguration) {
             if (localParams != null) {
                 LocalExecutionParams p = new LocalExecutionParams();
                 p.apFile = file;
