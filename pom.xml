@@ -55,6 +55,7 @@
     <dep.maven-resolver.version>1.6.3</dep.maven-resolver.version>
 
     <excluded.jmeter.group>step.junit.categories.LocalJMeter</excluded.jmeter.group>
+    <excluded.node.group>step.junit.categories.LocalNode</excluded.node.group>
   </properties>
 
   <repositories>
@@ -632,6 +633,16 @@
       </properties>
     </profile>
     <profile>
+      <!-- Tests requiring a Node.js agent installed on the machine, see step.junit.categories.LocalNode -->
+      <id>SkipLocalNodeTests</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <excluded.node.group>step.junit.categories.LocalNode</excluded.node.group>
+      </properties>
+    </profile>
+    <profile>
       <!-- Skip javadoc generation -->
       <id>SkipJavadoc</id>
       <activation>
@@ -646,7 +657,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              <excludedGroups>ch.exense.commons.test.categories.PerformanceTest,${excluded.jmeter.group}</excludedGroups>
+              <excludedGroups>ch.exense.commons.test.categories.PerformanceTest,${excluded.jmeter.group},${excluded.node.group}</excludedGroups>
               <systemPropertyVariables>
                 <!-- this file must be available in the classpath, it is currently located in the step-common resources -->
                 <logback.configurationFile>logback-for-test.xml</logback.configurationFile>
@@ -667,7 +678,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              <excludedGroups>${excluded.jmeter.group}</excludedGroups>
+              <excludedGroups>${excluded.jmeter.group},${excluded.node.group}</excludedGroups>
               <systemPropertyVariables>
                 <!-- this file must be available in the classpath, it is currently located in the step-common resources -->
                 <logback.configurationFile>logback-for-test.xml</logback.configurationFile>
@@ -724,7 +735,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-              <excludedGroups>ch.exense.commons.test.categories.PerformanceTest,${excluded.jmeter.group}</excludedGroups>
+              <excludedGroups>ch.exense.commons.test.categories.PerformanceTest,${excluded.jmeter.group},${excluded.node.group}</excludedGroups>
               <systemPropertyVariables>
                 <!-- this file must be available in the classpath, it is currently located in the step-common resources -->
                 <logback.configurationFile>logback-for-test.xml</logback.configurationFile>
