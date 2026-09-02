@@ -29,13 +29,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import javax.script.ScriptException;
 
 import ch.exense.commons.app.Configuration;
 import ch.exense.commons.test.categories.PerformanceTest;
-import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,16 +43,13 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractAccessor;
 import step.core.collections.Collection;
 import step.core.collections.Filters;
-import step.core.encryption.EncryptionManager;
 import step.core.collections.mongodb.MongoDBCollectionFactory;
 import step.core.dynamicbeans.DynamicBeanResolver;
-import step.core.dynamicbeans.DynamicValue;
 import step.core.dynamicbeans.DynamicValueResolver;
 import step.expressions.ExpressionHandler;
 import step.parameter.Parameter;
 import step.commons.activation.Expression;
 import step.core.accessors.InMemoryAccessor;
-import step.core.objectenricher.ObjectPredicate;
 import step.parameter.ParameterManager;
 
 public class ParameterManagerTest {
@@ -62,124 +57,6 @@ public class ParameterManagerTest {
     private static final Logger logger = LoggerFactory.getLogger(ParameterManagerTest.class);
 
     private final DynamicBeanResolver resolver = new DynamicBeanResolver(new DynamicValueResolver(new ExpressionHandler()));
-
-    private static final String SECRET = "MySecretValue";
-
-    /**
-     * Trivial encryption manager prefixing the value, enough to tell an encrypted value from a clear one
-     */
-    private static final EncryptionManager ENCRYPTION_MANAGER = new EncryptionManager() {
-        @Override
-        public String encrypt(String value) {
-            return "###" + value;
-        }
-
-        @Override
-        public String decrypt(String encryptedValue) {
-            return encryptedValue.replaceFirst("###", "");
-        }
-
-        @Override
-        public boolean isKeyPairChanged() {
-            return false;
-        }
-
-        @Override
-        public boolean isFirstStart() {
-            return false;
-        }
-    };
-
-    private static Map<String, String> getAllParameterValues(ParameterManager parameterManager, Map<String, Object> bindings, ObjectPredicate objectPredicate) {
-        return parameterManager.getAllParameters(bindings, objectPredicate).entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> ParameterManager.getMaskedValue(e.getValue())));
-    }
-
-    /**
-     * The client only ever receives the masked representation of a protected parameter. Saving that
-     * representation back unchanged, as the UI does when only the description is edited, must not
-     * lose the value. Runs without encryption manager, the value is then stored in clear
-     */
-    @Test
-    public void testSaveOfMaskedProtectedParameterKeepsTheClearValue() {
-        // Cloning is enabled to reproduce the behaviour of a real collection, which returns a new
-        // instance on every read
-        InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>(false);
-        ParameterManager m = new ParameterManager(accessor, null, new Configuration(), resolver);
-
-        Parameter parameter = newProtectedParameter();
-        m.save(parameter, null, "user");
-        ObjectId id = parameter.getId();
-
-        Parameter masked = ParameterManager.maskProtectedValue(accessor.get(id));
-        Assert.assertEquals(ParameterManager.PROTECTED_VALUE, masked.getValue().get());
-        Assert.assertNull(masked.getEncryptedValue());
-        // Masking must not have altered the stored parameter
-        Assert.assertEquals(SECRET, accessor.get(id).getValue().get());
-
-        masked.setDescription("edited");
-        m.save(masked, accessor.get(id), "user");
-
-        Parameter reloaded = accessor.get(id);
-        Assert.assertEquals("edited", reloaded.getDescription());
-        Assert.assertEquals(SECRET, reloaded.getValue().get());
-    }
-
-    /**
-     * Same round trip with an encryption manager: the encrypted value is not returned to the client
-     * either, the source parameter is therefore the only authority for it
-     */
-    @Test
-    public void testSaveOfMaskedProtectedParameterKeepsTheEncryptedValue() {
-        InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>(false);
-        ParameterManager m = new ParameterManager(accessor, ENCRYPTION_MANAGER, new Configuration(), resolver);
-
-        Parameter parameter = newProtectedParameter();
-        m.save(parameter, null, "user");
-        ObjectId id = parameter.getId();
-
-        Parameter stored = accessor.get(id);
-        Assert.assertNull(stored.getValue());
-        Assert.assertEquals("###" + SECRET, stored.getEncryptedValue());
-
-        Parameter masked = ParameterManager.maskProtectedValue(accessor.get(id));
-        Assert.assertEquals(ParameterManager.PROTECTED_VALUE, masked.getValue().get());
-        Assert.assertNull(masked.getEncryptedValue());
-        Assert.assertEquals("###" + SECRET, accessor.get(id).getEncryptedValue());
-
-        masked.setDescription("edited");
-        m.save(masked, accessor.get(id), "user");
-
-        Parameter reloaded = accessor.get(id);
-        Assert.assertEquals("edited", reloaded.getDescription());
-        Assert.assertNull(reloaded.getValue());
-        Assert.assertEquals("###" + SECRET, reloaded.getEncryptedValue());
-    }
-
-    /**
-     * Changing the value of a protected parameter must still work
-     */
-    @Test
-    public void testSaveOfProtectedParameterWithNewValue() {
-        InMemoryAccessor<Parameter> accessor = new InMemoryAccessor<>(false);
-        ParameterManager m = new ParameterManager(accessor, ENCRYPTION_MANAGER, new Configuration(), resolver);
-
-        Parameter parameter = newProtectedParameter();
-        m.save(parameter, null, "user");
-        ObjectId id = parameter.getId();
-
-        Parameter masked = ParameterManager.maskProtectedValue(accessor.get(id));
-        masked.setValue(new DynamicValue<>("NewSecret"));
-        m.save(masked, accessor.get(id), "user");
-
-        Assert.assertEquals("###NewSecret", accessor.get(id).getEncryptedValue());
-    }
-
-    private Parameter newProtectedParameter() {
-        Parameter parameter = new Parameter(null, "MySecret", SECRET, "desc");
-        parameter.setProtectedValue(true);
-        return parameter;
-    }
 
     @Test
     public void testJavascript() throws ScriptException {
@@ -217,12 +94,12 @@ public class ParameterManagerTest {
         Map<String, Object> bindings = new HashMap<String, Object>();
         bindings.put("user", "poire");
 
-        Map<String, String> params = getAllParameterValues(m, bindings, null);
+        Map<String, String> params = m.getAllParameterValues(bindings, null);
         Assert.assertEquals("poirier", params.get("key1"));
         Assert.assertEquals("defaultValue3", params.get("key2"));
         Assert.assertEquals("value3", params.get("key3"));
 
-        params = getAllParameterValues(m, bindings, t -> false);
+        params = m.getAllParameterValues(bindings, t -> false);
         Assert.assertEquals(0, params.size());
     }
 
@@ -248,12 +125,12 @@ public class ParameterManagerTest {
         bindings.put("user", "user" + nIt);
 
         long t1 = System.currentTimeMillis();
-        Map<String, String> params = getAllParameterValues(m, bindings, null);
+        Map<String, String> params = m.getAllParameterValues(bindings, null);
         logger.info("ms:" + (System.currentTimeMillis() - t1));
         Assert.assertEquals(params.get("key1"), "value" + nIt);
 
         t1 = System.currentTimeMillis();
-        params = getAllParameterValues(m, bindings, null);
+        params = m.getAllParameterValues(bindings, null);
         logger.info("ms:" + (System.currentTimeMillis() - t1));
         Assert.assertEquals(params.get("key1"), "value" + nIt);
 
@@ -284,7 +161,7 @@ public class ParameterManagerTest {
                         Random r = new Random();
                         int userId = r.nextInt(nIt) + 1;
                         bindings.put("user", "user" + userId);
-                        Map<String, String> params = getAllParameterValues(m, bindings, null);
+                        Map<String, String> params = m.getAllParameterValues(bindings, null);
                         Assert.assertEquals(params.get("key1"), "value" + userId);
                     }
                 }

@@ -24,6 +24,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.InMemoryAccessor;
 import step.core.accessors.LayeredAccessor;
 import step.core.artefacts.reports.ReportNode;
+import step.core.dynamicbeans.DynamicValue;
 import step.core.encryption.EncryptionManagerException;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionContextBindings;
@@ -148,11 +149,11 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
         ExecutionManager executionManager = context.getExecutionManager();
         // This map corresponds to the parameters displayed in the panel "Execution Parameters" of the execution view
         // which lists the parameters available in the plan after activation (evaluation of the activation expressions)
-        // It is persisted with the Execution and returned to the client, thus the value of protected parameters is
-        // masked here. This is intentionally not subject to CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS: that
-        // property only governs the access of keywords and expressions to protected values
         Map<String, String> executionParameters = new HashMap<>();
-        allParameters.forEach((k, v) -> executionParameters.put(k, ParameterManager.getMaskedValue(v)));
+        allParameters.forEach((k, v) -> {
+            DynamicValue<String> value = v.getValue();
+            executionParameters.put(k, value != null ? value.get() : "");
+        });
         executionManager.updateExecution(execution -> {
             Map<String, String> parameters = execution.getParameters();
             if (parameters == null) {
@@ -209,7 +210,7 @@ public class ParameterManagerPlugin extends AbstractExecutionEnginePlugin {
 
     private Object getParameterAsBindingValue(Parameter p, ParameterManager parameterManager, String key) {
         String value = getParameterValue(p, parameterManager);
-        boolean isProtected = ParameterManager.isProtected(p);
+        boolean isProtected = p.getProtectedValue();
         return byPassProtectedParameters ? value : (isProtected) ? new ProtectedVariable(key, value) : value;
     }
 

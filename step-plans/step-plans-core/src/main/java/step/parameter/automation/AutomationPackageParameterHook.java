@@ -118,10 +118,7 @@ public class AutomationPackageParameterHook implements AutomationPackageHook<Par
 
     @Override
     public Map<String, List<? extends AbstractOrganizableObject>> getEntitiesForAutomationPackage(ObjectId automationPackageId, AutomationPackageContext automationPackageContext) {
-        // This list is returned to the client, the value of protected parameters is therefore masked
-        List<Parameter> parameters = getParametersForAutomationPackage(automationPackageContext, automationPackageId).stream()
-            .map(ParameterManager::maskProtectedValue).toList();
-        return Map.of(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP, parameters);
+        return Map.of(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP, getParametersForAutomationPackage(automationPackageContext, automationPackageId));
     }
 
     private boolean isLayeredAccessor(Accessor<?> accessor) {

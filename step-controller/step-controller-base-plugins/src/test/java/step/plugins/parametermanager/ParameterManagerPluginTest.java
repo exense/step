@@ -28,13 +28,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import step.artefacts.BaseArtefactPlugin;
 import step.core.accessors.AbstractOrganizableObject;
-import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.accessors.InMemoryAccessor;
-import step.core.artefacts.reports.ReportNode;
 import step.core.dynamicbeans.DynamicBeanResolver;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.dynamicbeans.DynamicValueResolver;
@@ -42,12 +37,6 @@ import step.core.encryption.EncryptionManager;
 import step.core.encryption.EncryptionManagerException;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
-import step.core.execution.ExecutionEngineContext;
-import step.core.execution.OperationMode;
-import step.core.execution.model.Execution;
-import step.core.plans.Plan;
-import step.core.plans.builder.PlanBuilder;
-import step.core.plans.runner.PlanRunnerResult;
 import step.core.plugins.IgnoreDuringAutoDiscovery;
 import step.core.plugins.exceptions.PluginCriticalException;
 import step.core.variables.VariablesManager;
@@ -58,18 +47,8 @@ import step.functions.Function;
 import step.parameter.Parameter;
 import step.parameter.ParameterManager;
 import step.parameter.ParameterScope;
-import step.planbuilder.BaseArtefacts;
-import step.threadpool.ThreadPoolPlugin;
-
-import java.util.stream.Collectors;
 
 public class ParameterManagerPluginTest {
-
-    /**
-     * Value used for protected parameters. It must never show up in anything that is persisted or
-     * returned to a client
-     */
-    private static final String CANARY = "ThisValueMustNeverBeExposed";
 
     protected InMemoryAccessor<Parameter> parameterAccessor = new InMemoryAccessor<>();
     private EncryptionManager encryptionManager;
@@ -387,110 +366,6 @@ public class ParameterManagerPluginTest {
 
     }
 
-
-    /**
-     * The value of protected parameters must never be written to the parameter map of the Execution,
-     * which is persisted and displayed in the tab "Execution parameters" of the execution view
-     */
-    @Test
-    public void testProtectedParametersAreMaskedInExecutionParameters() {
-        declareParameter("MyGlobalParameter", "MyGlobalParameterValue", ParameterScope.GLOBAL, null);
-        declareProtectedParameter("MyProtectedParameter", CANARY, ParameterScope.GLOBAL, null);
-        declareProtectedParameter("MyProtectedFunctionParameter", CANARY, ParameterScope.FUNCTION, "MyFunction1");
-
-        Map<String, String> executionParameters = executePlanAndGetExecutionParameters(
-            new LocalParameterManagerPlugin(parameterAccessor, new Configuration()));
-
-        assertEquals("MyGlobalParameterValue", executionParameters.get("MyGlobalParameter"));
-        assertEquals(ParameterManager.PROTECTED_VALUE, executionParameters.get("MyProtectedParameter"));
-        assertEquals(ParameterManager.PROTECTED_VALUE, executionParameters.get("MyProtectedFunctionParameter"));
-        assertFalse(executionParameters.values().contains(CANARY));
-    }
-
-    @Test
-    public void testProtectedAndEncryptedParametersAreMaskedInExecutionParameters() {
-        declareProtectedAndEncryptedParameter("MyProtectedParameter", CANARY, ParameterScope.GLOBAL, null);
-
-        Map<String, String> executionParameters = executePlanAndGetExecutionParameters(
-            new LocalParameterManagerPlugin(parameterAccessor, encryptionManager, new Configuration()));
-
-        assertEquals(ParameterManager.PROTECTED_VALUE, executionParameters.get("MyProtectedParameter"));
-        assertFalse(executionParameters.values().contains(CANARY));
-    }
-
-    /**
-     * The masking of the execution parameters is deliberately not governed by
-     * {@link ParameterManagerPlugin#CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS}. That property only
-     * governs the access of keywords and expressions to the value of protected parameters
-     */
-    @Test
-    public void testProtectedParametersAreMaskedInExecutionParametersEvenWhenAccessIsAlwaysAllowed() {
-        declareProtectedParameter("MyProtectedParameter", CANARY, ParameterScope.GLOBAL, null);
-
-        Configuration configuration = new Configuration();
-        configuration.putProperty(ParameterManagerPlugin.CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS, "true");
-        Map<String, String> executionParameters = executePlanAndGetExecutionParameters(
-            new LocalParameterManagerPlugin(parameterAccessor, configuration), configuration);
-
-        assertEquals(ParameterManager.PROTECTED_VALUE, executionParameters.get("MyProtectedParameter"));
-        assertFalse(executionParameters.values().contains(CANARY));
-    }
-
-    /**
-     * Catch-all guard: the value of a protected parameter must appear nowhere in the persisted
-     * representation of an execution, neither in the {@link Execution} itself nor in its report nodes
-     */
-    @Test
-    public void testProtectedParameterValueIsNeverPersisted() throws JsonProcessingException {
-        declareProtectedParameter("MyProtectedParameter", CANARY, ParameterScope.GLOBAL, null);
-        declareProtectedAndEncryptedParameter("MyEncryptedParameter", CANARY, ParameterScope.GLOBAL, null);
-
-        ObjectMapper objectMapper = DefaultJacksonMapperProvider.getObjectMapper();
-        try (ExecutionEngine engine = newExecutionEngine(
-            new LocalParameterManagerPlugin(parameterAccessor, encryptionManager, new Configuration()), new Configuration())) {
-            PlanRunnerResult result = engine.execute(newPlan());
-            ExecutionEngineContext engineContext = engine.getExecutionEngineContext();
-
-            StringBuilder persistedContent = new StringBuilder();
-            persistedContent.append(objectMapper.writeValueAsString(
-                engineContext.getExecutionAccessor().get(result.getExecutionId())));
-            for (ReportNode reportNode : engineContext.getReportNodeAccessor()
-                .getReportNodesByExecutionID(result.getExecutionId()).collect(Collectors.toList())) {
-                persistedContent.append(objectMapper.writeValueAsString(reportNode));
-            }
-
-            assertFalse("The value of a protected parameter has been persisted: " + persistedContent,
-                persistedContent.toString().contains(CANARY));
-        }
-    }
-
-    private Map<String, String> executePlanAndGetExecutionParameters(ExecutionEnginePlugin parameterPlugin) {
-        return executePlanAndGetExecutionParameters(parameterPlugin, new Configuration());
-    }
-
-    private Map<String, String> executePlanAndGetExecutionParameters(ExecutionEnginePlugin parameterPlugin, Configuration configuration) {
-        try (ExecutionEngine engine = newExecutionEngine(parameterPlugin, configuration)) {
-            PlanRunnerResult result = engine.execute(newPlan());
-            Execution execution = engine.getExecutionEngineContext().getExecutionAccessor().get(result.getExecutionId());
-            Assert.assertNotNull(execution.getParameters());
-            return execution.getParameters();
-        }
-    }
-
-    private ExecutionEngine newExecutionEngine(ExecutionEnginePlugin parameterPlugin, Configuration configuration) {
-        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
-        parentContext.setConfiguration(configuration);
-        return ExecutionEngine.builder()
-            .withParentContext(parentContext)
-            .withPlugin(new BaseArtefactPlugin())
-            .withPlugin(new ThreadPoolPlugin())
-            .withPlugin(parameterPlugin)
-            .build();
-    }
-
-    private Plan newPlan() {
-        return PlanBuilder.create().startBlock(BaseArtefacts.sequence()).endBlock().build();
-    }
 
     private void assertVariable(VariablesManager variablesManager, String variableName) {
         String variable;

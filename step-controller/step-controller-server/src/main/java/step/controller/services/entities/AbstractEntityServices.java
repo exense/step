@@ -24,7 +24,6 @@ import step.framework.server.tables.service.bulk.TableBulkOperationRequest;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -57,23 +56,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-read")
     public T get(@PathParam("id") String id) {
-        return transformResponse(accessor.get(id));
-    }
-
-    /**
-     * Hook applied to every entity returned by the services of this class. Subclasses may override
-     * it to remove sensitive data from the responses.
-     *
-     * @param entity the entity about to be returned, may be null
-     * @return the entity to return to the client
-     * @see step.framework.server.tables.Table#withResultItemTransformer(java.util.function.BiFunction) the equivalent hook for the table services
-     */
-    protected T transformResponse(T entity) {
-        return entity;
-    }
-
-    protected List<T> transformResponse(Stream<T> entities) {
-        return entities.map(this::transformResponse).collect(Collectors.toList());
+        return accessor.get(id);
     }
 
     @Operation(operationId = "find{Entity}sByIds", description = "Returns the list of entities for the provided list of IDs")
@@ -83,7 +66,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-read")
     public List<T> findByIds(List<String> ids) {
-        return transformResponse(accessor.findByIds(ids));
+        return accessor.findByIds(ids).collect(Collectors.toList());
     }
 
     @Operation(operationId = "find{Entity}NamesByIds", description = "Returns the map of entities IDs to names for the provided list of IDs")
@@ -108,7 +91,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
     @Secured(right = "{entity}-read")
     public List<T> findManyByAttributes(Map<String, String> attributes) {
         Spliterator<T> manyByAttributes = accessor.findManyByAttributes(attributes);
-        return transformResponse(StreamSupport.stream(manyByAttributes, false));
+        return StreamSupport.stream(manyByAttributes, false).collect(Collectors.toList());
     }
 
     @Operation(operationId = "delete{Entity}", description = "Deletes the entity with the given Id")
@@ -142,7 +125,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         entity = beforeSave(entity);
         T result = accessor.save(entity);
         auditLog("save", result);
-        return transformResponse(result);
+        return result;
     }
 
     protected void auditLog(String operation, T entity) {
@@ -214,7 +197,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         assertEntityIsEditableInContext(clonedEntity);
         auditLog("clone", clonedEntity);
         save(clonedEntity);
-        return transformResponse(clonedEntity);
+        return clonedEntity;
     }
 
     protected T cloneEntity(T entity) {
@@ -290,7 +273,7 @@ public abstract class AbstractEntityServices<T extends AbstractIdentifiableObjec
         assertEntityIsEditableInContext(getEntity(id));
         T result = accessor.restoreVersion(new ObjectId(id), new ObjectId(versionId));
         auditLog("restoreVersion", result, Map.of("restoredVersion", versionId));
-        return transformResponse(result);
+        return result;
     }
 
     @Operation(operationId = "is{Entity}Locked", description = "Get entity locking state")
