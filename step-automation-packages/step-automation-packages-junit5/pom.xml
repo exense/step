@@ -66,6 +66,12 @@
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
@@ -82,6 +88,12 @@
     <dependency>
       <groupId>commons-beanutils</groupId>
       <artifactId>commons-beanutils</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
   </dependencies>
@@ -100,8 +112,25 @@
             </goals>
             <configuration combine.self="override">
               <rules>
-                <!-- no bannedDependencies here -->
+                <!-- ban on JUnit classes is removed here, but all other checks remain the same -->
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>commons-logging:commons-logging</exclude>
+                  </excludes>
+                  <message>
+                    Use org.slf4j:jcl-over-slf4j instead of commons-logging.
+                  </message>
+                </bannedDependencies>
                 <requireUpperBoundDeps/>
+                <banDuplicateClasses>
+                  <findAllDuplicates>true</findAllDuplicates>
+                  <ignoreWhenIdentical>true</ignoreWhenIdentical>
+                  <ignoreClasses>
+                    <!-- usage of jakarta and javax is in a disturbingly messy state currently -->
+                    <ignoreClass>jakarta.json.*</ignoreClass>
+                    <ignoreClass>javax.json.*</ignoreClass>
+                  </ignoreClasses>
+                </banDuplicateClasses>
               </rules>
               <fail>true</fail>
             </configuration>

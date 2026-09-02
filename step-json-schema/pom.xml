@@ -52,11 +52,12 @@
       <scope>provided</scope>
     </dependency>
 
-    <dependency>
-      <groupId>javax.json</groupId>
-      <artifactId>javax.json-api</artifactId>
-      <scope>provided</scope>
-    </dependency>
+    <!-- provided by step-api-javax-json -->
+    <!--    <dependency>-->
+    <!--      <groupId>javax.json</groupId>-->
+    <!--      <artifactId>javax.json-api</artifactId>-->
+    <!--      <scope>provided</scope>-->
+    <!--    </dependency>-->
 
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

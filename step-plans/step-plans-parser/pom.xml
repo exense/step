@@ -42,11 +42,6 @@
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.antlr</groupId>
-      <artifactId>antlr4</artifactId>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 
   <build>

@@ -19,17 +19,20 @@
 package step.automation.packages.functions;
 
 import step.handlers.javahandler.AbstractKeyword;
+import step.handlers.javahandler.Input;
 import step.handlers.javahandler.Keyword;
 import step.junit.runners.annotations.Plan;
+import step.junit.runners.annotations.PlanCategories;
 import step.junit.runners.annotations.Plans;
 
 @Plans({"plan.plan"})
-public class MyKeywordLibraryAutopack extends AbstractKeyword {
+@PlanCategories({"PlainTextPlan", "AnnotatedPlan"})
+public class MyKeywordLibraryAutopack1 extends AbstractKeyword {
 
     @Keyword
-    public void MyKeyword2() {
+    public void MyKeyword2(@Input(name = "myInput", required = false, defaultValue = "defaultValueString") String myInput) {
         System.out.println("MyKeyword2 called!");
-        output.add("MyKey", "MyValue");
+        output.add("MyKey", myInput);
         if (properties != null) {
             properties.forEach((key, value) -> {
                 output.add(key, value);
@@ -57,10 +60,10 @@ public class MyKeywordLibraryAutopack extends AbstractKeyword {
         }
     }
 
-
-    @Plan("Echo PARAM_EXEC")
+    @Plan("Echo \"before sleep\"\nSleep 1s\nEcho \"after sleep\"\n")
+    @PlanCategories({"InlinePlan", "AnnotatedPlan"})
     @Keyword(name = "Inline Plan")
-    public void inlinePlan() {
+    public void inlinePlan() throws InterruptedException {
     }
 
 }

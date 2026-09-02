@@ -43,8 +43,8 @@
     <!-- compiler settings -->
     <maven.compiler.release>21</maven.compiler.release>
     <!-- internal dependencies -->
-    <step-grid.version>0.0.0-MASTER-SNAPSHOT</step-grid.version>
-    <step-framework.version>0.0.0-MASTER-SNAPSHOT</step-framework.version>
+    <step-grid.version>0.0.0-SED-4915-SNAPSHOT</step-grid.version>
+    <step-framework.version>0.0.0-SED-4915-SNAPSHOT</step-framework.version>
     <!-- external, non-transitive, dependencies -->
     <dep.groovy.version>5.0.8</dep.groovy.version>
     <dep.apache-jmeter.version>5.6.3</dep.apache-jmeter.version>
@@ -234,6 +234,12 @@
         <groupId>org.everit.json</groupId>
         <artifactId>org.everit.json.schema</artifactId>
         <version>1.5.1</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <!-- plexus stuff is mostly referred to by maven classes -->
@@ -377,6 +383,12 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
+    <!-- Replace all apache commmons-logging references with slf4j bridge. Goes in tandem with commons-logging
+    bannedDependencies (below) to avoid conflicting class definitions, and appropriate exclusions where needed. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+    </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
@@ -516,6 +528,13 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>extra-enforcer-rules</artifactId>
+            <version>1.9.0</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <id>enforce-policies</id>
@@ -531,7 +550,24 @@
                     <exclude>org.testng</exclude>
                   </excludes>
                 </bannedDependencies>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>commons-logging:commons-logging</exclude>
+                  </excludes>
+                  <message>
+                    Use org.slf4j:jcl-over-slf4j instead of commons-logging.
+                  </message>
+                </bannedDependencies>
                 <requireUpperBoundDeps/>
+                <banDuplicateClasses>
+                  <findAllDuplicates>true</findAllDuplicates>
+                  <ignoreWhenIdentical>true</ignoreWhenIdentical>
+                  <ignoreClasses>
+                    <!-- usage of jakarta and javax is in a disturbingly messy state currently -->
+                    <ignoreClass>jakarta.json.*</ignoreClass>
+                    <ignoreClass>javax.json.*</ignoreClass>
+                  </ignoreClasses>
+                </banDuplicateClasses>
               </rules>
               <fail>true</fail>
             </configuration>
