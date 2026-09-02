@@ -21,12 +21,10 @@ package step.cli;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.agents.provisioning.local.LocalAgentWorkspace;
 import step.agents.provisioning.local.NodeLocalAgentProvider;
-import step.junit.categories.LocalNode;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,16 +47,7 @@ import java.util.zip.ZipOutputStream;
  * <p>
  * The package is assembled here rather than committed as a jar, so that the keyword and the plan stay readable and
  * modifiable in the sources.
- * <p>
- * <b>Requires a Node.js agent installed on the machine</b>, hence the category excluding it by default. The CLI
- * installs {@code step-node-agent} at its own version, which during development is the release being worked towards
- * and is not published yet; the snapshot of the branch is published after the maven build, so it does not exist while
- * the tests run either. A global installation ({@code npm install -g step-node-agent}) is used in preference to
- * installing one and is what makes this test runnable, {@code --localAgentNode} being the other way.
- * <p>
- * To run it: {@code mvn test -Dexcluded.node.group= -Dtest=NodeLocalExecutionTest}.
  */
-@Category(LocalNode.class)
 public class NodeLocalExecutionTest {
 
     private static final String KEYWORD_LIBRARY_ARCHIVE = "node-keyword-library.zip";
