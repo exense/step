@@ -24,24 +24,32 @@ import static step.planbuilder.BaseArtefacts.set;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
 import org.junit.Assert;
+import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Echo;
 import step.artefacts.Set;
 import step.artefacts.Sleep;
 import step.artefacts.While;
+import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.execution.ExecutionContext;
+import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.DefaultPlanRunner;
 import step.core.plans.runner.PlanRunner;
 import step.core.plans.runner.PlanRunnerResult;
+import step.engine.plugins.AbstractExecutionEnginePlugin;
+import step.threadpool.ThreadPoolPlugin;
 
 public class WhileHandlerTest extends AbstractArtefactHandlerTest {
 
@@ -112,6 +120,85 @@ public class WhileHandlerTest extends AbstractArtefactHandlerTest {
             "  Iteration_2:PASSED:\n" +
             "   Set:PASSED:\n" +
             "", writer.toString());
+    }
+
+    @Test
+    public void testSkeletonCreationWithConditionThatCannotBeEvaluated() throws IOException {
+        // The condition of this While block references a variable that is only defined at execution time.
+        // It can therefore not be evaluated during the skeleton creation phase
+        While block = new While("counter < 3");
+        block.setMaxIterations(new DynamicValue<>(10));
+
+        Plan plan = PlanBuilder.create().startBlock(sequence())
+            .add(defineVariableAtExecutionTime("counter", 0))
+            .startBlock(block)
+            .add(set("counter", "counter+1"))
+            .endBlock()
+            .endBlock().build();
+
+        List<String> skeletonNodes = new ArrayList<>();
+        StringWriter writer = new StringWriter();
+        try (ExecutionEngine engine = newEngineCollectingSkeletonNodes(skeletonNodes)) {
+            engine.execute(plan).printTree(writer);
+        }
+
+        // Although the condition couldn't be evaluated, the skeleton of exactly one iteration is created in order
+        // to forecast the resources required by the children of the While block
+        Assert.assertEquals(List.of("CheckArtefact", "Set", "Iteration_0", "While", "Sequence"), skeletonNodes);
+
+        // The condition can be evaluated during the execution phase. The loop is therefore repeated until the
+        // condition evaluates to false
+        Assert.assertEquals("Sequence:PASSED:\n" +
+            " CheckArtefact:PASSED:\n" +
+            " While:PASSED:\n" +
+            "  Iteration_0:PASSED:\n" +
+            "   Set:PASSED:\n" +
+            "  Iteration_1:PASSED:\n" +
+            "   Set:PASSED:\n" +
+            "  Iteration_2:PASSED:\n" +
+            "   Set:PASSED:\n" +
+            "", writer.toString());
+    }
+
+    @Test
+    public void testSkeletonCreationWithConditionEvaluatingToFalse() {
+        While block = new While("false");
+        block.setMaxIterations(new DynamicValue<>(10));
+
+        Plan plan = PlanBuilder.create().startBlock(block)
+            .add(set("counter", "0"))
+            .endBlock().build();
+
+        List<String> skeletonNodes = new ArrayList<>();
+        try (ExecutionEngine engine = newEngineCollectingSkeletonNodes(skeletonNodes)) {
+            engine.execute(plan);
+        }
+
+        // As the condition evaluates to false, no skeleton is created for the children of the While block
+        Assert.assertEquals(List.of("While"), skeletonNodes);
+    }
+
+    /**
+     * @return a {@link CheckArtefact} defining the provided variable during the execution phase only. Contrary to a
+     * {@link Set} artefact, which is also executed during the skeleton creation phase, the runnable of a
+     * {@link CheckArtefact} is only executed during the execution phase
+     */
+    private static CheckArtefact defineVariableAtExecutionTime(String key, Object value) {
+        return new CheckArtefact(context -> {
+            context.getVariablesManager().putVariable(context.getReport(), key, value);
+            context.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+        });
+    }
+
+    private static ExecutionEngine newEngineCollectingSkeletonNodes(List<String> skeletonNodeNames) {
+        return ExecutionEngine.builder().withPlugin(new ThreadPoolPlugin()).withPlugin(new BaseArtefactPlugin())
+            .withPlugin(new TokenForecastingExecutionPlugin())
+            .withPlugin(new AbstractExecutionEnginePlugin() {
+                @Override
+                public void afterReportNodeSkeletonCreation(ExecutionContext context, ReportNode node) {
+                    skeletonNodeNames.add(node.getName());
+                }
+            }).build();
     }
 
     @Test

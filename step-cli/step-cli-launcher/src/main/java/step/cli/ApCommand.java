@@ -22,6 +22,8 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static picocli.CommandLine.Option.NULL_VALUE;
+
 @CommandLine.Command(name = ApCommand.AP_COMMAND,
     mixinStandardHelpOptions = true,
     version = Constants.STEP_VERSION_STRING,
@@ -117,6 +119,10 @@ public class ApCommand implements Callable<Integer> {
 
         public static final String VERSION_NAME = "--versionName";
         public static final String FORCE_REFRESH_OF_SNAPSHOTS = "--forceRefreshOfSnapshots";
+        public static final String PLANS_ATTRIBUTES = "--plansAttributes";
+        public static final String KEYWORDS_ATTRIBUTES = "--keywordsAttributes";
+        public static final String TOKEN_SELECTION_CRITERIA = "--tokenSelectionCriteria";
+        public static final String EXECUTE_KEYWORDS_ON_CONTROLLER = "--executeKeywordsOnController";
 
         @CommandLine.Option(names = {"--async"}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
             description = "Updating an existing package while executions based on it are running will be delayed until these executions end. With this property set to true, the deployment will not wait in case of such delayed updates and will return as soon as the update has been scheduled.")
@@ -135,6 +141,24 @@ public class ApCommand implements Callable<Integer> {
         @CommandLine.Option(names = {"--deployment-timeout"}, defaultValue = "300", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
             description = "Maximum duration in seconds to wait for the deployment to complete on the server. The deployment runs asynchronously and is polled until completion; if it does not complete within this timeout the command fails (note that on the server, the deployment will still continue to run until deployment succeeds or fails).")
         protected int deploymentTimeout;
+
+        @CommandLine.Option(names = {PLANS_ATTRIBUTES}, defaultValue = NULL_VALUE, showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+            description = "The attributes to be applied to all the plans of this package, corresponding to custom screen inputs defined for the plans. Example: --plansAttributes=\"app=myApp|team=core\".",
+            split = "\\|", splitSynopsisLabel = "|")
+        protected Map<String, String> plansAttributes;
+
+        @CommandLine.Option(names = {KEYWORDS_ATTRIBUTES}, defaultValue = NULL_VALUE, showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+            description = "The attributes to be applied to all the keywords of this package, corresponding to custom screen inputs defined for the keywords. Example: --keywordsAttributes=\"app=myApp|team=core\".",
+            split = "\\|", splitSynopsisLabel = "|")
+        protected Map<String, String> keywordsAttributes;
+
+        @CommandLine.Option(names = {TOKEN_SELECTION_CRITERIA}, description = "The token selection criteria to be applied to all the keywords of this package, i.e. the attributes an agent token must have for the keywords to be routed to it. Example: --tokenSelectionCriteria=\"os=linux|team=core\".",
+            split = "\\|", splitSynopsisLabel = "|")
+        protected Map<String, String> tokenSelectionCriteria;
+
+        @CommandLine.Option(names = {EXECUTE_KEYWORDS_ON_CONTROLLER}, defaultValue = "false", showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+            description = "Forces all keywords in this package to execute locally on the controller rather than on an agent. Keywords already configured individually to run locally, or that are composite keywords, will always run locally regardless of this setting.")
+        protected boolean executeKeywordsOnController;
 
         @Override
         public Integer call() throws Exception {
@@ -159,6 +183,10 @@ public class ApCommand implements Callable<Integer> {
                 .setAuthToken(getAuthToken())
                 .setVersionName(versionName)
                 .setActivationExpression(activationExpression)
+                .setPlansAttributes(plansAttributes)
+                .setKeywordsAttributes(keywordsAttributes)
+                .setTokenSelectionCriteria(tokenSelectionCriteria)
+                .setExecuteKeywordsOnController(executeKeywordsOnController)
                 .setlibraryMavenArtifact(packageLibraryMavenArtifact)
                 .setManagedLibraryName(managedLibraryName)
                 .setLibraryFile(packageLibraryMavenArtifact != null || managedLibraryName != null || library == null || library.isEmpty() ? null : preparePackageLibraryFile(library));
