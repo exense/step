@@ -156,11 +156,6 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
         parameterAccessor.remove(new ObjectId(id));
     }
 
-    @Override
-    public Parameter get(String id) {
-        return transformResponse(parameterAccessor.get(new ObjectId(id)));
-    }
-
     @POST
     @Path("/search")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -168,11 +163,6 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
     @Secured(right = "{entity}-read")
     public Parameter getParameterByAttributes(Map<String, String> attributes) {
         return transformResponse(parameterAccessor.findByAttributes(attributes));
-    }
-
-    @Override
-    public List<Parameter> findManyByAttributes(Map<String, String> attributes) {
-        return transformResponse(StreamSupport.stream(parameterAccessor.findManyByAttributes(attributes), false));
     }
 
     @GET
