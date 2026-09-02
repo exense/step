@@ -29,7 +29,6 @@ import step.controller.services.entities.AbstractEntityServices;
 import step.core.GlobalContext;
 import step.core.accessors.Accessor;
 import step.core.deployment.ControllerServiceException;
-import step.core.dynamicbeans.DynamicValue;
 import step.framework.server.access.AuthorizationManager;
 import step.framework.server.security.Secured;
 import step.framework.server.security.SecuredContext;
@@ -41,11 +40,8 @@ import step.parameter.ParameterScope;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static step.parameter.ParameterManager.PROTECTED_VALUE;
 
 @Path("/parameters")
 @Tag(name = "Parameters")
@@ -106,12 +102,20 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
     private Parameter save(Parameter newParameter, Parameter sourceParameter) {
         assertRights(newParameter);
         try {
-            Parameter result = maskProtectedValue(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername()));
+            Parameter result = transformResponse(parameterManager.save(newParameter, sourceParameter, getSession().getUser().getUsername()));
             auditLog("save", result, Map.of("key", result.getKey()));
             return result;
         } catch (ParameterManagerException e) {
             throw new ControllerServiceException(e.getMessage());
         }
+    }
+
+    /**
+     * Masks the value of protected parameters in every response returned by these services
+     */
+    @Override
+    protected Parameter transformResponse(Parameter parameter) {
+        return ParameterManager.maskProtectedValue(parameter);
     }
 
     protected void assertRights(Parameter newParameter) {
@@ -127,7 +131,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
     }
 
     protected static boolean isProtected(Parameter oldParameter) {
-        return oldParameter.getProtectedValue() != null && oldParameter.getProtectedValue();
+        return ParameterManager.isProtected(oldParameter);
     }
 
     @Override
@@ -154,20 +158,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
 
     @Override
     public Parameter get(String id) {
-        Parameter parameter = parameterAccessor.get(new ObjectId(id));
-        return maskProtectedValue(parameter);
-    }
-
-    public static Parameter maskProtectedValue(Parameter parameter) {
-        if (parameter != null && isProtected(parameter) &&
-            !ParameterManager.RESET_VALUE.equals(parameter.getValue())) {
-            parameter.setValue(new DynamicValue<>(PROTECTED_VALUE));
-        }
-        return parameter;
-    }
-
-    protected List<Parameter> maskProtectedValues(Stream<Parameter> stream) {
-        return stream.map(ParameterServices::maskProtectedValue).collect(Collectors.toList());
+        return transformResponse(parameterAccessor.get(new ObjectId(id)));
     }
 
     @POST
@@ -176,12 +167,12 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
     @Produces(MediaType.APPLICATION_JSON)
     @Secured(right = "{entity}-read")
     public Parameter getParameterByAttributes(Map<String, String> attributes) {
-        return maskProtectedValue(parameterAccessor.findByAttributes(attributes));
+        return transformResponse(parameterAccessor.findByAttributes(attributes));
     }
 
     @Override
     public List<Parameter> findManyByAttributes(Map<String, String> attributes) {
-        return maskProtectedValues(StreamSupport.stream(parameterAccessor.findManyByAttributes(attributes), false));
+        return transformResponse(StreamSupport.stream(parameterAccessor.findManyByAttributes(attributes), false));
     }
 
     @GET
@@ -195,7 +186,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
         } else {
             range = getAllParameters(0, 1000);
         }
-        return maskProtectedValues(range.stream());
+        return transformResponse(range.stream());
     }
 
     @Override
