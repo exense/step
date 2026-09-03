@@ -46,7 +46,7 @@ public class RawMetricSamplesHandlerTest {
         plan.addAttribute(AbstractOrganizableObject.NAME, "plantTest");
 
 
-        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL_PLAN, true);
         parentContext.setExecutionAccessor(executionAccessor);
         parentContext.setPlanAccessor(planAccessor);
         MetricsExecutionPlugin metricsExecutionPlugin = new MetricsExecutionPlugin();
@@ -91,7 +91,7 @@ public class RawMetricSamplesHandlerTest {
         planAccessor.save(plan);
 
 
-        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL_PLAN, true);
         parentContext.setExecutionAccessor(executionAccessor);
         parentContext.setPlanAccessor(planAccessor);
         MetricsExecutionPlugin metricsExecutionPlugin = new MetricsExecutionPlugin();

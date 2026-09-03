@@ -226,7 +226,7 @@ public class ExecutionEngineTest {
 
     @Test
     public void testParentContext() throws ExecutionEngineException, IOException {
-        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL_PLAN, true);
         InMemoryPlanAccessor planAccessor = new InMemoryPlanAccessor();
 
         Plan otherPlan = new Plan();

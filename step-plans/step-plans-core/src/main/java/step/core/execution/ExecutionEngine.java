@@ -164,7 +164,7 @@ public class ExecutionEngine implements AutoCloseable {
          */
         public ExecutionEngine build() {
             if (operationMode == null) {
-                operationMode = OperationMode.LOCAL;
+                operationMode = OperationMode.LOCAL_PLAN;
             }
 
             PluginManager<ExecutionEnginePlugin> pluginManager;

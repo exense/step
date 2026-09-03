@@ -20,7 +20,6 @@ package step.engine.plugins;
 
 import static org.junit.Assert.assertNull;
 
-import java.util.Map;
 import java.util.function.Consumer;
 
 import org.junit.Assert;
@@ -50,7 +49,7 @@ public class FunctionPluginTest {
 
     @Test
     public void testNormalMode() {
-        AbstractExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+        AbstractExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL_PLAN, true);
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
 
         Function function = new Function();

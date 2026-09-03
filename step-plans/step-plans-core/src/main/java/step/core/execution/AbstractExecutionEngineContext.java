@@ -32,6 +32,9 @@ import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectManager;
 
+import java.util.Objects;
+import java.util.Optional;
+
 public abstract class AbstractExecutionEngineContext extends AbstractStepContext {
 
     private static final String CONTROLLER_URL_KEY = "CONTROLLER_URL_KEY";
@@ -71,7 +74,8 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
         super.useAllAttributesFromParentContext(parentContext);
         setConfiguration(parentContext.getConfiguration());
 
-        operationMode = parentContext.getOperationMode();
+        //Operation mode is already set in constructor, only override from parent if the parent defines it
+        Optional.ofNullable(parentContext.getOperationMode()).ifPresent(this::setOperationMode);
         artefactHandlerRegistry = parentContext.getArtefactHandlerRegistry();
 
         planAccessor = parentContext.getPlanAccessor();
@@ -98,7 +102,7 @@ public abstract class AbstractExecutionEngineContext extends AbstractStepContext
     }
 
     public void setOperationMode(OperationMode operationMode) {
-        this.operationMode = operationMode;
+        this.operationMode = Objects.requireNonNull(operationMode, "Operation mode cannot be null ");
     }
 
     public ArtefactHandlerRegistry getArtefactHandlerRegistry() {

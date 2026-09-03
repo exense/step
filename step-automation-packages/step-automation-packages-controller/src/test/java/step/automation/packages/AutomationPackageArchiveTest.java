@@ -64,6 +64,24 @@ public class AutomationPackageArchiveTest {
         }
     }
 
+    /**
+     * The class loader scanning the package must delegate to the class loader of the application, not to the system
+     * class loader: they are the same in a plain class path or a shaded jar, but not under the Spring Boot launcher
+     * the CLI is packaged with, where the system class loader sees the outer jar only. Getting this wrong makes the
+     * keyword scan fail with a NoClassDefFoundError on step.handlers.javahandler.AbstractKeyword.
+     */
+    @Test
+    public void keywordScanningDelegatesToTheApplicationClassLoader() throws AutomationPackageReadingException, IOException {
+        File automationPackageJar = new File("src/test/resources/samples/step-automation-packages-sample2.jar");
+
+        try (JavaAutomationPackageArchive archive = new JavaAutomationPackageArchive(automationPackageJar, null, null)) {
+            ClassLoader scanningClassLoader = archive.getClassLoaderForApAndLibraries();
+            Assert.assertSame(JavaAutomationPackageArchive.class.getClassLoader(), scanningClassLoader.getParent());
+            // The keywords of the package extend AbstractKeyword, which only the parent provides
+            Assert.assertNotNull(scanningClassLoader.getResource("step/handlers/javahandler/AbstractKeyword.class"));
+        }
+    }
+
     protected ObjectMapper createYamlObjectMapper() {
         YAMLFactory yamlFactory = new YAMLFactory();
 

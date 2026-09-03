@@ -43,7 +43,7 @@
     <!-- compiler settings -->
     <maven.compiler.release>21</maven.compiler.release>
     <!-- internal dependencies -->
-    <step-grid.version>0.0.0-MASTER-SNAPSHOT</step-grid.version>
+    <step-grid.version>0.0.0-SED-3310-SNAPSHOT</step-grid.version>
     <step-framework.version>0.0.0-MASTER-SNAPSHOT</step-framework.version>
     <!-- external, non-transitive, dependencies -->
     <dep.groovy.version>5.0.8</dep.groovy.version>
@@ -80,6 +80,7 @@
     <module>step-functions</module>
     <module>step-functions-plugins</module>
     <module>step-plans</module>
+    <module>step-agent-provisioning-local</module>
     <module>step-controller</module>
     <module>step-controller-plugins</module>
     <module>step-maven-plugin</module>
@@ -464,6 +465,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
           <version>3.1.3</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>3.5.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

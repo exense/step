@@ -37,7 +37,6 @@ import step.plugins.java.handler.KeywordHandler;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static step.core.execution.OperationMode.isLocal;
 
 @Plugin(dependencies = {FunctionPlugin.class})
 public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
@@ -48,7 +47,7 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
         OperationMode operationMode = context.getOperationMode();
-        if (isLocal(operationMode)) {
+        if (operationMode.isLocal()) {
             functionAccessor = context.require(FunctionAccessor.class);
             functionTypeRegistry = context.require(FunctionTypeRegistry.class);
 
@@ -56,7 +55,7 @@ public class LocalFunctionPlugin extends AbstractExecutionEnginePlugin {
 
             // Scanning and saving the local  keywords here is only required for the LocalPlanRunner
             // In the context of Automation Package, the Automation Package manager is responsible to read the AP (including annotations)
-            if (!OperationMode.LOCAL_AUTOMATION_PACKAGE.equals(operationMode)) {
+            if (!operationMode.isAutomationPackage()) {
                 List<Function> localFunctions = getLocalFunctions();
                 functionAccessor.save(localFunctions);
             }
