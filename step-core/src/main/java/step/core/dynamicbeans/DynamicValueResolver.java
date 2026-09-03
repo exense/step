@@ -26,45 +26,82 @@ import step.expressions.ProtectedVariable;
 
 public class DynamicValueResolver {
 
-    private ExpressionHandler expressionHandler;
+    private final ExpressionHandler expressionHandler;
+    private final StringInterpolator stringInterpolator;
 
     public DynamicValueResolver(ExpressionHandler expressionHandler) {
+        this(expressionHandler, new StringInterpolator(expressionHandler));
+    }
+
+    public DynamicValueResolver(ExpressionHandler expressionHandler, StringInterpolator stringInterpolator) {
         super();
         this.expressionHandler = expressionHandler;
+        this.stringInterpolator = stringInterpolator;
     }
 
     public void evaluate(DynamicValue<?> dynamicValue, Map<String, Object> bindings) {
+        evaluate(dynamicValue, bindings, true);
+    }
+
+    /**
+     * @param interpolatePlainValue whether the expressions contained in a plain (non dynamic) string value are
+     *                              interpolated. False for the values holding a structured document, whose
+     *                              expressions are resolved by the resolver of that document instead. See
+     *                              {@link NoStringInterpolation}
+     */
+    public void evaluate(DynamicValue<?> dynamicValue, Map<String, Object> bindings, boolean interpolatePlainValue) {
         if (dynamicValue.isDynamic()) {
-            // TODO support different expression types
-            String exprType = dynamicValue.expressionType;
-            EvaluationResult result = new EvaluationResult();
-            try {
-                Object evaluationResult;
-                Object protectedResult = null;
-
-                Object o = expressionHandler.evaluateGroovyExpression(dynamicValue.expression, bindings, dynamicValue.hasProtectedAccess());
-                //If the result is a ProtectedVariable and access is granted, the clear value is added as protectedResult of the evaluation result
-                if (dynamicValue.hasProtectedAccess() && o instanceof ProtectedVariable) {
-                    ProtectedVariable pb = (ProtectedVariable) o;
-                    protectedResult = pb.value;
-                    evaluationResult = pb.obfuscatedValue;
-                } else {
-                    //Otherwise the result is unchanged.
-                    // This means that ProtectedVariable can be returned when calling DynamicValue.get() which must be handled
-                    // carefully (but remain in a controlled and safe context). The only current use case is for the expression "dataSet.next" for protected dataset
-                    // when used in a Set control, the ProtectedVariable is added to the variables and thus protected when accessed in following groovy expressions
-                    evaluationResult = o;
-                }
-
-                evaluationResult = convertResultIfRequired(evaluationResult);
-                protectedResult = (protectedResult == null) ? evaluationResult : convertResultIfRequired(protectedResult);
-                result.setResultValue(evaluationResult);
-                result.setProtectedValue(protectedResult);
-            } catch (Exception e) {
-                result.setEvaluationException(e);
-            }
-            dynamicValue.evalutationResult = result;
+            dynamicValue.evalutationResult = getEvaluationResult(dynamicValue.expression, bindings, dynamicValue.hasProtectedAccess());
+        } else {
+            // A null result means that the value requires no interpolation and is to be returned as is
+            dynamicValue.setInterpolationResult(interpolatePlainValue ? interpolateIfRequired(dynamicValue, bindings) : null);
         }
+    }
+
+    private EvaluationResult interpolateIfRequired(DynamicValue<?> dynamicValue, Map<String, Object> bindings) {
+        EvaluationResult result = new EvaluationResult();
+        try {
+            StringInterpolator.Result interpolation = stringInterpolator.interpolate(dynamicValue.value, bindings, dynamicValue.hasProtectedAccess());
+            if (interpolation == null) {
+                return null;
+            }
+            // The obfuscated value is identical to the clear one unless a protected variable was interpolated
+            result.setResultValue(interpolation.getObfuscatedValue());
+            result.setProtectedValue(interpolation.getValue());
+        } catch (Exception e) {
+            result.setEvaluationException(e);
+        }
+        return result;
+    }
+
+    private EvaluationResult getEvaluationResult(String expression, Map<String, Object> bindings, boolean hasProtectedAccess) {
+        EvaluationResult result = new EvaluationResult();
+        try {
+            Object evaluationResult;
+            Object protectedResult = null;
+
+            Object o = expressionHandler.evaluateGroovyExpression(expression, bindings, hasProtectedAccess);
+            //If the result is a ProtectedVariable and access is granted, the clear value is added as protectedResult of the evaluation result
+            if (hasProtectedAccess && o instanceof ProtectedVariable) {
+                ProtectedVariable pb = (ProtectedVariable) o;
+                protectedResult = pb.value;
+                evaluationResult = pb.obfuscatedValue;
+            } else {
+                //Otherwise the result is unchanged.
+                // This means that ProtectedVariable can be returned when calling DynamicValue.get() which must be handled
+                // carefully (but remain in a controlled and safe context). The only current use case is for the expression "dataSet.next" for protected dataset
+                // when used in a Set control, the ProtectedVariable is added to the variables and thus protected when accessed in following groovy expressions
+                evaluationResult = o;
+            }
+
+            evaluationResult = convertResultIfRequired(evaluationResult);
+            protectedResult = (protectedResult == null) ? evaluationResult : convertResultIfRequired(protectedResult);
+            result.setResultValue(evaluationResult);
+            result.setProtectedValue(protectedResult);
+        } catch (Exception e) {
+            result.setEvaluationException(e);
+        }
+        return result;
     }
 
     /**

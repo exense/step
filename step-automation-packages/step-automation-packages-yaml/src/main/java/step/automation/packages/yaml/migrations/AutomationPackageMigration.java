@@ -16,33 +16,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.artefacts;
+package step.automation.packages.yaml.migrations;
 
-import step.core.artefacts.AbstractArtefact;
-import step.core.dynamicbeans.DynamicValue;
-import step.core.dynamicbeans.NoStringInterpolation;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
-public class TokenSelector extends AbstractArtefact {
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-    public static final String TOKEN_SELECTOR_TOKEN_YAML_FIELD = "routing";
-    DynamicValue<Boolean> remote = new DynamicValue<Boolean>(true);
-
-    DynamicValue<String> token = new DynamicValue<>("{}");
-
-    public DynamicValue<Boolean> getRemote() {
-        return remote;
-    }
-
-    public void setRemote(DynamicValue<Boolean> remote) {
-        this.remote = remote;
-    }
-
-    @NoStringInterpolation
-    public DynamicValue<String> getToken() {
-        return token;
-    }
-
-    public void setToken(DynamicValue<String> token) {
-        this.token = token;
-    }
+/**
+ * Marks a {@link AbstractAutomationPackageMigrationTask} to be applied to the automation package descriptors and
+ * fragments declaring a schema version older than the current one. The counterpart for the plans contained in a
+ * package is step.plans.parser.yaml.migrations.YamlPlanMigration
+ */
+@Target(ElementType.TYPE)
+@Retention(RUNTIME)
+public @interface AutomationPackageMigration {
+    String LOCATION = "step.automation.packages";
 }

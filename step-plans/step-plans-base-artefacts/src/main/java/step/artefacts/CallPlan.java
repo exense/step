@@ -22,6 +22,7 @@ import step.artefacts.automation.YamlCallPlan;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.NoStringInterpolation;
 import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.core.yaml.YamlModel;
@@ -53,6 +54,7 @@ public class CallPlan extends AbstractArtefact {
         this.planId = planId;
     }
 
+    @NoStringInterpolation
     public DynamicValue<String> getSelectionAttributes() {
         return selectionAttributes;
     }
@@ -61,6 +63,7 @@ public class CallPlan extends AbstractArtefact {
         this.selectionAttributes = selectionAttributes;
     }
 
+    @NoStringInterpolation
     public DynamicValue<String> getInput() {
         return input;
     }

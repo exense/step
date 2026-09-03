@@ -34,17 +34,31 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
+import step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask;
+import step.automation.packages.yaml.migrations.AutomationPackageMigration;
+import step.core.Version;
+import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
+import step.core.collections.Collection;
+import step.core.collections.CollectionFactory;
+import step.core.collections.Document;
+import step.core.collections.Filters;
+import step.core.collections.inmemory.InMemoryCollectionFactory;
+import step.core.scanner.AnnotationScanner;
+import step.migration.MigrationManager;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
+
+import static step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask.AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 public class AutomationPackageDescriptorReader {
 
@@ -58,12 +72,15 @@ public class AutomationPackageDescriptorReader {
 
     protected String jsonSchema;
 
+    private final MigrationManager migrationManager;
+
     public AutomationPackageDescriptorReader(String jsonSchemaPath, AutomationPackageSerializationRegistry serializationRegistry) {
         this.serializationRegistry = serializationRegistry;
         // TODO: we need to find a way to resolve the actual json schema (controller config) depending on running server instance (EE or OS)
         // TODO: also we have to resolve the json version for plans according to the automation package version!
         this.planReader = new YamlPlanReader(YamlPlanVersions.ACTUAL_VERSION, false, null);
         this.yamlObjectMapper = createYamlObjectMapper();
+        this.migrationManager = initMigrationManager();
 
         if (jsonSchemaPath != null) {
             this.jsonSchema = readJsonSchema(jsonSchemaPath);
@@ -80,8 +97,17 @@ public class AutomationPackageDescriptorReader {
     }
 
     public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageName) throws AutomationPackageReadingException {
+        return readAutomationPackageFragment(yamlFragment, fragmentName, packageName, null);
+    }
+
+    /**
+     * @param packageVersion the schema version declared by the automation package importing this fragment. Fragments
+     *                       usually declare no version of their own and follow the one of their package, which is
+     *                       what decides whether the migrations apply to them
+     */
+    public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageName, String packageVersion) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor fragment ({})...", fragmentName);
-        return readAutomationPackageYamlFile(yamlFragment, getFragmentClass(), packageName);
+        return readAutomationPackageYamlFile(yamlFragment, getFragmentClass(), packageName, packageVersion);
     }
 
     protected Class<? extends AutomationPackageFragmentYaml> getFragmentClass() {
@@ -89,6 +115,10 @@ public class AutomationPackageDescriptorReader {
     }
 
     protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageName) throws AutomationPackageReadingException {
+        return readAutomationPackageYamlFile(yaml, targetClass, packageName, null);
+    }
+
+    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageName, String inheritedVersion) throws AutomationPackageReadingException {
         try {
             String yamlDescriptorString = new String(yaml.readAllBytes(), StandardCharsets.UTF_8);
             String version = null;
@@ -104,6 +134,13 @@ public class AutomationPackageDescriptorReader {
                     throw new YamlPlanValidationException(message, ex);
                 }
             }
+
+            if (version == null) {
+                // A fragment declaring no version of its own follows the one of the package importing it
+                version = inheritedVersion;
+            }
+
+            yamlDescriptorString = migrateIfRequired(yamlDescriptorString, version);
 
             T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(yamlDescriptorString, targetClass);
 
@@ -130,6 +167,57 @@ public class AutomationPackageDescriptorReader {
         if (!res.getFragments().isEmpty()) {
             log.info("{} imported fragment(s) found in automation package {}", res.getFragments().size(), StringUtils.defaultString(packageName));
         }
+    }
+
+    /**
+     * Applies the migrations of the automation package format to a descriptor or fragment declaring an older schema
+     * version. This concerns the body of the file itself, the plans it contains are migrated by the yaml plan reader.
+     *
+     * @param yamlFile the yaml content read from the file
+     * @param version  the schema version declared by the file. A null version means that no migration is required,
+     *                 which is also the case of the files not declaring any version at all
+     * @return the migrated yaml content, or the content unchanged when no migration applies
+     */
+    protected String migrateIfRequired(String yamlFile, String version) throws IOException {
+        if (version == null) {
+            return yamlFile;
+        }
+        Version fileVersion = new Version(version);
+        if (fileVersion.compareTo(YamlAutomationPackageVersions.ACTUAL_VERSION) == 0) {
+            return yamlFile;
+        }
+
+        log.info("Migrating automation package file from version {} to {}", version, YamlAutomationPackageVersions.ACTUAL_VERSION);
+
+        CollectionFactory tempCollectionFactory = new InMemoryCollectionFactory(new Properties());
+        Collection<Document> tempCollection = tempCollectionFactory.getCollection(AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME, Document.class);
+        Document savedDocument = tempCollection.save(yamlObjectMapper.readValue(yamlFile, Document.class));
+
+        migrationManager.migrate(tempCollectionFactory, fileVersion, YamlAutomationPackageVersions.ACTUAL_VERSION);
+
+        Document migratedDocument = tempCollection.find(Filters.id(savedDocument.getId()), null, null, null, 0).findFirst().orElseThrow();
+        // The declared version is deliberately left untouched: it is what the imported fragments inherit, and the
+        // migrated content isn't validated again. Only the id, generated when saving into the temporary collection,
+        // has to be removed
+        migratedDocument.remove(AbstractIdentifiableObject.ID);
+
+        return yamlObjectMapper.writeValueAsString(migratedDocument);
+    }
+
+    /**
+     * Initializes the migration manager with the migrations of the automation package format
+     */
+    protected MigrationManager initMigrationManager() {
+        MigrationManager migrationManager = new MigrationManager();
+        try (AnnotationScanner annotationScanner = AnnotationScanner.forAllClassesFromClassLoader(AutomationPackageMigration.LOCATION, Thread.currentThread().getContextClassLoader())) {
+            for (Class<?> migration : annotationScanner.getClassesWithAnnotation(AutomationPackageMigration.class)) {
+                if (!AbstractAutomationPackageMigrationTask.class.isAssignableFrom(migration)) {
+                    throw new IllegalArgumentException("Class " + migration + " doesn't extend the " + AbstractAutomationPackageMigrationTask.class);
+                }
+                migrationManager.register((Class<? extends AbstractAutomationPackageMigrationTask>) migration);
+            }
+        }
+        return migrationManager;
     }
 
     protected String readJsonSchema(String jsonSchemaPath) {
