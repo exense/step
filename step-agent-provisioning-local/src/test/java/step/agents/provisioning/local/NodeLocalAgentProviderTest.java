@@ -18,12 +18,17 @@
  ******************************************************************************/
 package step.agents.provisioning.local;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -31,7 +36,8 @@ import java.util.List;
 /**
  * Covers what the provider starts, and what it refuses to. None of these tests starts node: they are about the
  * command the provider resolves and, more importantly, about failing with an actionable message instead of letting
- * node die on a directory holding no agent.
+ * node die on a directory holding no agent. The embedded agent, which this module does not carry, is covered end to
+ * end by the CLI.
  */
 public class NodeLocalAgentProviderTest {
 
@@ -39,97 +45,119 @@ public class NodeLocalAgentProviderTest {
     public final TemporaryFolder folder = new TemporaryFolder();
 
     /**
-     * What a user points {@code --localAgentNode} at: the project directory where they ran
-     * {@code npm install ./step-node-agent-<version>.tgz}, which is where npm generated the command starting it.
+     * The package itself: what {@code npm install -g step-node-agent} leaves behind, and what an unpacked archive
+     * looks like. Both are started the same way as the embedded agent, through the script.
      */
     @Test
-    public void startsTheAgentInstalledInTheConfiguredProject() throws Exception {
-        Path project = folder.getRoot().toPath().resolve("my-project");
-        Path command = installedAgent(project);
+    public void startsTheConfiguredAgentPackage() throws Exception {
+        Path agentPackage = folder.getRoot().toPath().resolve("step-node-agent");
+        Path script = Files.createFile(Files.createDirectories(agentPackage).resolve("server.js"));
 
-        Assert.assertEquals(List.of(command.toString()), providerFor(project).resolveAgentCommand());
+        Assert.assertEquals(List.of("node", script.toAbsolutePath().toString()),
+            providerFor(agentPackage).resolveAgentCommand());
     }
 
     /**
-     * A source checkout, a directory holding the agent package but no installation, an empty directory: all the same
-     * thing here, an installation that was never made. The message has to say what was expected and how to get it.
+     * The other shape: the project directory where a user ran {@code npm install ./step-node-agent-<version>.tgz},
+     * which puts the package under {@code node_modules}.
      */
     @Test
-    public void rejectsADirectoryWithNoInstalledAgent() throws Exception {
+    public void startsTheConfiguredAgentInstalledInAProject() throws Exception {
+        Path project = folder.getRoot().toPath().resolve("my-project");
+        Path script = installedAgent(project);
+
+        Assert.assertEquals(List.of("node", script.toAbsolutePath().toString()),
+            providerFor(project).resolveAgentCommand());
+    }
+
+    /**
+     * A source checkout, an empty directory, a project where npm was never run: the message has to name both places
+     * that were looked at, otherwise there is no telling which of the two shapes was expected.
+     */
+    @Test
+    public void rejectsADirectoryHoldingNoAgent() throws Exception {
         Path empty = folder.newFolder("empty").toPath();
 
         LocalAgentException exception = Assert.assertThrows(LocalAgentException.class,
             () -> providerFor(empty).resolveAgentCommand());
-        Assert.assertTrue("Should name the expected command: " + exception.getMessage(),
-            exception.getMessage().contains(Path.of("node_modules", ".bin",
-                NodeLocalAgentProvider.OsCommands.STEP_NODE_AGENT).toString()));
-        Assert.assertTrue("Should say how to install the agent: " + exception.getMessage(),
-            exception.getMessage().contains("npm install"));
+
+        Assert.assertTrue(exception.getMessage(),
+            exception.getMessage().contains(empty.resolve("server.js").toString()));
+        Assert.assertTrue(exception.getMessage(), exception.getMessage()
+            .contains(empty.resolve(Path.of("node_modules", "step-node-agent", "server.js")).toString()));
     }
 
     /**
-     * The package unpacked next to a {@code node_modules} of its own is not an installation either: only the command
-     * npm generates says that npm ran.
+     * The embedded agent is what makes a local execution work without a registry, so a CLI built without it and no
+     * agent configured is a dead end. It has to say so, and say what to do about it.
      */
     @Test
-    public void rejectsAnUnpackedPackageWhichWasNeverInstalled() throws Exception {
-        Path checkout = folder.getRoot().toPath().resolve("step-node-agent");
-        Files.createDirectories(checkout.resolve("node_modules").resolve("express"));
-        Files.createFile(checkout.resolve("server.js"));
+    public void failsWhenNoAgentIsEmbeddedAndNoneIsConfigured() throws Exception {
+        // This module does not carry the embedded agent: it is the CLI that embeds it, see the launcher pom
+        LocalAgentException exception = Assert.assertThrows(LocalAgentException.class,
+            () -> providerFor(null).resolveAgentCommand());
 
-        Assert.assertThrows(LocalAgentException.class, () -> providerFor(checkout).resolveAgentCommand());
+        Assert.assertTrue(exception.getMessage(), exception.getMessage().contains("--localAgentNode"));
+    }
+
+    @Test
+    public void unpacksAnArchiveIntoTheGivenDirectory() throws Exception {
+        Path archive = folder.getRoot().toPath().resolve("agent.tar.gz");
+        writeArchive(archive, "server.js", "console.log('agent')");
+        Path directory = folder.newFolder("extracted").toPath();
+
+        NodeLocalAgentProvider.unpack(archive.toUri().toURL(), directory);
+
+        Assert.assertEquals("console.log('agent')", Files.readString(directory.resolve("server.js")));
     }
 
     /**
-     * An {@code npm install -g step-node-agent} is started through the command it puts on the PATH, the CLI neither
-     * locating nor installing anything of its own.
+     * Nothing produces such an archive here, ours being built by our own build, but unpacking one would write
+     * anywhere on the machine.
      */
     @Test
-    public void startsAGloballyInstalledAgentThroughItsCommand() throws Exception {
-        Assert.assertEquals(List.of(NodeLocalAgentProvider.OsCommands.STEP_NODE_AGENT),
-            provider(null, true).resolveAgentCommand());
+    public void refusesAnArchiveWritingOutsideOfTheDirectory() throws Exception {
+        Path archive = folder.getRoot().toPath().resolve("evil.tar.gz");
+        writeArchive(archive, "../escaped.js", "anything");
+        Path directory = folder.newFolder("target").toPath();
+
+        IOException exception = Assert.assertThrows(IOException.class,
+            () -> NodeLocalAgentProvider.unpack(archive.toUri().toURL(), directory));
+
+        Assert.assertTrue(exception.getMessage(), exception.getMessage().contains("outside"));
+        Assert.assertFalse(Files.exists(directory.getParent().resolve("escaped.js")));
+    }
+
+    private static void writeArchive(Path archive, String entryName, String content) throws IOException {
+        byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+        try (OutputStream out = Files.newOutputStream(archive);
+             TarArchiveOutputStream tar = new TarArchiveOutputStream(new GzipCompressorOutputStream(out))) {
+            // The names of the entries an npm project produces are longer than the 100 characters tar allows by
+            // default, which is what the embedded agent is packed with too
+            tar.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+            TarArchiveEntry entry = new TarArchiveEntry(entryName);
+            entry.setSize(bytes.length);
+            tar.putArchiveEntry(entry);
+            tar.write(bytes);
+            tar.closeArchiveEntry();
+        }
     }
 
     /**
-     * A user pointing at an agent means that one, whatever is installed globally.
-     */
-    @Test
-    public void prefersTheConfiguredAgentOverTheGloballyInstalledOne() throws Exception {
-        Path project = folder.getRoot().toPath().resolve("my-project");
-        Path command = installedAgent(project);
-
-        Assert.assertEquals(List.of(command.toString()), provider(project, true).resolveAgentCommand());
-    }
-
-    /**
-     * Installs an agent into a project the way npm does, as far as this provider is concerned: the generated command.
+     * Installs the agent into a project the way npm does, as far as this provider is concerned.
      *
-     * @return the command npm generated, which is what the provider is expected to start
+     * @return the script the provider is expected to start
      */
     private static Path installedAgent(Path project) throws IOException {
-        Path binDirectory = project.resolve("node_modules").resolve(".bin");
-        Files.createDirectories(binDirectory);
-        return Files.createFile(binDirectory.resolve(NodeLocalAgentProvider.OsCommands.STEP_NODE_AGENT))
-            .toAbsolutePath();
+        Path packageDirectory = project.resolve("node_modules").resolve("step-node-agent");
+        Files.createDirectories(packageDirectory);
+        return Files.createFile(packageDirectory.resolve("server.js"));
     }
 
     private NodeLocalAgentProvider providerFor(Path configuredAgent) throws IOException {
-        return provider(configuredAgent, false);
-    }
-
-    /**
-     * @param globallyInstalled what to report instead of asking npm whether the agent is installed globally, which
-     *                          keeps these tests independent from what the machine running them has installed
-     */
-    private NodeLocalAgentProvider provider(Path configuredAgent, boolean globallyInstalled) throws IOException {
         LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration()
             .setNodeAgentPath(configuredAgent)
             .setWorkDirectory(folder.newFolder().toPath());
-        return new NodeLocalAgentProvider(configuration, new LocalAgentWorkspace(configuration.getWorkDirectory())) {
-            @Override
-            boolean lookupGlobalInstallation() {
-                return globallyInstalled;
-            }
-        };
+        return new NodeLocalAgentProvider(configuration, new LocalAgentWorkspace(configuration.getWorkDirectory()));
     }
 }

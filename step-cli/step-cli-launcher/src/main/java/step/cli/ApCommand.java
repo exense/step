@@ -254,17 +254,14 @@ public class ApCommand implements Callable<Integer> {
         protected Path localAgentJava;
 
         @CommandLine.Option(names = {"--localAgentNode"}, paramLabel = "<Path>",
-            description = "Local execution only. The directory of an installed Step Node.js agent to use. Either the step-node-agent package itself or a directory containing it in node_modules. Defaults to a globally installed step-node-agent, or to installing one with npm.")
+            description = "Local execution only. The directory of an installed Step Node.js agent to use instead of the one embedded in the CLI. "
+                + "Either the step-node-agent package itself or a directory containing it in node_modules.")
         protected Path localAgentNode;
 
         @CommandLine.Option(names = {"--localAgentDotNet"}, paramLabel = "<Path>",
             description = "Local execution only. The directory of an installed Step .NET agent, which is never installed by the CLI. "
                 + "Either the agent distribution or its bin directory. Defaults to the STEP_DOTNET_AGENT_HOME environment variable.")
         protected Path localAgentDotNet;
-
-        @CommandLine.Option(names = {"--localAgentNodeVersion"}, paramLabel = "<Version>",
-            description = "Local execution only. The version of the step-node-agent npm package to install. Defaults to the version of this CLI. Not used when the agent is already installed globally.")
-        protected String localAgentNodeVersion;
 
         @CommandLine.Option(names = {"--localAgentWorkDir"}, paramLabel = "<Path>",
             description = "Local execution only. The directory the local agents are installed and run in. Defaults to a folder in the system temporary directory.")
@@ -361,9 +358,6 @@ public class ApCommand implements Callable<Integer> {
                 // Verbose prints what the agents log, debug additionally raises the level they log at
                 .setVerbose(verbose)
                 .setDebug(debug);
-            if (localAgentNodeVersion != null && !localAgentNodeVersion.isBlank()) {
-                configuration.setNodeAgentVersion(localAgentNodeVersion);
-            }
             if (localAgentMaxTokens != null) {
                 configuration.setMaxTokensPerAgent(localAgentMaxTokens);
             }

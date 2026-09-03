@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.agents.provisioning.local;
 
-import step.core.Constants;
 
 import java.nio.file.Path;
 import java.time.Duration;
@@ -48,7 +47,6 @@ public class LocalAgentProvisioningConfiguration {
     private Path javaAgentPath;
     private Path nodeAgentPath;
     private Path dotNetAgentPath;
-    private String nodeAgentVersion = Constants.STEP_VERSION_STRING;
     private Path workDirectory;
     private int maxTokensPerAgent = DEFAULT_MAX_TOKENS_PER_AGENT;
     private Duration agentStartTimeout = Duration.ofSeconds(DEFAULT_START_TIMEOUT_SECONDS);
@@ -81,21 +79,6 @@ public class LocalAgentProvisioningConfiguration {
 
     public LocalAgentProvisioningConfiguration setNodeAgentPath(Path nodeAgentPath) {
         this.nodeAgentPath = nodeAgentPath;
-        return this;
-    }
-
-    /**
-     * @return the version of the {@code step-node-agent} npm package to install. Defaults to the version of this
-     * CLI, which is the one it was tested against; settable because the npm package is released independently and
-     * may not carry the exact same version. Only used for the installations the CLI makes itself: an agent installed
-     * globally or pointed at is used with the version it has.
-     */
-    public String getNodeAgentVersion() {
-        return nodeAgentVersion;
-    }
-
-    public LocalAgentProvisioningConfiguration setNodeAgentVersion(String nodeAgentVersion) {
-        this.nodeAgentVersion = nodeAgentVersion;
         return this;
     }
 

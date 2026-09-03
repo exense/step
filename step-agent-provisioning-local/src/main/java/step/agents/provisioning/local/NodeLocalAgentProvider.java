@@ -18,60 +18,67 @@
  ******************************************************************************/
 package step.agents.provisioning.local;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.core.Constants;
 import step.core.agents.AgentTypeConstants;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.JarURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.jar.JarEntry;
 
 /**
  * Starts the Node.js agent as a separate process.
  * <p>
- * The agent is not shipped with the CLI: it is a set of JavaScript files, and since it needs a Node.js runtime on the
- * machine anyway, embedding it would only save an npm install while making every CLI carry it. It is instead taken
- * from an existing installation - the one the user points at, or a global {@code npm install -g step-node-agent} -
- * and, failing that, installed with npm into the workspace on first use and reused afterwards.
+ * The agent is shipped inside the CLI, with its dependencies already resolved, and extracted on first use, as the Java agent is.
  * <p>
- * All three are started through the command npm generates for the package, and nothing here reads the inside of an
- * installation: a project the user points {@code --localAgentNode} at is one where {@code npm install} was run, which
- * is the case whether the agent came from the registry or from a {@code .tgz} handed to them.
+ * There are two ways to get an agent, the same two the Java agent offers: the one embedded here, and the installation
+ * {@code --localAgentNode} points at, which takes precedence. Both are started as {@code node server.js}, which is
+ * all {@code bin/step-node-agent} does - the commands npm generates are specific to the machine they were generated
+ * on, and the embedded agent is packed on one machine for all of them.
  * <p>
  * Unlike the Java agent, whose runtime the CLI provides by construction, this one depends on what the developer
- * machine offers: {@code node} and {@code npm} have to be runnable. When they are not, the agent type is simply not
- * offered and a plan using JavaScript keywords fails with "no agent available" rather than with an obscure process
- * error.
+ * machine offers: {@code node} has to be runnable. When it is not, the agent type is simply not offered and a plan
+ * using JavaScript keywords fails with "no agent available" rather than with an obscure process error.
  */
 public class NodeLocalAgentProvider implements LocalAgentProvider {
 
     private static final Logger logger = LoggerFactory.getLogger(NodeLocalAgentProvider.class);
     private static final String AGENT_CONF_FILE_NAME = "AgentConf.yaml";
     private static final String NPM_PACKAGE_NAME = "step-node-agent";
-    private static final String INSTALLED_AGENT_NAME = "node";
     private static final String NODE_MODULES_DIRECTORY_NAME = "node_modules";
-    private static final String BIN_DIRECTORY_NAME = ".bin";
-    private static final String PACKAGE_JSON_FILE_NAME = "package.json";
     /**
-     * Written before installing, so that npm installs into the directory of this CLI rather than into whichever
-     * project happens to sit above it: npm looks for the nearest {@code package.json} up the directory tree, and a
-     * workspace placed inside a JavaScript project would otherwise be installed into that project.
+     * The agent bundle embedded in the CLI: the agent and its runtime dependencies, as resolved by the build. Kept in
+     * sync by the build, see the launcher pom.
      */
-    private static final String PACKAGE_JSON_CONTENT =
-        "{\n  \"name\": \"step-cli-local-node-agent\",\n  \"version\": \"1.0.0\",\n  \"private\": true\n}\n";
-    private static final int NPM_INSTALL_TIMEOUT_MINUTES = 10;
-    private static final long NPM_LIST_TIMEOUT_MS = 30_000;
+    static final String EMBEDDED_AGENT_RESOURCE = "step-local-node-agent.tar.gz";
+    private static final String INSTALLED_EMBEDDED_AGENT_NAME = "node";
+    private static final String EMBEDDED_AGENT_IDENTITY_FILE_NAME = ".embedded-agent-id";
+    /**
+     * What {@code bin/step-node-agent} requires, and therefore what starting the agent comes down to.
+     */
+    private static final String AGENT_MAIN_SCRIPT = "server.js";
 
     private final LocalAgentProvisioningConfiguration configuration;
     private final LocalAgentWorkspace workspace;
     private final AgentConfWriter agentConfWriter = new AgentConfWriter();
-
-    private Boolean globallyInstalled;
 
     public NodeLocalAgentProvider(LocalAgentProvisioningConfiguration configuration, LocalAgentWorkspace workspace) {
         this.configuration = configuration;
@@ -90,51 +97,25 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
 
     @Override
     public boolean isAvailable() {
-        if (!OsCommands.isExecutableAvailable(OsCommands.NODE)) {
-            return false;
-        }
-        // An already installed agent only needs node to run it; installing one additionally needs npm.
-        return configuration.getNodeAgentPath() != null
-            || isInstalled()
-            || OsCommands.isExecutableAvailable(OsCommands.NPM);
+        return OsCommands.isExecutableAvailable(OsCommands.NODE)
+            && (configuration.getNodeAgentPath() != null || isAgentEmbedded());
     }
 
-    /**
-     * Names the runtime which is actually missing: with node installed and npm not, telling a user to install Node.js
-     * would send them looking at something they already have.
-     */
     @Override
     public String getInstallationHint() {
         if (!OsCommands.isExecutableAvailable(OsCommands.NODE)) {
             return "The Node.js agent runs on Node.js, which is not installed on this machine.";
         }
-        return "The Node.js agent is installed with npm, which is not installed on this machine: install it, or point"
-            + " --localAgentNode at a directory where " + NPM_PACKAGE_NAME + " has been installed.";
+        return "This CLI does not embed the Node.js agent: point --localAgentNode at an installed "
+            + NPM_PACKAGE_NAME + ".";
     }
 
-    private boolean isInstalled() {
-        return Files.isRegularFile(agentBinary(installedAgentProject()));
+    private static boolean isAgentEmbedded() {
+        return embeddedAgentResource() != null;
     }
 
-    /**
-     * @return the project directory this provider installs the agent into, one per version
-     */
-    private Path installedAgentProject() {
-        return workspace.getInstalledAgentDirectory(INSTALLED_AGENT_NAME, configuration.getNodeAgentVersion());
-    }
-
-    /**
-     * The command npm creates for a package declaring a {@code bin}, in the project it is installed into:
-     * {@code <project>/node_modules/.bin/step-node-agent}, {@code .cmd} on Windows.
-     * <p>
-     * Its presence is the whole definition of "an agent is installed here". Where npm put the package itself, and
-     * whether its dependency tree is complete, are npm's business: a package manager is free to lay its store out as
-     * it sees fit - npm hoists, pnpm symlinks, Yarn PnP has no {@code node_modules} at all - and the generated
-     * command is the one thing all of them provide.
-     */
-    private static Path agentBinary(Path projectDirectory) {
-        return projectDirectory.resolve(NODE_MODULES_DIRECTORY_NAME).resolve(BIN_DIRECTORY_NAME)
-            .resolve(OsCommands.STEP_NODE_AGENT).toAbsolutePath();
+    private static URL embeddedAgentResource() {
+        return NodeLocalAgentProvider.class.getClassLoader().getResource(EMBEDDED_AGENT_RESOURCE);
     }
 
     @Override
@@ -171,13 +152,6 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
             processBuilder.environment().put("LOG_LEVEL", configuration.isDebug() ? "debug" : "info");
             process = processBuilder.start();
         } catch (IOException e) {
-            if (command.get(0).equals(OsCommands.STEP_NODE_AGENT)) {
-                // npm reported the agent as globally installed, so the command it created is not on the PATH of this
-                // process. Nothing this provider can do about it, but the user can.
-                throw new LocalAgentException("The globally installed Node.js agent could not be started: no "
-                    + OsCommands.STEP_NODE_AGENT + " command was found. Point --localAgentNode at the installation"
-                    + " directory of the agent instead.", e);
-            }
             throw new LocalAgentException("Error while starting the local Node.js agent", e);
         }
         return new LocalAgentProcess("Local " + getDisplayName() + " agent", process, runDirectory,
@@ -185,148 +159,188 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
     }
 
     /**
-     * @return the command starting the agent, without its arguments. Either the command a global installation puts on
-     * the PATH, or the one npm generated in the project the agent is installed in.
+     * @return the command starting the agent, without its arguments
      */
     // Package private for the sake of the tests, which cover the resolution without starting anything
     List<String> resolveAgentCommand() throws LocalAgentException {
+        return List.of(OsCommands.NODE, resolveAgentScript().toAbsolutePath().toString());
+    }
+
+    /**
+     * @return the script starting the agent: the one of the installation the user pointed at, or the one of the agent
+     * embedded in this CLI
+     */
+    private Path resolveAgentScript() throws LocalAgentException {
         Path configured = configuration.getNodeAgentPath();
         if (configured != null) {
-            return List.of(validateConfiguredAgent(configured).toString());
+            logger.debug("Using the Node.js agent configured in {}", configured);
+            return validateConfiguredAgent(configured);
         }
-        // A globally installed agent comes before the one installed in the workspace: installing it is an explicit act
-        // of the user, who then expects it to be the agent that runs, and it spares the CLI an installation of its
-        // own. Its version is whatever was installed, which is deliberate: overriding a global installation with the
-        // version of this CLI is not for the CLI to decide.
-        if (isGloballyInstalled()) {
-            return List.of(OsCommands.STEP_NODE_AGENT);
-        }
-        return List.of(installAgentIfNeeded().toString());
+        return extractEmbeddedAgent();
     }
 
     /**
-     * Checks the project the user pointed at up front, rather than letting the process fail: a missing agent is
-     * otherwise reported as a start-up timeout, with the actual cause buried in the output of a process that died
-     * seconds earlier.
+     * Extracts the embedded agent, once per build of the CLI, and keeps it between runs: it is a few thousand files
+     * and unpacking them on every local execution would be pure waste.
+     * <p>
+     * The directory is named after the version, which is the same for every build of that version, so what it was
+     * extracted from is recorded next to it and it is reused only while that still matches.
      *
-     * @return the command starting the configured agent
+     * @return the script starting the agent
+     */
+    private Path extractEmbeddedAgent() throws LocalAgentException {
+        URL resource = embeddedAgentResource();
+        if (resource == null) {
+            throw new LocalAgentException("This CLI does not embed the Node.js agent, and none was configured."
+                + " Point --localAgentNode at an installed " + NPM_PACKAGE_NAME + ".");
+        }
+
+        Path directory = workspace.getInstalledAgentDirectory(INSTALLED_EMBEDDED_AGENT_NAME, Constants.STEP_VERSION_STRING);
+        Path mainScript = directory.resolve(AGENT_MAIN_SCRIPT);
+        String identity = identifyEmbeddedAgent(resource);
+        if (Files.isRegularFile(mainScript) && identity != null && identity.equals(readIdentity(directory))) {
+            logger.debug("Using the Node.js agent already extracted in {}", directory);
+            return mainScript;
+        }
+
+        logger.info("Extracting the Node.js agent to {}...", directory);
+        // Unpacked aside and moved into place, so that a CLI interrupted half way, or a second CLI running
+        // concurrently, can never leave a partial agent behind for the next run to start.
+        Path temporaryDirectory;
+        try {
+            deleteQuietly(directory);
+            Files.createDirectories(directory.getParent());
+            temporaryDirectory = Files.createTempDirectory(directory.getParent(), directory.getFileName() + ".part");
+        } catch (IOException e) {
+            throw new LocalAgentException("Error while creating the directory of the Node.js agent " + directory, e);
+        }
+        try {
+            unpack(resource, temporaryDirectory);
+            if (identity != null) {
+                // Written before the move, so that the identity and what it describes become visible together
+                Files.writeString(temporaryDirectory.resolve(EMBEDDED_AGENT_IDENTITY_FILE_NAME), identity);
+            }
+            Files.move(temporaryDirectory, directory, StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException e) {
+            deleteQuietly(temporaryDirectory);
+            throw new LocalAgentException("Error while extracting the Node.js agent to " + directory, e);
+        }
+        if (!Files.isRegularFile(mainScript)) {
+            throw new LocalAgentException("The Node.js agent embedded in this CLI contains no " + AGENT_MAIN_SCRIPT
+                + ": " + mainScript + " does not exist after extracting it.");
+        }
+        return mainScript;
+    }
+
+    // Package private for the sake of the tests, which unpack an archive of their own rather than the embedded agent
+    static void unpack(URL archive, Path directory) throws IOException {
+        try (InputStream stream = archive.openStream();
+             TarArchiveInputStream entries = new TarArchiveInputStream(
+                 new GzipCompressorInputStream(new BufferedInputStream(stream)))) {
+            TarArchiveEntry entry;
+            while ((entry = entries.getNextEntry()) != null) {
+                if (!entries.canReadEntryData(entry)) {
+                    logger.debug("Skipping the unreadable entry {} of the embedded Node.js agent", entry.getName());
+                    continue;
+                }
+                Path target = directory.resolve(entry.getName()).normalize();
+                if (!target.startsWith(directory)) {
+                    // An entry pointing outside the directory it is unpacked into. Nothing produces one here, the
+                    // archive being built by our own build, but unpacking one would write anywhere on the machine.
+                    throw new IOException("The embedded Node.js agent contains an entry outside of the archive: "
+                        + entry.getName());
+                }
+                if (entry.isDirectory()) {
+                    Files.createDirectories(target);
+                } else {
+                    Files.createDirectories(target.getParent());
+                    Files.copy(entries, target, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+    }
+
+    /**
+     * @return what identifies the agent this CLI embeds, or {@code null} when it cannot be determined, which extracts
+     * it afresh on every run rather than risking a stale one. Read from the index of the CLI jar when there is one,
+     * so that identifying it costs no read of the archive; computed from the archive itself otherwise, which is the
+     * case when the CLI runs from compiled classes rather than from a jar.
+     */
+    private static String identifyEmbeddedAgent(URL resource) {
+        try {
+            if (resource.openConnection() instanceof JarURLConnection jarConnection) {
+                JarEntry entry = jarConnection.getJarEntry();
+                if (entry != null && entry.getCrc() != -1) {
+                    return entry.getSize() + ":" + entry.getCrc();
+                }
+            }
+            return checksumOf(resource);
+        } catch (IOException e) {
+            logger.debug("Unable to identify the Node.js agent embedded in this CLI", e);
+            return null;
+        }
+    }
+
+    private static String checksumOf(URL resource) throws IOException {
+        try (InputStream stream = new BufferedInputStream(resource.openStream())) {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = stream.read(buffer)) != -1) {
+                digest.update(buffer, 0, read);
+            }
+            return HexFormat.of().formatHex(digest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            throw new IOException("SHA-256 is not available on this JVM", e);
+        }
+    }
+
+    /**
+     * @return the identity recorded next to an extracted agent, or {@code null} when there is none to read
+     */
+    private static String readIdentity(Path directory) {
+        Path identityFile = directory.resolve(EMBEDDED_AGENT_IDENTITY_FILE_NAME);
+        try {
+            return Files.readString(identityFile).trim();
+        } catch (IOException e) {
+            logger.debug("Unable to read the identity of the extracted Node.js agent from {}", identityFile, e);
+            return null;
+        }
+    }
+
+    /**
+     * Checks what the user pointed at up front, rather than letting the process fail: a missing agent is otherwise
+     * reported as a start-up timeout, with the actual cause buried in the output of a process that died seconds
+     * earlier.
+     * <p>
+     * Both shapes an installed agent comes in are accepted: the package itself, which is what a global
+     * {@code npm install -g step-node-agent} and an unpacked archive leave, and a project the agent was installed
+     * into, which is what {@code npm install ./step-node-agent-<version>.tgz} leaves. Either way the dependencies of
+     * the agent are found by the ordinary lookup of node, from the directory the script sits in upwards.
+     *
+     * @return the script starting the configured agent
      */
     private static Path validateConfiguredAgent(Path configured) throws LocalAgentException {
-        Path binary = agentBinary(configured);
-        if (!Files.isRegularFile(binary)) {
-            throw new LocalAgentException("No Node.js agent is installed in " + configured + ": " + binary
-                + " does not exist. Install the agent into that directory, for instance with 'npm install ./"
-                + NPM_PACKAGE_NAME + "-<version>.tgz', and point --localAgentNode at it.");
+        Path packageScript = configured.resolve(AGENT_MAIN_SCRIPT);
+        if (Files.isRegularFile(packageScript)) {
+            return packageScript;
         }
-        return binary;
-    }
-
-    /**
-     * @return the command starting the agent installed in the workspace, installed here on the first local execution
-     * using a Node.js keyword with this CLI version
-     */
-    private Path installAgentIfNeeded() throws LocalAgentException {
-        Path project = installedAgentProject();
-        Path binary = agentBinary(project);
-        if (Files.isRegularFile(binary)) {
-            logger.debug("Using the Node.js agent already installed in {}", project);
-            return binary;
+        Path projectScript = configured.resolve(NODE_MODULES_DIRECTORY_NAME).resolve(NPM_PACKAGE_NAME)
+            .resolve(AGENT_MAIN_SCRIPT);
+        if (Files.isRegularFile(projectScript)) {
+            return projectScript;
         }
-        installWithNpm(project);
-        if (!Files.isRegularFile(binary)) {
-            throw new LocalAgentException("npm reported a successful installation of " + NPM_PACKAGE_NAME
-                + " but created no " + OsCommands.STEP_NODE_AGENT + " command in " + binary.getParent());
-        }
-        return binary;
-    }
-
-    /**
-     * Reports whether the agent is installed globally, i.e. whether {@code npm install -g step-node-agent} was run on
-     * this machine. Such an installation puts the {@code step-node-agent} command on the PATH, which is all that is
-     * needed to start it: where npm put the package, and whether that package looks runnable, are questions this
-     * provider does not have to answer.
-     * <p>
-     * Asked at most once: it starts an npm process, and a global installation appearing while the CLI runs is not a
-     * case worth paying that on every provisioning for.
-     */
-    private synchronized boolean isGloballyInstalled() {
-        if (globallyInstalled == null) {
-            globallyInstalled = lookupGlobalInstallation();
-        }
-        return globallyInstalled;
-    }
-
-    // Package private for the sake of the tests, which must not depend on what the build machine happens to have installed
-    boolean lookupGlobalInstallation() {
-        if (!OsCommands.isExecutableAvailable(OsCommands.NPM)) {
-            return false;
-        }
-        try {
-            OsCommands.Result result = OsCommands.run(List.of(OsCommands.NPM, "list", "-g", NPM_PACKAGE_NAME,
-                "--depth=0", "--no-progress"), null, NPM_LIST_TIMEOUT_MS);
-            // The exit code is deliberately ignored: npm reports a package it was asked about but did not find as an
-            // error, as it does any complaint about the global tree. The listed package itself is the answer.
-            String listed = result.output().lines().map(String::trim)
-                .filter(line -> line.contains(NPM_PACKAGE_NAME + "@"))
-                .findFirst().orElse(null);
-            if (listed == null) {
-                logger.debug("No globally installed Node.js agent found");
-                return false;
-            }
-            // The line carries the version, which is worth having in the logs: it is the user's, not the CLI's
-            logger.debug("Using the globally installed Node.js agent, as listed by npm: {}", listed);
-            return true;
-        } catch (IOException e) {
-            logger.debug("Unable to list the globally installed npm packages", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        return false;
-    }
-
-    /**
-     * Installs the agent into the workspace, once per version. The installation is kept between runs: it downloads
-     * from the npm registry, which is both slow and the only part of a local execution needing network access.
-     */
-    private void installWithNpm(Path project) throws LocalAgentException {
-        String version = configuration.getNodeAgentVersion();
-        logger.info("Installing the Node.js agent {}@{} into {}. This is done once and reused by later executions...",
-            NPM_PACKAGE_NAME, version, project);
-
-        try {
-            Files.createDirectories(project);
-            Files.writeString(project.resolve(PACKAGE_JSON_FILE_NAME), PACKAGE_JSON_CONTENT);
-        } catch (IOException e) {
-            throw new LocalAgentException("Error while preparing the installation directory " + project, e);
-        }
-
-        // A plain local install, run in the directory it installs into: the same command a user runs in their own
-        // project, producing the same layout, which is the only one this provider knows how to start.
-        List<String> command = List.of(OsCommands.NPM, "install", NPM_PACKAGE_NAME + "@" + version,
-            "--omit=dev", "--no-audit", "--no-fund");
-        try {
-            OsCommands.Result result = OsCommands.run(command, project, NPM_INSTALL_TIMEOUT_MINUTES * 60_000L);
-            if (result.exitCode() != 0) {
-                // Leaving a half installed directory behind would make the next run believe the agent is there
-                deleteQuietly(project);
-                throw new LocalAgentException("Unable to install the Node.js agent " + NPM_PACKAGE_NAME + "@" + version
-                    + " (npm exited with " + result.exitCode() + "). Check that this machine can reach the npm registry,"
-                    + " or point --localAgentNode at an existing installation." + System.lineSeparator() + result.output());
-            }
-        } catch (IOException | InterruptedException e) {
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
-            deleteQuietly(project);
-            throw new LocalAgentException("Error while installing the Node.js agent with npm", e);
-        }
+        throw new LocalAgentException("The configured Node.js agent " + configured + " does not look like an agent"
+            + " installation: neither " + packageScript + " nor " + projectScript + " exists. Point --localAgentNode"
+            + " at an installed " + NPM_PACKAGE_NAME + " package, or at a directory containing it in "
+            + NODE_MODULES_DIRECTORY_NAME + ".");
     }
 
     private static void deleteQuietly(Path directory) {
         try {
             FileUtils.deleteDirectory(directory.toFile());
         } catch (IOException e) {
-            logger.warn("Failed to clean up {} after a failed installation", directory, e);
+            logger.warn("Failed to clean up {} after a failed extraction", directory, e);
         }
     }
 
@@ -335,19 +349,7 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
      */
     static class OsCommands {
 
-        static final boolean WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
         static final String NODE = "node";
-        /**
-         * npm is a shell script on Windows, and unlike an exe it is not resolved from a bare name.
-         */
-        static final String NPM = WINDOWS ? "npm.cmd" : "npm";
-        /**
-         * The command npm generates for the agent package: on the PATH for a global installation, in
-         * {@code node_modules/.bin} for a local one. Like npm, it is a script rather than an exe: a shell prompt
-         * resolves it from the bare name through PATHEXT, whereas the CreateProcess call behind {@link ProcessBuilder}
-         * only ever appends {@code .exe} and needs the extension spelled out.
-         */
-        static final String STEP_NODE_AGENT = WINDOWS ? NPM_PACKAGE_NAME + ".cmd" : NPM_PACKAGE_NAME;
 
         private static final long VERSION_CHECK_TIMEOUT_MS = 10_000;
         private static final Map<String, Boolean> AVAILABILITY_CACHE = new ConcurrentHashMap<>();
