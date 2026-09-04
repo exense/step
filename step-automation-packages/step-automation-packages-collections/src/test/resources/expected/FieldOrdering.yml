@@ -1,0 +1,74 @@
+---
+plans:
+  - name: "FieldOrdering"
+    root:
+      testCase:
+        nodeName: "FieldOrdering"
+        instrumentNode: true
+        children:
+          - sequence:
+              nodeName: "Sequence - Sequence Name"
+              description: "Description"
+              skipNode: true
+              instrumentNode: true
+              continueParentNodeExecutionOnError: true
+              continueOnError: true
+              pacing: 5000
+              before:
+                continueOnError: false
+                steps:
+                  - echo:
+                      nodeName: "Echo - Init"
+                      description: "Bla"
+                      skipNode: true
+                      instrumentNode: true
+                      continueParentNodeExecutionOnError: true
+                      text:
+                        expression: "Test"
+              children:
+                - callKeyword:
+                    nodeName: "Keyword call"
+                    description: "Description"
+                    keyword: "Keyword"
+                    inputs:
+                      - parameter: "Test"
+                    instrumentNode: true
+                    continueParentNodeExecutionOnError: true
+                    remote: false
+                    children:
+                      - assert:
+                          actual: "returnValue"
+                          operator: "EQUALS"
+                          doNegate: true
+                          expected: "1"
+                          customErrorMessage: "afda"
+                      - switch:
+                          nodeName: "Switch - switch"
+                          description: "Description"
+                          expression: "testd"
+                          children:
+                            - case:
+                                value: "Bla"
+                            - case:
+                                value: "Blub"
+                      - for:
+                          nodeName: "For - Loop"
+                          item: "a"
+                          maxFailedLoops: 1
+                          threads: 2
+                          globalCounter: "c"
+                          userItem: "b"
+                          start: 0
+                          end: 1
+                          inc: 2
+                          children:
+                            - set:
+                                nodeName: "Set - variable"
+                                key: "variable"
+                                value: "value"
+              after:
+                continueOnError: false
+                steps:
+                  - echo:
+                      nodeName: "Echo - After"
+                      text: "After"
