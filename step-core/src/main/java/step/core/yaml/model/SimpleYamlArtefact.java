@@ -18,15 +18,18 @@
  ******************************************************************************/
 package step.core.yaml.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.artefacts.AbstractArtefact;
-import step.core.yaml.YamlModel;
 import step.core.yaml.SerializationUtils;
+import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlModel;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * The yaml representation for {@link AbstractArtefact} classes having the yaml representation (annotated with {@link YamlModel}),
@@ -37,8 +40,8 @@ import java.util.List;
  */
 public class SimpleYamlArtefact<T extends AbstractArtefact> extends AbstractYamlArtefact<T> {
 
-    @JsonIgnore
-    protected ObjectNode fieldValues;
+    @YamlFieldCustomCopy
+    private ObjectNode fieldValues;
 
     public SimpleYamlArtefact(Class<T> techArtefactClass, ObjectNode fieldValues, ObjectMapper yamlObjectMapper) {
         this.artefactClass = techArtefactClass;
@@ -71,7 +74,18 @@ public class SimpleYamlArtefact<T extends AbstractArtefact> extends AbstractYaml
 
     public ObjectNode toFullJson() {
         ObjectNode jsonNode = yamlObjectMapper.valueToTree(this);
-        jsonNode.setAll(fieldValues);
+        // Flatten fieldValues into existing serialization to preserve order
+        List<Map.Entry<String, JsonNode>> list = jsonNode.properties().stream()
+            .flatMap(e -> {
+                if (e.getKey().equals("fieldValues")) {
+                    return e.getValue() instanceof ObjectNode ?
+                        ((ObjectNode) e.getValue()).properties().stream() : Stream.empty();
+                }
+                return Stream.of(e);
+            })
+            .toList();
+        jsonNode.removeAll();
+        list.forEach(e -> jsonNode.set(e.getKey(), e.getValue()));
         return jsonNode;
     }
 }

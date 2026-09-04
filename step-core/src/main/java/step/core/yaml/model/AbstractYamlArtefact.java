@@ -29,10 +29,11 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;
 import step.core.yaml.YamlArtefactsLookuper;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.jsonschema.JsonSchema;
 import step.jsonschema.JsonSchemaDefaultValueProvider;
-
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -58,20 +59,28 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
     @JsonSchema(defaultProvider = DefaultYamlArtefactNameProvider.class)
     @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.TOP)
     protected DynamicValue<String> nodeName;
+
+    @YamlFieldOrder(YamlFieldPriority.TOP)
+    protected String description;
 
     protected DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
     protected DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
     protected DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
-    protected String description;
 
-    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
+
     @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.LOW)
+    protected YamlChildrenBlock before;
+
+    @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.LOW)
+    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
     protected List<NamedYamlArtefact> children = new ArrayList<>();
 
     @YamlFieldCustomCopy
-    protected YamlChildrenBlock before;
-    @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.LOW)
     protected YamlChildrenBlock after;
 
     public AbstractYamlArtefact() {

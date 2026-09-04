@@ -7,7 +7,7 @@ import java.io.File;
 public class AutomationPackageWithEmptyWildcardTest extends AutomationPackageCollectionTestBase {
 
     public AutomationPackageWithEmptyWildcardTest() {
-        super.sourceDirectory = new File("src/test/resources/testdata/ap-with-empty-wildcard");
+        super(new File("src/test/resources/testdata/ap-with-empty-wildcard"));
     }
 
     @Test

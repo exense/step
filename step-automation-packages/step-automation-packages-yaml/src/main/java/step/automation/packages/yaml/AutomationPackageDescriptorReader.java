@@ -145,7 +145,7 @@ public class AutomationPackageDescriptorReader {
             log.info("{} plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageName));
         }
         if (!res.getPlansPlainText().isEmpty()) {
-            log.info("{} plain text plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageName));
+            log.info("{} plain text plan(s) found in automation package {}", res.getPlansPlainText().size(), StringUtils.defaultString(packageName));
         }
         for (Map.Entry<String, PatchableYamlList<?>> additionalEntry : res.getAdditionalFields().entrySet()) {
             log.info("{} {} found in automation package {}", additionalEntry.getValue().size(), additionalEntry.getKey(), StringUtils.defaultString(packageName));
