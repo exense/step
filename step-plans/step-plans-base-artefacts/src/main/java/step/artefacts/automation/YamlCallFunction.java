@@ -29,14 +29,14 @@ import step.core.yaml.YamlFieldPriority;
 public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
 
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Top)
+    @YamlFieldOrder(YamlFieldPriority.TOP)
     protected YamlKeywordDefinition keyword = new YamlKeywordDefinition(null, null, "{}");
 
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Top)
+    @YamlFieldOrder(YamlFieldPriority.TOP)
     protected YamlDynamicInputs inputs = new YamlDynamicInputs("{}");
 
-    @YamlFieldOrder(YamlFieldPriority.Normal)
+    @YamlFieldOrder(YamlFieldPriority.NORMAL)
     protected DynamicValue<String> resultMap = new DynamicValue<>();
 
     public YamlCallFunction() {

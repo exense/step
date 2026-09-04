@@ -29,11 +29,11 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
     private String planId;
 
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Top)
+    @YamlFieldOrder(YamlFieldPriority.TOP)
     private YamlDynamicInputs selectionAttributes = new YamlDynamicInputs("{}");
 
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Top)
+    @YamlFieldOrder(YamlFieldPriority.TOP)
     protected YamlDynamicInputs input = new YamlDynamicInputs("{}");
 
     public YamlCallPlan() {

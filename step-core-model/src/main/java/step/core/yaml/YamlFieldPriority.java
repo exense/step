@@ -23,7 +23,7 @@ package step.core.yaml;
  * Use this prioritization to override the field order
  */
 public enum YamlFieldPriority {
-    Top,
-    Normal,
-    Low,
+    TOP,
+    NORMAL,
+    LOW,
 }

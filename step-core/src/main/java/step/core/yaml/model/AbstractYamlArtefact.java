@@ -59,10 +59,10 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
     @JsonSchema(defaultProvider = DefaultYamlArtefactNameProvider.class)
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Top)
+    @YamlFieldOrder(YamlFieldPriority.TOP)
     protected DynamicValue<String> nodeName;
 
-    @YamlFieldOrder(YamlFieldPriority.Top)
+    @YamlFieldOrder(YamlFieldPriority.TOP)
     protected String description;
 
     protected DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
@@ -71,16 +71,16 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
 
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Low)
+    @YamlFieldOrder(YamlFieldPriority.LOW)
     protected YamlChildrenBlock before;
 
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Low)
+    @YamlFieldOrder(YamlFieldPriority.LOW)
     @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
     protected List<NamedYamlArtefact> children = new ArrayList<>();
 
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Low)
+    @YamlFieldOrder(YamlFieldPriority.LOW)
     protected YamlChildrenBlock after;
 
     public AbstractYamlArtefact() {

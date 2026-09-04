@@ -247,16 +247,20 @@ public class YamlPlanReader {
                     @Override
                     public List<BeanPropertyWriter> orderProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
 
-                        List<BeanPropertyWriter> orderedList = new ArrayList<>();
-
+                        Map<YamlFieldPriority, List<BeanPropertyWriter>> grouped = new java.util.EnumMap<>(YamlFieldPriority.class);
                         for (YamlFieldPriority priority : YamlFieldPriority.values()) {
-                            for (BeanPropertyWriter property : beanProperties) {
-                                YamlFieldOrder order = property.getAnnotation(YamlFieldOrder.class);
-                                YamlFieldPriority fieldPriority = order == null ? YamlFieldPriority.Normal : order.value();
-                                if (priority == fieldPriority) {
-                                    orderedList.add(property);
-                                }
-                            }
+                            grouped.put(priority, new ArrayList<>());
+                        }
+
+                        for (BeanPropertyWriter property : beanProperties) {
+                            YamlFieldOrder order = property.getAnnotation(YamlFieldOrder.class);
+                            YamlFieldPriority fieldPriority = order == null ? YamlFieldPriority.NORMAL : order.value();
+                            grouped.get(fieldPriority).add(property);
+                        }
+
+                        List<BeanPropertyWriter> orderedList = new ArrayList<>();
+                        for (YamlFieldPriority priority : YamlFieldPriority.values()) {
+                            orderedList.addAll(grouped.get(priority));
                         }
 
                         return orderedList;
