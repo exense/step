@@ -21,8 +21,11 @@ package step.automation.packages;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.*;
-import java.util.*;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class ResourcePathMatchingResolver {
@@ -85,7 +88,7 @@ public class ResourcePathMatchingResolver {
                             file = file.substring(0, file.length() - 1);
                         }
                         int lastIndexOf = file.lastIndexOf(getPathSeparator());
-                        String lastPath = file.substring(lastIndexOf + 1);
+                        String lastPath = URLDecoder.decode(file.substring(lastIndexOf + 1), StandardCharsets.UTF_8);
                         if (pattern.matcher(lastPath).matches()) {
                             findPathMatchingResourcesRecursive(pathArray, nextLevel, url, result);
                         }
