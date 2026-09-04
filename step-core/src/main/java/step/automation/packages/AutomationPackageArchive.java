@@ -61,7 +61,19 @@ public abstract class AutomationPackageArchive implements Closeable {
 
     abstract public boolean hasAutomationPackageDescriptor();
 
-    abstract public InputStream getDescriptorYaml();
+    abstract public URL getDescriptorYamlUrl();
+
+    public InputStream getDescriptorYaml() {
+        URL url = getDescriptorYamlUrl();
+        if (url == null) {
+            return null;
+        }
+        try {
+            return url.openStream();
+        } catch (IOException e) {
+            return null;
+        }
+    }
 
     abstract public InputStream getResourceAsStream(String resourcePath) throws IOException;
 

@@ -19,10 +19,8 @@
 package step.plans.parser.yaml.deserializers;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.deser.ResolvableDeserializer;
 import org.everit.json.schema.ValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +33,7 @@ import step.core.collections.Document;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.migration.MigrationManager;
+import step.plans.parser.yaml.VersionedYamlPlan;
 import step.plans.parser.yaml.YamlPlan;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
@@ -43,7 +42,7 @@ import java.util.Properties;
 
 import static step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask.YAML_PLANS_COLLECTION_NAME;
 
-public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
+public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> implements ResolvableDeserializer {
 
     private static final Logger log = LoggerFactory.getLogger(UpgradableYamlPlanDeserializer.class);
     private final Version currentVersion;
@@ -51,11 +50,14 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
     private final ObjectMapper yamlMapper;
     private final String jsonSchema;
 
-    public UpgradableYamlPlanDeserializer(Version currentVersion, String jsonSchema, MigrationManager migrationManager, ObjectMapper nonUpgradableYamlMapper) {
+    private JsonDeserializer<?> delegate;
+
+    public UpgradableYamlPlanDeserializer(Version currentVersion, String jsonSchema, MigrationManager migrationManager, ObjectMapper nonUpgradableYamlMapper, JsonDeserializer<?> delegate) {
         this.currentVersion = currentVersion;
         this.jsonSchema = jsonSchema;
         this.migrationManager = migrationManager;
         this.yamlMapper = nonUpgradableYamlMapper;
+        this.delegate = delegate;
     }
 
     @Override
@@ -64,7 +66,7 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
 
         if (currentVersion != null) {
             Document yamlPlanDocument = p.getCodec().treeToValue(planJsonNode, Document.class);
-            String planVersionString = yamlPlanDocument.getString(YamlPlan.VERSION_FIELD_NAME);
+            String planVersionString = yamlPlanDocument.getString(VersionedYamlPlan.VERSION_FIELD_NAME);
 
             if (planVersionString == null) {
                 planVersionString = (String) ctxt.getAttribute("version");
@@ -88,7 +90,7 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
                     Document migratedDocument = tempCollection.find(Filters.id(planDocument.getId()), null, null, null, 0).findFirst().orElseThrow();
 
                     // set actual version
-                    migratedDocument.replace(YamlPlan.VERSION_FIELD_NAME, currentVersion.toString());
+                    migratedDocument.replace(VersionedYamlPlan.VERSION_FIELD_NAME, currentVersion.toString());
 
                     // remove automatically generated document id
                     migratedDocument.remove(AbstractIdentifiableObject.ID);
@@ -99,8 +101,7 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
                     if (log.isDebugEnabled()) {
                         log.debug("Yaml plan after migrations: {}", bufferedYamlPlan);
                     }
-
-                    planJsonNode = yamlMapper.readTree(bufferedYamlPlan);
+                    planJsonNode = yamlMapper.valueToTree(migratedDocument);
                 }
             }
         }
@@ -115,7 +116,16 @@ public class UpgradableYamlPlanDeserializer extends JsonDeserializer<YamlPlan> {
             }
         }
 
-        return yamlMapper.treeToValue(planJsonNode, YamlPlan.class);
+        p = planJsonNode.traverse(p.getCodec());
+        p.nextToken();
+
+        return (YamlPlan) delegate.deserialize(p, ctxt);
     }
 
+    @Override
+    public void resolve(DeserializationContext ctxt) throws JsonMappingException {
+        if (delegate instanceof ResolvableDeserializer) {
+            ((ResolvableDeserializer) delegate).resolve(ctxt);
+        }
+    }
 }

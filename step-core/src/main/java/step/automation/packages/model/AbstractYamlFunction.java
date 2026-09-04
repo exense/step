@@ -19,18 +19,20 @@
 package step.automation.packages.model;
 
 import jakarta.json.JsonObject;
+import step.automation.packages.AutomationPackageLocalResourceMapper;
 import step.automation.packages.StagingAutomationPackageContext;
-import step.core.yaml.YamlModelUtils;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlModelUtils;
 import step.functions.Function;
 import step.jsonschema.JsonSchema;
 import step.jsonschema.JsonSchemaDefaultValueProvider;
 
 import java.lang.reflect.Field;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class AbstractYamlFunction<T extends Function> extends AbstractYamlModel implements AutomationPackageContextual<T> {
 
@@ -38,8 +40,8 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
     @JsonSchema(defaultProvider = DefaultYamlFunctionNameProvider.class)
     private String name;
 
-    private DynamicValue<Integer> callTimeout;
-    private JsonObject schema;
+    private DynamicValue<Integer> callTimeout = Function.DEFAULT_CALL_TIMEOUT;
+    private JsonObject schema = Function.DEFAULT_SCHEMA;
 
     private boolean executeLocally;
 
@@ -108,7 +110,26 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
 
     protected void fillDeclaredFields(T res, StagingAutomationPackageContext context) {
         res.addAttribute(AbstractOrganizableObject.NAME, this.getName());
+        res.setTokenSelectionCriteria(routing);
         copyFieldsToObject(res, true);
+    }
+
+    /**
+     * The inverse of {@link #fillDeclaredFields(Function, StagingAutomationPackageContext)}, the way
+     * {@code fillYamlArtefactFields} is the inverse of {@code fillArtefactFields} for artefacts:
+     * {@code copyFieldsFromObject} handles the plain fields, and a subclass overrides this to handle
+     * whatever it declared {@code @YamlFieldCustomCopy} - its resource references above all, which are
+     * mapped back to the form the descriptor holds with
+     * {@link AutomationPackageLocalResourceMapper#toDescriptorReference(DynamicValue)}.
+     * <p>
+     * This is where a conditional mapping belongs. {@code YamlK6Function} turns one authored script path
+     * into three different shapes of the business object, and only that class can recompose the original
+     * from them - which is why nothing generic may rewrite a keyword's references.
+     */
+    public void setDeclaredFieldsFromObject(T res) {
+        Optional.ofNullable(res.getAttribute(AbstractOrganizableObject.NAME)).ifPresent(this::setName);
+        routing = res.getTokenSelectionCriteria();
+        copyFieldsFromObject(res, true);
     }
 
     protected abstract T createFunctionInstance();

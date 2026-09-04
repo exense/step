@@ -20,11 +20,17 @@ package step.plans.parser.yaml;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationConfig;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.BeanDeserializer;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
+import com.fasterxml.jackson.databind.deser.std.CollectionDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
-import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.Version;
@@ -36,7 +42,15 @@ import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.PatchableYamlModel;
+import step.core.yaml.PatchingContext;
+import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchableYamlListDeserializer;
+import step.core.yaml.deserialization.PatchableYamlModelDeserializer;
+import step.core.yaml.deserializers.StepYamlDeserializer;
 import step.core.yaml.deserializers.StepYamlDeserializersScanner;
+import step.core.yaml.model.AbstractYamlArtefact;
+import step.core.yaml.model.NamedYamlArtefact;
 import step.core.yaml.serializers.StepYamlSerializersScanner;
 import step.migration.MigrationManager;
 import step.plans.nl.RootArtefactType;
@@ -44,8 +58,6 @@ import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.deserializers.UpgradableYamlPlanDeserializer;
 import step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask;
 import step.plans.parser.yaml.migrations.YamlPlanMigration;
-import step.core.yaml.model.AbstractYamlArtefact;
-import step.core.yaml.model.NamedYamlArtefact;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 import step.repositories.parser.StepsParser;
@@ -53,8 +65,13 @@ import step.repositories.parser.StepsParser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static step.core.scanner.Classes.newInstanceAs;
@@ -155,7 +172,7 @@ public class YamlPlanReader {
      * Writes the plan as YAML
      */
     public void writeYamlPlan(OutputStream os, Plan plan) throws IOException {
-        yamlMapper.writeValue(os, planToYamlPlan(plan));
+        yamlMapper.writeValue(os, planToVersionedYamlPlan(plan));
     }
 
     public void convertFromPlainTextToYaml(String planName, InputStream planTextInputStream, OutputStream yamlOutputStream) throws IOException, StepsParser.ParsingException {
@@ -195,7 +212,7 @@ public class YamlPlanReader {
         yamlMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 
         // configure custom deserializers
-        yamlMapper.registerModule(registerAllSerializersAndDeserializers(new SimpleModule(), yamlMapper, true));
+        yamlMapper.registerModule(registerAllSerializersAndDeserializers(yamlMapper, true));
         return yamlMapper;
     }
 
@@ -203,26 +220,72 @@ public class YamlPlanReader {
         YAMLFactory yamlFactory = new YAMLFactory();
         // Disable native type id to enable conversion to generic Documents
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
+        yamlFactory.enable(YAMLGenerator.Feature.INDENT_ARRAYS_WITH_INDICATOR);
         return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
     }
 
-    private SimpleModule registerBasicSerializersAndDeserializers(SimpleModule module, ObjectMapper resultingMapper) {
-        SimpleModule res = StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, resultingMapper);
-        res = StepYamlSerializersScanner.addAllSerializerAddonsToModule(res, resultingMapper);
-        return res;
-    }
-
-    public SimpleModule registerAllSerializersAndDeserializers(SimpleModule module, ObjectMapper resultingMapper, boolean upgradablePlan) {
+    public SimpleModule registerAllSerializersAndDeserializers(ObjectMapper resultingMapper, boolean upgradablePlan) {
         ObjectMapper nonUpgradableYamlMapper = createDefaultYamlMapper().registerModule(createModuleForNonUpgradablePlans(resultingMapper));
+        // configure custom deserializers
 
-        return registerBasicSerializersAndDeserializers(module, resultingMapper)
-            .addDeserializer(YamlPlan.class, new UpgradableYamlPlanDeserializer(upgradablePlan ? currentVersion : null, jsonSchema, migrationManager, nonUpgradableYamlMapper));
+        Map<Class<?>, Class<?>> deserializers = StepYamlDeserializersScanner.scanDeserializerAddons();
+
+
+        SimpleModule module = new SimpleModule() {
+            @Override
+            public void setupModule(SetupContext context) {
+                super.setupModule(context);
+
+                context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
+                    @Override
+                    public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
+
+                        if (YamlPlan.class == beanDesc.getBeanClass()) {
+                            deserializer = new UpgradableYamlPlanDeserializer(upgradablePlan ? currentVersion : null, jsonSchema, migrationManager, nonUpgradableYamlMapper, deserializer);
+                        }
+
+                        if (deserializers.containsKey(beanDesc.getBeanClass())) {
+                            try {
+                                Class<?> deserializerClass = deserializers.get(beanDesc.getBeanClass());
+                                if (StepYamlDeserializer.class.isAssignableFrom(deserializerClass)) {
+                                    deserializer = (JsonDeserializer<?>) deserializerClass.getConstructor(JsonDeserializer.class, ObjectMapper.class).newInstance(deserializer, resultingMapper);
+                                } else if (BeanDeserializer.class.isAssignableFrom(deserializerClass) && BeanDeserializer.class.isAssignableFrom(deserializer.getClass())) {
+                                    deserializer = (JsonDeserializer<?>) deserializerClass.getConstructor(BeanDeserializer.class).newInstance((BeanDeserializer) deserializer);
+                                }
+                            } catch (InstantiationException e) {
+                                throw new RuntimeException(e);
+                            } catch (IllegalAccessException e) {
+                                throw new RuntimeException(e);
+                            } catch (InvocationTargetException e) {
+                                throw new RuntimeException(e);
+                            } catch (NoSuchMethodException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+
+                        if (PatchableYamlModel.class.isAssignableFrom(beanDesc.getBeanClass())
+                            && !beanDesc.getBeanClass().equals(PatchableYamlModel.class)) {
+                            return new PatchableYamlModelDeserializer<>(deserializer);
+                        }
+                        return super.modifyDeserializer(config, beanDesc, deserializer);
+                    }
+
+                    @Override
+                    public JsonDeserializer<?> modifyCollectionDeserializer(DeserializationConfig config, CollectionType type, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
+                        if (deserializer instanceof CollectionDeserializer && beanDesc.getBeanClass().equals(PatchableYamlList.class)) {
+                            return new PatchableYamlListDeserializer((CollectionDeserializer) deserializer);
+                        }
+                        return deserializer;
+                    }
+                });
+            }
+        };
+        return StepYamlSerializersScanner.addAllSerializerAddonsToModule(module, resultingMapper);
     }
 
     private SimpleModule createModuleForNonUpgradablePlans(ObjectMapper resultingMapper) {
         SimpleModule module = new SimpleModule();
-        registerBasicSerializersAndDeserializers(module, resultingMapper);
-        return module;
+        return StepYamlSerializersScanner.addAllSerializerAddonsToModule(module, resultingMapper);
     }
 
     protected ObjectMapper getYamlMapper() {
@@ -271,10 +334,20 @@ public class YamlPlanReader {
         return plan;
     }
 
-    protected YamlPlan planToYamlPlan(Plan plan) {
-        YamlPlan yamlPlan = new YamlPlan();
+    public VersionedYamlPlan planToVersionedYamlPlan(Plan plan) {
+        VersionedYamlPlan yamlPlan = new VersionedYamlPlan(new PatchingContext(yamlMapper), currentVersion.toString());
+        setYamlPlanFieldsFromPlan(yamlPlan, plan);
+        return yamlPlan;
+    }
+
+    public YamlPlan planToYamlPlan(Plan plan) {
+        YamlPlan yamlPlan = new YamlPlan(new PatchingContext(yamlMapper));
+        setYamlPlanFieldsFromPlan(yamlPlan, plan);
+        return yamlPlan;
+    }
+
+    private void setYamlPlanFieldsFromPlan(YamlPlan yamlPlan, Plan plan) {
         yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
-        yamlPlan.setVersion(currentVersion.toString());
         yamlPlan.setCategories(plan.getCategories());
         yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
         AgentProvisioningConfiguration agents = plan.getAgents();
@@ -283,7 +356,6 @@ public class YamlPlanReader {
             !((AutomaticAgentProvisioningConfiguration) agents).mode.equals(AutomaticAgentProvisioningConfiguration.PlanAgentsPoolAutoMode.auto_detect)) {
             yamlPlan.setAgents(plan.getAgents());
         }
-        return yamlPlan;
     }
 
 }

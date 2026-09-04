@@ -37,9 +37,6 @@ public class NamedYamlDataSourceSerializer extends StepYamlSerializer<NamedYamlD
 
     private static final Logger log = LoggerFactory.getLogger(NamedYamlDataSourceSerializer.class);
 
-    public NamedYamlDataSourceSerializer() {
-    }
-
     public NamedYamlDataSourceSerializer(ObjectMapper yamlObjectMapper) {
         super(yamlObjectMapper);
     }

@@ -8,20 +8,21 @@ import java.util.Map;
 public class StagingAutomationPackageContext extends AutomationPackageContext {
 
     private final AutomationPackageArchive automationPackageArchive;
-    private final AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
+    private final AutomationPackageResourceMapper resourceMapper;
 
-    public StagingAutomationPackageContext(AutomationPackage automationPackage, AutomationPackageOperationMode operationMode,
+    public StagingAutomationPackageContext(AutomationPackageResourceMapper resourceMapper, AutomationPackage automationPackage, AutomationPackageOperationMode operationMode,
                                            ResourceManager resourceManager, AutomationPackageArchive automationPackageArchive,
                                            AutomationPackageContent packageContent, String actorUser, ObjectEnricher enricher, Map<String, Object> extensions) {
         super(automationPackage, operationMode, resourceManager, packageContent, actorUser, enricher, extensions);
         this.automationPackageArchive = automationPackageArchive;
+        this.resourceMapper = resourceMapper;
     }
 
     public AutomationPackageArchive getAutomationPackageArchive() {
         return automationPackageArchive;
     }
 
-    public AutomationPackageResourceUploader getResourceUploader() {
-        return resourceUploader;
+    public AutomationPackageResourceMapper getResourceMapper() {
+        return resourceMapper;
     }
 }

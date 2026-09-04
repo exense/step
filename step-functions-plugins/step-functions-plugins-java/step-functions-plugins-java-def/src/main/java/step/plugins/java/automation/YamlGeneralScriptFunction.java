@@ -18,7 +18,9 @@
  ******************************************************************************/
 package step.plugins.java.automation;
 
-import step.automation.packages.AutomationPackageResourceUploader;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import step.automation.packages.AutomationPackageLocalResourceMapper;
+import step.automation.packages.AutomationPackageResourceMapper;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.dynamicbeans.DynamicValue;
@@ -26,9 +28,9 @@ import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
 import step.plugins.java.GeneralFunctionScriptLanguage;
 import step.plugins.java.GeneralScriptFunction;
-import step.resources.ResourceManager;
 
 @YamlModel(name = "GeneralScript")
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlGeneralScriptFunction extends AbstractYamlFunction<GeneralScriptFunction> {
 
     @YamlFieldCustomCopy
@@ -50,18 +52,27 @@ public class YamlGeneralScriptFunction extends AbstractYamlFunction<GeneralScrip
             res.setScriptLanguage(new DynamicValue<>(GeneralFunctionScriptLanguage.groovy.name()));
         }
 
-        AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
+        AutomationPackageResourceMapper resourceMapper = context.getResourceMapper();
         String scriptFilePath = scriptFile.get();
-        String uploaded = resourceUploader.applyResourceReference(scriptFilePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
-        if (uploaded != null) {
-            res.setScriptFile(new DynamicValue<>(uploaded));
+        String scriptFileRef = resourceMapper.applyResourceReference(scriptFilePath, context);
+        if (scriptFileRef != null) {
+            res.setScriptFile(new DynamicValue<>(scriptFileRef));
         }
 
         String librariesFilePath = librariesFile.get();
-        uploaded = resourceUploader.applyResourceReference(librariesFilePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
-        if (uploaded != null) {
-            res.setLibrariesFile(new DynamicValue<>(uploaded));
+        String librariesFileRef = resourceMapper.applyResourceReference(librariesFilePath, context);
+        if (librariesFileRef != null) {
+            res.setLibrariesFile(new DynamicValue<>(librariesFileRef));
         }
+    }
+
+    @Override
+    public void setDeclaredFieldsFromObject(GeneralScriptFunction function) {
+        super.setDeclaredFieldsFromObject(function);
+        scriptFile = AutomationPackageLocalResourceMapper.toDescriptorReference(function.getScriptFile());
+        librariesFile = AutomationPackageLocalResourceMapper.toDescriptorReference(function.getLibrariesFile());
+        String language = function.getScriptLanguage().getValue();
+        scriptLanguage = language == null ? null : GeneralFunctionScriptLanguage.valueOf(language);
     }
 
     @Override

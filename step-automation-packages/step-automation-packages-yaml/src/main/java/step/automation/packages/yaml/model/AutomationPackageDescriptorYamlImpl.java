@@ -18,6 +18,10 @@
  ******************************************************************************/
 package step.automation.packages.yaml.model;
 
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.OptBoolean;
+import step.core.yaml.PatchingContext;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,6 +32,10 @@ public class AutomationPackageDescriptorYamlImpl extends AbstractAutomationPacka
     private Map<String, String> attributes = new HashMap<>();
 
     private String name;
+
+    public AutomationPackageDescriptorYamlImpl(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
+        super(patchingContext);
+    }
 
     @Override
     public String getName() {
