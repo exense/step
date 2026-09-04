@@ -28,6 +28,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -170,7 +172,7 @@ public class ClassLoaderResourceFilesystem {
         public JarResourcePath(URL url) throws MalformedURLException {
             String urlFile = url.getFile();
             int bangIndex = urlFile.indexOf('!');
-            pathInJar = urlFile.substring(bangIndex + 2);
+            pathInJar = URLDecoder.decode(urlFile.substring(bangIndex + 2), StandardCharsets.UTF_8);
             jarFile = new URL(urlFile.substring(0, bangIndex)).getFile();
         }
     }
