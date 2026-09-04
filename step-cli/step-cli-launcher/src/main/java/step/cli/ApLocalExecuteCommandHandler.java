@@ -56,7 +56,9 @@ public class ApLocalExecuteCommandHandler {
             public void afterExecutionEnd(ExecutionContext context) {
                 super.afterExecutionEnd(context);
             }
-        }).withPluginsFromClasspath().build()) {
+        }).withPluginsFromClasspath().build();
+             //Register resource to be closed by the shutdown hook in case the process receive a kill signal during execution
+             CliShutdownHook.Registration engineRegistration = CliShutdownHook.register(new GracefulEngineShutdown(executionEngine))) {
             AutomationPackageManager automationPackageManager = executionEngine.getExecutionEngineContext().require(AutomationPackageManager.class);
 
             InputStream libFileInputStream = null;
