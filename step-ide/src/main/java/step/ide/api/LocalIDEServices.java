@@ -1,5 +1,6 @@
 package step.ide.api;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.PostConstruct;
 import jakarta.ws.rs.Consumes;
@@ -16,6 +17,11 @@ import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.ide.LocalIDEState;
 import step.ide.exceptions.FileExistsException;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 
 @Path("/local/ide")
 @Tag(name = "IDE")
@@ -126,6 +132,72 @@ public class LocalIDEServices extends AbstractStepServices {
     @Path("ap/close")
     public void closeAP() {
         LocalIDEState.get().closeCurrentAutomationPackage();
+    }
+
+    public record ProposeDirectoryResponse(String directory, List<String> warnings, List<String> errors) {
+    }
+
+    @Operation(description = "Takes an existing parent directory and desired AP name, and returns the proposed corresponding directory name, along with potential warnings or errors.")
+    @GET
+    @Path("ap/propose-directory")
+    @Produces(MediaType.APPLICATION_JSON)
+    public ProposeDirectoryResponse proposeAPDirectory(@QueryParam("existingParentDirectory") String existingParentDirectory, @QueryParam("apName") String apName) {
+
+        if (existingParentDirectory == null || existingParentDirectory.isBlank()) {
+            throw error("existingParentDirectory must not be empty", Response.Status.BAD_REQUEST);
+        }
+        if (apName == null || apName.isBlank()) {
+            throw error("apName must not be empty", Response.Status.BAD_REQUEST);
+        }
+
+        java.nio.file.Path parentDirectory = java.nio.file.Path.of(existingParentDirectory);
+        if (!Files.exists(parentDirectory)) {
+            throw error("Parent directory does not exist: " + existingParentDirectory, Response.Status.BAD_REQUEST);
+        }
+        if (!Files.isDirectory(parentDirectory)) {
+            throw error("Specified parent path is not a directory: " + existingParentDirectory, Response.Status.BAD_REQUEST);
+        }
+
+        List<String> warnings = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+
+        String sanitizedDirectoryName = sanitizeName(apName, warnings);
+        java.nio.file.Path targetDirectory = parentDirectory.resolve(sanitizedDirectoryName);
+
+        if (Files.exists(targetDirectory)) {
+            try {
+                if (!Files.isDirectory(targetDirectory)) {
+                    errors.add("Target path already exists but is a file, not a directory: " + targetDirectory.toAbsolutePath());
+                } else if (isDirectoryEmpty(targetDirectory)) { // this is what can potentially throw IOException
+                    warnings.add("Directory already exists and is empty: " + targetDirectory.toAbsolutePath());
+                } else {
+                    warnings.add("Directory already exists and contains content: " + targetDirectory.toAbsolutePath());
+                }
+            } catch (IOException e) {
+                throw error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            }
+        }
+
+        return new ProposeDirectoryResponse(targetDirectory.toAbsolutePath().toString(), warnings, errors);
+    }
+
+    /**
+     * Replaces illegal cross-platform filesystem characters and reports modifications in the warnings list.
+     */
+    private String sanitizeName(String rawName, List<String> warnings) {
+        String sanitized = rawName.replaceAll("[\\\\/:*?\"<>|\\x00-\\x1F]", "_").trim();
+
+        if (!sanitized.equals(rawName)) {
+            warnings.add("Directory name was sanitized from '" + rawName + "' to '" + sanitized + "'");
+        }
+
+        return sanitized;
+    }
+
+    private boolean isDirectoryEmpty(java.nio.file.Path directory) throws IOException {
+        try (var entries = Files.list(directory)) {
+            return entries.findFirst().isEmpty();
+        }
     }
 
 }
