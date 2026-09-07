@@ -31,12 +31,22 @@ public class AutomationPackageFromResourceIdProvider extends AbstractAutomationP
     public AutomationPackageFromResourceIdProvider(AutomationPackageReaderRegistry apReaderRegistry, ResourceManager resourceManager,
                                                    String resourceId, AutomationPackageLibraryProvider packageLibraryProvider,
                                                    ObjectPredicate objectPredicate) {
+        this(apReaderRegistry, resourceManager, resourceId, packageLibraryProvider, objectPredicate, null);
+    }
+
+    /**
+     * @param archiveName overrides the name the package is deployed under; {@code null} keeps the
+     *                    archive's own file name
+     */
+    public AutomationPackageFromResourceIdProvider(AutomationPackageReaderRegistry apReaderRegistry, ResourceManager resourceManager,
+                                                   String resourceId, AutomationPackageLibraryProvider packageLibraryProvider,
+                                                   ObjectPredicate objectPredicate, String archiveName) {
         super(resourceManager, resourceId, objectPredicate);
         AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(resourceFile.getResourceFile());
         try {
             this.archive = reader.createAutomationPackageArchive(resourceFile.getResourceFile(),
                 packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
-                null);
+                archiveName);
         } catch (AutomationPackageReadingException e) {
             throw new AutomationPackageManagerException("Unable to load automation package by resource id: " + resourceId);
         }
