@@ -55,6 +55,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
     public static final String BEGIN = "begin";
     public static final String VALUE = "value";
     public static final String RN_ID = "rnId";
+    public static final String ARTEFACT_HASH = "artefactHash";
     public static final String STATUS = "status";
     public static final String RN_STATUS = "rnStatus";
     public static final String AGENT_URL = "agentUrl";
@@ -80,7 +81,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
     // These are used by the MeasurementControllerPlugin to "reconstruct" measures from measurements, and indicate the
     // "internal" fields which should NOT be added to the measure data field. Keep this in sync with the fields defined above.
     static final Set<String> MEASURE_NOT_DATA_KEYS = java.util.Set.of("_id", PROJECT, "projectName", ATTRIBUTE_EXECUTION_ID, RN_ID,
-        ORIGIN, RN_STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION, CANONICAL_PLAN_NAME);
+        ARTEFACT_HASH, ORIGIN, RN_STATUS, PLAN_ID, PLAN, AGENT_URL, TASK_ID, SCHEDULE, TEST_CASE, EXECUTION_DESCRIPTION, CANONICAL_PLAN_NAME);
     // Same use, but for defining which fields SHOULD be directly copied to the top-level fields of a measure.
     static final Set<String> MEASURE_FIELDS = java.util.Set.of(NAME, BEGIN, VALUE, STATUS);
 
@@ -203,7 +204,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
                 1, count, count, count, count, null);
 
             ExecutionMetricSample stepSample = new ExecutionMetricSample(
-                sample, execId, node.getId().toString(),
+                sample, execId, node.getId().toString(), node.getArtefactHash(),
                 planId, plan, canonicalPlanName, scheduleId, schedule, execution,
                 null, null, additionalAttributes, THREAD_GROUP);
 
@@ -216,7 +217,7 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
                 InstrumentType.GAUGE,
                 1, currentCount, currentCount, currentCount, currentCount, null);
             ExecutionMetricSample heartbeatStepSample = new ExecutionMetricSample(
-                heartbeatSample, execId, node.getId().toString(),
+                heartbeatSample, execId, node.getId().toString(), node.getArtefactHash(),
                 planId, plan, canonicalPlanName, scheduleId, schedule, execution,
                 null, null, additionalAttributes, THREAD_GROUP);
             MetricHeartbeatRegistry.getInstance().update(heartbeatStepSample);
@@ -344,11 +345,12 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         String execution = Objects.requireNonNullElse((String) executionContext.get(CTX_EXECUTION_DESCRIPTION), "");
         String execId = executionContext.getExecutionId();
         String rnId = (functionReport != null) ? functionReport.getId().toString() : null;
+        String artefactHash = (functionReport != null) ? functionReport.getArtefactHash() : null;
         String agentUrl = (functionReport != null) ? functionReport.getAgentUrl() : null;
         Map<String, String> functionAttributes = (functionReport != null) ? functionReport.getFunctionAttributes() : null;
         String origin = (functionAttributes != null) ? functionAttributes.get(AbstractOrganizableObject.NAME) : null;
         TreeMap<String, String> additionalAttributes = (TreeMap<String, String>) executionContext.get(CTX_ADDITIONAL_ATTRIBUTES);
-        return new ExecutionMetricSample(metricSample, execId, rnId, planId, planName, canonicalPlanName, taskId, schedule, execution,
+        return new ExecutionMetricSample(metricSample, execId, rnId, artefactHash, planId, planName, canonicalPlanName, taskId, schedule, execution,
             agentUrl, origin, additionalAttributes, metricType);
     }
 
@@ -407,6 +409,11 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
     private void enrichWithNodeAttributes(Measurement measurement, ReportNode node) {
         measurement.setExecId(node.getExecutionID());
         measurement.addCustomField(RN_ID, node.getId().toString());
+        // Report nodes created outside the artefact handler chain have no artefact hash. Such measurements
+        // are ingested without the attribute rather than with a null value.
+        if (node.getArtefactHash() != null) {
+            measurement.addCustomField(ARTEFACT_HASH, node.getArtefactHash());
+        }
         // If a measurement already has its own status (mandatory for live measures, optional for output measures),
         // keep it unconditionally, otherwise set the status from the report node.
         if (measurement.getStatus() == null) {

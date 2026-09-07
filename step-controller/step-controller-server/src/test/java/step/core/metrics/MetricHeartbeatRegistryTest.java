@@ -120,7 +120,7 @@ public class MetricHeartbeatRegistryTest {
     public void heartbeatPreservesExecutionMetadata() {
         step.core.metrics.ExecutionMetricSample original = new step.core.metrics.ExecutionMetricSample(
             gauge("cpu", 1, 70, 70, 70, 70),
-            "exec-42", "rn-99", "plan-7",
+            "exec-42", "rn-99", "HASH-99", "plan-7",
             "MyPlan", "canonical-plan-7", "task-1", "sched-1", "exec desc",
             "http://agent", "MyKeyword", null, null);
         registry.update(original);
@@ -131,6 +131,7 @@ public class MetricHeartbeatRegistryTest {
         step.core.metrics.ExecutionMetricSample hb = captured.get(0);
         assertEquals("exec-42", hb.eId);
         assertEquals("rn-99", hb.rnId);
+        assertEquals("HASH-99", hb.artefactHash);
         assertEquals("plan-7", hb.planId);
         assertEquals("MyPlan", hb.plan);
         assertEquals("task-1", hb.taskId);
@@ -266,13 +267,13 @@ public class MetricHeartbeatRegistryTest {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private step.core.metrics.ExecutionMetricSample stepSample(String execId, MetricSample sample) {
-        return new step.core.metrics.ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
+        return new step.core.metrics.ExecutionMetricSample(sample, execId, "rn-1", "HASH-1", "plan-1",
             "MyPlan", "canonical-plan-1", "", "", "my execution", null, null, null, null);
     }
 
     private step.core.metrics.ExecutionMetricSample stepSampleFull(String execId, MetricSample sample,
                                                                    String agentUrl, String origin) {
-        return new step.core.metrics.ExecutionMetricSample(sample, execId, "rn-1", "plan-1",
+        return new step.core.metrics.ExecutionMetricSample(sample, execId, "rn-1", "HASH-1", "plan-1",
             "MyPlan", "canonical-plan-1", "", "", "my execution", agentUrl, origin, null, null);
     }
 
