@@ -32,6 +32,7 @@ describe('measures - API', () => {
   })
 
   test('startMeasure/stopMeasure submits a measure with computed duration and begin', async () => {
+    for (let i = 0; i < 100; i++) {
     const accepted = []
     const lr = createLiveReporting({})
     lr.measures.destination = { accept: (m) => accepted.push(m), close: async () => {} }
@@ -45,7 +46,7 @@ describe('measures - API', () => {
     // setTimeout sometimes "undershoots" by 1 ms or so, so let's accept >= 8 ms (instead of 10)
     expect(accepted[0].duration).toBeGreaterThanOrEqual(8)
     expect(typeof accepted[0].begin).toBe('number')
-  })
+  }})
 })
 
 describe('measures - REST destination', () => {
