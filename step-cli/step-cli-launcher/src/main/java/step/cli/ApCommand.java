@@ -330,6 +330,10 @@ public class ApCommand implements Callable<Integer> {
         }
 
         private void handleApLocalExecuteCommand() {
+            if (MavenArtifactIdentifier.isMvnIdentifierShortString(apFile) ||
+                MavenArtifactIdentifier.isMvnIdentifierShortString(library)) {
+                throw new StepCliExecutionException("Maven artefacts are not supported for local executions");
+            }
             File file = prepareApFile(apFile);
             if (file == null) {
                 throw new StepCliExecutionException("AP file is not defined");
