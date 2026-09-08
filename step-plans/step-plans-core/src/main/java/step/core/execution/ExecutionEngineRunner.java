@@ -24,13 +24,17 @@ import org.slf4j.LoggerFactory;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.handlers.ArtefactHandlerManager;
-import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ParentSource;
+import step.core.artefacts.reports.ReportNode;
 import step.core.artefacts.reports.ReportNodeStatus;
 import step.core.artefacts.reports.aggregated.ReportNodeTimeSeries;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanBuilder;
 import step.core.artefacts.reports.resolvedplan.ResolvedPlanNode;
-import step.core.execution.model.*;
+import step.core.execution.model.Execution;
+import step.core.execution.model.ExecutionParameters;
+import step.core.execution.model.ExecutionStatus;
+import step.core.execution.model.ExecutionTimings;
+import step.core.execution.model.ReportExport;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.plans.runner.PlanRunnerResult;
@@ -45,7 +49,11 @@ import step.engine.execution.ExecutionVeto;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -89,6 +97,7 @@ public class ExecutionEngineRunner {
                 saveFailureReportWithResult(ReportNodeStatus.VETOED);
             } else {
                 try {
+                    ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_IMPORT);
                     Plan plan = getPlanFromExecutionParametersOrImport();
                     addPlanToContextAndUpdateExecution(plan);
 
@@ -119,6 +128,7 @@ public class ExecutionEngineRunner {
                     if (!executionContext.isSimulation()) {
                         logger.debug(messageWithId("Execution ended. Exporting report...."));
                         updateStatus(ExecutionStatus.EXPORTING);
+                        ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_EXPORT);
                         exportExecution(executionContext);
                         logger.info(messageWithId("Execution report exported."));
                     } else {
@@ -247,8 +257,10 @@ public class ExecutionEngineRunner {
                 // Do not update the status if the execution was aborted
                 updateStatus(ExecutionStatus.RUNNING);
             }
+            ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_START);
             return artefactHandlerManager.execute(root, rootReportNode, ParentSource.MAIN);
         } finally {
+            ExecutionTimings.recordTimestamp(executionContext, ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_END);
             try {
                 //Flush report node TS
                 executionContext.require(ReportNodeTimeSeries.class).flush();
