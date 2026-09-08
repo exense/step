@@ -76,13 +76,11 @@ public class SimpleYamlArtefact<T extends AbstractArtefact> extends AbstractYaml
         ObjectNode jsonNode = yamlObjectMapper.valueToTree(this);
         // Flatten fieldValues into existing serialization to preserve order
         List<Map.Entry<String, JsonNode>> list = jsonNode.properties().stream()
-            .flatMap(e -> {
-                if (e.getKey().equals("fieldValues")) {
-                    return e.getValue() instanceof ObjectNode ?
-                        ((ObjectNode) e.getValue()).properties().stream() : Stream.empty();
-                }
-                return Stream.of(e);
-            })
+            .flatMap(e ->
+                e.getKey().equals("fieldValues")
+                    ? e.getValue().propertyStream()
+                    : Stream.of(e)
+            )
             .toList();
         jsonNode.removeAll();
         list.forEach(e -> jsonNode.set(e.getKey(), e.getValue()));
