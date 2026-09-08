@@ -34,7 +34,7 @@ public class StepExecutionExceptionHandler implements CommandLine.IExecutionExce
         } else {
             // The stack traces are kept out of the output of a non verbose run (see StepConsoleLogging.suppressStackTraces),
             // which is worth saying once, here, where every failing command ends up
-            log.error("Execution failed. " + ex.getMessage() + " Run the command with "
+            log.error("Execution failed. " + ex.getMessage() + ". Run the command with "
                 + StepConsole.AbstractStepCommand.VERBOSE + " to see the stack traces of the errors.");
         }
         return 0;
