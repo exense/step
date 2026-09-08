@@ -15,9 +15,9 @@ plans:
                 expression: "mySimpleKey"
           - callKeyword:
               nodeName: "CallMyKeyword2"
+              keyword: "MyKeyword2"
               inputs:
                 - myInput: "myValue"
-              keyword: "MyKeyword2"
     categories:
       - "Yaml Plan"
 plansPlainText:

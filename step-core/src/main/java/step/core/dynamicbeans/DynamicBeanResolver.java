@@ -20,7 +20,6 @@ package step.core.dynamicbeans;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.core.artefacts.AbstractArtefact;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;

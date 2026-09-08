@@ -47,7 +47,7 @@ public class AutomationPackageCollectionTestBase {
     private final JavaAutomationPackageReader reader;
 
     // To use a different source directory, override in subclass constructor
-    protected File sourceDirectory = new File("src/test/resources/testdata/ap1");
+    protected final File sourceDirectory;
     protected File destinationDirectory;
     protected Path expectedFilesPath = new File("src/test/resources/expected").toPath();
     protected AutomationPackageYamlFragmentManager fragmentManager;
@@ -55,6 +55,11 @@ public class AutomationPackageCollectionTestBase {
     protected ResourceManager resourceManager;
 
     public AutomationPackageCollectionTestBase() {
+        this(new File("src/test/resources/testdata/ap1"));
+    }
+
+    public AutomationPackageCollectionTestBase(File sourceDirectory) {
+        this.sourceDirectory = sourceDirectory;
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
 

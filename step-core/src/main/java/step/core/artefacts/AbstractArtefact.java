@@ -48,7 +48,6 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
     protected String description;
 
-    protected List<AbstractArtefact> children = new ArrayList<>();
 
     @JsonSerialize(using = MapSerializer.class)
     @JsonDeserialize(using = MapDeserializer.class)
@@ -62,6 +61,9 @@ public abstract class AbstractArtefact extends AbstractOrganizableObject {
     private boolean isWorkArtefact = false;
 
     private ChildrenBlock before;
+
+    protected List<AbstractArtefact> children = new ArrayList<>();
+
     private ChildrenBlock after;
 
     public AbstractArtefact() {

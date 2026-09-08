@@ -46,8 +46,7 @@ public class AutomationPackageDataSourceCollectionTest extends AutomationPackage
     private Collection<Plan> planCollection;
 
     public AutomationPackageDataSourceCollectionTest() {
-        super();
-        sourceDirectory = new File("src/test/resources/testdata/ap-with-datasource");
+        super(new File("src/test/resources/testdata/ap-with-datasource"));
     }
 
     @Before
