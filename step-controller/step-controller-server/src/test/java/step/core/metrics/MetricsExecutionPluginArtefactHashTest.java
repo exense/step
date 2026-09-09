@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.metrics;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -84,6 +85,11 @@ public class MetricsExecutionPluginArtefactHashTest extends AbstractKeyword {
             .withPlugin(new BaseArtefactPlugin())
             .withPlugin(new LiveReportingPlugin())
             .build();
+    }
+
+    @After
+    public void tearDown() {
+        MetricsExecutionPlugin.unregisterSamplesHandler(capturingHandler);
     }
 
     @Test

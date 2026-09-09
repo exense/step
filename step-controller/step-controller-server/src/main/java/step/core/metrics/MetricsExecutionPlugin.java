@@ -97,6 +97,10 @@ public class MetricsExecutionPlugin extends AbstractExecutionEnginePlugin {
         SAMPLES_HANDLERS.add(handler);
     }
 
+    public static synchronized void unregisterSamplesHandler(MetricSamplesHandler handler) {
+        SAMPLES_HANDLERS.remove(handler);
+    }
+
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext executionEngineContext) {
         controllerUrl = Optional.ofNullable(parentContext).map(AbstractExecutionEngineContext::getControllerUrl).orElse("");
