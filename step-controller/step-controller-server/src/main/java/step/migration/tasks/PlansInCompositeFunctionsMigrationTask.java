@@ -1,4 +1,4 @@
-package step.functions.packages.migration;
+package step.migration.tasks;
 
 import step.core.Version;
 import step.core.collections.Collection;

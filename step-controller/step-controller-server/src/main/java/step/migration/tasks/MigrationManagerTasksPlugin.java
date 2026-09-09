@@ -57,6 +57,10 @@ public class MigrationManagerTasksPlugin extends AbstractControllerPlugin {
         migrationManager.register(V29_2_TimeSeriesNewIndexes.class);
         migrationManager.register(V30_0_ReportNodeAncestorIdsMigrationTask.class);
         migrationManager.register(V31_0_ReportLayoutReportTypeMigrationTask.class);
+        migrationManager.register(V31_0_RemoveKeywordPackageTableColumnMigrationTask.class);
+        // Relocated from the removed keyword package module, unchanged
+        migrationManager.register(ScreenTemplateFunctionTableExtensionsMigrationTask.class);
+        migrationManager.register(PlansInCompositeFunctionsMigrationTask.class);
     }
 
     @Override
