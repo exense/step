@@ -80,6 +80,7 @@
     <module>step-functions</module>
     <module>step-functions-plugins</module>
     <module>step-plans</module>
+    <module>step-agent-provisioning-local</module>
     <module>step-controller</module>
     <module>step-controller-plugins</module>
     <module>step-maven-plugin</module>
@@ -464,6 +465,11 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
           <version>3.1.3</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>exec-maven-plugin</artifactId>
+          <version>3.5.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

@@ -30,7 +30,6 @@ import step.core.maven.MavenArtifactIdentifier;
 import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.*;
-import step.datapool.DataSet;
 import step.datapool.excel.ExcelDataPool;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.Function;
@@ -51,14 +50,12 @@ import java.io.*;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static step.automation.packages.AutomationPackageTestUtils.*;
-import static step.plugins.parametermanager.ParameterManagerPlugin.CONFIG_PROTECTED_PARAMETERS_ALWAYS_ALLOW_ACCESS;
 
 public class AutomationPackageManagerOSTest extends AbstractAutomationPackageManagerTest {
 
@@ -1596,7 +1593,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             new GeneralScriptFunctionPlugin(),
             new ThreadPoolPlugin(),
             new AutomationPackageExecutionPlugin(automationPackageLocks, new InMemoryAutomationPackageAccessorImpl())));
-        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL_PLAN, true);
         parentContext.put(FunctionAccessor.class, functionAccessor);
         parentContext.setPlanAccessor(planAccessor);
         parentContext.setResourceManager(resourceManager);
