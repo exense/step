@@ -52,9 +52,9 @@ import step.migration.MigrationContext;
  * of the values reaching a DynamicValue is wider, see the migration documentation.
  */
 @YamlPlanMigration
-public class EscapeStringInterpolationYamlMigrationTask extends AbstractYamlPlanMigrationTask {
+public class V1_3_0_EscapeStringInterpolationYamlMigrationTask extends AbstractYamlPlanMigrationTask {
 
-    private static final Logger logger = LoggerFactory.getLogger(EscapeStringInterpolationYamlMigrationTask.class);
+    private static final Logger logger = LoggerFactory.getLogger(V1_3_0_EscapeStringInterpolationYamlMigrationTask.class);
 
     private static final String ROOT = "root";
     private static final String CHILDREN = "children";
@@ -79,7 +79,7 @@ public class EscapeStringInterpolationYamlMigrationTask extends AbstractYamlPlan
         "callPlan", Set.of("input")
     );
 
-    public EscapeStringInterpolationYamlMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
+    public V1_3_0_EscapeStringInterpolationYamlMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
         super(new Version(1, 3, 0), collectionFactory, migrationContext);
     }
 

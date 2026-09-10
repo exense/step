@@ -49,14 +49,14 @@ import step.parameter.automation.AutomationPackageParametersRegistration;
  * Fragments carry no version of their own, so they have to inherit the one of the package importing them, otherwise
  * their values would silently escape the migration.
  */
-public class EscapeStringInterpolationInParametersMigrationTaskFragmentTest {
+public class V1_3_0_EscapeStringInterpolationInParametersMigrationTaskFragmentTest {
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
     private final JavaAutomationPackageReader reader;
 
-    public EscapeStringInterpolationInParametersMigrationTaskFragmentTest() {
+    public V1_3_0_EscapeStringInterpolationInParametersMigrationTaskFragmentTest() {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
         AutomationPackageScheduleRegistration.registerSerialization(serializationRegistry);

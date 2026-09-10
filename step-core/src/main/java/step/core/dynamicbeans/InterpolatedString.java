@@ -125,7 +125,6 @@ public class InterpolatedString {
         if (cached != null) {
             return cached;
         }
-        // Malformed strings aren't cached. They are rare and are re-parsed on every evaluation
         InterpolatedString parsed = doParse(source);
         parseCache.put(source, parsed);
         return parsed;

@@ -47,14 +47,14 @@ import step.migration.MigrationContext;
  * closed set: a document declaring such a version can never contain a field introduced later.
  */
 @AutomationPackageMigration
-public class EscapeStringInterpolationInParametersMigrationTask extends AbstractAutomationPackageMigrationTask {
+public class V1_3_0_EscapeStringInterpolationInParametersMigrationTask extends AbstractAutomationPackageMigrationTask {
 
-    private static final Logger logger = LoggerFactory.getLogger(EscapeStringInterpolationInParametersMigrationTask.class);
+    private static final Logger logger = LoggerFactory.getLogger(V1_3_0_EscapeStringInterpolationInParametersMigrationTask.class);
 
     private static final String PARAMETERS = "parameters";
     private static final String VALUE = "value";
 
-    public EscapeStringInterpolationInParametersMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
+    public V1_3_0_EscapeStringInterpolationInParametersMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
         super(new Version(1, 3, 0), collectionFactory, migrationContext);
     }
 

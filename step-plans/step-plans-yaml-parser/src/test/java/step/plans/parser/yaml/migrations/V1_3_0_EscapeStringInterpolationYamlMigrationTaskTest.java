@@ -46,7 +46,7 @@ import step.threadpool.ThreadPoolPlugin;
  * string interpolation they must keep resolving to exactly what they did, which is what the escaping migration
  * guarantees. Bumping the schema version is how an author opts into the interpolation.
  */
-public class EscapeStringInterpolationYamlMigrationTaskTest {
+public class V1_3_0_EscapeStringInterpolationYamlMigrationTaskTest {
 
     private static final String PLACEHOLDERS =
         "  - set:\n" +

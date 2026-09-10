@@ -116,7 +116,6 @@ public class StringInterpolator {
                     clearValue.append(hasProtectedAccess ? String.valueOf(protectedVariable.value) : protectedVariable.obfuscatedValue);
                     containsProtectedValues = true;
                 } else {
-                    // Covers GString results as well, whose toString() renders the interpolated value
                     String stringValue = String.valueOf(o);
                     clearValue.append(stringValue);
                     obfuscatedValue.append(stringValue);

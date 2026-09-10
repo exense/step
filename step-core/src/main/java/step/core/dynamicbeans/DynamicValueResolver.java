@@ -53,7 +53,7 @@ public class DynamicValueResolver {
         if (dynamicValue.isDynamic()) {
             dynamicValue.evalutationResult = getEvaluationResult(dynamicValue.expression, bindings, dynamicValue.hasProtectedAccess());
         } else {
-            // A null result means that the value requires no interpolation and is to be returned as is
+            // Setting null as interpolation result means that the value contains no expression
             dynamicValue.setInterpolationResult(interpolatePlainValue ? interpolateIfRequired(dynamicValue, bindings) : null);
         }
     }

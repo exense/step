@@ -96,10 +96,6 @@ public class AutomationPackageDescriptorReader {
         return AutomationPackageDescriptorYamlImpl.class;
     }
 
-    public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageName) throws AutomationPackageReadingException {
-        return readAutomationPackageFragment(yamlFragment, fragmentName, packageName, null);
-    }
-
     /**
      * @param packageVersion the schema version declared by the automation package importing this fragment. Fragments
      *                       usually declare no version of their own and follow the one of their package, which is
@@ -171,7 +167,7 @@ public class AutomationPackageDescriptorReader {
 
     /**
      * Applies the migrations of the automation package format to a descriptor or fragment declaring an older schema
-     * version. This concerns the body of the file itself, the plans it contains are migrated by the yaml plan reader.
+     * version. This is a generic method that applies to all entities. Plans can also be migrated by the yaml plan reader specificallDy.
      *
      * @param yamlFile the yaml content read from the file
      * @param version  the schema version declared by the file. A null version means that no migration is required,

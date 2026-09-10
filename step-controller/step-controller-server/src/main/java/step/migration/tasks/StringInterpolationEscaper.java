@@ -33,8 +33,7 @@ import step.core.dynamicbeans.NoStringInterpolation;
  * used literally. See {@link InterpolatedString#escape(String)} for the escaping itself.
  * <p>
  * The document is walked generically: any nested map shaped like a serialized {@link DynamicValue} holding a plain
- * string value is escaped, wherever it sits in the structure. This is used by both the database migration and the
- * YAML migration, which operate on untyped documents.
+ * string value is escaped.
  * <p>
  * The values of the fields listed in {@link #CONTAINER_FIELDS} are not escaped themselves. They hold a JSON document
  * (keyword inputs, selection criteria) which isn't interpolated as a whole, see {@link NoStringInterpolation}. Their
@@ -43,9 +42,10 @@ import step.core.dynamicbeans.NoStringInterpolation;
 public class StringInterpolationEscaper {
 
     /**
-     * The fields holding a JSON document rather than user facing text, as of the schema this migration applies to.
-     * This set is intentionally frozen: it describes the model at the time the values being migrated were authored,
-     * and must not be updated when new container fields are introduced later.
+     * The list of fields holding a JSON document within a DynamicValue like step.artefacts.CallFunction#argument that
+     * we handle in the migration task V31_0_EscapeStringInterpolationInPlanValues.
+     * This set is intentionally frozen: it describes the model in Step 30 and must not be updated when new container
+     * fields are introduced later.
      */
     private static final Set<String> CONTAINER_FIELDS = Set.of(
         "argument",             // CallFunction, the keyword inputs
@@ -133,8 +133,9 @@ public class StringInterpolationEscaper {
         if (!escaped.equals(value)) {
             map.put(VALUE_FIELD, escaped);
             return true;
+        } else {
+            return false;
         }
-        return false;
     }
 
     /**
@@ -156,11 +157,12 @@ public class StringInterpolationEscaper {
         }
         if (!escapeMap(parsed, true)) {
             return null;
-        }
-        try {
-            return OBJECT_MAPPER.writeValueAsString(parsed);
-        } catch (Exception e) {
-            throw new RuntimeException("Error while rewriting the JSON document " + json, e);
+        } else {
+            try {
+                return OBJECT_MAPPER.writeValueAsString(parsed);
+            } catch (Exception e) {
+                throw new RuntimeException("Error while rewriting the JSON document " + json, e);
+            }
         }
     }
 

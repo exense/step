@@ -47,14 +47,14 @@ import static step.plans.parser.yaml.migrations.AbstractYamlPlanMigrationTask.YA
  * Note that the in memory collection clones the entities it stores, so a value read back from the collection is one
  * the task actually saved, not the instance it modified.
  */
-public class EscapeStringInterpolationYamlMigrationTaskUnitTest {
+public class V1_3_0_EscapeStringInterpolationYamlMigrationTaskUnitTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final InMemoryCollectionFactory collectionFactory = new InMemoryCollectionFactory(new Properties());
     private final Collection<Document> yamlPlans = collectionFactory.getCollection(YAML_PLANS_COLLECTION_NAME, Document.class);
-    private final EscapeStringInterpolationYamlMigrationTask task =
-        new EscapeStringInterpolationYamlMigrationTask(collectionFactory, new MigrationContext());
+    private final V1_3_0_EscapeStringInterpolationYamlMigrationTask task =
+        new V1_3_0_EscapeStringInterpolationYamlMigrationTask(collectionFactory, new MigrationContext());
 
     @Test
     public void testTaskAppliesAsOfTheSchemaVersionIntroducingTheInterpolation() {

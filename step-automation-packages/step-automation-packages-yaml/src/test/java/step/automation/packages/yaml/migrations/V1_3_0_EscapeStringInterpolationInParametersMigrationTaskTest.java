@@ -46,14 +46,14 @@ import step.plans.parser.yaml.YamlPlan;
  * introduction of the string interpolation they must keep resolving to exactly what they did. Declaring the current
  * schema version is how an author opts into the interpolation.
  */
-public class EscapeStringInterpolationInParametersMigrationTaskTest {
+public class V1_3_0_EscapeStringInterpolationInParametersMigrationTaskTest {
 
     private static final String COMPLETE_DESCRIPTOR =
         "src/test/resources/step/automation/packages/yaml/descriptors/completeDescriptor.yml";
 
     private final AutomationPackageDescriptorReader reader;
 
-    public EscapeStringInterpolationInParametersMigrationTaskTest() {
+    public V1_3_0_EscapeStringInterpolationInParametersMigrationTaskTest() {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageScheduleRegistration.registerSerialization(serializationRegistry);
         serializationRegistry.register(AutomationPackageParameterJsonSchema.FIELD_NAME_IN_AP, AutomationPackageParameter.class);
