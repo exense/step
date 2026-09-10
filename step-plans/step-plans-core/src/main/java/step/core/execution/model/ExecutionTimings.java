@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 import java.util.Objects;
 
 /**
- * This class was introduced as part of the JBS-251 feature request,
+ * This class was introduced as part of a feature request,
  * to allow conveying some timing metadata to external systems (in
  * particular, by filling certain Jira Xray fields with the captured
  * timestamps when the execution export is performed).
@@ -49,7 +49,7 @@ public class ExecutionTimings {
         Objects.requireNonNull(context, "context must not be null");
         Objects.requireNonNull(timing, "timing must not be null");
 
-        // IS0-8601 format, e.g. 2026-09-08T13:09:54.740868590+02:00
+        // ISO-8601 format with timezone, e.g. 2026-09-08T13:09:54.740868590+02:00
         String isoLocal = OffsetDateTime.now().toString();
         // Variables are saved to the root node
         context.getVariablesManager().putVariable(context.getReport(), timing.name(), isoLocal);
