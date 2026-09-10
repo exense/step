@@ -84,6 +84,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
     }
 
     @Override
+    @Secured(right = "{entity}-write")
     public Parameter save(Parameter newParameter) {
         if (newParameter.getKey() == null || newParameter.getKey().isBlank()) {
             throw new ControllerServiceException("The parameter's key is mandatory.");
@@ -135,6 +136,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
     }
 
     @Override
+    @Secured(right = "{entity}-write")
     public Parameter clone(String id) {
         Parameter sourceParameter = parameterAccessor.get(new ObjectId(id));
         assertEntityIsEditableInContext(sourceParameter);
@@ -148,6 +150,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
     }
 
     @Override
+    @Secured(right = "{entity}-delete")
     public void delete(String id) {
         Parameter parameter = get(id);
         assertEntityIsEditableInContext(parameter);
@@ -180,6 +183,7 @@ public class ParameterServices extends AbstractEntityServices<Parameter> {
     }
 
     @Override
+    @Secured(right = "{entity}-write")
     public Parameter restoreVersion(String id, String versionId) {
         Parameter parameter = parameterAccessor.get(id);
         assertEntityIsEditableInContext(parameter);
