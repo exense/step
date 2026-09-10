@@ -56,9 +56,7 @@ public class V31_0_EscapeStringInterpolationInPlanValues extends MigrationTask {
 
     @Override
     public void runUpgradeScript() {
-        // Composite keywords embed a plan, and the versioned collections hold the history of both
-        for (String collectionName : List.of(PLANS, PLANS + VERSION_COLLECTION_SUFFIX,
-            FUNCTIONS, FUNCTIONS + VERSION_COLLECTION_SUFFIX, PARAMETERS)) {
+        for (String collectionName : List.of(PLANS, FUNCTIONS, PARAMETERS)) {
             escapeCollection(collectionName);
         }
     }

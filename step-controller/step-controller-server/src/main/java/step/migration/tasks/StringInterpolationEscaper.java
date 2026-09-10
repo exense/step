@@ -87,8 +87,8 @@ public class StringInterpolationEscaper {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> childMap = (Map<String, Object>) value;
                 if (isPlainDynamicValue(childMap)) {
-                    // Within a container the fields are the input names, not model fields, so the exclusion of the
-                    // container fields must not apply to them
+                    // Containers are DynamicValue fields that contain a dynamic JSON like step.artefacts.CallFunction.function
+                    // In this case, the escaping is done on the dynamic JSON, not the value of the container itself
                     boolean isContainer = !withinContainer && CONTAINER_FIELDS.contains(key);
                     modified |= escapeDynamicValue(childMap, isContainer);
                 } else {

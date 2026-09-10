@@ -41,6 +41,16 @@ public class StringInterpolationEscaperTest {
         Assert.assertEquals("Hello $${name}", valueAt(document, "root", "text"));
     }
 
+    /**
+     * The dynamic flag defaults to false and may simply be absent from the persisted document
+     */
+    @Test
+    public void testValuesWithoutTheDynamicFlagAreEscaped() {
+        Map<String, Object> document = document("{'root':{'text':{'value':'Hello ${name}'}}}");
+        Assert.assertTrue(StringInterpolationEscaper.escapeDocument(document));
+        Assert.assertEquals("Hello $${name}", valueAt(document, "root", "text"));
+    }
+
     @Test
     public void testValuesWithoutSignificantDollarAreLeftUntouched() {
         Map<String, Object> document = document("{'root':{'text':{'dynamic':false,'value':'Price: $5'}}}");
@@ -48,10 +58,6 @@ public class StringInterpolationEscaperTest {
         Assert.assertEquals("Price: $5", valueAt(document, "root", "text"));
     }
 
-    /**
-     * Only ${ became significant, so a value containing a doubled dollar is left alone. This keeps the migration
-     * away from shell scripts, passwords and the like
-     */
     @Test
     public void testDoubleDollarIsNotEscaped() {
         Map<String, Object> document = document("{'root':{'text':{'dynamic':false,'value':'pid $$ of $$'}}}");
@@ -70,6 +76,17 @@ public class StringInterpolationEscaperTest {
         Assert.assertEquals("\"Hello ${name}\"", expression.get("expression"));
     }
 
+    /**
+     * A dynamic value switched to an expression usually keeps the plain value it had before. That leftover value is
+     * not used and must not be escaped either
+     */
+    @Test
+    public void testExpressionsKeepingATrailingValueAreNotEscaped() {
+        Map<String, Object> document = document("{'root':{'text':{'dynamic':true,'expression':'name','value':'Hello ${name}'}}}");
+        Assert.assertFalse(StringInterpolationEscaper.escapeDocument(document));
+        Assert.assertEquals("Hello ${name}", valueAt(document, "root", "text"));
+    }
+
     @Test
     public void testNestedChildrenAndListsAreWalked() {
         Map<String, Object> document = document("{'root':{'children':[" +
@@ -81,6 +98,32 @@ public class StringInterpolationEscaperTest {
         Assert.assertEquals("a $${x}", value((Map<?, ?>) ((Map<?, ?>) children.get(0)).get("text")));
         List<?> nested = (List<?>) ((Map<?, ?>) children.get(1)).get("children");
         Assert.assertEquals("b $${y}", value((Map<?, ?>) ((Map<?, ?>) nested.get(0)).get("text")));
+    }
+
+    /**
+     * Lists may be nested into each other, for instance in the rows of a data set
+     */
+    @Test
+    public void testListsNestedIntoListsAreWalked() {
+        Map<String, Object> document = document("{'root':{'rows':[[" +
+            "{'text':{'dynamic':false,'value':'a ${x}'}}," +
+            "[{'text':{'dynamic':false,'value':'b ${y}'}}]]]}}");
+        Assert.assertTrue(StringInterpolationEscaper.escapeDocument(document));
+
+        List<?> firstRow = (List<?>) ((List<?>) ((Map<?, ?>) document.get("root")).get("rows")).get(0);
+        Assert.assertEquals("a $${x}", value((Map<?, ?>) ((Map<?, ?>) firstRow.get(0)).get("text")));
+        List<?> nested = (List<?>) firstRow.get(1);
+        Assert.assertEquals("b $${y}", value((Map<?, ?>) ((Map<?, ?>) nested.get(0)).get("text")));
+    }
+
+    /**
+     * The elements of a list which aren't documents themselves are not dynamic values and must be left alone
+     */
+    @Test
+    public void testScalarElementsOfListsAreNotEscaped() {
+        Map<String, Object> document = document("{'root':{'rows':['a ${x}',5]}}");
+        Assert.assertFalse(StringInterpolationEscaper.escapeDocument(document));
+        Assert.assertEquals(List.of("a ${x}", 5), ((Map<?, ?>) document.get("root")).get("rows"));
     }
 
     /**
@@ -126,6 +169,33 @@ public class StringInterpolationEscaperTest {
         Map<String, Object> document = document("{'root':{'argument':{'dynamic':false,'value':'not json ${x}'}}}");
         Assert.assertFalse(StringInterpolationEscaper.escapeDocument(document));
         Assert.assertEquals("not json ${x}", valueAt(document, "root", "argument"));
+    }
+
+    /**
+     * A container holding no expression at all doesn't even have to be parsed
+     */
+    @Test
+    public void testContainerWithoutExpressionIsLeftUntouched() {
+        String argument = "{\"plain\":{\"dynamic\":false,\"value\":\"none\"}}";
+        Map<String, Object> document = documentWithArgument(argument);
+        Assert.assertFalse(StringInterpolationEscaper.escapeDocument(document));
+        Assert.assertEquals(argument, valueAt(document, "root", "argument"));
+
+        Map<String, Object> emptyContainer = documentWithArgument("");
+        Assert.assertFalse(StringInterpolationEscaper.escapeDocument(emptyContainer));
+        Assert.assertEquals("", valueAt(emptyContainer, "root", "argument"));
+    }
+
+    /**
+     * A container whose values are all expressions has nothing to escape and must be kept as it was authored,
+     * rather than rewritten by the JSON serialization
+     */
+    @Test
+    public void testContainerWithNothingToEscapeIsNotRewritten() {
+        String argument = "{ \"url\" : {\"dynamic\":true,\"expression\":\"'${x}'\"} }";
+        Map<String, Object> document = documentWithArgument(argument);
+        Assert.assertFalse(StringInterpolationEscaper.escapeDocument(document));
+        Assert.assertEquals(argument, valueAt(document, "root", "argument"));
     }
 
     @Test
