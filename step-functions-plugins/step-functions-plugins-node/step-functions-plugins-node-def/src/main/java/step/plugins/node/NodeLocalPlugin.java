@@ -25,7 +25,6 @@ import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.type.FunctionTypeRegistry;
 
-import static step.core.execution.OperationMode.isLocal;
 
 @Plugin(dependencies = {FunctionPlugin.class})
 public class NodeLocalPlugin extends AbstractExecutionEnginePlugin {
@@ -34,7 +33,7 @@ public class NodeLocalPlugin extends AbstractExecutionEnginePlugin {
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-        if (isLocal(context.getOperationMode())) {
+        if (context.getOperationMode().isLocal()) {
             functionTypeRegistry = context.require(FunctionTypeRegistry.class);
             functionTypeRegistry.registerFunctionType(new NodeFunctionType());
         }

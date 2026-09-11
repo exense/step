@@ -19,7 +19,6 @@
 package step.parameter;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.script.Bindings;
 import javax.script.ScriptException;
@@ -82,7 +81,11 @@ public class ParameterManager {
             // if the protected mask is set as value, reuse source value (i.e. value hasn't been changed)
             DynamicValue<String> newParameterValue = newParameter.getValue();
             if (newParameterValue != null && !newParameterValue.isDynamic() && newParameterValue.get().equals(PROTECTED_VALUE)) {
+                // Both values are taken from the source: the clear value when running without encryption manager,
+                // the encrypted one otherwise. Neither is sent to the client (see maskProtectedValue), the server
+                // is therefore the only authority for the value of an unchanged protected parameter
                 newParameter.setValue(sourceParameter.getValue());
+                newParameter.setEncryptedValue(sourceParameter.getEncryptedValue());
             }
         }
 
@@ -103,10 +106,12 @@ public class ParameterManager {
         return parameterAccessor.save(newParameter);
     }
 
-    public Map<String, String> getAllParameterValues(Map<String, Object> contextBindings, ObjectPredicate objectPredicate) {
-        return getAllParameters(contextBindings, objectPredicate).entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().value.get()));
-    }
-
+    /**
+     * <b>Warning:</b> the returned {@link Parameter}s carry the clear value of protected
+     * parameters. They must never be persisted into another object nor returned to a client as is.
+     * Use {@link #maskProtectedValue(Parameter)} or {@link #getMaskedValue(Parameter)} for
+     * anything that ends up in a report, a REST response or the database
+     */
     public Map<String, Parameter> getAllParameters(Map<String, Object> contextBindings, ObjectPredicate objectPredicate) {
         Map<String, Parameter> result = new HashMap<>();
         Bindings bindings = contextBindings != null ? new SimpleBindings(contextBindings) : null;
@@ -149,8 +154,7 @@ public class ParameterManager {
             unresolvedCountBeforeIteration = unresolvedParamKeys.size();
             unresolvedParamKeys.forEach(k -> {
                 Parameter parameter = allParameters.get(k);
-                Boolean protectedValue = parameter.getProtectedValue();
-                boolean isProtected = parameter.getProtectedValue() != null && parameter.getProtectedValue();
+                boolean isProtected = isProtected(parameter);
                 DynamicValue<String> parameterValue = parameter.getValue();
                 if (!isProtected && parameterValue != null) {
                     try {
@@ -205,8 +209,51 @@ public class ParameterManager {
         });
     }
 
-    private boolean isProtected(Parameter p) {
+    public static boolean isProtected(Parameter p) {
         return p.getProtectedValue() != null && p.getProtectedValue();
+    }
+
+    /**
+     * @return the value of the given {@link Parameter} as it may be displayed to a user: the value
+     * of protected parameters is replaced by {@link #PROTECTED_VALUE}
+     */
+    public static String getMaskedValue(Parameter p) {
+        if (isProtected(p)) {
+            return PROTECTED_VALUE;
+        } else {
+            DynamicValue<String> value = p.getValue();
+            return value != null ? value.get() : "";
+        }
+    }
+
+    /**
+     * Masks the value of the given {@link Parameter} if it is protected. Both the clear value and
+     * the encrypted value are removed, as neither of them may leave the server.
+     * <p>
+     * The provided instance is modified in place. Callers must therefore only pass instances they
+     * own, which is the case for every accessor backed by a real collection as well as for
+     * {@link step.core.collections.inmemory.InMemoryCollection}s created with cloning enabled.
+     * Should this ever be called on an accessor sharing its instances, enable the cloning of that
+     * accessor rather than copying the parameter here
+     *
+     * @return the provided parameter
+     */
+    public static Parameter maskProtectedValue(Parameter parameter) {
+        if (parameter != null && isProtected(parameter) && !isResetValue(parameter)) {
+            parameter.setValue(new DynamicValue<>(PROTECTED_VALUE));
+            parameter.setEncryptedValue(null);
+        }
+        return parameter;
+    }
+
+    /**
+     * @return true if the value of the parameter is the placeholder set when protected parameters
+     * have to be reset. This value carries no secret and is left untouched so that the user sees
+     * that the parameter has to be reset
+     */
+    private static boolean isResetValue(Parameter parameter) {
+        DynamicValue<String> value = parameter.getValue();
+        return value != null && !value.isDynamic() && RESET_VALUE.equals(value.get());
     }
 
     public Parameter encryptParameterValueIfEncryptionManagerAvailable(Parameter parameter) throws EncryptionManagerException {
