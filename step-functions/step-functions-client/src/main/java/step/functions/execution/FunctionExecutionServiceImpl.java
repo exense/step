@@ -63,7 +63,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static step.core.reports.Error.DEFAULT_ERROR_CODE;
@@ -225,7 +224,6 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
                 input.setProperties(properties);
 
                 int callTimeout = function.getCallTimeout().get();
-                logger.error("FIXME SED-4934 CALLTIMEOUT for {} is {} MILLISECONDS ({}@{} TO={})", function.getAttribute("name"), callTimeout, function.getClass().getName(), Objects.hashCode(function), Objects.hashCode(function.getCallTimeout()));
 
                 //expose additional properties to the keyword
                 properties.put(KEYWORD_NAME_PROP, input.getFunction());

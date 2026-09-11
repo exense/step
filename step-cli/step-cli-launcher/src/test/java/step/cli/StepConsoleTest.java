@@ -404,7 +404,6 @@ public class StepConsoleTest {
     }
 
     @Test
-    @Ignore("FIXME SED-4934 Failing test")
     public void testLocalExecutionNoMock() {
         int res = executeMain("ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local");
         Assert.assertEquals(0, res);

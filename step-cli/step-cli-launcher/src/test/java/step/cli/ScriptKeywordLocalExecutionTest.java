@@ -19,7 +19,6 @@
 package step.cli;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -50,7 +49,6 @@ public class ScriptKeywordLocalExecutionTest {
     public final TemporaryFolder workDirectory = new TemporaryFolder();
 
     @Test
-    @Ignore("FIXME SED-4934 Occasionally failing test")
     public void executesGroovyAndJavascriptKeywordsOnALocalAgent() throws Exception {
         LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration()
             .setWorkDirectory(workDirectory.getRoot().toPath());

@@ -18,13 +18,9 @@
  ******************************************************************************/
 package step.functions;
 
-import java.util.Map;
-
-import jakarta.json.JsonObject;
-
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
-
+import jakarta.json.JsonObject;
 import step.commons.activation.Expression;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
@@ -32,6 +28,8 @@ import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
 import step.core.json.JsonProviderCache;
 import step.core.objectenricher.EnricheableObject;
+
+import java.util.Map;
 
 import static step.functions.Function.JSON_CLASS_FIELD;
 
@@ -44,11 +42,17 @@ import static step.functions.Function.JSON_CLASS_FIELD;
 public class Function extends AbstractOrganizableObject implements EnricheableObject, EvaluationExpression {
 
 
-    public final static String JSON_CLASS_FIELD = "type";
+    public static final String JSON_CLASS_FIELD = "type";
 
-    public final static DynamicValue<Integer> DEFAULT_CALL_TIMEOUT = new DynamicValue<>(180000);
-    protected DynamicValue<Integer> callTimeout = DEFAULT_CALL_TIMEOUT;
-    public final static JsonObject DEFAULT_SCHEMA = JsonProviderCache.createObjectBuilder().build();
+    // we can't reuse the same (mutable) instance for multiple functions
+    public static DynamicValue<Integer> defaultCallTimeout() {
+        return new DynamicValue<>(180000);
+    }
+
+    // JsonObject is immutable, so sharing is not an issue
+    public static final JsonObject DEFAULT_SCHEMA= JsonProviderCache.createObjectBuilder().build();
+
+    protected DynamicValue<Integer> callTimeout = defaultCallTimeout();
     protected JsonObject schema = DEFAULT_SCHEMA;
 
     protected boolean executeLocally;

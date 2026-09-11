@@ -19,7 +19,6 @@
 package step.cli;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -49,7 +48,6 @@ public class ApLocalExecuteCommandHandlerTest {
     public final TemporaryFolder workDirectory = new TemporaryFolder();
 
     @Test
-    @Ignore("FIXME SED-4934 Failing test")
     public void executesAnAutomationPackageOnALocalAgent() throws Exception {
         File automationPackage = new File("src/test/resources/samples/step-automation-packages-sample1.jar");
 

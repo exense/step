@@ -35,7 +35,6 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAutomationPackageArchive> {
@@ -204,7 +203,6 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
                         function.setLibrariesFile(new DynamicValue<>(librariesFile));
                     }
 
-                    logger.error("FIXME SED-4934 SETTING TIMEOUT {} -> {} FOR {} ({}@{} TO={})", function.getCallTimeout().getValue(), annotation.timeout(), functionName, function.getClass().getName(), Objects.hashCode(function), Objects.hashCode(function.getCallTimeout()));
                     function.getCallTimeout().setValue(annotation.timeout());
                     FunctionManagerImpl.applyRoutingFromAnnotation(function, annotation);
 
