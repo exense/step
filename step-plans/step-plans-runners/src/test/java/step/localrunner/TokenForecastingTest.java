@@ -1235,6 +1235,64 @@ public class TokenForecastingTest {
     }
 
 
+    @Test
+    public void testKeywordInsideWhile() {
+        CallFunction testKeyword = FunctionArtefacts.keyword("test");
+        testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+
+        While whileBlock = new While("true");
+        whileBlock.setMaxIterations(new DynamicValue<>(3));
+
+        Plan plan = PlanBuilder.create()
+            .startBlock(BaseArtefacts.sequence())
+            .startBlock(whileBlock) // 3 iterations, executed sequentially
+            .add(testKeyword) // 3 invocations
+            .endBlock()
+            .endBlock()
+            .build();
+
+        Stats stats = prepareFunction(plan);
+
+        Set<AgentPoolSpec> availableAgentPools = Set.of(
+            new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+
+        Forecast forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+        stats.assertInvocationsAndThreads(3, 1);
+        // The iterations of a While block are executed sequentially, thus a single token
+        // (and therefore a single agent) is required at any point in time
+        assertAgentCountPool1(forecast, 1);
+    }
+
+    @Test
+    public void testKeywordInsideWhileInsideThreadGroup() {
+        CallFunction testKeyword = FunctionArtefacts.keyword("test");
+        testKeyword.setToken(new DynamicValue<>("{\"type\":{\"value\":\"pool\",\"dynamic\":false}}"));
+
+        ThreadGroup threadGroup = new ThreadGroup();
+        threadGroup.setUsers(new DynamicValue<>(3));
+
+        While whileBlock = new While("true");
+        whileBlock.setMaxIterations(new DynamicValue<>(2));
+
+        Plan plan = PlanBuilder.create()
+            .startBlock(threadGroup) // 3 threads
+            .startBlock(whileBlock) // 2 iterations, executed sequentially within each thread
+            .add(testKeyword) // 6 invocations
+            .endBlock()
+            .endBlock()
+            .build();
+
+        Stats stats = prepareFunction(plan);
+
+        Set<AgentPoolSpec> availableAgentPools = Set.of(
+            new AgentPoolSpec("pool1", Map.of("$agenttype", "default", "type", "pool"), 1));
+
+        Forecast forecast = executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
+        stats.assertInvocationsAndThreads(6, 3);
+        // Each of the 3 threads requires one token at a time -> 3 agents
+        assertAgentCountPool1(forecast, 3);
+    }
+
     private static Forecast executePlanWithSpecifiedTokenPools(Plan plan, Set<AgentPoolSpec> availableAgentPools) {
         return executePlanWithSpecifiedTokenPools(plan, availableAgentPools, null);
     }

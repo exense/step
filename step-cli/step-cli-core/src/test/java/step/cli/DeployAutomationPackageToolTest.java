@@ -17,6 +17,7 @@ import step.core.maven.MavenArtifactIdentifier;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 
 public class DeployAutomationPackageToolTest {
@@ -55,13 +56,53 @@ public class DeployAutomationPackageToolTest {
         Assert.assertEquals(testFile, packageFileCaptor.getValue().getFile());
     }
 
+    /**
+     * The deployment configurations (attributes and routing options) have to reach the client as configured.
+     */
+    @Test
+    public void testUploadWithDeploymentConfigurations() throws Exception {
+        File testFile;
+        try {
+            testFile = FileHelper.createTempFile();
+        } catch (IOException e) {
+            throw new RuntimeException("Temp file cannot be created", e);
+        }
+
+        Map<String, String> plansAttributes = Map.of("planAttribute", "planValue");
+        Map<String, String> keywordsAttributes = Map.of("keywordAttribute", "keywordValue");
+        Map<String, String> tokenSelectionCriteria = Map.of("os", "linux");
+
+        RemoteAutomationPackageClientImpl automationPackageClient = createRemoteAutomationPackageClientMock();
+        DeployAutomationPackageToolTestable tool = new DeployAutomationPackageToolTestable(
+            "http://localhost:8080",
+            new ApDeployParameters()
+                .setAutomationPackageFile(testFile)
+                .setAsync(false)
+                .setPlansAttributes(plansAttributes)
+                .setKeywordsAttributes(keywordsAttributes)
+                .setTokenSelectionCriteria(tokenSelectionCriteria)
+                .setExecuteKeywordsOnController(true),
+            automationPackageClient
+        );
+        tool.execute();
+
+        Mockito.verify(automationPackageClient, Mockito.times(1))
+            .createOrUpdateAutomationPackage(
+                Mockito.any(), Mockito.isNull(),
+                Mockito.isNull(), Mockito.isNull(),
+                Mockito.eq(plansAttributes), Mockito.eq(keywordsAttributes),
+                Mockito.eq(tokenSelectionCriteria), Mockito.eq(true),
+                Mockito.anyBoolean(), Mockito.isNull(), Mockito.anyLong()
+            );
+    }
+
     private RemoteAutomationPackageClientImpl createRemoteAutomationPackageClientMock() throws AutomationPackageClientException {
         RemoteAutomationPackageClientImpl remoteClient = Mockito.mock(RemoteAutomationPackageClientImpl.class);
         Mockito.when(remoteClient.createOrUpdateAutomationPackage(
-            Mockito.any(), Mockito.isNull(),
-            Mockito.any(), Mockito.any(), Mockito.isNull(),
-            Mockito.isNull(), Mockito.isNull(), Mockito.isNull(),
-            Mockito.anyBoolean(), Mockito.isNull(), Mockito.anyLong())
+            Mockito.any(), Mockito.any(),
+            Mockito.any(), Mockito.any(), Mockito.any(),
+            Mockito.any(), Mockito.any(), Mockito.any(),
+            Mockito.any(), Mockito.any(), Mockito.anyLong())
         ).thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED, UPDATED_PACK_ID, null, Set.of()));
         return remoteClient;
     }
@@ -73,7 +114,7 @@ public class DeployAutomationPackageToolTest {
         public DeployAutomationPackageToolTestable(String url, File apFile, String stepProjectName, String authToken, Boolean async, String apVersion, String activationExpr,
                                                    MavenArtifactIdentifier apLibraryMavenIdentifier, File apLibraryFile,
                                                    RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
-            super(url, new ApDeployParameters()
+            this(url, new ApDeployParameters()
                 .setAsync(async)
                 .setVersionName(apVersion)
                 .setActivationExpression(activationExpr)
@@ -81,7 +122,12 @@ public class DeployAutomationPackageToolTest {
                 .setStepProjectName(stepProjectName)
                 .setAuthToken(authToken)
                 .setlibraryMavenArtifact(apLibraryMavenIdentifier)
-                .setLibraryFile(apLibraryFile));
+                .setLibraryFile(apLibraryFile), remoteAutomationPackageClientMock);
+        }
+
+        public DeployAutomationPackageToolTestable(String url, ApDeployParameters params,
+                                                   RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock) {
+            super(url, params);
             this.remoteAutomationPackageClientMock = remoteAutomationPackageClientMock;
         }
 

@@ -58,9 +58,32 @@ public class YamlResourceReference {
         }
     }
 
+    /**
+     * The inverse of {@link #toDynamicValue()}: a {@code resource:<id>} comes back as a resource id, and
+     * anything else - a path relative to the automation package above all - as the simple reference it
+     * was written as. Labelling every value as a resource id, as this did, turned the path of a data
+     * source into an id on the way back to the descriptor.
+     * <p>
+     * An {@code apResource:<apId>:<relativePath>} reference comes back as its relative path, which is
+     * the form yaml has for it - {@code apId} belongs to the entity in memory, not to a descriptor, and
+     * is put back by {@code AutomationPackageResourceMapper} from the package being read. This is what
+     * makes the reference of a data source render as a path <b>wherever a plan is written as yaml</b>:
+     * the automation package editor, and {@code GET /plans/{id}/yaml} on a controller, which would
+     * otherwise hand the user an id of that server's database.
+     * <p>
+     * A reference to a <i>different</i> automation package is written as a relative path too, and so
+     * comes back pointing at the package that carries the plan. Such a reference can only be
+     * hand-written - nothing produces one - and yaml has no form for it.
+     */
     public static YamlResourceReference fromDynamicValue(DynamicValue<String> res) {
-        // TODO: now we only support file resources resource ids in plans
-        return new YamlResourceReference(null, res.getValue().replaceFirst(FileResolver.RESOURCE_PREFIX, ""));
+        String reference = res.getValue();
+        if (FileResolver.isResource(reference)) {
+            return new YamlResourceReference(null, reference.substring(FileResolver.RESOURCE_PREFIX.length()));
+        }
+        if (FileResolver.isApResource(reference)) {
+            return new YamlResourceReference(FileResolver.extractApRelativePath(reference), null);
+        }
+        return new YamlResourceReference(reference, null);
     }
 
     public String getSimpleString() {
@@ -79,7 +102,20 @@ public class YamlResourceReference {
         this.resourceId = resourceId;
     }
 
+    /**
+     * Empty means <i>nothing to write</i>, and so has to agree with {@code YamlResourceReferenceSerializer},
+     * which writes a value only for a non-blank field, and with {@link #toDynamicValue()}, which reads
+     * one only under the same condition. Answering on nullness alone let a blank reference - the
+     * default of {@code GoogleSheetv4DataPoolConfiguration.serviceAccountKey}, and any
+     * {@code resource:} with no id - through jackson's {@code NON_EMPTY} filter, so the property name
+     * was written and then the serializer declined to write its value. That leaves the generator with
+     * a dangling field name and breaks the serialization of the whole plan, far from here.
+     */
     public boolean isEmpty() {
-        return this.resourceId == null && this.simpleString == null;
+        return isBlank(simpleString) && isBlank(resourceId);
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isEmpty();
     }
 }

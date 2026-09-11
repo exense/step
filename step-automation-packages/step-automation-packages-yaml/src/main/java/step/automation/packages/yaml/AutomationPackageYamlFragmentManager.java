@@ -19,6 +19,7 @@
 package step.automation.packages.yaml;
 
 import org.apache.commons.io.FileUtils;
+import step.automation.packages.ApFileNames;
 import step.automation.packages.ResourcePathMatchingResolver;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapper;
@@ -327,7 +328,9 @@ public class AutomationPackageYamlFragmentManager {
             case NewObjectFragmentMode.FRAGMENT -> new File(location.relativeFragmentPath()).toPath();
             case NewObjectFragmentMode.PER_OBJECT -> {
                 if (patchable instanceof NamedPatchableYamlModel namedPatchableYamlModel) {
-                    yield new File(location.relativeFragmentPath()).toPath().resolve(YamlFragmentFilenames.sanitizeFilename(namedPatchableYamlModel.getName() + ".yml"));
+                    // the extension is appended after the sanitising, which caps the length of the name
+                    yield new File(location.relativeFragmentPath()).toPath()
+                        .resolve(ApFileNames.sanitize(namedPatchableYamlModel.getName()) + ".yml");
                 }
                 throw perObjectSaveUnsupported(entityName);
             }

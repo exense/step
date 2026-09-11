@@ -23,11 +23,17 @@ import ch.exense.commons.io.FileHelper;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.*;
 
@@ -73,9 +79,182 @@ public class ClassLoaderResourceFilesystemTest {
         assertTrue(directory.exists());
     }
 
+    /**
+     * The URLs returned by a class loader are percent encoded. Both the path of the archive itself
+     * (a jar downloaded twice by a browser typically ends up as "my archive (1).jar") and the path of
+     * the entry within it must be decoded before being used as a filesystem path, respectively as a
+     * zip entry name.
+     */
+    @Test
+    public void testJarProtocolWithSpacesInPaths() throws Exception {
+        File zip = new File(FileHelper.createTempFolder(), "my archive (1).zip");
+        try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip))) {
+            out.putNextEntry(new ZipEntry("my folder/"));
+            out.closeEntry();
+            out.putNextEntry(new ZipEntry("my folder/my file.txt"));
+            out.write("content".getBytes(StandardCharsets.UTF_8));
+            out.closeEntry();
+        }
+        URL zipUrl = zip.toURI().toURL();
+        assertTrue("the url of the archive must be encoded for this test to be meaningful", zipUrl.toString().contains("%20"));
+
+        try (URLClassLoader classLoader = new URLClassLoader(new URL[]{zipUrl})) {
+            URL folder = classLoader.getResource("my folder");
+            URL textResource = classLoader.getResource("my folder/my file.txt");
+            assertTrue(ClassLoaderResourceFilesystem.isDirectory(folder));
+            assertFalse(ClassLoaderResourceFilesystem.isDirectory(textResource));
+
+            try (ClassLoaderResourceFilesystem.ExtractedDirectory extractedDirectory = ClassLoaderResourceFilesystem.extractDirectory(folder)) {
+                assertEquals("my folder", extractedDirectory.directory.getName());
+                assertEquals("content", Files.readString(new File(extractedDirectory.directory, "my file.txt").toPath()));
+            }
+        }
+    }
+
+    @Test
+    public void testFileProtocolWithSpacesInPaths() throws Exception {
+        File folder = new File(FileHelper.createTempFolder(), "my folder");
+        assertTrue(new File(folder, "sub folder").mkdirs());
+        URL folderUrl = folder.toURI().toURL();
+        assertTrue("the url of the folder must be encoded for this test to be meaningful", folderUrl.toString().contains("%20"));
+
+        assertTrue(ClassLoaderResourceFilesystem.isDirectory(folderUrl));
+        assertEquals(List.of(new File(folder, "sub folder").toURI().toURL()), ClassLoaderResourceFilesystem.listDirectory(folderUrl));
+        try (ClassLoaderResourceFilesystem.ExtractedDirectory extractedDirectory = ClassLoaderResourceFilesystem.extractDirectory(folderUrl)) {
+            assertEquals(folder, extractedDirectory.directory);
+        }
+    }
+
+    /**
+     * The variant the materialiser uses: the content lands directly in the directory the caller names,
+     * rather than in a temporary directory of its own that the caller would then have to copy over.
+     */
+    @Test
+    public void testExtractJarProtocolIntoProvidedDestination() throws Exception {
+        URL zip = this.getClass().getClassLoader().getResource("folder.zip");
+        try (URLClassLoader classLoader = new URLClassLoader(new URL[]{zip})) {
+            Path destination = FileHelper.createTempFolder().toPath().resolve("destination");
+
+            ClassLoaderResourceFilesystem.extractDirectory(classLoader.getResource("folder"), destination);
+
+            assertTrue(Files.isDirectory(destination.resolve("subfolder")));
+            assertTrue(Files.isRegularFile(destination.resolve("TestResource.txt")));
+        }
+    }
+
+    /**
+     * A {@code file:} resource is a directory of the caller, not a temporary one: it is copied into the
+     * destination and left where it is.
+     */
+    @Test
+    public void testExtractFileProtocolIntoProvidedDestination() throws Exception {
+        Path source = FileHelper.createTempFolder().toPath();
+        FileHelper.unzip(this.getClass().getClassLoader().getResource("folder.zip").openStream(), source.toFile());
+        Path destination = FileHelper.createTempFolder().toPath().resolve("destination");
+
+        ClassLoaderResourceFilesystem.extractDirectory(source.resolve("folder").toUri().toURL(), destination);
+
+        assertTrue(Files.isDirectory(destination.resolve("subfolder")));
+        assertTrue(Files.isRegularFile(destination.resolve("TestResource.txt")));
+        assertTrue(Files.isRegularFile(source.resolve("folder/TestResource.txt")));
+    }
+
+    /**
+     * The two halves of a jar url are percent encoded, and each is read from the view of the reference
+     * that suits it - the jar from the encoded one, so that it can still become a {@link File} through
+     * its URI, the entry from the decoded one, since it becomes a zip entry name.
+     */
+    @Test
+    public void testJarResourcePathDecodesBothHalves() throws Exception {
+        var jarResourcePath = new ClassLoaderResourceFilesystem.JarResourcePath(
+            new URL("jar:file:/tmp/my%20jar.jar!/my%20folder/my%20file.txt"));
+
+        assertEquals("my folder/my file.txt", jarResourcePath.pathInJar);
+        // built from a path rather than compared to a literal: the separator is the platform's
+        assertEquals(new File("/tmp/my jar.jar").getPath(), jarResourcePath.jarFile);
+    }
+
+    /**
+     * A '+' is a legal literal character of a url path, and only the form encoding reads it as a space.
+     * {@code URLDecoder} implements that form encoding, which is why the decoding goes through
+     * {@link java.net.URI} - and why {@code decodePath}, still used for urls that are no valid URIs,
+     * protects the '+' by hand before delegating to it.
+     */
+    @Test
+    public void testJarResourcePathKeepsAPlusOfAnEntryName() throws Exception {
+        var jarResourcePath = new ClassLoaderResourceFilesystem.JarResourcePath(
+            new URL("jar:file:/tmp/my%20jar.jar!/folder/file+1%20(copy).txt"));
+
+        assertEquals("folder/file+1 (copy).txt", jarResourcePath.pathInJar);
+    }
+
+    /**
+     * An escape in the jar path shifts the separator between the encoded and the decoded form, so each
+     * half has to be split from its own.
+     */
+    @Test
+    public void testJarResourcePathSplitsEachFormAtItsOwnSeparator() throws Exception {
+        var jarResourcePath = new ClassLoaderResourceFilesystem.JarResourcePath(
+            new URL("jar:file:/tmp/a%20b%20c%20d/jar.jar!/x.txt"));
+
+        assertEquals("x.txt", jarResourcePath.pathInJar);
+        assertEquals(new File("/tmp/a b c d/jar.jar").getPath(), jarResourcePath.jarFile);
+    }
+
+    /**
+     * The entry names of a real archive, read through a class loader as they are in production: a class
+     * loader encodes, so every one of these urls is a valid URI and comes back as the name that was
+     * written into the jar.
+     */
+    @Test
+    public void testJarResourcePathOfTheEntriesOfAnArchive() throws Exception {
+        List<String> entryNames = List.of("my file.txt", "plus+file.txt", "100%.txt", "a#b.txt");
+        File jar = new File(FileHelper.createTempFolder(), "my app (fat).jar");
+        try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(jar))) {
+            for (String entryName : entryNames) {
+                out.putNextEntry(new ZipEntry("my folder/" + entryName));
+                out.write("content".getBytes(StandardCharsets.UTF_8));
+                out.closeEntry();
+            }
+        }
+
+        try (URLClassLoader classLoader = new URLClassLoader(new URL[]{jar.toURI().toURL()})) {
+            for (String entryName : entryNames) {
+                URL url = classLoader.getResource("my folder/" + entryName);
+                var jarResourcePath = new ClassLoaderResourceFilesystem.JarResourcePath(url);
+
+                assertEquals("my folder/" + entryName, jarResourcePath.pathInJar);
+                assertEquals(jar.getPath(), jarResourcePath.jarFile);
+            }
+        }
+    }
+
+    /**
+     * {@link URL} accepts strings that a URI rejects, a literal space for instance. A class loader never
+     * produces one - such a url was built by hand instead of through {@link File#toURI()} - so it is
+     * reported rather than guessed at.
+     */
+    @Test
+    public void testJarResourcePathRejectsAUrlThatIsNoValidUri() {
+        assertThrows(IllegalArgumentException.class, () -> new ClassLoaderResourceFilesystem.JarResourcePath(
+            new URL("jar:file:/tmp/my jar.jar!/my folder/my file.txt")));
+    }
+
+    /**
+     * <b>Known limitation, pinned deliberately:</b> a jar on a UNC share is refused, because
+     * {@code new File(URI)} rejects a URI carrying an authority. {@code Paths.get(URI)} would resolve it.
+     * Update this test when that is fixed rather than deleting it.
+     */
+    @Test
+    public void testJarResourcePathDoesNotSupportAUncShare() {
+        assertThrows(IllegalArgumentException.class, () -> new ClassLoaderResourceFilesystem.JarResourcePath(
+            new URL("jar:file://server/share/my%20jar.jar!/my%20file.txt")));
+    }
+
     @Test
     public void testUnsupportedProtocol() {
         assertThrows(RuntimeException.class, () -> ClassLoaderResourceFilesystem.extractDirectory(new URL("http", "myHost", "myFile")));
+        assertThrows(RuntimeException.class, () -> ClassLoaderResourceFilesystem.extractDirectory(new URL("http", "myHost", "myFile"), Path.of("destination")));
         assertThrows(RuntimeException.class, () -> ClassLoaderResourceFilesystem.isDirectory(new URL("http", "myHost", "myFile")));
     }
 }

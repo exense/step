@@ -200,7 +200,12 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 AutomationPackage automationPackage = new AutomationPackage();
                 automationPackage.setStatus(AutomationPackageStatus.EDITING);
                 StagingAutomationPackageContext stagingContext = new StagingAutomationPackageContext(new AutomationPackageLocalResourceMapper(), automationPackage, AutomationPackageOperationMode.LOCAL, resourceManager, archive, content, null, null, new HashMap<>());
-                return new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
+                AutomationPackageYamlFragmentManager fragmentManager = new AutomationPackageYamlFragmentManager(archive.getResourcePathMatchingResolver(), descriptor, fragments, getOrCreateDescriptorReader(), stagingContext);
+                // Transform resource references to AP resources as during AP deployment. Only required for plans  as
+                // keywords plugins map their own resource references while the fragments are read;
+                AutomationPackagePlansAttributesApplier.applySpecialAttributesToPlans(stagingContext,
+                    fragmentManager.getBusinessObjects(Plan.class));
+                return fragmentManager;
             } catch (FileSystemNotFoundException | URISyntaxException e) {
                 throw new AutomationPackageReadingException("Failed to read automation package for editing. The most likely cause is that you were trying to load " +
                     "an automation package as a packaged jar. This is not supported and expected behaviour", e);

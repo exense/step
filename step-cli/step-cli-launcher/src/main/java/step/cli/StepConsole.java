@@ -44,8 +44,6 @@ public class StepConsole extends BaseCommand {
 
     public static final String REQUIRED_ERR_MESSAGE = "Illegal parameters. One of the following options is required: '%s'";
 
-    public static final String AP_IGNORE_NAME = ".apignore";
-
     public static final Logger log = LoggerFactory.getLogger(StepConsole.class);
     public static final String MANAGED = "managed:";
 

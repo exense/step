@@ -18,16 +18,10 @@
  ******************************************************************************/
 package step.artefacts.handlers;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-
-import org.junit.Test;
-
-import com.google.common.io.Files;
-
 import ch.exense.commons.io.FileHelper;
+import com.google.common.io.Files;
 import org.junit.Assert;
+import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.Export;
 import step.artefacts.Sequence;
@@ -36,6 +30,10 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.execution.ExecutionEngine;
 import step.core.plans.Plan;
 import step.core.plans.builder.PlanBuilder;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 public class ExportHandlerTest {
 

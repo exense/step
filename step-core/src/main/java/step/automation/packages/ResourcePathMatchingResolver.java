@@ -99,7 +99,9 @@ public class ResourcePathMatchingResolver {
                             file = file.substring(0, file.length() - 1);
                         }
                         int lastIndexOf = file.lastIndexOf(getCanonicalPathSeparator());
-                        String lastPath = file.substring(lastIndexOf + 1);
+                        // the path of a URL is percent encoded, while the pattern is matched against the
+                        // real name of the resource (which may contain a space, for instance)
+                        String lastPath = ClassLoaderResourceFilesystem.decodePath(file.substring(lastIndexOf + 1));
                         if (pattern.matcher(lastPath).matches()) {
                             findPathMatchingResourcesRecursive(pathArray, nextLevel, url, result);
                         }

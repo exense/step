@@ -269,6 +269,6 @@ public class AutomationPackagePlanCollectionTest extends AutomationPackageCollec
 
         planCollection.save(plan);
 
-        assertFilesEqual(expectedFilesPath.resolve("Hello World Plan.yml"), destinationDirectory.toPath().resolve("plans").resolve("Hello World Plan.yml"));
+        assertFilesEqual(expectedFilesPath.resolve("Hello_World_Plan.yml"), destinationDirectory.toPath().resolve("plans").resolve("Hello_World_Plan.yml"));
     }
 }

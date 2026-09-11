@@ -26,13 +26,19 @@ public class LocalIDE {
     }
 
     public LocalIDE() throws Exception {
+        var ideState = LocalIDEState.get();
         Configuration configuration = loadConfiguration();
+        for (var cfg : ideState.startupHooks.onConfigure) {
+            // Startup hooks could throw exceptions, or outright stop the entire execution using System.exit.
+            // That's intentional, and the reason why they're called as early as possible.
+            cfg.accept(configuration);
+        }
         var resourcesDirectory = Files.createTempDirectory("step-ide-resources-");
         var fileManagerDirectory = Files.createTempDirectory("step-ide-filemanager-");
         LocalIDEState.get().addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
         configuration.putProperty("resources.dir", resourcesDirectory.toString());
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
-        configuration.putProperty("ui.resource.root", LocalIDEState.getIdeResourcePath());
+        configuration.putProperty("ui.resource.root", ideState.getIdeResourcePath());
         applyEnvOverride(configuration, "JMETER_HOME", "plugins.jmeter.home");
         server = new IDEControllerServer(configuration);
     }
@@ -62,8 +68,9 @@ public class LocalIDE {
 
     private static Configuration loadConfiguration() throws Exception {
         Configuration configuration = new Configuration();
-        InputStream propsStream = Objects.requireNonNull(LocalIDE.class.getClassLoader().getResourceAsStream("ide.properties"), "ide.properties resource not found");
-        configuration.getUnderlyingPropertyObject().load(propsStream);
+        try (InputStream propsStream = Objects.requireNonNull(LocalIDE.class.getClassLoader().getResourceAsStream("ide.properties"), "ide.properties resource not found");) {
+            configuration.getUnderlyingPropertyObject().load(propsStream);
+        }
         // Overlay an external ide.properties if present, so that users can configure the IDE (e.g. the AI agent
         // package location or an API key) without modifying the packaged resource.
         File externalProperties = new File(System.getProperty("ide.properties", "ide.properties"));

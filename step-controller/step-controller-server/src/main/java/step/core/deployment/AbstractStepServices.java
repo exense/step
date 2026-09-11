@@ -143,14 +143,33 @@ public abstract class AbstractStepServices extends AbstractServices<User> {
     }
 
     /**
+     * The ObjectHookInterceptor.aroundWriteTo can only be used for response returning an entity extending EnricheableObject
+     * This method can be used as helper for all other cases where checking if the entity is readable in given context
+     *
+     * @param entity the entity to be asserted
+     */
+    protected void assertEntityIsReadableInContext(AbstractIdentifiableObject entity) {
+        if (entity instanceof EnricheableObject enricheableObject) {
+            Session<User> session = getSession();
+            Optional<ObjectAccessException> optionalViolations = objectHookRegistry.isObjectReadableInContext(session, enricheableObject);
+            if (optionalViolations.isPresent()) {
+                ObjectAccessException objectAccessException = optionalViolations.get();
+                throw new ControllerServiceException(
+                    HttpStatus.SC_FORBIDDEN, ENTITY_ACCESS_DENIED,
+                    objectAccessException.getMessage(), objectAccessException.getViolations()
+                );
+            }
+        }
+    }
+
+    /**
      * The ObjectHookInterceptor.aroundReadFrom can only be used for POST request passing an entity as request BODY
-     * This method can be used as helper for all other cases where checking if the entity is editable in given context (i.e. DELETE request...(
+     * This method can be used as helper for all other cases where checking if the entity is editable in given context (i.e. DELETE request...)
      *
      * @param entity the entity to be asserted
      */
     protected void assertEntityIsEditableInContext(AbstractIdentifiableObject entity) {
-        if (entity instanceof EnricheableObject) {
-            EnricheableObject enricheableObject = (EnricheableObject) entity;
+        if (entity instanceof EnricheableObject enricheableObject) {
             Session<User> session = getSession();
             Optional<ObjectAccessException> optionalViolations = objectHookRegistry.isObjectEditableInContext(session, enricheableObject);
             if (optionalViolations.isPresent()) {

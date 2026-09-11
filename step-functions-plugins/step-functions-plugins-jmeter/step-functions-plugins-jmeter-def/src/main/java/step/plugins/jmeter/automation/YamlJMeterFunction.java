@@ -19,21 +19,22 @@
 package step.plugins.jmeter.automation;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import step.automation.packages.AutomationPackageResourceUploader;
+import step.automation.packages.AutomationPackageLocalResourceMapper;
+import step.automation.packages.AutomationPackageResourceMapper;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
 import step.plugins.jmeter.JMeterFunction;
-import step.resources.ResourceManager;
 
 @YamlModel(name = "JMeter")
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlJMeterFunction extends AbstractYamlFunction<JMeterFunction> {
 
+    // An empty value rather than none to support serialization
     @YamlFieldCustomCopy
-    private DynamicValue<String> jmeterTestplan = new DynamicValue<>();
+    private DynamicValue<String> jmeterTestplan = new DynamicValue<>("");
 
     public DynamicValue<String> getJmeterTestplan() {
         return jmeterTestplan;
@@ -46,13 +47,19 @@ public class YamlJMeterFunction extends AbstractYamlFunction<JMeterFunction> {
     @Override
     protected void fillDeclaredFields(JMeterFunction function, StagingAutomationPackageContext context) {
         super.fillDeclaredFields(function, context);
-        AutomationPackageResourceUploader resourceUploader = context.getResourceUploader();
+        AutomationPackageResourceMapper resourceMapper = context.getResourceMapper();
 
         String testplanPath = jmeterTestplan.get();
-        String testPlanRef = resourceUploader.applyResourceReference(testplanPath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
+        String testPlanRef = resourceMapper.applyResourceReference(testplanPath, context);
         if (testPlanRef != null) {
             function.setJmeterTestplan(new DynamicValue<>(testPlanRef));
         }
+    }
+
+    @Override
+    public void setDeclaredFieldsFromObject(JMeterFunction function) {
+        super.setDeclaredFieldsFromObject(function);
+        jmeterTestplan = AutomationPackageLocalResourceMapper.toDescriptorReference(function.getJmeterTestplan());
     }
 
     @Override

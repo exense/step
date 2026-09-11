@@ -26,20 +26,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.AttachmentMeta;
 import step.attachments.SkippedAttachmentMeta;
-import step.attachments.StreamingAttachmentMeta;
 import step.core.artefacts.reports.ReportNodeAccessor;
 import step.core.execution.ExecutionEngineContext;
-import step.reporting.Junit4ReportConfig;
 import step.reporting.JUnit4ReportWriter;
 import step.reporting.JUnitReport;
+import step.reporting.Junit4ReportConfig;
 import step.reporting.ReportMetadata;
-import step.resources.ResourceManager;
-import step.resources.ResourceRevisionContent;
-import step.resources.StreamingResourceContentProvider;
+import step.resources.AttachmentStorage;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class JUnitXmlReportBuilder {
 
@@ -48,15 +51,13 @@ public class JUnitXmlReportBuilder {
     public static final String DEFAULT_ATTACHMETS_SUBFOLDER = "attachments";
 
     private final ReportNodeAccessor reportNodeAccessor;
-    private final ResourceManager attachmentsResourceManager;
-    private final StreamingResourceContentProvider streamingResourceContentProvider;
+    private final AttachmentStorage attachmentStorage;
     private final Configuration configuration;
 
     public JUnitXmlReportBuilder(ExecutionEngineContext executionEngineContext) {
-        this.reportNodeAccessor = executionEngineContext.getReportNodeAccessor();
-        this.attachmentsResourceManager = executionEngineContext.getResourceManager();
-        this.streamingResourceContentProvider = executionEngineContext.get(StreamingResourceContentProvider.class);
-        this.configuration = executionEngineContext.getConfiguration();
+        this.reportNodeAccessor = Objects.requireNonNull(executionEngineContext.getReportNodeAccessor());
+        this.attachmentStorage = Objects.requireNonNull(executionEngineContext.getAttachmentStorage());
+        this.configuration = Objects.requireNonNull(executionEngineContext.getConfiguration());
     }
 
     /**
@@ -91,7 +92,7 @@ public class JUnitXmlReportBuilder {
             .setAddAttachments(includeAttachments != null ? includeAttachments : false)
             .setAttachmentSubfolder(attachmentsSubfolder)
             .setAttachmentRootFolder(attachmentsRootFolder)
-            .setAttachmentResourceManager(attachmentsResourceManager)
+            .setAttachmentStorage(attachmentStorage)
             .setAddLinksToStepFrontend(true)
             .setServerConfiguration(configuration)
             .createConfig();
@@ -132,15 +133,9 @@ public class JUnitXmlReportBuilder {
                             ObjectId attachmentId = attachment.getId();
                             InputStream resourceStream;
                             try {
-                                if (attachment instanceof StreamingAttachmentMeta) {
-                                    // streaming attachment
-                                    resourceStream = streamingResourceContentProvider.getResourceContentStream(attachmentId.toString());
-                                } else {
-                                    // "regular" attachment
-                                    resourceStream = attachmentsResourceManager.getResourceContent(attachmentId.toString()).getResourceStream();
-                                }
+                                resourceStream = attachmentStorage.getAttachmentStream(attachmentId.toString());
                             } catch (Exception e) {
-                                log.warn("Unable to obtain attachment content for attachment '{}' (id={}), not adding to report", attachment.getName(), attachmentId);
+                                log.warn("Unable to obtain attachment content for attachment '{}' (id={}), not adding to report", attachment.getName(), attachmentId, e);
                                 continue;
                             }
                             File attachmentOutFile = new File(testCaseSubdir, attachment.getName());

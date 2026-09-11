@@ -81,10 +81,10 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
         assertFilesEqual(
             expectedFilesPath
-                .resolve("Hello World Composite Function.yml"),
+                .resolve("Hello_World_Composite_Function.yml"),
             destinationDirectory.toPath()
                 .resolve("newKeywordsPath")
-                .resolve("Hello World Composite Function.yml")
+                .resolve("Hello_World_Composite_Function.yml")
         );
         assertFilesEqual(
             expectedFilesPath
@@ -99,10 +99,10 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
         assertFilesEqual(
             expectedFilesPath
-                .resolve("This Keyword was renamed.yml"),
+                .resolve("This_Keyword_was_renamed.yml"),
             destinationDirectory.toPath()
                 .resolve("newKeywordsPath")
-                .resolve("This Keyword was renamed.yml")
+                .resolve("This_Keyword_was_renamed.yml")
         );
 
         assertFilesEqual(
@@ -116,7 +116,7 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
         assertFalse(Files.exists(
             destinationDirectory.toPath()
                 .resolve("newKeywordsPath")
-                .resolve("This Keyword was renamed.yml")
+                .resolve("This_Keyword_was_renamed.yml")
         ));
 
         assertFilesEqual(
@@ -145,10 +145,10 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
         assertFilesEqual(
             expectedFilesPath
-                .resolve("Hello World Plan.yml"),
+                .resolve("Hello_World_Plan.yml"),
             destinationDirectory.toPath()
                 .resolve("newPlansPath")
-                .resolve("Hello World Plan.yml")
+                .resolve("Hello_World_Plan.yml")
         );
         assertFilesEqual(
             expectedFilesPath
@@ -163,10 +163,10 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
         assertFilesEqual(
             expectedFilesPath
-                .resolve("This Plan was renamed.yml"),
+                .resolve("This_Plan_was_renamed.yml"),
             destinationDirectory.toPath()
                 .resolve("newPlansPath")
-                .resolve("This Plan was renamed.yml")
+                .resolve("This_Plan_was_renamed.yml")
         );
 
         assertFilesEqual(
@@ -180,7 +180,7 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
         assertFalse(Files.exists(
             destinationDirectory.toPath()
                 .resolve("newPlansPath")
-                .resolve("This Plan was renamed.yml")
+                .resolve("This_Plan_was_renamed.yml")
         ));
 
         assertFilesEqual(
@@ -208,10 +208,10 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
         assertFilesEqual(
             expectedFilesPath
-                .resolve("Hello World Plan.yml"),
+                .resolve("Hello_World_Plan.yml"),
             destinationDirectory.toPath()
                 .resolve("newPlansPath")
-                .resolve("Hello World Plan.yml")
+                .resolve("Hello_World_Plan.yml")
         );
         assertFilesEqual(
             expectedFilesPath
@@ -229,10 +229,10 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
 
         assertFilesEqual(
             expectedFilesPath
-                .resolve("This Plan was renamed.yml"),
+                .resolve("This_Plan_was_renamed.yml"),
             destinationDirectory.toPath()
                 .resolve("newPlansPath")
-                .resolve("This Plan was renamed.yml")
+                .resolve("This_Plan_was_renamed.yml")
         );
 
         assertFilesEqual(
@@ -246,7 +246,7 @@ public class AutomationPackageFragmentReferenceTest extends AutomationPackageCol
         assertFalse(Files.exists(
             destinationDirectory.toPath()
                 .resolve("newPlansPath")
-                .resolve("Hello World Plan.yml")
+                .resolve("Hello_World_Plan.yml")
         ));
 
         assertFilesEqual(

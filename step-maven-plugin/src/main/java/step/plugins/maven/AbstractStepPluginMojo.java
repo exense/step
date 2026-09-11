@@ -40,7 +40,9 @@ import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -242,6 +244,50 @@ public abstract class AbstractStepPluginMojo extends AbstractMojo {
         }
         s = s + ":" + version;
         return s;
+    }
+
+    /**
+     * Merges a map configured in the pom.xml with the same map passed as a single string, which is what allows
+     * overriding its values with a system property. The values of the raw string take precedence.
+     *
+     * @param parameterName how the parameter is named in the error message reported for a malformed raw entry
+     * @return the merged map, or {@code null} when nothing is configured at all
+     */
+    protected Map<String, String> mergeWithRawValues(Map<String, String> configured, String raw, String parameterName) {
+        Map<String, String> merged = new LinkedHashMap<>();
+        if (configured != null) {
+            merged.putAll(configured);
+        }
+        if (raw != null && !raw.isBlank()) {
+            merged.putAll(parseKeyValuePairs(raw, parameterName));
+        }
+        return merged.isEmpty() ? null : merged;
+    }
+
+    /**
+     * Parses a map passed as a single string, which is the form a map has to take to be passed as a system property.
+     *
+     * @param raw           the entries, separated by a semicolon (ex: key1=value1;key2=value2). The first '=' of an
+     *                      entry separates the key from its value, so that values may contain '=' themselves. Keys are
+     *                      trimmed and must not be empty; values are taken as-is, so that leading spaces are preserved.
+     * @param parameterName how the parameter is named in the error message reported for a malformed entry
+     */
+    protected Map<String, String> parseKeyValuePairs(String raw, String parameterName) {
+        if (raw == null || raw.isBlank()) return new LinkedHashMap<>();
+
+        Map<String, String> result = new LinkedHashMap<>();
+        for (String entry : raw.split(";")) {
+            entry = entry.trim();
+            if (entry.isEmpty()) continue;
+            String[] parts = entry.split("=", 2);
+            if (parts.length != 2 || parts[0].trim().isEmpty()) {
+                throw new IllegalArgumentException(
+                    "Invalid " + parameterName + " format '" + entry + "', expected 'key=value'. " +
+                        "Multiple parameters should be separated by a semicolon ';' (ex: key1=value1;key2=value2).");
+            }
+            result.put(parts[0].trim(), parts[1]);
+        }
+        return result;
     }
 
     protected static void validateEEConfiguration(String paramProjectName, String paramAuthToken) throws MojoExecutionException {

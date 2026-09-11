@@ -30,13 +30,14 @@ import step.cli.StepCliExecutionException;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Mojo(name = "execute-automation-package")
 public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo {
+
+    private static final String EXECUTION_PARAMETER_NAME = "execution parameter";
 
     @Parameter(property = "step-execute-auto-packages.user-id", required = false)
     private String userId;
@@ -294,14 +295,7 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
 
     public Map<String, String> getExecutionParameters() {
         // Start with XML-configured parameters, then let raw string (system property) values override them
-        Map<String, String> merged = new LinkedHashMap<>();
-        if (executionParameters != null) {
-            merged.putAll(executionParameters);
-        }
-        if (executionParametersRaw != null && !executionParametersRaw.isBlank()) {
-            merged.putAll(parseExecutionParameters(executionParametersRaw));
-        }
-        return merged.isEmpty() ? null : merged;
+        return mergeWithRawValues(executionParameters, executionParametersRaw, EXECUTION_PARAMETER_NAME);
     }
 
     public void setExecutionParameters(Map<String, String> executionParameters) {
@@ -317,21 +311,7 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
     }
 
     protected Map<String, String> parseExecutionParameters(String raw) {
-        if (raw == null || raw.isBlank()) return new LinkedHashMap<>();
-
-        Map<String, String> result = new LinkedHashMap<>();
-        for (String entry : raw.split(";")) {
-            entry = entry.trim();
-            if (entry.isEmpty()) continue;
-            String[] parts = entry.split("=", 2);
-            if (parts.length != 2) {
-                throw new IllegalArgumentException(
-                    "Invalid execution parameter format '" + entry + "', expected 'key=value'. " +
-                        "Multiple parameters should be separated by a semicolon ';' (ex: key1=value1;key2=value2).");
-            }
-            result.put(parts[0].trim(), parts[1]);
-        }
-        return result;
+        return parseKeyValuePairs(raw, EXECUTION_PARAMETER_NAME);
     }
 
     public Integer getExecutionResultTimeoutS() {
