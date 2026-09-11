@@ -174,6 +174,16 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
     abstract protected void fillAutomationPackageWithAnnotatedKeywordsAndPlans(T archive, AutomationPackageContent res) throws AutomationPackageReadingException;
 
     public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive) throws AutomationPackageReadingException {
+        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive,
+            fragment instanceof AutomationPackageDescriptorYaml ? ((AutomationPackageDescriptorYaml) fragment).getVersion() : null);
+    }
+
+    /**
+     * @param packageVersion the schema version declared by the automation package descriptor. Fragments usually
+     *                       declare no version of their own and inherit this one, which is what decides whether the
+     *                       migrations of the automation package format apply to them
+     */
+    public void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, String packageVersion) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
         if (!fragment.getFragments().isEmpty()) {
@@ -181,8 +191,8 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 List<URL> resources = archive.getResourcesByPattern(importedFragmentReference);
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = resource.openStream()) {
-                        fragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getAutomationPackageName());
-                        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive);
+                        AutomationPackageFragmentYaml importedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, importedFragmentReference, archive.getAutomationPackageName(), packageVersion);
+                        fillAutomationPackageWithImportedFragments(targetPackage, importedFragment, archive, packageVersion);
                     } catch (IOException e) {
                         throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
                     }

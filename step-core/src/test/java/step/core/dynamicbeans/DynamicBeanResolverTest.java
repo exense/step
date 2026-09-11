@@ -41,6 +41,28 @@ public class DynamicBeanResolverTest {
         Assert.assertEquals("test", bean.getTestRecursive2().getTestString().get());
     }
 
+    /**
+     * A value which fails to evaluate must not prevent the other values of the bean from being evaluated. The error
+     * is kept on the failing value and reported when that value is actually used
+     */
+    @Test
+    public void testFailingValueDoesNotPreventTheEvaluationOfTheOtherValues() {
+        TestBean bean = new TestBean();
+        // The public fields are evaluated before the properties, so a failure here used to abort the whole bean
+        bean.publicField = new DynamicValue<>("undefinedVariable", "");
+
+        resolver.evaluate(bean, null);
+
+        RuntimeException e = Assert.assertThrows(RuntimeException.class, () -> bean.publicField.get());
+        Assert.assertTrue(e.getMessage(), e.getMessage().contains("undefinedVariable"));
+
+        Assert.assertEquals("test", bean.publicFieldWithAnnotation.testString.get());
+        Assert.assertEquals("test", bean.getTestString().get());
+        Assert.assertEquals(true, (boolean) bean.getTestBoolean().get());
+        Assert.assertEquals(10, (int) bean.getTestInteger().get());
+        Assert.assertEquals("test", bean.getTestRecursive2().getTestString().get());
+    }
+
     @Test
     public void testClone() {
         TestBean bean = new TestBean();

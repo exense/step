@@ -22,6 +22,7 @@ import step.artefacts.automation.YamlReturn;
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.NoStringInterpolation;
 import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlReturn.class, name = "return")
@@ -30,6 +31,7 @@ public class Return extends AbstractArtefact {
 
     private DynamicValue<String> output = new DynamicValue<>();
 
+    @NoStringInterpolation
     public DynamicValue<String> getOutput() {
         return output;
     }

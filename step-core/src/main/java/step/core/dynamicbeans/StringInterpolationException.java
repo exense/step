@@ -16,33 +16,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with STEP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
-package step.artefacts;
+package step.core.dynamicbeans;
 
-import step.core.artefacts.AbstractArtefact;
-import step.core.dynamicbeans.DynamicValue;
-import step.core.dynamicbeans.NoStringInterpolation;
+/**
+ * Thrown when a plain string value contains a malformed expression and can therefore not be interpolated
+ */
+public class StringInterpolationException extends RuntimeException {
 
-public class TokenSelector extends AbstractArtefact {
-
-    public static final String TOKEN_SELECTOR_TOKEN_YAML_FIELD = "routing";
-    DynamicValue<Boolean> remote = new DynamicValue<Boolean>(true);
-
-    DynamicValue<String> token = new DynamicValue<>("{}");
-
-    public DynamicValue<Boolean> getRemote() {
-        return remote;
-    }
-
-    public void setRemote(DynamicValue<Boolean> remote) {
-        this.remote = remote;
-    }
-
-    @NoStringInterpolation
-    public DynamicValue<String> getToken() {
-        return token;
-    }
-
-    public void setToken(DynamicValue<String> token) {
-        this.token = token;
+    public StringInterpolationException(String message) {
+        super(message);
     }
 }
