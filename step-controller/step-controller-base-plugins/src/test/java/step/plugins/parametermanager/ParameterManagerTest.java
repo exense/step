@@ -240,7 +240,7 @@ public class ParameterManagerTest {
         accessor.save(new Parameter(null, "plain", "no placeholder here", "desc"));
         accessor.save(new Parameter(null, "escaped", "$${host}", "desc"));
 
-        Map<String, String> params = m.getAllParameterValues(new HashMap<>(), null);
+        Map<String, String> params = getAllParameterValues(m, new HashMap<>(), null);
         Assert.assertEquals("myhost", params.get("host"));
         Assert.assertEquals("http://myhost:8080/api", params.get("url"));
         Assert.assertEquals("no placeholder here", params.get("plain"));
@@ -256,7 +256,7 @@ public class ParameterManagerTest {
 
         Map<String, Object> bindings = new HashMap<>();
         bindings.put("user", "poire");
-        Assert.assertEquals("Hello poire", m.getAllParameterValues(bindings, null).get("greeting"));
+        Assert.assertEquals("Hello poire", getAllParameterValues(m, bindings, null).get("greeting"));
     }
 
     @Test
@@ -269,8 +269,9 @@ public class ParameterManagerTest {
         protectedParameter.setProtectedValue(true);
         accessor.save(protectedParameter);
 
-        Map<String, String> params = m.getAllParameterValues(new HashMap<>(), null);
-        Assert.assertEquals("pwd=${host}", params.get("secret"));
+        // The raw parameter is read, the masked value would hide whether the protected value was interpolated
+        Map<String, Parameter> parameters = m.getAllParameters(new HashMap<>(), null);
+        Assert.assertEquals("pwd=${host}", parameters.get("secret").getValue().get());
     }
 
     @Test
@@ -282,7 +283,7 @@ public class ParameterManagerTest {
         accessor.save(new Parameter(null, "b", "${a}", "desc"));
 
         PluginCriticalException e = Assert.assertThrows(PluginCriticalException.class,
-            () -> m.getAllParameterValues(new HashMap<>(), null));
+            () -> m.getAllParameters(new HashMap<>(), null));
         Assert.assertTrue(e.getMessage(), e.getMessage().contains("could not be resolved"));
     }
 
