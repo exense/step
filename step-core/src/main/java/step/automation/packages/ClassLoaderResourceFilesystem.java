@@ -53,7 +53,7 @@ public class ClassLoaderResourceFilesystem {
      * @return true if the resource referenced by the provided url is a directory
      * @throws IOException
      */
-    public static boolean isDirectory(URL resourceUrl) throws IOException {
+    public static boolean isDirectory(URL resourceUrl) throws IOException, URISyntaxException {
         String protocol = resourceUrl.getProtocol();
         if (protocol.equals(FILE)) {
             return toFile(resourceUrl).isDirectory();

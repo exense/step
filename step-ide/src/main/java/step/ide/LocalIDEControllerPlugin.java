@@ -9,6 +9,7 @@ import step.core.GlobalContext;
 import step.core.execution.ExecutionDiversion;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
+import step.engine.plugins.ExecutionEnginePlugin;
 import step.ide.api.LocalFileSystemServices;
 import step.ide.api.LocalIDEServices;
 import step.resources.ResourceManagerImpl;
@@ -24,6 +25,7 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
 
         state.setResourceManager((ResourceManagerImpl) context.getResourceManager());
         state.setFileResolver(context.getFileResolver());
+        state.setConfiguration(context.getConfiguration());
         context.put(ExecutionDiversion.class, state);
         // Lets the automation package services browse the package open in the editor under the 'local'
         // id, so that the IDE and a Step server expose the very same ap-resource services.
@@ -47,5 +49,10 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
     @Override
     public void postShutdownHook() {
         LocalIDEState.get().onShutdown();
+    }
+
+    @Override
+    public ExecutionEnginePlugin getExecutionEnginePlugin() {
+        return new IDEKeywordPropertiesPlugin(LocalIDEState.get().getConfiguration());
     }
 }

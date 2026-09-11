@@ -14,6 +14,11 @@ public class ApExecuteParameters extends ApParameters<ApExecuteParameters> {
     private Boolean ensureExecutionSuccess;
 
     private String includePlans;
+    /**
+     * Takes precedence over {@link #includePlans}. Unlike the comma separated {@link #includePlans}, this supports
+     * plan names containing commas, which is why the IDE uses it.
+     */
+    private List<String> includePlanNames;
     private String excludePlans;
     private Boolean wrapIntoTestSet;
     private Integer numberOfThreads;
@@ -46,6 +51,10 @@ public class ApExecuteParameters extends ApParameters<ApExecuteParameters> {
 
     public String getIncludePlans() {
         return includePlans;
+    }
+
+    public List<String> getIncludePlanNames() {
+        return includePlanNames;
     }
 
     public String getExcludePlans() {
@@ -104,6 +113,11 @@ public class ApExecuteParameters extends ApParameters<ApExecuteParameters> {
 
     public ApExecuteParameters setIncludePlans(String includePlans) {
         this.includePlans = includePlans;
+        return this;
+    }
+
+    public ApExecuteParameters setIncludePlanNames(List<String> includePlanNames) {
+        this.includePlanNames = includePlanNames;
         return this;
     }
 
