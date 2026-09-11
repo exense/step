@@ -23,7 +23,6 @@ import step.automation.packages.deserialization.AutomationPackageSerializationRe
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.execution.AbstractExecutionEngineContext;
 import step.core.execution.ExecutionEngineContext;
-import step.core.execution.OperationMode;
 import step.core.plugins.Plugin;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.type.FunctionTypeRegistry;
@@ -31,7 +30,6 @@ import step.parameter.ParameterManager;
 import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.resources.ResourceManager;
 
-import static step.core.execution.OperationMode.isLocal;
 
 /**
  * Registers the automation package manager for local executions in execution engine context
@@ -41,7 +39,7 @@ public class AutomationPackageLocalOSPlugin extends AbstractExecutionEnginePlugi
 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
-        if (isLocal(context.getOperationMode())) {
+        if (context.getOperationMode().isLocal()) {
             FunctionAccessor functionAccessor = context.require(FunctionAccessor.class);
             ResourceManager resourceManager = context.getResourceManager();
 

@@ -203,6 +203,10 @@ class Agent {
 
         if (properties['skipNpmInstall'] === 'true') {
           logger.info('Skipping npm install')
+        } else if (!hasPackageJson(npmProjectPath)) {
+          // A keyword project without a package.json declares no dependency, so there is nothing to install. npm
+          // would eventually try to find such a file in the directory ancestors and fail if none is found
+          logger.info('Skipping npm install, ' + npmProjectPath + ' has no package.json')
         } else {
           logger.info('Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
           const npmInstallResult = await this.executeNpmInstall(npmProjectPath);
@@ -343,6 +347,10 @@ class Agent {
       }
     });
   }
+}
+
+function hasPackageJson(npmProjectPath) {
+  return fs.existsSync(path.join(npmProjectPath, 'package.json'));
 }
 
 async function readStepKeywordDirectory(npmProjectPath) {

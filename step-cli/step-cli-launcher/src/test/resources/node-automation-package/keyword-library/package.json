@@ -1,0 +1,6 @@
+{
+  "name": "step-cli-node-keyword-library",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Keyword library of the automation package used by NodeLocalExecutionTest. It deliberately declares no dependency, so that the npm install the agent runs in it needs no network access."
+}

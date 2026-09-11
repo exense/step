@@ -48,13 +48,21 @@ import step.grid.client.GridClientException;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
-import step.grid.io.*;
+import step.grid.io.AgentError;
+import step.grid.io.AgentErrorCode;
+import step.grid.io.Attachment;
+import step.grid.io.AttachmentHelper;
+import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static step.core.reports.Error.DEFAULT_ERROR_CODE;

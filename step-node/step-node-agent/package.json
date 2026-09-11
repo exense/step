@@ -57,6 +57,7 @@
     "shelljs",
     "unzip-stream",
     "uuid",
+    "winston",
     "ws",
     "yaml"
   ],
@@ -71,6 +72,7 @@
     "shelljs",
     "unzip-stream",
     "uuid",
+    "winston",
     "ws",
     "yaml"
   ]
