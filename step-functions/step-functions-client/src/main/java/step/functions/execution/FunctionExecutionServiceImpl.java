@@ -48,13 +48,22 @@ import step.grid.client.GridClientException;
 import step.grid.filemanager.FileManagerException;
 import step.grid.filemanager.FileVersion;
 import step.grid.filemanager.FileVersionId;
-import step.grid.io.*;
+import step.grid.io.AgentError;
+import step.grid.io.AgentErrorCode;
+import step.grid.io.Attachment;
+import step.grid.io.AttachmentHelper;
+import step.grid.io.OutputMessage;
 import step.grid.tokenpool.Interest;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static step.core.reports.Error.DEFAULT_ERROR_CODE;
@@ -216,6 +225,7 @@ public class FunctionExecutionServiceImpl implements FunctionExecutionService {
                 input.setProperties(properties);
 
                 int callTimeout = function.getCallTimeout().get();
+                logger.error("FIXME SED-4934 CALLTIMEOUT for {} is {} MILLISECONDS ({}@{} TO={})", function.getAttribute("name"), callTimeout, function.getClass().getName(), Objects.hashCode(function), Objects.hashCode(function.getCallTimeout()));
 
                 //expose additional properties to the keyword
                 properties.put(KEYWORD_NAME_PROP, input.getFunction());
