@@ -478,7 +478,7 @@ public class ParameterManagerPluginTest {
     }
 
     private ExecutionEngine newExecutionEngine(ExecutionEnginePlugin parameterPlugin, Configuration configuration) {
-        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL_PLAN, true);
         parentContext.setConfiguration(configuration);
         return ExecutionEngine.builder()
             .withParentContext(parentContext)

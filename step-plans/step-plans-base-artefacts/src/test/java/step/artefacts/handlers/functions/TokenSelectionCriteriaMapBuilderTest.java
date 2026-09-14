@@ -109,6 +109,27 @@ public class TokenSelectionCriteriaMapBuilderTest {
             "criteriaAttribute3", new Interest(Pattern.compile("attribute3FromFunctionGroup"), true)), criteriaMap);
     }
 
+    /**
+     * A registered filter has the last word on the criteria a token is selected with. This is what lets an execution
+     * whose agents are not those of a real infrastructure, a local execution typically, drop the criteria it cannot
+     * honour.
+     */
+    @Test
+    public void testSelectionCriteriaFilter() {
+        Function function = new Function();
+        FunctionTypeRegistry functionTypeRegistry = buildFunctionTypeRegistry(Map.of());
+
+        CallFunction callFunction = new CallFunction();
+        callFunction.getToken().setValue("{\"keptCriteria\":\"aValue\", \"droppedCriteria\":\"anotherValue\"}");
+
+        DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler()));
+        TokenSelectionCriteriaMapBuilder builder = new TokenSelectionCriteriaMapBuilder(functionTypeRegistry,
+            dynamicJsonObjectResolver, criteria -> Map.of("keptCriteria", criteria.get("keptCriteria")));
+
+        Map<String, Interest> criteriaMap = builder.buildSelectionCriteriaMap(callFunction, function, null, Map.of());
+        assertEquals(Map.of("keptCriteria", new Interest(Pattern.compile("aValue"), true)), criteriaMap);
+    }
+
     private static TokenSelectionCriteriaMapBuilder getTokenSelectionCriteriaMapBuilder(FunctionTypeRegistry functionTypeRegistry) {
         DynamicJsonObjectResolver dynamicJsonObjectResolver = new DynamicJsonObjectResolver(new DynamicJsonValueResolver(new ExpressionHandler()));
         return new TokenSelectionCriteriaMapBuilder(functionTypeRegistry, dynamicJsonObjectResolver);
