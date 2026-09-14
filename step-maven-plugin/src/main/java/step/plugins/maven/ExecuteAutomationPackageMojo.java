@@ -84,6 +84,7 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
     @Parameter(property = "step-execute-auto-packages.ensure-exec-success", defaultValue = "true")
     private Boolean ensureExecutionSuccess;
 
+    // TODO should we update these fields to support native lists?
     @Parameter(property = "step-execute-auto-packages.include-plans")
     private String includePlans;
     @Parameter(property = "step-execute-auto-packages.exclude-plans")
