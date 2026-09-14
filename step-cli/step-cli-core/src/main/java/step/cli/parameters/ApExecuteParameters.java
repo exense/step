@@ -13,18 +13,13 @@ public class ApExecuteParameters extends ApParameters<ApExecuteParameters> {
     private Boolean waitForExecution;
     private Boolean ensureExecutionSuccess;
 
-    private String includePlans;
-    /**
-     * Takes precedence over {@link #includePlans}. Unlike the comma separated {@link #includePlans}, this supports
-     * plan names containing commas, which is why the IDE uses it.
-     */
-    private List<String> includePlanNames;
-    private String excludePlans;
+    private List<String> includePlans;
+    private List<String> excludePlans;
     private Boolean wrapIntoTestSet;
     private Integer numberOfThreads;
 
-    private String includeCategories;
-    private String excludeCategories;
+    private List<String> includeCategories;
+    private List<String> excludeCategories;
 
     private List<ExecuteAutomationPackageTool.Report> reports;
     private File reportOutputDir;
@@ -49,23 +44,19 @@ public class ApExecuteParameters extends ApParameters<ApExecuteParameters> {
         return ensureExecutionSuccess;
     }
 
-    public String getIncludePlans() {
+    public List<String> getIncludePlans() {
         return includePlans;
     }
 
-    public List<String> getIncludePlanNames() {
-        return includePlanNames;
-    }
-
-    public String getExcludePlans() {
+    public List<String> getExcludePlans() {
         return excludePlans;
     }
 
-    public String getIncludeCategories() {
+    public List<String> getIncludeCategories() {
         return includeCategories;
     }
 
-    public String getExcludeCategories() {
+    public List<String> getExcludeCategories() {
         return excludeCategories;
     }
 
@@ -111,17 +102,12 @@ public class ApExecuteParameters extends ApParameters<ApExecuteParameters> {
         return this;
     }
 
-    public ApExecuteParameters setIncludePlans(String includePlans) {
+    public ApExecuteParameters setIncludePlans(List<String> includePlans) {
         this.includePlans = includePlans;
         return this;
     }
 
-    public ApExecuteParameters setIncludePlanNames(List<String> includePlanNames) {
-        this.includePlanNames = includePlanNames;
-        return this;
-    }
-
-    public ApExecuteParameters setExcludePlans(String excludePlans) {
+    public ApExecuteParameters setExcludePlans(List<String> excludePlans) {
         this.excludePlans = excludePlans;
         return this;
     }
@@ -136,12 +122,12 @@ public class ApExecuteParameters extends ApParameters<ApExecuteParameters> {
         return this;
     }
 
-    public ApExecuteParameters setIncludeCategories(String includeCategories) {
+    public ApExecuteParameters setIncludeCategories(List<String> includeCategories) {
         this.includeCategories = includeCategories;
         return this;
     }
 
-    public ApExecuteParameters setExcludeCategories(String excludeCategories) {
+    public ApExecuteParameters setExcludeCategories(List<String> excludeCategories) {
         this.excludeCategories = excludeCategories;
         return this;
     }

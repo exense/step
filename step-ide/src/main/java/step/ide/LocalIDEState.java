@@ -53,7 +53,6 @@ public class LocalIDEState implements ExecutionDiversion {
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
     private String ideResourcePath = "dist/step-ide"; // must neither start, nor end, with a slash; Overridden in the EE variant.
-    private Configuration configuration;
 
     public String getIdeResourcePath() {
         return ideResourcePath;
@@ -267,14 +266,6 @@ public class LocalIDEState implements ExecutionDiversion {
             throw new IllegalStateException("No automation package is currently opened, please open one first");
         }
         return apDir;
-    }
-
-    public void setConfiguration(Configuration configuration) {
-        this.configuration = configuration;
-    }
-
-    public Configuration getConfiguration() {
-        return configuration;
     }
 
     public void setFileResolver(FileResolver fileResolver) {

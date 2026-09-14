@@ -215,17 +215,21 @@ public class ApCommand extends BaseCommand {
             description = "Whether to wait for execution completeness")
         protected boolean async;
 
-        @CommandLine.Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed")
-        protected String includePlans;
+        @CommandLine.Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> includePlans;
 
-        @CommandLine.Option(names = {"--excludePlans"}, description = "The comma separated list of plans to be excluded from execution")
-        protected String excludePlans;
+        @CommandLine.Option(names = {"--excludePlans"}, description = "The comma separated list of plans to be excluded from execution",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> excludePlans;
 
-        @CommandLine.Option(names = {"--includeCategories"}, description = "The comma separated list of categories to be executed")
-        protected String includeCategories;
+        @CommandLine.Option(names = {"--includeCategories"}, description = "The comma separated list of categories to be executed",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> includeCategories;
 
-        @CommandLine.Option(names = {"--excludeCategories"}, description = "The comma separated list of categories to be excluded from execution")
-        protected String excludeCategories;
+        @CommandLine.Option(names = {"--excludeCategories"}, description = "The comma separated list of categories to be excluded from execution",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> excludeCategories;
 
         @CommandLine.Option(names = {LOCAL}, defaultValue = "false", description = "To execute the Automation Package locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         protected boolean local;
@@ -306,8 +310,8 @@ public class ApCommand extends BaseCommand {
             executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
         }
 
-        protected void executeLocally(File file, File libFile, String includePlans, String excludePlans, String includeCategories,
-                                      String excludeCategories, Map<String, String> executionParameters) {
+        protected void executeLocally(File file, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
+                                      List<String> excludeCategories, Map<String, String> executionParameters) {
             new ApLocalExecuteCommandHandler().execute(file, libFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
         }
 

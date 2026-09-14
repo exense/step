@@ -145,16 +145,14 @@ public class IdeCommands {
                 .setExecutionResultTimeoutS(3600)
                 .setWaitForExecution(false)
                 .setEnsureExecutionSuccess(false)
-                .setIncludePlans(executionParams.getDescription()) // NOTE: the include plans is slightly buggy as it splits plan names by commas (",") -- so don't use plan names with a comma.
+                // an empty list of included plan names means that all plans of the package are executed
+                .setIncludePlans(request.includedPlanNames().isEmpty() ? null : request.includedPlanNames())
                 .setExcludePlans(null)
                 .setIncludeCategories(null)
                 .setExcludeCategories(null)
                 .setWrapIntoTestSet(false)
                 .setNumberOfThreads(null)
                 .setReports(null);
-            if (request.includedPlanNames() != null && !request.includedPlanNames().isEmpty()) {
-                params.setIncludePlanNames(request.includedPlanNames());
-            }
             String url = "http://localhost:8080";
             return new ExecuteAutomationPackageTool(url, params);
         }

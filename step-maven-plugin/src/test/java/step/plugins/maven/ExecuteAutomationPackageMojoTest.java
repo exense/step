@@ -59,10 +59,10 @@ public class ExecuteAutomationPackageMojoTest extends AbstractMojoTest {
         assertEquals(ExecuteAutomationPackageTool.ReportType.junit, mojo.params.getReports().get(0).getReportType());
         assertEquals(List.of(ExecuteAutomationPackageTool.ReportOutputMode.stdout, ExecuteAutomationPackageTool.ReportOutputMode.file), mojo.params.getReports().get(0).getOutputModes());
         assertEquals(createTestCustomParams(), mojo.params.getExecutionParameters());
-        assertEquals(TEST_INCLUDE_PLANS, mojo.params.getIncludePlans());
-        Assert.assertNull(TEST_INCLUDE_PLANS, mojo.params.getExcludePlans());
-        assertEquals(TEST_INCLUDE_CATEGORIES, mojo.params.getIncludeCategories());
-        assertEquals(TEST_EXCLUDE_CATEGORIES, mojo.params.getExcludeCategories());
+        assertEquals(List.of("plan1", "plan2"), mojo.params.getIncludePlans());
+        Assert.assertNull(mojo.params.getExcludePlans());
+        assertEquals(List.of("PerformanceTest", "JMterTest"), mojo.params.getIncludeCategories());
+        assertEquals(List.of("CypressTest", "OidcTest"), mojo.params.getExcludeCategories());
     }
 
     private void configureMojo(ExecuteAutomationPackageMojoTestable mojo, boolean ensureExecutionSuccess) throws URISyntaxException {

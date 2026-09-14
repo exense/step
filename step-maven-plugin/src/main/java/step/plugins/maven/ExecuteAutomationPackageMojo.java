@@ -185,10 +185,10 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
                 .setWaitForExecution(getWaitForExecution())
                 .setEnsureExecutionSuccess(getEnsureExecutionSuccess())
                 .setReports(parsedReports)
-                .setIncludePlans(getIncludePlans())
-                .setExcludePlans(getExcludePlans())
-                .setIncludeCategories(getIncludeCategories())
-                .setExcludeCategories(getExcludeCategories())
+                .setIncludePlans(parseCommaSeparatedList(getIncludePlans()))
+                .setExcludePlans(parseCommaSeparatedList(getExcludePlans()))
+                .setIncludeCategories(parseCommaSeparatedList(getIncludeCategories()))
+                .setExcludeCategories(parseCommaSeparatedList(getExcludeCategories()))
                 .setWrapIntoTestSet(getWrapIntoTestSet())
                 .setNumberOfThreads(getNumberOfThreads())
                 .setReportOutputDir(reportOutputDir);
@@ -241,6 +241,10 @@ public class ExecuteAutomationPackageMojo extends AbstractAutomationPackageMojo 
                 return report;
             })
             .collect(Collectors.toList());
+    }
+
+    private static List<String> parseCommaSeparatedList(String raw) {
+        return raw == null ? null : List.of(raw.split(","));
     }
 
     protected ExecuteAutomationPackageTool createTool(final String url, ApExecuteParameters params) {

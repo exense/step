@@ -37,8 +37,6 @@ import step.engine.plugins.AbstractExecutionEnginePlugin;
 import step.junit.runner.StepClassParserResult;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,8 +47,8 @@ public class ApLocalExecuteCommandHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApLocalExecuteCommandHandler.class);
 
-    public void execute(File apFile, File libFile, String includePlans, String excludePlans, String includeCategories,
-                        String excludeCategories, Map<String, String> executionParameters) throws StepCliExecutionException {
+    public void execute(File apFile, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
+                        List<String> excludeCategories, Map<String, String> executionParameters) throws StepCliExecutionException {
         try (ExecutionEngine executionEngine = ExecutionEngine.builder().withPlugin(new AbstractExecutionEnginePlugin() {
             @Override
             public void afterExecutionEnd(ExecutionContext context) {
@@ -147,9 +145,5 @@ public class ApLocalExecuteCommandHandler {
 
     private static String getPlanName(Plan p) {
         return p.getAttribute(AbstractOrganizableObject.NAME);
-    }
-
-    private List<String> parseList(String string) {
-        return (string == null || string.isEmpty()) ? new ArrayList<>() : Arrays.stream(string.split(",")).collect(Collectors.toList());
     }
 }

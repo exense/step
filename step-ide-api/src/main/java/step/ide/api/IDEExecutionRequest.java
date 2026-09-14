@@ -10,8 +10,7 @@ import java.util.Objects;
  * Describes an automation package execution launched by the IDE.
  *
  * @param automationPackage   the automation package to execute. This is the <b>directory</b> of the currently opened
- *                            package for regular executions, but may also be a packaged archive (e.g. when the IDE
- *                            runs the AI agent, which is delivered as a packaged automation package).
+ *                            package for regular executions, but may also be an external packaged archive
  * @param executionParameters the execution parameters, notably the custom parameters handed to the package
  * @param includedPlanNames   the names of the plans to execute; an empty list executes all plans of the package
  */
