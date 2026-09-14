@@ -31,6 +31,7 @@ import step.automation.packages.AutomationPackageUpdateParameter;
 import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.AutomationPackageUpdateStatus;
 import step.automation.packages.AutomationPackageEntity;
+import step.automation.packages.AutomationPackageFileSource;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.automation.packages.accessor.AutomationPackageAccessorImpl;
 import step.core.accessors.AbstractOrganizableObject;
@@ -80,6 +81,8 @@ public class KeywordPackageMigrationExecutorTest {
     private AutomationPackageManager automationPackageManager;
     private ObjectHookRegistry objectHookRegistry;
     private Path resourceRoot;
+    private String deployedArchiveContent;
+    private String deployedLibrariesContent;
 
     @Before
     public void setUp() throws Exception {
@@ -97,9 +100,16 @@ public class KeywordPackageMigrationExecutorTest {
                         collectionFactory.getCollection("resourceRevisions", ResourceRevision.class)));
 
         automationPackageManager = Mockito.mock(AutomationPackageManager.class);
+        // The content is read while the manager is called, as its providers do, so a closed stream or a
+        // resource whose content cannot be found fails here rather than on a real controller.
         Mockito.when(automationPackageManager.createOrUpdateAutomationPackage(Mockito.any()))
-                .thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED,
-                        new ObjectId(), null, null));
+                .thenAnswer(invocation -> {
+                    AutomationPackageUpdateParameter parameters = invocation.getArgument(0);
+                    deployedArchiveContent = readContent(parameters.apSource);
+                    deployedLibrariesContent = readContent(parameters.apLibrarySource);
+                    return new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED,
+                            new ObjectId(), null, null);
+                });
 
         objectHookRegistry = new ObjectHookRegistry();
     }
@@ -149,6 +159,7 @@ public class KeywordPackageMigrationExecutorTest {
         assertEquals(ResourceManager.RESOURCE_TYPE_AP,
                 resourceManager.getResource(archive.getId().toString()).getResourceType());
         assertEquals(archive.getId().toString(), captureDeployment().apSource.getResourceId());
+        assertEquals("the content has to follow the resource to its new type", "jar", deployedArchiveContent);
     }
 
     @Test
@@ -164,17 +175,27 @@ public class KeywordPackageMigrationExecutorTest {
         assertEquals(ResourceManager.RESOURCE_TYPE_AP_LIBRARY,
                 resourceManager.getResource(libraries.getId().toString()).getResourceType());
         assertEquals(libraries.getId().toString(), captureDeployment().apLibrarySource.getResourceId());
+        assertEquals("jar", deployedArchiveContent);
+        assertEquals("the content has to follow the resource to its new type", "jar", deployedLibrariesContent);
     }
 
     @Test
     public void aPathLocatedPackageIsDeployedFromTheFileOnDisk() throws Exception {
         File archiveOnDisk = Files.write(resourceRoot.resolve("payments.jar"),
                 "jar".getBytes(StandardCharsets.UTF_8)).toFile();
-        staging.save(stage("payments", archiveOnDisk.getAbsolutePath()));
+        File librariesOnDisk = Files.write(resourceRoot.resolve("libs.zip"),
+                "libs".getBytes(StandardCharsets.UTF_8)).toFile();
+        StagedKeywordPackage staged = stage("payments", archiveOnDisk.getAbsolutePath());
+        staged.setPackageLibrariesLocation(librariesOnDisk.getAbsolutePath());
+        staging.save(staged);
 
         run(KeywordPackageMigrationMode.MIGRATE);
 
         assertNull("no resource existed, so none may be reused", captureDeployment().apSource.getResourceId());
+        assertEquals("the streams must still be open when the manager reads them", "jar", deployedArchiveContent);
+        assertEquals("libs", deployedLibrariesContent);
+        assertTrue("the files the keyword package pointed at are left untouched",
+                archiveOnDisk.exists() && librariesOnDisk.exists());
     }
 
     /**
@@ -189,6 +210,20 @@ public class KeywordPackageMigrationExecutorTest {
         run(KeywordPackageMigrationMode.MIGRATE);
 
         assertEquals("payments", captureDeployment().apSource.getArchiveName());
+    }
+
+    @Test
+    public void aKeywordPackageWithoutNameIsMigratedAsUnnamed() throws Exception {
+        automationPackageAccessor.save(automationPackage(KeywordPackageMigrationExecutor.UNNAMED_PACKAGE));
+        Resource archive = createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, "payments.jar");
+        StagedKeywordPackage staged = stage("payments", FileResolver.createPathForResource(archive));
+        staged.getAttributes().remove(AbstractOrganizableObject.NAME);
+        staging.save(staged);
+
+        run(KeywordPackageMigrationMode.MIGRATE);
+
+        assertEquals("the default name still gets a counter on collision",
+                KeywordPackageMigrationExecutor.UNNAMED_PACKAGE + " (1)", captureDeployment().apSource.getArchiveName());
     }
 
     @Test
@@ -225,10 +260,10 @@ public class KeywordPackageMigrationExecutorTest {
 
     @Test
     public void aFailedDeploymentClearsItsRecordAndDoesNotStopTheRest() throws Exception {
-        Mockito.when(automationPackageManager.createOrUpdateAutomationPackage(Mockito.any()))
-                .thenThrow(new RuntimeException("archive cannot be read"))
-                .thenReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED,
-                        new ObjectId(), null, null));
+        Mockito.doThrow(new RuntimeException("archive cannot be read"))
+                .doReturn(new AutomationPackageUpdateResult(AutomationPackageUpdateStatus.CREATED,
+                        new ObjectId(), null, null))
+                .when(automationPackageManager).createOrUpdateAutomationPackage(Mockito.any());
 
         Resource first = createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, "first.jar");
         Resource second = createResource(ResourceManager.RESOURCE_TYPE_FUNCTIONS, "second.jar");
@@ -340,6 +375,20 @@ public class KeywordPackageMigrationExecutorTest {
                 ArgumentCaptor.forClass(AutomationPackageUpdateParameter.class);
         Mockito.verify(automationPackageManager).createOrUpdateAutomationPackage(captor.capture());
         return captor.getValue();
+    }
+
+    /** Resolves a source the way the manager's providers do. */
+    private String readContent(AutomationPackageFileSource source) throws Exception {
+        String content;
+        if (source == null) {
+            content = null;
+        } else if (source.getResourceId() != null) {
+            File file = resourceManager.getResourceFile(source.getResourceId()).getResourceFile();
+            content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
+        } else {
+            content = new String(source.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        }
+        return content;
     }
 
     private Resource createResource(String type, String fileName) throws Exception {

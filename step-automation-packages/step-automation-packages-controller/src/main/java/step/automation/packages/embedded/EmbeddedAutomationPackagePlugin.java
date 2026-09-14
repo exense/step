@@ -53,7 +53,7 @@ public class EmbeddedAutomationPackagePlugin extends AbstractControllerPlugin {
         } else {
             new EmbeddedAutomationPackageImporter(
                     context.require(AutomationPackageManager.class),
-                    context.get(ObjectHookRegistry.class),
+                    context.require(ObjectHookRegistry.class),
                     context.require(AttributeResolverRegistry.class)
             ).importEmbeddedAutomationPackages(packageFolder);
         }

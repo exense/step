@@ -73,7 +73,7 @@ public class KeywordPackageMigrationPlugin extends AbstractControllerPlugin {
                 context.require(AutomationPackageAccessor.class),
                 context.require(AutomationPackageManager.class),
                 context.getResourceManager(),
-                context.get(ObjectHookRegistry.class),
+                context.require(ObjectHookRegistry.class),
                 mode
         ).run();
     }
