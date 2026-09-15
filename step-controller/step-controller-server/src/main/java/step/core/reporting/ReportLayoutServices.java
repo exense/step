@@ -49,6 +49,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     }
 
     @Override
+    @Secured(right = "{entity}-read")
     public ReportLayout get(String id) {
         ReportLayout reportLayout = super.get(id);
         checkLayoutRight(reportLayout, READ_RIGHT);
@@ -67,6 +68,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     }
 
     @Override
+    @Secured(right = "{entity}-read")
     public List<ReportLayout> findByIds(List<String> ids) {
         List<ReportLayout> byIds = super.findByIds(ids);
         byIds.forEach(r -> checkLayoutRight(r, READ_RIGHT));
@@ -74,6 +76,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     }
 
     @Override
+    @Secured(right = "{entity}-read")
     public Map<String, String> findNamesByIds(List<String> ids) {
         return reportLayoutAccessor.findByIds(ids).peek(l -> checkLayoutRight(l, READ_RIGHT)).collect(Collectors.toMap(a -> a.getId().toHexString(), a ->
             a.getAttribute(AbstractOrganizableObject.NAME)
@@ -81,6 +84,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     }
 
     @Override
+    @Secured(right = "{entity}-read")
     public List<ReportLayout> findManyByAttributes(Map<String, String> attributes) {
         return super.findManyByAttributes(attributes).stream().filter(this::canReadLayout).collect(Collectors.toList());
     }
@@ -104,6 +108,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     }
 
     @Override
+    @Secured(right = "{entity}-write")
     public ReportLayout save(ReportLayout reportLayout) {
         //Only check additional specific rights when updating layout
         Optional.ofNullable(super.get(reportLayout.getId().toHexString())).ifPresent(entity -> checkLayoutRight(entity, WRITE_RIGHT));
@@ -134,6 +139,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     }
 
     @Override
+    @Secured(right = "{entity}-delete")
     public void delete(String id) {
         ReportLayout reportLayout = getEntity(id);
         checkLayoutRight(reportLayout, DELETE_RIGHT);
@@ -148,6 +154,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     }
 
     @Override
+    @Secured(right = "{entity}-write")
     public ReportLayout restoreVersion(String id, String versionId) {
         ReportLayout reportLayout = getEntity(id);
         checkLayoutRight(reportLayout, WRITE_RIGHT);
@@ -155,6 +162,7 @@ public class ReportLayoutServices extends AbstractEntityServices<ReportLayout> {
     }
 
     @Override
+    @Secured(right = "{entity}-write")
     public void setLocked(String id, Boolean locked) {
         ReportLayout reportLayout = getEntity(id);
         checkLayoutRight(reportLayout, WRITE_RIGHT);
