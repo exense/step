@@ -60,6 +60,11 @@
       <artifactId>step-automation-packages-controller</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-agent-provisioning-local</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

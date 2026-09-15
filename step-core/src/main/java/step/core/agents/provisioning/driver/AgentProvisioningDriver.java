@@ -19,9 +19,14 @@
 
 package step.core.agents.provisioning.driver;
 
+import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import step.core.agents.provisioning.AgentPoolSpec;
+import step.core.agents.provisioning.TokenSelectionCriteriaFilter;
+import step.grid.tokenpool.Interest;
 
 import java.io.Closeable;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface AgentProvisioningDriver extends Closeable {
@@ -72,6 +77,37 @@ public interface AgentProvisioningDriver extends Closeable {
      * @param agentPoolSpecs the specification of the remote agent pool to be registered
      */
     void registerRemoteAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs);
+
+    /**
+     * Returns the agent pools to provision for a plan whose agent pools are configured manually.
+     *
+     * @param configured           the agent pool requirements configured in the plan
+     * @param forecasted           the agent pool requirements calculated by the token forecasting
+     * @param criteriaWithoutMatch the token selection criteria for which the token forecasting found no agent pool
+     * @return the agent pool requirements to be provisioned. By default, the configured ones.
+     */
+    default List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(List<AgentPoolRequirementSpec> configured,
+                                                                       List<AgentPoolRequirementSpec> forecasted,
+                                                                       Set<Map<String, Interest>> criteriaWithoutMatch) {
+        return configured;
+    }
+
+    /**
+     * @param criteriaWithoutMatch the token selection criteria for which the token forecasting found no agent pool
+     * @return the message of the error raised when the agent pools are calculated automatically and some criteria
+     * have no matching agent pool
+     */
+    default String getUnmatchedCriteriaMessage(Set<Map<String, Interest>> criteriaWithoutMatch) {
+        return "No matching agent pool found for selection criteria: " + criteriaWithoutMatch;
+    }
+
+    /**
+     * @return a new filter applied to the token selection criteria of the keywords of an execution provisioned by this
+     * driver, or null if the criteria are used as defined. Called once per execution.
+     */
+    default TokenSelectionCriteriaFilter createTokenSelectionCriteriaFilter() {
+        return null;
+    }
 
     default void close() {
         // Default implementation does nothing

@@ -20,7 +20,7 @@ package step.agents.provisioning.local;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import step.artefacts.handlers.functions.TokenSelectionCriteriaFilter;
+import step.core.agents.provisioning.TokenSelectionCriteriaFilter;
 import step.grid.agent.AgentTypes;
 import step.grid.tokenpool.Interest;
 

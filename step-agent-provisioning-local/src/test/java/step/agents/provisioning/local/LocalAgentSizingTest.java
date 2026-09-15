@@ -24,12 +24,16 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import step.core.agents.AgentTypeConstants;
 import step.core.agents.provisioning.AgentPoolRequirementSpec;
+import step.core.agents.provisioning.TokenSelectionCriteriaFilter;
 import step.core.execution.ProvisioningException;
+import step.grid.agent.AgentTypes;
+import step.grid.tokenpool.Interest;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Covers how the forecast of an execution is turned into the size of the agents started for it. None of these tests
@@ -94,6 +98,52 @@ public class LocalAgentSizingTest {
     }
 
     /**
+     * A plan configuring its agent pools manually names the pools of a Step instance, which don't exist locally: it gets
+     * one agent per agent type of the forecast, with the maximum number of tokens.
+     */
+    @Test
+    public void startsOneAgentPerForecastedAgentTypeForConfiguredAgentPools() throws Exception {
+        withDriver(5, driver -> {
+            List<AgentPoolRequirementSpec> requirements = driver.resolveConfiguredAgentPools(
+                List.of(new AgentPoolRequirementSpec("windows-medium", 2)),
+                List.of(new AgentPoolRequirementSpec(JAVA_POOL, 1), new AgentPoolRequirementSpec(JAVA_POOL, 3)),
+                Set.of());
+            Assert.assertEquals(1, requirements.size());
+            Assert.assertEquals(JAVA_POOL, requirements.get(0).agentPoolTemplateName);
+            Assert.assertEquals(5, requirements.get(0).numberOfAgents);
+        });
+    }
+
+    @Test
+    public void startsNoAgentForConfiguredAgentPoolsWhenNoKeywordRequiresOne() throws Exception {
+        withDriver(5, driver -> Assert.assertEquals(List.of(), driver.resolveConfiguredAgentPools(
+            List.of(new AgentPoolRequirementSpec("windows-medium", 2)), List.of(), Set.of())));
+    }
+
+    @Test
+    public void rejectsConfiguredAgentPoolsWhenARequiredAgentTypeIsNotAvailable() throws Exception {
+        withDriver(5, driver -> {
+            ProvisioningException exception = Assert.assertThrows(ProvisioningException.class,
+                () -> driver.resolveConfiguredAgentPools(List.of(new AgentPoolRequirementSpec("windows-medium", 2)), List.of(),
+                    Set.of(Map.of(AgentTypes.AGENT_TYPE_KEY, new Interest(Pattern.compile(AgentTypeConstants.AGENT_TYPE_DOTNET), true)))));
+            Assert.assertEquals("This plan requires agent types which are not available for local execution: "
+                + AgentTypeConstants.AGENT_TYPE_DOTNET + ".", exception.getMessage());
+        });
+    }
+
+    /**
+     * The filter keeps track of the criteria it already reported, which is per execution.
+     */
+    @Test
+    public void createsATokenSelectionCriteriaFilterPerExecution() throws Exception {
+        withDriver(5, driver -> {
+            TokenSelectionCriteriaFilter filter = driver.createTokenSelectionCriteriaFilter();
+            Assert.assertTrue(filter instanceof LocalTokenSelectionCriteriaFilter);
+            Assert.assertNotSame(filter, driver.createTokenSelectionCriteriaFilter());
+        });
+    }
+
+    /**
      * Runs the given assertions on a driver whose only available agent type is Java, which keeps these tests
      * independent from what the machine running them has installed.
      */
@@ -102,7 +152,7 @@ public class LocalAgentSizingTest {
             .setMaxTokensPerAgent(maxTokensPerAgent)
             .setWorkDirectory(workDirectory.getRoot().toPath());
         LocalAgentWorkspace workspace = new LocalAgentWorkspace(configuration.getWorkDirectory());
-        try (LocalExecutionGrid grid = new LocalExecutionGrid(configuration.getAgentStartTimeout(), workspace);
+        try (LocalExecutionGrid grid = LocalExecutionGrid.startEmbedded(configuration.getAgentStartTimeout(), workspace);
              LocalProcessAgentProvisioningDriver driver = new LocalProcessAgentProvisioningDriver(grid, workspace,
                  configuration, List.of(new JavaLocalAgentProvider(configuration, workspace)))) {
             Assert.assertEquals("Only the Java agent must be available in this test",
