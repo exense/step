@@ -53,6 +53,11 @@ public abstract class AbstractFunctionType<T extends Function> {
     protected static final Logger logger = LoggerFactory.getLogger(AbstractFunctionType.class);
 
     public static final String MISSING_ENV_VARIABLE_MESSAGE = "The '%s' environment variable is not set.";
+    /**
+     * Controller property declaring that the keywords run on the machine of the controller, as in the Step IDE: the
+     * function types then take the location of the tools they run from environment variables, as for a local execution.
+     */
+    public static final String CONFIGURATION_FROM_ENVIRONMENT = "plugins.functions.configurationFromEnvironment";
     // This constant duplicates step.functions.handler.AbstractFunctionHandler.AUTOMATION_PACKAGE_FILE
     // Unfortunately there's currently no common project between AbstractFunctionType and AbstractFunctionHandler
     public static final String AUTOMATION_PACKAGE_FILE = "$automationPackageFile";
