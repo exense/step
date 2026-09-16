@@ -22,6 +22,7 @@ import step.artefacts.automation.YamlCallFunction;
 import step.artefacts.reports.CallFunctionReportNode;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.NoStringInterpolation;
 import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlCallFunction.class, name = "callKeyword")
@@ -35,6 +36,7 @@ public class CallFunction extends TokenSelector {
     private DynamicValue<String> argument = new DynamicValue<>("{}");
     private DynamicValue<String> resultMap = new DynamicValue<>();
 
+    @NoStringInterpolation
     public DynamicValue<String> getFunction() {
         return function;
     }
@@ -43,6 +45,7 @@ public class CallFunction extends TokenSelector {
         this.function = function;
     }
 
+    @NoStringInterpolation
     public DynamicValue<String> getArgument() {
         return argument;
     }

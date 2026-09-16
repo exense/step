@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.core.execution;
 
+import org.junit.Assert;
 import org.junit.Test;
 import step.core.artefacts.CheckArtefact;
 import step.core.artefacts.handlers.CheckArtefactHandler;
@@ -27,6 +28,7 @@ import step.core.execution.model.Execution;
 import step.core.execution.model.ExecutionMode;
 import step.core.execution.model.ExecutionParameters;
 import step.core.execution.model.ExecutionStatus;
+import step.core.execution.model.ExecutionTimings;
 import step.core.objectenricher.ObjectPredicate;
 import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
@@ -41,11 +43,14 @@ import step.engine.execution.ExecutionVetoer;
 import step.engine.plugins.AbstractExecutionEnginePlugin;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 
@@ -323,4 +328,38 @@ public class ExecutionEngineTest {
         }
     }
 
+    @Test
+    public void testTimingVariables() throws Exception {
+        ExecutionEngine executionEngine = newExecutionEngine();
+        AtomicReference<String> importIso = new AtomicReference<>();
+        AtomicReference<String> startIso = new AtomicReference<>();
+        Instant testStart = Instant.now();
+        AtomicReference<Instant> kw = new AtomicReference<>();
+
+        Plan plan = PlanBuilder.create().startBlock(new CheckArtefact(c -> {
+            c.getCurrentReportNode().setStatus(ReportNodeStatus.PASSED);
+            kw.set(Instant.now());
+            importIso.set(c.getVariablesManager().getVariableAsString(ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_IMPORT.name()));
+            startIso.set(c.getVariablesManager().getVariableAsString(ExecutionTimings.TimestampVar.STEP_EXEC_TIMESTAMP_START.name()));
+        })).endBlock().build();
+
+        PlanRunnerResult result = executionEngine.execute(new ExecutionParameters(plan, null));
+        Instant end = Instant.now();
+        assertEquals(ReportNodeStatus.PASSED, result.getResult());
+
+        assertNotNull("import timestamp variable must be set", importIso.get());
+        assertNotNull("exec start timestamp variable must be set", startIso.get());
+
+        Instant importTs = OffsetDateTime.parse(importIso.get()).toInstant();
+        Instant startTs = OffsetDateTime.parse(startIso.get()).toInstant();
+
+        assertTrue("test start must precede import", precedes(testStart, importTs));
+        assertTrue("import must precede execution start", precedes(importTs, startTs));
+        assertTrue("execution start must precede KW execution", precedes(startTs, kw.get()));
+        assertTrue("execution must precede test end", precedes(kw.get(), end));
+    }
+
+    private static boolean precedes(Instant earlier, Instant later) {
+        return !earlier.isAfter(later);
+    }
 }
