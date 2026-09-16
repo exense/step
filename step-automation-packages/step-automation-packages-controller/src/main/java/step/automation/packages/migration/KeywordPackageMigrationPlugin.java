@@ -24,6 +24,7 @@ import step.automation.packages.AutomationPackageManager;
 import step.automation.packages.AutomationPackagePlugin;
 import step.automation.packages.accessor.AutomationPackageAccessor;
 import step.core.GlobalContext;
+import step.core.Version;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.core.plugins.exceptions.PluginCriticalException;
@@ -31,6 +32,7 @@ import step.core.objectenricher.ObjectHookRegistry;
 import step.migration.MigrationManager;
 import step.migration.MigrationManagerPlugin;
 import step.functions.accessor.FunctionAccessor;
+import step.versionmanager.VersionManager;
 
 /**
  * Migrate the keyword packages using the provided mode per configuration
@@ -40,16 +42,16 @@ import step.functions.accessor.FunctionAccessor;
  *     <li>Delete: delete the package entity, its keywords and Step resources</li>
  * </ul>
  *
- * <p>The migration task itself only remove the functionPackage entities (the collection is renamed),
- * since the migration tasks are also used at import of Step exported archive for which the keywords
- * and resources must be kept.
+ * <p>The migration task {@link KeywordPackageMigrationTask}itself only remove the functionPackage entities (the collection is renamed)
+ * for 2 reasons:
+ * <ul><li>migration task only perform migration at the model level while using actual ResourceManager and AutomationPackageManger is required for the full migration</li>
+ * <li>the {@code ImportManager} apply the same migration tasks, in which case migration to AP or deletion doens't apply</li></ul>
  * </p>
- * <p>The 2nd phase is executed in the afterInitializeData of the controller plugin using the Resource and
- * Automation Package managers
- *</p>
- * <p>Because it drains the staging collection on every startup rather than once, an interruption
- * between the two phases is picked up on the next boot even though the migration task itself will not
- * run again.
+ * <p>The 2nd phase of the migration run by this plugin is also only triggered on the first start after the upgrade. The logic
+ * of the
+ * </p>
+ * <p>An incorrect configuration of the mode is detected early and interrupt the startup before the migration tasks. The
+ * {@link #RESTART_MIGRATION_HINT} tells the administrator what to do to fix the issue.
  * </p>
  */
 @Plugin(dependencies = {MigrationManagerPlugin.class, AutomationPackagePlugin.class})
@@ -57,25 +59,71 @@ public class KeywordPackageMigrationPlugin extends AbstractControllerPlugin {
 
     private static final Logger logger = LoggerFactory.getLogger(KeywordPackageMigrationPlugin.class);
 
+    /**
+     * The start of this controller is recorded before the migration runs, so correcting the
+     * configuration is not enough on its own to get another attempt.
+     */
+    static final String RESTART_MIGRATION_HINT = "The keyword package migration only runs on the "
+            + "startup that upgrades to " + KeywordPackageMigrationTask.AS_OF_VERSION
+            + ", and this start has already been recorded with that version. Correct the property and "
+            + "delete the most recent record of the 'controllerlogs' collection before starting again, "
+            + "otherwise the keyword packages are left untouched and their keywords keep running as "
+            + "they are.";
+
+    private boolean migrationRequired;
+    private KeywordPackageMigrationMode mode;
+
+    /**
+     * The version of the previous start is read by the version manager in its {@code init}, which runs
+     * before this, so whether the migration applies is already known here. The mode is therefore only
+     * read on the startup that migrates, and a value left behind in the configuration afterward can no
+     * longer stop a controller from starting.
+     * <p>
+     * Resolving it here rather than in {@link #afterInitializeData(GlobalContext)} also keeps a rejected
+     * value from stopping the startup after the migration task has renamed the keyword package
+     * collection, which would leave the staging collection behind with nothing left to drain it.
+     */
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         context.require(MigrationManager.class).register(KeywordPackageMigrationTask.class);
+        migrationRequired = migrationRequired(context);
+        if (migrationRequired) {
+            mode = resolveMode(context);
+        }
     }
 
     @Override
     public void afterInitializeData(GlobalContext context) throws Exception {
-        KeywordPackageMigrationMode mode = resolveMode(context);
+        if (migrationRequired) {
+            logger.info("Migrating the keyword packages in {} mode.", mode.getPropertyValue());
+            // The staging collection is only looked up here: getting it creates it on the collection
+            // factories that need to, which is what this whole check exists to avoid on every start.
+            new KeywordPackageMigrationExecutor(
+                    context.getCollectionFactory().getCollection(
+                            KeywordPackageMigrationTask.STAGING_COLLECTION, StagedKeywordPackage.class),
+                    context.require(FunctionAccessor.class),
+                    context.require(AutomationPackageAccessor.class),
+                    context.require(AutomationPackageManager.class),
+                    context.getResourceManager(),
+                    context.require(ObjectHookRegistry.class),
+                    mode
+            ).run();
+        }
+    }
 
-        new KeywordPackageMigrationExecutor(
-                context.getCollectionFactory().getCollection(
-                        KeywordPackageMigrationTask.STAGING_COLLECTION, StagedKeywordPackage.class),
-                context.require(FunctionAccessor.class),
-                context.require(AutomationPackageAccessor.class),
-                context.require(AutomationPackageManager.class),
-                context.getResourceManager(),
-                context.require(ObjectHookRegistry.class),
-                mode
-        ).run();
+    /**
+     * Asks the migration framework whether it runs {@link KeywordPackageMigrationTask} on this startup,
+     * rather than restating the condition: an empty previous version is the first start against this
+     * database, where nothing is migrated at all.
+     *
+     * @return true if the migration task runs during this startup and leaves a staging collection behind
+     */
+    private boolean migrationRequired(GlobalContext context) {
+        VersionManager<?> versionManager = context.require(VersionManager.class);
+        return versionManager.getPreviousVersion()
+                .map(previous -> MigrationManager.isMigrationTaskInScope(
+                        KeywordPackageMigrationTask.AS_OF_VERSION, previous, context.require(Version.class)))
+                .orElse(false);
     }
 
     /**
@@ -86,12 +134,10 @@ public class KeywordPackageMigrationPlugin extends AbstractControllerPlugin {
      */
     private KeywordPackageMigrationMode resolveMode(GlobalContext context) {
         try {
-            KeywordPackageMigrationMode mode = KeywordPackageMigrationMode.parse(
+            return KeywordPackageMigrationMode.parse(
                     context.getConfiguration().getProperty(KeywordPackageMigrationMode.PROPERTY_KEY));
-            logger.info("Keyword package migration mode: {}", mode.getPropertyValue());
-            return mode;
         } catch (IllegalArgumentException e) {
-            throw new PluginCriticalException(e.getMessage(), e);
+            throw new PluginCriticalException(e.getMessage() + ". " + RESTART_MIGRATION_HINT, e);
         }
     }
 }

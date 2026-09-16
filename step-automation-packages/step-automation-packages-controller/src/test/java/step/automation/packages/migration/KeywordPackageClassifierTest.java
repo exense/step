@@ -38,29 +38,29 @@ public class KeywordPackageClassifierTest {
 
     @Test
     public void resourceBackedPackagesAreMigratable() {
-        KeywordPackageBucket bucket = classifier.classify(keywordPackage("resource:65120000000000000000000a"));
+        KeywordPackageMigrationEligibility eligibility = classifier.classify(keywordPackage("resource:65120000000000000000000a"));
 
-        assertEquals(KeywordPackageBucket.MIGRATABLE, bucket);
+        assertEquals(KeywordPackageMigrationEligibility.MIGRATABLE, eligibility);
     }
 
     @Test
     public void readablePathsAreMigratable() {
-        KeywordPackageBucket bucket = classifier.classify(keywordPackage(READABLE_PATH));
+        KeywordPackageMigrationEligibility eligibility = classifier.classify(keywordPackage(READABLE_PATH));
 
-        assertEquals(KeywordPackageBucket.MIGRATABLE, bucket);
+        assertEquals(KeywordPackageMigrationEligibility.MIGRATABLE, eligibility);
     }
 
     @Test
     public void missingPathsAreDroppedRatherThanMigrated() {
-        KeywordPackageBucket bucket = classifier.classify(keywordPackage(MISSING_PATH));
+        KeywordPackageMigrationEligibility eligibility = classifier.classify(keywordPackage(MISSING_PATH));
 
-        assertEquals(KeywordPackageBucket.ARCHIVE_MISSING, bucket);
+        assertEquals(KeywordPackageMigrationEligibility.INCOMPLETE, eligibility);
     }
 
     @Test
     public void aBlankLocationIsTreatedAsAMissingPath() {
-        assertEquals(KeywordPackageBucket.ARCHIVE_MISSING, classifier.classify(keywordPackage(null)));
-        assertEquals(KeywordPackageBucket.ARCHIVE_MISSING, classifier.classify(keywordPackage("  ")));
+        assertEquals(KeywordPackageMigrationEligibility.INCOMPLETE, classifier.classify(keywordPackage(null)));
+        assertEquals(KeywordPackageMigrationEligibility.INCOMPLETE, classifier.classify(keywordPackage("  ")));
     }
 
     /**
@@ -72,7 +72,7 @@ public class KeywordPackageClassifierTest {
         StagedKeywordPackage keywordPackage = keywordPackage(READABLE_PATH);
         keywordPackage.setPackageLibrariesLocation(MISSING_PATH);
 
-        assertEquals(KeywordPackageBucket.ARCHIVE_MISSING, classifier.classify(keywordPackage));
+        assertEquals(KeywordPackageMigrationEligibility.INCOMPLETE, classifier.classify(keywordPackage));
     }
 
     @Test
@@ -80,7 +80,7 @@ public class KeywordPackageClassifierTest {
         StagedKeywordPackage keywordPackage = keywordPackage("resource:65120000000000000000000a");
         keywordPackage.setPackageLibrariesLocation(MISSING_PATH);
 
-        assertEquals(KeywordPackageBucket.ARCHIVE_MISSING, classifier.classify(keywordPackage));
+        assertEquals(KeywordPackageMigrationEligibility.INCOMPLETE, classifier.classify(keywordPackage));
     }
 
     @Test
@@ -88,7 +88,7 @@ public class KeywordPackageClassifierTest {
         StagedKeywordPackage keywordPackage = keywordPackage(READABLE_PATH);
         keywordPackage.setPackageLibrariesLocation(READABLE_LIBRARIES_PATH);
 
-        assertEquals(KeywordPackageBucket.MIGRATABLE, classifier.classify(keywordPackage));
+        assertEquals(KeywordPackageMigrationEligibility.MIGRATABLE, classifier.classify(keywordPackage));
     }
 
     /**
@@ -100,7 +100,7 @@ public class KeywordPackageClassifierTest {
         StagedKeywordPackage keywordPackage = keywordPackage("resource:65120000000000000000000a");
         keywordPackage.setPackageLibrariesLocation(READABLE_LIBRARIES_PATH);
 
-        assertEquals(KeywordPackageBucket.MIGRATABLE, classifier.classify(keywordPackage));
+        assertEquals(KeywordPackageMigrationEligibility.MIGRATABLE, classifier.classify(keywordPackage));
     }
 
     /**
@@ -112,7 +112,7 @@ public class KeywordPackageClassifierTest {
         StagedKeywordPackage keywordPackage = keywordPackage("resource:65120000000000000000000a");
         keywordPackage.setPackageLibrariesLocation("resource:65120000000000000000000b");
 
-        assertEquals(KeywordPackageBucket.MIGRATABLE, classifier.classify(keywordPackage));
+        assertEquals(KeywordPackageMigrationEligibility.MIGRATABLE, classifier.classify(keywordPackage));
     }
 
     /**
@@ -125,9 +125,9 @@ public class KeywordPackageClassifierTest {
         StagedKeywordPackage keywordPackage = keywordPackage(READABLE_PATH);
         keywordPackage.addCustomField(EMBEDDED_PACKAGE_CUSTOM_FIELD, new File(READABLE_PATH));
 
-        KeywordPackageBucket bucket = classifier.classify(keywordPackage);
+        KeywordPackageMigrationEligibility eligibility = classifier.classify(keywordPackage);
 
-        assertEquals(KeywordPackageBucket.EMBEDDED, bucket);
+        assertEquals(KeywordPackageMigrationEligibility.EMBEDDED, eligibility);
     }
 
     @Test

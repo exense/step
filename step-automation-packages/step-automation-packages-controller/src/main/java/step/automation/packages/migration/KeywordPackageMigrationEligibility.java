@@ -23,7 +23,7 @@ package step.automation.packages.migration;
  * whether the archive sits in a resource or on the filesystem is settled at deployment time, from the
  * location itself.
  */
-public enum KeywordPackageBucket {
+public enum KeywordPackageMigrationEligibility {
 
     /**
      * Imported from the embedded packages folder. Always located by absolute path and never owning a
@@ -42,5 +42,5 @@ public enum KeywordPackageBucket {
      * one that cannot run. Nothing can execute these keywords today either way, so the package is
      * logged with its location and removed without a replacement.
      */
-    ARCHIVE_MISSING
+    INCOMPLETE
 }

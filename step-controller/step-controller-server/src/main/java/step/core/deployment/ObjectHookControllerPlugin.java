@@ -43,8 +43,8 @@ public class ObjectHookControllerPlugin extends AbstractControllerPlugin {
         ObjectPredicateFactory objectPredicateFactory = new ObjectPredicateFactory(objectHookRegistry);
         context.put(ObjectPredicateFactory.class, objectPredicateFactory);
 
-        // Registered here so that every plugin contributing or consuming a resolver is ordered after
-        // this one, as they already are for the hook registry.
+        // AttributeResolverRegistry is instantiated and registered in this plugin directly, as it shares
+        // the same object-manipulation scope and registration lifecycle as ObjectHookRegistry
         context.put(AttributeResolverRegistry.class, new AttributeResolverRegistry());
 
         context.getServiceRegistrationCallback().registerService(ObjectHookInterceptor.class);

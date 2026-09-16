@@ -48,7 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
+import java.util.stream.StreamSupport;
 
 
 /**
@@ -82,19 +82,20 @@ public class KeywordPackageMigrationExecutor {
                                            ResourceManager resourceManager,
                                            ObjectHookRegistry objectHookRegistry,
                                            KeywordPackageMigrationMode mode) {
-        this.staging = staging;
-        this.functionAccessor = functionAccessor;
-        this.automationPackageAccessor = automationPackageAccessor;
-        this.automationPackageManager = automationPackageManager;
-        this.resourceManager = resourceManager;
-        this.objectHookRegistry = objectHookRegistry;
-        this.mode = mode;
+        this.staging = Objects.requireNonNull(staging, "The staging must not be null");
+        this.functionAccessor = Objects.requireNonNull(functionAccessor, "The functionAccessor must not be null");
+        this.automationPackageAccessor = Objects.requireNonNull(automationPackageAccessor, "The automationPackageAccessor must not be null");
+        this.automationPackageManager = Objects.requireNonNull(automationPackageManager, "The automationPackageManager must not be null");
+        this.resourceManager = Objects.requireNonNull(resourceManager, "The resourceManager must not be null");
+        this.objectHookRegistry = Objects.requireNonNull(objectHookRegistry, "The objectHookRegistry must not be null");
+        this.mode = Objects.requireNonNull(mode, "The mode must not be null");
         this.classifier = new KeywordPackageClassifier();
     }
 
     public void run() {
         List<StagedKeywordPackage> staged = staging.find(Filters.empty(), null, null, null, 0).toList();
         if (staged.isEmpty()) {
+            //non-existent collections are silently recreated on any access, so we have to clean it up here
             staging.drop();
             return;
         }
@@ -104,9 +105,9 @@ public class KeywordPackageMigrationExecutor {
         List<String> failures = new ArrayList<>();
 
         for (StagedKeywordPackage stagedPackage : staged) {
-            KeywordPackageBucket bucket = classifier.classify(stagedPackage);
+            KeywordPackageMigrationEligibility eligibility = classifier.classify(stagedPackage);
             try {
-                if (process(stagedPackage, bucket)) {
+                if (process(stagedPackage, eligibility)) {
                     deployed++;
                 }
             } catch (Exception e) {
@@ -114,7 +115,7 @@ public class KeywordPackageMigrationExecutor {
                 logger.error("Unable to migrate the keyword package {}. It has been removed without a "
                         + "replacement.", stagedPackage.describe(), e);
             } finally {
-                // A failed package is not retried, so its record goes either way.
+                // A failed package is not retried, so its record it always deleted.
                 staging.remove(Filters.id(stagedPackage.getId()));
             }
         }
@@ -130,28 +131,46 @@ public class KeywordPackageMigrationExecutor {
     }
 
     /**
+     * Decides what happens to one keyword package, in this order:
+     * <ul>
+     *     <li>{@link KeywordPackageMigrationEligibility#EMBEDDED}, or any package in
+     *     {@link KeywordPackageMigrationMode#DELETE} mode: keywords and owned resources are removed</li>
+     *     <li>{@link KeywordPackageMigrationMode#DETACH} mode: the keywords are kept and unlinked, an
+     *     {@link KeywordPackageMigrationEligibility#INCOMPLETE} package included, since that mode exists
+     *     to leave keywords untouched</li>
+     *     <li>{@link KeywordPackageMigrationEligibility#INCOMPLETE}: the keywords are removed, the
+     *     resources kept</li>
+     *     <li>{@link KeywordPackageMigrationEligibility#MIGRATABLE} in
+     *     {@link KeywordPackageMigrationMode#MIGRATE} mode, the only combination left: an automation
+     *     package is deployed</li>
+     * </ul>
+     *
      * @return true if an automation package was deployed for this keyword package
      */
-    private boolean process(StagedKeywordPackage staged, KeywordPackageBucket bucket) throws Exception {
+    private boolean process(StagedKeywordPackage staged, KeywordPackageMigrationEligibility eligibility) throws Exception {
         boolean deployed = false;
-        if (KeywordPackageBucket.EMBEDDED.equals(bucket) || mode == KeywordPackageMigrationMode.DELETE) {
+        if (KeywordPackageMigrationEligibility.EMBEDDED.equals(eligibility) || mode == KeywordPackageMigrationMode.DELETE) {
             // Embedded packages are recreated by the embedded automation package feature, so they are
             // deleted whatever the mode.
             deleteKeywords(staged);
-            deleteResource(staged.getPackageLocation());
-            deleteResource(staged.getPackageLibrariesLocation());
+            deleteIfIsResource(staged.getPackageLocation());
+            deleteIfIsResource(staged.getPackageLibrariesLocation());
         } else if (mode == KeywordPackageMigrationMode.DETACH) {
             detachKeywords(staged);
-        } else if (KeywordPackageBucket.ARCHIVE_MISSING.equals(bucket)) {
+        } else if (KeywordPackageMigrationEligibility.INCOMPLETE.equals(eligibility)) {
             // The resources are kept: the missing one may be only the archive or only the libraries,
             // and the other can still be a valid resource shared with another package.
             logger.warn("The keyword package {} points at an archive or libraries that cannot be read, "
                     + "its keywords cannot be executed. The package and its keywords are removed "
                     + "without a replacement, its Step resources are left in place.", staged.describe());
             deleteKeywords(staged);
-        } else {
+        } else if (KeywordPackageMigrationEligibility.MIGRATABLE.equals(eligibility)) {
             deploy(staged);
             deployed = true;
+        } else {
+            // Unreachable, unless an eligibility is added without being handled here.
+            throw new IllegalStateException("Unsupported eligibility " + eligibility + " in "
+                    + mode.getPropertyValue() + " mode for the keyword package " + staged.describe() + ".");
         }
         return deployed;
     }
@@ -257,7 +276,7 @@ public class KeywordPackageMigrationExecutor {
     }
 
     private boolean isNameTaken(String name, ObjectPredicate objectPredicate) {
-        return java.util.stream.StreamSupport
+        return StreamSupport
                 .stream(automationPackageAccessor.findManyByAttributes(
                         Map.of(AbstractOrganizableObject.NAME, name)), false)
                 .anyMatch(objectPredicate);
@@ -275,8 +294,9 @@ public class KeywordPackageMigrationExecutor {
     }
 
     /**
-     * Removed through the accessor and not {@code FunctionManager.deleteFunction}, which delegates to
-     * the keyword type and deletes the linked resource of a managed keyword — the archive being reused
+     * Removed through the accessor directly and not {@code FunctionManager.deleteFunction},
+     * which would deletes the linked resource of the keyword — the resource being reused
+     * by the migration
      * here.
      */
     private void deleteKeywords(StagedKeywordPackage staged) {
@@ -293,7 +313,7 @@ public class KeywordPackageMigrationExecutor {
     /**
      * Does nothing for a package located by a filesystem path, which owns no resource.
      */
-    private void deleteResource(String location) {
+    private void deleteIfIsResource(String location) {
         if (location == null || !location.startsWith(FileResolver.RESOURCE_PREFIX)) {
             return;
         }

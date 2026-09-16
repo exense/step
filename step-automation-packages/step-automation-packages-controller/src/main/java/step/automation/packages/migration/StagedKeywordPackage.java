@@ -26,7 +26,8 @@ import java.util.Map;
 /**
  * A keyword package waiting to be replaced, as moved aside by {@link KeywordPackageMigrationTask}.
  * <p>
- * This is a verbatim copy of the {@code functionPackage} document: the migration task moves the
+ * This class is structurally compatible with the data previously present in the functionPackage
+ * collection that is about to be migrated; the migration task moves the
  * documents rather than interpreting them, so this type only has to name the fields the plugin later
  * reads. It keeps its original id, which is what the plugin uses to find the keywords the package
  * deployed through {@code customFields.functionPackageId}.

@@ -428,8 +428,8 @@ public class ResourceManagerImpl implements ResourceManager {
             String previousType = resource.getResourceType();
             resource.setResourceType(resourceType);
             File newContainer = getResourceContainer(resource);
-            boolean moved = currentContainer.exists();
-            if (moved) {
+            boolean moving = currentContainer.exists();
+            if (moving) {
                 Files.createDirectories(newContainer.getParentFile().toPath());
                 Files.move(currentContainer.toPath(), newContainer.toPath());
             }
@@ -437,7 +437,7 @@ public class ResourceManagerImpl implements ResourceManager {
                 resource = fillPredefinedFieldsAndSave(resource);
             } catch (RuntimeException e) {
                 // Keep the content where the unchanged record still points
-                if (moved) {
+                if (moving) {
                     Files.move(newContainer.toPath(), currentContainer.toPath());
                 }
                 resource.setResourceType(previousType);

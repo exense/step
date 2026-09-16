@@ -44,36 +44,36 @@ public class KeywordPackageClassifier {
     public KeywordPackageClassifier() {
         this(path -> {
             File file = new File(path);
-            return file.exists() && file.canRead();
+            return file.exists() && file.canRead() && file.isFile();
         });
     }
 
     /**
      * @param fileReadable decides whether a filesystem location still resolves
      */
-    public KeywordPackageClassifier(Predicate<String> fileReadable) {
+    KeywordPackageClassifier(Predicate<String> fileReadable) {
         this.fileReadable = fileReadable;
     }
 
-    public KeywordPackageBucket classify(StagedKeywordPackage keywordPackage) {
+    public KeywordPackageMigrationEligibility classify(StagedKeywordPackage keywordPackage) {
         if (keywordPackage.getCustomField(EMBEDDED_PACKAGE_CUSTOM_FIELD) != null) {
-            return KeywordPackageBucket.EMBEDDED;
+            return KeywordPackageMigrationEligibility.EMBEDDED;
         }
 
         String packageLocation = keywordPackage.getPackageLocation();
         if (isBlank(packageLocation) || isUnavailable(packageLocation)) {
             // Nothing to convert and nothing to point an automation package at. Treated as a broken
             // location rather than as an error, so that it is logged and cleaned up like the others.
-            return KeywordPackageBucket.ARCHIVE_MISSING;
+            return KeywordPackageMigrationEligibility.INCOMPLETE;
         }
 
         // Libraries if set must be valid too
         String librariesLocation = keywordPackage.getPackageLibrariesLocation();
         if (!isBlank(librariesLocation) && isUnavailable(librariesLocation)) {
-            return KeywordPackageBucket.ARCHIVE_MISSING;
+            return KeywordPackageMigrationEligibility.INCOMPLETE;
         }
 
-        return KeywordPackageBucket.MIGRATABLE;
+        return KeywordPackageMigrationEligibility.MIGRATABLE;
     }
 
     /**

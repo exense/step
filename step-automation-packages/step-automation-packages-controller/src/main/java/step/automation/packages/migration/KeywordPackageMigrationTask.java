@@ -43,6 +43,12 @@ import step.migration.MigrationTask;
  */
 public class KeywordPackageMigrationTask extends MigrationTask {
 
+    /**
+     * The version this migration belongs to. Shared with {@link KeywordPackageMigrationPlugin}, which
+     * runs the second phase of this migration as it requires access to managers.
+     */
+    static final Version AS_OF_VERSION = new Version(3, 31, 0);
+
     /** The collection being retired, from the former {@code FunctionPackageEntity.entityName}. */
     static final String FUNCTION_PACKAGE_COLLECTION = "functionPackage";
 
@@ -55,7 +61,7 @@ public class KeywordPackageMigrationTask extends MigrationTask {
     private final Collection<Document> keywordPackages;
 
     public KeywordPackageMigrationTask(CollectionFactory collectionFactory, MigrationContext migrationContext) {
-        super(new Version(3, 31, 0), collectionFactory, migrationContext);
+        super(AS_OF_VERSION, collectionFactory, migrationContext);
 
         this.keywordPackages = collectionFactory.getCollection(FUNCTION_PACKAGE_COLLECTION, Document.class);
     }
@@ -74,6 +80,6 @@ public class KeywordPackageMigrationTask extends MigrationTask {
         // Rename the collection for the actual migration/cleanup
         keywordPackages.rename(STAGING_COLLECTION);
 
-        logger.info("Moved {} keyword package(s) aside for the migration to automation packages.", count);
+        logger.info("Collection {} was renamed to {} for upcoming migration of {} keyword packages to automation packages.", FUNCTION_PACKAGE_COLLECTION, STAGING_COLLECTION, count);
     }
 }

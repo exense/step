@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Deploys the automation packages shipped with the distribution, from
@@ -70,18 +71,29 @@ public class EmbeddedAutomationPackageImporter {
     public EmbeddedAutomationPackageImporter(AutomationPackageManager automationPackageManager,
                                              ObjectHookRegistry objectHookRegistry,
                                              AttributeResolverRegistry attributeResolverRegistry) {
-        this.automationPackageManager = automationPackageManager;
-        this.objectHookRegistry = objectHookRegistry;
-        this.attributeResolverRegistry = attributeResolverRegistry;
+        this.automationPackageManager = Objects.requireNonNull(automationPackageManager, "The automationPackageManager must not be null");
+        this.objectHookRegistry = Objects.requireNonNull(objectHookRegistry, "The objectHookRegistry must not be null");
+        this.attributeResolverRegistry = Objects.requireNonNull(attributeResolverRegistry, "The attributeResolverRegistry must not be null");
     }
 
     /**
      * @return the ids of the deployed automation packages
      */
     public List<String> importEmbeddedAutomationPackages(String packageFolder) {
+        Objects.requireNonNull(packageFolder, "The packageFolder must not be null");
+        File folder = new File(packageFolder);
         List<String> deployed = new ArrayList<>();
-        deployed.addAll(importFolder(new File(packageFolder, LOCAL_FOLDER), true));
-        deployed.addAll(importFolder(new File(packageFolder, REMOTE_FOLDER), false));
+        if (!folder.exists()) {
+            // The configured folder path might not exist, which is acceptable and handled as it was in the legacy KW package
+            logger.warn("The configured embedded automation package folder {} does not exist.",
+                    folder.getAbsolutePath());
+        } else if (!folder.isDirectory()) {
+            throw new IllegalArgumentException("The configured embedded automation package folder "
+                    + folder.getAbsolutePath() + " is not a folder.");
+        } else {
+            deployed.addAll(importFolder(new File(folder, LOCAL_FOLDER), true));
+            deployed.addAll(importFolder(new File(folder, REMOTE_FOLDER), false));
+        }
         return deployed;
     }
 

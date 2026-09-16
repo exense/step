@@ -166,6 +166,8 @@ public interface ResourceManager {
      * Changes the type of an existing resource, relocating its content accordingly: the content is
      * stored per type, so updating the type through {@link #saveResource(Resource)} alone leaves the
      * content where it can no longer be found. The id and the revisions are kept.
+     * <p><b>Warning:</b> always use this method, never {@link #saveResource(Resource)}, to change the
+     * type of an existing resource.</p>
      *
      * @param resourceId   the id of the resource
      * @param resourceType the new type of the resource

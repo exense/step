@@ -178,6 +178,19 @@ public class EmbeddedAutomationPackageImporterTest {
     }
 
     @Test
+    public void aMissingPackageFolderIsNotAnError() {
+        assertTrue(run(new File(folder.getRoot(), "absent").getAbsolutePath()).isEmpty());
+    }
+
+    /** A configured path that is not a folder can never hold packages, so the start has to fail. */
+    @Test
+    public void aPackageFolderThatIsNotAFolderIsRejected() throws Exception {
+        File file = folder.newFile("automationpackages");
+
+        assertThrows(IllegalArgumentException.class, () -> run(file.getAbsolutePath()));
+    }
+
+    @Test
     public void oneFailingArchiveDoesNotStopTheOthers() throws Exception {
         archive("local", "broken-keywords.jar");
         archive("local", "sound-keywords.jar");
@@ -197,8 +210,12 @@ public class EmbeddedAutomationPackageImporterTest {
     // ------------------------------------------------------------------ setup
 
     private List<String> run() {
+        return run(folder.getRoot().getAbsolutePath());
+    }
+
+    private List<String> run(String packageFolder) {
         return new EmbeddedAutomationPackageImporter(automationPackageManager, objectHookRegistry,
-                attributeResolverRegistry).importEmbeddedAutomationPackages(folder.getRoot().getAbsolutePath());
+                attributeResolverRegistry).importEmbeddedAutomationPackages(packageFolder);
     }
 
     /** A minimal archive: the importer recognizes it by its ZIP header, not by its content. */
