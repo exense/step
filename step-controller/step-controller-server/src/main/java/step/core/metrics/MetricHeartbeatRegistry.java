@@ -153,7 +153,7 @@ public class MetricHeartbeatRegistry {
             heartbeatSample = new MetricSample(now, orig.getName(), orig.getLabels(), InstrumentType.GAUGE,
                 1, last, last, last, last, null);
         }
-        return new ExecutionMetricSample(heartbeatSample, original.eId, original.rnId, original.planId,
+        return new ExecutionMetricSample(heartbeatSample, original.eId, original.rnId, original.artefactHash, original.planId,
             original.plan, original.canonicalPlanName, original.taskId, original.schedule, original.execution,
             original.agentUrl, original.origin, original.getAttributes(), original.metricType);
     }

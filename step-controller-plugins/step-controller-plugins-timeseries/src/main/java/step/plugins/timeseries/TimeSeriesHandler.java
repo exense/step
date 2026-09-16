@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static step.core.metrics.ExecutionMetricSample.SAMPLE_SAMPLE_TIME;
+import static step.core.metrics.MetricsExecutionPlugin.ARTEFACT_HASH;
 import static step.core.timeseries.TimeSeriesConstants.ATTRIBUTES_PREFIX;
 import static step.core.timeseries.TimeSeriesConstants.TIMESTAMP_ATTRIBUTE;
 import static step.core.metrics.StepMetricSample.METRIC_TYPE;
@@ -55,7 +56,7 @@ public class TimeSeriesHandler {
         }
     };
     //Ugly implementation
-    private static final List<String> executionMetricSampleBaseFields = List.of("eId", "rnId", "planId", "plan", "taskId", "schedule", "execution", "agentUrl", "origin", "metricType");
+    private static final List<String> executionMetricSampleBaseFields = List.of("eId", "rnId", ARTEFACT_HASH, "planId", "plan", "taskId", "schedule", "execution", "agentUrl", "origin", "metricType");
     private static final List<String> executionMetricSampleAttributesFields = List.of("project", "projectName");
     private static final Function<String, String> attributesPrefixRemovalSamples = (attribute) -> {
         if (attribute.startsWith(ATTRIBUTES_PREFIX)) {
