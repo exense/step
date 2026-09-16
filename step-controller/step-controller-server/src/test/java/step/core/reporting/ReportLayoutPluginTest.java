@@ -9,6 +9,7 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.entities.EntityManager;
@@ -72,7 +73,7 @@ public class ReportLayoutPluginTest {
 
     private List<ReportLayout> getAllPresets() {
         return accessor.getCollectionDriver()
-            .find(step.core.collections.Filters.equals(
+            .find(Filters.equals(
                     ReportLayout.FIELD_VISIBILITY,
                     ReportLayout.ReportLayoutVisibility.Preset.name()),
                 null, null, null, 0)

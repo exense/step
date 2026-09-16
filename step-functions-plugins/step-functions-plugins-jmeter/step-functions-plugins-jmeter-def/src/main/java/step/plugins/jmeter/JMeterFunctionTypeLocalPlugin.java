@@ -28,6 +28,7 @@ import step.functions.type.AbstractFunctionType;
 import step.functions.type.FunctionTypeRegistry;
 
 import java.util.Map;
+import java.util.Objects;
 
 
 @Plugin(dependencies = {FunctionPlugin.class})
@@ -54,6 +55,8 @@ public class JMeterFunctionTypeLocalPlugin extends AbstractExecutionEnginePlugin
     }
 
     static void applyEnvironmentConfiguration(Configuration configuration, Map<String, String> environment) {
+        Objects.requireNonNull(configuration, "configuration must not be null");
+        Objects.requireNonNull(environment, "environment must not be null");
         String jMeterHome = environment.get(JMETER_HOME_ENV_VAR);
         if (jMeterHome != null) {
             configuration.putProperty(JMeterFunctionType.JMETER_HOME_CONFIG_PROPERTY, jMeterHome);

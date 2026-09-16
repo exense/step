@@ -53,6 +53,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -212,7 +213,7 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
      * missing, but not that the .NET agent is the user's to install, nor how it is told where it is.
      */
     static String unavailableAgentsMessage(Set<Map<String, Interest>> criteriaWithoutMatch,
-                                           java.util.function.Function<String, String> installationHints) {
+                                           Function<String, String> installationHints) {
         List<String> agentTypes = criteriaWithoutMatch.stream()
             .map(criteria -> criteria.get(AgentTypes.AGENT_TYPE_KEY))
             .filter(Objects::nonNull)

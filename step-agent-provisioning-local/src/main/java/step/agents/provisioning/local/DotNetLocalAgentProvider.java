@@ -29,6 +29,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Starts the .NET agent as a separate process.
@@ -60,7 +61,7 @@ public class DotNetLocalAgentProvider implements LocalAgentProvider {
     private final AgentConfWriter agentConfWriter = new AgentConfWriter();
 
     public DotNetLocalAgentProvider(LocalAgentProvisioningConfiguration configuration) {
-        this.configuration = configuration;
+        this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
     }
 
     @Override

@@ -23,6 +23,7 @@ import step.core.collections.inmemory.InMemoryCollection;
 import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
+import step.core.execution.OperationMode;
 import step.core.plans.Plan;
 import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
 import step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
@@ -124,7 +126,7 @@ public class AgentProvisioningExecutionPluginTest {
     }
 
     private static ExecutionEngine newExecutionEngine(AgentProvisioningDriver driver, AgentProvisioningStatusAccessor accessor) {
-        ExecutionEngineContext parentContext = new ExecutionEngineContext(step.core.execution.OperationMode.LOCAL_PLAN, true);
+        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL_PLAN, true);
         parentContext.put(AgentProvisioningDriver.class, driver);
         return ExecutionEngine.builder()
             .withParentContext(parentContext)
@@ -148,7 +150,7 @@ public class AgentProvisioningExecutionPluginTest {
         static final List<AgentPoolRequirementSpec> RESOLVED_AGENT_POOLS = List.of(new AgentPoolRequirementSpec(POOL, 5));
 
         private final AgentProvisioningDriverConfiguration configuration;
-        private final Map<String, AgentProvisioningStatus> statuses = new java.util.concurrent.ConcurrentHashMap<>();
+        private final Map<String, AgentProvisioningStatus> statuses = new ConcurrentHashMap<>();
         private final AtomicInteger deprovisionCount = new AtomicInteger();
         private final AtomicInteger filterInvocations = new AtomicInteger();
         private AgentProvisioningRequest request;
