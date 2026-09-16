@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
 import step.core.AbstractStepContext;
 import step.core.accessors.AbstractOrganizableObject;
+import step.core.agents.AgentTypeConstants;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.functions.Function;
@@ -55,6 +56,8 @@ public abstract class AbstractFunctionType<T extends Function> {
     // This constant duplicates step.functions.handler.AbstractFunctionHandler.AUTOMATION_PACKAGE_FILE
     // Unfortunately there's currently no common project between AbstractFunctionType and AbstractFunctionHandler
     public static final String AUTOMATION_PACKAGE_FILE = "$automationPackageFile";
+
+    private static final Pattern JAVA_AGENT_TYPE_PATTERN = Pattern.compile(AgentTypeConstants.AGENT_TYPE_JAVA);
 
     protected FileResolver fileResolver;
     protected LoadingCache<String, File> fileResolverCache;
@@ -98,7 +101,7 @@ public abstract class AbstractFunctionType<T extends Function> {
 
     public Map<String, Interest> getTokenSelectionCriteria(T function) {
         Map<String, Interest> criteria = new HashMap<>();
-        criteria.put(AgentTypes.AGENT_TYPE_KEY, new Interest(Pattern.compile("default"), true));
+        criteria.put(AgentTypes.AGENT_TYPE_KEY, new Interest(JAVA_AGENT_TYPE_PATTERN, true));
         return criteria;
     }
 

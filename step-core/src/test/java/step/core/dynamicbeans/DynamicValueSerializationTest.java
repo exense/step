@@ -19,6 +19,7 @@
 package step.core.dynamicbeans;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,5 +52,42 @@ public class DynamicValueSerializationTest {
         r.evaluate(bean, null);
         Assert.assertEquals("test", bean.getTestString().get());
         Assert.assertEquals("test2", bean.getTestRecursive().get().getTestString().get());
+    }
+
+    /**
+     * The interpolation of a plain value is runtime state which must not be persisted along with the value
+     */
+    @Test
+    public void testInterpolationResultIsNotSerialized() throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        DynamicValue<String> value = new DynamicValue<>("Hello ${name}");
+        new DynamicValueResolver(new ExpressionHandler()).evaluate(value, Map.of("name", "John"));
+        Assert.assertEquals("Hello John", value.get());
+
+        String serialized = mapper.writeValueAsString(value);
+        Assert.assertFalse(serialized, serialized.contains("interpolatedLiteral"));
+        Assert.assertFalse(serialized, serialized.contains("evalutationResult"));
+        Assert.assertFalse(serialized, serialized.contains("John"));
+
+        // The deserialized value is the unevaluated literal again
+        DynamicValue<?> deserialized = mapper.readValue(serialized, DynamicValue.class);
+        Assert.assertEquals("Hello ${name}", deserialized.get());
+    }
+
+    /**
+     * Values containing an escaped placeholder must survive a serialization round trip unchanged
+     */
+    @Test
+    public void testEscapedPlaceholderRoundTrip() throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        DynamicValue<String> value = new DynamicValue<>("$${name}");
+        String serialized = mapper.writeValueAsString(value);
+        DynamicValue<?> deserialized = mapper.readValue(serialized, DynamicValue.class);
+        Assert.assertEquals("$${name}", deserialized.getValue());
+
+        new DynamicValueResolver(new ExpressionHandler()).evaluate(deserialized, Map.of("name", "John"));
+        Assert.assertEquals("${name}", deserialized.get());
     }
 }
