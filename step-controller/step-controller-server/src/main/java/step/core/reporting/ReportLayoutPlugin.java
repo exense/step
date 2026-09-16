@@ -132,6 +132,10 @@ public class ReportLayoutPlugin extends AbstractControllerPlugin {
     private void loadPreset(InputStream inputStream, String source) throws IOException {
         ObjectMapper objectMapper = DefaultJacksonMapperProvider.getObjectMapper();
         ReportLayoutJson layoutJson = objectMapper.readValue(inputStream, ReportLayoutJson.class);
+        if (layoutJson == null) {
+            logger.error("Invalid json file: {} is empty", source);
+            return;
+        }
         if (ObjectId.isValid(layoutJson.id)) {
             ReportLayout reportLayout = new ReportLayout(layoutJson.layout, ReportLayout.ReportLayoutVisibility.Preset, layoutJson.reportType);
             reportLayout.addAttribute(AbstractOrganizableObject.NAME, layoutJson.name);

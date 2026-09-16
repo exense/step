@@ -7,10 +7,9 @@ import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
-import step.automation.packages.AutomationPackageArchive;
-import step.automation.packages.AutomationPackageReader;
 import step.automation.packages.AutomationPackageReaderRegistry;
 import step.automation.packages.JavaAutomationPackageArchive;
+import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.collections.AutomationPackageCollectionFactory;
@@ -25,7 +24,6 @@ import step.parameter.Parameter;
 import step.plans.parser.yaml.YamlPlan;
 import step.resources.ResourceManagerImpl;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -94,12 +92,8 @@ public class LocalIDEState implements ExecutionDiversion {
     private void useAutomationPackageDirectory(Path apDir) throws Exception {
         AutomationPackageReaderRegistry readerRegistry = Objects.requireNonNull(automationPackageReaderRegistry,
             "No automation package reader registry set, the IDE backend is not started");
-        File apFile = apDir.toFile();
-        AutomationPackageReader<AutomationPackageArchive> reader = readerRegistry.getReaderForFile(apFile);
-        AutomationPackageYamlFragmentManager fragmentManager;
-        try (AutomationPackageArchive archive = reader.createAutomationPackageArchive(apFile, null, null)) {
-            fragmentManager = reader.getAutomationPackageYamlFragmentManager(archive, this.resourceManager);
-        }
+        JavaAutomationPackageReader reader = (JavaAutomationPackageReader) readerRegistry.<JavaAutomationPackageArchive>getReaderByType(JavaAutomationPackageArchive.TYPE);
+        var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager);
         Properties properties = new Properties();
 
         int variant = 1;

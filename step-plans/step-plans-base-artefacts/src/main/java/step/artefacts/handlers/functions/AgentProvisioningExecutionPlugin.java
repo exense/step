@@ -133,10 +133,15 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
             } finally {
                 // persist the last provisioning status that contains error details in case of error
                 AgentProvisioningStatus agentProvisioningStatus = agentProvisioningDriver.getTokenProvisioningStatus(provisioningRequestId);
-                agentProvisioningStatus.executionId = context.getExecutionId();
-                agentProvisioningStatusAccessor.save(agentProvisioningStatus);
-                // now add it as reference to the execution
-                context.getExecutionManager().updateExecution(execution -> execution.addCustomField(AGENT_PROVISIONING_STATUS_ID_CUSTOM_FIELD, agentProvisioningStatus.getId().toHexString()));
+                if (agentProvisioningStatus != null) {
+                    agentProvisioningStatus.executionId = context.getExecutionId();
+                    agentProvisioningStatusAccessor.save(agentProvisioningStatus);
+                    // now add it as reference to the execution
+                    context.getExecutionManager().updateExecution(execution -> execution.addCustomField(AGENT_PROVISIONING_STATUS_ID_CUSTOM_FIELD, agentProvisioningStatus.getId().toHexString()));
+                } else {
+                    // Not thrown: an exception from this finally block would hide the provisioning error being propagated
+                    logger.warn("No provisioning status returned by the driver for request {} of execution {}", provisioningRequestId, context.getExecutionId());
+                }
             }
             logger.info("Successfully provisioned agents for execution " + context.getExecutionId());
         } else {

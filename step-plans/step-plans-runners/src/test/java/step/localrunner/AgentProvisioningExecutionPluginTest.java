@@ -24,6 +24,7 @@ import step.core.execution.ExecutionContext;
 import step.core.execution.ExecutionEngine;
 import step.core.execution.ExecutionEngineContext;
 import step.core.execution.OperationMode;
+import step.core.execution.ProvisioningException;
 import step.core.plans.Plan;
 import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
 import step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration;
@@ -77,6 +78,33 @@ public class AgentProvisioningExecutionPluginTest {
                 .get(result.getExecutionId()).getCustomField(AGENT_PROVISIONING_STATUS_ID_CUSTOM_FIELD));
             // The filter of the driver is applied to the token selection criteria of the keywords
             assertTrue(driver.filterInvocations.get() > 0);
+        }
+    }
+
+    @Test
+    public void provisionsWithoutPersistingWhenTheDriverReturnsNoStatus() {
+        RecordingDriver driver = new NoStatusDriver(null);
+        AgentProvisioningStatusAccessor accessor = new AgentProvisioningStatusAccessor(new InMemoryCollection<>());
+
+        try (ExecutionEngine executionEngine = newExecutionEngine(driver, accessor)) {
+            PlanRunnerResult result = executionEngine.execute(plan());
+
+            assertEquals(ReportNodeStatus.PASSED, result.getResult());
+            assertFalse(accessor.getAll().hasNext());
+            assertNull(executionEngine.getExecutionEngineContext().getExecutionAccessor()
+                .get(result.getExecutionId()).getCustomField(AGENT_PROVISIONING_STATUS_ID_CUSTOM_FIELD));
+        }
+    }
+
+    @Test
+    public void reportsTheProvisioningErrorWhenTheDriverReturnsNoStatus() {
+        RecordingDriver driver = new NoStatusDriver(new ProvisioningException("Unable to start the agents"));
+
+        try (ExecutionEngine executionEngine = newExecutionEngine(driver, new AgentProvisioningStatusAccessor(new InMemoryCollection<>()))) {
+            PlanRunnerResult result = executionEngine.execute(plan());
+
+            assertEquals(ReportNodeStatus.TECHNICAL_ERROR, result.getResult());
+            assertEquals("Unable to start the agents", result.getErrorSummary());
         }
     }
 
@@ -143,6 +171,32 @@ public class AgentProvisioningExecutionPluginTest {
             .withPlugin(new TokenForecastingExecutionPlugin())
             .withPlugin(new AgentProvisioningExecutionPlugin(accessor))
             .build();
+    }
+
+    /**
+     * A driver which has no status to return for its provisioning requests, optionally failing the provisioning
+     */
+    private static class NoStatusDriver extends RecordingDriver {
+
+        private final ProvisioningException provisioningError;
+
+        NoStatusDriver(ProvisioningException provisioningError) {
+            super(Map.of("$agenttype", "default"));
+            this.provisioningError = provisioningError;
+        }
+
+        @Override
+        public AgentProvisioningStatus executeTokenProvisioningRequest(String provisioningRequestId) {
+            if (provisioningError != null) {
+                throw provisioningError;
+            }
+            return super.executeTokenProvisioningRequest(provisioningRequestId);
+        }
+
+        @Override
+        public AgentProvisioningStatus getTokenProvisioningStatus(String provisioningRequestId) {
+            return null;
+        }
     }
 
     private static class RecordingDriver implements AgentProvisioningDriver {
