@@ -1,0 +1,30 @@
+schemaVersion: 1.0.0
+name: "Script keywords local execution"
+keywords:
+  - GeneralScript:
+      name: "GroovyEcho"
+      scriptLanguage: groovy
+      scriptFile: "groovy/keyword.groovy"
+  - GeneralScript:
+      name: "JavascriptEcho"
+      scriptLanguage: javascript
+      scriptFile: "javascript/keyword.js"
+plans:
+  - name: "Script plan"
+    root:
+      testCase:
+        children:
+          - callKeyword:
+              keyword: "GroovyEcho"
+              inputs:
+                - message: "hello from groovy"
+              children:
+                - check:
+                    expression: "output.echoed.equals('hello from groovy')"
+          - callKeyword:
+              keyword: "JavascriptEcho"
+              inputs:
+                - message: "hello from javascript"
+              children:
+                - check:
+                    expression: "output.echoed.equals('hello from javascript')"
