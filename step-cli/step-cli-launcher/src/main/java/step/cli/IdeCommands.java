@@ -3,18 +3,23 @@ package step.cli;
 import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import picocli.CommandLine;
+import step.cli.parameters.ApDeployParameters;
 import step.cli.parameters.ApExecuteParameters;
 import step.core.Constants;
 import step.core.execution.model.ExecutionParameters;
 import step.ide.LocalIDE;
-import step.ide.LocalIDEState;
-import step.ide.api.IDEExecutionRequest;
-import step.ide.api.IDEExecutorDelegate;
-import step.ide.api.IDEExecutorDelegateFactory;
+import step.ide.LocalIDEModel;
+import step.ide.api.IDEDelegator;
+import step.ide.api.LocalExecutionDelegate;
+import step.ide.api.LocalExecutionRequest;
+import step.ide.api.RemoteDeploymentRequest;
+import step.ide.api.RemoteExecutionRequest;
+import step.ide.api.StepConnectionInfo;
 import step.ide.exceptions.FileExistsException;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -26,11 +31,11 @@ public class IdeCommands {
     private IdeCommands() {
     }
 
-    public static class IdeBaseCommand extends BaseCommand implements IDEExecutorDelegateFactory {
+    public static class IdeBaseCommand extends BaseCommand implements IDEDelegator {
         protected static final Logger logger = StepConsole.log;
 
-        protected LocalIDEState getState() {
-            return LocalIDEState.get();
+        protected LocalIDEModel model() {
+            return LocalIDEModel.get();
         }
 
         @CommandLine.Option(names = {"--no-browser"}, defaultValue = "false", description = "Skip launching the browser after starting.")
@@ -57,9 +62,15 @@ public class IdeCommands {
         }
 
         protected void startBackend() throws Exception {
-            LocalIDEState state = getState();
+            LocalIDEModel model = model();
+            if (spec.defaultValueProvider() instanceof StepDefaultValuesProvider defaults) {
+                logger.debug("Found default values provider, looking for connection information");
+                Properties props = defaults.getProperties();
+                // note this can still produce null values (when there is not enough information), but that's handled
+                model.setCliConnection(StepConnectionInfo.fromCliProperties(props));
+            }
             CompletableFuture<Void> awaitStartup = new CompletableFuture<>();
-            state.setStartupAwaitFuture(awaitStartup);
+            model.setStartupAwaitFuture(awaitStartup);
             // Note that the start() method is currently invoked synchronously, i.e. it will block
             // until startup is either complete, or failed. This does not break any functionality,
             // it just renders the timeout handling below useless -- the future will (should!) always
@@ -76,12 +87,11 @@ public class IdeCommands {
             } catch (ExecutionException e) {
                 throw new RuntimeException("Backend startup failed with an exception", e.getCause());
             } catch (InterruptedException e) {
-                // Best practice: restore the interrupted status if we catch an InterruptedException
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Thread was interrupted while waiting for backend to start", e);
             }
-            // Wire the execution redirection so executions get run in an isolated context
-            state.setExecutorDelegateFactory(this);
+            // Wire the various delegations (execute locally/remotely, deploy etc.)
+            model.setDelegator(this);
         }
 
         protected void afterBackendStart() throws Exception {
@@ -120,7 +130,7 @@ public class IdeCommands {
         private static int determineFrontendPort() {
             // This uses some hardcoded logic, names and port numbers:
             // If the app is bundled, return prod port, otherwise dev port.
-            String resourceName = "/" + LocalIDEState.get().getIdeResourcePath() + "/index.html";
+            String resourceName = "/" + LocalIDEModel.get().getIdeResourcePath() + "/index.html";
             boolean resourceExists = IdeCommands.class.getResource(resourceName) != null;
             if (!resourceExists) {
                 logger.warn("Unable to find resource {} , assuming local development mode", resourceName);
@@ -128,8 +138,47 @@ public class IdeCommands {
             return resourceExists ? 8080 : 4201;
         }
 
+        private int awaitTermination() {
+            // This awaits specific user input
+            CompletableFuture<Void> quitCommand = new CompletableFuture<>();
+            Thread waitForQuitCommandThread = new Thread(() -> {
+                Scanner scanner = new Scanner(System.in);
+                while (scanner.hasNextLine()) {
+                    String input = scanner.nextLine().trim().toLowerCase();
+                    if (input.equals("q") || input.equals("quit")) {
+                        logger.debug("User entered termination command: {}", input);
+                        quitCommand.complete(null);
+                        break;
+                    } else {
+                        logger.warn("Unrecognized input, ignoring: {}", input);
+                    }
+                }
+            }, "cli-quit-listener");
+            waitForQuitCommandThread.setDaemon(true);
+            waitForQuitCommandThread.start();
+            // This will be triggered when the backend is shutdown (e.g. using Ctrl-C, or via REST call)
+            CompletableFuture<Void> backendShutdown = new CompletableFuture<>();
+            model().setShutdownAwaitFuture(backendShutdown);
+
+            logger.info("The IDE is running. Type 'quit' (or 'q') to shutdown. You can also press Ctrl-C to terminate the process.");
+            try {
+                // Wait for any of the futures to complete.
+                CompletableFuture.anyOf(backendShutdown, quitCommand).get();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.error("Main thread interrupted.");
+                return 1;
+            } catch (ExecutionException e) {
+                logger.error("Error while waiting for backend shutdown: ", e);
+                return 1;
+            }
+            return 0;
+        }
+
+        // IDEDelegator method implementations
+
         @Override
-        public IDEExecutorDelegate createDelegate(IDEExecutionRequest request) {
+        public final LocalExecutionDelegate delegate(LocalExecutionRequest request) {
             File apPath = request.automationPackage().toFile();
             ExecutionParameters executionParams = request.executionParameters();
             ApExecuteParameters params = new ApExecuteParameters()
@@ -153,45 +202,31 @@ public class IdeCommands {
                 .setWrapIntoTestSet(false)
                 .setNumberOfThreads(null)
                 .setReports(null);
-            String url = "http://localhost:8080";
-            return new ExecuteAutomationPackageTool(url, params);
+            return singleExecutionIdFuture -> new ExecuteAutomationPackageTool(StepConnectionInfo.LOCAL.url(), params).executePackageAndFillExecutionId(singleExecutionIdFuture);
         }
 
-        private int awaitTermination() {
-            // This awaits specific user input
-            CompletableFuture<Void> quitCommand = new CompletableFuture<>();
-            Thread waitForQuitCommandThread = new Thread(() -> {
-                Scanner scanner = new Scanner(System.in);
-                while (scanner.hasNextLine()) {
-                    String input = scanner.nextLine().trim().toLowerCase();
-                    if (input.equals("q") || input.equals("quit")) {
-                        logger.debug("User entered termination command: {}", input);
-                        quitCommand.complete(null);
-                        break;
-                    } else {
-                        logger.warn("Unrecognized input, ignoring: {}", input);
-                    }
-                }
-            }, "cli-quit-listener");
-            waitForQuitCommandThread.setDaemon(true);
-            waitForQuitCommandThread.start();
-            // This will be triggered when the backend is shutdown (e.g. using Ctrl-C, or via REST call)
-            CompletableFuture<Void> backendShutdown = new CompletableFuture<>();
-            getState().setShutdownAwaitFuture(backendShutdown);
+        @Override
+        public final void execute(Path apPath, RemoteExecutionRequest request) {
+            File packaged = ApCommand.AbstractApCommand.prepareFile(apPath.toAbsolutePath().toString(), "automation package", true);
+            ApExecuteParameters params = new ApExecuteParameters()
+                .setAuthToken(request.connection().token())
+                .setStepProjectName(request.connection().projectName())
+                .setAutomationPackageFile(packaged)
+                .setWaitForExecution(false)
+                ;
+            new ExecuteAutomationPackageTool(request.connection().url(), params).execute();
+        }
 
-            logger.info("The IDE is running. Type 'quit' (or 'q') to shutdown. You can also press Ctrl-C to terminate the process.");
-            try {
-                // Wait for any of the futures to complete.
-                CompletableFuture.anyOf(backendShutdown, quitCommand).get();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                logger.error("Main thread interrupted.");
-                return 1;
-            } catch (ExecutionException e) {
-                logger.error("Error while waiting for backend shutdown: ", e);
-                return 1;
-            }
-            return 0;
+
+        @Override
+        public final void deploy(Path apPath, RemoteDeploymentRequest request) {
+            File packaged = ApCommand.AbstractApCommand.prepareFile(apPath.toAbsolutePath().toString(), "automation package", true);
+            ApDeployParameters params = new ApDeployParameters()
+                .setAuthToken(request.connection().token())
+                .setStepProjectName(request.connection().projectName())
+                .setAutomationPackageFile(packaged)
+                ;
+            new DeployAutomationPackageTool(request.connection().url(), params).execute();
         }
     }
 
@@ -232,14 +267,14 @@ public class IdeCommands {
         @Override
         protected void validateArguments() throws CommandLine.ParameterException {
             try {
-                var ideState = getState();
+                var model = model();
                 if (initGroup == null || !initGroup.initialize) {
-                    ideState.validateExistingAutomationPackageDirectory(apDirectory);
+                    model.validateExistingAutomationPackageDirectory(apDirectory);
                     return;
                 }
                 // initialization requested
                 try {
-                    ideState.validateInitializableAutomationPackageDirectory(apDirectory, initGroup.force);
+                    model.validateInitializableAutomationPackageDirectory(apDirectory, initGroup.force);
                 } catch (FileExistsException e) {
                     throw new IllegalArgumentException("Automation Package descriptor already exists at " + e.existingPath.toString() + ". Use --force to overwrite.");
                 }
@@ -251,9 +286,9 @@ public class IdeCommands {
         @Override
         protected void afterBackendStart() throws Exception {
             if (initGroup == null || !initGroup.initialize) {
-                getState().useExistingAutomationPackageDirectory(apDirectory);
+                model().useExistingAutomationPackageDirectory(apDirectory);
             } else {
-                getState().useNewAutomationPackageDirectory(apDirectory, initGroup.name);
+                model().useNewAutomationPackageDirectory(apDirectory, initGroup.name);
             }
             super.afterBackendStart();
         }

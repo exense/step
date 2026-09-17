@@ -6,11 +6,13 @@ import step.automation.packages.AutomationPackagePlugin;
 import step.automation.packages.LocalApResourceProvider;
 import step.automation.packages.LocalAutomationPackageDirectoryProvider;
 import step.core.GlobalContext;
+import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.execution.ExecutionDiversion;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.ide.api.LocalFileSystemServices;
 import step.ide.api.LocalIDEServices;
+import step.ide.api.StepConnectionInfo;
 import step.resources.ResourceManagerImpl;
 
 @Plugin(dependencies = AutomationPackagePlugin.class)
@@ -20,32 +22,36 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
     @Override
     public void serverStart(GlobalContext context) throws Exception {
         logger.debug("LocalIDEControllerPlugin serverStart");
-        var state = LocalIDEState.get();
+        var model = LocalIDEModel.get();
 
-        state.setResourceManager((ResourceManagerImpl) context.getResourceManager());
-        state.setFileResolver(context.getFileResolver());
-        context.put(ExecutionDiversion.class, state);
+        model.setResourceManager((ResourceManagerImpl) context.getResourceManager());
+        model.setFileResolver(context.getFileResolver());
+        context.put(ExecutionDiversion.class, model);
         // Lets the automation package services browse the package open in the editor under the 'local'
         // id, so that the IDE and a Step server expose the very same ap-resource services.
-        context.put(LocalAutomationPackageDirectoryProvider.class, state::getCurrentAutomationPackageDirectory);
+        context.put(LocalAutomationPackageDirectoryProvider.class, model::getCurrentAutomationPackageDirectory);
 
         var services = context.getServiceRegistrationCallback();
         services.registerService(LocalIDEServices.class);
         services.registerService(LocalFileSystemServices.class);
 
         context.setApResourceProvider(new LocalApResourceProvider(
-            () -> LocalIDEState.get().getCurrentAutomationPackageDirectory(),
+            () -> LocalIDEModel.get().getCurrentAutomationPackageDirectory(),
             context.getApResourceProvider()));
+
+        // This makes the CLI configuration (url, token etc.) available to the frontend.
+        context.require(WebApplicationConfigurationManager.class)
+            .registerHook(session -> StepConnectionInfo.toConfigurationMap(model.getCliConnection()));
     }
 
     @Override
     public void finalizeStart(GlobalContext context) throws Exception {
         logger.debug("LocalIDEControllerPlugin finalizeStart");
-        LocalIDEState.get().onStartupFinished();
+        LocalIDEModel.get().onStartupFinished();
     }
 
     @Override
     public void postShutdownHook() {
-        LocalIDEState.get().onShutdown();
+        LocalIDEModel.get().onShutdown();
     }
 }

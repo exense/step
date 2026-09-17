@@ -38,7 +38,6 @@ import step.core.plans.filters.PlanByIncludedCategoriesFilter;
 import step.core.plans.filters.PlanByIncludedNamesFilter;
 import step.core.plans.filters.PlanMultiFilter;
 import step.core.plans.runner.PlanRunnerResult;
-import step.ide.api.IDEExecutorDelegate;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +52,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 
-public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParameters> implements IDEExecutorDelegate {
+public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParameters> {
 
     private static final Logger logger = LoggerFactory.getLogger(ExecuteAutomationPackageTool.class);
 
@@ -79,7 +78,6 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
     }
 
 
-    @Override
     public void executePackageAndFillExecutionId(CompletableFuture<String> singleExecutionIdFuture) throws Exception {
         executePackageOnStep(singleExecutionIdFuture);
     }
@@ -97,7 +95,6 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
      * @param firstExecutionIdFuture execution ID future to complete once it's known.
      * @throws StepCliExecutionException on error
      */
-    // TODO SED-4429 extract and refactor this logic
     protected void executePackageOnStep(CompletableFuture<String> firstExecutionIdFuture) throws StepCliExecutionException {
         parameters.validate();
 
