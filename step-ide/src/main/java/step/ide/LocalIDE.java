@@ -26,19 +26,19 @@ public class LocalIDE {
     }
 
     public LocalIDE() throws Exception {
-        var ideState = LocalIDEState.get();
+        var model = LocalIDEModel.get();
         Configuration configuration = loadConfiguration();
-        for (var cfg : ideState.startupHooks.onConfigure) {
+        for (var cfg : model.startupHooks.onConfigure) {
             // Startup hooks could throw exceptions, or outright stop the entire execution using System.exit.
             // That's intentional, and the reason why they're called as early as possible.
             cfg.accept(configuration);
         }
         var resourcesDirectory = Files.createTempDirectory("step-ide-resources-");
         var fileManagerDirectory = Files.createTempDirectory("step-ide-filemanager-");
-        LocalIDEState.get().addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
+        model.addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
         configuration.putProperty("resources.dir", resourcesDirectory.toString());
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
-        configuration.putProperty("ui.resource.root", ideState.getIdeResourcePath());
+        configuration.putProperty("ui.resource.root", model.getIdeResourcePath());
         applyEnvOverride(configuration, "JMETER_HOME", "plugins.jmeter.home");
         server = new IDEControllerServer(configuration);
     }

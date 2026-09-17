@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
-import step.ide.LocalIDEState;
+import step.ide.LocalIDEModel;
 import step.ide.exceptions.FileExistsException;
 
 @Path("/local/ide")
@@ -54,7 +54,7 @@ public class LocalIDEServices extends AbstractStepServices {
         } catch (java.nio.file.InvalidPathException e) {
             throw error("Invalid directory path: " + e.getMessage(), Response.Status.BAD_REQUEST);
         }
-        var ideState = LocalIDEState.get();
+        var ideState = model();
 
         try {
             ideState.validateExistingAutomationPackageDirectory(apPath);
@@ -68,6 +68,10 @@ public class LocalIDEServices extends AbstractStepServices {
             logger.error("Unable to use existing AP directory: {}", directory, e);
             throw error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private static LocalIDEModel model() {
+        return LocalIDEModel.get();
     }
 
     @POST
@@ -88,7 +92,7 @@ public class LocalIDEServices extends AbstractStepServices {
         try {
             // more validation
             try {
-                LocalIDEState.get().validateInitializableAutomationPackageDirectory(path, false);
+                model().validateInitializableAutomationPackageDirectory(path, false);
             } catch (FileExistsException e) {
                 throw error(
                     "Directory already contains an automation package descriptor, refusing to overwrite: " + e.existingPath.toAbsolutePath(),
@@ -100,7 +104,7 @@ public class LocalIDEServices extends AbstractStepServices {
         }
 
         try {
-            LocalIDEState.get().useNewAutomationPackageDirectory(path, apName);
+            model().useNewAutomationPackageDirectory(path, apName);
         } catch (Exception e) {
             logger.error("Unable to initialize new AP directory: {}", path.toAbsolutePath(), e);
             throw error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
@@ -115,17 +119,37 @@ public class LocalIDEServices extends AbstractStepServices {
     @Path("ap/current")
     @Produces(MediaType.APPLICATION_JSON)
     public AutomationPackageDescriptor getCurrentAP() {
-        var dir = LocalIDEState.get().getCurrentAutomationPackageDirectory();
+        var dir = model().getCurrentAutomationPackageDirectory();
         if (dir == null) {
             return null;
         }
-        return new AutomationPackageDescriptor(dir.toString(), LocalIDEState.get().getCurrentAutomationPackageName());
+        return new AutomationPackageDescriptor(dir.toString(), model().getCurrentAutomationPackageName());
     }
 
     @POST
     @Path("ap/close")
     public void closeAP() {
-        LocalIDEState.get().closeCurrentAutomationPackage();
+        model().closeCurrentAutomationPackage();
+    }
+
+    @Path("remote-execute")
+    @POST
+    public void executeRemote(RemoteExecutionRequest request) {
+        try {
+            model().executeRemote(request);
+        } catch (Exception e) {
+            throw error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+        }
+    }
+
+    @Path("remote-deploy")
+    @POST
+    public void deployRemote(RemoteDeploymentRequest request) {
+        try {
+            model().deployRemote(request);
+        } catch (Exception e) {
+            throw error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
 }
