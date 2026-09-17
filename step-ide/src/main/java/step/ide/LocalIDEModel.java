@@ -239,7 +239,7 @@ public class LocalIDEModel implements ExecutionDiversion {
 
     public void setDelegator(IDEDelegator delegator) {
         if (this.delegator != null) {
-            throw new IllegalStateException("executorDelegateFactory has already been set");
+            throw new IllegalStateException("delegator has already been set");
         }
         this.delegator = delegator;
     }
@@ -253,7 +253,7 @@ public class LocalIDEModel implements ExecutionDiversion {
     }
 
     public void setCliConnection(StepConnectionInfo cliConnection) {
-        if (this.cliConnection != null && cliConnection != null) {
+        if (this.cliConnection != null) {
             throw new IllegalStateException("cliConnection has already been set");
         }
         this.cliConnection = cliConnection;

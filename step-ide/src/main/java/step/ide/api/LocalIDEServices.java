@@ -17,6 +17,8 @@ import step.core.deployment.ControllerServiceException;
 import step.ide.LocalIDEModel;
 import step.ide.exceptions.FileExistsException;
 
+import java.util.Objects;
+
 @Path("/local/ide")
 @Tag(name = "IDE")
 public class LocalIDEServices extends AbstractStepServices {
@@ -136,7 +138,7 @@ public class LocalIDEServices extends AbstractStepServices {
     @POST
     public void executeRemote(RemoteExecutionRequest request) {
         try {
-            model().executeRemote(request);
+            model().executeRemote(Objects.requireNonNull(request));
         } catch (Exception e) {
             throw error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
         }
@@ -146,7 +148,7 @@ public class LocalIDEServices extends AbstractStepServices {
     @POST
     public void deployRemote(RemoteDeploymentRequest request) {
         try {
-            model().deployRemote(request);
+            model().deployRemote(Objects.requireNonNull(request));
         } catch (Exception e) {
             throw error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
         }
