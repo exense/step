@@ -1,12 +1,10 @@
 /*******************************************************************************
  * Copyright (C) exense GmbH
  ******************************************************************************/
-package step.localrunner;
+package step.artefacts.handlers.functions;
 
 import org.junit.Test;
 import step.artefacts.BaseArtefactPlugin;
-import step.artefacts.handlers.functions.AgentProvisioningExecutionPlugin;
-import step.artefacts.handlers.functions.TokenForecastingExecutionPlugin;
 import step.artefacts.handlers.functions.test.MyFunction;
 import step.artefacts.handlers.functions.test.MyFunctionType;
 import step.core.accessors.AbstractOrganizableObject;
@@ -27,6 +25,7 @@ import step.core.execution.OperationMode;
 import step.core.execution.ProvisioningException;
 import step.core.plans.Plan;
 import step.core.plans.agents.configuration.AgentPoolProvisioningConfiguration;
+import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.core.plans.agents.configuration.ManualAgentProvisioningConfiguration;
 import step.core.plans.builder.PlanBuilder;
 import step.core.plans.runner.PlanRunnerResult;
@@ -142,6 +141,46 @@ public class AgentProvisioningExecutionPluginTest {
         }
     }
 
+    /**
+     * {@code agents: []} disables the provisioning to run on permanent agents. A driver without such agents, as the
+     * local one, still gets to provision the agents the plan needs.
+     */
+    @Test
+    public void letsTheDriverProvisionAPlanDisablingTheProvisioning() {
+        RecordingDriver driver = new RecordingDriver(Map.of("$agenttype", "default"));
+
+        try (ExecutionEngine executionEngine = newExecutionEngine(driver, new AgentProvisioningStatusAccessor(new InMemoryCollection<>()))) {
+            PlanRunnerResult result = executionEngine.execute(planDisablingTheProvisioning());
+
+            assertEquals(ReportNodeStatus.PASSED, result.getResult());
+            assertEquals(List.of(), driver.configuredAgentPools);
+            assertEquals(List.of(new AgentPoolRequirementSpec(POOL, 1)), driver.forecastedAgentPools);
+            assertEquals(RecordingDriver.RESOLVED_AGENT_POOLS, driver.request.agentPoolRequirementSpecs);
+            assertEquals(1, driver.deprovisionCount.get());
+        }
+    }
+
+    @Test
+    public void provisionsNothingForAPlanDisablingTheProvisioningByDefault() {
+        RecordingDriver driver = new ConfiguredAgentPoolsDriver();
+
+        try (ExecutionEngine executionEngine = newExecutionEngine(driver, new AgentProvisioningStatusAccessor(new InMemoryCollection<>()))) {
+            PlanRunnerResult result = executionEngine.execute(planDisablingTheProvisioning());
+
+            assertEquals(ReportNodeStatus.PASSED, result.getResult());
+            assertNull(driver.request);
+            assertEquals(0, driver.deprovisionCount.get());
+        }
+    }
+
+    private static Plan planDisablingTheProvisioning() {
+        Plan plan = plan();
+        ManualAgentProvisioningConfiguration agentConfiguration = new ManualAgentProvisioningConfiguration();
+        agentConfiguration.configuredAgentPools = List.of();
+        plan.setAgents(agentConfiguration);
+        return plan;
+    }
+
     private static Plan plan() {
         Plan plan = PlanBuilder.create()
             .startBlock(BaseArtefacts.testCase())
@@ -171,6 +210,23 @@ public class AgentProvisioningExecutionPluginTest {
             .withPlugin(new TokenForecastingExecutionPlugin())
             .withPlugin(new AgentProvisioningExecutionPlugin(accessor))
             .build();
+    }
+
+    /**
+     * A driver provisioning the configured agent pools as they are, as {@link AgentProvisioningDriver} does by default
+     */
+    private static class ConfiguredAgentPoolsDriver extends RecordingDriver {
+
+        ConfiguredAgentPoolsDriver() {
+            super(Map.of("$agenttype", "default"));
+        }
+
+        @Override
+        public List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(AgentProvisioningConfiguration agentProvisioningConfiguration,
+                                                                          List<AgentPoolRequirementSpec> forecasted,
+                                                                          Set<Map<String, Interest>> criteriaWithoutMatch) {
+            return agentProvisioningConfiguration.getAgentPoolRequirementSpecs();
+        }
     }
 
     /**
@@ -249,10 +305,10 @@ public class AgentProvisioningExecutionPluginTest {
         }
 
         @Override
-        public List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(List<AgentPoolRequirementSpec> configured,
+        public List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(AgentProvisioningConfiguration agentProvisioningConfiguration,
                                                                           List<AgentPoolRequirementSpec> forecasted,
                                                                           Set<Map<String, Interest>> criteriaWithoutMatch) {
-            configuredAgentPools = configured;
+            configuredAgentPools = agentProvisioningConfiguration.getAgentPoolRequirementSpecs();
             forecastedAgentPools = forecasted;
             return RESOLVED_AGENT_POOLS;
         }

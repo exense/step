@@ -93,10 +93,9 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
     @Override
     public void provisionRequiredResources(ExecutionContext context) {
         AgentProvisioningConfiguration planAgentConfiguration = getPlanAgentPoolConfiguratorOrDefault(context);
+        TokenForecastingContext tokenForecastingContext = TokenForecastingExecutionPlugin.getTokenForecastingContext(context);
+        List<AgentPoolRequirementSpec> requiredAgentPools;
         if (planAgentConfiguration.enableAgentProvisioning()) {
-            // The token forecasting is always calculated, even if the agent pools are configured manually
-            TokenForecastingContext tokenForecastingContext = TokenForecastingExecutionPlugin.getTokenForecastingContext(context);
-            List<AgentPoolRequirementSpec> requiredAgentPools;
             if (planAgentConfiguration.enableAutomaticTokenNumberCalculation()) {
                 logger.debug("Calculating agent pool requirements...");
                 // Get the results of the token forecasting
@@ -105,16 +104,24 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
                 if (!criteriaWithoutMatch.isEmpty()) {
                     throw new ProvisioningException(agentProvisioningDriver.getUnmatchedCriteriaMessage(criteriaWithoutMatch));
                 }
-                logger.info("Calculated agent pool requirements: " + requiredAgentPools);
+                logger.info("Calculated agent pool requirements: {}", requiredAgentPools);
             } else {
                 List<AgentPoolRequirementSpec> configuredAgentPools = planAgentConfiguration.getAgentPoolRequirementSpecs();
+                // this checks here feels a bit odd but keeping it as it's legacy
                 if (configuredAgentPools == null) {
                     throw new ProvisioningException("The method getAgentPoolRequirementSpecs of the plan agent configuration returned null");
                 }
-                requiredAgentPools = agentProvisioningDriver.resolveConfiguredAgentPools(configuredAgentPools,
+                requiredAgentPools = agentProvisioningDriver.resolveConfiguredAgentPools(planAgentConfiguration,
                     tokenForecastingContext.getAgentPoolRequirementSpec(), tokenForecastingContext.getCriteriaWithoutMatch());
             }
+        } else {
+            // Even when auto-provisioning is disabled in the plan configuration, some driver (e.g. local execution)
+            // can still return a list of agent to be provisioned
+            requiredAgentPools = agentProvisioningDriver.resolveConfiguredAgentPools(planAgentConfiguration,
+                tokenForecastingContext.getAgentPoolRequirementSpec(), tokenForecastingContext.getCriteriaWithoutMatch());
+        }
 
+        if (planAgentConfiguration.enableAgentProvisioning() || !requiredAgentPools.isEmpty()) {
             // Delegate the provisioning of the agent tokens to the driver according to the calculated forecast
             AgentProvisioningRequest request = new AgentProvisioningRequest();
             request.executionId = context.getExecutionId();
@@ -143,8 +150,8 @@ public class AgentProvisioningExecutionPlugin extends AbstractExecutionEnginePlu
                     logger.warn("No provisioning status returned by the driver for request {} of execution {}", provisioningRequestId, context.getExecutionId());
                 }
             }
-            logger.info("Successfully provisioned agents for execution " + context.getExecutionId());
-        } else {
+            logger.info("Successfully provisioned agents for execution {}", context.getExecutionId());
+        } else if (!agentProvisioningDriver.alwaysProvisionAgents()) {
             logger.info("Agent provisioning is disabled for this plan");
         }
     }

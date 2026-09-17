@@ -22,11 +22,13 @@ package step.core.agents.provisioning.driver;
 import step.core.agents.provisioning.AgentPoolRequirementSpec;
 import step.core.agents.provisioning.AgentPoolSpec;
 import step.core.agents.provisioning.TokenSelectionCriteriaFilter;
+import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.grid.tokenpool.Interest;
 
 import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public interface AgentProvisioningDriver extends Closeable {
@@ -79,17 +81,32 @@ public interface AgentProvisioningDriver extends Closeable {
     void registerRemoteAgentPoolSpecs(Set<AgentPoolSpec> agentPoolSpecs);
 
     /**
-     * Returns the agent pools to provision for a plan whose agent pools are configured manually.
+     * Returns the agent pools to provision for a plan whose agent pools are configured manually. The default returns
+     * the configured list but custom implementation may override this behavior. Example local provisioning
+     * {@code LocalProcessAgentProvisioningDriver} will resolve to a list of agents actually required for the execution
      *
-     * @param configured           the agent pool requirements configured in the plan
-     * @param forecasted           the agent pool requirements calculated by the token forecasting
-     * @param criteriaWithoutMatch the token selection criteria for which the token forecasting found no agent pool
-     * @return the agent pool requirements to be provisioned. By default, the configured ones.
+     * @param agentProvisioningConfiguration the agent pool configuration of the plan, empty when the plan disables
+     *                                       the provisioning
+     * @param forecasted                     the agent pool requirements calculated by the token forecasting
+     * @param criteriaWithoutMatch           the token selection criteria for which the token forecasting found no agent pool
+     * @return the agent pool requirements to be provisioned. By default, the configured ones, shall never return null.
      */
-    default List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(List<AgentPoolRequirementSpec> configured,
+    default List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(AgentProvisioningConfiguration agentProvisioningConfiguration,
                                                                        List<AgentPoolRequirementSpec> forecasted,
                                                                        Set<Map<String, Interest>> criteriaWithoutMatch) {
-        return configured;
+        Objects.requireNonNull(agentProvisioningConfiguration, "agentProvisioningConfiguration must not be null");
+        return (agentProvisioningConfiguration.enableAgentProvisioning()) ? agentProvisioningConfiguration.getAgentPoolRequirementSpecs() : List.of();
+    }
+
+    /**
+     * Some driver always provision agents even when the plan disable it in its configuration.
+     * Simple because the plan's configuration is mean for a deployed plan on a Step instance and
+     * does not necessarily apply in other context.
+     *
+     * @return whether the driver always provision agents, false by default
+     */
+    default boolean alwaysProvisionAgents() {
+        return false;
     }
 
     /**

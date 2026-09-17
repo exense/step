@@ -32,6 +32,7 @@ import step.core.agents.provisioning.driver.AgentProvisioningError;
 import step.core.agents.provisioning.driver.AgentProvisioningRequest;
 import step.core.agents.provisioning.driver.AgentProvisioningStatus;
 import step.core.execution.ProvisioningException;
+import step.core.plans.agents.configuration.AgentProvisioningConfiguration;
 import step.grid.AgentRef;
 import step.grid.TokenWrapper;
 import step.grid.agent.AgentTypes;
@@ -165,15 +166,21 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
      * infrastructure, whereas a local execution has one machine and the agents this driver can start on it. The number
      * of agents they ask for is just as meaningless, being a number of machines.
      * <p>
+     * The same goes for a plan configuring no agent pool at all ({@code agents: []}), which disables the provisioning
+     * to run on the permanent agents of a Step instance: there is no such agent here.
+     * <p>
      * What the requirement is turned into is therefore one agent per agent type the token forecasting found the plan
      * needs, each with as many tokens as a local agent is allowed to have: the plan asked not to be sized
      * automatically, so it is given everything the local execution can offer.
      */
     @Override
-    public List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(List<AgentPoolRequirementSpec> configured,
+    public List<AgentPoolRequirementSpec> resolveConfiguredAgentPools(AgentProvisioningConfiguration agentProvisioningConfiguration,
                                                                       List<AgentPoolRequirementSpec> forecasted,
                                                                       Set<Map<String, Interest>> criteriaWithoutMatch) {
-        Objects.requireNonNull(configured, "configured must not be null");
+        Objects.requireNonNull(agentProvisioningConfiguration, "agentProvisioningConfiguration must not be null");
+        if (agentProvisioningConfiguration.enableAutomaticTokenNumberCalculation()) {
+            throw new IllegalArgumentException("Resolve agent pools should not be invoked when automatic calculation is enabled.");
+        }
         Objects.requireNonNull(forecasted, "forecasted must not be null");
         Objects.requireNonNull(criteriaWithoutMatch, "criteriaWithoutMatch must not be null");
         if (!criteriaWithoutMatch.isEmpty()) {
@@ -186,17 +193,16 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
             .map(poolName -> new AgentPoolRequirementSpec(poolName, maxTokensPerAgent))
             .collect(Collectors.toList());
 
-        String configuredPoolNames = configured.stream().map(p -> p.agentPoolTemplateName).collect(Collectors.joining(", "));
-        if (requiredAgentPools.isEmpty()) {
-            logger.info("This plan configures its agent pools manually ({}), but none of its keywords requires an "
-                + "agent: none is started.", configuredPoolNames);
-        } else {
-            logger.info("This plan configures its agent pools manually ({}). Those pools are those of a Step "
-                    + "instance and do not exist here: one agent of each required type is started with {} tokens "
-                    + "instead ({}).", configuredPoolNames, maxTokensPerAgent,
-                requiredAgentPools.stream().map(p -> p.agentPoolTemplateName).collect(Collectors.joining(", ")));
-        }
+        String planConfigurationMessage = agentProvisioningConfiguration.enableAgentProvisioning() ?
+            "This plan configures its agent pools manually" :
+            "This plan disables the agent provisioning";
+        logger.info("{}, this is ignored for local execution, agents are still started automatically.", planConfigurationMessage);
         return requiredAgentPools;
+    }
+
+    @Override
+    public boolean alwaysProvisionAgents() {
+        return true;
     }
 
     /**
