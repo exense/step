@@ -42,6 +42,8 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String assertionPlanName;
     private Map<String, String> executionParameters;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private Map<String, Object> metadata;
 
     @JsonCreator
     public AutomationPackageSchedule(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
@@ -105,6 +107,14 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase {
         this.active = active;
     }
 
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
     public String getAssertionPlanName() {
         return assertionPlanName;
     }
@@ -123,6 +133,7 @@ public class AutomationPackageSchedule extends PatchableYamlModelBase {
             ", planName='" + planName + '\'' +
             ", assertionPlanName='" + assertionPlanName + '\'' +
             ", executionParameters=" + executionParameters +
+            ", metadata=" + metadata +
             '}';
     }
 }

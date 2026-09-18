@@ -2,22 +2,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Plan",
   "$defs": {
-    "resourceReference": {
-      "oneOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "id": {
-              "type": "string"
-            }
-          }
-        }
-      ]
-    },
     "SmartDynamicValueBooleanDef": {
       "oneOf": [
         {
@@ -90,6 +74,51 @@
         },
         "additionalProperties": false
       }
+    },
+    "MetadataDef": {
+      "type": "object",
+      "description": "Free-form metadata",
+      "patternProperties": {
+        "^[^.$][^.]*$": {
+          "$ref": "#/$defs/MetadataValueDef"
+        }
+      },
+      "additionalProperties": false
+    },
+    "MetadataValueDef": {
+      "type": [
+        "object",
+        "array",
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ],
+      "patternProperties": {
+        "^[^.$][^.]*$": {
+          "$ref": "#/$defs/MetadataValueDef"
+        }
+      },
+      "additionalProperties": false,
+      "items": {
+        "$ref": "#/$defs/MetadataValueDef"
+      }
+    },
+    "resourceReference": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          }
+        }
+      ]
     },
     "AssertDef": {
       "type": "object",
@@ -2534,6 +2563,9 @@
         },
         "agents": {
           "$ref": "#/$defs/agentsDef"
+        },
+        "metadata": {
+          "$ref": "#/$defs/MetadataDef"
         },
         "root": {
           "$ref": "#/$defs/RootArtefactDef"

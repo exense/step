@@ -35,6 +35,7 @@ import step.core.plans.PlanAccessor;
 import step.core.repositories.RepositoryObjectReference;
 import step.core.scheduler.*;
 import step.core.scheduler.automation.AutomationPackageSchedule;
+import step.core.yaml.YamlMetadata;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -117,6 +118,7 @@ public class AutomationPackageSchedulerHook implements AutomationPackageHook<Exe
 
             execTaskParameters.setActive(schedule.getActive() == null || schedule.getActive());
             execTaskParameters.addAttribute(AbstractOrganizableObject.NAME, schedule.getName());
+            YamlMetadata.applyTo(execTaskParameters, schedule.getMetadata());
 
             execTaskParameters.setCronExpression(schedule.getCron());
 
