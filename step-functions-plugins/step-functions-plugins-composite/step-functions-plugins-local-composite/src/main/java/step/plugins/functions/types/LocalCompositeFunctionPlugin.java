@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static step.core.execution.OperationMode.isLocal;
 
 @Plugin(dependencies = {FunctionPlugin.class})
 public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin {
@@ -50,7 +49,7 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
     @Override
     public void initializeExecutionEngineContext(AbstractExecutionEngineContext parentContext, ExecutionEngineContext context) {
         OperationMode operationMode = context.getOperationMode();
-        if (isLocal(operationMode)) {
+        if (operationMode.isLocal()) {
             functionAccessor = context.require(FunctionAccessor.class);
             planAccessor = context.getPlanAccessor();
             functionTypeRegistry = context.require(FunctionTypeRegistry.class);
@@ -63,7 +62,7 @@ public class LocalCompositeFunctionPlugin extends AbstractExecutionEnginePlugin 
 
             // Scanning and saving the local composite keywords here is only required for the LocalPlanRunner
             // In the context of Automation Package, the Automation Package manager is responsible to read the AP (including annotations)
-            if (!OperationMode.LOCAL_AUTOMATION_PACKAGE.equals(operationMode)) {
+            if (!operationMode.isAutomationPackage()) {
                 saveLocalFunctions();
             }
         }

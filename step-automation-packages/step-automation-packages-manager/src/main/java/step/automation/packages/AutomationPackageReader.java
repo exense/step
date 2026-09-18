@@ -215,15 +215,23 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         }
     }
 
-    /**
-     *
-     * @param targetPackage Target Automation package content to be filled by fragment read entities
-     * @param fragment      Fragment to read
-     * @param archive       Automation package archive
-     * @param fragments     Set of all automation package fragments collected during  recursive reading of fragments.
-     * @throws AutomationPackageReadingException Thrown upon errors when reading the fragment
-     */
     private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments) throws AutomationPackageReadingException {
+        fillAutomationPackageWithImportedFragments(targetPackage, fragment, archive, fragments, fragment instanceof AutomationPackageDescriptorYaml ? ((AutomationPackageDescriptorYaml) fragment).getVersion() : null);
+    }
+
+
+        /**
+         *
+         * @param targetPackage Target Automation package content to be filled by fragment read entities
+         * @param fragment      Fragment to read
+         * @param archive       Automation package archive
+         * @param fragments     Set of all automation package fragments collected during  recursive reading of fragments.
+         * @param packageVersion the schema version declared by the automation package descriptor. Fragments usually
+         *                       declare no version of their own and inherit this one, which is what decides whether the
+         *                       migrations of the automation package format apply to them
+         * @throws AutomationPackageReadingException Thrown upon errors when reading the fragment
+         */
+    private void fillAutomationPackageWithImportedFragments(AutomationPackageContent targetPackage, AutomationPackageFragmentYaml fragment, T archive, Set<AutomationPackageFragmentYaml> fragments, String packageVersion) throws AutomationPackageReadingException {
         fillContentSections(targetPackage, fragment, archive);
 
         if (!fragment.getFragments().isEmpty()) {
@@ -231,7 +239,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                 List<URL> resources = archive.getResourcesByPattern(importedFragmentReference.toString());
                 for (URL resource : resources) {
                     try (InputStream fragmentYamlStream = resource.openStream()) {
-                        AutomationPackageFragmentYaml referencedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName());
+                        AutomationPackageFragmentYaml referencedFragment = getOrCreateDescriptorReader().readAutomationPackageFragment(fragmentYamlStream, resource.toString(), archive.getAutomationPackageName(), packageVersion);
                         fragments.add(referencedFragment);
                         try {
                             referencedFragment.setFragmentPath(Path.of(resource.toURI()));
@@ -240,7 +248,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                                 "This is likely due to loading the automation package as a jar and not as a file system folder. This is expected behaviour");
                         }
 
-                        fillAutomationPackageWithImportedFragments(targetPackage, referencedFragment, archive, fragments);
+                        fillAutomationPackageWithImportedFragments(targetPackage, referencedFragment, archive, fragments, packageVersion);
                     } catch (IOException | URISyntaxException e) {
                         throw new AutomationPackageReadingException("Unable to read fragment in automation package: " + importedFragmentReference, e);
                     }

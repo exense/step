@@ -40,7 +40,7 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
     @JsonSchema(defaultProvider = DefaultYamlFunctionNameProvider.class)
     private String name;
 
-    private DynamicValue<Integer> callTimeout = Function.DEFAULT_CALL_TIMEOUT;
+    private DynamicValue<Integer> callTimeout = Function.defaultCallTimeout();
     private JsonObject schema = Function.DEFAULT_SCHEMA;
 
     private boolean executeLocally;

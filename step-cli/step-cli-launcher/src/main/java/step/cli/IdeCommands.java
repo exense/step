@@ -8,6 +8,7 @@ import step.core.Constants;
 import step.core.execution.model.ExecutionParameters;
 import step.ide.LocalIDE;
 import step.ide.LocalIDEState;
+import step.ide.api.IDEExecutionRequest;
 import step.ide.api.IDEExecutorDelegate;
 import step.ide.api.IDEExecutorDelegateFactory;
 import step.ide.exceptions.FileExistsException;
@@ -119,7 +120,7 @@ public class IdeCommands {
         private static int determineFrontendPort() {
             // This uses some hardcoded logic, names and port numbers:
             // If the app is bundled, return prod port, otherwise dev port.
-            String resourceName = "/" + LocalIDEState.getIdeResourcePath() + "/index.html";
+            String resourceName = "/" + LocalIDEState.get().getIdeResourcePath() + "/index.html";
             boolean resourceExists = IdeCommands.class.getResource(resourceName) != null;
             if (!resourceExists) {
                 logger.warn("Unable to find resource {} , assuming local development mode", resourceName);
@@ -128,9 +129,11 @@ public class IdeCommands {
         }
 
         @Override
-        public IDEExecutorDelegate createIDEExecutorDelegate(File apDirectory, ExecutionParameters executionParams) {
+        public IDEExecutorDelegate createDelegate(IDEExecutionRequest request) {
+            File apPath = request.automationPackage().toFile();
+            ExecutionParameters executionParams = request.executionParameters();
             ApExecuteParameters params = new ApExecuteParameters()
-                .setAutomationPackageFile(ApCommand.AbstractApCommand.prepareFile(Failable.call(apDirectory::getCanonicalPath), "automation package", true))
+                .setAutomationPackageFile(ApCommand.AbstractApCommand.prepareFile(Failable.call(apPath::getCanonicalPath), "automation package", true))
                 .setAutomationPackageMavenArtifact(null)
                 .setLibraryFile(null)
                 .setlibraryMavenArtifact(null)
@@ -142,7 +145,8 @@ public class IdeCommands {
                 .setExecutionResultTimeoutS(3600)
                 .setWaitForExecution(false)
                 .setEnsureExecutionSuccess(false)
-                .setIncludePlans(executionParams.getDescription()) // NOTE: the include plans is slightly buggy as it splits plan names by commas (",") -- so don't use plan names with a comma.
+                // an empty list of included plan names means that all plans of the package are executed
+                .setIncludePlans(request.includedPlanNames().isEmpty() ? null : request.includedPlanNames())
                 .setExcludePlans(null)
                 .setIncludeCategories(null)
                 .setExcludeCategories(null)

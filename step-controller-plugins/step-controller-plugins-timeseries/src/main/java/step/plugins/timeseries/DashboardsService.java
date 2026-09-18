@@ -52,6 +52,7 @@ public class DashboardsService extends AbstractEntityServices<DashboardView> { /
 
 
     @Override
+    @Secured(right = "{entity}-write")
     public DashboardView clone(String id) {
         DashboardView clone = super.clone(id);
         Map<String, Object> customFields = clone.getCustomFields();
