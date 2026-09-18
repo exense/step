@@ -1,0 +1,14 @@
+---
+keywords:
+  - Composite:
+      name: "Keyword"
+      schema:
+        properties:
+          parameter:
+            type: "string"
+        required:
+          - "parameter"
+      routing: {}
+      plan:
+        root:
+          sequence: {}

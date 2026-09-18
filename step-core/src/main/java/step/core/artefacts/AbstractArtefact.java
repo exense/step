@@ -31,6 +31,8 @@ import step.core.accessors.MapSerializer;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.entities.EntityConstants;
 import step.core.entities.EntityReference;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,28 +44,40 @@ import java.util.Map;
 public abstract class AbstractArtefact extends AbstractOrganizableObject {
 
     public static final String JSON_CLASS_PROPERTY = "_class";
+
+    @YamlFieldOrder(YamlFieldPriority.DESCRIPTORS)
     protected DynamicValue<String> dynamicName;
 
+    @YamlFieldOrder(YamlFieldPriority.DESCRIPTORS)
     protected boolean useDynamicName;
 
+    @YamlFieldOrder(YamlFieldPriority.DESCRIPTORS)
     protected String description;
 
 
     @JsonSerialize(using = MapSerializer.class)
     @JsonDeserialize(using = MapDeserializer.class)
+    @YamlFieldOrder(YamlFieldPriority.DESCRIPTORS)
     protected Map<String, Object> customAttributes;
 
     protected List<ObjectId> attachments;
 
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
     private DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
     private DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
     private DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
     private boolean isWorkArtefact = false;
 
+
+    @YamlFieldOrder(YamlFieldPriority.BEFORE)
     private ChildrenBlock before;
 
+    @YamlFieldOrder(YamlFieldPriority.CHILDREN)
     protected List<AbstractArtefact> children = new ArrayList<>();
 
+    @YamlFieldOrder(YamlFieldPriority.AFTER)
     private ChildrenBlock after;
 
     public AbstractArtefact() {

@@ -59,28 +59,31 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
     @JsonSchema(defaultProvider = DefaultYamlArtefactNameProvider.class)
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Top)
+    @YamlFieldOrder(YamlFieldPriority.DESCRIPTORS)
     protected DynamicValue<String> nodeName;
 
-    @YamlFieldOrder(YamlFieldPriority.Top)
+    @YamlFieldOrder(YamlFieldPriority.DESCRIPTORS)
     protected String description;
 
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
     protected DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
     protected DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
     protected DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
 
 
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Low)
+    @YamlFieldOrder(YamlFieldPriority.BEFORE)
     protected YamlChildrenBlock before;
 
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Low)
+    @YamlFieldOrder(YamlFieldPriority.CHILDREN)
     @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
     protected List<NamedYamlArtefact> children = new ArrayList<>();
 
     @YamlFieldCustomCopy
-    @YamlFieldOrder(YamlFieldPriority.Low)
+    @YamlFieldOrder(YamlFieldPriority.AFTER)
     protected YamlChildrenBlock after;
 
     public AbstractYamlArtefact() {
