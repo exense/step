@@ -37,7 +37,8 @@ import java.util.Map;
  * classes, which keeps the agent libraries off the CLI's classpath: the whole point of running the agents as separate
  * processes is that they bring their own, isolated set of libraries.
  * <p>
- * All agent types share the same configuration shape (grid host, token groups with a capacity and token attributes),
+ * All agent types share the same configuration shape (grid host, token groups with a capacity, token attributes and
+ * selection patterns),
  * so the same writer serves the YAML of every agent type.
  * <p>
  * Only the settings <b>every</b> agent understands are written here; anything else is passed by the provider of the
@@ -91,6 +92,8 @@ public class AgentConfWriter {
 
         Map<String, Object> tokenConf = new LinkedHashMap<>();
         tokenConf.put("attributes", new LinkedHashMap<>(context.getTokenAttributes()));
+        // Understood by every agent type, each turning a pattern into a mandatory interest of its tokens
+        tokenConf.put("selectionPatterns", new LinkedHashMap<>(context.getTokenSelectionPatterns()));
 
         Map<String, Object> tokenGroup = new LinkedHashMap<>();
         tokenGroup.put("capacity", context.getNumberOfTokens());
