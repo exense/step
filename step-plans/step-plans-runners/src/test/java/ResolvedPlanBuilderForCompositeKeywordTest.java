@@ -39,7 +39,7 @@ public class ResolvedPlanBuilderForCompositeKeywordTest {
 
     @Before
     public void before() {
-        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL, true);
+        ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL_PLAN, true);
         InMemoryFunctionAccessorImpl functionAccessor = new InMemoryFunctionAccessorImpl();
         parentContext.put(FunctionAccessor.class, functionAccessor);
         engine = new ExecutionEngine.Builder().withParentContext(parentContext)

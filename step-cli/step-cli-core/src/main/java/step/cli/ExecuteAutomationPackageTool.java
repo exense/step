@@ -45,7 +45,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParameters> implements IDEExecutorDelegate {
 
@@ -289,25 +287,21 @@ public class ExecuteAutomationPackageTool extends AbstractCliTool<ApExecuteParam
         return executionParameters;
     }
 
-    public static PlanFilter getPlanFilters(String includePlans, String excludePlans, String includeCategories, String excludeCategories) {
+    public static PlanFilter getPlanFilters(List<String> includePlans, List<String> excludePlans, List<String> includeCategories, List<String> excludeCategories) {
         List<PlanFilter> multiFilter = new ArrayList<>();
         if (includePlans != null) {
-            multiFilter.add(new PlanByIncludedNamesFilter(parseList(includePlans)));
+            multiFilter.add(new PlanByIncludedNamesFilter(includePlans));
         }
         if (excludePlans != null) {
-            multiFilter.add(new PlanByExcludedNamesFilter(parseList(excludePlans)));
+            multiFilter.add(new PlanByExcludedNamesFilter(excludePlans));
         }
         if (includeCategories != null) {
-            multiFilter.add(new PlanByIncludedCategoriesFilter(parseList(includeCategories)));
+            multiFilter.add(new PlanByIncludedCategoriesFilter(includeCategories));
         }
         if (excludeCategories != null) {
-            multiFilter.add(new PlanByExcludedCategoriesFilter(parseList(excludeCategories)));
+            multiFilter.add(new PlanByExcludedCategoriesFilter(excludeCategories));
         }
         return new PlanMultiFilter(multiFilter);
-    }
-
-    private static List<String> parseList(String string) {
-        return (string != null && !string.isBlank()) ? Arrays.stream(string.split(",")).collect(Collectors.toList()) : new ArrayList<>();
     }
 
     public enum ReportType {

@@ -20,6 +20,7 @@ package step.artefacts;
 
 import step.core.artefacts.AbstractArtefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.dynamicbeans.NoStringInterpolation;
 
 public class TokenSelector extends AbstractArtefact {
 
@@ -36,6 +37,7 @@ public class TokenSelector extends AbstractArtefact {
         this.remote = remote;
     }
 
+    @NoStringInterpolation
     public DynamicValue<String> getToken() {
         return token;
     }

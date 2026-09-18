@@ -30,8 +30,8 @@ public class NodeFunctionToYamlMapper extends AbstractFunctionToYamlMapper<NodeF
     public YamlAutomationPackageKeyword toYamlObject(NodeFunction nodeFunction) {
 
         YamlNodeFunction yamlFunction = new YamlNodeFunction();
+        // the custom-copy fields, the script reference included, are mapped back by the yaml model
         setCommonAttributes(nodeFunction, yamlFunction);
-        yamlFunction.setJsfile(nodeFunction.getJsFile());
 
         return new YamlAutomationPackageKeyword(yamlFunction, null);
     }

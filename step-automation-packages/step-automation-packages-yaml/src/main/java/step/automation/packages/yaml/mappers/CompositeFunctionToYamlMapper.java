@@ -44,7 +44,7 @@ public class CompositeFunctionToYamlMapper extends AbstractFunctionToYamlMapper<
 
         Plan plan = compositeFunction.getPlan();
         if (plan != null) {
-            YamlPlan yamlPlan = planReader.planToYamlPlan(compositeFunction.getPlan());
+            YamlPlan yamlPlan = planReader.planToYamlPlan(plan);
             yamlPlan.setName(null);
             yamlComposite.setPlan(yamlPlan);
         }

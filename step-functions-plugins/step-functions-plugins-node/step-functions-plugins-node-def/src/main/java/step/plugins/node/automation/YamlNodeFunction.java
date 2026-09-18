@@ -19,21 +19,22 @@
 package step.plugins.node.automation;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import step.automation.packages.AutomationPackageResourceUploader;
+import step.automation.packages.AutomationPackageLocalResourceMapper;
+import step.automation.packages.AutomationPackageResourceMapper;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
 import step.core.yaml.YamlModel;
 import step.plugins.node.NodeFunction;
-import step.resources.ResourceManager;
 
 @YamlModel(name = "Node")
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlNodeFunction extends AbstractYamlFunction<NodeFunction> {
 
+    // An empty value rather than none to support serialization
     @YamlFieldCustomCopy
-    private DynamicValue<String> jsfile = new DynamicValue<>();
+    private DynamicValue<String> jsfile = new DynamicValue<>("");
 
     public DynamicValue<String> getJsfile() {
         return jsfile;
@@ -46,13 +47,19 @@ public class YamlNodeFunction extends AbstractYamlFunction<NodeFunction> {
     @Override
     protected void fillDeclaredFields(NodeFunction function, StagingAutomationPackageContext context) {
         super.fillDeclaredFields(function, context);
-        AutomationPackageResourceUploader resourceUploader = context.getResourceUploader();
+        AutomationPackageResourceMapper resourceMapper = context.getResourceMapper();
 
         String filePath = jsfile.get();
-        String fileRef = resourceUploader.applyUniqueResourceReference(filePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
+        String fileRef = resourceMapper.applyUniqueResourceReference(filePath, context);
         if (fileRef != null) {
             function.setJsFile(new DynamicValue<>(fileRef));
         }
+    }
+
+    @Override
+    public void setDeclaredFieldsFromObject(NodeFunction function) {
+        super.setDeclaredFieldsFromObject(function);
+        jsfile = AutomationPackageLocalResourceMapper.toDescriptorReference(function.getJsFile());
     }
 
     @Override

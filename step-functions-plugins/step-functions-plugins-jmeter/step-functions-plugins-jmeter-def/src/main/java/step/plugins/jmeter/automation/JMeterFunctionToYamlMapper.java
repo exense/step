@@ -30,8 +30,8 @@ public class JMeterFunctionToYamlMapper extends AbstractFunctionToYamlMapper<JMe
     public YamlAutomationPackageKeyword toYamlObject(JMeterFunction jmeterFunction) {
 
         YamlJMeterFunction yamlFunction = new YamlJMeterFunction();
+        // the custom-copy fields, the test plan reference included, are mapped back by the yaml model
         setCommonAttributes(jmeterFunction, yamlFunction);
-        yamlFunction.setJmeterTestplan(jmeterFunction.getJmeterTestplan());
 
         return new YamlAutomationPackageKeyword(yamlFunction, null);
     }

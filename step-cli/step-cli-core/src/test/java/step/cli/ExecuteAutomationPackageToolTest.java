@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,9 +42,9 @@ public class ExecuteAutomationPackageToolTest {
 
     protected static final Tenant TENANT_1 = createTenant1();
 
-    public static final String TEST_INCLUDE_PLANS = "plan1,plan2";
-    public static final String TEST_INCLUDE_CATEGORIES = "PerformanceTest,JMterTest";
-    public static final String TEST_EXCLUDE_CATEGORIES = "CypressTest,OidcTest";
+    public static final List<String> TEST_INCLUDE_PLANS = List.of("plan1", "plan2");
+    public static final List<String> TEST_INCLUDE_CATEGORIES = List.of("PerformanceTest", "JMterTest");
+    public static final List<String> TEST_EXCLUDE_CATEGORIES = List.of("CypressTest", "OidcTest");
 
     private File tempReportFolder;
 
@@ -154,9 +153,9 @@ public class ExecuteAutomationPackageToolTest {
         Assert.assertEquals("testUser", captured.getUserID());
         Assert.assertEquals(ExecutionMode.RUN, captured.getMode());
         PlanMultiFilter planFilter = (PlanMultiFilter) captured.getPlanFilter();
-        PlanMultiFilter expectedFilter = new PlanMultiFilter(List.of(new PlanByIncludedNamesFilter(Arrays.asList(TEST_INCLUDE_PLANS.split(","))),
-            new PlanByIncludedCategoriesFilter(Arrays.asList(TEST_INCLUDE_CATEGORIES.split(","))),
-            new PlanByExcludedCategoriesFilter(Arrays.asList(TEST_EXCLUDE_CATEGORIES.split(",")))));
+        PlanMultiFilter expectedFilter = new PlanMultiFilter(List.of(new PlanByIncludedNamesFilter(TEST_INCLUDE_PLANS),
+            new PlanByIncludedCategoriesFilter(TEST_INCLUDE_CATEGORIES),
+            new PlanByExcludedCategoriesFilter(TEST_EXCLUDE_CATEGORIES)));
         Assert.assertEquals(expectedFilter, planFilter);
         Assert.assertEquals(createTestCustomParams(), captured.getCustomParameters());
     }

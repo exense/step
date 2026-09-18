@@ -21,7 +21,6 @@ package step.automation.packages.yaml.mappers;
 import step.automation.packages.mappers.AbstractFunctionToYamlMapper;
 import step.automation.packages.mappers.interfaces.BusinessObjectToYamlMapping;
 import step.automation.packages.model.YamlAutomationPackageKeyword;
-import step.plugins.java.GeneralFunctionScriptLanguage;
 import step.plugins.java.GeneralScriptFunction;
 import step.plugins.java.automation.YamlGeneralScriptFunction;
 
@@ -32,11 +31,8 @@ public class GeneralScriptFunctionToYamlMapper extends AbstractFunctionToYamlMap
     public YamlAutomationPackageKeyword toYamlObject(GeneralScriptFunction generalScriptFunction) {
 
         YamlGeneralScriptFunction yamlFunction = new YamlGeneralScriptFunction();
+        // the custom-copy fields, resource references included, are mapped back by the yaml model itself
         setCommonAttributes(generalScriptFunction, yamlFunction);
-
-        yamlFunction.setScriptFile(generalScriptFunction.getScriptFile());
-        yamlFunction.setLibrariesFile(generalScriptFunction.getLibrariesFile());
-        yamlFunction.setScriptLanguage(GeneralFunctionScriptLanguage.valueOf(generalScriptFunction.getScriptLanguage().getValue()));
 
         return new YamlAutomationPackageKeyword(yamlFunction, null);
     }

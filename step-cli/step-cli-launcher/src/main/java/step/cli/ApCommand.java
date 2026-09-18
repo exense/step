@@ -2,10 +2,11 @@ package step.cli;
 
 import ch.exense.commons.io.FileHelper;
 import picocli.CommandLine;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageFromFolderProvider;
 import step.automation.packages.AutomationPackageReadingException;
-import step.cli.apignore.ApIgnoreFileFilter;
+import step.automation.packages.apignore.ApIgnoreFileFilter;
 import step.cli.parameters.ApDeployParameters;
 import step.cli.parameters.ApExecuteParameters;
 import step.core.Constants;
@@ -14,6 +15,8 @@ import step.core.maven.MavenArtifactIdentifier;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -67,10 +70,9 @@ public class ApCommand extends BaseCommand {
                     }
 
                     Function<File, Boolean> fileFilter = null;
-                    File apIgnoreFile = new File(file, StepConsole.AP_IGNORE_NAME);
-                    if (apIgnoreFile.exists()) {
-                        ApIgnoreFileFilter gitIgnore = new ApIgnoreFileFilter(file.toPath(), apIgnoreFile.toPath());
-                        fileFilter = file1 -> !file1.getName().equals(StepConsole.AP_IGNORE_NAME) && gitIgnore.accept(file1.toPath());
+                    ApIgnoreFileFilter apIgnore = ApIgnoreFileFilter.of(file.toPath());
+                    if (apIgnore != null) {
+                        fileFilter = candidate -> apIgnore.accept(candidate.toPath());
                     }
 
                     File tempDirectory = Files.createTempDirectory("stepcli").toFile();
@@ -216,17 +218,21 @@ public class ApCommand extends BaseCommand {
             description = "Whether to wait for execution completeness")
         protected boolean async;
 
-        @CommandLine.Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed")
-        protected String includePlans;
+        @CommandLine.Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> includePlans;
 
-        @CommandLine.Option(names = {"--excludePlans"}, description = "The comma separated list of plans to be excluded from execution")
-        protected String excludePlans;
+        @CommandLine.Option(names = {"--excludePlans"}, description = "The comma separated list of plans to be excluded from execution",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> excludePlans;
 
-        @CommandLine.Option(names = {"--includeCategories"}, description = "The comma separated list of categories to be executed")
-        protected String includeCategories;
+        @CommandLine.Option(names = {"--includeCategories"}, description = "The comma separated list of categories to be executed",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> includeCategories;
 
-        @CommandLine.Option(names = {"--excludeCategories"}, description = "The comma separated list of categories to be excluded from execution")
-        protected String excludeCategories;
+        @CommandLine.Option(names = {"--excludeCategories"}, description = "The comma separated list of categories to be excluded from execution",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> excludeCategories;
 
         @CommandLine.Option(names = {LOCAL}, defaultValue = "false", description = "To execute the Automation Package locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         protected boolean local;
@@ -245,6 +251,46 @@ public class ApCommand extends BaseCommand {
 
         @CommandLine.Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
         protected Map<String, String> executionParameters;
+
+        // Local execution only. Like every option, these can also be set in ~/stepcli.properties or in a file passed
+        // with --config, which is the only practical way to configure the Windows executable.
+
+        @CommandLine.Option(names = {"--localAgentJava"}, paramLabel = "<Path>",
+            description = "Local execution only. The directory of an installed Step Java agent to use instead of the one embedded in the CLI.")
+        protected Path localAgentJava;
+
+        @CommandLine.Option(names = {"--localAgentNode"}, paramLabel = "<Path>",
+            description = "Local execution only. The directory of an installed Step Node.js agent to use instead of the one embedded in the CLI. "
+                + "Either the step-node-agent package itself or a directory containing it in node_modules.")
+        protected Path localAgentNode;
+
+        @CommandLine.Option(names = {"--localAgentDotNet"}, paramLabel = "<Path>",
+            description = "Local execution only. The directory of an installed Step .NET agent, which is never installed by the CLI. "
+                + "Either the agent distribution or its bin directory. Defaults to the STEP_DOTNET_AGENT_HOME environment variable.")
+        protected Path localAgentDotNet;
+
+        @CommandLine.Option(names = {"--localAgentWorkDir"}, paramLabel = "<Path>",
+            description = "Local execution only. The directory the local agents are installed and run in. Defaults to a folder in the system temporary directory.")
+        protected Path localAgentWorkDir;
+
+        @CommandLine.Option(names = {"--localAgentMaxTokens"}, paramLabel = "<Count>",
+            description = "Local execution only. The maximum number of keywords a local agent can run in parallel. "
+                + "Agents are sized on what the execution requires, up to this limit.",
+            showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+            defaultValue = "" + LocalAgentProvisioningConfiguration.DEFAULT_MAX_TOKENS_PER_AGENT)
+        protected Integer localAgentMaxTokens;
+
+        @CommandLine.Option(names = {"--localAgentStartTimeout"}, paramLabel = "<Seconds>",
+            description = "Local execution only. How long to wait for a local agent to start and connect.",
+            showDefaultValue = CommandLine.Help.Visibility.ALWAYS,
+            defaultValue = "" + LocalAgentProvisioningConfiguration.DEFAULT_START_TIMEOUT_SECONDS)
+        protected Integer localAgentStartTimeout;
+
+        @CommandLine.Option(names = {"--localAgentVmArgs"}, paramLabel = "<Arg>",
+            description = "Local execution only. An additional JVM argument for the local Java agent, for instance to attach a debugger to a keyword. "
+                + "Repeat the option to pass several arguments (--localAgentVmArgs=-Xms1g --localAgentVmArgs=-Xmx4g). Wrap in double quotes"
+                + " arguments containing spaces.")
+        protected List<String> localAgentVmArgs;
 
         @Override
         public Integer call() throws Exception {
@@ -290,6 +336,10 @@ public class ApCommand extends BaseCommand {
         }
 
         private void handleApLocalExecuteCommand() {
+            if (MavenArtifactIdentifier.isMvnIdentifierShortString(apFile) ||
+                MavenArtifactIdentifier.isMvnIdentifierShortString(library)) {
+                throw new StepCliExecutionException("Maven artefacts are not supported for local executions");
+            }
             File file = prepareApFile(apFile);
             if (file == null) {
                 throw new StepCliExecutionException("AP file is not defined");
@@ -304,12 +354,34 @@ public class ApCommand extends BaseCommand {
                 packageLibraryFile = preparePackageLibraryFile(library);
             }
 
-            executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
+            executeLocally(file, packageLibraryFile, includePlans, excludePlans, includeCategories, excludeCategories,
+                executionParameters, buildLocalAgentConfiguration());
         }
 
-        protected void executeLocally(File file, File libFile, String includePlans, String excludePlans, String includeCategories,
-                                      String excludeCategories, Map<String, String> executionParameters) {
-            new ApLocalExecuteCommandHandler().execute(file, libFile, includePlans, excludePlans, includeCategories, excludeCategories, executionParameters);
+        protected LocalAgentProvisioningConfiguration buildLocalAgentConfiguration() {
+            LocalAgentProvisioningConfiguration configuration = new LocalAgentProvisioningConfiguration()
+                .setJavaAgentPath(localAgentJava)
+                .setNodeAgentPath(localAgentNode)
+                .setDotNetAgentPath(localAgentDotNet)
+                .setWorkDirectory(localAgentWorkDir)
+                .setJavaAgentVmArgs(localAgentVmArgs)
+                // Verbose prints what the agents log, debug additionally raises the level they log at
+                .setVerbose(verbose)
+                .setDebug(debug);
+            if (localAgentMaxTokens != null) {
+                configuration.setMaxTokensPerAgent(localAgentMaxTokens);
+            }
+            if (localAgentStartTimeout != null) {
+                configuration.setAgentStartTimeout(Duration.ofSeconds(localAgentStartTimeout));
+            }
+            return configuration;
+        }
+
+        protected void executeLocally(File file, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
+                                      List<String> excludeCategories, Map<String, String> executionParameters,
+                                      LocalAgentProvisioningConfiguration localAgentConfiguration) {
+            new ApLocalExecuteCommandHandler().execute(file, libFile, includePlans, excludePlans, includeCategories,
+                excludeCategories, executionParameters, localAgentConfiguration);
         }
 
         public void checkStepUrlRequired() {

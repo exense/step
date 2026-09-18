@@ -58,8 +58,12 @@ public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunctio
         super.fillDeclaredFields(res, context);
         if (plan != null) {
             res.setPlan(yamlPlanToPlan(plan));
+            // The plan of a composite carries data sources like any other, and they are references to
+            // files of the automation package. These must be mapped to AP resources too.
+            context.getResourceMapper().applyToPlan(res.getPlan(), context);
         }
     }
+
 
     private Plan yamlPlanToPlan(YamlPlan yamlPlan) {
         Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());

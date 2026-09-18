@@ -29,6 +29,18 @@ import java.util.Map;
 
 public class GeneralScriptFunctionType extends AbstractScriptFunctionType<GeneralScriptFunction> {
 
+    /**
+     * The script a new keyword starts with, per language. Kept as data rather than as a chain of
+     * conditions so that a test can enumerate it: a language added here without its file added to
+     * {@code src/main/resources/step/plugins/java/templates/} would otherwise create empty scripts
+     * and only say so in a log line.
+     *
+     * @see AbstractScriptFunctionType#getTemplateFileInputStream(String)
+     */
+    static final Map<String, String> TEMPLATE_BY_LANGUAGE = Map.of(
+        "javascript", "custom_script.js",
+        "groovy", "custom_script.groovy");
+
     public GeneralScriptFunctionType(Configuration configuration) {
         super(configuration);
     }
@@ -38,15 +50,10 @@ public class GeneralScriptFunctionType extends AbstractScriptFunctionType<Genera
         String language = getScriptLanguage(function);
         if (language.equals("java")) {
             // No specific setup for java at the moment
-        } else {
-            String template = null;
-            if (language.equals("javascript")) {
-                template = "custom_script.js";
-            } else if (language.equals("groovy")) {
-                template = "custom_script.groovy";
-            }
-            setupScriptFileAsResource(function, template);
+            return;
         }
+        // a language naming no template gets an empty script
+        setupScriptFileAsResource(function, TEMPLATE_BY_LANGUAGE.get(language));
     }
 
     @Override
