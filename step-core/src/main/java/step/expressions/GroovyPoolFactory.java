@@ -44,7 +44,7 @@ public class GroovyPoolFactory implements KeyedPooledObjectFactory<GroovyPoolKey
             // configuration will cause the definition of the base class itself to ALSO extend the base class again,
             // leading to recursive load/compile attempts that block the initialization for ~20-30 seconds.
             groovyCompilerConfiguration.setScriptBaseClass(scriptBaseClass);
-            baseClassLoader = new GroovyClassLoader(this.getClass().getClassLoader());
+            baseClassLoader = new GroovyClassLoader(Thread.currentThread().getContextClassLoader());
         } else {
             baseClassLoader = null;
         }
