@@ -30,12 +30,12 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.Properties;
 
-public class AutomationPackagePlanFieldOrderingTest extends AutomationPackageCollectionTestBase {
+public class AutomationPackagePlanFormattingTest extends AutomationPackageCollectionTestBase {
 
     private Collection<Plan> planCollection;
 
-    public AutomationPackagePlanFieldOrderingTest() {
-        super(new File("src/test/resources/testdata/ap-field-ordering"));
+    public AutomationPackagePlanFormattingTest() {
+        super(new File("src/test/resources/testdata/ap-formatting"));
     }
 
     @Before
@@ -61,5 +61,18 @@ public class AutomationPackagePlanFieldOrderingTest extends AutomationPackageCol
 
 
         assertFilesEqual(expectedFilesPath.resolve("FieldOrdering.yml"), destinationDirectory.toPath().resolve("plans").resolve("FieldOrdering.yml"));
+    }
+
+    @Test
+    public void testCallEntities() throws IOException {
+
+        Optional<Plan> optionalPlan = planCollection.find(Filters.equals("attributes.name", "CallEntities"), null, null, null, 100).findFirst();
+
+        Assert.assertTrue(optionalPlan.isPresent());
+
+        Plan plan = optionalPlan.get();
+        planCollection.save(plan);
+
+        assertFilesEqual(expectedFilesPath.resolve("CallEntities.yml"), destinationDirectory.toPath().resolve("plans").resolve("CallEntities.yml"));
     }
 }
