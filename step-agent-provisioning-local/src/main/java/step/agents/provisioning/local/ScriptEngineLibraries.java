@@ -27,13 +27,16 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.CodeSource;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -97,7 +100,7 @@ public class ScriptEngineLibraries {
     private final LocalAgentWorkspace workspace;
 
     public ScriptEngineLibraries(LocalAgentWorkspace workspace) {
-        this.workspace = workspace;
+        this.workspace = Objects.requireNonNull(workspace, "workspace must not be null");
     }
 
     /**
@@ -143,7 +146,7 @@ public class ScriptEngineLibraries {
             }
             try {
                 Files.move(temporaryDirectory, directory, StandardCopyOption.ATOMIC_MOVE);
-            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+            } catch (AtomicMoveNotSupportedException e) {
                 Files.move(temporaryDirectory, directory, StandardCopyOption.REPLACE_EXISTING);
             }
         } catch (IOException e) {
@@ -317,7 +320,7 @@ public class ScriptEngineLibraries {
 
     private static void deleteQuietly(Path directory) {
         try (var paths = Files.walk(directory)) {
-            paths.sorted(java.util.Comparator.reverseOrder()).forEach(path -> {
+            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
                 try {
                     Files.deleteIfExists(path);
                 } catch (IOException e) {

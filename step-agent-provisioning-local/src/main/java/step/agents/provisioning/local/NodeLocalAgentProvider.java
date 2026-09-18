@@ -41,7 +41,9 @@ import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 
 /**
@@ -81,8 +83,8 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
     private final AgentConfWriter agentConfWriter = new AgentConfWriter();
 
     public NodeLocalAgentProvider(LocalAgentProvisioningConfiguration configuration, LocalAgentWorkspace workspace) {
-        this.configuration = configuration;
-        this.workspace = workspace;
+        this.configuration = Objects.requireNonNull(configuration, "configuration must not be null");
+        this.workspace = Objects.requireNonNull(workspace, "workspace must not be null");
     }
 
     @Override
@@ -403,7 +405,7 @@ public class NodeLocalAgentProvider implements LocalAgentProvider {
             reader.setDaemon(true);
             reader.start();
 
-            if (!process.waitFor(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS)) {
+            if (!process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
                 process.destroyForcibly();
                 throw new IOException(command.get(0) + " did not complete within " + timeoutMs + "ms");
             }

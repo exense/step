@@ -141,7 +141,7 @@ public class AutomationPackagePlugin extends AbstractControllerPlugin {
         super.afterInitializeData(context);
 
         if (context.get(AutomationPackageManager.class) == null) {
-            log.info("Using the OS implementation of automation package manager");
+            log.info("Creating the automation package manager");
 
             AutomationPackageMavenConfig.ConfigProvider mavenConfigProvider = new MavenConfigProviderImpl(
                 context.require(ControllerSettingAccessor.class),

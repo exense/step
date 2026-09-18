@@ -32,13 +32,16 @@ import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.Objects;
 
 /**
- * The grid the local agents register to, embedded in the CLI.
+ * The grid the local agents register to.
  * <p>
- * It is the very same {@link GridImpl} a Step controller runs, started on an ephemeral port for the lifetime of one
- * CLI invocation. Reusing it rather than emulating it is what makes a local execution go through the same path as a
- * platform execution: the same token selection, the same file transfer to the agents, the same keyword protocol.
+ * It is the very same {@link GridImpl} a Step controller runs. It is either embedded, started on an ephemeral port
+ * for the lifetime of one CLI invocation (see {@link #startEmbedded}), or the grid of the application the local
+ * agents are started from, typically the one of the Step IDE (see {@link #attach}). Reusing it rather than emulating
+ * it is what makes a local execution go through the same path as a platform execution: the same token selection, the
+ * same file transfer to the agents, the same keyword protocol.
  */
 public class LocalExecutionGrid implements Closeable {
 
@@ -48,30 +51,59 @@ public class LocalExecutionGrid implements Closeable {
     private final GridImpl grid;
     private final LocalGridClientImpl gridClient;
     private final SymmetricSecurityConfiguration security;
+    /**
+     * The file manager directory of the embedded grid, null when attached to a grid this instance doesn't own
+     */
     private final Path fileManagerDirectory;
 
+    private LocalExecutionGrid(GridImpl grid, SymmetricSecurityConfiguration security, Path fileManagerDirectory,
+                               Duration agentStartTimeout) {
+        this.grid = grid;
+        this.security = security;
+        this.fileManagerDirectory = fileManagerDirectory;
+        this.gridClient = new LocalGridClientImpl(gridClientConfiguration(agentStartTimeout, security), grid);
+    }
+
     /**
+     * Starts an embedded grid, stopped by {@link #close()}.
+     *
      * @param workspace the workspace the file manager of this grid caches its files in. Using it rather than a
      *                  temporary directory of its own is what gets that cache deleted: it is deleted with this grid,
      *                  and swept by the next run should this CLI be killed before it can do so.
      */
-    public LocalExecutionGrid(Duration agentStartTimeout, LocalAgentWorkspace workspace) throws Exception {
+    public static LocalExecutionGrid startEmbedded(Duration agentStartTimeout, LocalAgentWorkspace workspace) throws Exception {
+        Objects.requireNonNull(agentStartTimeout, "agentStartTimeout must not be null");
+        Objects.requireNonNull(workspace, "workspace must not be null");
         // The grid listens on all interfaces, so it is protected with a secret rather than left open to anything
         // able to connect. The secret is generated per invocation and never leaves this process and the
         // configuration files of the agents it starts, both of which are gone when the CLI terminates.
-        security = new SymmetricSecurityConfiguration(generateSecretKey());
+        SymmetricSecurityConfiguration security = new SymmetricSecurityConfiguration(generateSecretKey());
 
         GridImpl.GridImplConfig gridConfig = new GridImpl.GridImplConfig();
         gridConfig.setSecurity(security);
 
-        fileManagerDirectory = workspace.createGridRunDirectory();
+        Path fileManagerDirectory = workspace.createGridRunDirectory();
 
         // Port 0: the OS assigns a free port, which keeps concurrent CLI invocations from colliding
-        grid = new GridImpl(fileManagerDirectory.toFile(), 0, gridConfig);
+        GridImpl grid = new GridImpl(fileManagerDirectory.toFile(), 0, gridConfig);
         grid.start();
         logger.debug("Started the local grid on port {}", grid.getServerPort());
 
-        gridClient = new LocalGridClientImpl(gridClientConfiguration(agentStartTimeout, security), grid);
+        return new LocalExecutionGrid(grid, security, fileManagerDirectory, agentStartTimeout);
+    }
+
+    /**
+     * Attaches to a grid which is already running and owned by someone else, typically the grid of the Step IDE.
+     * {@link #close()} leaves that grid running.
+     *
+     * @param security the security configuration of that grid, passed on to the agents for them to be able to
+     *                 register to it. May be null if the grid is not secured.
+     */
+    public static LocalExecutionGrid attach(GridImpl grid, SymmetricSecurityConfiguration security, Duration agentStartTimeout) {
+        Objects.requireNonNull(grid, "grid must not be null");
+        Objects.requireNonNull(agentStartTimeout, "agentStartTimeout must not be null");
+        logger.debug("Attached to the grid running on port {}", grid.getServerPort());
+        return new LocalExecutionGrid(grid, security, null, agentStartTimeout);
     }
 
     private static GridClientConfiguration gridClientConfiguration(Duration agentStartTimeout, SymmetricSecurityConfiguration security) {
@@ -114,13 +146,19 @@ public class LocalExecutionGrid implements Closeable {
     }
 
     /**
-     * Stops the grid and deletes the files its file manager cached. The grid client is left alone: it is registered
-     * in the execution engine context, which closes it itself.
+     * Closes the grid client of this instance and, for an embedded grid, stops the grid and deletes the files its file
+     * manager cached. An attached grid is left running.
      * <p>
-     * To be called once the grid client has been closed, as the client depends on files that this method deletes.
+     * The grid client is closed first, as the class loaders of its local tokens read files that are deleted with the
+     * file manager directory. Closing it is idempotent: the CLI also registers it in the execution engine context,
+     * which closes it when the engine is closed.
      */
     @Override
     public void close() throws IOException {
+        gridClient.close();
+        if (fileManagerDirectory == null) {
+            return;
+        }
         logger.debug("Stopping the local grid...");
         try {
             grid.stop();
