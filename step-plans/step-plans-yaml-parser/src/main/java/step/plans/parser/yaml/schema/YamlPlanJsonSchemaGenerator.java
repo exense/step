@@ -84,7 +84,10 @@ public class YamlPlanJsonSchemaGenerator {
 
     protected List<JsonSchemaExtension> getDefinitionsExtensions() {
         List<JsonSchemaExtension> extensions = new ArrayList<>();
+        // the scanner returns the add-ons in no particular order, which would make the order of the definitions in
+        // the generated schema depend on the build. Sorting keeps the published schemas stable.
         CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+            .sorted(Comparator.comparing(Class::getName))
             .map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
         return extensions;
     }

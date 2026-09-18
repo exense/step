@@ -31,25 +31,25 @@ public class YamlMetadataTest {
 
     @Test
     public void applyAndExtract() {
-        AbstractOrganizableObject object = new AbstractOrganizableObject();
+        AbstractOrganizableObject entity = new AbstractOrganizableObject();
         Map<String, Object> metadata = new LinkedHashMap<>();
         metadata.put("owner", "team-a");
         metadata.put("nested", Map.of("list", List.of(Map.of("key", 1), "value"), "not$leading", true));
         metadata.put("empty", null);
 
-        YamlMetadata.applyTo(object, metadata);
+        YamlMetadata.applyTo(entity, metadata);
 
-        assertSame(metadata, object.getCustomField(YamlMetadata.METADATA_FIELD));
-        assertSame(metadata, YamlMetadata.extractFrom(object));
+        assertSame(metadata, entity.getMetadata());
+        assertSame(metadata, YamlMetadata.extractFrom(entity));
     }
 
     @Test
     public void nullOrEmptyMetadataIsNotApplied() {
-        AbstractOrganizableObject object = new AbstractOrganizableObject();
-        YamlMetadata.applyTo(object, null);
-        YamlMetadata.applyTo(object, Map.of());
-        assertNull(object.getCustomFields());
-        assertNull(YamlMetadata.extractFrom(object));
+        AbstractOrganizableObject entity = new AbstractOrganizableObject();
+        YamlMetadata.applyTo(entity, null);
+        YamlMetadata.applyTo(entity, Map.of());
+        assertNull(entity.getMetadata());
+        assertNull(YamlMetadata.extractFrom(entity));
     }
 
     @Test
@@ -62,9 +62,9 @@ public class YamlMetadataTest {
     }
 
     private static void assertInvalid(Map<String, Object> metadata, String expectedMessagePrefix) {
-        AbstractOrganizableObject object = new AbstractOrganizableObject();
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> YamlMetadata.applyTo(object, metadata));
+        AbstractOrganizableObject entity = new AbstractOrganizableObject();
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> YamlMetadata.applyTo(entity, metadata));
         assertTrue(e.getMessage(), e.getMessage().startsWith(expectedMessagePrefix));
-        assertNull(object.getCustomFields());
+        assertNull(entity.getMetadata());
     }
 }

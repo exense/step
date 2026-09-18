@@ -141,10 +141,10 @@ public class AutomationPackageDescriptorReaderTest {
             planMetadata.put("empty", null);
             assertEquals(planMetadata, yamlPlan.getMetadata());
 
-            // the metadata is persisted in the custom fields of the plan and written back to yaml
+            // the metadata is persisted in the plan itself and written back to yaml
             YamlPlanReader planReader = reader.getPlanReader();
             Plan plan = planReader.yamlPlanToPlan(yamlPlan);
-            assertEquals(planMetadata, plan.getCustomField(YamlMetadata.METADATA_FIELD));
+            assertEquals(planMetadata, plan.getMetadata());
             assertEquals(planMetadata, planReader.planToYamlPlan(plan).getMetadata());
 
             assertEquals(Map.of("owner", "team-b"), descriptor.getPlansPlainText().get(0).getMetadata());
@@ -156,7 +156,7 @@ public class AutomationPackageDescriptorReaderTest {
             AutomationPackageParameter yamlParameter = parameters.get(0);
             assertEquals(Map.of("owner", "team-d"), yamlParameter.getMetadata());
             Parameter parameter = yamlParameter.toParameter();
-            assertEquals(Map.of("owner", "team-d"), parameter.getCustomField(YamlMetadata.METADATA_FIELD));
+            assertEquals(Map.of("owner", "team-d"), parameter.getMetadata());
             assertEquals(Map.of("owner", "team-d"), AutomationPackageParameter.fromParameter(parameter).getMetadata());
         }
     }
@@ -181,7 +181,7 @@ public class AutomationPackageDescriptorReaderTest {
             assertNull(yamlPlan.getMetadata());
             YamlPlanReader planReader = reader.getPlanReader();
             Plan plan = planReader.yamlPlanToPlan(yamlPlan);
-            assertNull(plan.getCustomFields());
+            assertNull(plan.getMetadata());
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             planReader.writeYamlPlan(out, plan);
             assertFalse(out.toString(StandardCharsets.UTF_8), out.toString(StandardCharsets.UTF_8).contains(YamlMetadata.METADATA_FIELD));

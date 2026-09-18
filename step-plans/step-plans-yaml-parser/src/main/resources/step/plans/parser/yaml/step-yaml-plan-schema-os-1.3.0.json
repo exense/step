@@ -75,22 +75,6 @@
         "additionalProperties": false
       }
     },
-    "resourceReference": {
-      "oneOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "id": {
-              "type": "string"
-            }
-          }
-        }
-      ]
-    },
     "MetadataDef": {
       "type": "object",
       "description": "Free-form metadata",
@@ -119,6 +103,22 @@
       "items": {
         "$ref": "#/$defs/MetadataValueDef"
       }
+    },
+    "resourceReference": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          }
+        }
+      ]
     },
     "AssertDef": {
       "type": "object",

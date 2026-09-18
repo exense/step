@@ -26,13 +26,13 @@ import java.util.regex.Pattern;
 
 /**
  * The free-form {@code metadata} that can be declared on the automation package itself and on each of its entities
- * (keywords, plans, parameters, schedules...). The YAML content is kept as is, as a map, and persisted in the
- * custom field {@link #METADATA_FIELD} of the business object.
+ * (keywords, plans, parameters, schedules...). The YAML content is kept as it is, as a map, and persisted in the
+ * {@link AbstractIdentifiableObject#getMetadata()} of the business object.
  */
 public class YamlMetadata {
 
     /**
-     * The name of the field in YAML and of the custom field in the business object
+     * The name of the field in YAML and in the business object
      */
     public static final String METADATA_FIELD = "metadata";
 
@@ -40,31 +40,29 @@ public class YamlMetadata {
     public static final String METADATA_VALUE_DEF = "MetadataValueDef";
 
     /**
-     * The keys are persisted as they are in the DB documents, where a dot is interpreted as a path separator and a
-     * leading dollar sign as an operator
+     * The keys become the keys of the metadata document stored with the entity, where a dot is interpreted as a path
+     * separator and a leading dollar sign as an operator
      */
     public static final String KEY_PATTERN = "^[^.$][^.]*$";
     private static final Pattern KEY_REGEX = Pattern.compile(KEY_PATTERN);
 
     /**
-     * Validates the metadata and sets it as custom field of the target. Nothing is set for null or empty metadata.
+     * Validates the metadata and sets it on the target. Nothing is set for null or empty metadata.
      *
      * @throws IllegalArgumentException if one of the keys (at any depth) is invalid
      */
     public static void applyTo(AbstractIdentifiableObject target, Map<String, Object> metadata) {
         if (metadata != null && !metadata.isEmpty()) {
             validate(metadata);
-            target.addCustomField(METADATA_FIELD, metadata);
+            target.setMetadata(metadata);
         }
     }
 
     /**
-     * @return the metadata stored in the custom fields of the source or null if there is none
+     * @return the metadata of the source or null if there is none
      */
-    @SuppressWarnings("unchecked")
     public static Map<String, Object> extractFrom(AbstractIdentifiableObject source) {
-        Object metadata = source.getCustomField(METADATA_FIELD);
-        return metadata instanceof Map ? (Map<String, Object>) metadata : null;
+        return source.getMetadata();
     }
 
     /**

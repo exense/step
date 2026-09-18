@@ -61,7 +61,9 @@ public class YamlKeywordSchemaGenerator {
 
     protected List<JsonSchemaExtension> getDefinitionsExtensions() {
         List<JsonSchemaExtension> extensions = new ArrayList<>();
+        // sorted for the same reason as in YamlPlanJsonSchemaGenerator: the scan order is not stable across builds
         CachedAnnotationScanner.getClassesWithAnnotation(JsonSchemaDefinitionAddOn.LOCATION, JsonSchemaDefinitionAddOn.class, Thread.currentThread().getContextClassLoader()).stream()
+            .sorted(Comparator.comparing(Class::getName))
             .map(newInstanceAs(JsonSchemaExtension.class)).forEach(extensions::add);
         return extensions;
     }
