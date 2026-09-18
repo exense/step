@@ -307,7 +307,7 @@ class Agent {
 
   async executeNpmInstall(npmProjectPath) {
     return await new Promise((resolve) => {
-      const child = spawn(npmCommand, ['install'], {cwd: npmProjectPath, shell: true});
+      const child = spawn(npmCommand, ['install', '--no-audit', '--no-fund'], {cwd: npmProjectPath, shell: true});
       const stdChunks = [];
 
       child.stdout.on('data', (data) => {
