@@ -28,7 +28,6 @@ import step.automation.packages.scheduler.AutomationPackageSchedulerPlugin;
 import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.GlobalContext;
 import step.core.accessors.AbstractIdentifiableObject;
-import step.core.accessors.AbstractOrganizableObject;
 import step.core.collections.Collection;
 import step.core.controller.ControllerSetting;
 import step.core.controller.ControllerSettingAccessor;
