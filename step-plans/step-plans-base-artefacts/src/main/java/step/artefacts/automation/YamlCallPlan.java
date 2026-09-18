@@ -24,10 +24,16 @@ import step.core.yaml.model.AbstractYamlArtefact;
 
 public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
 
+    private static final YamlDynamicInputs DEFAULT_SELECTION_ATTRIBUTES = new YamlDynamicInputs("{}");
+    private static final YamlCallNamedEntityDefinition DEFAULT_CALL_ENTITY_DEFINITION = new YamlCallNamedEntityDefinition(null, null, "{}");
+
     private String planId;
 
     @YamlFieldCustomCopy
-    private YamlDynamicInputs selectionAttributes = new YamlDynamicInputs("{}");
+    protected YamlCallNamedEntityDefinition plan = DEFAULT_CALL_ENTITY_DEFINITION;
+
+    @YamlFieldCustomCopy
+    private YamlDynamicInputs selectionAttributes = DEFAULT_SELECTION_ATTRIBUTES;
 
     @YamlFieldCustomCopy
     protected YamlDynamicInputs input = new YamlDynamicInputs("{}");
@@ -42,7 +48,12 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
         if (this.input != null) {
             res.setInput(this.input.toDynamicValue());
         }
-        if (this.selectionAttributes != null) {
+
+        if (this.plan != DEFAULT_CALL_ENTITY_DEFINITION) {
+            res.setSelectionAttributes(this.plan.toDynamicValue());
+        }
+
+        if (this.selectionAttributes != DEFAULT_SELECTION_ATTRIBUTES) {
             res.setSelectionAttributes(this.selectionAttributes.toDynamicValue());
         }
     }
@@ -54,8 +65,7 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
             this.input = YamlDynamicInputs.fromDynamicValue(artefact.getInput());
         }
         if (artefact.getSelectionAttributes() != null) {
-            this.selectionAttributes = YamlDynamicInputs.fromDynamicValue(artefact.getSelectionAttributes());
+            this.plan = YamlCallNamedEntityDefinition.fromDynamicValue(artefact.getSelectionAttributes());
         }
-
     }
 }
