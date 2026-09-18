@@ -43,6 +43,11 @@ public interface AutomationPackageFragmentYaml {
 
     PatchableYamlList<PatchableYamlPrimitive<String>> getFragments();
 
+    /**
+     * @return the free-form metadata declared at the top level of this descriptor or fragment, null if there is none
+     */
+    Map<String, Object> getMetadata();
+
     Map<String, PatchableYamlList<?>> getAdditionalFields();
 
     default <T> PatchableYamlList<T> getAdditionalField(String k) {

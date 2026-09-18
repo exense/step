@@ -82,6 +82,9 @@
         "Node": {
           "type": "object",
           "properties": {
+            "metadata": {
+              "$ref": "#/$defs/MetadataDef"
+            },
             "description": {
               "type": "string"
             },
@@ -121,6 +124,9 @@
         "Composite": {
           "type": "object",
           "properties": {
+            "metadata": {
+              "$ref": "#/$defs/MetadataDef"
+            },
             "description": {
               "type": "string"
             },
@@ -160,6 +166,9 @@
         "GeneralScript": {
           "type": "object",
           "properties": {
+            "metadata": {
+              "$ref": "#/$defs/MetadataDef"
+            },
             "description": {
               "type": "string"
             },
@@ -209,6 +218,9 @@
         "JMeter": {
           "type": "object",
           "properties": {
+            "metadata": {
+              "$ref": "#/$defs/MetadataDef"
+            },
             "description": {
               "type": "string"
             },
@@ -274,6 +286,35 @@
           }
         }
       ]
+    },
+    "MetadataDef": {
+      "type": "object",
+      "description": "Free-form metadata",
+      "patternProperties": {
+        "^[^.$][^.]*$": {
+          "$ref": "#/$defs/MetadataValueDef"
+        }
+      },
+      "additionalProperties": false
+    },
+    "MetadataValueDef": {
+      "type": [
+        "object",
+        "array",
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ],
+      "patternProperties": {
+        "^[^.$][^.]*$": {
+          "$ref": "#/$defs/MetadataValueDef"
+        }
+      },
+      "additionalProperties": false,
+      "items": {
+        "$ref": "#/$defs/MetadataValueDef"
+      }
     },
     "AssertDef": {
       "type": "object",
@@ -2716,6 +2757,9 @@
         "agents": {
           "$ref": "#/$defs/agentsDef"
         },
+        "metadata": {
+          "$ref": "#/$defs/MetadataDef"
+        },
         "root": {
           "$ref": "#/$defs/RootArtefactDef"
         }
@@ -2743,6 +2787,9 @@
     "ScheduleDef": {
       "type": "object",
       "properties": {
+        "metadata": {
+          "$ref": "#/$defs/MetadataDef"
+        },
         "executionParameters": {
           "type": "object",
           "properties": {}
@@ -2774,6 +2821,9 @@
     "StepParameterDef": {
       "type": "object",
       "properties": {
+        "metadata": {
+          "$ref": "#/$defs/MetadataDef"
+        },
         "scopeEntity": {
           "type": "string"
         },
@@ -2808,6 +2858,9 @@
     "PlainTextPlanDef": {
       "type": "object",
       "properties": {
+        "metadata": {
+          "$ref": "#/$defs/MetadataDef"
+        },
         "file": {
           "type": "string"
         },
@@ -2842,6 +2895,9 @@
     },
     "attributes": {
       "type": "object"
+    },
+    "metadata": {
+      "$ref": "#/$defs/MetadataDef"
     },
     "keywords": {
       "type": "array",

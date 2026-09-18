@@ -32,6 +32,7 @@ import step.core.accessors.DefaultJacksonMapperProvider;
 import step.core.artefacts.AbstractArtefact;
 import step.core.plans.agents.configuration.AutomaticAgentProvisioningConfiguration;
 import step.core.scanner.CachedAnnotationScanner;
+import step.core.yaml.YamlMetadata;
 import step.core.yaml.schema.*;
 import step.handlers.javahandler.jsonschema.FieldMetadataExtractor;
 import step.handlers.javahandler.jsonschema.JsonSchemaCreator;
@@ -134,6 +135,8 @@ public class YamlPlanJsonSchemaGenerator {
             objectBuilder.add("categories", categoriesBuilder);
             //agents
             objectBuilder.add(AGENT_CONFIGURATION_YAML_NAME, YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), AGENT_CONFIGURATION_YAML_NAME + SchemaDefSuffix));
+            //metadata
+            objectBuilder.add(YamlMetadata.METADATA_FIELD, YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), YamlMetadata.METADATA_DEF));
         }
         objectBuilder.add("root", YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), ROOT_ARTEFACT_DEF));
         return objectBuilder;

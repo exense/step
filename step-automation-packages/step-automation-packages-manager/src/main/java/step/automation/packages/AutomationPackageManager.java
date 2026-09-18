@@ -39,6 +39,7 @@ import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.ImportResult;
+import step.core.yaml.YamlMetadata;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -1081,6 +1082,7 @@ public class AutomationPackageManager {
         }
         newPackage.addAttribute(AbstractOrganizableObject.NAME, packageContent.getName());
         newPackage.addAttribute(AP_BASE_NAME_ATTR_KEY, packageContent.getBaseName());
+        YamlMetadata.applyTo(newPackage, packageContent.getMetadata());
         Date currentTime = new Date();
         if (oldPackage == null) {
             newPackage.setCreationDate(currentTime);
