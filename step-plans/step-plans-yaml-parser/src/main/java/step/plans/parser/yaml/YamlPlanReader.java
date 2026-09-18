@@ -254,7 +254,7 @@ public class YamlPlanReader {
 
                         for (BeanPropertyWriter property : beanProperties) {
                             YamlFieldOrder order = property.getAnnotation(YamlFieldOrder.class);
-                            YamlFieldPriority fieldPriority = order == null ? YamlFieldPriority.NORMAL : order.value();
+                            YamlFieldPriority fieldPriority = order == null ? YamlFieldPriority.ARTEFACT_SPECIFIC : order.value();
                             grouped.get(fieldPriority).add(property);
                         }
 

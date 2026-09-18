@@ -4,6 +4,8 @@ import step.artefacts.ThreadGroup;
 import step.core.artefacts.ChildrenBlock;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 import step.core.yaml.model.AbstractYamlArtefact;
 import step.core.yaml.model.YamlChildrenBlock;
 
@@ -29,8 +31,10 @@ public class YamlThreadGroup extends AbstractYamlArtefact<ThreadGroup> {
     DynamicValue<String> userItem = new DynamicValue<String>("userId");
 
     @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.BEFORE_THREAD)
     YamlChildrenBlock beforeThread;
     @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.AFTER_THREAD)
     YamlChildrenBlock afterThread;
 
     public YamlThreadGroup() {

@@ -55,6 +55,11 @@ public class AutomationPackagePlanFieldOrderingTest extends AutomationPackageCol
         Plan plan = optionalPlan.get();
         planCollection.save(plan);
 
+        optionalPlan = planCollection.find(Filters.equals("attributes.name", "Some plan"), null, null, null, 100).findFirst();
+        plan = optionalPlan.get();
+        planCollection.save(plan);
+
+
         assertFilesEqual(expectedFilesPath.resolve("FieldOrdering.yml"), destinationDirectory.toPath().resolve("plans").resolve("FieldOrdering.yml"));
     }
 }

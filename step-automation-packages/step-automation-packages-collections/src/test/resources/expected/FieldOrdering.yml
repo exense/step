@@ -9,22 +9,22 @@ plans:
           - sequence:
               nodeName: "Sequence - Sequence Name"
               description: "Description"
+              continueOnError: true
+              pacing: 5000
               skipNode: true
               instrumentNode: true
               continueParentNodeExecutionOnError: true
-              continueOnError: true
-              pacing: 5000
               before:
                 continueOnError: false
                 steps:
                   - echo:
                       nodeName: "Echo - Init"
                       description: "Bla"
+                      text:
+                        expression: "Test"
                       skipNode: true
                       instrumentNode: true
                       continueParentNodeExecutionOnError: true
-                      text:
-                        expression: "Test"
               children:
                 - callKeyword:
                     nodeName: "Keyword call"
@@ -32,9 +32,9 @@ plans:
                     keyword: "Keyword"
                     inputs:
                       - parameter: "Test"
+                    remote: false
                     instrumentNode: true
                     continueParentNodeExecutionOnError: true
-                    remote: false
                     children:
                       - assert:
                           actual: "returnValue"
@@ -72,3 +72,61 @@ plans:
                   - echo:
                       nodeName: "Echo - After"
                       text: "After"
+  - name: "Some plan"
+    root:
+      testCase:
+        nodeName: "Some plan"
+        description: "This is my plan"
+        children:
+          - set:
+              description: "This is a set"
+              key: "key"
+              value: "value"
+              instrumentNode: true
+          - callKeyword:
+              description: "calling a keyword"
+              keyword: "GroovyKW"
+              inputs:
+                - key: "value"
+              skipNode: true
+          - threadGroup:
+              nodeName: "ThreadGroup 1"
+              description: "desc"
+              before:
+                continueOnError: false
+                steps:
+                  - echo:
+                      nodeName: "Echo init group"
+                      description: "init group"
+                      text: "init group"
+              beforeThread:
+                continueOnError: false
+                steps:
+                  - echo:
+                      nodeName: "Echo init thread"
+                      description: "init group"
+                      text: "init thread"
+              children:
+                - callKeyword:
+                    nodeName: "GroovyKW - call me"
+                    description: "call in thread group"
+                    keyword: "GroovyKW"
+                    inputs:
+                      - key: "value"
+                    routing:
+                      - OS: "LINUX"
+                    remote: false
+              afterThread:
+                continueOnError: false
+                steps:
+                  - echo:
+                      nodeName: "Echo after thread"
+                      description: "after thread"
+                      text: "after thread"
+              after:
+                continueOnError: false
+                steps:
+                  - echo:
+                      nodeName: "Echo after group"
+                      description: "after group"
+                      text: "after group"
