@@ -28,13 +28,21 @@ import step.core.collections.Filters;
 import step.core.objectenricher.ObjectEnricher;
 import step.core.objectenricher.ObjectPredicate;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static step.core.accessors.AbstractAccessor.ATTRIBUTES_FIELD_NAME;
 
@@ -487,5 +495,10 @@ public class ResourceManagerImpl implements ResourceManager {
                 }
             });
         }
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + " [resourceRootFolder=" + resourceRootFolder + "]";
     }
 }

@@ -25,6 +25,8 @@ import step.artefacts.CallPlan;
 import step.artefacts.TestCase;
 import step.artefacts.TestSet;
 import step.automation.packages.*;
+import step.automation.packages.accessor.AutomationPackageAccessor;
+import step.automation.packages.accessor.LayeredAutomationPackageAccessor;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.accessors.Accessor;
@@ -475,6 +477,19 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         // resource manager used in isolated package manager is non-permanent
         ((LayeredResourceManager) contextResourceManager).pushManager(apManager.getResourceManager(), false);
 
+        // Make the apResource: resolver see the isolated automation package: the global accessor
+        // installed at execution init does not contain the in-memory isolated AP. We layer the
+        // isolated accessor on top of the global one (mirroring the resource-manager layer pushed just
+        // above) rather than replacing it: an isolated execution may still run a globally-deployed
+        // keyword (surfaced through the layered function accessor) whose apResource: reference points
+        // to the global automation package, which must remain resolvable.
+        AutomationPackageAccessor globalAccessor = context.get(AutomationPackageAccessor.class);
+        AutomationPackageAccessor isolatedAccessor = apManager.getAutomationPackageAccessor();
+        AutomationPackageAccessor layeredAccessor = (globalAccessor != null)
+            ? new LayeredAutomationPackageAccessor(List.of(isolatedAccessor, globalAccessor))
+            : isolatedAccessor;
+        context.put(AutomationPackageAccessor.class, layeredAccessor);
+
         // call some hooks on import
         apManager.runExtensionsBeforeIsolatedExecution(automationPackage, context, apManager.getExtensions(), result);
 
@@ -572,6 +587,9 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
         public void close() throws IOException {
             // cleanup the associated automation package manager and remove this context from the shared map in case of shared context
             log.info("Cleanup isolated execution context");
+            // Wipe the materialised apResource cache of the isolated package before disposing the
+            // manager (the AP is still reachable here). The cache root lives on the MAIN manager.
+            wipeApResourceCache();
             //In case the Package execution context is shared (i.e. when triggering isolated executions from CLI), we close the shared context
             //and remove it from the shared map
             if (shared) {
@@ -582,6 +600,19 @@ public abstract class RepositoryWithAutomationPackageSupport extends AbstractRep
                 //Otherwise directly clean the automation package stored in this context
             } else {
                 inMemoryManager.cleanup();
+            }
+        }
+
+        private void wipeApResourceCache() {
+            File cacheRoot = manager.getApResourceCacheRoot();
+            AutomationPackage automationPackage = getAutomationPackage();
+            if (cacheRoot == null || automationPackage == null) {
+                return;
+            }
+            String apId = automationPackage.getId().toHexString();
+            if (!ApResourceCache.wipe(cacheRoot, apId)) {
+                log.warn("Unable to fully wipe the apResource cache directory {}",
+                    ApResourceCache.apDirectory(cacheRoot, apId).getAbsolutePath());
             }
         }
     }

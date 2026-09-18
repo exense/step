@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.plugins.functions.types.automation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.accessors.AbstractOrganizableObject;
@@ -29,10 +30,8 @@ import step.jsonschema.JsonSchema;
 import step.plans.parser.yaml.YamlPlan;
 import step.plugins.functions.types.CompositeFunction;
 
-import java.util.Map;
-import java.util.Objects;
-
 @YamlModel(name = "Composite")
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunction> {
 
     @YamlFieldCustomCopy
@@ -59,10 +58,14 @@ public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunctio
         super.fillDeclaredFields(res, context);
         if (plan != null) {
             res.setPlan(yamlPlanToPlan(plan));
+            // The plan of a composite carries data sources like any other, and they are references to
+            // files of the automation package. These must be mapped to AP resources too.
+            context.getResourceMapper().applyToPlan(res.getPlan(), context);
         }
     }
 
-    public Plan yamlPlanToPlan(YamlPlan yamlPlan) {
+
+    private Plan yamlPlanToPlan(YamlPlan yamlPlan) {
         Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
 
         // plan name is optional, the composite function name is used by default

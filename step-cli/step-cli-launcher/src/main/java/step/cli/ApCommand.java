@@ -2,13 +2,13 @@ package step.cli;
 
 import ch.exense.commons.io.FileHelper;
 import picocli.CommandLine;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.automation.packages.AutomationPackageArchive;
 import step.automation.packages.AutomationPackageFromFolderProvider;
 import step.automation.packages.AutomationPackageReadingException;
-import step.cli.apignore.ApIgnoreFileFilter;
+import step.automation.packages.apignore.ApIgnoreFileFilter;
 import step.cli.parameters.ApDeployParameters;
 import step.cli.parameters.ApExecuteParameters;
-import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.core.Constants;
 import step.core.maven.MavenArtifactIdentifier;
 
@@ -17,42 +17,46 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static picocli.CommandLine.Option.NULL_VALUE;
 
-@CommandLine.Command(name = ApCommand.AP_COMMAND,
-    mixinStandardHelpOptions = true,
-    version = Constants.STEP_VERSION_STRING,
+@CommandLine.Command(name = ApCommand.COMMAND_NAME,
     description = "The CLI interface to manage automation packages in Step",
-    usageHelpAutoWidth = true
+    version = Constants.STEP_VERSION_STRING,
+    mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
+    subcommands = {ApCommand.ApDeployCommand.class, ApCommand.ApExecuteCommand.class, CommandLine.HelpCommand.class}
 )
-public class ApCommand implements Callable<Integer> {
+public class ApCommand extends BaseCommand {
+    public static final String COMMAND_NAME = "ap";
 
-    public static final String AP_COMMAND = "ap";
 
     public static abstract class AbstractApCommand extends StepConsole.AbstractStepCommand {
 
-        @CommandLine.Option(names = {"-p", "--package"}, paramLabel = "<Package>", description = "The path to the automation-package.yaml file, folder or the archive containing it. Also supports maven coordinates (mvn:groupId:artefactId:version[:classifier:type]).")
+        @CommandLine.Option(names = {"-p", "--package"}, paramLabel = "<Package>", description = "The path to the automation-package.yaml file, directory or the archive containing it. Also supports maven coordinates (mvn:groupId:artefactId:version[:classifier:type]).")
         protected String apFile;
 
         @CommandLine.Option(names = {"-l", "--library"}, paramLabel = "<Library>", description = "The file path, maven coordinate (mvn:groupId:artefactId:version[:classifier:type]), or the name of an existing managed library (example managed:MY_COMMON_LIBRARY).")
         protected String library;
 
         /**
-         * If the param points to the folder, prepares the zipped AP file with .stz extension.
+         * If the param points to the directory, prepares the zipped AP file with .stz extension.
          * Otherwise, if the param is a simple file, just returns this file
          *
          * @param param the source of AP
          */
-        protected static File prepareFile(String param, String entityNameForLog, boolean checkApFolder) {
+        protected static File prepareFile(String param, String entityNameForLog, boolean checkApDirectory) {
             try {
                 File file = null;
                 if (param == null) {
-                    // use the current folder by default
+                    // use the current directory by default
                     file = new File(new File("").getAbsolutePath());
                 } else {
                     file = new File(param);
@@ -60,16 +64,15 @@ public class ApCommand implements Callable<Integer> {
                 StepConsole.log.info("The {} is {}", entityNameForLog, file.getAbsolutePath());
 
                 if (file.isDirectory()) {
-                    // check if the folder is AP (contains the yaml descriptor)
-                    if (checkApFolder) {
-                        checkApFolder(file);
+                    // check if the directory is AP (contains the yaml descriptor)
+                    if (checkApDirectory) {
+                        checkApDirectory(file);
                     }
 
                     Function<File, Boolean> fileFilter = null;
-                    File apIgnoreFile = new File(file, StepConsole.AP_IGNORE_NAME);
-                    if (apIgnoreFile.exists()) {
-                        ApIgnoreFileFilter gitIgnore = new ApIgnoreFileFilter(file.toPath(), apIgnoreFile.toPath());
-                        fileFilter = file1 -> !file1.getName().equals(StepConsole.AP_IGNORE_NAME) && gitIgnore.accept(file1.toPath());
+                    ApIgnoreFileFilter apIgnore = ApIgnoreFileFilter.of(file.toPath());
+                    if (apIgnore != null) {
+                        fileFilter = candidate -> apIgnore.accept(candidate.toPath());
                     }
 
                     File tempDirectory = Files.createTempDirectory("stepcli").toFile();
@@ -95,26 +98,26 @@ public class ApCommand implements Callable<Integer> {
             return prepareFile(param, "package library", false);
         }
 
-        private static void checkApFolder(File param) throws IOException {
+        private static void checkApDirectory(File param) throws IOException {
             // package library is not required here, because we only need to check the automation package descriptor
             try (AutomationPackageFromFolderProvider apProvider = new AutomationPackageFromFolderProvider(param, null);
                  AutomationPackageArchive apArchive = apProvider.getAutomationPackageArchive()) {
                 if (!apArchive.hasAutomationPackageDescriptor()) {
-                    throw new StepCliExecutionException("The AP folder " + param.getAbsolutePath() + " doesn't contain the AP descriptor file");
+                    throw new StepCliExecutionException("The AP directory " + param.getAbsolutePath() + " doesn't contain the AP descriptor file");
                 }
             } catch (AutomationPackageReadingException e) {
-                throw new StepCliExecutionException("Unable to read automation package from folder " + param.getAbsolutePath(), e);
+                throw new StepCliExecutionException("Unable to read automation package from directory " + param.getAbsolutePath(), e);
 
             }
         }
     }
 
     @CommandLine.Command(name = "deploy",
-        mixinStandardHelpOptions = true,
-        version = Constants.STEP_VERSION_STRING,
         description = "The CLI interface to deploy automation packages in Step",
-        usageHelpAutoWidth = true,
-        subcommands = {CommandLine.HelpCommand.class})
+        version = Constants.STEP_VERSION_STRING,
+        mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
+        subcommands = {CommandLine.HelpCommand.class}
+    )
     public static class ApDeployCommand extends AbstractApCommand {
 
         public static final String VERSION_NAME = "--versionName";
@@ -200,10 +203,9 @@ public class ApCommand implements Callable<Integer> {
     }
 
     @CommandLine.Command(name = "execute",
-        mixinStandardHelpOptions = true,
-        version = "step.ap.execute 1.0",
         description = "The CLI interface to execute automation packages in Step",
-        usageHelpAutoWidth = true,
+        version = Constants.STEP_VERSION_STRING,
+        mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
         subcommands = {CommandLine.HelpCommand.class})
     public static class ApExecuteCommand extends AbstractApCommand implements Callable<Integer> {
 
@@ -216,17 +218,21 @@ public class ApCommand implements Callable<Integer> {
             description = "Whether to wait for execution completeness")
         protected boolean async;
 
-        @CommandLine.Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed")
-        protected String includePlans;
+        @CommandLine.Option(names = {"--includePlans"}, description = "The comma separated list of plans to be executed",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> includePlans;
 
-        @CommandLine.Option(names = {"--excludePlans"}, description = "The comma separated list of plans to be excluded from execution")
-        protected String excludePlans;
+        @CommandLine.Option(names = {"--excludePlans"}, description = "The comma separated list of plans to be excluded from execution",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> excludePlans;
 
-        @CommandLine.Option(names = {"--includeCategories"}, description = "The comma separated list of categories to be executed")
-        protected String includeCategories;
+        @CommandLine.Option(names = {"--includeCategories"}, description = "The comma separated list of categories to be executed",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> includeCategories;
 
-        @CommandLine.Option(names = {"--excludeCategories"}, description = "The comma separated list of categories to be excluded from execution")
-        protected String excludeCategories;
+        @CommandLine.Option(names = {"--excludeCategories"}, description = "The comma separated list of categories to be excluded from execution",
+            split = ",", splitSynopsisLabel = ",")
+        protected List<String> excludeCategories;
 
         @CommandLine.Option(names = {LOCAL}, defaultValue = "false", description = "To execute the Automation Package locally ", showDefaultValue = CommandLine.Help.Visibility.ALWAYS)
         protected boolean local;
@@ -240,7 +246,7 @@ public class ApCommand implements Callable<Integer> {
         @CommandLine.Option(names = {"--reportType"}, description = "The type of execution report to be generated and stored locally. Supported report types: junit, aggregated. Also (optional) you can specify the output destination: --reportType=junit;output=file,stdout")
         protected List<String> reportType;
 
-        @CommandLine.Option(names = {"--reportDir"}, description = "The local folder to store generated execution reports", defaultValue = "reports")
+        @CommandLine.Option(names = {"--reportDir"}, description = "The local directory to store generated execution reports", defaultValue = "reports")
         protected File reportDir;
 
         @CommandLine.Option(descriptionKey = EP_DESCRIPTION_KEY, names = {"-ep", "--executionParameters"}, description = "Set execution parameters for local and remote executions ", split = "\\|", splitSynopsisLabel = "|")
@@ -371,8 +377,8 @@ public class ApCommand implements Callable<Integer> {
             return configuration;
         }
 
-        protected void executeLocally(File file, File libFile, String includePlans, String excludePlans, String includeCategories,
-                                      String excludeCategories, Map<String, String> executionParameters,
+        protected void executeLocally(File file, File libFile, List<String> includePlans, List<String> excludePlans, List<String> includeCategories,
+                                      List<String> excludeCategories, Map<String, String> executionParameters,
                                       LocalAgentProvisioningConfiguration localAgentConfiguration) {
             new ApLocalExecuteCommandHandler().execute(file, libFile, includePlans, excludePlans, includeCategories,
                 excludeCategories, executionParameters, localAgentConfiguration);
@@ -455,12 +461,4 @@ public class ApCommand implements Callable<Integer> {
         }
 
     }
-
-    @Override
-    public Integer call() throws Exception {
-        // call help by default
-        return StepConsole.addApSubcommands(new CommandLine(new ApCommand()), ApDeployCommand::new, ApExecuteCommand::new)
-            .execute("help");
-    }
-
 }

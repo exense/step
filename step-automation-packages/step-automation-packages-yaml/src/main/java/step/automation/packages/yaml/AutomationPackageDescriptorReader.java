@@ -18,6 +18,8 @@
  ******************************************************************************/
 package step.automation.packages.yaml;
 
+import com.fasterxml.jackson.databind.InjectableValues;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -29,13 +31,12 @@ import org.slf4j.LoggerFactory;
 import step.artefacts.handlers.JsonSchemaValidator;
 import step.automation.packages.AutomationPackageReadingException;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistryAware;
+import step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask;
+import step.automation.packages.yaml.migrations.AutomationPackageMigration;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageDescriptorYamlImpl;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYamlImpl;
-import step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask;
-import step.automation.packages.yaml.migrations.AutomationPackageMigration;
 import step.core.Version;
 import step.core.accessors.AbstractIdentifiableObject;
 import step.core.accessors.DefaultJacksonMapperProvider;
@@ -45,32 +46,38 @@ import step.core.collections.Document;
 import step.core.collections.Filters;
 import step.core.collections.inmemory.InMemoryCollectionFactory;
 import step.core.scanner.AnnotationScanner;
+import step.core.yaml.PatchingContext;
+import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.deserialization.PatchingParserDelegate;
 import step.migration.MigrationManager;
-import step.core.yaml.deserializers.StepYamlDeserializersScanner;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plans.parser.yaml.model.YamlPlanVersions;
 import step.plans.parser.yaml.schema.YamlPlanValidationException;
 
-import static step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask.AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
+
+import static step.automation.packages.yaml.migrations.AbstractAutomationPackageMigrationTask.AUTOMATION_PACKAGE_DESCRIPTORS_COLLECTION_NAME;
 
 public class AutomationPackageDescriptorReader {
 
-    protected static final Logger log = LoggerFactory.getLogger(AutomationPackageDescriptorReader.class);
+    private static final Logger log = LoggerFactory.getLogger(AutomationPackageDescriptorReader.class);
 
-    protected final ObjectMapper yamlObjectMapper;
+    private final ObjectMapper yamlObjectMapper;
 
-    protected final YamlPlanReader planReader;
+    private final YamlPlanReader planReader;
 
     private final AutomationPackageSerializationRegistry serializationRegistry;
 
-    protected String jsonSchema;
+    private String jsonSchema;
 
     private final MigrationManager migrationManager;
 
@@ -89,7 +96,7 @@ public class AutomationPackageDescriptorReader {
 
     public AutomationPackageDescriptorYaml readAutomationPackageDescriptor(InputStream yamlDescriptor, String packageName) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor...");
-        return readAutomationPackageYamlFile(yamlDescriptor, getDescriptorClass(), packageName);
+        return readAutomationPackageYamlFile("automation-package.yml", yamlDescriptor, getDescriptorClass(), packageName);
     }
 
     protected Class<? extends AutomationPackageDescriptorYaml> getDescriptorClass() {
@@ -103,18 +110,18 @@ public class AutomationPackageDescriptorReader {
      */
     public AutomationPackageFragmentYaml readAutomationPackageFragment(InputStream yamlFragment, String fragmentName, String packageName, String packageVersion) throws AutomationPackageReadingException {
         log.info("Reading automation package descriptor fragment ({})...", fragmentName);
-        return readAutomationPackageYamlFile(yamlFragment, getFragmentClass(), packageName, packageVersion);
+        return readAutomationPackageYamlFile(fragmentName, yamlFragment, getFragmentClass(), packageName, packageVersion);
     }
 
     protected Class<? extends AutomationPackageFragmentYaml> getFragmentClass() {
         return AutomationPackageFragmentYamlImpl.class;
     }
 
-    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageName) throws AutomationPackageReadingException {
-        return readAutomationPackageYamlFile(yaml, targetClass, packageName, null);
+    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(String location, InputStream yaml, Class<T> targetClass, String packageName) throws AutomationPackageReadingException {
+        return readAutomationPackageYamlFile(location, yaml, targetClass, packageName, null);
     }
 
-    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(InputStream yaml, Class<T> targetClass, String packageName, String inheritedVersion) throws AutomationPackageReadingException {
+    protected <T extends AutomationPackageFragmentYaml> T readAutomationPackageYamlFile(String location, InputStream yaml, Class<T> targetClass, String packageName, String inheritedVersion) throws AutomationPackageReadingException {
         try {
             String yamlDescriptorString = new String(yaml.readAllBytes(), StandardCharsets.UTF_8);
             String version = null;
@@ -138,8 +145,25 @@ public class AutomationPackageDescriptorReader {
 
             yamlDescriptorString = migrateIfRequired(yamlDescriptorString, version);
 
-            T res = yamlObjectMapper.reader().withAttribute("version", version).readValue(yamlDescriptorString, targetClass);
+            PatchingContext context = new PatchingContext(location, yamlDescriptorString, yamlObjectMapper);
+            PatchingParserDelegate parser = new PatchingParserDelegate(yamlObjectMapper.createParser(yamlDescriptorString), context);
 
+            Map<Class<?>, Object> injections = new HashMap<>();
+            injections.put(AutomationPackageSerializationRegistry.class, serializationRegistry);
+            injections.put(PatchingContext.class, context);
+            injections.put(ObjectMapper.class, yamlObjectMapper);
+
+            InjectableValues.Std injectableValues = new InjectableValues.Std();
+            injections.forEach(injectableValues::addValue);
+
+            yamlObjectMapper.setInjectableValues(injectableValues);
+
+            T res = yamlObjectMapper.reader()
+                .withAttributes(injections)
+                .withAttribute("version", version)
+                .readValue(parser, targetClass);
+
+            res.setPatchingContext(context);
             logAfterRead(packageName, res);
             return res;
         } catch (IOException | YamlPlanValidationException e) {
@@ -157,7 +181,7 @@ public class AutomationPackageDescriptorReader {
         if (!res.getPlansPlainText().isEmpty()) {
             log.info("{} plain text plan(s) found in automation package {}", res.getPlans().size(), StringUtils.defaultString(packageName));
         }
-        for (Map.Entry<String, List<?>> additionalEntry : res.getAdditionalFields().entrySet()) {
+        for (Map.Entry<String, PatchableYamlList<?>> additionalEntry : res.getAdditionalFields().entrySet()) {
             log.info("{} {} found in automation package {}", additionalEntry.getValue().size(), additionalEntry.getKey(), StringUtils.defaultString(packageName));
         }
         if (!res.getFragments().isEmpty()) {
@@ -227,30 +251,41 @@ public class AutomationPackageDescriptorReader {
         }
     }
 
-    protected ObjectMapper createYamlObjectMapper() {
+    private ObjectMapper createYamlObjectMapper() {
+        ObjectMapper yamlMapper = createBasicYamlObjectMapper();
+
+        // register deserializers to read yaml plans
+        SimpleModule module = planReader.registerAllSerializersAndDeserializers(yamlMapper, true);
+        yamlMapper.registerModule(module);
+
+        return yamlMapper;
+    }
+
+    // Below are a few static convenience methods for others who may need access to some information about
+    // an AP, without requiring all the heavy lifting of actually being able to load and parse the entire AP.
+
+    public static ObjectMapper createBasicYamlObjectMapper() {
         YAMLFactory yamlFactory = new YAMLFactory();
 
         // Disable native type id to enable conversion to generic Documents
         yamlFactory.disable(YAMLGenerator.Feature.USE_NATIVE_TYPE_ID);
-        ObjectMapper yamlMapper = DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+        yamlFactory.enable(YAMLGenerator.Feature.INDENT_ARRAYS_WITH_INDICATOR);
+        yamlFactory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
+        return DefaultJacksonMapperProvider.getObjectMapper(yamlFactory);
+    }
 
-        // configure custom deserializers
-        SimpleModule module = new SimpleModule();
+    public static String getAutomationPackageName(Path apDescriptorFile) throws IOException {
+        try (InputStream stream = Files.newInputStream(Objects.requireNonNull(apDescriptorFile))) {
+            return getAutomationPackageName(stream);
+        }
+    }
 
-        // register deserializers to read yaml plans
-        planReader.registerAllSerializersAndDeserializers(module, yamlMapper, true);
-
-        // add annotated jackson deserializers
-        StepYamlDeserializersScanner.addAllDeserializerAddonsToModule(module, yamlMapper, List.of(stepYamlDeserializer -> {
-            if (stepYamlDeserializer instanceof AutomationPackageSerializationRegistryAware) {
-                ((AutomationPackageSerializationRegistryAware) stepYamlDeserializer).setSerializationRegistry(serializationRegistry);
-            }
-        }));
-
-
-        yamlMapper.registerModule(module);
-
-        return yamlMapper;
+    public static String getAutomationPackageName(InputStream apDescriptorInputStream) throws IOException {
+        var mapper = createBasicYamlObjectMapper();
+        return Optional.ofNullable(mapper.readTree(apDescriptorInputStream))
+            .map(rootNode -> rootNode.get("name"))
+            .map(JsonNode::asText)
+            .orElse(null);
     }
 
     public YamlPlanReader getPlanReader() {

@@ -29,9 +29,6 @@ import java.io.IOException;
 @StepYamlSerializerAddOn(targetClasses = {DynamicValue.class})
 public class YamlDynamicValueSerializer extends StepYamlSerializer<DynamicValue<?>> {
 
-    public YamlDynamicValueSerializer() {
-    }
-
     public YamlDynamicValueSerializer(ObjectMapper yamlObjectMapper) {
         super(yamlObjectMapper);
     }

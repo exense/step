@@ -40,7 +40,7 @@ public class ExcelFileLookup {
 
     public File lookup(String workbookPath) {
         File workBookFile;
-        if (workbookPath.contains("/") || workbookPath.contains("\\")) {
+        if (isFilesystemPath(workbookPath)) {
             workBookFile = new File(workbookPath);
         } else {
             workBookFile = fileResolver != null ? fileResolver.resolve(workbookPath) : null;
@@ -66,6 +66,16 @@ public class ExcelFileLookup {
             }
         }
         return workBookFile;
+    }
+
+    /**
+     * @return whether the workbook is named by a path of the file system rather than by a name to look up
+     * or a reference to resolve. A reference is never a path, whatever separators it holds: an
+     * {@code apResource:} one carries the archive-relative path of its entry, slashes included.
+     */
+    private static boolean isFilesystemPath(String workbookPath) {
+        return !FileResolver.isResource(workbookPath) && !FileResolver.isApResource(workbookPath)
+            && (workbookPath.contains("/") || workbookPath.contains("\\"));
     }
 
 }

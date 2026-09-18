@@ -1,0 +1,17 @@
+plans:
+  - name: Test Plan with Composite
+    categories:
+      - Yaml Plan
+      - Composite
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Calling composite"
+          - callKeyword:
+              keyword: "Composite keyword from AP"
+              children:
+                - check:
+                    expression: "output.output1.equals('value')"
+                - check:
+                    expression: "output.output2.equals('some thing dynamic')"

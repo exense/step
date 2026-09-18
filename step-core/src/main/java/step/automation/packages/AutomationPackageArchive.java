@@ -30,7 +30,7 @@ import java.util.Objects;
 public abstract class AutomationPackageArchive implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchive.class);
-    public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
+    public static final List<String> METADATA_FILES = List.of("automation-package.yaml", "automation-package.yml");
     public static final String NULL_TYPE_ERROR_MSG = "The type of the AutomationPackageArchive must not be null";
 
     private final File originalFile;
@@ -61,7 +61,19 @@ public abstract class AutomationPackageArchive implements Closeable {
 
     abstract public boolean hasAutomationPackageDescriptor();
 
-    abstract public InputStream getDescriptorYaml();
+    abstract public URL getDescriptorYamlUrl();
+
+    public InputStream getDescriptorYaml() {
+        URL url = getDescriptorYamlUrl();
+        if (url == null) {
+            return null;
+        }
+        try {
+            return url.openStream();
+        } catch (IOException e) {
+            return null;
+        }
+    }
 
     abstract public InputStream getResourceAsStream(String resourcePath) throws IOException;
 

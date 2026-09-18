@@ -18,10 +18,17 @@
  ******************************************************************************/
 package step.core.scheduler.automation;
 
-import java.util.Map;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JacksonInject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.OptBoolean;
+import step.core.yaml.PatchableYamlModelBase;
+import step.core.yaml.PatchingContext;
 
-public class AutomationPackageSchedule {
+import java.util.List;
+import java.util.Map;
+
+public class AutomationPackageSchedule extends PatchableYamlModelBase {
 
     public static final String SCHEDULE_DEF = "ScheduleDef";
     public static final String FIELD_NAME_IN_AP = "schedules";
@@ -29,15 +36,20 @@ public class AutomationPackageSchedule {
     private Boolean active = true;
     private String cron;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL) // otherwise fails schema check after re-reading serialized value
     private List<String> cronExclusions;
     private String planName;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String assertionPlanName;
     private Map<String, String> executionParameters;
 
-    public AutomationPackageSchedule() {
+    @JsonCreator
+    public AutomationPackageSchedule(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext patchingContext) {
+        super(patchingContext);
     }
 
     public AutomationPackageSchedule(String name, String cron, String planName, Map<String, String> executionParameters) {
+        super(new PatchingContext());
         this.name = name;
         this.cron = cron;
         this.planName = planName;

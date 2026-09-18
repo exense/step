@@ -35,6 +35,6 @@ public class YamlAutomationPackageSchemaGeneratorTest {
 
         String errorMessage = "Published schema doesn't match to the actual one. To fix the test you need to publish " +
             "the generated schema printed above and actualize the published schema in current test";
-        Assert.assertEquals(errorMessage, publishedSchema, currentSchema);
+        Assert.assertEquals(errorMessage, publishedSchema.toPrettyString(), currentSchema.toPrettyString());
     }
 }

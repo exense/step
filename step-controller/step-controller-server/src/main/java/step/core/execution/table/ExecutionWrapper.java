@@ -27,6 +27,38 @@ public class ExecutionWrapper extends Execution {
 
     private Object executionSummary;
 
+    public ExecutionWrapper() {
+        super();
+    }
+
+    public ExecutionWrapper(Execution execution) {
+        super();
+        // AbstractIdentifiableObject
+        setId(execution.getId());
+        setCustomFields(execution.getCustomFields());
+        // AbstractOrganizableObject
+        setAttributes(execution.getAttributes());
+        // Execution
+        setStartTime(execution.getStartTime());
+        setEndTime(execution.getEndTime());
+        setDescription(execution.getDescription());
+        setExecutionType(execution.getExecutionType());
+        setStatus(execution.getStatus());
+        setResult(execution.getResult());
+        setLifecycleErrors(execution.getLifecycleErrors());
+        setPlanId(execution.getPlanId());
+        setImportResult(execution.getImportResult());
+        setReportExports(execution.getReportExports());
+        setExecutionTaskID(execution.getExecutionTaskID());
+        setParameters(execution.getParameters());
+        setExecutionParameters(execution.getExecutionParameters());
+        setExecutiontTaskParameters(execution.getExecutiontTaskParameters());
+        setResolvedPlanRootNodeId(execution.getResolvedPlanRootNodeId());
+        setAgentsInvolved(execution.getAgentsInvolved());
+        setStepVersion(execution.getStepVersion());
+        setHistoryResults(execution.getHistoryResults());
+    }
+
     public ReportNode getRootReportNode() {
         return rootReportNode;
     }

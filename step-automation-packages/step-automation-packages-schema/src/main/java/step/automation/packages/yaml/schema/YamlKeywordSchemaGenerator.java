@@ -23,7 +23,7 @@ import jakarta.json.JsonObjectBuilder;
 import jakarta.json.spi.JsonProvider;
 import step.core.yaml.YamlModelUtils;
 import step.automation.packages.model.AbstractYamlFunction;
-import step.automation.packages.yaml.AutomationPackageKeywordsLookuper;
+import step.core.yaml.AutomationPackageKeywordsLookuper;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.schema.AggregatedJsonSchemaFieldProcessor;
 import step.core.yaml.schema.JsonSchemaDefinitionAddOn;

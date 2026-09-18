@@ -20,6 +20,7 @@ package step.artefacts.automation.datasource;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.core.yaml.deserializers.NamedEntityYamlDeserializer;
@@ -31,8 +32,8 @@ import java.io.IOException;
 @StepYamlDeserializerAddOn(targetClasses = {NamedYamlDataSource.class})
 public class NamedYamlDataSourceDeserializer extends StepYamlDeserializer<NamedYamlDataSource> {
 
-    public NamedYamlDataSourceDeserializer(ObjectMapper yamlObjectMapper) {
-        super(yamlObjectMapper);
+    public NamedYamlDataSourceDeserializer(JsonDeserializer<?> deserializer, ObjectMapper yamlObjectMapper) {
+        super(deserializer, yamlObjectMapper);
     }
 
     @Override

@@ -20,6 +20,7 @@ package step.artefacts.automation;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import step.core.accessors.AbstractOrganizableObject;
@@ -39,8 +40,8 @@ public class YamlKeywordDefinitionDeserializer extends StepYamlDeserializer<Yaml
 
     private static final ObjectMapper DEFAULT_OBJECT_MAPPER = DefaultJacksonMapperProvider.getObjectMapper();
 
-    public YamlKeywordDefinitionDeserializer(ObjectMapper yamlObjectMapper) {
-        super(yamlObjectMapper);
+    public YamlKeywordDefinitionDeserializer(JsonDeserializer<?> deserializer, ObjectMapper yamlObjectMapper) {
+        super(deserializer, yamlObjectMapper);
     }
 
     @Override
