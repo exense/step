@@ -361,9 +361,10 @@ function hasPackageJson(npmProjectPath) {
 // npm-shrinkwrap.json over package-lock.json, and `npm ci` accepts either. There is deliberately no fallback to
 // `npm install` when `npm ci` fails: a failure typically means the lockfile is out of sync with package.json
 function getNpmInstallArgs(npmProjectPath, isWorkspace) {
-  const hasLockfile = ['npm-shrinkwrap.json', 'package-lock.json']
+  const hasLockfile = isWorkspace && ['npm-shrinkwrap.json', 'package-lock.json']
     .some(lockfile => fs.existsSync(path.join(npmProjectPath, lockfile)));
-  return [isWorkspace && hasLockfile ? 'ci' : 'install', '--no-audit', '--no-fund'];
+  return [hasLockfile ? 'ci' : 'install', '--no-audit', '--no-fund'];
+}
 }
 
 async function readStepKeywordDirectory(npmProjectPath) {
