@@ -208,7 +208,6 @@ class Agent {
           // would eventually try to find such a file in the directory ancestors and fail if none is found
           logger.info('Skipping npm install, ' + npmProjectPath + ' has no package.json')
         } else {
-          logger.info('Running npm install in ' + npmProjectPath + ' for token ' + tokenId)
           const npmInstallResult = await this.executeNpmInstall(npmProjectPath);
           const npmInstallFailed = npmInstallResult.status !== 0 || npmInstallResult.error != null;
           if (npmInstallFailed || isDebugEnabled) {
@@ -310,8 +309,6 @@ class Agent {
   }
 
   async executeNpmInstall(npmProjectPath) {
-    // Only a workspace copied per token can be reinstalled from scratch. Outside the agent mode the keyword project is
-    // used in place, and `npm ci` would delete the node_modules the calling process (e.g. the runner) is running from
     const npmArgs = getNpmInstallArgs(npmProjectPath, this.mode === 'agent');
     logger.info('Installing dependencies of ' + npmProjectPath + ' with: npm ' + npmArgs.join(' '));
     return await new Promise((resolve) => {
@@ -357,14 +354,13 @@ function hasPackageJson(npmProjectPath) {
   return fs.existsSync(path.join(npmProjectPath, 'package.json'));
 }
 
-// A project shipping a lockfile gets the exact dependency tree it declares via `npm ci`. npm itself prefers
-// npm-shrinkwrap.json over package-lock.json, and `npm ci` accepts either. There is deliberately no fallback to
-// `npm install` when `npm ci` fails: a failure typically means the lockfile is out of sync with package.json
-function getNpmInstallArgs(npmProjectPath, isWorkspace) {
-  const hasLockfile = isWorkspace && ['npm-shrinkwrap.json', 'package-lock.json']
+function getNpmInstallArgs(npmProjectPath, isAgentMode) {
+  // In the agent mode we call npm ci to preserve the dependency tree if npm-shrinkwrap.json or package-lock.json exist
+  // Outside the agent mode the keyword project is used in place, and `npm ci` would delete the node_modules
+  // the calling process (e.g. the runner) is running from. In these cases we perform a npm install
+  const useNpmCi = isAgentMode && ['npm-shrinkwrap.json', 'package-lock.json']
     .some(lockfile => fs.existsSync(path.join(npmProjectPath, lockfile)));
-  return [hasLockfile ? 'ci' : 'install', '--no-audit', '--no-fund'];
-}
+  return [useNpmCi ? 'ci' : 'install', '--no-audit', '--no-fund'];
 }
 
 async function readStepKeywordDirectory(npmProjectPath) {
