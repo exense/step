@@ -68,7 +68,7 @@ public class YamlMetadata {
     /**
      * @throws IllegalArgumentException if one of the keys (at any depth) is invalid
      */
-    public static void validate(Map<String, Object> metadata) {
+    private static void validate(Map<String, Object> metadata) {
         validateValue(metadata, METADATA_FIELD);
     }
 
