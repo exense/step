@@ -26,11 +26,14 @@ import org.junit.rules.TemporaryFolder;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -58,19 +61,24 @@ public class ScriptEngineLibrariesTest {
     }
 
     /**
-     * An executable jar keeping its dependencies as nested jars, the way Spring Boot packages them. The nested jar is
-     * not reachable through the file system, which is exactly what this covers.
+     * An executable jar keeping its dependencies as nested jars, the way Spring Boot packages them. The nested jar has
+     * no file of its own, which is exactly what this covers: it is read through the "nested" file system of the
+     * loader the application is packaged with.
      */
     @Test
     public void copiesALibraryNestedInAnExecutableJar() throws Exception {
+        Path library = jar(folder.getRoot().toPath().resolve("nested/groovy-5.0.4.jar"), "nested groovy content");
         Path application = executableJar(folder.getRoot().toPath().resolve("step.jar"),
-            "BOOT-INF/lib/groovy-5.0.4.jar", "nested groovy content");
+            "BOOT-INF/lib/groovy-5.0.4.jar", library);
         Path target = folder.newFolder("libraries").toPath();
 
         ScriptEngineLibraries.copyLibrary(nestedUrl(application, "BOOT-INF/lib/groovy-5.0.4.jar"), target);
 
-        // Under its own name, not the name of the application it was nested in
-        Assert.assertEquals("nested groovy content", contentOf(target.resolve("groovy-5.0.4.jar")));
+        // The very jar the application runs on, under its own name rather than the name of the application it was
+        // nested in
+        Path copy = target.resolve("groovy-5.0.4.jar");
+        Assert.assertTrue(copy + " was not written", Files.isRegularFile(copy));
+        Assert.assertArrayEquals(Files.readAllBytes(library), Files.readAllBytes(copy));
     }
 
     /**
@@ -79,8 +87,9 @@ public class ScriptEngineLibrariesTest {
      */
     @Test
     public void reportsANestedLibraryWhichIsNotThere() throws Exception {
+        Path library = jar(folder.getRoot().toPath().resolve("nested/groovy-5.0.4.jar"), "nested groovy content");
         Path application = executableJar(folder.getRoot().toPath().resolve("step.jar"),
-            "BOOT-INF/lib/groovy-5.0.4.jar", "nested groovy content");
+            "BOOT-INF/lib/groovy-5.0.4.jar", library);
         Path target = folder.newFolder("libraries").toPath();
 
         URL missing = nestedUrl(application, "BOOT-INF/lib/nashorn-core-15.4.jar");
@@ -135,10 +144,18 @@ public class ScriptEngineLibrariesTest {
 
     /**
      * @return the location a class of a nested library is reported at, as the class loader of an executable jar builds
-     * it: {@code jar:file:/path/step.jar!/BOOT-INF/lib/library.jar!/}
+     * it: {@code jar:nested:/path/step.jar/!BOOT-INF/lib/library.jar!/}. Such a URL is built with a handler of its
+     * own: the handler of the JVM rejects it, as the "nested" protocol it points at is one the loader of the
+     * application registers, and a test runs without that loader.
      */
     private static URL nestedUrl(Path application, String entryName) throws IOException {
-        return new URL("jar:" + application.toUri().toURL() + "!/" + entryName + "!/");
+        return new URL(null, "jar:nested:" + application.toUri().getRawPath() + "/!" + entryName + "!/",
+            new URLStreamHandler() {
+                @Override
+                protected URLConnection openConnection(URL url) {
+                    throw new UnsupportedOperationException("The content of " + url + " is not read through the URL");
+                }
+            });
     }
 
     private static Path library(Path path, String content) throws IOException {
@@ -149,11 +166,32 @@ public class ScriptEngineLibrariesTest {
         return path;
     }
 
-    private static Path executableJar(Path path, String entryName, String entryContent) throws IOException {
+    private static Path jar(Path path, String content) throws IOException {
         Files.createDirectories(path.getParent());
         try (ZipOutputStream jar = new ZipOutputStream(Files.newOutputStream(path))) {
-            jar.putNextEntry(new ZipEntry(entryName));
-            jar.write(entryContent.getBytes(StandardCharsets.UTF_8));
+            jar.putNextEntry(new ZipEntry("content.txt"));
+            jar.write(content.getBytes(StandardCharsets.UTF_8));
+            jar.closeEntry();
+        }
+        return path;
+    }
+
+    /**
+     * An application packaged as an executable jar holds its libraries as nested jars, stored uncompressed so that
+     * they can be read where they lie.
+     */
+    private static Path executableJar(Path path, String entryName, Path nestedLibrary) throws IOException {
+        Files.createDirectories(path.getParent());
+        byte[] content = Files.readAllBytes(nestedLibrary);
+        CRC32 crc = new CRC32();
+        crc.update(content);
+        ZipEntry entry = new ZipEntry(entryName);
+        entry.setMethod(ZipEntry.STORED);
+        entry.setSize(content.length);
+        entry.setCrc(crc.getValue());
+        try (ZipOutputStream jar = new ZipOutputStream(Files.newOutputStream(path))) {
+            jar.putNextEntry(entry);
+            jar.write(content);
             jar.closeEntry();
         }
         return path;
