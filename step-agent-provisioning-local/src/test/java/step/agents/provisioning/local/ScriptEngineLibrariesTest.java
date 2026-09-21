@@ -143,6 +143,21 @@ public class ScriptEngineLibrariesTest {
     }
 
     /**
+     * The loader names a nested library by the entry it is stored under, without encoding it, so a library whose name
+     * holds a character a URI cannot carry gives a location which cannot be read apart. Reported as every other
+     * unreadable location is, rather than as the exception of whatever parses it.
+     */
+    @Test
+    public void reportsANestedLocationItCannotReadApart() throws Exception {
+        Path target = folder.newFolder("libraries").toPath();
+        URL illegal = nestedUrl(folder.getRoot().toPath().resolve("step.jar"), "BOOT-INF/lib/my lib.jar");
+
+        LocalAgentException exception = Assert.assertThrows(LocalAgentException.class,
+            () -> ScriptEngineLibraries.copyLibrary(illegal, target));
+        Assert.assertTrue(exception.getMessage(), exception.getMessage().contains("my lib.jar"));
+    }
+
+    /**
      * @return the location a class of a nested library is reported at, as the class loader of an executable jar builds
      * it: {@code jar:nested:/path/step.jar/!BOOT-INF/lib/library.jar!/}. Such a URL is built with a handler of its
      * own: the handler of the JVM rejects it, as the "nested" protocol it points at is one the loader of the

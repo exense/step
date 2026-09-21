@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -269,7 +270,7 @@ public class ScriptEngineLibraries {
     private static Path fileLibrary(URL location) throws LocalAgentException {
         try {
             return Path.of(location.toURI());
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException | IllegalArgumentException | FileSystemNotFoundException e) {
             throw new LocalAgentException("Unable to read the library " + location, e);
         }
     }
@@ -323,7 +324,14 @@ public class ScriptEngineLibraries {
         if (!url.startsWith(NESTED_LOCATION_PREFIX)) {
             throw new LocalAgentException("Unable to read the library " + location + ": not a nested library location.");
         }
-        URI nested = URI.create(url.substring("jar:".length()));
+        URI nested;
+        try {
+            nested = new URI(url.substring("jar:".length()));
+        } catch (URISyntaxException e) {
+            // The loader encodes the archive of a location, but not the name of the entry in it: a library whose name
+            // holds a character a URI cannot carry ends up here
+            throw new LocalAgentException("Unable to read the library " + location, e);
+        }
         String nestedLocation = raw ? nested.getRawSchemeSpecificPart() : nested.getSchemeSpecificPart();
         // The trailing "!/" of the location, which points at the root of the library rather than into it
         int deepReference = nestedLocation.indexOf("!/");
