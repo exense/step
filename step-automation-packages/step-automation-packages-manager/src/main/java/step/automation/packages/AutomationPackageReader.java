@@ -29,6 +29,7 @@ import step.automation.packages.yaml.model.AutomationPackageDescriptorYaml;
 import step.automation.packages.yaml.model.AutomationPackageFragmentYaml;
 import step.core.plans.Plan;
 import step.core.yaml.deserialization.PatchableYamlList;
+import step.core.yaml.YamlMetadata;
 import step.core.yaml.deserialization.PatchableYamlPrimitive;
 import step.functions.Function;
 import step.plans.automation.YamlPlainTextPlan;
@@ -127,6 +128,9 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
         String baseName = resolveName(descriptor, archive);
         res.setBaseName(baseName);
         res.setName(resolveUniqueName(baseName, apVersion));
+        if (descriptor != null) {
+            res.setMetadata(descriptor.getMetadata());
+        }
 
         if (scanAnnotations) {
             fillAutomationPackageWithAnnotatedKeywordsAndPlans(archive, res);
@@ -314,6 +318,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
                         }
                         YamlPlanReader.setPlanName(parsedPlan, finalPlanName);
                         parsedPlan.setCategories(plainTextPlan.getCategories());
+                        YamlMetadata.applyTo(parsedPlan, plainTextPlan.getMetadata());
                         targetPackage.getPlans().add(parsedPlan);
                     } catch (IOException ex) {
                         throw new AutomationPackageReadingException("Unable to read plain text plan from url: " + url.getFile(), ex);
