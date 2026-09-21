@@ -30,6 +30,7 @@ import step.core.Version;
 import step.core.scheduler.automation.AutomationPackageScheduleJsonSchema;
 import step.automation.packages.schema.AutomationPackageJsonSchemaExtension;
 import step.core.yaml.schema.JsonSchemaExtension;
+import step.core.yaml.YamlMetadata;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.handlers.javahandler.jsonschema.JsonSchemaPreparationException;
 import step.plans.parser.yaml.YamlPlan;
@@ -111,6 +112,7 @@ public class YamlAutomationPackageSchemaGenerator {
         objectBuilder.add("version", jsonProvider.createObjectBuilder().add("const", actualVersion.toString()));
         objectBuilder.add("name", jsonProvider.createObjectBuilder().add("type", "string"));
         objectBuilder.add("attributes", jsonProvider.createObjectBuilder().add("type", "object"));
+        objectBuilder.add(YamlMetadata.METADATA_FIELD, YamlJsonSchemaHelper.addRef(jsonProvider.createObjectBuilder(), YamlMetadata.METADATA_DEF));
 
         // TODO: split keyword and plans definitions
         JsonObjectBuilder builder = jsonProvider.createObjectBuilder();

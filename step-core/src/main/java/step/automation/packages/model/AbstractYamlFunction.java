@@ -18,6 +18,7 @@
  ******************************************************************************/
 package step.automation.packages.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.json.JsonObject;
 import step.automation.packages.AutomationPackageLocalResourceMapper;
 import step.automation.packages.StagingAutomationPackageContext;
@@ -25,6 +26,7 @@ import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlMetadata;
 import step.core.yaml.YamlModelUtils;
 import step.functions.Function;
 import step.jsonschema.JsonSchema;
@@ -51,6 +53,10 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
     private boolean useCustomTemplate = false;
 
     private String description;
+
+    @YamlFieldCustomCopy
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private Map<String, Object> metadata;
 
     public DynamicValue<Integer> getCallTimeout() {
         return callTimeout;
@@ -108,9 +114,18 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
         this.name = name;
     }
 
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+
     protected void fillDeclaredFields(T res, StagingAutomationPackageContext context) {
         res.addAttribute(AbstractOrganizableObject.NAME, this.getName());
         res.setTokenSelectionCriteria(routing);
+        YamlMetadata.applyTo(res, metadata);
         copyFieldsToObject(res, true);
     }
 
@@ -129,6 +144,7 @@ public abstract class AbstractYamlFunction<T extends Function> extends AbstractY
     public void setDeclaredFieldsFromObject(T res) {
         Optional.ofNullable(res.getAttribute(AbstractOrganizableObject.NAME)).ifPresent(this::setName);
         routing = res.getTokenSelectionCriteria();
+        metadata = YamlMetadata.extractFrom(res);
         copyFieldsFromObject(res, true);
     }
 

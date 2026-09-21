@@ -28,6 +28,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -65,6 +66,9 @@ import java.util.zip.ZipFile;
 public class ScriptEngineLibraries {
 
     private static final Logger logger = LoggerFactory.getLogger(ScriptEngineLibraries.class);
+
+    /** How a location points into the executable jar of the application rather than at a file of the file system */
+    private static final String NESTED_LOCATION_PREFIX = "jar:nested:";
 
     /**
      * An engine, as found on the class path of the running application.
@@ -226,8 +230,7 @@ public class ScriptEngineLibraries {
     /**
      * Copies one library into the target directory, under the name it has, from the two layouts an application can be
      * started from: the jars of a class path, and the jars nested in an executable jar which keeps its dependencies
-     * (Spring Boot's {@code BOOT-INF/lib}). A nested jar is not reachable through the file system, hence reading it
-     * out of the archive it is stored in.
+     * (Spring Boot's {@code BOOT-INF/lib}).
      */
     // Package private for the sake of the tests, which cover both layouts without a packaged application
     static void copyLibrary(URL location, Path targetDirectory) throws IOException, LocalAgentException {
@@ -270,14 +273,19 @@ public class ScriptEngineLibraries {
     private static Path fileLibrary(URL location) throws LocalAgentException {
         try {
             return Path.of(location.toURI());
-        } catch (URISyntaxException e) {
+        } catch (URISyntaxException | IllegalArgumentException | FileSystemNotFoundException e) {
             throw new LocalAgentException("Unable to read the library " + location, e);
         }
     }
 
     /**
      * Reads a library out of the archive holding it, given a location of the form
-     * {@code jar:file:/path/app.jar!/BOOT-INF/lib/library.jar!/}.
+     * {@code jar:nested:/path/app.jar/!BOOT-INF/lib/library.jar!/}, which is how the Spring Boot loader names a
+     * library nested in the executable jar of the application.
+     * <p>
+     * The archive is read as the zip it is rather than through the {@code nested} file system the loader registers:
+     * that file system reports a read which ends on the last bytes of an entry as 0 bytes read, which leaves whoever
+     * copies from it with an empty file.
      */
     private static void copyNestedLibrary(URL location, Path target) throws IOException, LocalAgentException {
         Path archive = nestedArchive(location);
@@ -296,26 +304,48 @@ public class ScriptEngineLibraries {
 
     private static Path nestedArchive(URL location) throws LocalAgentException {
         try {
-            return Path.of(URI.create(nestedParts(location)[0]));
+            // The loader builds the location of the archive from the path of its file URI, hence rebuilding that URI
+            // rather than reading the path as it is: it holds a leading slash on Windows, and is URI encoded
+            return Path.of(URI.create("file://" + nestedParts(location, true)[0]));
         } catch (RuntimeException e) {
             throw new LocalAgentException("Unable to read the library " + location, e);
         }
     }
 
     private static String nestedEntryName(URL location) throws LocalAgentException {
-        return nestedParts(location)[1];
+        return nestedParts(location, false)[1];
     }
 
-    private static String[] nestedParts(URL location) throws LocalAgentException {
+    /**
+     * @return the archive and the name of the entry holding the library in it, split at the {@code /!} separator of a
+     * nested location: {@code jar:nested:/path/app.jar/!BOOT-INF/lib/library.jar!/} is the entry
+     * {@code BOOT-INF/lib/library.jar} of {@code /path/app.jar}.
+     * @param raw whether the parts are returned as the location holds them, rather than URI decoded
+     */
+    private static String[] nestedParts(URL location, boolean raw) throws LocalAgentException {
         String url = location.toString();
-        if (!url.startsWith("jar:")) {
+        if (!url.startsWith(NESTED_LOCATION_PREFIX)) {
             throw new LocalAgentException("Unable to read the library " + location + ": not a nested library location.");
         }
-        String[] parts = url.substring("jar:".length()).split("!/");
-        if (parts.length < 2 || parts[1].isEmpty()) {
+        URI nested;
+        try {
+            nested = new URI(url.substring("jar:".length()));
+        } catch (URISyntaxException e) {
+            // The loader encodes the archive of a location, but not the name of the entry in it: a library whose name
+            // holds a character a URI cannot carry ends up here
+            throw new LocalAgentException("Unable to read the library " + location, e);
+        }
+        String nestedLocation = raw ? nested.getRawSchemeSpecificPart() : nested.getSchemeSpecificPart();
+        // The trailing "!/" of the location, which points at the root of the library rather than into it
+        int deepReference = nestedLocation.indexOf("!/");
+        if (deepReference >= 0) {
+            nestedLocation = nestedLocation.substring(0, deepReference);
+        }
+        int separator = nestedLocation.lastIndexOf("/!");
+        if (separator < 0) {
             throw new LocalAgentException("Unable to read the library " + location + ": no nested library in it.");
         }
-        return parts;
+        return new String[]{nestedLocation.substring(0, separator), nestedLocation.substring(separator + 2)};
     }
 
     private static void deleteQuietly(Path directory) {
