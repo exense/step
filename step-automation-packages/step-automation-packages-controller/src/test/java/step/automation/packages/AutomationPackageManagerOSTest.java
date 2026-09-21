@@ -31,6 +31,7 @@ import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
 import step.core.scheduler.CronExclusion;
 import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.yaml.YamlMetadata;
 import step.datapool.excel.ExcelDataPool;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.Function;
@@ -52,6 +53,7 @@ import step.threadpool.ThreadPoolPlugin;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -66,6 +68,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -374,6 +378,49 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(4, storedPlans.size());
         }
+    }
+
+    @Test
+    public void testMetadata() throws IOException {
+        File zip = zipTestResourceFolder("metadata", "automation-package.yml", "plan.plan");
+        try (InputStream is = new FileInputStream(zip)) {
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withAllowUpdate(false).withApSource(AutomationPackageFileSource.withInputStream(is, "metadata.zip")).build();
+            ObjectId result = manager.createOrUpdateAutomationPackage(parameters).getId();
+
+            AutomationPackage storedPackage = automationPackageAccessor.get(result);
+            assertEquals(Map.of("owner", "team-a", "tags", List.of("smoke", "nightly")), YamlMetadata.extractFrom(storedPackage));
+
+            Map<String, Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result))
+                .collect(Collectors.toMap(p -> p.getAttribute(AbstractOrganizableObject.NAME), p -> p));
+            assertEquals(Map.of("requirements", List.of(Map.of("id", "REQ-1", "covered", true))), YamlMetadata.extractFrom(storedPlans.get("Plan with metadata")));
+            assertNull(YamlMetadata.extractFrom(storedPlans.get("Plan without metadata")));
+            assertEquals(Map.of("owner", "team-b"), YamlMetadata.extractFrom(storedPlans.get("Plain text plan with metadata")));
+
+            Function storedFunction = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).findFirst().orElseThrow();
+            assertEquals(Map.of("origin", Map.of("tool", "generator")), YamlMetadata.extractFrom(storedFunction));
+            // the metadata of the composite keyword doesn't apply to its plan
+            assertNull(YamlMetadata.extractFrom(((CompositeFunction) storedFunction).getPlan()));
+
+            ExecutiontTaskParameters storedTask = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).findFirst().orElseThrow();
+            assertEquals(Map.of("owner", "team-c"), YamlMetadata.extractFrom(storedTask));
+
+            Parameter storedParameter = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).findFirst().orElseThrow();
+            assertEquals(Map.of("owner", "team-d"), YamlMetadata.extractFrom(storedParameter));
+        }
+    }
+
+    private File zipTestResourceFolder(String folder, String... fileNames) throws IOException {
+        File zip = Files.createTempFile("automation-package", ".zip").toFile();
+        zip.deleteOnExit();
+        try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip))) {
+            for (String fileName : fileNames) {
+                out.putNextEntry(new ZipEntry(fileName));
+                Files.copy(new File("src/test/resources/step/automation/packages/" + folder + "/" + fileName).toPath(), out);
+                out.closeEntry();
+            }
+        }
+        return zip;
     }
 
     private void retryFlakyTest(int retries, Runnable test, String testName) {

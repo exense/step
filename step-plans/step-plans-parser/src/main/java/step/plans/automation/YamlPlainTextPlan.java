@@ -20,12 +20,14 @@ package step.plans.automation;
 
 import com.fasterxml.jackson.annotation.JacksonInject;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.OptBoolean;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
 import step.plans.nl.RootArtefactType;
 
 import java.util.List;
+import java.util.Map;
 
 public class YamlPlainTextPlan extends PatchableYamlModelBase {
 
@@ -36,6 +38,9 @@ public class YamlPlainTextPlan extends PatchableYamlModelBase {
     private List<String> categories;
 
     private String file;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private Map<String, Object> metadata;
 
     @JsonCreator
     public YamlPlainTextPlan(@JacksonInject(useInput = OptBoolean.FALSE, optional = OptBoolean.TRUE) PatchingContext context) {
@@ -64,6 +69,14 @@ public class YamlPlainTextPlan extends PatchableYamlModelBase {
 
     public void setCategories(List<String> categories) {
         this.categories = categories;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 
     public RootArtefactType getRootType() {

@@ -44,6 +44,7 @@ import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
+import step.core.yaml.YamlMetadata;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlListDeserializer;
 import step.core.yaml.deserialization.PatchableYamlModelDeserializer;
@@ -326,6 +327,7 @@ public class YamlPlanReader {
         Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
         setPlanName(plan, yamlPlan.getName());
         plan.setCategories(yamlPlan.getCategories());
+        YamlMetadata.applyTo(plan, yamlPlan.getMetadata());
         AgentProvisioningConfiguration agents = yamlPlan.getAgents();
         //If agents is not define in YAML, use default value of plan
         if (agents != null) {
@@ -349,6 +351,7 @@ public class YamlPlanReader {
     private void setYamlPlanFieldsFromPlan(YamlPlan yamlPlan, Plan plan) {
         yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
         yamlPlan.setCategories(plan.getCategories());
+        yamlPlan.setMetadata(YamlMetadata.extractFrom(plan));
         yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
         AgentProvisioningConfiguration agents = plan.getAgents();
         //don't set the value of agents if the default values is used to keep the Yaml short
