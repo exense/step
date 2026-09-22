@@ -127,11 +127,4 @@ public class StepDefaultValuesProvider implements CommandLine.IDefaultValueProvi
             log.info(builder.toString());
         }
     }
-
-    // exposes the raw properties, so they can be looked up easily by key instead of requiring a picocli ArgSpec
-    public Properties getProperties() {
-        Properties copy = new Properties();
-        copy.putAll(mergedProperties);
-        return copy;
-    }
 }

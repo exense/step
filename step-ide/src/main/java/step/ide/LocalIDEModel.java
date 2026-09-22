@@ -6,8 +6,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageHookRegistry;
+import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.JavaAutomationPackageArchive;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
@@ -20,9 +22,10 @@ import step.core.execution.model.ExecutionParameters;
 import step.ide.api.IDEDelegator;
 import step.ide.api.LocalExecutionDelegate;
 import step.ide.api.LocalExecutionRequest;
+import step.ide.api.RemoteDefaults;
 import step.ide.api.RemoteDeploymentRequest;
+import step.ide.api.RemoteExecution;
 import step.ide.api.RemoteExecutionRequest;
-import step.ide.api.StepConnectionInfo;
 import step.ide.collections.CurrentlyOpenedAutomationPackageCollectionFactory;
 import step.ide.exceptions.FileExistsException;
 import step.parameter.Parameter;
@@ -40,7 +43,6 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /*
  * This is a singleton class that represents IDE-specific state and logic.
@@ -63,7 +65,6 @@ public class LocalIDEModel implements ExecutionDiversion {
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
     private String ideResourcePath = "dist/step-ide"; // must neither start, nor end, with a slash; Overridden in the EE variant.
-    private StepConnectionInfo cliConnection;
 
 
     public String getIdeResourcePath() {
@@ -252,17 +253,6 @@ public class LocalIDEModel implements ExecutionDiversion {
         return executeLocally(new LocalExecutionRequest(apDir, executionParams, includedPlanNames));
     }
 
-    public void setCliConnection(StepConnectionInfo cliConnection) {
-        if (this.cliConnection != null) {
-            throw new IllegalStateException("cliConnection has already been set");
-        }
-        this.cliConnection = cliConnection;
-    }
-
-    StepConnectionInfo getCliConnection() {
-        return cliConnection;
-    }
-
     /**
      * Executes an automation package through the configured delegate and returns the id of the launched execution.
      * The package is not necessarily the currently opened one: the AI agent for instance is a packaged automation
@@ -346,29 +336,39 @@ public class LocalIDEModel implements ExecutionDiversion {
         }
     }
 
-    public void executeRemote(RemoteExecutionRequest request) throws Exception {
-        request = checkAndPrepare(request, RemoteExecutionRequest::connection, RemoteExecutionRequest::new);
-        delegator.execute(requireCurrentAutomationPackageDirectory(), request);
-    }
-
-    public void deployRemote(RemoteDeploymentRequest request) throws Exception {
-        request = checkAndPrepare(request, RemoteDeploymentRequest::connection, RemoteDeploymentRequest::new);
-        delegator.deploy(requireCurrentAutomationPackageDirectory(), request);
+    /**
+     * Executes the currently opened automation package on a remote Step controller and returns the executions this
+     * started, one per plan unless the plans are wrapped into a single test set. Options left null in the request
+     * fall back to what is configured in the CLI properties.
+     */
+    public List<RemoteExecution> executeRemote(RemoteExecutionRequest request) throws Exception {
+        return requireDelegator().execute(requireCurrentAutomationPackageDirectory(), request);
     }
 
     /**
-     * Checks that the delegator is set, and replaces the connection information with the default (if present).
+     * Deploys the currently opened automation package to a remote Step controller. Options left null in the
+     * request fall back to what is configured in the CLI properties.
      */
-    private <T> T checkAndPrepare(T request, Function<T, StepConnectionInfo> getConnection, Function<StepConnectionInfo, T> constructor) {
-        Objects.requireNonNull(delegator, "No IDEDelegator set, the IDE was not started through the CLI launcher");
+    public AutomationPackageUpdateResult deployRemote(RemoteDeploymentRequest request) throws Exception {
+        return requireDelegator().deploy(requireCurrentAutomationPackageDirectory(), request);
+    }
 
-        if (getConnection.apply(request) == null) {
-            if (cliConnection == null) {
-                throw new IllegalStateException("No connection information provided, and no default connection configured in properties");
-            }
-            return constructor.apply(cliConnection);
-        }
-        return request;
+    /**
+     * Returns the options that remote executions and deployments fall back to, as configured in the CLI properties.
+     */
+    public RemoteDefaults remoteDefaults() {
+        return requireDelegator().remoteDefaults();
+    }
+
+    /**
+     * Returns the local agent provisioning options configured in the CLI properties.
+     */
+    public LocalAgentProvisioningConfiguration localAgentConfiguration() {
+        return requireDelegator().localAgentConfiguration();
+    }
+
+    private IDEDelegator requireDelegator() {
+        return Objects.requireNonNull(delegator, "No IDEDelegator set, the IDE was not started through the CLI launcher");
     }
 
     /**

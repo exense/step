@@ -94,7 +94,7 @@ public class ApCommand extends BaseCommand {
             return prepareFile(param, "automation package", true);
         }
 
-        protected static File preparePackageLibraryFile(String param) {
+        protected File preparePackageLibraryFile(String param) {
             return prepareFile(param, "package library", false);
         }
 

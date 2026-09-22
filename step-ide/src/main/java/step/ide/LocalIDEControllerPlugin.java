@@ -6,13 +6,11 @@ import step.automation.packages.AutomationPackagePlugin;
 import step.automation.packages.LocalApResourceProvider;
 import step.automation.packages.LocalAutomationPackageDirectoryProvider;
 import step.core.GlobalContext;
-import step.core.deployment.WebApplicationConfigurationManager;
 import step.core.execution.ExecutionDiversion;
 import step.core.plugins.AbstractControllerPlugin;
 import step.core.plugins.Plugin;
 import step.ide.api.LocalFileSystemServices;
 import step.ide.api.LocalIDEServices;
-import step.ide.api.StepConnectionInfo;
 import step.resources.ResourceManagerImpl;
 
 @Plugin(dependencies = AutomationPackagePlugin.class)
@@ -38,10 +36,6 @@ public class LocalIDEControllerPlugin extends AbstractControllerPlugin {
         context.setApResourceProvider(new LocalApResourceProvider(
             () -> LocalIDEModel.get().getCurrentAutomationPackageDirectory(),
             context.getApResourceProvider()));
-
-        // This makes the CLI configuration (url, token etc.) available to the frontend.
-        context.require(WebApplicationConfigurationManager.class)
-            .registerHook(session -> StepConnectionInfo.toConfigurationMap(model.getCliConnection()));
     }
 
     @Override

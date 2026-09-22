@@ -1,33 +1,25 @@
 package step.ide.api;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
+/**
+ * The connection to a remote Step controller. Every field is optional: a field left null in a request
+ * falls back to what is configured in the CLI properties.
+ * <p>
+ * {@link #tokenConfigured} is only filled when this record describes the configured defaults, so that
+ * the client can indicate that an API key is available without the key itself being exposed.
+ */
+public record StepConnectionInfo(String url, String projectName, String token, String stepUser,
+                                 Boolean tokenConfigured) {
 
-public record StepConnectionInfo(String url, String projectName, String token) {
-    public StepConnectionInfo {
-        Objects.requireNonNull(url, "url must not be null");
+    public static final StepConnectionInfo LOCAL = new StepConnectionInfo("http://localhost:8080", null, null, null, null);
+
+    public StepConnectionInfo(String url, String projectName, String token, String stepUser) {
+        this(url, projectName, token, stepUser, null);
     }
 
-    public static StepConnectionInfo LOCAL = new StepConnectionInfo("http://localhost:8080", null, null);
-
-    public static Map<String, String> toConfigurationMap(StepConnectionInfo info) {
-        HashMap<String, String> map = new HashMap<>();
-        if (info != null) {
-            map.put("ide.stepconnection.cliprops.url", info.url);
-            map.put("ide.stepconnection.cliprops.projectname", info.projectName);
-            map.put("ide.stepconnection.cliprops.token", info.token);
-        }
-        return map;
+    /**
+     * Returns a copy without the API key, reporting through {@link #tokenConfigured} whether one is set.
+     */
+    public StepConnectionInfo withoutToken() {
+        return new StepConnectionInfo(url, projectName, null, stepUser, token != null && !token.isBlank());
     }
-
-    public static StepConnectionInfo fromCliProperties(Properties props) {
-        String url = props.getProperty("stepUrl");
-        if (url == null) {
-            return null;
-        }
-        return new StepConnectionInfo(url, props.getProperty("projectName"), props.getProperty("token"));
-    }
-
 }

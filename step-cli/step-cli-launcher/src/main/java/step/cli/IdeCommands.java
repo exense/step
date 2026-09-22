@@ -3,7 +3,8 @@ package step.cli;
 import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import picocli.CommandLine;
-import step.cli.parameters.ApDeployParameters;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
+import step.automation.packages.AutomationPackageUpdateResult;
 import step.cli.parameters.ApExecuteParameters;
 import step.core.Constants;
 import step.core.execution.model.ExecutionParameters;
@@ -12,14 +13,16 @@ import step.ide.LocalIDEModel;
 import step.ide.api.IDEDelegator;
 import step.ide.api.LocalExecutionDelegate;
 import step.ide.api.LocalExecutionRequest;
+import step.ide.api.RemoteDefaults;
 import step.ide.api.RemoteDeploymentRequest;
+import step.ide.api.RemoteExecution;
 import step.ide.api.RemoteExecutionRequest;
 import step.ide.api.StepConnectionInfo;
 import step.ide.exceptions.FileExistsException;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Properties;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -28,6 +31,8 @@ import java.util.concurrent.TimeoutException;
 
 
 public class IdeCommands {
+    public static final String COMMAND_NAME = "ide";
+
     private IdeCommands() {
     }
 
@@ -40,6 +45,12 @@ public class IdeCommands {
 
         @CommandLine.Option(names = {"--no-browser"}, defaultValue = "false", description = "Skip launching the browser after starting.")
         public boolean noBrowser;
+
+        // The IDE has no connection options of its own: a remote deployment or execution triggered from the IDE
+        // falls back to the options configured here and in the default configuration file.
+        @CommandLine.Option(names = {StepConsole.AbstractStepCommand.CONFIG}, paramLabel = "<configFile>",
+            description = "Optional configuration file(s) containing CLI options (ex: projectName=Common)")
+        protected List<String> config;
 
         @Override
         public Integer call() {
@@ -63,12 +74,9 @@ public class IdeCommands {
 
         protected void startBackend() throws Exception {
             LocalIDEModel model = model();
-            if (spec.defaultValueProvider() instanceof StepDefaultValuesProvider defaults) {
-                logger.debug("Found default values provider, looking for connection information");
-                Properties props = defaults.getProperties();
-                // note this can still produce null values (when there is not enough information), but that's handled
-                model.setCliConnection(StepConnectionInfo.fromCliProperties(props));
-            }
+            // Wire the various delegations (execute locally/remotely, deploy, read the CLI configuration) before
+            // starting the backend, so that the controller plugins can already use them while they start up.
+            model.setDelegator(this);
             CompletableFuture<Void> awaitStartup = new CompletableFuture<>();
             model.setStartupAwaitFuture(awaitStartup);
             // Note that the start() method is currently invoked synchronously, i.e. it will block
@@ -90,8 +98,6 @@ public class IdeCommands {
                 Thread.currentThread().interrupt();
                 throw new RuntimeException("Thread was interrupted while waiting for backend to start", e);
             }
-            // Wire the various delegations (execute locally/remotely, deploy etc.)
-            model.setDelegator(this);
         }
 
         protected void afterBackendStart() throws Exception {
@@ -206,31 +212,31 @@ public class IdeCommands {
         }
 
         @Override
-        public final void execute(Path apPath, RemoteExecutionRequest request) {
-            File packaged = ApCommand.AbstractApCommand.prepareFile(apPath.toAbsolutePath().toString(), "automation package", true);
-            ApExecuteParameters params = new ApExecuteParameters()
-                .setAuthToken(request.connection().token())
-                .setStepProjectName(request.connection().projectName())
-                .setAutomationPackageFile(packaged)
-                .setWaitForExecution(false)
-                ;
-            new ExecuteAutomationPackageTool(request.connection().url(), params).execute();
+        public final List<RemoteExecution> execute(Path apPath, RemoteExecutionRequest request) {
+            return remoteDelegate().execute(apPath, request);
         }
 
+        @Override
+        public final AutomationPackageUpdateResult deploy(Path apPath, RemoteDeploymentRequest request) {
+            return remoteDelegate().deploy(apPath, request);
+        }
 
         @Override
-        public final void deploy(Path apPath, RemoteDeploymentRequest request) {
-            File packaged = ApCommand.AbstractApCommand.prepareFile(apPath.toAbsolutePath().toString(), "automation package", true);
-            ApDeployParameters params = new ApDeployParameters()
-                .setAuthToken(request.connection().token())
-                .setStepProjectName(request.connection().projectName())
-                .setAutomationPackageFile(packaged)
-                ;
-            new DeployAutomationPackageTool(request.connection().url(), params).execute();
+        public final RemoteDefaults remoteDefaults() {
+            return remoteDelegate().remoteDefaults();
+        }
+
+        @Override
+        public final LocalAgentProvisioningConfiguration localAgentConfiguration() {
+            return remoteDelegate().localAgentConfiguration();
+        }
+
+        private IdeRemoteDelegate remoteDelegate() {
+            return new IdeRemoteDelegate(spec.defaultValueProvider());
         }
     }
 
-    @CommandLine.Command(name = "ide",
+    @CommandLine.Command(name = COMMAND_NAME,
         description = "The CLI interface to launch the local Step IDE",
         version = Constants.STEP_VERSION_STRING,
         mixinStandardHelpOptions = true, usageHelpAutoWidth = true,

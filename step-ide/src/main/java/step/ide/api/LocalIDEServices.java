@@ -12,12 +12,14 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.automation.packages.AutomationPackageUpdateResult;
 import step.core.deployment.AbstractStepServices;
 import step.core.deployment.ControllerServiceException;
 import step.ide.LocalIDEModel;
 import step.ide.exceptions.FileExistsException;
+import step.ide.exceptions.InvalidRequestException;
 
-import java.util.Objects;
+import java.util.List;
 
 @Path("/local/ide")
 @Tag(name = "IDE")
@@ -134,24 +136,66 @@ public class LocalIDEServices extends AbstractStepServices {
         model().closeCurrentAutomationPackage();
     }
 
+    /**
+     * Executes the currently opened automation package on a remote Step controller and returns the executions this
+     * started, one per plan unless the plans are wrapped into a single test set. Options left null in the request,
+     * as well as an entirely absent request, fall back to what is configured in the CLI properties.
+     */
     @Path("remote-execute")
     @POST
-    public void executeRemote(RemoteExecutionRequest request) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<RemoteExecution> executeRemote(RemoteExecutionRequest request) {
         try {
-            model().executeRemote(Objects.requireNonNull(request));
+            return model().executeRemote(request == null ? RemoteExecutionRequest.DEFAULTS : request);
         } catch (Exception e) {
-            throw error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+            throw toServiceException(e);
         }
     }
 
+    /**
+     * Deploys the currently opened automation package to a remote Step controller. Options left null in the
+     * request, as well as an entirely absent request, fall back to what is configured in the CLI properties.
+     */
     @Path("remote-deploy")
     @POST
-    public void deployRemote(RemoteDeploymentRequest request) {
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public AutomationPackageUpdateResult deployRemote(RemoteDeploymentRequest request) {
         try {
-            model().deployRemote(Objects.requireNonNull(request));
+            return model().deployRemote(request == null ? RemoteDeploymentRequest.DEFAULTS : request);
         } catch (Exception e) {
-            throw error(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+            throw toServiceException(e);
         }
+    }
+
+    /**
+     * Returns the options the two endpoints above fall back to, so that a client can display them and only
+     * has to send back the options it actually overrides.
+     */
+    @Path("remote-defaults")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public RemoteDefaults getRemoteDefaults() {
+        try {
+            return model().remoteDefaults();
+        } catch (Exception e) {
+            throw toServiceException(e);
+        }
+    }
+
+    /**
+     * Reports a misconfigured or incomplete request as a bad request, and anything else as an internal error.
+     */
+    private static ControllerServiceException toServiceException(Exception e) {
+        boolean badRequest = e instanceof InvalidRequestException
+            || e instanceof IllegalArgumentException
+            || e instanceof IllegalStateException;
+        if (!badRequest) {
+            logger.error("Error while processing IDE request", e);
+        }
+        String message = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage();
+        return error(message, badRequest ? Response.Status.BAD_REQUEST : Response.Status.INTERNAL_SERVER_ERROR, e);
     }
 
 }
