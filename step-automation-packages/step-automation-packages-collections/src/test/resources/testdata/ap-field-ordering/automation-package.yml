@@ -1,0 +1,5 @@
+schemaVersion: 1.2.0
+name: "YAML Field Ordering"
+fragments:
+  - "keywords/*.yml"
+  - "plans/*.yml"
