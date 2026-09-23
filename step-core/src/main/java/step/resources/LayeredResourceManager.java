@@ -184,6 +184,11 @@ public class LayeredResourceManager implements ResourceManager {
     }
 
     @Override
+    public Resource changeResourceType(String resourceId, String resourceType) throws IOException {
+        return getManagerForPersistence().changeResourceType(resourceId, resourceType);
+    }
+
+    @Override
     public ResourceRevision saveResourceRevision(ResourceRevision resourceRevision) throws IOException {
         return getManagerForPersistence().saveResourceRevision(resourceRevision);
     }
