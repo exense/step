@@ -24,6 +24,7 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -89,5 +90,31 @@ public class DynamicValueSerializationTest {
 
         new DynamicValueResolver(new ExpressionHandler()).evaluate(deserialized, Map.of("name", "John"));
         Assert.assertEquals("${name}", deserialized.get());
+    }
+
+    /**
+     * A field left unset by the user is a value holding null, and the keyword models leave such a field
+     * out of the descriptor by comparing it against the default of the field - see AbstractYamlFunction.
+     */
+    @Test
+    public void testUnsetValueIsLeftOutOfTheOutput() throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+
+        String serialized = mapper.writeValueAsString(new BeanWithDefaults());
+        Assert.assertEquals("{}", serialized);
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private static class BeanWithDefaults {
+
+        private DynamicValue<String> scriptDirectory = new DynamicValue<>();
+
+        public DynamicValue<String> getScriptDirectory() {
+            return scriptDirectory;
+        }
+
+        public void setScriptDirectory(DynamicValue<String> scriptDirectory) {
+            this.scriptDirectory = scriptDirectory;
+        }
     }
 }
