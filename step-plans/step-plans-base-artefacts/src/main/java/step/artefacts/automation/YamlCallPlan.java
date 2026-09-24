@@ -24,16 +24,13 @@ import step.core.yaml.model.AbstractYamlArtefact;
 
 public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
 
-    private static final YamlDynamicInputs DEFAULT_SELECTION_ATTRIBUTES = new YamlDynamicInputs("{}");
-    private static final YamlCallNamedEntityDefinition DEFAULT_CALL_ENTITY_DEFINITION = new YamlCallNamedEntityDefinition(null, null, "{}");
-
     private String planId;
 
     @YamlFieldCustomCopy
-    protected YamlCallNamedEntityDefinition plan = DEFAULT_CALL_ENTITY_DEFINITION;
+    protected YamlCallNamedEntityDefinition plan = null;
 
     @YamlFieldCustomCopy
-    private YamlDynamicInputs selectionAttributes = DEFAULT_SELECTION_ATTRIBUTES;
+    private YamlDynamicInputs selectionAttributes = null;
 
     @YamlFieldCustomCopy
     protected YamlDynamicInputs input = new YamlDynamicInputs("{}");
@@ -49,11 +46,11 @@ public class YamlCallPlan extends AbstractYamlArtefact<CallPlan> {
             res.setInput(this.input.toDynamicValue());
         }
 
-        if (this.plan != DEFAULT_CALL_ENTITY_DEFINITION) {
+        if (this.plan != null) {
             res.setSelectionAttributes(this.plan.toDynamicValue());
         }
 
-        if (this.selectionAttributes != DEFAULT_SELECTION_ATTRIBUTES) {
+        if (this.selectionAttributes != null) {
             res.setSelectionAttributes(this.selectionAttributes.toDynamicValue());
         }
     }
