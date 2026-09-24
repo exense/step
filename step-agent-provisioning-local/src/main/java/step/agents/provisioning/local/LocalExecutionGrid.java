@@ -56,8 +56,8 @@ public class LocalExecutionGrid implements Closeable {
      */
     private final Path fileManagerDirectory;
 
-    private LocalExecutionGrid(GridImpl grid, SymmetricSecurityConfiguration security, Path fileManagerDirectory,
-                               Duration agentStartTimeout) {
+    protected LocalExecutionGrid(GridImpl grid, SymmetricSecurityConfiguration security, Path fileManagerDirectory,
+                                 Duration agentStartTimeout) {
         this.grid = grid;
         this.security = security;
         this.fileManagerDirectory = fileManagerDirectory;
