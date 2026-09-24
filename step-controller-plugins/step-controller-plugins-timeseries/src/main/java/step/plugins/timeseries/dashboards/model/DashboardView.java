@@ -6,7 +6,6 @@ import step.core.objectenricher.EnricheableObject;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class DashboardView extends AbstractOrganizableObject implements EnricheableObject {
 
@@ -22,7 +21,10 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
     @NotNull
     private List<DashboardItem> dashlets;
 
-    private Map<String, Object> metadata = new HashMap<>();
+    public DashboardView() {
+        // dashboards have always exposed a non-null metadata map, while the inherited one starts null
+        setMetadata(new HashMap<>());
+    }
 
     public Long getResolution() {
         return resolution;
@@ -75,15 +77,6 @@ public class DashboardView extends AbstractOrganizableObject implements Enrichea
 
     public DashboardView setDescription(String description) {
         this.description = description;
-        return this;
-    }
-
-    public Map<String, Object> getMetadata() {
-        return metadata;
-    }
-
-    public DashboardView setMetadata(Map<String, Object> metadata) {
-        this.metadata = metadata;
         return this;
     }
 

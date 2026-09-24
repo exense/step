@@ -260,8 +260,9 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         }
 
         logger.info("Starting the local {} agent with {} token(s)...", provider.getDisplayName(), numberOfTokens);
+        Map<String, String> partition = Map.of(TOKEN_ATTRIBUTE_PARTITION, tokenPartition);
         LocalAgentStartContext startContext = new LocalAgentStartContext(grid.getGridUrl(), workingDirectory,
-            numberOfTokens, Map.of(TOKEN_ATTRIBUTE_PARTITION, tokenPartition), grid.getSecurity());
+            numberOfTokens, partition, partition, grid.getSecurity());
         LocalAgentProcess process = provider.start(startContext);
 
         StartedAgent startedAgent = new StartedAgent(process);
@@ -424,7 +425,10 @@ public class LocalProcessAgentProvisioningDriver implements AgentProvisioningDri
         final Set<StartedAgent> startedAgents = new HashSet<>();
         /**
          * Isolates the tokens of this execution from the ones of any other, exactly as the Kubernetes driver does.
-         * The partition is added to the token attributes of the provisioned agent and used a selection criteria by the execution.
+         * The partition is declared on the tokens of the provisioned agent both as an attribute and as a selection
+         * pattern, and the execution presents it as an attribute when selecting a token: the selection pattern is
+         * what keeps the tokens of an agent stopped by a previous execution, which the grid still lists until their
+         * registration expires, from being selected by the next one.
          * The execution id is used (fallback to random UUID for JUnit tests).
          */
         final String tokenPartition;

@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import step.core.GlobalContext;
+import step.core.objectenricher.AttributeResolverRegistry;
 import step.core.objectenricher.ObjectHookRegistry;
 import step.core.objectenricher.ObjectPredicateFactory;
 import step.core.plugins.AbstractControllerPlugin;
@@ -41,6 +42,10 @@ public class ObjectHookControllerPlugin extends AbstractControllerPlugin {
 
         ObjectPredicateFactory objectPredicateFactory = new ObjectPredicateFactory(objectHookRegistry);
         context.put(ObjectPredicateFactory.class, objectPredicateFactory);
+
+        // AttributeResolverRegistry is instantiated and registered in this plugin directly, as it shares
+        // the same object-manipulation scope and registration lifecycle as ObjectHookRegistry
+        context.put(AttributeResolverRegistry.class, new AttributeResolverRegistry());
 
         context.getServiceRegistrationCallback().registerService(ObjectHookInterceptor.class);
     }
