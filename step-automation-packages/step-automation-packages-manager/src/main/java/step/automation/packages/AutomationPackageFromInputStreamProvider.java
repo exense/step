@@ -28,11 +28,21 @@ public class AutomationPackageFromInputStreamProvider extends AbstractAutomation
 
     public AutomationPackageFromInputStreamProvider(AutomationPackageReaderRegistry apReaderRegistry, InputStream packageStream,
                                                     String fileName, AutomationPackageLibraryProvider packageLibraryProvider) throws AutomationPackageReadingException {
+        this(apReaderRegistry, packageStream, fileName, packageLibraryProvider, null);
+    }
+
+    /**
+     * @param archiveName overrides the name the package is deployed under; {@code null} keeps the
+     *                    archive's own file name
+     */
+    public AutomationPackageFromInputStreamProvider(AutomationPackageReaderRegistry apReaderRegistry, InputStream packageStream,
+                                                    String fileName, AutomationPackageLibraryProvider packageLibraryProvider,
+                                                    String archiveName) throws AutomationPackageReadingException {
         super(packageStream, fileName);
         AutomationPackageReader<?> reader = apReaderRegistry.getReaderForFile(tempFile.getTempFile());
         this.archive = reader.createAutomationPackageArchive(tempFile.getTempFile(),
             packageLibraryProvider == null ? null : packageLibraryProvider.getAutomationPackageLibrary(),
-            null);
+            archiveName);
     }
 
     @Override

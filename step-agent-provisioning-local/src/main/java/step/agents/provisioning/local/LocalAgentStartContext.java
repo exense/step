@@ -33,24 +33,29 @@ public class LocalAgentStartContext {
     private final Path workingDirectory;
     private final int numberOfTokens;
     private final Map<String, String> tokenAttributes;
+    private final Map<String, String> tokenSelectionPatterns;
     private final SymmetricSecurityConfiguration gridSecurity;
 
     /**
-     * @param gridUrl          the URL of the embedded grid the agent has to register to. Always a loopback URL.
-     * @param workingDirectory the directory the agent process runs in. It is created by the caller, is dedicated to
-     *                         this agent and is deleted once the agent is stopped.
-     * @param numberOfTokens   the capacity of the single token group the agent has to declare
-     * @param tokenAttributes  the attributes to declare on the tokens. Contains at least the token partition, which
-     *                         isolates the tokens of this execution from the ones of any other.
-     * @param gridSecurity     the security configuration of the embedded grid, or {@code null} when the grid
-     *                         authentication is disabled
+     * @param gridUrl                the URL of the embedded grid the agent has to register to. Always a loopback URL.
+     * @param workingDirectory       the directory the agent process runs in. It is created by the caller, is dedicated
+     *                               to this agent and is deleted once the agent is stopped.
+     * @param numberOfTokens         the capacity of the single token group the agent has to declare
+     * @param tokenAttributes        the attributes to declare on the tokens. Contains at least the token partition.
+     * @param tokenSelectionPatterns the patterns the tokens require from whoever selects them. Contains at least the
+     *                               token partition: an attribute alone doesn't stop a token from being selected by
+     *                               another execution, the pattern does.
+     * @param gridSecurity           the security configuration of the embedded grid, or {@code null} when the grid
+     *                               authentication is disabled
      */
     public LocalAgentStartContext(String gridUrl, Path workingDirectory, int numberOfTokens,
-                                  Map<String, String> tokenAttributes, SymmetricSecurityConfiguration gridSecurity) {
+                                  Map<String, String> tokenAttributes, Map<String, String> tokenSelectionPatterns,
+                                  SymmetricSecurityConfiguration gridSecurity) {
         this.gridUrl = Objects.requireNonNull(gridUrl, "gridUrl must not be null");
         this.workingDirectory = Objects.requireNonNull(workingDirectory, "workingDirectory must not be null");
         this.numberOfTokens = numberOfTokens;
         this.tokenAttributes = Objects.requireNonNull(tokenAttributes, "tokenAttributes must not be null");
+        this.tokenSelectionPatterns = Objects.requireNonNull(tokenSelectionPatterns, "tokenSelectionPatterns must not be null");
         this.gridSecurity = gridSecurity;
     }
 
@@ -68,6 +73,10 @@ public class LocalAgentStartContext {
 
     public Map<String, String> getTokenAttributes() {
         return tokenAttributes;
+    }
+
+    public Map<String, String> getTokenSelectionPatterns() {
+        return tokenSelectionPatterns;
     }
 
     public SymmetricSecurityConfiguration getGridSecurity() {

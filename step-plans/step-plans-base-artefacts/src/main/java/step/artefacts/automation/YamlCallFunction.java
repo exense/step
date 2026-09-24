@@ -26,13 +26,13 @@ import step.core.yaml.YamlFieldCustomCopy;
 
 public class YamlCallFunction extends YamlTokenSelector<CallFunction> {
 
-    protected DynamicValue<String> resultMap = new DynamicValue<>();
+    @YamlFieldCustomCopy
+    protected YamlKeywordDefinition keyword = new YamlKeywordDefinition(null, null, "{}");
 
     @YamlFieldCustomCopy
     protected YamlDynamicInputs inputs = new YamlDynamicInputs("{}");
 
-    @YamlFieldCustomCopy
-    protected YamlKeywordDefinition keyword = new YamlKeywordDefinition(null, null, "{}");
+    protected DynamicValue<String> resultMap = new DynamicValue<>();
 
     public YamlCallFunction() {
         super(CallFunction.class);
