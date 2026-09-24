@@ -62,6 +62,14 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
     private PatchableYamlList<YamlPlainTextPlan> plansPlainText;
 
     private final Map<String, PatchableYamlList<?>> additionalFields = new HashMap<>();
+
+    /**
+     * Only the metadata of the descriptor is applied to the automation package. The one of an imported fragment is
+     * read and written back as it is, but goes nowhere else: a fragment is a part of a package, not a package.
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private Map<String, Object> metadata;
+
     private PatchingContext context;
     private long fileLastModified = 0;
 
@@ -75,6 +83,15 @@ public abstract class AbstractAutomationPackageFragmentYaml implements Automatio
 
     @JsonIgnore
     private Path path;
+
+    @Override
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
 
     @Override
     public PatchableYamlList<YamlAutomationPackageKeyword> getKeywords() {

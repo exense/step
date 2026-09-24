@@ -32,6 +32,7 @@ public class AutomationPackageContent {
     private List<AutomationPackageKeyword> keywords = new ArrayList<>();
     private List<Plan> plans = new ArrayList<>();
     private Map<String, List<?>> additionalData = new HashMap<>();
+    private Map<String, Object> metadata;
 
     public String getName() {
         return name;
@@ -63,6 +64,14 @@ public class AutomationPackageContent {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 
     public List<Plan> getPlans() {

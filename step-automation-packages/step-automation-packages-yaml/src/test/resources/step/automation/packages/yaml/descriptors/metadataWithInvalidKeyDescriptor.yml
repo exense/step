@@ -1,0 +1,12 @@
+version: 1.3.0
+name: "package-with-invalid-metadata"
+plans:
+  - name: "Plan with invalid metadata"
+    metadata:
+      valid:
+        - invalid.key: "value"
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"

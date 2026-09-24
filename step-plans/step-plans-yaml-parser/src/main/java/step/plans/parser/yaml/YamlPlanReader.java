@@ -24,10 +24,13 @@ import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.deser.BeanDeserializer;
 import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.deser.std.CollectionDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
+import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -44,6 +47,9 @@ import step.core.scanner.AnnotationScanner;
 import step.core.scanner.CachedAnnotationScanner;
 import step.core.yaml.PatchableYamlModel;
 import step.core.yaml.PatchingContext;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
+import step.core.yaml.YamlMetadata;
 import step.core.yaml.deserialization.PatchableYamlList;
 import step.core.yaml.deserialization.PatchableYamlListDeserializer;
 import step.core.yaml.deserialization.PatchableYamlModelDeserializer;
@@ -67,6 +73,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -236,6 +243,31 @@ public class YamlPlanReader {
             public void setupModule(SetupContext context) {
                 super.setupModule(context);
 
+                // Bean serializer to have control over field ordering using YamlFieldOrder annotation
+                context.addBeanSerializerModifier(new BeanSerializerModifier() {
+                    @Override
+                    public List<BeanPropertyWriter> orderProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
+
+                        Map<YamlFieldPriority, List<BeanPropertyWriter>> grouped = new java.util.EnumMap<>(YamlFieldPriority.class);
+                        for (YamlFieldPriority priority : YamlFieldPriority.values()) {
+                            grouped.put(priority, new ArrayList<>());
+                        }
+
+                        for (BeanPropertyWriter property : beanProperties) {
+                            YamlFieldOrder order = property.getAnnotation(YamlFieldOrder.class);
+                            YamlFieldPriority fieldPriority = order == null ? YamlFieldPriority.ARTEFACT_SPECIFIC : order.value();
+                            grouped.get(fieldPriority).add(property);
+                        }
+
+                        List<BeanPropertyWriter> orderedList = new ArrayList<>();
+                        for (YamlFieldPriority priority : YamlFieldPriority.values()) {
+                            orderedList.addAll(grouped.get(priority));
+                        }
+
+                        return orderedList;
+                    }
+                });
+
                 context.addBeanDeserializerModifier(new BeanDeserializerModifier() {
                     @Override
                     public JsonDeserializer<?> modifyDeserializer(DeserializationConfig config, BeanDescription beanDesc, JsonDeserializer<?> deserializer) {
@@ -326,6 +358,7 @@ public class YamlPlanReader {
         Plan plan = new Plan(yamlPlan.getRoot().getYamlArtefact().toArtefact());
         setPlanName(plan, yamlPlan.getName());
         plan.setCategories(yamlPlan.getCategories());
+        YamlMetadata.applyTo(plan, yamlPlan.getMetadata());
         AgentProvisioningConfiguration agents = yamlPlan.getAgents();
         //If agents is not define in YAML, use default value of plan
         if (agents != null) {
@@ -349,6 +382,7 @@ public class YamlPlanReader {
     private void setYamlPlanFieldsFromPlan(YamlPlan yamlPlan, Plan plan) {
         yamlPlan.setName(plan.getAttribute(AbstractOrganizableObject.NAME));
         yamlPlan.setCategories(plan.getCategories());
+        yamlPlan.setMetadata(YamlMetadata.extractFrom(plan));
         yamlPlan.setRoot(new NamedYamlArtefact(AbstractYamlArtefact.toYamlArtefact(plan.getRoot(), yamlMapper)));
         AgentProvisioningConfiguration agents = plan.getAgents();
         //don't set the value of agents if the default values is used to keep the Yaml short
