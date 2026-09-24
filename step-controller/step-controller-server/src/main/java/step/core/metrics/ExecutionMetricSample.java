@@ -21,6 +21,12 @@ public class ExecutionMetricSample extends StepMetricSample {
 
     public final String eId;
     public final String rnId;
+    /**
+     * Hash of the artefact path of the report node this sample was produced by, i.e. the static
+     * position of the artefact within the resolved plan. Null for samples not bound to a report node
+     * (e.g. execution level metrics).
+     */
+    public final String artefactHash;
     public final String planId;
     public final String plan;
     public final String canonicalPlanName;
@@ -34,6 +40,7 @@ public class ExecutionMetricSample extends StepMetricSample {
     public ExecutionMetricSample(@JsonProperty("sample") MetricSample sample,
                                  @JsonProperty("eId") String eId,
                                  @JsonProperty("rnId") String rnId,
+                                 @JsonProperty("artefactHash") String artefactHash,
                                  @JsonProperty("planId") String planId,
                                  @JsonProperty("plan") String plan,
                                  @JsonProperty("canonicalPlanName") String canonicalPlanName,
@@ -47,6 +54,7 @@ public class ExecutionMetricSample extends StepMetricSample {
         super(sample, metricType);
         this.eId = eId;
         this.rnId = rnId;
+        this.artefactHash = artefactHash;
         this.planId = planId;
         this.plan = plan;
         this.canonicalPlanName = canonicalPlanName;
@@ -78,6 +86,7 @@ public class ExecutionMetricSample extends StepMetricSample {
         }
         // Context labels are authoritative — set last so they cannot be overridden
         putIfNotEmpty(labels, MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID, eId);
+        putIfNotEmpty(labels, MetricsExecutionPlugin.ARTEFACT_HASH, artefactHash);
         putIfNotEmpty(labels, MetricsExecutionPlugin.PLAN_ID, planId);
         putIfNotEmpty(labels, MetricsExecutionPlugin.PLAN, plan);
         putIfNotEmpty(labels, MetricsExecutionPlugin.CANONICAL_PLAN_NAME, canonicalPlanName);

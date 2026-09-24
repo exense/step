@@ -132,6 +132,10 @@ public class MetricsExecutionPluginMetricsTest extends AbstractKeyword {
         String execId = counterMm.eId;
         Assert.assertNotNull(execId);
         Assert.assertEquals(execId, counterMm.getEffectiveLabels().get(MetricsExecutionPlugin.ATTRIBUTE_EXECUTION_ID));
+
+        // As well as the hash of the artefact the keyword was called from
+        Assert.assertNotNull(counterMm.artefactHash);
+        Assert.assertEquals(counterMm.artefactHash, counterMm.getEffectiveLabels().get(MetricsExecutionPlugin.ARTEFACT_HASH));
     }
 
     private ExecutionMetricSample findByName(List<ExecutionMetricSample> metrics, String name) {
