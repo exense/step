@@ -1,0 +1,42 @@
+version: 1.3.0
+name: "package-with-metadata"
+metadata:
+  owner: "team-a"
+  tags: [ "smoke", "nightly" ]
+keywords:
+  - JMeter:
+      name: "JMeter keyword"
+      jmeterTestplan: "jmeterProject1/jmeterProject1.xml"
+      metadata:
+        origin:
+          tool: "generator"
+          version: 2
+plans:
+  - name: "Plan with metadata"
+    metadata:
+      requirements:
+        - id: "REQ-1"
+          covered: true
+        - "REQ-2"
+      empty: null
+    root:
+      testCase:
+        children:
+          - echo:
+              text: "Just echo"
+plansPlainText:
+  - name: "Plain text plan with metadata"
+    file: "plan.plan"
+    metadata:
+      owner: "team-b"
+schedules:
+  - name: "Schedule with metadata"
+    cron: "*/5 * * * *"
+    planName: "Plan with metadata"
+    metadata:
+      owner: "team-c"
+parameters:
+  - key: "myKey"
+    value: "myValue"
+    metadata:
+      owner: "team-d"

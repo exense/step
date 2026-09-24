@@ -27,9 +27,12 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.PatchableYamlModelBase;
 import step.core.yaml.PatchingContext;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlMetadata;
 import step.core.yaml.YamlModel;
 import step.parameter.Parameter;
 import step.parameter.ParameterScope;
+
+import java.util.Map;
 
 @YamlModel(named = false)
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
@@ -57,6 +60,10 @@ public class AutomationPackageParameter extends PatchableYamlModelBase {
 
     protected String scopeEntity;
 
+    @YamlFieldCustomCopy
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    protected Map<String, Object> metadata;
+
     @JsonCreator
     public AutomationPackageParameter(@JacksonInject(useInput = OptBoolean.FALSE) PatchingContext context) {
         super(context);
@@ -68,6 +75,7 @@ public class AutomationPackageParameter extends PatchableYamlModelBase {
         if (activationScript != null) {
             res.setActivationExpression(new Expression(activationScript));
         }
+        YamlMetadata.applyTo(res, metadata);
         return res;
     }
 
@@ -103,6 +111,10 @@ public class AutomationPackageParameter extends PatchableYamlModelBase {
         return scopeEntity;
     }
 
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
     public static AutomationPackageParameter fromParameter(Parameter parameter) {
         AutomationPackageParameter yamlParameter = new AutomationPackageParameter(null);
         yamlParameter.copyFieldsFromObject(parameter, true);
@@ -112,6 +124,7 @@ public class AutomationPackageParameter extends PatchableYamlModelBase {
         } else {
             yamlParameter.activationScript = expression.getScript();
         }
+        yamlParameter.metadata = YamlMetadata.extractFrom(parameter);
         return yamlParameter;
     }
 }

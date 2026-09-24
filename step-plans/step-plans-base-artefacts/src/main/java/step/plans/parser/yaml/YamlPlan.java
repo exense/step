@@ -33,6 +33,7 @@ import step.core.yaml.PatchingContext;
 import step.core.yaml.model.NamedYamlArtefact;
 
 import java.util.List;
+import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class YamlPlan extends PatchableYamlModelBase implements NamedPatchableYamlModel {
@@ -48,6 +49,9 @@ public class YamlPlan extends PatchableYamlModelBase implements NamedPatchableYa
     private AgentProvisioningConfiguration agents;
 
     private List<String> categories;
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private Map<String, Object> metadata;
 
     @JsonCreator
     public YamlPlan(@JacksonInject(useInput = OptBoolean.FALSE, optional = OptBoolean.TRUE) PatchingContext context) {
@@ -85,5 +89,13 @@ public class YamlPlan extends PatchableYamlModelBase implements NamedPatchableYa
 
     public void setCategories(List<String> categories) {
         this.categories = categories;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
     }
 }
