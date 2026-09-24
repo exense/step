@@ -50,15 +50,19 @@ public class YamlGeneralScriptFunction extends AbstractYamlFunction<GeneralScrip
             res.setScriptLanguage(new DynamicValue<>(GeneralFunctionScriptLanguage.groovy.name()));
         }
 
-        AutomationPackageResourceUploader resourceUploader = new AutomationPackageResourceUploader();
+        // The package-wide uploader, and its unique references: keywords declaring the same file must
+        // share one resource, because the Java handler builds one class loader per resource. A
+        // resource per keyword put each keyword in its own class loader, so an object one keyword
+        // stored in the session could not be cast by the next.
+        AutomationPackageResourceUploader resourceUploader = context.getResourceUploader();
         String scriptFilePath = scriptFile.get();
-        String uploaded = resourceUploader.applyResourceReference(scriptFilePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
+        String uploaded = resourceUploader.applyUniqueResourceReference(scriptFilePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
         if (uploaded != null) {
             res.setScriptFile(new DynamicValue<>(uploaded));
         }
 
         String librariesFilePath = librariesFile.get();
-        uploaded = resourceUploader.applyResourceReference(librariesFilePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
+        uploaded = resourceUploader.applyUniqueResourceReference(librariesFilePath, ResourceManager.RESOURCE_TYPE_FUNCTIONS, context);
         if (uploaded != null) {
             res.setLibrariesFile(new DynamicValue<>(uploaded));
         }
