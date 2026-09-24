@@ -6,8 +6,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.attachments.FileResolver;
 import step.automation.packages.AutomationPackageHookRegistry;
+import step.automation.packages.AutomationPackageUpdateResult;
 import step.automation.packages.JavaAutomationPackageArchive;
 import step.automation.packages.JavaAutomationPackageReader;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
@@ -17,9 +19,13 @@ import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.collections.AutomationPackageCollectionFactory;
 import step.core.execution.ExecutionDiversion;
 import step.core.execution.model.ExecutionParameters;
-import step.ide.api.IDEExecutionRequest;
-import step.ide.api.IDEExecutorDelegate;
-import step.ide.api.IDEExecutorDelegateFactory;
+import step.ide.api.IDEDelegator;
+import step.ide.api.LocalExecutionDelegate;
+import step.ide.api.LocalExecutionRequest;
+import step.ide.api.RemoteDefaults;
+import step.ide.api.RemoteDeploymentRequest;
+import step.ide.api.RemoteExecution;
+import step.ide.api.RemoteExecutionRequest;
 import step.ide.collections.CurrentlyOpenedAutomationPackageCollectionFactory;
 import step.ide.exceptions.FileExistsException;
 import step.parameter.Parameter;
@@ -38,21 +44,28 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-public class LocalIDEState implements ExecutionDiversion {
-    private static final Logger logger = LoggerFactory.getLogger(LocalIDEState.class);
-    private static final LocalIDEState instance = new LocalIDEState();
+/*
+ * This is a singleton class that represents IDE-specific state and logic.
+ * For instance, it contains information about which automation package the user
+ * is currently working with. It also acts as a bridge between the controller (services)
+ * and the CLI, passing information or functionality calls in both directions.
+ */
+public class LocalIDEModel implements ExecutionDiversion {
+    private static final Logger logger = LoggerFactory.getLogger(LocalIDEModel.class);
+    private static final LocalIDEModel instance = new LocalIDEModel();
 
     private final JavaAutomationPackageReader reader;
 
     private final List<Path> directoriesToCleanupOnShutdown = new CopyOnWriteArrayList<>();
     public final StartupHooks startupHooks = new StartupHooks();
     private ResourceManagerImpl resourceManager;
-    private IDEExecutorDelegateFactory executorDelegateFactory;
+    private IDEDelegator delegator;
     private Path currentAutomationPackageDirectory;
     private FileResolver fileResolver;
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
     private String ideResourcePath = "dist/step-ide"; // must neither start, nor end, with a slash; Overridden in the EE variant.
+
 
     public String getIdeResourcePath() {
         return ideResourcePath;
@@ -62,11 +75,11 @@ public class LocalIDEState implements ExecutionDiversion {
         this.ideResourcePath = Objects.requireNonNull(ideResourcePath, "ideResourcePath must not be null");
     }
 
-    public static LocalIDEState get() {
+    public static LocalIDEModel get() {
         return instance;
     }
 
-    private LocalIDEState() {
+    private LocalIDEModel() {
         AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
         AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
         AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, null);
@@ -92,6 +105,7 @@ public class LocalIDEState implements ExecutionDiversion {
         var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager);
         Properties properties = new Properties();
 
+        // TODO: decide on the final implementation (or make it user-selectable), then remove dead code
         int variant = 1;
         if (variant == 1) {
             properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
@@ -224,8 +238,11 @@ public class LocalIDEState implements ExecutionDiversion {
         this.currentAutomationPackageDirectory = null;
     }
 
-    public void setExecutorDelegateFactory(IDEExecutorDelegateFactory executorDelegateFactory) {
-        this.executorDelegateFactory = executorDelegateFactory;
+    public void setDelegator(IDEDelegator delegator) {
+        if (this.delegator != null) {
+            throw new IllegalStateException("delegator has already been set");
+        }
+        this.delegator = delegator;
     }
 
     @Override
@@ -233,7 +250,7 @@ public class LocalIDEState implements ExecutionDiversion {
         Path apDir = requireCurrentAutomationPackageDirectory();
         String description = executionParams.getDescription();
         List<String> includedPlanNames = (description == null || description.isBlank()) ? List.of() : List.of(description);
-        return executeAutomationPackage(new IDEExecutionRequest(apDir, executionParams, includedPlanNames));
+        return executeLocally(new LocalExecutionRequest(apDir, executionParams, includedPlanNames));
     }
 
     /**
@@ -241,22 +258,22 @@ public class LocalIDEState implements ExecutionDiversion {
      * The package is not necessarily the currently opened one: the AI agent for instance is a packaged automation
      * package of its own, executed against the opened package.
      */
-    public String executeAutomationPackage(IDEExecutionRequest request) {
-        Objects.requireNonNull(executorDelegateFactory, "No IDEExecutorDelegateFactory set, the IDE was not started through the CLI launcher");
-        logger.info("Launching diverted execution of {} (plans: {}) for parameters: {}", request.automationPackage(),
+    public String executeLocally(LocalExecutionRequest request) {
+        Objects.requireNonNull(delegator, "No IDEDelegator set, the IDE was not started through the CLI launcher");
+        logger.info("Launching local execution of {} (plans: {}) for parameters: {}", request.automationPackage(),
             request.includedPlanNames(), Failable.call(() -> new ObjectMapper().writeValueAsString(request.executionParameters())));
-        IDEExecutorDelegate executorDelegate = executorDelegateFactory.createDelegate(request);
+        LocalExecutionDelegate delegate = delegator.delegate(request);
         CompletableFuture<String> executionIdFuture = new CompletableFuture<>();
         CompletableFuture.runAsync((() -> {
             try {
-                executorDelegate.executePackageAndFillExecutionId(executionIdFuture);
+                delegate.executePackageAndFillExecutionId(executionIdFuture);
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
                 executionIdFuture.completeExceptionally(e);
             }
         }));
         String executionId = executionIdFuture.join();
-        logger.info("Diverted executionId: {}", executionId);
+        logger.info("Launched executionId: {}", executionId);
         return executionId;
     }
 
@@ -317,6 +334,41 @@ public class LocalIDEState implements ExecutionDiversion {
             logger.debug("Completing shutdown-await future");
             shutdownAwaitFuture.complete(null);
         }
+    }
+
+    /**
+     * Executes the currently opened automation package on a remote Step controller and returns the executions this
+     * started, one per plan unless the plans are wrapped into a single test set. Options left null in the request
+     * fall back to what is configured in the CLI properties.
+     */
+    public List<RemoteExecution> executeRemote(RemoteExecutionRequest request) throws Exception {
+        return requireDelegator().execute(requireCurrentAutomationPackageDirectory(), request);
+    }
+
+    /**
+     * Deploys the currently opened automation package to a remote Step controller. Options left null in the
+     * request fall back to what is configured in the CLI properties.
+     */
+    public AutomationPackageUpdateResult deployRemote(RemoteDeploymentRequest request) throws Exception {
+        return requireDelegator().deploy(requireCurrentAutomationPackageDirectory(), request);
+    }
+
+    /**
+     * Returns the options that remote executions and deployments fall back to, as configured in the CLI properties.
+     */
+    public RemoteDefaults remoteDefaults() {
+        return requireDelegator().remoteDefaults();
+    }
+
+    /**
+     * Returns the local agent provisioning options configured in the CLI properties.
+     */
+    public LocalAgentProvisioningConfiguration localAgentConfiguration() {
+        return requireDelegator().localAgentConfiguration();
+    }
+
+    private IDEDelegator requireDelegator() {
+        return Objects.requireNonNull(delegator, "No IDEDelegator set, the IDE was not started through the CLI launcher");
     }
 
     /**

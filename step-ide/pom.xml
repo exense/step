@@ -32,11 +32,6 @@
   <dependencies>
     <dependency>
       <groupId>ch.exense.step</groupId>
-      <artifactId>step-ide-api</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>ch.exense.step</groupId>
       <artifactId>step-framework-server</artifactId>
     </dependency>
     <dependency>
@@ -58,6 +53,12 @@
     <dependency>
       <groupId>ch.exense.step</groupId>
       <artifactId>step-automation-packages-controller</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- for LocalAgentProvisioningConfiguration, which the CLI resolves from its properties for the IDE -->
+    <dependency>
+      <groupId>ch.exense.step</groupId>
+      <artifactId>step-agent-provisioning-local</artifactId>
       <version>${project.version}</version>
     </dependency>
   </dependencies>

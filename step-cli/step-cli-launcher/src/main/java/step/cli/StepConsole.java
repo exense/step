@@ -236,18 +236,15 @@ public class StepConsole extends BaseCommand {
 
         List<String> customConfigFiles = null;
 
-        // custom configuration files are only applied for "ap" command
+        // Only the "ap", "library" and "ide" command trees accept custom configuration files. The option sits at a
+        // different depth in each of them ("ap deploy", "library deploy", but "ide" as well as "ide open"), so it is
+        // read from the deepest command that was parsed.
         CommandLine.ParseResult subcommand1 = parseResult.subcommand();
         if (subcommand1 != null && (Objects.equals(subcommand1.commandSpec().name(), ApCommand.COMMAND_NAME) ||
-            Objects.equals(subcommand1.commandSpec().name(), LibraryCommand.COMMAND_NAME))) {
+            Objects.equals(subcommand1.commandSpec().name(), LibraryCommand.COMMAND_NAME) ||
+            Objects.equals(subcommand1.commandSpec().name(), IdeCommands.COMMAND_NAME))) {
             CommandLine.ParseResult subcommand2 = subcommand1.subcommand();
-            if (subcommand2 != null) {
-                CommandLine.Model.OptionSpec configOptionSpec = subcommand2.commandSpec().findOption(AbstractStepCommand.CONFIG);
-                Object configsList = configOptionSpec == null ? null : configOptionSpec.getValue();
-                if (configsList != null) {
-                    customConfigFiles = ((List<String>) configsList);
-                }
-            }
+            customConfigFiles = findCustomConfigFiles(subcommand2 == null ? subcommand1 : subcommand2);
         }
         CommandLine cmd = factory != null ? new CommandLine(new StepConsole(), factory) : new CommandLine(new StepConsole());
         return cmd
@@ -255,5 +252,12 @@ public class StepConsole extends BaseCommand {
             .setDefaultValueProvider(new StepDefaultValuesProvider(customConfigFiles, lookupDefaultConfigFile))
             .setExecutionExceptionHandler(new StepExecutionExceptionHandler())
             .execute(args);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> findCustomConfigFiles(CommandLine.ParseResult command) {
+        CommandLine.Model.OptionSpec configOptionSpec = command.commandSpec().findOption(AbstractStepCommand.CONFIG);
+        Object configsList = configOptionSpec == null ? null : configOptionSpec.getValue();
+        return configsList == null ? null : (List<String>) configsList;
     }
 }

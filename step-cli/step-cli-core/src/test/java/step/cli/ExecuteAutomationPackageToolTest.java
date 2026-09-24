@@ -88,6 +88,30 @@ public class ExecuteAutomationPackageToolTest {
         return executions.stream().map(e -> e.getId().toString()).collect(Collectors.toList());
     }
 
+    /**
+     * Executing an automation package starts one execution per plan, unless the plans are wrapped into a single
+     * test set, so all of them have to be reported back to the caller.
+     */
+    @Test
+    public void testExecuteReportsEveryStartedExecution() throws Exception {
+        List<Execution> executions = List.of(
+            getMockedExecution(ReportNodeStatus.PASSED, null, "PlanA"),
+            getMockedExecution(ReportNodeStatus.PASSED, null, "PlanB"));
+        List<String> executionIds = getExecuteAutomationPackageResult(executions);
+
+        RemoteExecutionManager remoteExecutionManagerMock = createExecutionManagerMock(executions);
+
+        RemoteAutomationPackageClientImpl remoteAutomationPackageClientMock = Mockito.mock(RemoteAutomationPackageClientImpl.class);
+        Mockito.when(remoteAutomationPackageClientMock.executeAutomationPackage(Mockito.any(), Mockito.any(), Mockito.isNull())).thenReturn(executionIds);
+
+        ExecuteAutomationPackageToolTestable tool = createTool(true, remoteExecutionManagerMock, remoteAutomationPackageClientMock);
+        List<ExecuteAutomationPackageTool.StartedExecution> started = tool.execute();
+
+        Assert.assertEquals(executionIds, started.stream().map(ExecuteAutomationPackageTool.StartedExecution::id).collect(Collectors.toList()));
+        Assert.assertEquals(List.of("PlanA", "PlanB"),
+            started.stream().map(ExecuteAutomationPackageTool.StartedExecution::description).collect(Collectors.toList()));
+    }
+
     @Test
     public void testExecuteImportError() throws Exception {
         Execution execution = getMockedExecution(ReportNodeStatus.FAILED, "Import error");
@@ -165,9 +189,13 @@ public class ExecuteAutomationPackageToolTest {
     }
 
     private static Execution getMockedExecution(ReportNodeStatus resultStatus, String importError) {
+        return getMockedExecution(resultStatus, importError, "My execution");
+    }
+
+    private static Execution getMockedExecution(ReportNodeStatus resultStatus, String importError, String description) {
         Execution execution = Mockito.mock(Execution.class);
         Mockito.when(execution.getId()).thenReturn(new ObjectId());
-        Mockito.when(execution.getDescription()).thenReturn("My execution");
+        Mockito.when(execution.getDescription()).thenReturn(description);
         Mockito.when(execution.getStatus()).thenReturn(ExecutionStatus.ENDED);
         Mockito.when(execution.getResult()).thenReturn(resultStatus);
 
