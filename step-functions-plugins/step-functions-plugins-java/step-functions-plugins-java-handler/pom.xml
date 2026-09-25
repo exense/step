@@ -32,8 +32,7 @@
   <dependencies>
     <dependency>
       <groupId>ch.exense.step</groupId>
-      <artifactId>step-core</artifactId>
-      <version>${project.version}</version>
+      <artifactId>step-framework-core</artifactId>
     </dependency>
     <dependency>
       <groupId>ch.exense.step</groupId>
@@ -49,6 +48,11 @@
       <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-all</artifactId>
       <type>pom</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.openjdk.nashorn</groupId>
+      <artifactId>nashorn-core</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
