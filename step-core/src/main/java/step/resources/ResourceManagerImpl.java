@@ -425,6 +425,36 @@ public class ResourceManagerImpl implements ResourceManager {
         return fillPredefinedFieldsAndSave(resource);
     }
 
+    @Override
+    public Resource changeResourceType(String resourceId, String resourceType) throws IOException {
+        if (!resourceTypes.containsKey(resourceType)) {
+            throw new RuntimeException("Unknown resource type " + resourceType);
+        }
+        Resource resource = getResource(resourceId);
+        if (!resourceType.equals(resource.getResourceType())) {
+            File currentContainer = getResourceContainer(resource);
+            String previousType = resource.getResourceType();
+            resource.setResourceType(resourceType);
+            File newContainer = getResourceContainer(resource);
+            boolean moving = currentContainer.exists();
+            if (moving) {
+                Files.createDirectories(newContainer.getParentFile().toPath());
+                Files.move(currentContainer.toPath(), newContainer.toPath());
+            }
+            try {
+                resource = fillPredefinedFieldsAndSave(resource);
+            } catch (RuntimeException e) {
+                // Keep the content where the unchanged record still points
+                if (moving) {
+                    Files.move(newContainer.toPath(), currentContainer.toPath());
+                }
+                resource.setResourceType(previousType);
+                throw e;
+            }
+        }
+        return resource;
+    }
+
     private Resource fillPredefinedFieldsAndSave(Resource resource) {
         // Ensure that the name remains in sync with resourceName
         resource.addAttribute(AbstractOrganizableObject.NAME, resource.getResourceName());

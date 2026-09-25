@@ -59,4 +59,15 @@ public class PatchableYamlPrimitive<T> extends PatchableYamlModelBase {
         // FIXME: Yes, we use startLocation twice here. This is a workaround for a known bug, see SED-4847
         getPatchingContext().claimChunk(startLocation, startLocation, this);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof PatchableYamlPrimitive<?> that)) return false;
+        return Objects.equals(value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(value);
+    }
 }

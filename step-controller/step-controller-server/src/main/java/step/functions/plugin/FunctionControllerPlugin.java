@@ -141,7 +141,6 @@ public class FunctionControllerPlugin extends AbstractControllerPlugin {
                 .addColumn("attributes.project", true)
                 .addColumn("attributes.name", true, nameInput)
                 .addColumn("type", true)
-                .addColumn("customFields.functionPackageId", true)
                 .addColumn("automationPackage", true)
                 .addColumn("actions", true)
                 .build();

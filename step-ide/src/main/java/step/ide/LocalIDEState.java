@@ -17,6 +17,7 @@ import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.collections.AutomationPackageCollectionFactory;
 import step.core.execution.ExecutionDiversion;
 import step.core.execution.model.ExecutionParameters;
+import step.ide.api.IDEExecutionRequest;
 import step.ide.api.IDEExecutorDelegate;
 import step.ide.api.IDEExecutorDelegateFactory;
 import step.ide.collections.CurrentlyOpenedAutomationPackageCollectionFactory;
@@ -28,12 +29,14 @@ import step.resources.ResourceManagerImpl;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 public class LocalIDEState implements ExecutionDiversion {
     private static final Logger logger = LoggerFactory.getLogger(LocalIDEState.class);
@@ -42,21 +45,21 @@ public class LocalIDEState implements ExecutionDiversion {
     private final JavaAutomationPackageReader reader;
 
     private final List<Path> directoriesToCleanupOnShutdown = new CopyOnWriteArrayList<>();
+    public final StartupHooks startupHooks = new StartupHooks();
     private ResourceManagerImpl resourceManager;
     private IDEExecutorDelegateFactory executorDelegateFactory;
     private Path currentAutomationPackageDirectory;
     private FileResolver fileResolver;
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
+    private String ideResourcePath = "dist/step-ide"; // must neither start, nor end, with a slash; Overridden in the EE variant.
 
-    private static String ideResourcePath = "dist/step-ide"; // must neither start, nor end, with a slash; Overridden in the EE variant.
-
-    public static String getIdeResourcePath() {
+    public String getIdeResourcePath() {
         return ideResourcePath;
     }
 
-    public static void setIdeResourcePath(String ideResourcePath) {
-        LocalIDEState.ideResourcePath = ideResourcePath;
+    public void setIdeResourcePath(String ideResourcePath) {
+        this.ideResourcePath = Objects.requireNonNull(ideResourcePath, "ideResourcePath must not be null");
     }
 
     public static LocalIDEState get() {
@@ -227,9 +230,22 @@ public class LocalIDEState implements ExecutionDiversion {
 
     @Override
     public String divertExecution(ExecutionParameters executionParams) {
-        Objects.requireNonNull(currentAutomationPackageDirectory, "currentAutomationPackageDirectory not set; select an AP first");
-        logger.info("Launching diverted execution for parameters: {}", Failable.call(() -> new ObjectMapper().writeValueAsString(executionParams)));
-        IDEExecutorDelegate executorDelegate = executorDelegateFactory.createIDEExecutorDelegate(currentAutomationPackageDirectory.toFile(), executionParams);
+        Path apDir = requireCurrentAutomationPackageDirectory();
+        String description = executionParams.getDescription();
+        List<String> includedPlanNames = (description == null || description.isBlank()) ? List.of() : List.of(description);
+        return executeAutomationPackage(new IDEExecutionRequest(apDir, executionParams, includedPlanNames));
+    }
+
+    /**
+     * Executes an automation package through the configured delegate and returns the id of the launched execution.
+     * The package is not necessarily the currently opened one: the AI agent for instance is a packaged automation
+     * package of its own, executed against the opened package.
+     */
+    public String executeAutomationPackage(IDEExecutionRequest request) {
+        Objects.requireNonNull(executorDelegateFactory, "No IDEExecutorDelegateFactory set, the IDE was not started through the CLI launcher");
+        logger.info("Launching diverted execution of {} (plans: {}) for parameters: {}", request.automationPackage(),
+            request.includedPlanNames(), Failable.call(() -> new ObjectMapper().writeValueAsString(request.executionParameters())));
+        IDEExecutorDelegate executorDelegate = executorDelegateFactory.createDelegate(request);
         CompletableFuture<String> executionIdFuture = new CompletableFuture<>();
         CompletableFuture.runAsync((() -> {
             try {
@@ -242,6 +258,14 @@ public class LocalIDEState implements ExecutionDiversion {
         String executionId = executionIdFuture.join();
         logger.info("Diverted executionId: {}", executionId);
         return executionId;
+    }
+
+    public Path requireCurrentAutomationPackageDirectory() {
+        Path apDir = currentAutomationPackageDirectory;
+        if (apDir == null) {
+            throw new IllegalStateException("No automation package is currently opened, please open one first");
+        }
+        return apDir;
     }
 
     public void setFileResolver(FileResolver fileResolver) {
@@ -293,6 +317,16 @@ public class LocalIDEState implements ExecutionDiversion {
             logger.debug("Completing shutdown-await future");
             shutdownAwaitFuture.complete(null);
         }
+    }
+
+    /**
+     * This is a trivial class allowing to influence startup behavior by providing one-shot hooks for lifecycle events.
+     * This is as simple as can be, no synchronization or access control is enforced (nor required) here; Currently
+     * only the EE variant defines additional hooks by directly manipulating the exposed data.
+     */
+    public static class StartupHooks {
+
+        public final List<Consumer<Configuration>> onConfigure = new ArrayList<>();
     }
 
 }

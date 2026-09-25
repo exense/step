@@ -29,10 +29,11 @@ import step.core.dynamicbeans.DynamicValue;
 import step.core.yaml.AbstractYamlModel;
 import step.core.yaml.YamlArtefactsLookuper;
 import step.core.yaml.YamlFieldCustomCopy;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 import step.core.yaml.schema.YamlJsonSchemaHelper;
 import step.jsonschema.JsonSchema;
 import step.jsonschema.JsonSchemaDefaultValueProvider;
-
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -58,20 +59,31 @@ public abstract class AbstractYamlArtefact<T extends AbstractArtefact> extends A
 
     @JsonSchema(defaultProvider = DefaultYamlArtefactNameProvider.class)
     @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.DESCRIPTORS)
     protected DynamicValue<String> nodeName;
 
-    protected DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
-    protected DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
-    protected DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
+    @YamlFieldOrder(YamlFieldPriority.DESCRIPTORS)
     protected String description;
 
-    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
+    protected DynamicValue<Boolean> skipNode = new DynamicValue<>(false);
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
+    protected DynamicValue<Boolean> instrumentNode = new DynamicValue<>(false);
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
+    protected DynamicValue<Boolean> continueParentNodeExecutionOnError = new DynamicValue<>(false);
+
+
     @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.BEFORE)
+    protected YamlChildrenBlock before;
+
+    @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.CHILDREN)
+    @JsonSchema(ref = YamlJsonSchemaHelper.DEFS_PREFIX + ARTEFACT_ARRAY_DEF)
     protected List<NamedYamlArtefact> children = new ArrayList<>();
 
     @YamlFieldCustomCopy
-    protected YamlChildrenBlock before;
-    @YamlFieldCustomCopy
+    @YamlFieldOrder(YamlFieldPriority.AFTER)
     protected YamlChildrenBlock after;
 
     public AbstractYamlArtefact() {

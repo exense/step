@@ -30,7 +30,7 @@ import java.util.Objects;
 public abstract class AutomationPackageArchive implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger(AutomationPackageArchive.class);
-    public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
+    public static final List<String> METADATA_FILES = List.of("automation-package.yaml", "automation-package.yml");
     public static final String NULL_TYPE_ERROR_MSG = "The type of the AutomationPackageArchive must not be null";
 
     private final File originalFile;

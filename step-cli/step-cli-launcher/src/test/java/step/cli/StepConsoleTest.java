@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import step.agents.provisioning.local.LocalAgentProvisioningConfiguration;
 import step.cli.parameters.ApDeployParameters;
 import step.cli.parameters.ApExecuteParameters;
 import step.cli.parameters.LibraryDeployParameters;
@@ -241,10 +242,10 @@ public class StepConsoleTest {
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, remoteExecuteHistory.size());
         TestApExecuteCommand.RemoteExecutionParams usedParams = remoteExecuteHistory.get(0);
-        Assert.assertEquals("p1,p2", usedParams.params.getIncludePlans());
-        Assert.assertEquals("p3,p4", usedParams.params.getExcludePlans());
-        Assert.assertEquals("CatA,CatB", usedParams.params.getIncludeCategories());
-        Assert.assertEquals("CatC,CatD", usedParams.params.getExcludeCategories());
+        Assert.assertEquals(List.of("p1", "p2"), usedParams.params.getIncludePlans());
+        Assert.assertEquals(List.of("p3", "p4"), usedParams.params.getExcludePlans());
+        Assert.assertEquals(List.of("CatA", "CatB"), usedParams.params.getIncludeCategories());
+        Assert.assertEquals(List.of("CatC", "CatD"), usedParams.params.getExcludeCategories());
         Assert.assertEquals("http://localhost:8080", usedParams.stepUrl);
         Assert.assertEquals("abc", usedParams.params.getAuthToken());
         Assert.assertEquals("testProject", usedParams.params.getStepProjectName());
@@ -366,17 +367,19 @@ public class StepConsoleTest {
         Histories histories = new Histories(null, null, null, localExecuteHistory);
 
         // all parameters
-        int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD", "-ep=key1=value1|key2=value2", "-ep=key3=value3");
+        int res = runMain(histories, "ap", "execute", "-p=src/test/resources/samples/step-automation-packages-sample1.jar", "--local", "--includePlans=p1,p2", "--excludePlans=p3,p4", "--includeCategories=CatA,CatB", "--excludeCategories=CatC,CatD", "-ep=key1=value1|key2=value2", "-ep=key3=value3", "--localAgentVmArgs=-Xmx4g", "--localAgentVmArgs=-XX:HeapDumpPath=C:\\Program Files\\dumps");
 
         Assert.assertEquals(0, res);
         Assert.assertEquals(1, localExecuteHistory.size());
         TestApExecuteCommand.LocalExecutionParams usedParams = localExecuteHistory.get(0);
-        Assert.assertEquals("p1,p2", usedParams.includePlans);
-        Assert.assertEquals("p3,p4", usedParams.excludePlans);
-        Assert.assertEquals("CatA,CatB", usedParams.includeCategories);
-        Assert.assertEquals("CatC,CatD", usedParams.excludeCategories);
+        Assert.assertEquals(List.of("p1", "p2"), usedParams.includePlans);
+        Assert.assertEquals(List.of("p3", "p4"), usedParams.excludePlans);
+        Assert.assertEquals(List.of("CatA", "CatB"), usedParams.includeCategories);
+        Assert.assertEquals(List.of("CatC", "CatD"), usedParams.excludeCategories);
         Assert.assertEquals(Map.of("key1", "value1", "key2", "value2", "key3", "value3"), usedParams.executionParameters);
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+        Assert.assertEquals(List.of("-Xmx4g", "-XX:HeapDumpPath=C:\\Program Files\\dumps"),
+            usedParams.localAgentConfiguration.getJavaAgentVmArgs());
 
         // minimum parameters
         localExecuteHistory.clear();
@@ -387,6 +390,7 @@ public class StepConsoleTest {
         usedParams = localExecuteHistory.get(0);
         Assert.assertEquals(Map.of(), usedParams.executionParameters);
         Assert.assertEquals("step-automation-packages-sample1.jar", usedParams.apFile.getName());
+        Assert.assertEquals(List.of(), usedParams.localAgentConfiguration.getJavaAgentVmArgs());
 
         // properties files
         localExecuteHistory.clear();
@@ -596,11 +600,12 @@ public class StepConsoleTest {
 
         public static class LocalExecutionParams {
             private File apFile;
-            private String includePlans;
-            private String excludePlans;
-            private String includeCategories;
-            private String excludeCategories;
+            private List<String> includePlans;
+            private List<String> excludePlans;
+            private List<String> includeCategories;
+            private List<String> excludeCategories;
             private Map<String, String> executionParameters;
+            public LocalAgentProvisioningConfiguration localAgentConfiguration;
         }
 
         public TestApExecuteCommand(List<RemoteExecutionParams> remoteParams, List<LocalExecutionParams> localParams) {
@@ -627,11 +632,13 @@ public class StepConsoleTest {
         }
 
         @Override
-        protected void executeLocally(File file, File kwLibFile, String includePlans, String excludePlans,
-                                      String includeCategories, String excludeCategories, Map<String, String> executionParameters) {
+        protected void executeLocally(File file, File kwLibFile, List<String> includePlans, List<String> excludePlans,
+                                      List<String> includeCategories, List<String> excludeCategories, Map<String, String> executionParameters,
+                                      LocalAgentProvisioningConfiguration localAgentConfiguration) {
             if (localParams != null) {
                 LocalExecutionParams p = new LocalExecutionParams();
                 p.apFile = file;
+                p.localAgentConfiguration = localAgentConfiguration;
                 p.excludePlans = excludePlans;
                 p.includePlans = includePlans;
                 p.includeCategories = includeCategories;
