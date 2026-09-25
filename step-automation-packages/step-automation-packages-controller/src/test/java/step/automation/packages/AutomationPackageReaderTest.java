@@ -71,7 +71,7 @@ public class AutomationPackageReaderTest {
     public void testReadFromPackage() throws AutomationPackageReadingException {
         File automationPackageJar = new File("src/test/resources/samples/step-automation-packages-sample1.jar");
 
-        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackageJar, null, null);
+        AutomationPackageContent automationPackageContent = readAutomationPackageFromJarFile(automationPackageJar, null, null);
         assertNotNull(automationPackageContent);
 
         // 6 keywords: 4 from descriptor and two from java class with @Keyword annotation
@@ -208,7 +208,7 @@ public class AutomationPackageReaderTest {
     public void testFragmentsWithPackageAP() throws AutomationPackageReadingException {
         File automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages.zip");
 
-        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(automationPackage, null, null);
+        AutomationPackageContent automationPackageContent = readAutomationPackageFromJarFile(automationPackage, null, null);
         assertNotNull(automationPackageContent);
 
         List<Plan> plans = automationPackageContent.getPlans();
@@ -225,7 +225,7 @@ public class AutomationPackageReaderTest {
         File tempFolder = FileHelper.createTempFolder();
         FileHelper.unzip(this.getClass().getClassLoader().getResourceAsStream("step/automation/packages/step-automation-packages.zip"), tempFolder);
 
-        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(tempFolder, null, null);
+        AutomationPackageContent automationPackageContent = readAutomationPackageFromJarFile(tempFolder, null, null);
         assertNotNull(automationPackageContent);
 
         List<Plan> plans = automationPackageContent.getPlans();
@@ -241,14 +241,14 @@ public class AutomationPackageReaderTest {
     public void testInvalidAPNames() {
         File automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages-invalidNameBackSlash.zip");
         try {
-            reader.readAutomationPackageFromJarFile(automationPackage, null, null);
+            readAutomationPackageFromJarFile(automationPackage, null, null);
             fail();
         } catch (AutomationPackageReadingException e) {
             assertEquals("Package name contains unsafe characters: My package\\. Simple quote and backslash characters are not allowed.", e.getMessage());
         }
         automationPackage = FileHelper.getClassLoaderResourceAsFile(this.getClass().getClassLoader(), "step/automation/packages/step-automation-packages-invalidNameSimpleQuote.zip");
         try {
-            reader.readAutomationPackageFromJarFile(automationPackage, null, null);
+            readAutomationPackageFromJarFile(automationPackage, null, null);
             fail();
         } catch (AutomationPackageReadingException e) {
             assertEquals("Package name contains unsafe characters: My package';. Simple quote and backslash characters are not allowed.", e.getMessage());
@@ -265,7 +265,7 @@ public class AutomationPackageReaderTest {
         boolean deleteOk = descriptor.delete();
         Assert.assertTrue(deleteOk);
 
-        AutomationPackageContent automationPackageContent = reader.readAutomationPackageFromJarFile(tempFolder, null, null);
+        AutomationPackageContent automationPackageContent = readAutomationPackageFromJarFile(tempFolder, null, null);
         assertNotNull(automationPackageContent);
         assertEquals(tempFolder.getName(), automationPackageContent.getName());
 
@@ -274,6 +274,24 @@ public class AutomationPackageReaderTest {
 
         // cleanup temp folder
         Assert.assertTrue("Temp folder cannot be removed", FileHelper.deleteFolder(tempFolder));
+    }
+
+
+    /**
+     * Convenient method for test
+     *
+     * @param automationPackage the JAR file to be read
+     * @param apVersion         the automation package version
+     * @param keywordLib        the package library file
+     * @return the automation package content read from the provided files
+     * @throws AutomationPackageReadingException in case of error
+     */
+    private AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {
+        try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, keywordLib, null)) {
+            return reader.readAutomationPackage(automationPackageArchive, apVersion);
+        } catch (IOException e) {
+            throw new AutomationPackageReadingException("IO Exception", e);
+        }
     }
 
 }

@@ -302,6 +302,7 @@ public class YamlJsonSchemaHelper {
         }
 
         // -- DEFAULT LOGIC
+        result.add(new MetadataFieldProcessor());
         result.add(new DynamicValueFieldProcessor());
         result.add(new EnumFieldProcessor());
 

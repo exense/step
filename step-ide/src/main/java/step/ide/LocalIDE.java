@@ -1,0 +1,76 @@
+package step.ide;
+
+import ch.exense.commons.app.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.framework.server.ControllerServer;
+
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.List;
+import java.util.Objects;
+
+public class LocalIDE {
+
+    private static final Logger logger = LoggerFactory.getLogger(LocalIDE.class);
+    private final ControllerServer server;
+
+    public static void main(String[] args) throws Exception {
+        try {
+            new LocalIDE().start();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    public LocalIDE() throws Exception {
+        var ideState = LocalIDEState.get();
+        Configuration configuration = loadConfiguration();
+        for (var cfg : ideState.startupHooks.onConfigure) {
+            // Startup hooks could throw exceptions, or outright stop the entire execution using System.exit.
+            // That's intentional, and the reason why they're called as early as possible.
+            cfg.accept(configuration);
+        }
+        var resourcesDirectory = Files.createTempDirectory("step-ide-resources-");
+        var fileManagerDirectory = Files.createTempDirectory("step-ide-filemanager-");
+        LocalIDEState.get().addDirectoriesToCleanupOnShutdown(List.of(resourcesDirectory, fileManagerDirectory));
+        configuration.putProperty("resources.dir", resourcesDirectory.toString());
+        configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
+        configuration.putProperty("ui.resource.root", ideState.getIdeResourcePath());
+        server = new IDEControllerServer(configuration);
+    }
+
+    private static class IDEControllerServer extends ControllerServer {
+        static {
+            // method is protected, so we need a subclass
+            setupLogging();
+        }
+
+        public IDEControllerServer(Configuration configuration) {
+            super(configuration);
+        }
+    }
+
+    private static Configuration loadConfiguration() throws Exception {
+        Configuration configuration = new Configuration();
+        try (InputStream propsStream = Objects.requireNonNull(LocalIDE.class.getClassLoader().getResourceAsStream("ide.properties"), "ide.properties resource not found");) {
+            configuration.getUnderlyingPropertyObject().load(propsStream);
+        }
+        // Overlay an external ide.properties if present, so that users can configure the IDE (e.g. the AI agent
+        // package location or an API key) without modifying the packaged resource.
+        File externalProperties = new File(System.getProperty("ide.properties", "ide.properties"));
+        if (externalProperties.isFile()) {
+            logger.info("Overlaying external configuration file: {}", externalProperties.getAbsolutePath());
+            try (InputStream externalStream = Files.newInputStream(externalProperties.toPath())) {
+                configuration.getUnderlyingPropertyObject().load(externalStream);
+            }
+        }
+        return configuration;
+    }
+
+    public void start() throws Exception {
+        server.start();
+    }
+}

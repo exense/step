@@ -6,14 +6,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.awaitility.Awaitility;
 import org.bson.types.ObjectId;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.artefacts.BaseArtefactPlugin;
 import step.artefacts.DataSetArtefact;
 import step.artefacts.ForEachBlock;
 import step.attachments.FileResolver;
-import step.automation.packages.accessor.InMemoryAutomationPackageAccessorImpl;
 import step.automation.packages.library.AutomationPackageLibraryFromInputStreamProvider;
 import step.automation.packages.library.AutomationPackageLibraryProvider;
 import step.core.accessors.AbstractOrganizableObject;
@@ -29,7 +29,9 @@ import step.core.execution.model.ExecutionStatus;
 import step.core.maven.MavenArtifactIdentifier;
 import step.core.plans.Plan;
 import step.core.plans.runner.PlanRunnerResult;
-import step.core.scheduler.*;
+import step.core.scheduler.CronExclusion;
+import step.core.scheduler.ExecutiontTaskParameters;
+import step.core.yaml.YamlMetadata;
 import step.datapool.excel.ExcelDataPool;
 import step.engine.plugins.FunctionPlugin;
 import step.functions.Function;
@@ -43,19 +45,58 @@ import step.plugins.jmeter.JMeterFunction;
 import step.plugins.node.NodeFunction;
 import step.repositories.artifact.ResolvedMavenArtifact;
 import step.repositories.artifact.SnapshotMetadata;
-import step.resources.*;
+import step.resources.Resource;
+import step.resources.ResourceManager;
+import step.resources.ResourceRevisionFileHandle;
 import step.threadpool.ThreadPoolPlugin;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.time.Duration;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
-import static org.junit.Assert.*;
-import static step.automation.packages.AutomationPackageTestUtils.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static step.automation.packages.AutomationPackageTestUtils.ANNOTATED_KEYWORD;
+import static step.automation.packages.AutomationPackageTestUtils.ANNOTATED_KEYWORD_ROUTING_CRITERIA;
+import static step.automation.packages.AutomationPackageTestUtils.ANNOTATED_KEYWORD_ROUTING_TO_CTRL;
+import static step.automation.packages.AutomationPackageTestUtils.COMPOSITE_KEYWORD;
+import static step.automation.packages.AutomationPackageTestUtils.INLINE_PLAN;
+import static step.automation.packages.AutomationPackageTestUtils.J_METER_KEYWORD_1;
+import static step.automation.packages.AutomationPackageTestUtils.J_METER_KEYWORD_2;
+import static step.automation.packages.AutomationPackageTestUtils.NODE_KEYWORD;
+import static step.automation.packages.AutomationPackageTestUtils.PLAN_FROM_PLANS_ANNOTATION;
+import static step.automation.packages.AutomationPackageTestUtils.PLAN_NAME_FROM_DESCRIPTOR;
+import static step.automation.packages.AutomationPackageTestUtils.PLAN_NAME_FROM_DESCRIPTOR_2;
+import static step.automation.packages.AutomationPackageTestUtils.PLAN_NAME_FROM_DESCRIPTOR_PLAIN_TEXT;
+import static step.automation.packages.AutomationPackageTestUtils.PLAN_NAME_WITH_COMPOSITE;
+import static step.automation.packages.AutomationPackageTestUtils.SCHEDULE_1;
+import static step.automation.packages.AutomationPackageTestUtils.SCHEDULE_2;
+import static step.automation.packages.AutomationPackageTestUtils.findByName;
+import static step.automation.packages.AutomationPackageTestUtils.findFunctionByClassAndName;
+import static step.automation.packages.AutomationPackageTestUtils.findPlanByName;
+import static step.automation.packages.AutomationPackageTestUtils.toIds;
 
 public class AutomationPackageManagerOSTest extends AbstractAutomationPackageManagerTest {
 
@@ -285,13 +326,13 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             Assert.assertEquals("Test excel plan", forEachExcelPlan.getAttribute(AbstractOrganizableObject.NAME));
             ForEachBlock forEachArtefact = (ForEachBlock) forEachExcelPlan.getRoot().getChildren().get(0);
             ExcelDataPool excelDataPool = (ExcelDataPool) forEachArtefact.getDataSource();
-            checkUploadedResource(excelDataPool.getFile(), "excel1.xlsx");
+            checkApResourceReference(excelDataPool.getFile(), "excel1.xlsx");
 
             List<Function> storedFunctions = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(1, storedFunctions.size());
             JMeterFunction jMeterFunction = (JMeterFunction) storedFunctions.get(0);
             DynamicValue<String> jmeterTestplanRef = jMeterFunction.getJmeterTestplan();
-            checkUploadedResource(jmeterTestplanRef, "jmeterProject1.xml");
+            checkApResourceReference(jmeterTestplanRef, "jmeterProject1.xml");
 
             executePlanWithAssertion(forEachExcelPlan);
 
@@ -300,7 +341,7 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             Assert.assertEquals("Test excel plan in before section", planWithDatasetInBefore.getAttribute(AbstractOrganizableObject.NAME));
             DataSetArtefact dataSet = (DataSetArtefact) planWithDatasetInBefore.getRoot().getBefore().getSteps().get(0);
             ExcelDataPool excelDataPool2 = (ExcelDataPool) dataSet.getDataSource();
-            checkUploadedResource(excelDataPool2.getFile(), "excel1.xlsx");
+            checkApResourceReference(excelDataPool2.getFile(), "excel1.xlsx");
 
             executePlanWithAssertion(planWithDatasetInBefore);
         }
@@ -337,6 +378,49 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
             List<Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).collect(Collectors.toList());
             Assert.assertEquals(4, storedPlans.size());
         }
+    }
+
+    @Test
+    public void testMetadata() throws IOException {
+        File zip = zipTestResourceFolder("metadata", "automation-package.yml", "plan.plan");
+        try (InputStream is = new FileInputStream(zip)) {
+            AutomationPackageUpdateParameter parameters = new AutomationPackageUpdateParameterBuilder().forJunit()
+                .withAllowUpdate(false).withApSource(AutomationPackageFileSource.withInputStream(is, "metadata.zip")).build();
+            ObjectId result = manager.createOrUpdateAutomationPackage(parameters).getId();
+
+            AutomationPackage storedPackage = automationPackageAccessor.get(result);
+            assertEquals(Map.of("owner", "team-a", "tags", List.of("smoke", "nightly")), YamlMetadata.extractFrom(storedPackage));
+
+            Map<String, Plan> storedPlans = planAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result))
+                .collect(Collectors.toMap(p -> p.getAttribute(AbstractOrganizableObject.NAME), p -> p));
+            assertEquals(Map.of("requirements", List.of(Map.of("id", "REQ-1", "covered", true))), YamlMetadata.extractFrom(storedPlans.get("Plan with metadata")));
+            assertNull(YamlMetadata.extractFrom(storedPlans.get("Plan without metadata")));
+            assertEquals(Map.of("owner", "team-b"), YamlMetadata.extractFrom(storedPlans.get("Plain text plan with metadata")));
+
+            Function storedFunction = functionAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).findFirst().orElseThrow();
+            assertEquals(Map.of("origin", Map.of("tool", "generator")), YamlMetadata.extractFrom(storedFunction));
+            // the metadata of the composite keyword doesn't apply to its plan
+            assertNull(YamlMetadata.extractFrom(((CompositeFunction) storedFunction).getPlan()));
+
+            ExecutiontTaskParameters storedTask = executionTaskAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).findFirst().orElseThrow();
+            assertEquals(Map.of("owner", "team-c"), YamlMetadata.extractFrom(storedTask));
+
+            Parameter storedParameter = parameterAccessor.findManyByCriteria(getAutomationPackageIdCriteria(result)).findFirst().orElseThrow();
+            assertEquals(Map.of("owner", "team-d"), YamlMetadata.extractFrom(storedParameter));
+        }
+    }
+
+    private File zipTestResourceFolder(String folder, String... fileNames) throws IOException {
+        File zip = Files.createTempFile("automation-package", ".zip").toFile();
+        zip.deleteOnExit();
+        try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip))) {
+            for (String fileName : fileNames) {
+                out.putNextEntry(new ZipEntry(fileName));
+                Files.copy(new File("src/test/resources/step/automation/packages/" + folder + "/" + fileName).toPath(), out);
+                out.closeEntry();
+            }
+        }
+        return zip;
     }
 
     private void retryFlakyTest(int retries, Runnable test, String testName) {
@@ -1337,15 +1421,14 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         Assert.assertEquals(expectedKwOrigin, kwLibResource.getOrigin());
     }
 
-    private void checkUploadedResource(DynamicValue<String> fileResourceReference, String expectedFileName) {
-        FileResolver fileResolver = new FileResolver(resourceManager);
-        String resourceReferenceString = fileResourceReference.get();
-        Assert.assertTrue("Uploaded resources does not have the RESOURCE_PREFIX", resourceReferenceString.startsWith(FileResolver.RESOURCE_PREFIX));
-        String resourceId = FileResolver.resolveResourceId(resourceReferenceString);
-        File excelFile = fileResolver.resolve(resourceId);
-        Assert.assertNotNull(excelFile);
-        Resource resource = resourceManager.getResource(resourceId);
-        Assert.assertEquals(expectedFileName, resource.getResourceName());
+    private void checkApResourceReference(DynamicValue<String> fileResourceReference, String expectedFileName) {
+        // Embedded files are no longer uploaded as standalone resources; the reference is rewritten to
+        // an apResource: pointer into the automation package archive (resolved on the fly at execution).
+        String reference = fileResourceReference.get();
+        Assert.assertTrue("Expected an apResource: reference but got: " + reference, FileResolver.isApResource(reference));
+        String relativePath = FileResolver.extractApRelativePath(reference);
+        Assert.assertTrue("apResource path '" + relativePath + "' should end with " + expectedFileName,
+            relativePath.endsWith(expectedFileName));
     }
 
     protected SampleUploadingResult uploadSample1WithAsserts(AutomationPackageFileSource sample1FileSource, boolean createNew, boolean async, boolean expectedDelay,
@@ -1587,12 +1670,28 @@ public class AutomationPackageManagerOSTest extends AbstractAutomationPackageMan
         return criteria;
     }
 
+    private File apResourceCacheRoot;
+
+    private File getApResourceCacheRoot() {
+        if (apResourceCacheRoot == null) {
+            try {
+                apResourceCacheRoot = Files.createTempDirectory("ap-cache-test").toFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return apResourceCacheRoot;
+    }
+
     protected ExecutionEngine.Builder newExecutionEngineBuilder() {
+        // Wire the apResource resolver with the real (deployed) accessor and the manager's reader
+        // registry so plans reading apResource: datasources/scripts materialise them at execution.
         ExecutionEngine.Builder builder = ExecutionEngine.builder().withPlugins(List.of(new BaseArtefactPlugin(),
             new FunctionPlugin(),
             new GeneralScriptFunctionPlugin(),
             new ThreadPoolPlugin(),
-            new AutomationPackageExecutionPlugin(automationPackageLocks, new InMemoryAutomationPackageAccessorImpl())));
+            new AutomationPackageExecutionPlugin(automationPackageLocks, automationPackageAccessor,
+                getApResourceCacheRoot(), manager.getAutomationPackageReaderRegistry())));
         ExecutionEngineContext parentContext = new ExecutionEngineContext(OperationMode.LOCAL_PLAN, true);
         parentContext.put(FunctionAccessor.class, functionAccessor);
         parentContext.setPlanAccessor(planAccessor);

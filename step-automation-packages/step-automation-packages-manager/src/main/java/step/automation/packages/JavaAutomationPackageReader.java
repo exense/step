@@ -2,13 +2,15 @@ package step.automation.packages;
 
 import ch.exense.commons.app.Configuration;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.model.ScriptAutomationPackageKeyword;
+import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
 import step.core.accessors.AbstractOrganizableObject;
 import step.core.dynamicbeans.DynamicValue;
 import step.core.plans.Plan;
 import step.core.scanner.AnnotationScanner;
-import step.engine.plugins.LocalFunctionPlugin;
 import step.functions.Function;
 import step.functions.manager.FunctionManagerImpl;
 import step.handlers.javahandler.Keyword;
@@ -21,8 +23,12 @@ import step.plans.nl.parser.PlanParser;
 import step.plans.parser.yaml.YamlPlanReader;
 import step.plugins.functions.types.CompositeFunctionUtils;
 import step.plugins.java.GeneralScriptFunction;
+import step.resources.ResourceManager;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -32,6 +38,7 @@ import java.util.List;
 import java.util.Set;
 
 public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAutomationPackageArchive> {
+    private static final Logger logger = LoggerFactory.getLogger(JavaAutomationPackageReader.class);
 
     protected final StepClassParser stepClassParser;
 
@@ -62,13 +69,13 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
             // instead of this we keep the scriptFile blank and fill it further in AutomationPackageKeywordsAttributesApplier (after we upload the jar file as resource)
             List<ScriptAutomationPackageKeyword> scannedKeywords = extractAnnotatedKeywords(annotationScanner, null, null);
             if (!scannedKeywords.isEmpty()) {
-                log.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
+                logger.info("{} annotated keywords found in automation package {}", scannedKeywords.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
             }
             res.getKeywords().addAll(scannedKeywords);
 
             List<Plan> annotatedPlans = extractAnnotatedPlans(archive, annotationScanner, stepClassParser);
             if (!annotatedPlans.isEmpty()) {
-                log.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
+                logger.info("{} annotated plans found in automation package {}", annotatedPlans.size(), StringUtils.defaultString(archive.getAutomationPackageName()));
             }
             res.getPlans().addAll(annotatedPlans);
         } catch (JsonSchemaPreparationException e) {
@@ -154,7 +161,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
                             try {
                                 ((AutoCloseable) classLoader).close();
                             } catch (Exception e) {
-                                log.error("Unable to close the classloader created from provided package file '{}' after reading its content.", archive.getOriginalFile().getName());
+                                logger.error("Unable to close the classloader created from provided package file '{}' after reading its content.", archive.getOriginalFile().getName());
                             }
                         }
                     }
@@ -173,7 +180,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
             for (Method m : methods) {
                 Keyword annotation = m.getAnnotation(Keyword.class);
                 if (annotation == null) {
-                    log.warn("Keyword annotation is not found for method " + m.getName());
+                    logger.warn("Keyword annotation is not found for method " + m.getName());
                     continue;
                 }
 
@@ -236,17 +243,15 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
     }
 
     /**
-     * Convenient method for test
+     * Reads automation package into a yaml fragment manager
      *
      * @param automationPackage the JAR file to be read
-     * @param apVersion         the automation package version
-     * @param keywordLib        the package library file
-     * @return the automation package content raed from the provided files
+     * @return the automation package fragment manager read from the provided files for editing
      * @throws AutomationPackageReadingException in case of error
      */
-    public AutomationPackageContent readAutomationPackageFromJarFile(File automationPackage, String apVersion, File keywordLib) throws AutomationPackageReadingException {
-        try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, keywordLib, null)) {
-            return readAutomationPackage(automationPackageArchive, apVersion);
+    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(File automationPackage, ResourceManager resourceManager) throws AutomationPackageReadingException {
+        try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, null, null)) {
+            return getAutomationPackageYamlFragmentManager(automationPackageArchive, resourceManager);
         } catch (IOException e) {
             throw new AutomationPackageReadingException("IO Exception", e);
         }

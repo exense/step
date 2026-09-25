@@ -1,0 +1,336 @@
+package step.ide;
+
+import ch.exense.commons.app.Configuration;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.function.Failable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import step.attachments.FileResolver;
+import step.automation.packages.AutomationPackageReaderRegistry;
+import step.automation.packages.JavaAutomationPackageArchive;
+import step.automation.packages.JavaAutomationPackageReader;
+import step.automation.packages.yaml.AutomationPackageDescriptorReader;
+import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
+import step.core.collections.AutomationPackageCollectionFactory;
+import step.core.execution.ExecutionDiversion;
+import step.core.execution.model.ExecutionParameters;
+import step.ide.api.IDEExecutionRequest;
+import step.ide.api.IDEExecutorDelegate;
+import step.ide.api.IDEExecutorDelegateFactory;
+import step.ide.collections.CurrentlyOpenedAutomationPackageCollectionFactory;
+import step.ide.exceptions.FileExistsException;
+import step.parameter.Parameter;
+import step.plans.parser.yaml.YamlPlan;
+import step.resources.ResourceManagerImpl;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
+
+public class LocalIDEState implements ExecutionDiversion {
+    private static final Logger logger = LoggerFactory.getLogger(LocalIDEState.class);
+    private static final LocalIDEState instance = new LocalIDEState();
+
+    private AutomationPackageReaderRegistry automationPackageReaderRegistry;
+
+    private final List<Path> directoriesToCleanupOnShutdown = new CopyOnWriteArrayList<>();
+    public final StartupHooks startupHooks = new StartupHooks();
+    private ResourceManagerImpl resourceManager;
+    private IDEExecutorDelegateFactory executorDelegateFactory;
+    private Path currentAutomationPackageDirectory;
+    private FileResolver fileResolver;
+    private CompletableFuture<Void> startupAwaitFuture;
+    private CompletableFuture<Void> shutdownAwaitFuture;
+    private String ideResourcePath = "dist/step-ide"; // must neither start, nor end, with a slash; Overridden in the EE variant.
+
+    public String getIdeResourcePath() {
+        return ideResourcePath;
+    }
+
+    public void setIdeResourcePath(String ideResourcePath) {
+        this.ideResourcePath = Objects.requireNonNull(ideResourcePath, "ideResourcePath must not be null");
+    }
+
+    public static LocalIDEState get() {
+        return instance;
+    }
+
+    private LocalIDEState() {
+    }
+
+    /**
+     * Sets the registry of the automation package readers of the IDE backend, which carries the JSON schema, hooks and
+     * serializers registered by the controller plugins (the EE ones included in the EE edition).
+     */
+    public void setAutomationPackageReaderRegistry(AutomationPackageReaderRegistry automationPackageReaderRegistry) {
+        this.automationPackageReaderRegistry = Objects.requireNonNull(automationPackageReaderRegistry, "automationPackageReaderRegistry must not be null");
+    }
+
+    public void setResourceManager(ResourceManagerImpl resourceManager) {
+        this.resourceManager = resourceManager;
+        logger.debug("Setting resource manager to {}", resourceManager);
+    }
+
+    public void useExistingAutomationPackageDirectory(Path apDir) throws Exception {
+        validateExistingAutomationPackageDirectory(apDir);
+        useAutomationPackageDirectory(apDir);
+    }
+
+    public void useNewAutomationPackageDirectory(Path apDir, String apName) throws Exception {
+        initializeAPDirectory(apDir, apName);
+        useAutomationPackageDirectory(apDir);
+    }
+
+    private void useAutomationPackageDirectory(Path apDir) throws Exception {
+        AutomationPackageReaderRegistry readerRegistry = Objects.requireNonNull(automationPackageReaderRegistry,
+            "No automation package reader registry set, the IDE backend is not started");
+        JavaAutomationPackageReader reader = (JavaAutomationPackageReader) readerRegistry.<JavaAutomationPackageArchive>getReaderByType(JavaAutomationPackageArchive.TYPE);
+        var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager);
+        Properties properties = new Properties();
+
+        int variant = 1;
+        if (variant == 1) {
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), "parameters.yml");
+        }
+        if (variant == 2) {
+            String mainFile = fragmentManager.descriptorYaml.getFragmentPath().toFile().getName();
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, Parameter.ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, Parameter.ENTITY_NAME), mainFile);
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, YamlPlan.PLANS_ENTITY_NAME), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, YamlPlan.PLANS_ENTITY_NAME), mainFile);
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_MODE, "keywords"), AutomationPackageYamlFragmentManager.NewObjectFragmentMode.FRAGMENT.name());
+            properties.setProperty(String.format(AutomationPackageYamlFragmentManager.PROPERTY_NEW_OBJECT_FRAGMENT_PATH, "keywords"), mainFile);
+        }
+        fragmentManager.setProperties(properties);
+        var automationPackageCollectionFactory = new AutomationPackageCollectionFactory(new Properties(), fragmentManager);
+        CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(automationPackageCollectionFactory);
+        this.currentAutomationPackageDirectory = apDir.toAbsolutePath().normalize();
+        this.fileResolver.setUnprefixedRoot(apDir);
+    }
+
+    private Path findAutomationPackageDescriptorPath(Path apDirectory) {
+        for (String fileName : JavaAutomationPackageArchive.METADATA_FILES) {
+            Path metadataFile = apDirectory.resolve(fileName);
+            if (Files.isRegularFile(metadataFile)) {
+                return metadataFile;
+            }
+        }
+        return null;
+    }
+
+    private Path resolveAndCheckBaseDirectory(Path apDirectory, boolean forInitialization) {
+        if (apDirectory == null) {
+            throw new IllegalArgumentException("Directory path must not be null");
+        }
+        Path resolvedDir = apDirectory.toAbsolutePath().normalize();
+
+        if (!Files.exists(resolvedDir)) {
+            if (forInitialization) {
+                return resolvedDir;
+            }
+            throw new IllegalArgumentException("Path does not exist: " + resolvedDir);
+        }
+
+        if (!Files.isDirectory(resolvedDir)) {
+            throw new IllegalArgumentException("Path exists but is not a directory: " + resolvedDir);
+        }
+
+        if (!Files.isReadable(resolvedDir)) {
+            throw new IllegalArgumentException("Directory is not readable: " + resolvedDir);
+        }
+
+        // This is an absolute edge case, but in theory we could get away with read-only directories in some cases (not very useful for an editor though).
+        if (forInitialization && !Files.isWritable(resolvedDir)) {
+            throw new IllegalArgumentException("Directory is not writable: " + resolvedDir);
+        }
+
+        return resolvedDir;
+    }
+
+    public void validateExistingAutomationPackageDirectory(Path apDirectory) {
+        Path resolvedDir = resolveAndCheckBaseDirectory(apDirectory, false);
+        if (findAutomationPackageDescriptorPath(resolvedDir) == null) {
+            throw new IllegalArgumentException("Directory " + resolvedDir + " does not contain an automation package descriptor");
+        }
+    }
+
+    public void validateInitializableAutomationPackageDirectory(Path apDirectory, boolean allowExistingDescriptor) throws FileExistsException {
+        Path resolvedDir = resolveAndCheckBaseDirectory(apDirectory, true);
+        if (!allowExistingDescriptor) {
+            Path existingDescriptor = findAutomationPackageDescriptorPath(resolvedDir);
+            if (existingDescriptor != null) {
+                throw new FileExistsException(existingDescriptor);
+            }
+        }
+    }
+
+    private void initializeAPDirectory(Path apDir, String apName) throws Exception {
+        Objects.requireNonNull(apDir, "apDir must not be null");
+
+        // 1. Create the directory if it doesn't exist (we allow this from the CLI)
+        if (!Files.exists(apDir)) {
+            Files.createDirectories(apDir);
+            logger.info("Created new Automation Package directory: {}", apDir.toAbsolutePath());
+        }
+
+        if (!Files.isDirectory(apDir)) {
+            String error = String.format("Path %s is not a usable directory, unable to initialize Automation Package", apDir.toAbsolutePath());
+            logger.error(error);
+            throw new IllegalArgumentException(error);
+        }
+
+        Path descriptor = Objects.requireNonNullElseGet(findAutomationPackageDescriptorPath(apDir),
+            () -> apDir.resolve(JavaAutomationPackageArchive.METADATA_FILES.getFirst())
+        );
+
+        logger.info("Initializing AP descriptor: {}", descriptor.toAbsolutePath());
+
+        if (apName == null || apName.isBlank()) {
+            Path fileName = apDir.getFileName();
+            // Edge case: FS roots (/ or C:) apparently return a null filename
+            apName = fileName != null ? fileName.toString() : "root-directory";
+        }
+
+        String yamlName = apName.replace("\\", "\\\\").replace("\"", "\\\"");
+        String content = "schemaVersion: 1.0.0\nname: \"" + yamlName + "\"\n";
+        Files.writeString(descriptor, content);
+    }
+
+    public Path getCurrentAutomationPackageDirectory() {
+        return currentAutomationPackageDirectory;
+    }
+
+    public String getCurrentAutomationPackageName() {
+        if (currentAutomationPackageDirectory == null) {
+            return null;
+        }
+        try {
+            Path apDescriptor = Objects.requireNonNull(findAutomationPackageDescriptorPath(currentAutomationPackageDirectory),
+                "Unexpected: unable to find automation package descriptor in " + currentAutomationPackageDirectory);
+            return Objects.requireNonNullElse(AutomationPackageDescriptorReader.getAutomationPackageName(apDescriptor), "WARNING: AP name not set");
+        } catch (Exception e) {
+            logger.error("Unexpected: failed to read automation package name from current automation package directory", e);
+            return "ERROR while reading AP name, see log";
+        }
+    }
+
+    public void closeCurrentAutomationPackage() {
+        CurrentlyOpenedAutomationPackageCollectionFactory.getInstance().setCurrentFactory(null);
+        this.currentAutomationPackageDirectory = null;
+    }
+
+    public void setExecutorDelegateFactory(IDEExecutorDelegateFactory executorDelegateFactory) {
+        this.executorDelegateFactory = executorDelegateFactory;
+    }
+
+    @Override
+    public String divertExecution(ExecutionParameters executionParams) {
+        Path apDir = requireCurrentAutomationPackageDirectory();
+        String description = executionParams.getDescription();
+        List<String> includedPlanNames = (description == null || description.isBlank()) ? List.of() : List.of(description);
+        return executeAutomationPackage(new IDEExecutionRequest(apDir, executionParams, includedPlanNames));
+    }
+
+    /**
+     * Executes an automation package through the configured delegate and returns the id of the launched execution.
+     * The package is not necessarily the currently opened one: the AI agent for instance is a packaged automation
+     * package of its own, executed against the opened package.
+     */
+    public String executeAutomationPackage(IDEExecutionRequest request) {
+        Objects.requireNonNull(executorDelegateFactory, "No IDEExecutorDelegateFactory set, the IDE was not started through the CLI launcher");
+        logger.info("Launching diverted execution of {} (plans: {}) for parameters: {}", request.automationPackage(),
+            request.includedPlanNames(), Failable.call(() -> new ObjectMapper().writeValueAsString(request.executionParameters())));
+        IDEExecutorDelegate executorDelegate = executorDelegateFactory.createDelegate(request);
+        CompletableFuture<String> executionIdFuture = new CompletableFuture<>();
+        CompletableFuture.runAsync((() -> {
+            try {
+                executorDelegate.executePackageAndFillExecutionId(executionIdFuture);
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+                executionIdFuture.completeExceptionally(e);
+            }
+        }));
+        String executionId = executionIdFuture.join();
+        logger.info("Diverted executionId: {}", executionId);
+        return executionId;
+    }
+
+    public Path requireCurrentAutomationPackageDirectory() {
+        Path apDir = currentAutomationPackageDirectory;
+        if (apDir == null) {
+            throw new IllegalStateException("No automation package is currently opened, please open one first");
+        }
+        return apDir;
+    }
+
+    public void setFileResolver(FileResolver fileResolver) {
+        this.fileResolver = fileResolver;
+    }
+
+    public void addDirectoriesToCleanupOnShutdown(Collection<Path> directories) {
+        this.directoriesToCleanupOnShutdown.addAll(Objects.requireNonNull(directories));
+        if (logger.isDebugEnabled()) {
+            for (Path directory : directoriesToCleanupOnShutdown) {
+                logger.debug("Registering directory for cleanup on shutdown: {}", directory.toAbsolutePath());
+            }
+        }
+    }
+
+    public void setStartupAwaitFuture(CompletableFuture<Void> startupAwaitFuture) {
+        this.startupAwaitFuture = startupAwaitFuture;
+    }
+
+    public void setShutdownAwaitFuture(CompletableFuture<Void> shutdownAwaitFuture) {
+        this.shutdownAwaitFuture = shutdownAwaitFuture;
+    }
+
+    public void onStartupFinished() {
+        if (startupAwaitFuture != null) {
+            startupAwaitFuture.complete(null);
+            startupAwaitFuture = null;
+        }
+    }
+
+    public void onShutdown() {
+        logger.info("Shutting down, performing cleanup tasks");
+        for (Path directory : directoriesToCleanupOnShutdown) {
+            if (!Files.isDirectory(directory)) {
+                logger.warn("Directory {} is not a usable directory, unable to cleanup", directory.toAbsolutePath());
+            }
+            try {
+                logger.debug("Cleaning up directory {}", directory.toAbsolutePath());
+                FileUtils.deleteDirectory(directory.toFile());
+            } catch (Exception e) {
+                logger.error("Error while deleting directory {}", directory.toAbsolutePath(), e);
+            }
+        }
+        // We're intentionally doing the cleanup above even on error, otherwise we would leak temporary directories.
+        if (startupAwaitFuture != null) {
+            startupAwaitFuture.completeExceptionally(new RuntimeException("Unexpected shutdown while starting up. Consult the log for error details."));
+        }
+        if (shutdownAwaitFuture != null) {
+            logger.debug("Completing shutdown-await future");
+            shutdownAwaitFuture.complete(null);
+        }
+    }
+
+    /**
+     * This is a trivial class allowing to influence startup behavior by providing one-shot hooks for lifecycle events.
+     * This is as simple as can be, no synchronization or access control is enforced (nor required) here; Currently
+     * only the EE variant defines additional hooks by directly manipulating the exposed data.
+     */
+    public static class StartupHooks {
+
+        public final List<Consumer<Configuration>> onConfigure = new ArrayList<>();
+    }
+
+}

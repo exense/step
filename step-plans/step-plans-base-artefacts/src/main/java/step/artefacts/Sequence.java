@@ -19,18 +19,21 @@
 package step.artefacts;
 
 import step.artefacts.automation.YamlSequence;
-
 import step.core.artefacts.AbstractArtefact;
 import step.core.artefacts.Artefact;
 import step.core.dynamicbeans.DynamicValue;
+import step.core.yaml.YamlFieldOrder;
+import step.core.yaml.YamlFieldPriority;
 import step.core.yaml.YamlModel;
 
 @YamlModel(model = YamlSequence.class, name = "sequence")
 @Artefact(validAsRoot = true)
 public class Sequence extends AbstractArtefact {
 
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
     DynamicValue<Boolean> continueOnError = new DynamicValue<Boolean>(false);
 
+    @YamlFieldOrder(YamlFieldPriority.EXECUTION_CONTROL)
     DynamicValue<Long> pacing = new DynamicValue<Long>();
 
     public DynamicValue<Boolean> getContinueOnError() {

@@ -44,7 +44,7 @@
     <maven.compiler.release>21</maven.compiler.release>
     <!-- internal dependencies -->
     <step-grid.version>0.0.0-MASTER-SNAPSHOT</step-grid.version>
-    <step-framework.version>0.0.0-MASTER-SNAPSHOT</step-framework.version>
+    <step-framework.version>0.0.0-SED-4429-SNAPSHOT</step-framework.version>
     <!-- external, non-transitive, dependencies -->
     <dep.groovy.version>5.0.8</dep.groovy.version>
     <dep.apache-jmeter.version>5.6.3</dep.apache-jmeter.version>
@@ -85,6 +85,7 @@
     <module>step-controller-plugins</module>
     <module>step-maven-plugin</module>
     <module>step-repositories</module>
+    <module>step-ide-api</module>
     <module>step-ide</module>
     <module>step-libs-maven-client</module>
     <module>step-json-schema</module>

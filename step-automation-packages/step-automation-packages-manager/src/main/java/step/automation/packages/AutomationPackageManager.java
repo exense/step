@@ -39,6 +39,7 @@ import step.core.plans.InMemoryPlanAccessor;
 import step.core.plans.Plan;
 import step.core.plans.PlanAccessor;
 import step.core.repositories.ImportResult;
+import step.core.yaml.YamlMetadata;
 import step.functions.Function;
 import step.functions.accessor.FunctionAccessor;
 import step.functions.accessor.InMemoryFunctionAccessorImpl;
@@ -96,6 +97,14 @@ public class AutomationPackageManager {
     public final AutomationPackageOperationMode operationMode;
     private final int maxParallelVersionsPerPackage;
     private final ObjectHookRegistry objectHookRegistry;
+
+    /**
+     * Materialisation cache root for {@code apResource:} files. It is passed to the manager to handle cleanup only,
+     * the materialization itself is handled by the {@code FileResolver}
+     * {@code null} for local/isolated managers. Local clean up the cache with the engine,
+     * isolated when closing the IsolatedPackageExecutionContext
+     */
+    private File apResourceCacheRoot;
 
 
     /**
@@ -324,7 +333,33 @@ public class AutomationPackageManager {
         }
     }
 
+    public File getApResourceCacheRoot() {
+        return apResourceCacheRoot;
+    }
+
+    public void setApResourceCacheRoot(File apResourceCacheRoot) {
+        this.apResourceCacheRoot = apResourceCacheRoot;
+    }
+
+    /**
+     * Wipes the materialised {@code apResource:} cache of the given package, if a cache root is
+     * configured. Called from {@link #deleteAutomationPackageEntities} which runs under the AP write
+     * lock, so no execution can be reading the wiped entries. The path is keyed by the (stable) AP id,
+     * so on a redeploy this clears stale content that the next resolve re-materialises fresh.
+     */
+    private void wipeApResourceCache(AutomationPackage automationPackage) {
+        if (apResourceCacheRoot == null || automationPackage == null) {
+            return;
+        }
+        String apId = automationPackage.getId().toHexString();
+        if (!ApResourceCache.wipe(apResourceCacheRoot, apId)) {
+            log.warn("Unable to fully wipe the apResource cache directory {}",
+                ApResourceCache.apDirectory(apResourceCacheRoot, apId).getAbsolutePath());
+        }
+    }
+
     protected void deleteAutomationPackageEntities(AutomationPackage automationPackage, AutomationPackage newPackage, String actorUser, WriteAccessValidator writeAccessValidator) {
+        wipeApResourceCache(automationPackage);
         deleteFunctions(automationPackage);
         deletePlans(automationPackage);
 
@@ -893,7 +928,7 @@ public class AutomationPackageManager {
             try {
                 boolean hooked = automationPackageHookRegistry.onPrepareStaging(
                     hookEntry.fieldName,
-                    new StagingAutomationPackageContext(newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, actorUser, enricherForIncludedEntities, extensions),
+                    new StagingAutomationPackageContext(new AutomationPackageResourceMapper(), newPackage, operationMode, staging.getResourceManager(), automationPackageArchive, packageContent, actorUser, enricherForIncludedEntities, extensions),
                     packageContent,
                     hookEntry.values,
                     oldPackage, staging, objectPredicate);
@@ -993,7 +1028,7 @@ public class AutomationPackageManager {
 
     protected List<Function> prepareFunctionsStaging(AutomationPackage newPackage, AutomationPackageArchive automationPackageArchive, AutomationPackageContent packageContent, ObjectEnricher enricher,
                                                      AutomationPackage oldPackage, ResourceManager stagingResourceManager, String actorUser) {
-        StagingAutomationPackageContext apContext = new StagingAutomationPackageContext(newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
+        StagingAutomationPackageContext apContext = new StagingAutomationPackageContext(new AutomationPackageResourceMapper(), newPackage, operationMode, stagingResourceManager, automationPackageArchive, packageContent, actorUser, enricher, extensions);
         List<Function> completeFunctions = packageContent.getKeywords().stream().map(keyword -> keyword.prepareKeyword(apContext)).collect(Collectors.toList());
 
         // get old functions with same name and reuse their ids
@@ -1047,6 +1082,7 @@ public class AutomationPackageManager {
         }
         newPackage.addAttribute(AbstractOrganizableObject.NAME, packageContent.getName());
         newPackage.addAttribute(AP_BASE_NAME_ATTR_KEY, packageContent.getBaseName());
+        YamlMetadata.applyTo(newPackage, packageContent.getMetadata());
         Date currentTime = new Date();
         if (oldPackage == null) {
             newPackage.setCreationDate(currentTime);

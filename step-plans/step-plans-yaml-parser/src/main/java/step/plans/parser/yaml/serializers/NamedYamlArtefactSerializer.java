@@ -47,10 +47,6 @@ public class NamedYamlArtefactSerializer extends StepYamlSerializer<NamedYamlArt
 
     private static final Logger log = LoggerFactory.getLogger(NamedYamlArtefactSerializer.class);
 
-    public NamedYamlArtefactSerializer() {
-        super();
-    }
-
     public NamedYamlArtefactSerializer(ObjectMapper stepYamlMapper) {
         super(stepYamlMapper);
     }

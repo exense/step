@@ -37,7 +37,6 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     public static String TYPE = "JAVA";
 
     private static final Logger log = LoggerFactory.getLogger(JavaAutomationPackageArchive.class);
-    public static final List<String> METADATA_FILES = List.of("automation-package.yml", "automation-package.yaml");
 
     private final ClassLoader classLoaderForMainApFile;
     private final ClassLoader classLoaderForApAndLibraries;
@@ -127,9 +126,9 @@ public class JavaAutomationPackageArchive extends AutomationPackageArchive {
     }
 
     @Override
-    public InputStream getDescriptorYaml() {
+    public URL getDescriptorYamlUrl() {
         for (String metadataFile : METADATA_FILES) {
-            InputStream yamlDescriptor = classLoaderForMainApFile.getResourceAsStream(metadataFile);
+            URL yamlDescriptor = classLoaderForMainApFile.getResource(metadataFile);
             if (yamlDescriptor != null) {
                 return yamlDescriptor;
             }
