@@ -17,7 +17,6 @@ import step.ide.api.RemoteDefaults;
 import step.ide.api.RemoteDeploymentRequest;
 import step.ide.api.RemoteExecution;
 import step.ide.api.RemoteExecutionRequest;
-import step.ide.api.StepConnectionInfo;
 import step.ide.exceptions.FileExistsException;
 
 import java.io.File;
@@ -134,14 +133,14 @@ public class IdeCommands {
         }
 
         private static int determineFrontendPort() {
-            // This uses some hardcoded logic, names and port numbers:
-            // If the app is bundled, return prod port, otherwise dev port.
-            String resourceName = "/" + LocalIDEModel.get().getIdeResourcePath() + "/index.html";
+            // If the app is bundled, it is served by the backend, otherwise by the (hardcoded) port of the dev server.
+            LocalIDEModel model = LocalIDEModel.get();
+            String resourceName = "/" + model.getIdeResourcePath() + "/index.html";
             boolean resourceExists = IdeCommands.class.getResource(resourceName) != null;
             if (!resourceExists) {
                 logger.warn("Unable to find resource {} , assuming local development mode", resourceName);
             }
-            return resourceExists ? 8080 : 4201;
+            return resourceExists ? model.getPort() : 4201;
         }
 
         private int awaitTermination() {
@@ -184,7 +183,7 @@ public class IdeCommands {
         // IDEDelegator method implementations
 
         @Override
-        public final LocalExecutionDelegate delegate(LocalExecutionRequest request) {
+        public final LocalExecutionDelegate delegateLocalExecution(LocalExecutionRequest request) {
             File apPath = request.automationPackage().toFile();
             ExecutionParameters executionParams = request.executionParameters();
             ApExecuteParameters params = new ApExecuteParameters()
@@ -208,11 +207,12 @@ public class IdeCommands {
                 .setWrapIntoTestSet(false)
                 .setNumberOfThreads(null)
                 .setReports(null);
-            return singleExecutionIdFuture -> new ExecuteAutomationPackageTool(StepConnectionInfo.LOCAL.url(), params).executePackageAndFillExecutionId(singleExecutionIdFuture);
+            String localUrl = model().getLocalConnection().url();
+            return singleExecutionIdFuture -> new ExecuteAutomationPackageTool(localUrl, params).executePackageAndFillExecutionId(singleExecutionIdFuture);
         }
 
         @Override
-        public final List<RemoteExecution> execute(Path apPath, RemoteExecutionRequest request) {
+        public final List<RemoteExecution> executeOnStep(Path apPath, RemoteExecutionRequest request) {
             return remoteDelegate().execute(apPath, request);
         }
 

@@ -10,10 +10,16 @@ package step.ide.api;
 public record StepConnectionInfo(String url, String projectName, String token, String stepUser,
                                  Boolean tokenConfigured) {
 
-    public static final StepConnectionInfo LOCAL = new StepConnectionInfo("http://localhost:8080", null, null, null, null);
-
     public StepConnectionInfo(String url, String projectName, String token, String stepUser) {
         this(url, projectName, token, stepUser, null);
+    }
+
+    /**
+     * @param port the port of the controller running on the local host
+     * @return the connection to the local controller
+     */
+    public static StepConnectionInfo local(int port) {
+        return new StepConnectionInfo("http://localhost:" + port, null, null, null, null);
     }
 
     /**

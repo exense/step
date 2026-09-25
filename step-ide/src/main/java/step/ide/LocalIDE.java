@@ -41,6 +41,7 @@ public class LocalIDE {
         configuration.putProperty("ui.resource.root", model.getIdeResourcePath());
         applyEnvOverride(configuration, "JMETER_HOME", "plugins.jmeter.home");
         server = new IDEControllerServer(configuration);
+        model.setPort(server.getPort());
     }
 
     private static class IDEControllerServer extends ControllerServer {

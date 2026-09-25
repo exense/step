@@ -8,13 +8,13 @@ import java.util.List;
 
 public interface IDEDelegator {
 
-    LocalExecutionDelegate delegate(LocalExecutionRequest request);
+    LocalExecutionDelegate delegateLocalExecution(LocalExecutionRequest request);
 
     /**
      * Executes the automation package and returns the executions this started, one per plan unless the plans are
      * wrapped into a single test set.
      */
-    List<RemoteExecution> execute(Path apPath, RemoteExecutionRequest request) throws Exception;
+    List<RemoteExecution> executeOnStep(Path apPath, RemoteExecutionRequest request) throws Exception;
 
     AutomationPackageUpdateResult deploy(Path apPath, RemoteDeploymentRequest request) throws Exception;
 

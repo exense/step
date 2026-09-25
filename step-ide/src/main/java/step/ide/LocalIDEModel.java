@@ -19,6 +19,7 @@ import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.collections.AutomationPackageCollectionFactory;
 import step.core.execution.ExecutionDiversion;
 import step.core.execution.model.ExecutionParameters;
+import step.framework.server.ControllerServer;
 import step.ide.api.IDEDelegator;
 import step.ide.api.LocalExecutionDelegate;
 import step.ide.api.LocalExecutionRequest;
@@ -26,6 +27,7 @@ import step.ide.api.RemoteDefaults;
 import step.ide.api.RemoteDeploymentRequest;
 import step.ide.api.RemoteExecution;
 import step.ide.api.RemoteExecutionRequest;
+import step.ide.api.StepConnectionInfo;
 import step.ide.collections.CurrentlyOpenedAutomationPackageCollectionFactory;
 import step.ide.exceptions.FileExistsException;
 import step.parameter.Parameter;
@@ -65,7 +67,23 @@ public class LocalIDEModel implements ExecutionDiversion {
     private CompletableFuture<Void> startupAwaitFuture;
     private CompletableFuture<Void> shutdownAwaitFuture;
     private String ideResourcePath = "dist/step-ide"; // must neither start, nor end, with a slash; Overridden in the EE variant.
+    private int port = ControllerServer.DEFAULT_PORT; // the port of the IDE backend, set from its configuration by LocalIDE
 
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    /**
+     * @return the connection to the controller of the IDE backend
+     */
+    public StepConnectionInfo getLocalConnection() {
+        return StepConnectionInfo.local(port);
+    }
 
     public String getIdeResourcePath() {
         return ideResourcePath;
@@ -262,7 +280,7 @@ public class LocalIDEModel implements ExecutionDiversion {
         Objects.requireNonNull(delegator, "No IDEDelegator set, the IDE was not started through the CLI launcher");
         logger.info("Launching local execution of {} (plans: {}) for parameters: {}", request.automationPackage(),
             request.includedPlanNames(), Failable.call(() -> new ObjectMapper().writeValueAsString(request.executionParameters())));
-        LocalExecutionDelegate delegate = delegator.delegate(request);
+        LocalExecutionDelegate delegate = delegator.delegateLocalExecution(request);
         CompletableFuture<String> executionIdFuture = new CompletableFuture<>();
         CompletableFuture.runAsync((() -> {
             try {
@@ -342,7 +360,7 @@ public class LocalIDEModel implements ExecutionDiversion {
      * fall back to what is configured in the CLI properties.
      */
     public List<RemoteExecution> executeRemote(RemoteExecutionRequest request) throws Exception {
-        return requireDelegator().execute(requireCurrentAutomationPackageDirectory(), request);
+        return requireDelegator().executeOnStep(requireCurrentAutomationPackageDirectory(), request);
     }
 
     /**
