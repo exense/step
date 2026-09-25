@@ -35,17 +35,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-@StepYamlDeserializerAddOn(targetClasses = {YamlKeywordDefinition.class})
-public class YamlKeywordDefinitionDeserializer extends StepYamlDeserializer<YamlKeywordDefinition> {
+@StepYamlDeserializerAddOn(targetClasses = {YamlCallNamedEntityDefinition.class})
+public class YamlCallNamedEntityDefinitionDeserializer extends StepYamlDeserializer<YamlCallNamedEntityDefinition> {
 
     private static final ObjectMapper DEFAULT_OBJECT_MAPPER = DefaultJacksonMapperProvider.getObjectMapper();
 
-    public YamlKeywordDefinitionDeserializer(JsonDeserializer<?> deserializer, ObjectMapper yamlObjectMapper) {
+    public YamlCallNamedEntityDefinitionDeserializer(JsonDeserializer<?> deserializer, ObjectMapper yamlObjectMapper) {
         super(deserializer, yamlObjectMapper);
     }
 
     @Override
-    public YamlKeywordDefinition deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+    public YamlCallNamedEntityDefinition deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         JsonNode node = p.getCodec().readTree(p);
 
         Map<String, DynamicValue<String>> criteria = getDynamicSelectionCriteria(node);
@@ -53,9 +53,9 @@ public class YamlKeywordDefinitionDeserializer extends StepYamlDeserializer<Yaml
 
         if (!node.isContainerNode()) {
             // for simple function definition the node (string node) contains explicit function name
-            return new YamlKeywordDefinition(node.asText(), node.asText(), selectionCriteriaJson);
+            return new YamlCallNamedEntityDefinition(node.asText(), node.asText(), selectionCriteriaJson);
         } else {
-            return new YamlKeywordDefinition(YamlKeywordDefinitionSerializer.getFunctionName(node.asText(), false), null, selectionCriteriaJson);
+            return new YamlCallNamedEntityDefinition(YamlCallNamedEntityDefinitionSerializer.getEntityName(node.asText(), false), null, selectionCriteriaJson);
         }
     }
 

@@ -32,35 +32,35 @@ import step.jsonschema.JsonSchema;
 import java.lang.reflect.Field;
 import java.util.List;
 
-@JsonSchema(customJsonSchemaProcessor = YamlKeywordDefinition.YamlKeywordDefinitionJsonSchemaProcessor.class)
-public class YamlKeywordDefinition {
+@JsonSchema(customJsonSchemaProcessor = YamlCallNamedEntityDefinition.YamlCallNamedEntityDefinitionJsonSchemaProcessor.class)
+public class YamlCallNamedEntityDefinition {
 
-    private final String keywordName;
-    private String simpleKeywordName;
-    private String keywordSelectionCriteriaJson;
+    private final String entityName;
+    private String simpleEntityName;
+    private String entitySelectionCriteriaJson;
 
-    public YamlKeywordDefinition(String keywordName, String simpleKeywordName, String keywordSelectionCriteria) {
-        this.keywordName = keywordName;
-        this.simpleKeywordName = simpleKeywordName;
-        this.keywordSelectionCriteriaJson = keywordSelectionCriteria;
+    public YamlCallNamedEntityDefinition(String entityName, String simpleEntityName, String entitySelectionCriteria) {
+        this.entityName = entityName;
+        this.simpleEntityName = simpleEntityName;
+        this.entitySelectionCriteriaJson = entitySelectionCriteria;
     }
 
     public DynamicValue<String> toDynamicValue() {
-        if (keywordSelectionCriteriaJson != null) {
-            return new DynamicValue<>(keywordSelectionCriteriaJson);
+        if (entitySelectionCriteriaJson != null) {
+            return new DynamicValue<>(entitySelectionCriteriaJson);
         } else {
             return new DynamicValue<>("{}");
         }
     }
 
-    public static YamlKeywordDefinition fromDynamicValue(DynamicValue<String> dynamicValue) {
+    public static YamlCallNamedEntityDefinition fromDynamicValue(DynamicValue<String> dynamicValue) {
         try {
             if (dynamicValue.isDynamic()) {
                 throw new UnsupportedOperationException("Dynamic arguments are not supported");
             }
-            return new YamlKeywordDefinition(
-                YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, false),
-                YamlKeywordDefinitionSerializer.getFunctionName(dynamicValue, true),
+            return new YamlCallNamedEntityDefinition(
+                YamlCallNamedEntityDefinitionSerializer.getEntityName(dynamicValue, false),
+                YamlCallNamedEntityDefinitionSerializer.getEntityName(dynamicValue, true),
                 dynamicValue.getValue()
             );
         } catch (Exception ex) {
@@ -68,39 +68,37 @@ public class YamlKeywordDefinition {
         }
     }
 
-    public String getKeywordName() {
-        return this.keywordName;
+    public String getEntityName() {
+        return this.entityName;
     }
 
-    public String getSimpleKeywordName() {
-        return simpleKeywordName;
+    public String getSimpleEntityName() {
+        return simpleEntityName;
     }
 
-    public void setSimpleKeywordName(String simpleKeywordName) {
-        this.simpleKeywordName = simpleKeywordName;
+    public void setSimpleEntityName(String simpleEntityName) {
+        this.simpleEntityName = simpleEntityName;
     }
 
-    public String getKeywordSelectionCriteriaJson() {
-        return keywordSelectionCriteriaJson;
+    public String getEntitySelectionCriteriaJson() {
+        return entitySelectionCriteriaJson;
     }
 
-    public void setKeywordSelectionCriteriaJson(String keywordSelectionCriteriaJson) {
-        this.keywordSelectionCriteriaJson = keywordSelectionCriteriaJson;
+    public void setEntitySelectionCriteriaJson(String entitySelectionCriteriaJson) {
+        this.entitySelectionCriteriaJson = entitySelectionCriteriaJson;
     }
 
-    public static class YamlKeywordDefinitionJsonSchemaProcessor implements JsonSchemaFieldProcessor {
+    public static class YamlCallNamedEntityDefinitionJsonSchemaProcessor implements JsonSchemaFieldProcessor {
 
         @Override
         public boolean applyCustomProcessing(Class<?> objectClass, Field field, FieldMetadata fieldMetadata, JsonObjectBuilder propertiesBuilder, List<String> requiredPropertiesOutput, JsonSchemaCreator schemaCreator) throws JsonSchemaPreparationException {
             JsonProvider jsonProvider = JsonProvider.provider();
             YamlJsonSchemaHelper jsonSchemaHelper = new YamlJsonSchemaHelper(jsonProvider);
-            JsonObjectBuilder nestedPropertyParamsBuilder = jsonProvider.createObjectBuilder();
             JsonArrayBuilder oneOfArrayBuilder = jsonProvider.createArrayBuilder();
             oneOfArrayBuilder
                 .add(jsonProvider.createObjectBuilder().add("type", "string"))
                 .add(jsonSchemaHelper.createPatternPropertiesWithDynamicValues());
-            nestedPropertyParamsBuilder.add("oneOf", oneOfArrayBuilder);
-            propertiesBuilder.add(fieldMetadata.getFieldName(), nestedPropertyParamsBuilder);
+            propertiesBuilder.add("oneOf", oneOfArrayBuilder);
             return true;
         }
     }
