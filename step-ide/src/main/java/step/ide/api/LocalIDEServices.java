@@ -39,7 +39,7 @@ public class LocalIDEServices extends AbstractStepServices {
     @POST
     @Path("ap/use-existing")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void useExistingAP(@QueryParam("directory") String directory, @QueryParam("upgrade") Boolean upgrade) {
+    public void useExistingAP(@QueryParam("directory") String directory, @QueryParam("upgrade") boolean upgrade) {
         if (directory == null || directory.isBlank()) {
             throw error("directory must not be empty", Response.Status.BAD_REQUEST);
         }

@@ -43,7 +43,7 @@ public class PatchableYamlPrimitive<T> extends PatchableYamlModelBase {
 
     @Override
     public String toString() {
-        return value.toString();
+        return value != null ? value.toString() : "";
     }
 
     public T getValue() {

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.OptBoolean;
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import step.core.yaml.PatchingContext;
 
 import java.io.IOException;
@@ -45,7 +46,11 @@ public class PatchableYamlScalarField<T> extends PatchableYamlPrimitive<T> {
     @JsonValue
     @Override
     public JsonNode getJsonValue() {
-        return getPatchingContext().getMapper().createObjectNode().putPOJO(fieldName, value);
+        ObjectNode node = getPatchingContext().getMapper().createObjectNode();
+        if (fieldName != null && value != null) {
+            node.putPOJO(fieldName, value);
+        }
+        return node;
     }
 
     @Override

@@ -249,7 +249,7 @@ public class JavaAutomationPackageReader extends AutomationPackageReader<JavaAut
      * @return the automation package fragment manager read from the provided files for editing
      * @throws AutomationPackageReadingException in case of error
      */
-    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(File automationPackage, ResourceManager resourceManager, Boolean upgrade) throws AutomationPackageReadingException {
+    public AutomationPackageYamlFragmentManager getAutomationPackageYamlFragmentManager(File automationPackage, ResourceManager resourceManager, boolean upgrade) throws AutomationPackageReadingException {
         try (JavaAutomationPackageArchive automationPackageArchive = new JavaAutomationPackageArchive(automationPackage, null, null)) {
             return getAutomationPackageYamlFragmentManager(automationPackageArchive, resourceManager, upgrade);
         } catch (IOException e) {

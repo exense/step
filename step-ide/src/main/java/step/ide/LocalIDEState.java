@@ -81,7 +81,7 @@ public class LocalIDEState implements ExecutionDiversion {
         logger.debug("Setting resource manager to {}", resourceManager);
     }
 
-    public void useExistingAutomationPackageDirectory(Path apDir, Boolean upgrade) throws Exception {
+    public void useExistingAutomationPackageDirectory(Path apDir, boolean upgrade) throws Exception {
         validateExistingAutomationPackageDirectory(apDir);
         useAutomationPackageDirectory(apDir, upgrade);
     }
@@ -91,7 +91,7 @@ public class LocalIDEState implements ExecutionDiversion {
         useAutomationPackageDirectory(apDir, false);
     }
 
-    private void useAutomationPackageDirectory(Path apDir, Boolean upgrade) throws Exception {
+    private void useAutomationPackageDirectory(Path apDir, boolean upgrade) throws Exception {
         AutomationPackageReaderRegistry readerRegistry = Objects.requireNonNull(automationPackageReaderRegistry,
             "No automation package reader registry set, the IDE backend is not started");
         JavaAutomationPackageReader reader = (JavaAutomationPackageReader) readerRegistry.<JavaAutomationPackageArchive>getReaderByType(JavaAutomationPackageArchive.TYPE);

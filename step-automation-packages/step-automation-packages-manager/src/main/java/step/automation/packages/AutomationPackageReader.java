@@ -223,6 +223,7 @@ public abstract class AutomationPackageReader<T extends AutomationPackageArchive
 
                 if (schemaVersion == null || schemaVersion.getMajor() != STEP_YAML_SCHEMA_VERSION.getMajor() || schemaVersion.getMinor() != STEP_YAML_SCHEMA_VERSION.getMinor()) {
                     descriptor.setVersionString(STEP_YAML_SCHEMA_VERSION_STRING);
+                    descriptor.writeToDisk();
                     fragmentManager.saveAllEntities();
                 }
                 // Transform resource references to AP resources as during AP deployment. Only required for plans  as
