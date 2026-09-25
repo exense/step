@@ -7,13 +7,11 @@ import org.apache.commons.lang3.function.Failable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import step.attachments.FileResolver;
-import step.automation.packages.AutomationPackageHookRegistry;
+import step.automation.packages.AutomationPackageReaderRegistry;
 import step.automation.packages.JavaAutomationPackageArchive;
 import step.automation.packages.JavaAutomationPackageReader;
-import step.automation.packages.deserialization.AutomationPackageSerializationRegistry;
 import step.automation.packages.yaml.AutomationPackageDescriptorReader;
 import step.automation.packages.yaml.AutomationPackageYamlFragmentManager;
-import step.automation.packages.yaml.YamlAutomationPackageVersions;
 import step.core.collections.AutomationPackageCollectionFactory;
 import step.core.execution.ExecutionDiversion;
 import step.core.execution.model.ExecutionParameters;
@@ -23,7 +21,6 @@ import step.ide.api.IDEExecutorDelegateFactory;
 import step.ide.collections.CurrentlyOpenedAutomationPackageCollectionFactory;
 import step.ide.exceptions.FileExistsException;
 import step.parameter.Parameter;
-import step.parameter.automation.AutomationPackageParametersRegistration;
 import step.plans.parser.yaml.YamlPlan;
 import step.resources.ResourceManagerImpl;
 
@@ -44,7 +41,7 @@ public class LocalIDEState implements ExecutionDiversion {
     private static final Logger logger = LoggerFactory.getLogger(LocalIDEState.class);
     private static final LocalIDEState instance = new LocalIDEState();
 
-    private final JavaAutomationPackageReader reader;
+    private AutomationPackageReaderRegistry automationPackageReaderRegistry;
 
     private final List<Path> directoriesToCleanupOnShutdown = new CopyOnWriteArrayList<>();
     public final StartupHooks startupHooks = new StartupHooks();
@@ -69,10 +66,14 @@ public class LocalIDEState implements ExecutionDiversion {
     }
 
     private LocalIDEState() {
-        AutomationPackageSerializationRegistry serializationRegistry = new AutomationPackageSerializationRegistry();
-        AutomationPackageHookRegistry hookRegistry = new AutomationPackageHookRegistry();
-        AutomationPackageParametersRegistration.registerParametersHooks(hookRegistry, serializationRegistry, null);
-        reader = new JavaAutomationPackageReader(YamlAutomationPackageVersions.ACTUAL_JSON_SCHEMA_PATH, hookRegistry, serializationRegistry, new Configuration());
+    }
+
+    /**
+     * Sets the registry of the automation package readers of the IDE backend, which carries the JSON schema, hooks and
+     * serializers registered by the controller plugins (the EE ones included in the EE edition).
+     */
+    public void setAutomationPackageReaderRegistry(AutomationPackageReaderRegistry automationPackageReaderRegistry) {
+        this.automationPackageReaderRegistry = Objects.requireNonNull(automationPackageReaderRegistry, "automationPackageReaderRegistry must not be null");
     }
 
     public void setResourceManager(ResourceManagerImpl resourceManager) {
@@ -91,6 +92,9 @@ public class LocalIDEState implements ExecutionDiversion {
     }
 
     private void useAutomationPackageDirectory(Path apDir, Boolean upgrade) throws Exception {
+        AutomationPackageReaderRegistry readerRegistry = Objects.requireNonNull(automationPackageReaderRegistry,
+            "No automation package reader registry set, the IDE backend is not started");
+        JavaAutomationPackageReader reader = (JavaAutomationPackageReader) readerRegistry.<JavaAutomationPackageArchive>getReaderByType(JavaAutomationPackageArchive.TYPE);
         var fragmentManager = reader.getAutomationPackageYamlFragmentManager(apDir.toFile(), this.resourceManager, upgrade);
         Properties properties = new Properties();
 

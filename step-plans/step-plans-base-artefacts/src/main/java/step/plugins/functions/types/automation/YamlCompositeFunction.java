@@ -18,7 +18,6 @@
  ******************************************************************************/
 package step.plugins.functions.types.automation;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import step.automation.packages.StagingAutomationPackageContext;
 import step.automation.packages.model.AbstractYamlFunction;
 import step.core.accessors.AbstractOrganizableObject;
@@ -31,7 +30,6 @@ import step.plans.parser.yaml.YamlPlan;
 import step.plugins.functions.types.CompositeFunction;
 
 @YamlModel(name = "Composite")
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class YamlCompositeFunction extends AbstractYamlFunction<CompositeFunction> {
 
     @YamlFieldCustomCopy

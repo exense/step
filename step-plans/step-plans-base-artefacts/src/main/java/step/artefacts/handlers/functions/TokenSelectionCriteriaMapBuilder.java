@@ -21,6 +21,7 @@ package step.artefacts.handlers.functions;
 import step.artefacts.CallFunction;
 import step.artefacts.handlers.FunctionGroupHandler;
 import step.artefacts.handlers.TokenSelectorHelper;
+import step.core.agents.provisioning.TokenSelectionCriteriaFilter;
 import step.core.dynamicbeans.DynamicJsonObjectResolver;
 import step.functions.Function;
 import step.functions.type.AbstractFunctionType;

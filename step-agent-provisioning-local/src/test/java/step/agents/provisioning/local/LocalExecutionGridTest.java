@@ -22,8 +22,10 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import step.grid.GridImpl;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -45,7 +47,7 @@ public class LocalExecutionGridTest {
         LocalAgentWorkspace workspace = new LocalAgentWorkspace(workDirectory.getRoot().toPath());
 
         Path fileManagerDirectory;
-        try (LocalExecutionGrid grid = new LocalExecutionGrid(Duration.ofSeconds(10), workspace)) {
+        try (LocalExecutionGrid grid = LocalExecutionGrid.startEmbedded(Duration.ofSeconds(10), workspace)) {
             Assert.assertNotNull(grid.getGridUrl());
             fileManagerDirectory = gridDirectories().stream().findFirst().orElseThrow();
             // A cached file, as the file manager leaves them behind: an empty directory would be deleted by far less
@@ -54,6 +56,29 @@ public class LocalExecutionGridTest {
 
         Assert.assertFalse("The file manager directory should have been deleted with the grid",
             Files.exists(fileManagerDirectory));
+    }
+
+    /**
+     * The grid of the IDE is owned by the IDE: closing the attachment must leave it running and its files in place.
+     */
+    @Test
+    public void leavesAnAttachedGridRunningWhenClosed() throws Exception {
+        Path fileManagerDirectory = workDirectory.newFolder("ownedGrid").toPath();
+        GridImpl ownedGrid = new GridImpl(fileManagerDirectory.toFile(), 0);
+        ownedGrid.start();
+        try {
+            try (LocalExecutionGrid grid = LocalExecutionGrid.attach(ownedGrid, null, Duration.ofSeconds(10))) {
+                Assert.assertSame(ownedGrid, grid.getGrid());
+                Assert.assertEquals("http://" + AgentConfWriter.LOOPBACK_HOST + ":" + ownedGrid.getServerPort(), grid.getGridUrl());
+            }
+
+            try (Socket socket = new Socket(AgentConfWriter.LOOPBACK_HOST, ownedGrid.getServerPort())) {
+                Assert.assertTrue("The attached grid should still be listening", socket.isConnected());
+            }
+            Assert.assertTrue(Files.exists(fileManagerDirectory));
+        } finally {
+            ownedGrid.stop();
+        }
     }
 
     /**

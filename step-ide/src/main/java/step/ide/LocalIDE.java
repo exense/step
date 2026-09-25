@@ -39,7 +39,6 @@ public class LocalIDE {
         configuration.putProperty("resources.dir", resourcesDirectory.toString());
         configuration.putProperty("grid.filemanager.path", fileManagerDirectory.toString());
         configuration.putProperty("ui.resource.root", ideState.getIdeResourcePath());
-        applyEnvOverride(configuration, "JMETER_HOME", "plugins.jmeter.home");
         server = new IDEControllerServer(configuration);
     }
 
@@ -51,18 +50,6 @@ public class LocalIDE {
 
         public IDEControllerServer(Configuration configuration) {
             super(configuration);
-        }
-    }
-
-    /**
-     * Applies an environment variable on top of the configuration. Environment variables take precedence over
-     * ide.properties, which notably allows secrets to be provided without ending up in a file.
-     */
-    private static void applyEnvOverride(Configuration configuration, String environmentVariable, String propertyKey) {
-        String value = System.getenv(environmentVariable);
-        if (value != null && !value.isBlank()) {
-            logger.info("Applying environment variable {} to property {}", environmentVariable, propertyKey);
-            configuration.putProperty(propertyKey, value);
         }
     }
 
